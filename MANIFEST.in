@@ -1,8 +1,4 @@
 include COPYING MANIFEST.in
-include src/*.h
-include lib/numina/logging.ini
-include lib/numina/defaults.cfg
-include lib/numina/simulation/*.dat
-include lib/emir/instrument/*.txt
+include emir/instrument/*.txt
 recursive-include doc *
 
