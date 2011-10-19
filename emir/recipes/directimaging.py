@@ -47,17 +47,20 @@ from numina.array import combine_shape, correct_flatfield
 from numina.array import fixpix2
 from numina.array.combine import flatcombine, median, quantileclip
 
+from numina __version__
+from numina.recipes import Parameter
 from numina.recipes import RecipeBase, RecipeError
-from numina.recipes.registry import ProxyPath, ProxyQuery
-from numina.recipes.registry import Schema
+
 from numina.util.sextractor import SExtractor
 from numina.util.sextractor import open as sopen
 import numina.util.sexcatalog as sexcatalog
-from emir.dataproducts import create_result
-from emir.recipes import EmirRecipeMixin
+from emir.dataproducts import create_result, MasterBias, MasterDark, MasterFlat
+
 import emir.instrument.detector as detector
 
 __all__ = ['Recipe']
+
+__author__ = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -136,7 +139,7 @@ class ImageInformation(object):
         self.valid_sky = True
 
 
-class Recipe(RecipeBase, EmirRecipeMixin):
+class Recipe(RecipeBase):
     '''Recipe for the reduction of imaging mode observations.
 
     Recipe to reduce observations obtained in imaging mode, considering different
@@ -208,34 +211,31 @@ class Recipe(RecipeBase, EmirRecipeMixin):
        calibration might be computed using available stars (TBD).
     
     '''
-    capabilities = ['dithered_images',
-                    'nodded-beamswitched_images',
-                    'stare_images']
-    
-    required_parameters = [
-        Schema('extinction', ProxyQuery(dummy=1.0), 'Mean atmospheric extinction'),
-        Schema('master_bias', ProxyQuery(), 'Master bias image'),
-        Schema('master_dark', ProxyQuery(), 'Master dark image'),
-        Schema('master_bpm', ProxyQuery(), 'Master bad pixel mask'),
-        Schema('master_flat', ProxyQuery(), 'Master flat field image'),
-        Schema('nonlinearity', ProxyQuery(dummy=[1.0, 0.0]), 'Polynomial for non-linearity correction'),
-        Schema('iterations', 4, 'Iterations of the recipe'),
-        Schema('sky_images', 5, 'Images used to estimate the background around current image'),
-        Schema('sky_images_sep_time', 10, 'Maximum separation time between sky images in minutes'),
-        Schema('images', ProxyPath('/observing_block/result/images'), 'A list of paths to images'),
-        Schema('resultname', 'result.fits', 'Name of the output image'),
-        Schema('airmasskey', 'AIRMASS', 'Name of airmass header keyword'),
-        Schema('exposurekey', 'EXPOSED', 'Name of exposure header keyword'),
-        Schema('juliandatekey', 'MJD-OBS', 'Julian date keyword'),
-        Schema('detector', 'Hawaii2Detector', 'Name of the class containing the detector geometry'),
-        Schema('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
-        Schema('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
+
+    __requires__ = [
+        Parameter('extinction', 1.0, 'Mean atmospheric extinction'),
+        Parameter('master_bias', MasterBias, 'Master bias image'),
+        Parameter('master_dark', MasterDark, 'Master dark image'),
+        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        Parameter('master_flat', MasterFlat, 'Master flat field image'),
+        # FIXME: this is candidate to be a non Image Product
+        Parameter('nonlinearity', [1.0, 0.0], 'Polynomial for non-linearity correction'),
+        Parameter('iterations', 4, 'Iterations of the recipe'),
+        Parameter('sky_images', 5, 'Images used to estimate the background around current image'),
+        Parameter('sky_images_sep_time', 10, 'Maximum separation time between sky images in minutes'),
+        Parameter('resultname', 'result.fits', 'Name of the output image'),
+#        Parameter('airmasskey', 'AIRMASS', 'Name of airmass header keyword'),
+#        Parameter('exposurekey', 'EXPOSED', 'Name of exposure header keyword'),
+#        Parameter('juliandatekey', 'MJD-OBS', 'Julian date keyword'),
+#        Parameter('detector', 'Hawaii2Detector', 'Name of the class containing the detector geometry'),
+        Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
+        Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
     ]
     
     provides = []
     
     def __init__(self, param, runinfo):
-        super(Recipe, self).__init__(param, runinfo)
+        super(Recipe, self).__init__(author=__author__, version="0.1.0")
         
         self.iter = 0
         self._figure = plt.figure(facecolor='white')
