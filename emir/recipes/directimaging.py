@@ -47,15 +47,17 @@ from numina.array import combine_shape, correct_flatfield
 from numina.array import fixpix2
 from numina.array.combine import flatcombine, median, quantileclip
 
-from numina __version__
+from numina import __version__
 from numina.recipes import Parameter
 from numina.recipes import RecipeBase, RecipeError
 
 from numina.util.sextractor import SExtractor
 from numina.util.sextractor import open as sopen
 import numina.util.sexcatalog as sexcatalog
-from emir.dataproducts import create_result, MasterBias, MasterDark, MasterFlat
 
+
+from emir.dataproducts import create_result, MasterBias, MasterDark 
+from emir.dataproducts import MasterFlat, MasterBadPixelMask
 import emir.instrument.detector as detector
 
 __all__ = ['Recipe']
@@ -232,7 +234,7 @@ class Recipe(RecipeBase):
         Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
     ]
     
-    provides = []
+    __provides__ = []
     
     def __init__(self, param, runinfo):
         super(Recipe, self).__init__(author=__author__, version="0.1.0")

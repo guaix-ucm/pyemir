@@ -25,37 +25,21 @@ import time
 import numpy
 import pyfits
 
-from numina import RecipeBase, Image, __version__
+from numina import RecipeBase, __version__
 from numina import FITSHistoryHandler
-from numina.recipes import Image, Keyword
+from numina.recipes import Parameter
+
+from emir.dataproducts import MasterBias, MasterDark, MasterFlat
 
 __all__ = ['Recipe', 'BiasRecipe', 'DarkRecipe', 'FlatRecipe']
 
 _logger = logging.getLogger('emir.recipes')
 
-class Recipe(RecipeBase):
-    '''Null recipe'''
-
-    __requires__ = []
-    __provides__ = []
-
-    def __init__(self):
-        super(Recipe, self).__init__(
-                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
-                        version="0.1.0"
-                )
-
-    def run(self, block):
-
-            return {'products': {} }
-
-
-
 class BiasRecipe(RecipeBase):
     '''Process BIAS images and create MASTER_BIAS.'''
 
     __requires__ = []
-    __provides__ = [Image('master_bias', comment='Master bias image')]
+    __provides__ = [MasterBias]
 
     def __init__(self):
         super(BiasRecipe, self).__init__(
@@ -71,7 +55,7 @@ class BiasRecipe(RecipeBase):
         fh.setLevel(logging.INFO)
         _logger.addHandler(fh)
 
-    	_logger.info('starting bias reduction')
+        _logger.info('starting bias reduction')
 
         images = rb.images
 
@@ -109,20 +93,18 @@ class BiasRecipe(RecipeBase):
             # merge header with HISTORY log
             hdr.ascardlist().extend(history_header.ascardlist())    
 
-            return {'products': {'master_bias': hdulist}}
-        except OSError as error:
-            return {'error' : {'exception': str(error)}}
+            return {'products': [MasterBias(hdulist)]}
         finally:
             _logger.removeHandler(fh)
 
             for hdulist in cdata:
                 hdulist.close()
-
+            
 class DarkRecipe(RecipeBase):
     '''Process DARK images and provide MASTER_DARK. '''
 
-    __requires__ = [Image('master_bias', comment='Master bias image')]
-    __provides__ = [Image('master_dark', comment='Master dark image')]
+    __requires__ = [Parameter('master_bias', MasterBias, 'comment')]
+    __provides__ = [MasterDark]
 
     def __init__(self):
         super(DarkRecipe, self).__init__(
@@ -139,7 +121,7 @@ class DarkRecipe(RecipeBase):
         fh.setLevel(logging.INFO)
         _logger.addHandler(fh)
 
-    	_logger.info('starting dark reduction')
+        _logger.info('starting dark reduction')
 
         try:
             _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
@@ -182,18 +164,18 @@ class DarkRecipe(RecipeBase):
             # merge final header with HISTORY log
             hdr.ascardlist().extend(history_header.ascardlist())    
 
-            return {'products': {'master_dark': hdulist}}
-        except OSError as error:
-            return {'error' : {'exception': str(error)}}
+            return {'products': [MasterDark(hdulist)]}
         finally:
             _logger.removeHandler(fh)
 
 class FlatRecipe(RecipeBase):
     '''Process FLAT images and provide MASTER_FLAT. '''
 
-    __requires__ = [Image('master_bias'),
-                    Image('master_dark')]
-    __provides__ = [Image('master_flat')]
+    __requires__ = [
+                    Parameter('master_bias', MasterBias, 'comment'),
+                    Parameter('master_dark', MasterDark, 'comment')
+                    ]
+    __provides__ = [MasterFlat]
 
     def __init__(self):
         super(FlatRecipe, self).__init__(
@@ -210,7 +192,7 @@ class FlatRecipe(RecipeBase):
         fh.setLevel(logging.INFO)
         _logger.addHandler(fh)
 
-    	_logger.info('starting flat reduction')
+        _logger.info('starting flat reduction')
 
         try:
             _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
@@ -251,7 +233,7 @@ class FlatRecipe(RecipeBase):
             # reduction keywords
             hdr = hdu.header
             hdr.update('FILENAME', 'master_flat-%(block_id)d.fits' % self.environ)
-            hdr.update('IMGTYP', 'FALT', 'Image type')
+            hdr.update('IMGTYP', 'FLAT', 'Image type')
             hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
             hdr.update('NUMXVER', __version__, 'Numina package version')
             hdr.update('NUMRNAM', 'FlatRecipe', 'Numina recipe name')
@@ -264,7 +246,6 @@ class FlatRecipe(RecipeBase):
             # merge final header with HISTORY log
             hdr.ascardlist().extend(history_header.ascardlist())    
 
-            return {'products': {'master_flat': hdulist}}
+            return {'products': [MasterFlat(hdulist)]}
         finally:
             _logger.removeHandler(fh)
-

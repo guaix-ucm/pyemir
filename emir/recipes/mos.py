@@ -25,9 +25,7 @@ import time
 import numpy
 import pyfits
 
-from numina import RecipeBase, Image, __version__
-from numina import FITSHistoryHandler
-from numina.recipes import Image, Keyword
+from numina import RecipeBase
 
 __all__ = ['Recipe']
 
