@@ -1,16 +1,9 @@
 
-==============
-Numina modules
-==============
+============
+Emir modules
+============
 
 .. toctree::
+   :maxdepth: 2
 
-   array
-   exceptions
-   image
-   instrument
    recipes
-   qa
-   user
-   
-   

@@ -13,6 +13,7 @@ be able to be installed and work properly:
  - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
  - pyxdg (http://www.freedesktop.org/wiki/Software/pyxdg)
  - simplejson (http://undefined.org/python/#simplejson)
+ - numina (http://guaix.fis.ucm.es/hg/numina)
 
 Webpage: https://guaix.fis.ucm.es/projects/emir
 Maintainer: sergiopr@fis.ucm.es

@@ -1,45 +1,23 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages, Extension
-
-import numpy
-
-numpy_include = numpy.get_include()
-cext = Extension('numina.array._combine',
-                ['src/combinemodule.cc',
-                 'src/operations.cc',
-                 'src/nu_combine_methods.cc',
-                 'src/nu_combine.cc'
-                 ],
-          include_dirs=[numpy_include])
-
-uext = Extension('numina.array._ufunc',
-                ['src/ufunc.cc',
-                 ],
-          include_dirs=[numpy_include])
+from setuptools import setup, find_packages
 
 setup(name='pyemir',
-      version='0.4.2',
+      version='0.5.0',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.4.2.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.5.0.tar.gz',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
-      packages=find_packages('lib'),
-      package_dir={'': 'lib'},
-      package_data={'numina.simulation': ['*.dat'],
-                      'numina': ['*.cfg', 'logging.ini'],
+      packages=find_packages('.'),
+      package_data={
                       'emir.instrument': ['image_*.txt', 'spectrum_*.txt'],
-                      },
-      ext_modules=[cext, uext],
-      entry_points={
-                      'console_scripts': ['numina = numina.user:main'],
                       },
       test_suite="nose.collector",
       install_requires=['setuptools', 'numpy', 'pyfits', 'scipy', 
-		'sphinx', 'pyxdg', 'simplejson', 'nose',
-		'matplotlib', 'numdisplay'],
+		'sphinx', 'nose',
+		'matplotlib', 'numdisplay', 'numina>=0.5.0'],
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',

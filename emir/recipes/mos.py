@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2011 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -15,17 +15,35 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
-'''Quality asses for Numina-based applications.'''
+'''MOS Recipes for EMIR'''
 
-GOOD = 100
-FAIR = 90
-BAD = 70
-UNKNOWN = -1
+import logging
+import time
 
-_level_names = {GOOD: 'GOOD',
-                FAIR: 'FAIR',
-                BAD: 'BAD',
-                UNKNOWN: 'UNKNOWN'}
+import numpy
+import pyfits
+
+from numina import RecipeBase
+
+__all__ = ['Recipe']
+
+_logger = logging.getLogger('emir.recipes')
+
+class Recipe(RecipeBase):
+    '''Null recipe'''
+
+    __requires__ = []
+    __provides__ = []
+
+    def __init__(self):
+        super(Recipe, self).__init__(
+                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
+                        version="0.1.0"
+                )
+
+    def run(self, block):
+
+            return {'products': {} }
 

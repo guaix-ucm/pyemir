@@ -23,9 +23,44 @@ import logging
 
 import pyfits
 
+from numina.recipes import Image
 from emir.instrument.headers import default
 
 _logger = logging.getLogger('emir.dataproducts')
+
+
+class MasterBadPixelMask(Image):
+    def __init__(self, hdu):
+        super(MasterBias, self).__init__(hdu)
+
+    def metadata(self):
+        hdr = self.image[0].header
+        yield 'detector0.mode', hdr['ccdmode']
+
+class MasterBias(Image):
+    def __init__(self, hdu):
+        super(MasterBias, self).__init__(hdu)
+
+    def metadata(self):
+        hdr = self.image[0].header
+        yield 'detector0.mode', hdr['ccdmode']
+
+class MasterDark(Image):
+    def __init__(self, hdu):
+        super(MasterDark, self).__init__(hdu)
+
+    def metadata(self):
+        hdr = self.image[0].header
+        yield 'detector0.mode', hdr['ccdmode']
+
+class MasterFlat(Image):
+    def __init__(self, hdu):
+        super(MasterFlat, self).__init__(hdu)
+
+    def metadata(self):
+        hdr = self.image[0].header
+        yield 'detector0.mode', hdr['ccdmode']
+        yield 'filter0', hdr['filter']
 
 # Image -> Raw: PRIMARY
 #       -> Result: PRIMARY, VARIANCE, MAP 

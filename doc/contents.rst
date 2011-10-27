@@ -12,7 +12,6 @@ PyEmir Documentation
    intro
    highlevel
    emir/modules
-   modules
 
    
 Indices and tables
