@@ -37,8 +37,7 @@ import numdisplay.zscale
 from scipy.spatial import cKDTree as KDTree
 
 import numina.image
-import numina.qa
-from numina.image import DiskImage, get_image_shape, resize_fits
+from numina.image import get_image_shape, resize_fits
 from numina.image.flow import SerialFlow
 from numina.image.background import create_background_map
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
@@ -48,7 +47,7 @@ from numina.array import fixpix2
 from numina.array.combine import flatcombine, median, quantileclip
 
 from numina import __version__
-from numina.recipes import Parameter
+from numina.recipes import Parameter, Image
 from numina.recipes import RecipeBase, RecipeError
 
 from numina.util.sextractor import SExtractor
@@ -236,7 +235,7 @@ class Recipe(RecipeBase):
     
     __provides__ = []
     
-    def __init__(self, param, runinfo):
+    def __init__(self):
         super(Recipe, self).__init__(author=__author__, version="0.1.0")
         
         self.iter = 0
@@ -325,7 +324,7 @@ class Recipe(RecipeBase):
             _logger.info('Iter %d, SC: subtracting sky to image %s', 
                      self.iter, image.label)
             name = _name_skybackground(image.label, self.iter)
-            pyfits.writeto(name, sky)
+            pyfits.writeto(name, sky, clobber=True)
             d -= sky
         
         finally:
@@ -378,7 +377,7 @@ class Recipe(RecipeBase):
                 # To continue we interpolate over the patches
                 #fixpix2(sky, binmask, out=sky, iterations=1)
                 name = _name_skybackgroundmask(image.label, self.iter)
-                pyfits.writeto(name, binmask.astype('int16'))
+                pyfits.writeto(name, binmask.astype('int16'), clobber=True)
                 
             hdulist1 = pyfits.open(image.lastname, mode='update')
             try:
@@ -392,7 +391,7 @@ class Recipe(RecipeBase):
                 d -= sky
                 
                 name = _name_skybackground(image.label, self.iter)
-                pyfits.writeto(name, sky)
+                pyfits.writeto(name, sky, clobber=True)
                 _logger.info('Iter %d, SC: subtracting sky %s to image %s', 
                              self.iter, name, image.lastname)                
             
@@ -469,7 +468,7 @@ class Recipe(RecipeBase):
         fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
         self.figure_simple_image(fake, title='Fake sky error image')
         # store fake image
-        pyfits.writeto('fake_sky_rms_i%0d.fits' % self.iter, fake)
+        pyfits.writeto('fake_sky_rms_i%0d.fits' % self.iter, fake, clobber=True)
 
 
 
@@ -565,7 +564,7 @@ class Recipe(RecipeBase):
         self._figure.canvas.draw()
         self._figure.savefig('figure-median-sky-background_i%01d.png' % self.iter)
 
-    def compute_superflat(self, iinfo, segmask):
+    def compute_superflat(self, iinfo, segmask, amplifiers):
         _logger.info("Iter %d, SF: combining the images without offsets", self.iter)
         try:
             filelist = []
@@ -595,7 +594,7 @@ class Recipe(RecipeBase):
                 fileh.close()            
 
         # We interpolate holes by channel
-        for channel in self.DetectorClass.amplifiers: 
+        for channel in amplifiers: 
             mask = (sf_num[channel] == 0)
             if numpy.any(mask):                    
                 fixpix2(sf_data[channel], mask, out=sf_data[channel])
@@ -604,7 +603,7 @@ class Recipe(RecipeBase):
         sf_data /= sf_data.mean()
         
         sfhdu = pyfits.PrimaryHDU(sf_data)            
-        sfhdu.writeto(_name_skyflat('comb', self.iter))
+        sfhdu.writeto(_name_skyflat('comb', self.iter), clobber=True)
         return sf_data
 
     def apply_superflat(self, images_info, superflat):
@@ -633,7 +632,7 @@ class Recipe(RecipeBase):
         phdu = pyfits.PrimaryHDU(newdata, newheader)
         image.lastname = _name_skyflat_proc(image.label, self.iter)
         image.flat_corrected = image.lastname
-        phdu.writeto(image.lastname)
+        phdu.writeto(image.lastname, clobber=True)
         
         # FIXME: plotting
         try:
@@ -1007,7 +1006,7 @@ class Recipe(RecipeBase):
     def resize_image_and_mask(self, image, finalshape, imgn, maskn):
         _logger.info('Resizing image %s', image.label)
         resize_fits(image.base, imgn, finalshape, image.region)
-    
+
         _logger.info('Resizing mask %s', image.label)
         resize_fits(image.mask, maskn, finalshape, image.region, fill=1)
 
@@ -1025,23 +1024,30 @@ class Recipe(RecipeBase):
             _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
         return images_info
             
-    def run(self):
+    def run(self, block):
+        
+        metadata = self.instrument['metadata']
+        detector = self.instrument['detectors'][0] # One detector
+        amplifiers = self.instrument['amplifiers'][0] # Amplifiers
+        
+        amplifiers = [(slice(chan[0][0], chan[0][1]), slice(chan[1][0], chan[1][1]))  
+                      for chan in amplifiers]
         
         # States
         BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
 
         state = BASIC
-
+        
         images_info = []
         
         # Creating ImageInformation
-        for key in sorted(self.parameters['images'].keys()):
+        for image, offset in block.images2:
             # Label
             ii = ImageInformation()
-            ii.label = os.path.splitext(key)[0]
-            ii.base = self.parameters['images'][key][0].filename
-            ii.mask = self.parameters['master_bpm'].filename
-            ii.offset = self.parameters['images'][key][1]
+            ii.label = os.path.splitext(image)[0]
+            ii.base = image
+            ii.mask = self.parameters['master_bpm']
+            ii.offset = offset
  
             ii.region = None
             ii.resized_base = None
@@ -1050,10 +1056,10 @@ class Recipe(RecipeBase):
             ii.objmask_data = None
             hdr = pyfits.getheader(ii.base)
             try:
-                ii.exposure = hdr[self.parameters['exposurekey']]
+                ii.exposure = hdr[str(metadata['exposure'])]
                 ii.baseshape = get_image_shape(hdr)
-                ii.airmass = hdr[self.parameters['airmasskey']]
-                ii.mjd = hdr[self.parameters['juliandatekey']]
+                ii.airmass = hdr[str(metadata['airmass'])]
+                ii.mjd = hdr[str(metadata['juliandate'])]
             except KeyError, e:
                 raise RecipeError("%s in image %s" % (str(e), ii.base))
             images_info.append(ii)
@@ -1073,8 +1079,8 @@ class Recipe(RecipeBase):
 
                 # Basic processing
                 # Open bpm, dark and flat
-                bpm = pyfits.getdata(self.parameters['master_bpm'].filename)
-                mdark = pyfits.getdata(self.parameters['master_dark'].filename)
+                bpm = pyfits.getdata(self.parameters['master_bpm'])
+                mdark = pyfits.getdata(self.parameters['master_dark'])
                 # FIXME: Use a flat field image eventually
                 #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
         
@@ -1104,7 +1110,7 @@ class Recipe(RecipeBase):
                 images_info = self.update_scale_factors(images_info)
 
                 # Create superflat
-                superflat = self.compute_superflat(images_info, None)
+                superflat = self.compute_superflat(images_info, None, amplifiers)
             
                 # Apply superflat
                 images_info = self.apply_superflat(images_info, superflat)
@@ -1150,14 +1156,14 @@ class Recipe(RecipeBase):
                     image.objmask = _name_object_mask(image.label, self.iter)
                     _logger.info('Iter %d, create object mask %s', self.iter,  image.objmask)                 
                     image.objmask_data = objmask[image.region]
-                    pyfits.writeto(image.objmask, image.objmask_data)
+                    pyfits.writeto(image.objmask, image.objmask_data, clobber=True)
 
                 _logger.info('Iter %d, superflat correction (SF)', self.iter)
                 # Compute scale factors (median)           
                 images_info = self.update_scale_factors(images_info)
             
                 # Combining images to obtain the sky flat
-                superflat = self.compute_superflat(images_info, objmask)
+                superflat = self.compute_superflat(images_info, objmask, amplifiers)
     
                 # Apply superflat
                 images_info = self.apply_superflat(images_info, superflat)
@@ -1186,5 +1192,5 @@ class Recipe(RecipeBase):
                                 exmap=sf_data[2].astype('int16'))
         
         _logger.info("Final image created")
-        return {'qa': numina.qa.UNKNOWN, 'result_image': result}
+        return {'products': [Image(result)]}
 
