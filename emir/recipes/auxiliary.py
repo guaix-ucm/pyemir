@@ -26,8 +26,8 @@ import numpy
 import pyfits
 
 from numina import RecipeBase, __version__
-from numina import FITSHistoryHandler
-from numina.recipes import Parameter
+from numina.recipes import Parameter, log_to_history
+
 
 from emir.dataproducts import MasterBias, MasterDark, MasterFlat
 
@@ -47,14 +47,8 @@ class BiasRecipe(RecipeBase):
                         version="0.1.0"
                 )
 
+    @log_to_history(_logger)
     def run(self, rb):
-
-        history_header = pyfits.Header()
-
-        fh =  FITSHistoryHandler(history_header)
-        fh.setLevel(logging.INFO)
-        _logger.addHandler(fh)
-
         _logger.info('starting bias reduction')
 
         images = rb.images
@@ -95,8 +89,6 @@ class BiasRecipe(RecipeBase):
 
             return {'products': [MasterBias(hdulist)]}
         finally:
-            _logger.removeHandler(fh)
-
             for hdulist in cdata:
                 hdulist.close()
             
@@ -111,16 +103,9 @@ class DarkRecipe(RecipeBase):
                         author="Sergio Pascual <sergiopr@fis.ucm.es>",
                         version="0.1.0"
                 )
-
+        
+    @log_to_history(_logger)
     def run(self, block):
-
-        # HISTORY logger
-        history_header = pyfits.Header()
-
-        fh =  FITSHistoryHandler(history_header)
-        fh.setLevel(logging.INFO)
-        _logger.addHandler(fh)
-
         _logger.info('starting dark reduction')
 
         try:
@@ -166,7 +151,7 @@ class DarkRecipe(RecipeBase):
 
             return {'products': [MasterDark(hdulist)]}
         finally:
-            _logger.removeHandler(fh)
+            pass
 
 class FlatRecipe(RecipeBase):
     '''Process FLAT images and provide MASTER_FLAT. '''
@@ -182,16 +167,9 @@ class FlatRecipe(RecipeBase):
                         author="Sergio Pascual <sergiopr@fis.ucm.es>",
                         version="0.1.0"
                 )
-
+        
+    @log_to_history(_logger)
     def run(self, block):
-
-        # HISTORY logger
-        history_header = pyfits.Header()
-
-        fh =  FITSHistoryHandler(history_header)
-        fh.setLevel(logging.INFO)
-        _logger.addHandler(fh)
-
         _logger.info('starting flat reduction')
 
         try:
@@ -248,4 +226,4 @@ class FlatRecipe(RecipeBase):
 
             return {'products': [MasterFlat(hdulist)]}
         finally:
-            _logger.removeHandler(fh)
+            pass
