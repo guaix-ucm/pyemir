@@ -1,4 +1,4 @@
-include COPYING MANIFEST.in
+include COPYING MANIFEST.in AUTHORS.txt
 include emir/instrument/*.txt
 include emir/simulation/*.dat
 recursive-include doc *
