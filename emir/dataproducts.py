@@ -24,7 +24,7 @@ import logging
 import pyfits
 
 from numina.recipes import Image
-from emir.instrument.headers import default
+from emir.instrument import EmirImageFactory
 
 _logger = logging.getLogger('emir.dataproducts')
 
@@ -73,7 +73,7 @@ def create_raw(data=None, headers=None, default_headers=None, imgtype='image'):
     if imgtype not in _result_types:
         raise TypeError('%s not in %s' % (imgtype, _result_types))
     
-    hdefault = default_headers or default
+    hdefault = default_headers or EmirImageFactory.default
     
     hdu = pyfits.PrimaryHDU(data, hdefault[imgtype]['primary'])
                 
@@ -95,7 +95,7 @@ def create_result(data=None, headers=None,
     extensions['variance'] = (variance, variance_headers)
     extensions['map'] = (exmap, exmap_headers)
     
-    hdefault = default_headers or default
+    hdefault = default_headers or EmirImageFactory.default
     
     for extname in ['variance', 'map']:
         edata = extensions[extname]
