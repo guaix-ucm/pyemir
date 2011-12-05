@@ -152,7 +152,7 @@ class Hawaii2Detector(Detector):
     
     def __init__(self, gain=1.0, ron=0.0, dark=1.0, well=65535,
                  pedestal=200., flat=1.0, resetval=0, resetnoise=0.0,
-                 mode='8'):
+                 ampmode='8'):
         '''
             :parameter gain: gain in e-/ADU
             :parameter ron: ron in ADU
@@ -162,12 +162,12 @@ class Hawaii2Detector(Detector):
         super(Hawaii2Detector, self).__init__(self.shape, gain, ron, dark, well,
                                            pedestal, flat, resetval, resetnoise)
         
-        if mode not in ['1', '8']:
-            raise ValueError('mode must be "1" or "8"')
+        if ampmode not in ['1', '8']:
+            raise ValueError('ampmode must be "1" or "8"')
         
-        self.mode = mode
+        self.ampmode = ampmode
         # Amplifier region
-        self.amplifiers = self.AMP1 if mode == '1' else self.AMP8
+        self.amplifiers = self.AMP1 if ampmode == '1' else self.AMP8
         
         # Gain and RON per amplifier
         self._ron = numpy.asarray(ron)
@@ -179,7 +179,7 @@ class Hawaii2Detector(Detector):
         
         self._exposure = 0
         
-    def read(self, time=None, source=None):
+    def readout(self, time=None, source=None):
         '''Read the detector.'''
         if time is not None:
             self.elapse(time, source)
@@ -201,6 +201,9 @@ class Hawaii2Detector(Detector):
         # result[result > self._well] = self._well
         return result.astype(self.type)        
         
+    def mode(self, name):
+        pass
+
     def configure(self, ronmode):
         self.ronmode = ronmode
     
@@ -214,17 +217,17 @@ class Hawaii2Detector(Detector):
         # Process the images according to the mode
         final = self.ronmode.process(images, self.events)
         return final.astype(self.outtype)
-
-    def metadata(self):
+    
+    @property
+    def meta(self):
         '''Return metadata exported by the EmirDetector.'''
-        mtdt = {'EXPOSED':self._exposure, 
-                'EXPTIME':self._exposure,
-                'ELAPSED':self.time_since_last_reset(),
-                'DARKTIME':self.time_since_last_reset(),
-                'READMODE':self.ronmode.mode.upper(),
-                'READSCHM':self.ronmode.scheme.upper(),
-                'READNUM':self.ronmode.reads,
-                'READREPT':self.ronmode.repeat}
+        mtdt = {'exposed':self._exposure, 
+                'elapsed':self.time_since_last_reset(),
+                'darktime':self.time_since_last_reset(),
+                'readmode':self.ronmode.mode.upper(),
+                'readschm':self.ronmode.scheme.upper(),
+                'readnum':self.ronmode.reads,
+                'readrept':self.ronmode.repeat}
         return mtdt
 
 class EmirDetector(Hawaii2Detector):
