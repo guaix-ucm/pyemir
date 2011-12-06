@@ -23,6 +23,7 @@ from datetime import datetime
 import numpy # pylint: disable-msgs=E1101
 
 from numina import braid
+from numina.astrotime import datetime_to_mjd
 from numina.instrument.detector import Detector
 
 # Classes are new style
@@ -231,7 +232,7 @@ class Hawaii2Detector(Detector):
                 'readrept':self.ronmode.repeat}
         now = datetime.now()
         mtdt['dateobs'] = now.isoformat()
-        mtdt['mjdobs'] = 1 # FIXME: datetime_to_mjd(now)
+        mtdt['mjdobs'] = datetime_to_mjd(now)
         mtdt['readnoise'] = 1 # FIXME
         mtdt['gain'] = 1 # FIXME
         return mtdt
