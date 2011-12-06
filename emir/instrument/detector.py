@@ -18,6 +18,7 @@
 # 
 
 import itertools as ito
+from datetime import datetime
 
 import numpy # pylint: disable-msgs=E1101
 
@@ -225,9 +226,14 @@ class Hawaii2Detector(Detector):
                 'elapsed':self.time_since_last_reset(),
                 'darktime':self.time_since_last_reset(),
                 'readmode':self.ronmode.mode.upper(),
-                'readschm':self.ronmode.scheme.upper(),
+                'readscheme':self.ronmode.scheme.upper(),
                 'readnum':self.ronmode.reads,
                 'readrept':self.ronmode.repeat}
+        now = datetime.now()
+        mtdt['dateobs'] = now.isoformat()
+        mtdt['mjdobs'] = 1 # FIXME: datetime_to_mjd(now)
+        mtdt['readnoise'] = 1 # FIXME
+        mtdt['gain'] = 1 # FIXME
         return mtdt
 
 class EmirDetector(Hawaii2Detector):
