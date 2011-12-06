@@ -1,5 +1,5 @@
 #
-# Copyright 2011 Sergio Pascual
+# Copyright 2011 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -39,7 +39,7 @@ class Recipe(RecipeBase):
 
     def __init__(self):
         super(Recipe, self).__init__(
-                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
+                        author="Universidad Complutense de Madrid <sergiopr@fis.ucm.es>",
                         version="0.1.0"
                 )
 

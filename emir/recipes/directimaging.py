@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2011 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -61,7 +61,7 @@ import emir.instrument.detector as detector
 
 __all__ = ['Recipe']
 
-__author__ = "Sergio Pascual <sergiopr@fis.ucm.es>"
+__author__ = "Universidad Complutense de Madrid <sergiopr@fis.ucm.es>"
 
 _logger = logging.getLogger("emir.recipes")
 
