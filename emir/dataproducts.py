@@ -20,14 +20,13 @@
 '''Data products produced by the EMIR pipeline.'''
 
 import logging
-
 import pyfits
 
 from numina.recipes import Image
-from emir.instrument import EmirImageFactory
+
+from .simulator import EmirImageFactory
 
 _logger = logging.getLogger('emir.dataproducts')
-
 
 class MasterBadPixelMask(Image):
     def __init__(self, hdu):
