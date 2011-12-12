@@ -21,7 +21,7 @@
 
 import logging
 
-from numina import NullHandler, __version__
+from numina import __version__
 
 # Top level NullHandler
-logging.getLogger("emir").addHandler(NullHandler())
+logging.getLogger("emir").addHandler(logging.NullHandler())
