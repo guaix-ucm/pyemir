@@ -17,11 +17,16 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''The emir package'''
+'''The EMIR Data Reduction Pipeline'''
 
 import logging
 
-from numina import __version__
+from .simulator import EmirImageFactory as ImageFactory
+from .simulator import Emir as Instrument
+
+__all__ = ['Instrument', 'ImageFactory']
+
+__version__ = '0.5.0'
 
 # Top level NullHandler
 logging.getLogger("emir").addHandler(logging.NullHandler())
