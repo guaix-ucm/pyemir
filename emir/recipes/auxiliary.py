@@ -26,7 +26,8 @@ import numpy
 import pyfits
 
 from numina import RecipeBase, __version__
-from numina.recipes import Parameter, log_to_history
+from numina.recipes import Parameter
+from numina.logger import log_to_history
 
 
 from emir.dataproducts import MasterBias, MasterDark, MasterFlat
