@@ -24,10 +24,7 @@ import numpy # pylint: disable-msgs=E1101
 
 from numina import braid
 from numina.astrotime import datetime_to_mjd
-from numina.instrument.detector import Detector
-
-# Classes are new style
-__metaclass__ = type
+from numina.instrument.detector import nIRDetector, Amplifier, Das
 
 def _channel_gen1(beg, end, step):
     return ito.imap(lambda x: (x, x + step), xrange(beg, end, step))
@@ -60,90 +57,12 @@ QUADRANTS = [(slice(1024, 2048), slice(0, 1024)),
              (slice(1024, 2048), slice(1024, 2048))
              ]
 
-class ReadoutMode:
-    def __init__(self, mode, scheme, reads, repeat):
-        self.mode = mode
-        self.scheme = scheme
-        self.reads = reads
-        self.repeat = repeat
+class EmirDas(Das):
+    def __init__(self, detector):
+        Das.__init__(self, detector)
         
-class SingleReadoutMode(ReadoutMode):
-    def __init__(self, repeat=1):
-        ReadoutMode.__init__(self, 'single', 'perline', 1, repeat)
-        
-    def events(self, exposure):
-        return [exposure]
-    
-    def process(self, images, events):
-        return images[0]
-    
-class CdsReadoutMode(ReadoutMode):
-    '''Correlated double sampling readout mode.'''
-    def __init__(self, repeat=1):
-        ReadoutMode.__init__(self, 'CDS', 'perline', 1, repeat)
-        
-    def events(self, exposure):
-        '''
-        >>> cds_rm = CdsReadoutMode()
-        >>> cds_rm.events(10.0)
-        [0.0, 10.0]
-        '''
-        return [0.0, exposure]
-    
-    def process(self, images, events):
-        return images[1] - images[0]
-    
-class FowlerReadoutMode(ReadoutMode):
-    '''Fowler sampling readout mode.'''
-    def __init__(self, reads, repeat=1, readout_time=0.0):
-        ReadoutMode.__init__(self, 'Fowler', 'perline', reads, repeat)
-        self.readout_time = readout_time
-        
-    def events(self, exposure):
-        '''
-        
-        >>> frm = FowlerReadoutMode(reads=3, readout_time=0.8)
-        >>> frm.events(10.0)
-        [0.0, 0.8, 1.6, 10.0, 10.8, 11.6]
-        '''
-        
-        dt = self.readout_time
-        vreads = [i * dt for i in range(self.reads)]
-        vreads += [t + exposure for t in vreads]
-        return vreads
-    
-    def process(self, images, events):
-        # Subtracting correlated reads
-        nsamples = len(images) / 2
-        # nsamples has to be odd
-        reduced = numpy.array([images[nsamples + i] - images[i] 
-                               for i in range(nsamples)])
-        # Final mean
-        return reduced.mean(axis=0)
 
-class RampReadoutMode(ReadoutMode):
-    '''"Up the ramp" sampling readout mode.'''
-    def __init__(self, reads, repeat=1):
-        ReadoutMode.__init__(self, 'Ramp', 'perline', reads, repeat)
-        
-    def events(self, exposure):
-        dt = exposure / (self.reads - 1.)
-        return [dt * i for i in range(self.reads)]
-    
-    def process(self, images, events):
-        
-        def slope(y, xcenter, varx, time):
-            return ((y - y.mean()) * xcenter).sum() / varx * time
-        
-        events = numpy.asarray(events)
-        images = numpy.asarray(images)
-        meanx = events.mean()
-        sxx = events.var() * events.shape[0]
-        xcenter = events - meanx
-        images = numpy.dstack(images)
-        return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
-
-class Hawaii2Detector(Detector):
+class Hawaii2Detector(nIRDetector):
     '''Hawaii2 detector.'''
     
     AMP1 = QUADRANTS # 1 amplifier per quadrant
@@ -161,82 +80,22 @@ class Hawaii2Detector(Detector):
             :parameter dark: dark current in e-/s
             :parameter well: well depth in ADUs 
         '''
-        super(Hawaii2Detector, self).__init__(self.shape, gain, ron, dark, well,
-                                           pedestal, flat, resetval, resetnoise)
+        
         
         if ampmode not in ['1', '8']:
             raise ValueError('ampmode must be "1" or "8"')
         
         self.ampmode = ampmode
         # Amplifier region
-        self.amplifiers = self.AMP1 if ampmode == '1' else self.AMP8
+        self.ampgeom = self.AMP1 if ampmode == '1' else self.AMP8
         
-        # Gain and RON per amplifier
-        self._ron = numpy.asarray(ron)
-        self._gain = numpy.asarray(gain)
+        ampgain = ito.cycle(numpy.asarray(gain).flat)
+        ampron = ito.cycle(numpy.asarray(ron).flat)
+        ampwell = ito.cycle(numpy.asarray(ron).flat)
+        amps = [Amplifier(geom, gain, ron, well) for geom, gain, ron, well in zip(self.amplifiers, ampgain, ampron, ampwell)]
         
-        self.ronmode = SingleReadoutMode()
+        nIRDetector.__init__(self, self.shape, amps, dark, pedestal, flat, resetval, resetnoise)
         
-        self.events = None
-        
-        self._exposure = 0
-        
-    def readout(self, time=None, source=None):
-        '''Read the detector.'''
-        if time is not None:
-            self.elapse(time, source)
-        self._time += self.readout_time
-        result = self._detector.copy()
-        result[result < 0] = 0
-        
-        # Gain and RON per amplifier        
-        ampgain = ito.cycle(self._gain.flat)
-        ampron = ito.cycle(self._ron.flat)
-        
-        for amp, gain, ron in zip(self.amplifiers, ampgain, ampron):
-            data = result[amp]
-            data /= gain            
-            # Readout noise
-            data += numpy.random.standard_normal(data.shape) * ron
-        
-        result += self._pedestal
-        # result[result > self._well] = self._well
-        return result.astype(self.type)        
-        
-    def mode(self, name):
-        pass
-
-    def configure(self, ronmode):
-        self.ronmode = ronmode
-    
-    def exposure(self, exposure):
-        self._exposure = exposure
-        self.events = self.ronmode.events(exposure)
-    
-    def lpath(self, source=None):
-        self.reset()
-        images = [self.read(t, source) for t in self.events]
-        # Process the images according to the mode
-        final = self.ronmode.process(images, self.events)
-        return final.astype(self.outtype)
-    
-    @property
-    def meta(self):
-        '''Return metadata exported by the EmirDetector.'''
-        mtdt = {'exposed':self._exposure, 
-                'elapsed':self.time_since_last_reset(),
-                'darktime':self.time_since_last_reset(),
-                'readmode':self.ronmode.mode.upper(),
-                'readscheme':self.ronmode.scheme.upper(),
-                'readnum':self.ronmode.reads,
-                'readrept':self.ronmode.repeat}
-        now = datetime.now()
-        mtdt['dateobs'] = now.isoformat()
-        mtdt['mjdobs'] = datetime_to_mjd(now)
-        mtdt['readnoise'] = 1 # FIXME
-        mtdt['gain'] = 1 # FIXME
-        return mtdt
-
 class EmirDetector(Hawaii2Detector):
     def __init__(self, flat=1.0):        
         # ADU, per AMP
@@ -259,16 +118,10 @@ class EmirDetector(Hawaii2Detector):
                   41803.7, 41450.2, 41306.2, 41609.4, 41414.1, 41324.5, 41691.1, 
                   41360.0, 41551.2, 41618.6, 41553.5]
 
-        super(EmirDetector, self).__init__(gain=gain, ron=ron, dark=dark, 
+        Hawaii2Detector.__init__(self, gain=gain, ron=ron, dark=dark, 
                                            well=wdepth, flat=flat)
 
-class Hawaii1Detector(Detector):
-    '''Hawaii1 detector.'''
-        
-    shape = (1024, 1024)
-    amplifiers =  [(slice(512, 1024), slice(0, 512)),
-             (slice(0, 512), slice(0, 512)),
-             (slice(0, 512), slice(512, 1024)),
-             (slice(512, 1024), slice(512, 1024))
-             ]
-
+if __name__ == '__main__':
+    
+    
+    det = EmirDetector()

@@ -25,14 +25,10 @@ from StringIO import StringIO
 import logging
 
 import pyfits
-from pyfits import Header
-import numpy
-from numpy.random import normal, poisson
 from numina.treedict import TreeDict
 from numina.instrument.template import interpolate
-from numina.recipes import Image
 
-from emir.instrument.detector import EmirDetector
+from emir.instrument.detector import EmirDetector, EmirDas
 
 _logger = logging.getLogger('emir.simulator')
 
@@ -40,6 +36,7 @@ class Instrument(object):
     def __init__(self, detector):
 
         self.detector = detector
+        self.das = EmirDas(detector)
 
         self.meta = TreeDict()
         self.meta['name'] = 'EMIR'
@@ -47,6 +44,7 @@ class Instrument(object):
         self.meta['filter0'] = 'J'
         self.meta['imagetype'] = ''
         self.meta['detector'] = self.detector.meta
+        self.meta['das'] = self.das.meta
  
     def filter(self, name):
         self.meta['filter0'] = name
@@ -85,9 +83,9 @@ def _load_header(res, ext):
     try:
         res = _table[(res, ext)]
     except KeyError:
-        return Header()    
+        return pyfits.Header()    
     sfile = StringIO(get_data('emir.instrument', res))
-    hh = Header(txtfile=sfile)
+    hh = pyfits.Header(txtfile=sfile)
     return hh
 
 def _load_all_headers():
