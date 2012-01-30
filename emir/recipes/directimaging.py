@@ -222,8 +222,8 @@ class Recipe(RecipeBase):
         # FIXME: this is candidate to be a non Image Product
         Parameter('nonlinearity', [1.0, 0.0], 'Polynomial for non-linearity correction'),
         Parameter('iterations', 4, 'Iterations of the recipe'),
-        Parameter('sky_images', 5, 'Images used to estimate the background around current image'),
-        Parameter('sky_images_sep_time', 10, 'Maximum separation time between sky images in minutes'),
+        Parameter('sky_images', 5, 'Images used to estimate the background before and after current image'),
+        Parameter('sky_images_sep_time', 10, 'Maximum separation time between consecutive sky images in minutes'),
         Parameter('resultname', 'result.fits', 'Name of the output image'),
 #        Parameter('airmasskey', 'AIRMASS', 'Name of airmass header keyword'),
 #        Parameter('exposurekey', 'EXPOSED', 'Name of exposure header keyword'),
