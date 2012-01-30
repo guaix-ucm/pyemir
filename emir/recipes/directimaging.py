@@ -214,7 +214,7 @@ class Recipe(RecipeBase):
     '''
 
     __requires__ = [
-        Parameter('extinction', 1.0, 'Mean atmospheric extinction'),
+        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
         Parameter('master_bias', MasterBias, 'Master bias image'),
         Parameter('master_dark', MasterDark, 'Master dark image'),
         Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
