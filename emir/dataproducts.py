@@ -22,7 +22,7 @@
 import logging
 import pyfits
 
-from numina.recipes import Image
+from numina.recipes import Image, Product
 
 from .simulator import EmirImageFactory
 
@@ -60,6 +60,15 @@ class MasterFlat(Image):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
         yield 'filter0', hdr['filter']
+
+class SlitTransmissionCalibration(Product):
+    pass
+
+class NonLinearityCalibration(Product):
+    def __init__(self, poly):
+        super(NonLinearityCalibration).__init__()
+        self.poly = poly
+        
 
 # Image -> Raw: PRIMARY
 #       -> Result: PRIMARY, VARIANCE, MAP 

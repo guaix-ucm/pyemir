@@ -21,7 +21,7 @@
 
 **Observing modes:**
 
-    * Slit transmission calibration
+    * Slit transmission calibration (4.4)
      
 **Inputs:**
 
@@ -36,3 +36,39 @@
  * TBD
 
 '''
+
+import logging
+
+from numina.recipes import Parameter
+from numina import RecipeBase, provides
+from numina.logger import log_to_history
+
+from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from ..dataproducts import SlitTransmissionCalibration
+from ..dataproducts import NonLinearityCalibration
+
+__all__ = ['Recipe']
+
+_logger = logging.getLogger('emir.recipes')
+
+@provides(SlitTransmissionCalibration)
+class Recipe(RecipeBase):
+    '''Calibrate slits transmission.'''
+
+    __requires__ = [       
+        Parameter('master_bias', MasterBias, 'Master bias image'),
+        Parameter('master_dark', MasterDark, 'Master dark image'),
+        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+    ]
+
+    def __init__(self):
+        super(Recipe, self).__init__(
+            author="Universidad Complutense de Madrid <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    @log_to_history(_logger)
+    def run(self, obresult):
+        return {'products': [SlitTransmissionCalibration()]}
