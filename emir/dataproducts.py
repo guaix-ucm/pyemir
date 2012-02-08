@@ -70,6 +70,9 @@ class MasterSpectralFlat(Image):
         yield 'detector0.mode', hdr['ccdmode']
         yield 'filter0', hdr['filter']
 
+class TelescopeFocus(Product):
+    pass
+
 class SlitTransmissionCalibration(Product):
     pass
 
