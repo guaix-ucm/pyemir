@@ -18,7 +18,7 @@
 #
 
 '''
-    Recipe for finding the telescope best focus.
+    Recipes for finding the best focus.
 
 '''
 
