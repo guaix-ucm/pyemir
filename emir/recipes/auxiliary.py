@@ -24,23 +24,50 @@ import time
 
 import numpy
 import pyfits
-
-from numina import RecipeBase, __version__
-from numina.recipes import Parameter
+from numina.recipes import RecipeBase, Parameter, provides
 from numina.logger import log_to_history
 
+from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from ..dataproducts import NonLinearityCalibration
 
-from emir.dataproducts import MasterBias, MasterDark, MasterFlat
 
-__all__ = ['Recipe', 'BiasRecipe', 'DarkRecipe', 'FlatRecipe']
+__all__ = ['BiasRecipe', 'DarkRecipe', 'FlatRecipe']
 
 _logger = logging.getLogger('emir.recipes')
 
+@provides(MasterBias)
 class BiasRecipe(RecipeBase):
-    '''Process BIAS images and create MASTER_BIAS.'''
+    '''
+    Recipe to process data taken in Bias image Mode.
 
-    __requires__ = []
-    __provides__ = [MasterBias]
+    Bias images only appear in Simple Readout mode.
+
+    **Observing modes:**
+    
+     * Bias Image (3.1)   
+    
+    **Inputs:**
+    
+     * A list of bias images
+     * A model of the detector (gain, RN)
+    
+    **Outputs:**
+    
+     * A combined bias frame, with variance extension and quality flag. 
+    
+    **Procedure:**
+    
+    The list of images can be readly processed by combining them with a typical
+    sigma-clipping algorithm.
+    
+    '''
+    
+    
+
+    __requires__ = [
+        Parameter('combine', 'median', 'Combine method'),
+        Parameter('resultname', 'result.fits', 'Name of the bias output image'),
+    ]
 
     def __init__(self):
         super(BiasRecipe, self).__init__(
