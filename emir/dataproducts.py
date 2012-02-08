@@ -86,7 +86,9 @@ class NonLinearityCalibration(Product):
     def __init__(self, poly):
         super(NonLinearityCalibration).__init__()
         self.poly = poly
-        
+
+class TelescopeOffset(Product):
+    pass    
 
 # Image -> Raw: PRIMARY
 #       -> Result: PRIMARY, VARIANCE, MAP 
