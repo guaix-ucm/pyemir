@@ -52,9 +52,18 @@ class MasterDark(Image):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
 
-class MasterFlat(Image):
+class MasterIntensityFlat(Image):
     def __init__(self, hdu):
-        super(MasterFlat, self).__init__(hdu)
+        super(MasterIntensityFlat, self).__init__(hdu)
+
+    def metadata(self):
+        hdr = self.image[0].header
+        yield 'detector0.mode', hdr['ccdmode']
+        yield 'filter0', hdr['filter']
+        
+class MasterSpectralFlat(Image):
+    def __init__(self, hdu):
+        super(MasterSpectralFlat, self).__init__(hdu)
 
     def metadata(self):
         hdr = self.image[0].header
@@ -62,6 +71,9 @@ class MasterFlat(Image):
         yield 'filter0', hdr['filter']
 
 class SlitTransmissionCalibration(Product):
+    pass
+
+class WavelengthCalibration(Product):
     pass
 
 class NonLinearityCalibration(Product):
