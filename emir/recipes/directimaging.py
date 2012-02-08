@@ -38,9 +38,9 @@ from scipy.spatial import cKDTree as KDTree
 
 import numina.image
 from numina.image import get_image_shape, resize_fits
-from numina.image.flow import SerialFlow
+from numina.flow import SerialFlow
 from numina.image.background import create_background_map
-from numina.image.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
+from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 from numina.array import subarray_match
 from numina.array import combine_shape, correct_flatfield
 from numina.array import fixpix2
@@ -55,9 +55,9 @@ from numina.util.sextractor import open as sopen
 import numina.util.sexcatalog as sexcatalog
 
 
-from emir.dataproducts import create_result, MasterBias, MasterDark 
-from emir.dataproducts import MasterFlat, MasterBadPixelMask
-import emir.instrument.detector as detector
+from .dataproducts import create_result, MasterBias, MasterDark 
+from .dataproducts import MasterFlat, MasterBadPixelMask
+#import .instrument.detector as detector
 
 __all__ = ['Recipe']
 
@@ -248,12 +248,6 @@ class Recipe(RecipeBase):
         self.parameters['master_dark'] = DiskImage(os.path.abspath(self.parameters['master_dark']))
         self.parameters['master_flat'] = DiskImage(os.path.abspath(self.parameters['master_flat']))
         self.parameters['master_bpm'] = DiskImage(os.path.abspath(self.parameters['master_bpm']))
-        
-        try:
-            self.DetectorClass = getattr(detector, self.parameters['detector'])
-        except AttributeError:
-            raise RecipeError('Unknown detector class %s' % self.parameters['detector'])
-        
         
         # Converting self.parameters['images'] to DiskImage
         # with absolute path
