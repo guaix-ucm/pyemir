@@ -88,7 +88,10 @@ class NonLinearityCalibration(Product):
         self.poly = poly
 
 class TelescopeOffset(Product):
-    pass    
+    pass
+
+class MSMPositions(Product):
+    pass
 
 # Image -> Raw: PRIMARY
 #       -> Result: PRIMARY, VARIANCE, MAP 
