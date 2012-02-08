@@ -40,8 +40,7 @@
 
 import logging
 
-from numina.recipes import Parameter, provides
-from numina import RecipeBase
+from numina.recipes import RecipeBase, Parameter, provides
 from numina.logger import log_to_history
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
