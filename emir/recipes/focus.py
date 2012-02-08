@@ -32,7 +32,10 @@ from ..dataproducts import TelescopeFocus
 from ..dataproducts import MasterIntensityFlat
 from ..dataproducts import NonLinearityCalibration
 
-__all__ = ['RecipeRough', 'RecipeFine']
+__all__ = ['TelescopeRoughFocusRecipe', 
+           'TelescopeFineFocusRecipe',
+           'DTUFocusRecipe',           
+           ]
 
 _logger = logging.getLogger('emir.recipes')
 
