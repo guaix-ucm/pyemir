@@ -37,7 +37,7 @@ __all__ = ['RecipeRough', 'RecipeFine']
 _logger = logging.getLogger('emir.recipes')
 
 @provides(TelescopeFocus)
-class RecipeRough(RecipeBase):
+class TelescopeRoughFocusRecipe(RecipeBase):
     '''Recipe to compute the telescope focus.
     
     **Observing modes:**
@@ -69,17 +69,16 @@ class RecipeRough(RecipeBase):
     ]
 
     def __init__(self):
-        super(Recipe, self).__init__(
+        super(TelescopeRoughFocusRecipe, self).__init__(
             author="Universidad Complutense de Madrid <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
-    @log_to_history(_logger)
     def run(self, obresult):
         return {'products': [TelescopeFocus()]}
 
 @provides(TelescopeFocus)
-class RecipeFine(RecipeBase):
+class TelescopeFineFocusRecipe(RecipeBase):
     '''
     Recipe to compute the telescope focus.
     
@@ -112,12 +111,55 @@ class RecipeFine(RecipeBase):
     ]
 
     def __init__(self):
-        super(Recipe, self).__init__(
+        super(TelescopeFineFocusRecipe, self).__init__(
             author="Universidad Complutense de Madrid <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
-    @log_to_history(_logger)
     def run(self, obresult):
         return {'products': [TelescopeFocus()]}
 
+@provides(DetectorFocus)
+class DTUFocusRecipe(RecipeBase):
+    '''
+    Recipe to compute the DTU focus.
+    
+    **Observing modes:**
+
+        * EMIR focus control
+
+    **Inputs:**
+
+     * A list of images
+     * A list of sky images
+     * Bias, dark, flat
+     * A model of the detector
+     * List of focii 
+
+    **Outputs:**
+     * Best focus
+    
+    '''
+
+    __requires__ = [       
+        Parameter('master_bias', MasterBias, 'Master bias image'),
+        Parameter('master_dark', MasterDark, 'Master dark image'),
+        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+        Parameter('master_intensity_ff', MasterIntensityFlat, 
+                  'Master intensity flatfield'),
+        Parameter('objects', None, 'List of x-y pair of object coordinates'),
+        Parameter('msm_pattern', None, 'List of x-y pair of slit coordinates'),
+        Parameter('dtu_focus_range', None, 
+                  'Focus range of the DTU: begin, end and step')        
+    ]
+
+    def __init__(self):
+        super(DTUFocusRecipe, self).__init__(
+            author="Universidad Complutense de Madrid <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, obresult):
+        return {'products': [DTUFocus()]}

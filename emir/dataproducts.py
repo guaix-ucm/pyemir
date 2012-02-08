@@ -73,6 +73,9 @@ class MasterSpectralFlat(Image):
 class TelescopeFocus(Product):
     pass
 
+class DTUFocus(Product):
+    pass
+
 class SlitTransmissionCalibration(Product):
     pass
 
