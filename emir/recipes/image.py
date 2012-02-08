@@ -77,7 +77,7 @@ class Recipe(RecipeBase):
 
     def __init__(self):
         super(Recipe, self).__init__(
-                        author="Universidad Complutense de Madrid <sergiopr@fis.ucm.es>",
+                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
                         version="0.1.0"
                 )
         self.pp = {}

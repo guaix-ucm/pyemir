@@ -61,7 +61,7 @@ from .dataproducts import MasterFlat, MasterBadPixelMask
 
 __all__ = ['Recipe']
 
-__author__ = "Universidad Complutense de Madrid <sergiopr@fis.ucm.es>"
+__author__ = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 _logger = logging.getLogger("emir.recipes")
 

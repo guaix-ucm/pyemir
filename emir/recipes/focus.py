@@ -70,7 +70,7 @@ class TelescopeRoughFocusRecipe(RecipeBase):
 
     def __init__(self):
         super(TelescopeRoughFocusRecipe, self).__init__(
-            author="Universidad Complutense de Madrid <sergiopr@fis.ucm.es>",
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -112,7 +112,7 @@ class TelescopeFineFocusRecipe(RecipeBase):
 
     def __init__(self):
         super(TelescopeFineFocusRecipe, self).__init__(
-            author="Universidad Complutense de Madrid <sergiopr@fis.ucm.es>",
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -157,7 +157,7 @@ class DTUFocusRecipe(RecipeBase):
 
     def __init__(self):
         super(DTUFocusRecipe, self).__init__(
-            author="Universidad Complutense de Madrid <sergiopr@fis.ucm.es>",
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
