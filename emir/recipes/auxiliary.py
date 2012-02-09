@@ -32,7 +32,9 @@ from ..dataproducts import NonLinearityCalibration, MasterIntensityFlat
 from ..dataproducts import WavelengthCalibration
 from ..dataproducts import SlitTransmissionCalibration
 
-__all__ = ['BiasRecipe', 'DarkRecipe', 'FlatRecipe']
+__all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
+           'SpectralFlatRecipe', 'SlitTransmissionRecipe',
+           'WavelengthCalibrationRecipe']
 
 _logger = logging.getLogger('emir.recipes')
 
