@@ -29,6 +29,7 @@ from numina.logger import log_to_history
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ..dataproducts import NonLinearityCalibration, MasterIntensityFlat
+from ..dataproducts import WavelengthCalibration
 from ..dataproducts import SlitTransmissionCalibration
 
 __all__ = ['BiasRecipe', 'DarkRecipe', 'FlatRecipe']
@@ -403,4 +404,47 @@ class SlitTransmissionRecipe(RecipeBase):
 
         
         
+@provides(WavelengthCalibration)
+class WavelengthCalibrationRecipe(RecipeBase):
+    '''Recipe to calibrate the spectral response.
+
+    **Observing modes:**
+
+        * Wavelength calibration (4.5)
+     
+    **Inputs:**
+
+     * List of line positions
+     * Calibrations upto spectral flatfielding
+
+    **Outputs:**
+
+     * Wavelength calibration structure 
+
+    **Procedure:**
+
+     * TBD
+    '''
+
+    __requires__ = [       
+        Parameter('master_bias', MasterBias, 'Master bias image'),
+        Parameter('master_dark', MasterDark, 'Master dark image'),
+        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+        Parameter('master_intensity_ff', MasterIntensityFlat, 
+                  'Master intensity flatfield'),
+        Parameter('master_spectral_ff', MasterSpectralFlat, 
+                  'Master spectral flatfield'),
+    ]
+
+    def __init__(self):
+        super(Recipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    @log_to_history(_logger)
+    def run(self, obresult):
+        return {'products': [WavelengthCalibration()]}
         
