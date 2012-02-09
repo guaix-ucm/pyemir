@@ -29,6 +29,7 @@ from numina.logger import log_to_history
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ..dataproducts import TelescopeFocus
+from ..dataproducts import DTUFocus
 from ..dataproducts import MasterIntensityFlat
 from ..dataproducts import NonLinearityCalibration
 
@@ -122,7 +123,7 @@ class TelescopeFineFocusRecipe(RecipeBase):
     def run(self, obresult):
         return {'products': [TelescopeFocus()]}
 
-@provides(DetectorFocus)
+@provides(DTUFocus)
 class DTUFocusRecipe(RecipeBase):
     '''
     Recipe to compute the DTU focus.
