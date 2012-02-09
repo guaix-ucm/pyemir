@@ -84,7 +84,7 @@ class WavelengthCalibration(Product):
 
 class NonLinearityCalibration(Product):
     def __init__(self, poly):
-        super(NonLinearityCalibration).__init__()
+        super(NonLinearityCalibration, self).__init__()
         self.poly = poly
 
 class TelescopeOffset(Product):
