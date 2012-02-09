@@ -28,7 +28,7 @@ from numina.recipes import RecipeBase, Parameter, provides
 from numina.logger import log_to_history
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from ..dataproducts import NonLinearityCalibration
+from ..dataproducts import NonLinearityCalibration, MasterFlat
 
 
 __all__ = ['BiasRecipe', 'DarkRecipe', 'FlatRecipe']
@@ -120,11 +120,39 @@ class BiasRecipe(RecipeBase):
             for hdulist in cdata:
                 hdulist.close()
             
+@provides(MasterDark)            
 class DarkRecipe(RecipeBase):
-    '''Process DARK images and provide MASTER_DARK. '''
+    '''Recipe to process data taken in Dark current image Mode.
 
-    __requires__ = [Parameter('master_bias', MasterBias, 'comment')]
-    __provides__ = [MasterDark]
+    Recipe to process dark images. The dark images will be combined 
+    weighting with the inverses of the corresponding variance extension. 
+    They do not have to be of the same exposure time t, they will be 
+    scaled to the same t0 ~ 60s (those with very short exposure time 
+    should be avoided).
+    
+    **Observing mode:**
+    
+     * Dark current Image (3.2)
+    
+    **Inputs:**
+    
+     * A list of dark images 
+     * A model of the detector (gain, RN)
+    
+    **Outputs:**
+    
+     * A combined dark frame, with variance extension and quality flag. 
+    
+    **Procedure:**
+    
+    The process will remove cosmic rays (using a typical sigma-clipping algorithm).
+    
+    ''' 
+
+    __requires__ = [Parameter('master_bias', MasterBias, 'comment'),
+                    Parameter('resultname', 'result.fits', 
+                              'Name of the dark output image'),
+                    ]
 
     def __init__(self):
         super(DarkRecipe, self).__init__(
@@ -137,7 +165,8 @@ class DarkRecipe(RecipeBase):
         _logger.info('starting dark reduction')
 
         try:
-            _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
+            _logger.info('subtracting bias %s', 
+                         str(self.parameters['master_bias']))
             with pyfits.open(self.parameters['master_bias'], mode='readonly') as master_bias:
                 for image in block.images:
                     with pyfits.open(image, memmap=True) as fd:
