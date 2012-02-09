@@ -333,3 +333,53 @@ class IntensityFlatRecipe(RecipeBase):
             return {'products': [MasterIntensityFlat(hdulist)]}
         finally:
             pass
+        
+        
+@provides(MasterSpectralFlat)
+class SpectralFlatRecipe(RecipeBase):
+    '''Spectral Flatfield Recipe.
+
+    Recipe to process spectral flat-fields. The flat-on and flat-off images are
+    combined (method?) separately and the subtracted to obtain a thermal subtracted
+    flat-field.
+
+    **Observing modes:**
+
+        * Multislit mask Flat-Field
+     
+    **Inputs:**
+
+     * A list of lamp-on flats
+     * A model of the detector 
+
+    **Outputs:**
+
+     * A combined spectral flat field with with variance extension and quality flag.
+
+    **Procedure:**
+
+     * TBD
+
+    '''
+
+
+    __requires__ = [       
+        Parameter('master_bias', MasterBias, 'Master bias image'),
+        Parameter('master_dark', MasterDark, 'Master dark image'),
+        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+    ]
+
+    def __init__(self):
+        super(Recipe1, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, obresult):
+        return {'products': [MasterSpectralFlat(None)]}
+        
+        
+        
+        
