@@ -28,7 +28,7 @@ from numina.recipes import RecipeBase, Parameter, provides
 from numina.logger import log_to_history
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from ..dataproducts import NonLinearityCalibration, MasterFlat
+from ..dataproducts import NonLinearityCalibration, MasterIntensityFlat
 
 
 __all__ = ['BiasRecipe', 'DarkRecipe', 'FlatRecipe']
@@ -210,17 +210,66 @@ class DarkRecipe(RecipeBase):
         finally:
             pass
 
-class FlatRecipe(RecipeBase):
-    '''Process FLAT images and provide MASTER_FLAT. '''
+import logging
+import os
 
-    __requires__ = [
-                    Parameter('master_bias', MasterBias, 'comment'),
-                    Parameter('master_dark', MasterDark, 'comment')
-                    ]
-    __provides__ = [MasterFlat]
+import numpy
+import pyfits
+
+from numina.recipes import RecipeBase
+from numina.image import DiskImage
+from numina.image.flow import SerialFlow
+from numina.image.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
+from numina.array.combine import flatcombine
+from numina.worker import para_map
+from numina.recipes.registry import ProxyPath, ProxyQuery
+from numina.recipes.registry import Schema
+import numina.qa as QA
+from emir.dataproducts import create_result
+from emir.recipes import EmirRecipeMixin
+
+_logger = logging.getLogger("emir.recipes")
+
+@provides(MasterIntensityFlat)
+class IntensityFlatRecipe(RecipeBase):
+    '''Recipe to process data taken in intensity flat-field mode.
+        
+    Recipe to process intensity flat-fields. The flat-on and flat-off images are
+    combined (method?) separately and the subtracted to obtain a thermal subtracted
+    flat-field.
+    
+    **Observing modes:**
+    
+     * Intensity Flat-Field
+    
+    **Inputs:**
+    
+      * A list of lamp-on flats
+      * A list of lamp-off flats
+      * A master dark frame
+      * A model of the detector. 
+    
+    **Outputs:**
+    
+     * TBD
+    
+    **Procedure:**
+    
+     * A combined thermal subtracted flat field, normalized to median 1, 
+       with with variance extension and quality flag. 
+    
+    '''
+    __requires__ = [ 
+        Parameter('master_bias', MasterBias, 'Master bias image'),
+        Parameter('master_dark', MasterDark, 'Master dark image'),
+        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+    ]
+    
 
     def __init__(self):
-        super(FlatRecipe, self).__init__(
+        super(IntensityFlatRecipe, self).__init__(
                         author="Sergio Pascual <sergiopr@fis.ucm.es>",
                         version="0.1.0"
                 )
@@ -281,6 +330,6 @@ class FlatRecipe(RecipeBase):
             # merge final header with HISTORY log
             hdr.ascardlist().extend(history_header.ascardlist())    
 
-            return {'products': [MasterFlat(hdulist)]}
+            return {'products': [MasterIntensityFlat(hdulist)]}
         finally:
             pass
