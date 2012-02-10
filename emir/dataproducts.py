@@ -70,6 +70,19 @@ class MasterSpectralFlat(Image):
         yield 'detector0.mode', hdr['ccdmode']
         yield 'filter0', hdr['filter']
 
+class Spectra(Image):
+    def __init__(self, hdu):
+        super(Spectra, self).__init__(hdu)
+
+    def metadata(self):
+        hdr = self.image[0].header
+        yield 'detector0.mode', hdr['ccdmode']
+        yield 'filter0', hdr['filter']
+        
+class DataCube(Image):
+    def __init__(self, hdu):
+        super(Image, self).__init__(None)
+
 class TelescopeFocus(Product):
     pass
 
@@ -94,6 +107,9 @@ class MSMPositions(Product):
     pass
 
 class SourcesCatalog(Product):
+    pass
+
+class LinesCatalog(Product):
     pass
 
 # Image -> Raw: PRIMARY
