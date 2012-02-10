@@ -93,6 +93,9 @@ class TelescopeOffset(Product):
 class MSMPositions(Product):
     pass
 
+class SourcesCatalog(Product):
+    pass
+
 # Image -> Raw: PRIMARY
 #       -> Result: PRIMARY, VARIANCE, MAP 
 

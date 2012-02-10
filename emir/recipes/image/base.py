@@ -47,7 +47,7 @@ from numina.array import fixpix2
 from numina.array.combine import flatcombine, median, quantileclip
 
 from numina import __version__
-from numina.recipes import Parameter, Image
+from numina.recipes import Parameter, Image, provides
 from numina.recipes import RecipeBase, RecipeError
 
 from numina.util.sextractor import SExtractor
@@ -55,8 +55,9 @@ from numina.util.sextractor import open as sopen
 import numina.util.sexcatalog as sexcatalog
 
 
-from .dataproducts import create_result, MasterBias, MasterDark 
-from .dataproducts import MasterFlat, MasterBadPixelMask
+from ...dataproducts import create_result, MasterBias, MasterDark 
+from ...dataproducts import MasterIntensityFlat, MasterBadPixelMask
+from ...dataproducts import SourcesCatalog
 #import .instrument.detector as detector
 
 __all__ = ['Recipe']
@@ -139,7 +140,8 @@ class ImageInformation(object):
         self.valid_science = True
         self.valid_sky = True
 
-
+@provides(Image)
+@provides(SourcesCatalog)
 class Recipe(RecipeBase):
     '''Recipe for the reduction of imaging mode observations.
 
@@ -218,7 +220,7 @@ class Recipe(RecipeBase):
         Parameter('master_bias', MasterBias, 'Master bias image'),
         Parameter('master_dark', MasterDark, 'Master dark image'),
         Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        Parameter('master_flat', MasterFlat, 'Master flat field image'),
+        Parameter('master_flat', MasterIntensityFlat, 'Master flat field image'),
         # FIXME: this is candidate to be a non Image Product
         Parameter('nonlinearity', [1.0, 0.0], 'Polynomial for non-linearity correction'),
         Parameter('iterations', 4, 'Iterations of the recipe'),
@@ -231,9 +233,7 @@ class Recipe(RecipeBase):
 #        Parameter('detector', 'Hawaii2Detector', 'Name of the class containing the detector geometry'),
         Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
         Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
-    ]
-    
-    __provides__ = []
+    ]    
     
     def __init__(self):
         super(Recipe, self).__init__(author=__author__, version="0.1.0")
@@ -1186,5 +1186,5 @@ class Recipe(RecipeBase):
                                 exmap=sf_data[2].astype('int16'))
         
         _logger.info("Final image created")
-        return {'products': [Image(result)]}
+        return {'products': [Image(result), SourcesCatalog()]}
 
