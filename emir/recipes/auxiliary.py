@@ -355,7 +355,7 @@ class SpectralFlatRecipe(RecipeBase):
     ]
 
     def __init__(self):
-        super(Recipe1, self).__init__(
+        super(SpectralFlatRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
@@ -395,7 +395,7 @@ class SlitTransmissionRecipe(RecipeBase):
     ]
 
     def __init__(self):
-        super(Recipe, self).__init__(
+        super(SlitTransmissionRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
@@ -441,7 +441,7 @@ class WavelengthCalibrationRecipe(RecipeBase):
     ]
 
     def __init__(self):
-        super(Recipe, self).__init__(
+        super(WavelengthCalibrationRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
