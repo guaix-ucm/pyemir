@@ -34,12 +34,12 @@ from ..dataproducts import TelescopeOffset, MSMPositions
 from ..dataproducts import MasterIntensityFlat
 from ..dataproducts import NonLinearityCalibration
 
-__all__ = ['Recipe1', 'Recipe2', 'Recipe3']
+__all__ = ['TargetAcquisitionRecipe', 'MaskImagingRecipe', 'MaskCheckRecipe']
 
 _logger = logging.getLogger('emir.recipes')
 
 @provides(TelescopeOffset)
-class Recipe1(RecipeBase):
+class TargetAcquisitionRecipe(RecipeBase):
     '''
     Acquire a target.
     
@@ -63,7 +63,7 @@ class Recipe1(RecipeBase):
     ]
 
     def __init__(self):
-        super(Recipe1, self).__init__(
+        super(TargetAcquisitionRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
@@ -72,7 +72,7 @@ class Recipe1(RecipeBase):
         return {'products': [TelescopeOffset()]}
     
 @provides(MSMPositions)
-class Recipe2(RecipeBase):
+class MaskImagingRecipe(RecipeBase):
     '''Acquire a target.
     
     Mask image Recipe.
@@ -95,7 +95,7 @@ class Recipe2(RecipeBase):
     ]
 
     def __init__(self):
-        super(Recipe2, self).__init__(
+        super(MaskImagingRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
@@ -104,7 +104,7 @@ class Recipe2(RecipeBase):
         return {'products': [MSMPositions()]}
     
 @provides(TelescopeOffset, MSMPositions)
-class Recipe3(RecipeBase):
+class MaskCheckRecipe(RecipeBase):
     '''
     Acquire a target.
     
@@ -127,7 +127,7 @@ class Recipe3(RecipeBase):
     ]
 
     def __init__(self):
-        super(Recipe3, self).__init__(
+        super(MaskCheckRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
