@@ -89,10 +89,37 @@ class TelescopeFocus(Product):
 class DTUFocus(Product):
     pass
 
+class DTU_XY_Calibration(Product):
+    pass
+
+class DTU_Z_Calibration(Product):
+    pass
+
+class DTUFlexureCalibration(Product):
+    pass
+
 class SlitTransmissionCalibration(Product):
     pass
 
 class WavelengthCalibration(Product):
+    pass
+
+class CSU2DetectorCalibration(Product):
+    pass
+
+class PointingOriginCalibration(Product):
+    pass
+
+class SpectroPhotometricCalibration(Product):
+    pass
+
+class PhotometricCalibration(Product):
+    pass
+
+class MasterGainMap(Product):
+    pass
+
+class MasterRONMap(Product):
     pass
 
 class NonLinearityCalibration(Product):
