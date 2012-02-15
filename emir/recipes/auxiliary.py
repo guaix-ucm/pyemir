@@ -29,7 +29,7 @@ from numina.logger import log_to_history
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ..dataproducts import NonLinearityCalibration, MasterIntensityFlat
-from ..dataproducts import WavelengthCalibration
+from ..dataproducts import WavelengthCalibration, MasterSpectralFlat
 from ..dataproducts import SlitTransmissionCalibration
 
 __all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
