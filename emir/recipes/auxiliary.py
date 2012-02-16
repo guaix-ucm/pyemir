@@ -24,8 +24,9 @@ import time
 
 import numpy
 import pyfits
-from numina.recipes import RecipeBase, Parameter, provides
+from numina.recipes import RecipeBase, Parameter, provides, requires
 from numina.logger import log_to_history
+from numina.array.combine import median
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ..dataproducts import NonLinearityCalibration, MasterIntensityFlat
@@ -83,14 +84,9 @@ class BiasRecipe(RecipeBase):
                 cdata.append(hdulist)
 
             _logger.info('stacking images')
-            data = numpy.zeros(cdata[0]['PRIMARY'].data.shape, dtype='float32')
-            for hdulist in cdata:
-                data += hdulist['PRIMARY'].data
+            data = median(cdata)
 
-            data /= len(cdata)
-            data += 2.0
-
-            hdu = pyfits.PrimaryHDU(data, header=cdata[0]['PRIMARY'].header)
+            hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
     
             # update hdu header with
             # reduction keywords
