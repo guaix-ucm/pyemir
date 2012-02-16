@@ -162,7 +162,7 @@ class LinesCatalog(Product):
     pass
 
 class ChannelLevelStatistics(Product):
-    ''' A list of mean, std dev and median per channel'''
+    ''' A list of exposure time, mean, std dev and median per channel'''
     pass
 
 # Image -> Raw: PRIMARY

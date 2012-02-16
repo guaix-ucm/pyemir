@@ -114,15 +114,13 @@ class BiasRecipe(RecipeBase):
             for hdulist in cdata:
                 hdulist.close()
             
-@provides(MasterDark)            
+@provides(MasterDark, ChannelLevelStatistics)   
 class DarkRecipe(RecipeBase):
     '''Recipe to process data taken in Dark current image Mode.
 
     Recipe to process dark images. The dark images will be combined 
-    weighting with the inverses of the corresponding variance extension. 
-    They do not have to be of the same exposure time t, they will be 
-    scaled to the same t0 ~ 60s (those with very short exposure time 
-    should be avoided).
+    using the median.
+    They do have to be of the same exposure time t.
     
     **Observing mode:**
     
@@ -130,23 +128,12 @@ class DarkRecipe(RecipeBase):
     
     **Inputs:**
     
-     * A list of dark images 
-     * A model of the detector (gain, RN)
-    
     **Outputs:**
     
-     * A combined dark frame, with variance extension and quality flag. 
-    
-    **Procedure:**
-    
-    The process will remove cosmic rays (using a typical sigma-clipping algorithm).
-    
+     * A combined dark frame, with variance extension.
     ''' 
 
-    __requires__ = [Parameter('master_bias', MasterBias, 'comment'),
-                    Parameter('resultname', 'result.fits', 
-                              'Name of the dark output image'),
-                    ]
+    __requires__ = [Parameter('master_bias', MasterBias, 'comment')]
 
     def __init__(self):
         super(DarkRecipe, self).__init__(
@@ -200,7 +187,7 @@ class DarkRecipe(RecipeBase):
             # merge final header with HISTORY log
             hdr.ascardlist().extend(history_header.ascardlist())    
 
-            return {'products': [MasterDark(hdulist)]}
+            return {'products': [MasterDark(hdulist), ChannelLevelStatistics()]}
         finally:
             pass
 
