@@ -30,7 +30,7 @@ from numina.logger import log_to_history
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ..dataproducts import NonLinearityCalibration, MasterIntensityFlat
 from ..dataproducts import WavelengthCalibration, MasterSpectralFlat
-from ..dataproducts import SlitTransmissionCalibration
+from ..dataproducts import SlitTransmissionCalibration, ChannelLevelStatistics
 
 __all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
            'SpectralFlatRecipe', 'SlitTransmissionRecipe',
@@ -38,7 +38,8 @@ __all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
 
 _logger = logging.getLogger('emir.recipes')
 
-@provides(MasterBias)
+@requires()
+@provides(MasterBias, ChannelLevelStatistics)
 class BiasRecipe(RecipeBase):
     '''
     Recipe to process data taken in Bias image Mode.
@@ -51,26 +52,16 @@ class BiasRecipe(RecipeBase):
     
     **Inputs:**
     
-     * A list of bias images
-     * A model of the detector (gain, RN)
-    
     **Outputs:**
     
-     * A combined bias frame, with variance extension and quality flag. 
+     * A combined bias frame, with variance extension.
+     * Statistics of the final image per channel (mean, median , variance) 
     
     **Procedure:**
     
-    The list of images can be readly processed by combining them with a typical
-    sigma-clipping algorithm.
+    The list of images can be readly processed by combining them with a median algorithm.
     
     '''
-    
-    
-
-    __requires__ = [
-        Parameter('combine', 'median', 'Combine method'),
-        Parameter('resultname', 'result.fits', 'Name of the bias output image'),
-    ]
 
     def __init__(self):
         super(BiasRecipe, self).__init__(
@@ -118,7 +109,7 @@ class BiasRecipe(RecipeBase):
             # merge header with HISTORY log
             hdr.ascardlist().extend(history_header.ascardlist())    
 
-            return {'products': [MasterBias(hdulist)]}
+            return {'products': [MasterBias(hdulist), ChannelLevelStatistics()]}
         finally:
             for hdulist in cdata:
                 hdulist.close()

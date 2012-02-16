@@ -37,6 +37,17 @@ class MasterBadPixelMask(Image):
         yield 'detector0.mode', hdr['ccdmode']
 
 class MasterBias(Image):
+    '''Master bias product
+    
+    This image has 4 extensions: primary, two variance extensions
+    and number of pixels used in the combination.
+    
+    The variance extensions are computed using two different methods. 
+    The first one is the variance of the same pixels in different images.
+    The second extension is the variance of each channel in the final image.
+    
+    
+    '''
     def __init__(self, hdu):
         super(MasterBias, self).__init__(hdu)
 
@@ -45,6 +56,17 @@ class MasterBias(Image):
         yield 'detector0.mode', hdr['ccdmode']
 
 class MasterDark(Image):
+    '''Master dark product
+    
+    This image has 4 extensions: primary, two variance extensions
+    and number of pixels used in the combination.
+    
+    The variance extensions are computed using two different methods. 
+    The first one is the variance of the same pixels in different images.
+    The second extension is the variance of each channel in the final image.
+    
+    
+    '''
     def __init__(self, hdu):
         super(MasterDark, self).__init__(hdu)
 
@@ -137,6 +159,10 @@ class SourcesCatalog(Product):
     pass
 
 class LinesCatalog(Product):
+    pass
+
+class ChannelLevelStatistics(Product):
+    ''' A list of mean, std dev and median per channel'''
     pass
 
 # Image -> Raw: PRIMARY
