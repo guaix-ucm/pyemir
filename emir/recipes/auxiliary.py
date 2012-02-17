@@ -27,6 +27,7 @@ import pyfits
 from numina.recipes import RecipeBase, Parameter, provides, requires
 from numina.logger import log_to_history
 from numina.array.combine import median
+from numina import __version__
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ..dataproducts import NonLinearityCalibration, MasterIntensityFlat
@@ -70,7 +71,7 @@ class BiasRecipe(RecipeBase):
                         version="0.1.0"
                 )
 
-    @log_to_history(_logger)
+    #@log_to_history(_logger)
     def run(self, rb):
         _logger.info('starting bias reduction')
 
@@ -84,7 +85,25 @@ class BiasRecipe(RecipeBase):
                 cdata.append(hdulist)
 
             _logger.info('stacking images')
-            data = median(cdata)
+            
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+
+            var2 = numpy.zeros_like(data[0])
+
+
+            cls = ChannelLevelStatistics(exposure=0.0)
+
+            for amp1, amp2 in self.instrument['amplifiers'][0]:
+                
+                region = (slice(*amp1), slice(*amp2))
+                
+                mean = numpy.mean(data[0][region])
+                med = numpy.median(data[0][region])
+                var = numpy.var(data[0][region])
+                stts = mean, med, var
+                sregion = amp1, amp2
+                cls.statistics.append([sregion, stts])
+                var2[region] = var
 
             hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
     
@@ -95,17 +114,25 @@ class BiasRecipe(RecipeBase):
             hdr.update('IMGTYP', 'BIAS', 'Image type')
             hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
             hdr.update('NUMXVER', __version__, 'Numina package version')
-            hdr.update('NUMRNAM', 'BiasRecipe', 'Numina recipe name')
+            hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
             hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
 
-            hdulist = pyfits.HDUList([hdu])
+            exhdr = pyfits.Header()
+            exhdr.update('extver', 1)
+            varhdu = pyfits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
+            exhdr = pyfits.Header()
+            exhdr.update('extver', 2)
+            var2hdu = pyfits.ImageHDU(var2, name='VARIANCE', header=exhdr)
+            num = pyfits.ImageHDU(data[2], name='MAP')
+
+            hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
 
             _logger.info('bias reduction ended')
 
             # merge header with HISTORY log
-            hdr.ascardlist().extend(history_header.ascardlist())    
+            #hdr.ascardlist().extend(history_header.ascardlist())    
 
-            return {'products': [MasterBias(hdulist), ChannelLevelStatistics()]}
+            return {'products': [MasterBias(hdulist), cls]}
         finally:
             for hdulist in cdata:
                 hdulist.close()

@@ -26,7 +26,7 @@ class EmirRecipeMixin:
 
 # equivalence
 _equiv = {
-    'bias_image': 'auxiliary:Recipe',
+    'bias_image': 'auxiliary:BiasRecipe',
     'dark_current_image': 'auxiliary:Recipe',
     'intensity_flatfield': 'auxiliary:Recipe',
     'msm_spectral_flatfield': 'auxiliary:Recipe',

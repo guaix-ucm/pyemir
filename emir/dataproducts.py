@@ -163,7 +163,9 @@ class LinesCatalog(Product):
 
 class ChannelLevelStatistics(Product):
     ''' A list of exposure time, mean, std dev and median per channel'''
-    pass
+    def __init__(self, exposure):
+        self.exposure = exposure
+        self.statistics = []
 
 # Image -> Raw: PRIMARY
 #       -> Result: PRIMARY, VARIANCE, MAP 
