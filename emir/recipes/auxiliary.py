@@ -71,7 +71,7 @@ class BiasRecipe(RecipeBase):
                         version="0.1.0"
                 )
 
-    #@log_to_history(_logger)
+    @log_to_history(_logger)
     def run(self, rb):
         _logger.info('starting bias reduction')
 
@@ -128,9 +128,6 @@ class BiasRecipe(RecipeBase):
             hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
 
             _logger.info('bias reduction ended')
-
-            # merge header with HISTORY log
-            #hdr.ascardlist().extend(history_header.ascardlist())    
 
             return {'products': [MasterBias(hdulist), cls]}
         finally:
