@@ -24,7 +24,7 @@
 import logging
 
 from numina.recipes import RecipeBase, Parameter, provides, requires
-from numina.recipes import Image
+from numina.recipes import DataFrame
 
 from ...dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ...dataproducts import TelescopeOffset, MSMPositions
@@ -189,7 +189,7 @@ class RotationCenterRecipe(RecipeBase):
         return {'products': [PointingOriginCalibration()]}
 
 @requires()
-@provides(Image)
+@provides(DataFrame)
 class AstrometricCalibrationRecipe(RecipeBase):
     '''
 
@@ -207,7 +207,7 @@ class AstrometricCalibrationRecipe(RecipeBase):
         )
 
     def run(self, obresult):
-        return {'products': [Image(None)]}
+        return {'products': [DataFrame(None)]}
 
 @provides(PhotometricCalibration)
 class PhotometricCalibrationRecipe(RecipeBase):

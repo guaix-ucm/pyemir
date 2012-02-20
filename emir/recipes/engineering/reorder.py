@@ -28,25 +28,20 @@ import numpy # pylint: disable-msgs=E1101
 
 import numina.qa
 from numina.recipes import RecipeBase
-from emir.recipes import EmirRecipeMixin
-from numina.recipes.registry import ProxyPath
-from numina.recipes.registry import Schema
+
 from numina.image import DiskImage
 from emir.instrument.detector import CHANNELS_READOUT
 from emir.dataproducts import create_result
 
 _logger = logging.getLogger("emir.recipes")
 
-class Recipe(RecipeBase, EmirRecipeMixin):
+class Recipe(RecipeBase):
     '''Reordering Recipe.
     
     Recipe to reorder images created by the detector.
     '''
     required_parameters = [
-        Schema('images', ProxyPath('/observing_block/result/images'), 
-               'A list of images created by the detector'),
     ]
-    capabilities = ['detector_reorder']
     
     
     def __init__(self, param, runinfo):

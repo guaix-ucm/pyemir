@@ -24,7 +24,7 @@ Image mode recipes of EMIR
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, provides, Image
+from numina.recipes import RecipeBase, Parameter, provides, DataFrame
 
 from ...dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ...dataproducts import MasterIntensityFlat
@@ -36,7 +36,7 @@ __all__ = []
 
 _logger = logging.getLogger('emir.recipes')
 
-@provides(Image, SourcesCatalog)
+@provides(DataFrame, SourcesCatalog)
 class StareImageRecipe(RecipeBase):
     '''
     The effect of recording images of the sky in a given pointing
@@ -69,9 +69,9 @@ class StareImageRecipe(RecipeBase):
         )
 
     def run(self, obresult):
-        return {'products': [Image(None), SourcesCatalog()]}
+        return {'products': [DataFrame(None), SourcesCatalog()]}
     
-@provides(Image, SourcesCatalog)
+@provides(DataFrame, SourcesCatalog)
 class NBImageRecipe(RecipeBase):
     '''
     The effect of recording a series of stare images, with the same
@@ -107,9 +107,9 @@ class NBImageRecipe(RecipeBase):
         )
 
     def run(self, obresult):
-        return {'products': [Image(None), SourcesCatalog()]}
+        return {'products': [DataFrame(None), SourcesCatalog()]}
 
-@provides(Image, SourcesCatalog)
+@provides(DataFrame, SourcesCatalog)
 class MicroditheredImageRecipe(RecipeBase):
     '''
     Recipe for the reduction of microdithering imaging.
@@ -210,9 +210,9 @@ class MicroditheredImageRecipe(RecipeBase):
         )
 
     def run(self, obresult):
-        return {'products': [Image(None), SourcesCatalog()]}
+        return {'products': [DataFrame(None), SourcesCatalog()]}
 
-@provides(Image, SourcesCatalog)
+@provides(DataFrame, SourcesCatalog)
 class MosaicRecipe(RecipeBase):
     '''
     The effect of recording a series of stare images, with the same
@@ -242,6 +242,6 @@ class MosaicRecipe(RecipeBase):
         )
 
     def run(self, obresult):
-        return {'products': [Image(None), SourcesCatalog()]}
+        return {'products': [DataFrame(None), SourcesCatalog()]}
 
 

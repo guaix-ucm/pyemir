@@ -47,7 +47,7 @@ from numina.array import fixpix2
 from numina.array.combine import flatcombine, median, quantileclip
 
 from numina import __version__
-from numina.recipes import Parameter, Image, provides
+from numina.recipes import Parameter, DataFrame, provides
 from numina.recipes import RecipeBase, RecipeError
 
 from numina.util.sextractor import SExtractor
@@ -140,7 +140,7 @@ class ImageInformation(object):
         self.valid_science = True
         self.valid_sky = True
 
-@provides(Image)
+@provides(DataFrame)
 @provides(SourcesCatalog)
 class Recipe(RecipeBase):
     '''Recipe for the reduction of imaging mode observations.
@@ -1186,5 +1186,5 @@ class Recipe(RecipeBase):
                                 exmap=sf_data[2].astype('int16'))
         
         _logger.info("Final image created")
-        return {'products': [Image(result), SourcesCatalog()]}
+        return {'products': [DataFrame(result), SourcesCatalog()]}
 

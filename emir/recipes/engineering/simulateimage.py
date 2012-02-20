@@ -27,21 +27,19 @@ import numpy
 from numina.recipes import RecipeBase
 import numina.qa as qa
 from numina.simulation import run_counter
-from numina.recipes.registry import ProxyQuery
-from numina.recipes.registry import Schema
+
 from emir.instrument.detector import Hawaii2Detector
 from emir.dataproducts import create_raw
-from emir.recipes import EmirRecipeMixin
 
 _logger = logging.getLogger("emir.recipes")
 
-class Recipe(RecipeBase, EmirRecipeMixin):
+class Recipe(RecipeBase):
     '''Recipe to simulate EMIR images.'''
     
-    required_parameters = [
-        Schema('detector', ProxyQuery(dummy={}), 'Detector parameters'),
-        Schema('readout', ProxyQuery(dummy={}), 'Readout mode'),
-        Schema('name_format', 'r%05d', 'Filename format'),
+    __requires__ = [
+#        Schema('detector', ProxyQuery(dummy={}), 'Detector parameters'),
+#        Schema('readout', ProxyQuery(dummy={}), 'Readout mode'),
+#        Schema('name_format', 'r%05d', 'Filename format'),
     ]
 
     capabilities = ['simulate_image']
