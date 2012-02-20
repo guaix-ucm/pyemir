@@ -22,13 +22,13 @@
 import logging
 import pyfits
 
-from numina.recipes import Image, Product
+from numina.recipes import DataFrame, DataProduct
 
 from .simulator import EmirImageFactory
 
 _logger = logging.getLogger('emir.dataproducts')
 
-class MasterBadPixelMask(Image):
+class MasterBadPixelMask(DataFrame):
     def __init__(self, hdu):
         super(MasterBias, self).__init__(hdu)
 
@@ -36,7 +36,7 @@ class MasterBadPixelMask(Image):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
 
-class MasterBias(Image):
+class MasterBias(DataFrame):
     '''Master bias product
     
     This image has 4 extensions: primary, two variance extensions
@@ -55,7 +55,7 @@ class MasterBias(Image):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
 
-class MasterDark(Image):
+class MasterDark(DataFrame):
     '''Master dark product
     
     This image has 4 extensions: primary, two variance extensions
@@ -74,7 +74,7 @@ class MasterDark(Image):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
 
-class MasterIntensityFlat(Image):
+class MasterIntensityFlat(DataFrame):
     def __init__(self, hdu):
         super(MasterIntensityFlat, self).__init__(hdu)
 
@@ -83,7 +83,7 @@ class MasterIntensityFlat(Image):
         yield 'detector0.mode', hdr['ccdmode']
         yield 'filter0', hdr['filter']
         
-class MasterSpectralFlat(Image):
+class MasterSpectralFlat(DataFrame):
     def __init__(self, hdu):
         super(MasterSpectralFlat, self).__init__(hdu)
 
@@ -92,7 +92,7 @@ class MasterSpectralFlat(Image):
         yield 'detector0.mode', hdr['ccdmode']
         yield 'filter0', hdr['filter']
 
-class Spectra(Image):
+class Spectra(DataFrame):
     def __init__(self, hdu):
         super(Spectra, self).__init__(hdu)
 
@@ -101,73 +101,73 @@ class Spectra(Image):
         yield 'detector0.mode', hdr['ccdmode']
         yield 'filter0', hdr['filter']
         
-class DataCube(Image):
+class DataCube(DataFrame):
     def __init__(self, hdu):
-        super(Image, self).__init__(None)
+        super(DataFrame, self).__init__(None)
 
-class TelescopeFocus(Product):
+class TelescopeFocus(DataProduct):
     pass
 
-class DTUFocus(Product):
+class DTUFocus(DataProduct):
     pass
 
-class DTU_XY_Calibration(Product):
+class DTU_XY_Calibration(DataProduct):
     pass
 
-class DTU_Z_Calibration(Product):
+class DTU_Z_Calibration(DataProduct):
     pass
 
-class DTUFlexureCalibration(Product):
+class DTUFlexureCalibration(DataProduct):
     pass
 
-class SlitTransmissionCalibration(Product):
+class SlitTransmissionCalibration(DataProduct):
     pass
 
-class WavelengthCalibration(Product):
+class WavelengthCalibration(DataProduct):
     pass
 
-class CSU2DetectorCalibration(Product):
+class CSU2DetectorCalibration(DataProduct):
     pass
 
-class PointingOriginCalibration(Product):
+class PointingOriginCalibration(DataProduct):
     pass
 
-class SpectroPhotometricCalibration(Product):
+class SpectroPhotometricCalibration(DataProduct):
     pass
 
-class PhotometricCalibration(Product):
+class PhotometricCalibration(DataProduct):
     pass
 
-class MasterGainMap(Product):
+class MasterGainMap(DataProduct):
     pass
 
-class MasterRONMap(Product):
+class MasterRONMap(DataProduct):
     pass
 
-class NonLinearityCalibration(Product):
+class NonLinearityCalibration(DataProduct):
     def __init__(self, poly):
         super(NonLinearityCalibration, self).__init__()
         self.poly = poly
 
-class TelescopeOffset(Product):
+class TelescopeOffset(DataProduct):
     pass
 
-class MSMPositions(Product):
+class MSMPositions(DataProduct):
     pass
 
-class SourcesCatalog(Product):
+class SourcesCatalog(DataProduct):
     pass
 
-class LinesCatalog(Product):
+class LinesCatalog(DataProduct):
     pass
 
-class ChannelLevelStatistics(Product):
+class ChannelLevelStatistics(DataProduct):
     ''' A list of exposure time, mean, std dev and median per channel'''
     def __init__(self, exposure):
         self.exposure = exposure
         self.statistics = []
 
-# Image -> Raw: PRIMARY
+# DataFrame -> Raw: PRIMARY
 #       -> Result: PRIMARY, VARIANCE, MAP 
 
 _result_types = ['image', 'spectrum']
