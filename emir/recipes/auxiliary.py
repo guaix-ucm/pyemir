@@ -72,10 +72,10 @@ class BiasRecipe(RecipeBase):
                 )
 
     @log_to_history(_logger)
-    def run(self, rb):
+    def run(self, obresult):
         _logger.info('starting bias reduction')
 
-        images = rb.images
+        images = obresult.images
 
         cdata = []
 
@@ -84,7 +84,7 @@ class BiasRecipe(RecipeBase):
                 hdulist = pyfits.open(image, memmap=True, mode='readonly')
                 cdata.append(hdulist)
 
-            _logger.info('stacking images')
+            _logger.info('stacking %d images using median', len(cdata))
             
             data = median([d['primary'].data for d in cdata], dtype='float32')
 
