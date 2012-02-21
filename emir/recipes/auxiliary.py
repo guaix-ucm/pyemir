@@ -164,14 +164,18 @@ class DarkRecipe(RecipeBase):
         _logger.info('starting dark reduction')
 
         cdata = []
-
-        exposure = 100.0
+        expdata = []
 
         try:
-            
-            for image in obresult.images:
-                hdulist = pyfits.open(image, memmap=True, mode='readonly')
+                        
+            for name, exposure in obresult.images:
+                hdulist = pyfits.open(name, memmap=True, mode='readonly')
                 cdata.append(hdulist)
+                expdata.append(exposure)
+
+            if not all([exp == expdata[0] for exp in expdata]):
+                _logger.error('image with wrong exposure time')
+                raise RecipeError('image with wrong exposure time')
 
             _logger.info('stacking %d images using median', len(cdata))
             
@@ -182,6 +186,17 @@ class DarkRecipe(RecipeBase):
             for hdulist in cdata:
                 hdulist.close()
 
+        if self.parameters['master_bias'] is not None:
+            # load bias
+            
+            master_bias = pyfits.open(self.parameters['master_bias'], mode='readonly')
+            _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
+            # subtrac bias
+            data[0] -= master_bias[0].data
+            
+            idx = master_bias.index_of(('variance', 1))
+            data[1] += master_bias[idx].data
+            
 
         var2 = numpy.zeros_like(data[0])
 
