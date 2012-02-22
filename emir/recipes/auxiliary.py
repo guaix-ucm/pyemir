@@ -28,6 +28,10 @@ from numina.recipes import RecipeBase, Parameter, provides, requires
 from numina.logger import log_to_history
 from numina.array.combine import median
 from numina import __version__
+from numina.flow import SerialFlow
+from numina.flow.node import IdNode
+from numina.flow.processing import BiasCorrector
+from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ..dataproducts import NonLinearityCalibration, MasterIntensityFlat
@@ -157,7 +161,7 @@ class DarkRecipe(RecipeBase):
                               'Master bias calibration', soft=True)]
 
     def __init__(self):
-        super(DarkRecipe, self).__init__(author=_s_author,version="0.1.0")
+        super(DarkRecipe, self).__init__(author=_s_author, version="0.1.0")
         
     @log_to_history(_logger)
     def run(self, obresult):
@@ -256,9 +260,8 @@ class IntensityFlatRecipe(RecipeBase):
     
     **Inputs:**
     
-      * A list of lamp-on flats
-      * A list of lamp-off flats
       * A master dark frame
+      * Non linearity
       * A model of the detector. 
     
     **Outputs:**
@@ -272,9 +275,8 @@ class IntensityFlatRecipe(RecipeBase):
     
     '''
     __requires__ = [ 
-        Parameter('master_bias', MasterBias, 'Master bias image'),
+        Parameter('master_bias', MasterBias, 'Master bias image', soft=True),
         Parameter('master_dark', MasterDark, 'Master dark image'),
-        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
         Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
     ]
@@ -282,69 +284,95 @@ class IntensityFlatRecipe(RecipeBase):
 
     def __init__(self):
         super(IntensityFlatRecipe, self).__init__(
-                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
+                        author=_s_author,
                         version="0.1.0"
                 )
         
     @log_to_history(_logger)
     def run(self, block):
         _logger.info('starting flat reduction')
+                
+        # Basic processing
+        if self.parameters['master_bias']:
+            mbias = pyfits.getdata(self.parameters['master_bias'])
+            bias_corrector = BiasCorrector(mbias)
+        else:
+            bias_corrector = IdNode()
+            
+        mdark = pyfits.getdata(self.parameters['master_dark'])
+        dark_corrector = DarkCorrector(mdark)
+        nl_corrector = NonLinearityCorrector(self.parameters['nonlinearity'])
+        
+        
+        basicflow = SerialFlow([bias_corrector, dark_corrector, nl_corrector])
+
+        for img in block.images:
+
+            with pyfits.open(img[0], mode='update') as hdulist:
+                hdulist = basicflow(hdulist)
+
+        # combine LAMP-ON
+        
+        lampon = [img[0] for img in block.images if img[2] == 'LAMPON']
+        
+        dataon = self.stack_images(lampon)
+                
+        # combine LAMP-OFF
+        lampoff = [img[0] for img in block.images if img[2] == 'LAMPOFF']
+        
+        dataoff = self.stack_images(lampoff)
+        
+        # Subtract
+        datafin = dataon[0] - dataoff[0]
+        varfin = dataon[1] + dataoff[1]
+        mapfin = dataon[2] + dataoff[2]
+
+        meanval = datafin.mean()
+        
+        datafin /= meanval
+        varfin /= (meanval * meanval)
+
+        hdu = pyfits.PrimaryHDU(datafin)
+
+        # update hdu header with
+        # reduction keywords
+        hdr = hdu.header
+        hdr.update('NUMXVER', __version__, 'Numina package version')
+        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
+        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        
+        hdr.update('FILENAME', 'master_intensity_flat-%(block_id)d.fits' % self.environ)
+        hdr.update('IMGTYP', 'FLAT', 'Image type')
+        hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
+        
+        varhdu = pyfits.ImageHDU(varfin, name='VARIANCE')
+        num = pyfits.ImageHDU(mapfin, name='MAP')
+
+        hdulist = pyfits.HDUList([hdu, varhdu, num])
+
+        md = MasterIntensityFlat(hdulist)
+
+        return {'products': [md]}
+        
+        
+    def stack_images(self, images):
+        
+        cdata = []
 
         try:
-            _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
-            with pyfits.open(self.parameters['master_bias'], mode='readonly') as master_bias:
-                for image in block.images:
-                    with pyfits.open(image, memmap=True) as fd:
-                        data = fd['primary'].data
-                        data -= master_bias['primary'].data
-                
+            for name in images:
+                hdulist = pyfits.open(name, memmap=True, mode='readonly')
+                cdata.append(hdulist)
 
-            _logger.info('subtracting dark %s', str(self.parameters['master_dark']))
-            with pyfits.open(self.parameters['master_dark'], mode='readonly') as master_dark:
-                for image in block.images:
-                    with pyfits.open(image, memmap=True) as fd:
-                        data = fd['primary'].data
-                        data -= master_dark['primary'].data
-
-
-            _logger.info('stacking images from block %d', block.id)
-
-            base = block.images[0]
-           
-            with pyfits.open(base, memmap=True) as fd:
-                data = fd['PRIMARY'].data.copy()
-                hdr = fd['PRIMARY'].header
-           
-            for image in block.images[1:]:
-                with pyfits.open(image, memmap=True) as fd:
-                    add_data = fd['primary'].data
-                    data += add_data
-
-            # Normalize flat to mean 1.0
-            data[:] = 1.0
-
-            hdu = pyfits.PrimaryHDU(data, header=hdr)
-
-            # update hdu header with
-            # reduction keywords
-            hdr = hdu.header
-            hdr.update('FILENAME', 'master_flat-%(block_id)d.fits' % self.environ)
-            hdr.update('IMGTYP', 'FLAT', 'Image type')
-            hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
-            hdr.update('NUMXVER', __version__, 'Numina package version')
-            hdr.update('NUMRNAM', 'FlatRecipe', 'Numina recipe name')
-            hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
-
-            hdulist = pyfits.HDUList([hdu])
-
-            _logger.info('flat reduction ended')
-
-            # merge final header with HISTORY log
-            hdr.ascardlist().extend(history_header.ascardlist())    
-
-            return {'products': [MasterIntensityFlat(hdulist)]}
+            _logger.info('stacking %d images using median', len(cdata))
+            
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+            return data
+            
         finally:
-            pass
+            for hdulist in cdata:
+                hdulist.close()
+        
         
         
 @provides(MasterSpectralFlat)

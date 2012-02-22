@@ -28,7 +28,7 @@ class EmirRecipeMixin:
 _equiv = {
     'bias_image': 'auxiliary:BiasRecipe',
     'dark_image': 'auxiliary:DarkRecipe',
-    'intensity_flatfield': 'auxiliary:Recipe',
+    'intensity_flatfield': 'auxiliary:IntensityFlatRecipe',
     'msm_spectral_flatfield': 'auxiliary:Recipe',
     'slit_transmission_calibration': 'auxiliary:Recipe',
     'wavelength_calibration': 'auxiliary:Recipe',
