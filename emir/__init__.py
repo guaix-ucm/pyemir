@@ -21,10 +21,11 @@
 
 import logging
 
+from emir.recipes import Pipeline
 from .simulator import EmirImageFactory as ImageFactory
-from .simulator import Emir as Instrument
+from emir.simulator import Instrument
 
-__all__ = ['Instrument', 'ImageFactory']
+__all__ = ['Instrument', 'ImageFactory', 'Pipeline']
 
 __version__ = '0.5.0'
 

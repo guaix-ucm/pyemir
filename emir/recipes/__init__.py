@@ -17,12 +17,9 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Recipes for Emir Observing Modes.'''
+'''Recipes for EMIR Observing Modes.'''
 
 __all__ = ['find_recipe']
-
-class EmirRecipeMixin:
-    instrument = ['emir']
 
 # equivalence
 _equiv = {
@@ -54,3 +51,8 @@ _equiv = {
 
 def find_recipe(mode):
     return _equiv[mode]
+
+class Pipeline(object):
+
+    def find_recipe(self, mode):
+        return _equiv[mode]

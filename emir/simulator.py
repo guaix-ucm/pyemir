@@ -32,11 +32,14 @@ from emir.instrument.detector import EmirDetector, EmirDas
 
 _logger = logging.getLogger('emir.simulator')
 
-class Instrument(object):
+class BaseInstrument(object):
     def __init__(self, detector):
 
         self.detector = detector
         self.das = EmirDas(detector)
+        
+        self.detector.meta['gain'] = 2.8
+        self.detector.meta['readnoise'] = 2.8
 
         self.meta = TreeDict()
         self.meta['name'] = 'EMIR'
@@ -50,7 +53,7 @@ class Instrument(object):
         self.meta['filter0'] = name
 
     def expose(self, time):
-        self.detector.elapse(time)
+        self.detector.expose(time)
 
     def readout(self):
         data = self.detector.readout() 
@@ -59,11 +62,10 @@ class Instrument(object):
     def imagetype(self, name):
         self.meta['imagetype'] = name
 
-class Emir(Instrument):
+class Instrument(BaseInstrument):
     def __init__(self):
         detector = EmirDetector()
-        print detector.meta
-        Instrument.__init__(self, detector)
+        BaseInstrument.__init__(self, detector)
 
 _result_types = ['image', 'spectrum']
 _extensions = ['primary', 'variance', 'map', 'wcs']

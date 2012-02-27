@@ -23,8 +23,13 @@ from datetime import datetime
 import numpy # pylint: disable-msgs=E1101
 
 from numina import braid
+from numina.treedict import TreeDict
 from numina.astrotime import datetime_to_mjd
 from numina.instrument.detector import nIRDetector, Amplifier, Das
+from numina.instrument.detector import SingleReadoutMode
+from numina.instrument.detector import CdsReadoutMode
+from numina.instrument.detector import RampReadoutMode
+from numina.instrument.detector import FowlerReadoutMode
 
 def _channel_gen1(beg, end, step):
     return ito.imap(lambda x: (x, x + step), xrange(beg, end, step))
@@ -60,7 +65,22 @@ QUADRANTS = [(slice(1024, 2048), slice(0, 1024)),
 class EmirDas(Das):
     def __init__(self, detector):
         Das.__init__(self, detector)
-        
+                
+    def readout_mode_single(self, repeat=1):
+        self.readmode(SingleReadoutMode(repeat=repeat)) 
+    
+    def readout_mode_cds(self, repeat=1):
+        mode = CdsReadoutMode(repeat=repeat)
+        self.readmode(mode)
+    
+    def readout_mode_fowler(self, reads, repeat=1, readout_time=0.0):
+        mode = FowlerReadoutMode(reads, repeat=repeat, 
+                                 readout_time=readout_time)
+        self.readmode(mode)    
+
+    def readout_mode_ramp(self, reads, repeat=1):
+        mode = RampReadoutMode(reads, repeat=repeat)
+        self.readmode(mode)
 
 class Hawaii2Detector(nIRDetector):
     '''Hawaii2 detector.'''
@@ -117,6 +137,10 @@ class EmirDetector(Hawaii2Detector):
                   40384.9, 40128.1, 41401.4, 41696.5, 41461.1, 41233.2, 41351.0, 
                   41803.7, 41450.2, 41306.2, 41609.4, 41414.1, 41324.5, 41691.1, 
                   41360.0, 41551.2, 41618.6, 41553.5]
+        
+        self.meta = TreeDict()
+        self.meta['gain'] = 2.8
+        self.meta['readnoise'] = 3.0
 
         Hawaii2Detector.__init__(self, gain=gain, ron=ron, dark=dark, 
                                            well=wdepth, flat=flat)
