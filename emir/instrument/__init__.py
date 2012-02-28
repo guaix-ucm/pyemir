@@ -16,7 +16,3 @@
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
-
-class Lamp(object):
-    def __init__(self):
-        pass
