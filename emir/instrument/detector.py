@@ -24,7 +24,6 @@ import numpy # pylint: disable-msgs=E1101
 
 from numina import braid
 from numina.treedict import TreeDict
-from numina.astrotime import datetime_to_mjd
 from numina.instrument.detector import nIRDetector, Amplifier, Das
 from numina.instrument.detector import SingleReadoutMode
 from numina.instrument.detector import CdsReadoutMode
