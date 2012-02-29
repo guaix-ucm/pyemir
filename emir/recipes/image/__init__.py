@@ -24,7 +24,12 @@ Image mode recipes of EMIR
 
 import logging
 
+import pyfits
 from numina.recipes import RecipeBase, Parameter, provides, DataFrame
+from numina.flow import SerialFlow
+from numina.flow.node import IdNode
+from numina.flow.processing import BiasCorrector
+from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 
 from ...dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ...dataproducts import MasterIntensityFlat
@@ -59,7 +64,9 @@ class StareImageRecipe(RecipeBase):
         Parameter('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
         # FIXME: this parameter is optional 
-        Parameter('sources', None, 'List of x, y coordinates to measure FWHM')
+        Parameter('sources', None, 
+                  'List of x, y coordinates to measure FWHM',
+                  soft=True)
     ]
 
     def __init__(self):
@@ -69,7 +76,59 @@ class StareImageRecipe(RecipeBase):
         )
 
     def run(self, obresult):
+        
+        list_of_wcs = [(img.ra, img.dec) for img in obresult.images]
+        list_of_offsets = self.convert_wcs_to_pixels(list_of_wcs)
+        
+        # Insert pixel offsets between images
+        for img, off in zip(obresult.images, list_of_offsets):
+            img.pix_offset = off
+        
+        # States
+        BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
+        
+        state = BASIC
+        
+        while True:
+            if state == BASIC:    
+                _logger.info('Basic processing')
+
+                # Basic processing
+                
+                # FIXME: add this
+                # bpm = pyfits.getdata(self.parameters['master_bpm'])
+                
+                if self.parameters['master_bias']:
+                    mbias = pyfits.getdata(self.parameters['master_bias'])
+                    bias_corrector = BiasCorrector(mbias)
+                else:
+                    bias_corrector = IdNode()
+            
+                mdark = pyfits.getdata(self.parameters['master_dark'])
+                dark_corrector = DarkCorrector(mdark)
+                nl_corrector = NonLinearityCorrector(self.parameters['nonlinearity'])
+        
+                # FIXME
+                #mflat = pyfits.getdata(self.parameters['master_flat'])
+                    
+                basicflow = SerialFlow([bias_corrector, 
+                                            dark_corrector, 
+                                            nl_corrector])
+
+                for img in obresult.images:
+                    with pyfits.open(img.label, mode='update') as hdulist:
+                            hdulist = basicflow(hdulist)
+                            
+                state = PRERED
+            else:
+                break
+                
         return {'products': [DataFrame(None), SourcesCatalog()]}
+    
+    def convert_wcs_to_pixels(self, list_of_wcs):
+        '''Convert a list of RA, DEC coordinates to offset in pixels'''
+        # FIXME: compute here real values
+        return [(0, 0)] * len(list_of_wcs)
     
 @provides(DataFrame, SourcesCatalog)
 class NBImageRecipe(RecipeBase):
