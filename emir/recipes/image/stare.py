@@ -248,14 +248,13 @@ class StareImageRecipe(RecipeBase):
 
     def correct_superflat(self, image, fitted):
         _logger.info("Iter %d, SF: apply superflat to image %s", 0, image.resized_base)
-        hdulist = pyfits.open(image.resized_base, mode='readonly')
-        data = hdulist['primary'].data[image.region]
-        newdata = hdulist['primary'].data.copy()
-        newdata[image.region] = correct_flatfield(data, fitted)
-
-                
-        newheader = hdulist['primary'].header.copy()
-        hdulist.close()
+        with pyfits.open(image.resized_base, mode='readonly') as hdulist:
+            data = hdulist['primary'].data[image.region]
+            newdata = hdulist['primary'].data.copy()
+            newdata[image.region] = correct_flatfield(data, fitted)    
+            newheader = hdulist['primary'].header.copy()
+        
+        # Copy primary image extension
         phdu = pyfits.PrimaryHDU(newdata, newheader)
         image.lastname = name_skyflat_proc(image.label, 0)
         image.flat_corrected = image.lastname
