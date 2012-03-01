@@ -34,7 +34,7 @@ from numina.image import get_image_shape, resize_fits
 from numina.recipes import RecipeBase, Parameter, provides, DataFrame
 from numina.flow import SerialFlow
 from numina.flow.node import IdNode
-from numina.flow.processing import BiasCorrector
+from numina.flow.processing import BiasCorrector, FlatFieldCorrector
 from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 from numina.array import combine_shape, correct_flatfield
 from numina.array import subarray_match
@@ -266,6 +266,7 @@ class StareImageRecipe(RecipeBase):
         baseshape = self.instrument['detectors'][0]
         amplifiers = self.instrument['amplifiers'][0]
                 
+        # Reference pixel in the center of the frame
         refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2)
         
         labels = [img.label for img in obresult.images]
@@ -302,11 +303,14 @@ class StareImageRecipe(RecipeBase):
                 nl_corrector = NonLinearityCorrector(self.parameters['nonlinearity'])
         
                 # FIXME
-                #mflat = pyfits.getdata(self.parameters['master_flat'])
-                    
+                mflat = pyfits.getdata(self.parameters['master_intensity_ff'])
+                ff_corrector = FlatFieldCorrector(mflat)  
+                  
                 basicflow = SerialFlow([bias_corrector, 
-                                            dark_corrector, 
-                                            nl_corrector])
+                                        dark_corrector, 
+                                        nl_corrector,
+                                        ff_corrector
+                                        ])
 
                 for img in obresult.images:
                     with pyfits.open(img.label, mode='update') as hdulist:
