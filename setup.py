@@ -16,7 +16,7 @@ setup(name='pyemir',
                    },
       test_suite="nose.collector",
       install_requires=['setuptools', 'numpy', 'pyfits', 'scipy', 
-		'sphinx', 'nose',
+		'sphinx', 'nose', 'pywcs',
 		'matplotlib', 'numdisplay', 'numina>=0.5.0'],
       classifiers=[
                    "Programming Language :: Python",

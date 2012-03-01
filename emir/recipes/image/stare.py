@@ -48,7 +48,7 @@ from emir.dataproducts import create_result
 
 from .shared import name_skyflat, name_skyflat_proc
 from .shared import name_redimensioned_images, name_skysub_proc
-
+from .shared import offsets_from_wcs
 
 _logger = logging.getLogger('emir.recipes')
 
@@ -265,9 +265,11 @@ class StareImageRecipe(RecipeBase):
         
         baseshape = self.instrument['detectors'][0]
         amplifiers = self.instrument['amplifiers'][0]
+                
+        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2)
         
-        list_of_wcs = [(img.ra, img.dec) for img in obresult.images]
-        list_of_offsets = self.convert_wcs_to_pixels(list_of_wcs)
+        labels = [img.label for img in obresult.images]
+        list_of_offsets = offsets_from_wcs(labels, refpix)
         
         # Insert pixel offsets between images
         for img, off in zip(obresult.images, list_of_offsets):
@@ -352,9 +354,5 @@ class StareImageRecipe(RecipeBase):
 
            
         return {'products': [DataFrame(result), SourcesCatalog()]}
-    
-    def convert_wcs_to_pixels(self, list_of_wcs):
-        '''Convert a list of RA, DEC coordinates to offset in pixels'''
-        # FIXME: compute here real values
-        return [(0, 0)] * len(list_of_wcs)
+
     
