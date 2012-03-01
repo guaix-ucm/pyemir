@@ -45,27 +45,12 @@ from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import NonLinearityCalibration
 from emir.dataproducts import SourcesCatalog
 from emir.dataproducts import create_result
- 
-__all__ = []
+
+from .shared import name_skyflat, name_skyflat_proc
+from .shared import name_redimensioned_images, name_skysub_proc
+
 
 _logger = logging.getLogger('emir.recipes')
-
-def _name_skyflat(label, iteration, ext='.fits'):
-    dn = 'superflat_%s_i%01d%s' % (label, iteration, ext)
-    return dn
-
-def _name_skyflat_proc(label, iteration, ext='.fits'):
-    dn = '%s_rf_i%01d%s' % (label, iteration, ext)
-    return dn
-
-def _name_redimensioned_images(label, iteration, ext='.fits'):
-    dn = '%s_r%s' % (label, ext)
-    mn = '%s_mr%s' % (label, ext)
-    return dn, mn
-
-def _name_skysub_proc(label, iteration, ext='.fits'):
-    dn = '%s_rfs_i%01d%s' % (label, iteration, ext)
-    return dn
 
 
 @provides(DataFrame, SourcesCatalog)
@@ -105,7 +90,7 @@ class StareImageRecipe(RecipeBase):
         
     def compute_simple_sky(self, image):
         
-        dst = _name_skysub_proc(image.label, 0)
+        dst = name_skysub_proc(image.label, 0)
         prev = image.lastname
         shutil.copy(image.lastname, dst)
         image.lastname = dst
@@ -168,7 +153,7 @@ class StareImageRecipe(RecipeBase):
         sf_data /= sf_data.mean()
         
         sfhdu = pyfits.PrimaryHDU(sf_data)            
-        sfhdu.writeto(_name_skyflat('comb', 0), clobber=True)
+        sfhdu.writeto(name_skyflat('comb', 0), clobber=True)
         return sf_data
         
     def update_scale_factors(self, images_info):
@@ -198,7 +183,7 @@ class StareImageRecipe(RecipeBase):
             region, _ = subarray_match(finalshape, noffset, baseshape)
             image.region = region
             image.noffset = noffset
-            imgn, maskn = _name_redimensioned_images(image.label, 0)
+            imgn, maskn = name_redimensioned_images(image.label, 0)
             image.resized_base = imgn
             image.resized_mask = maskn
                     
@@ -272,7 +257,7 @@ class StareImageRecipe(RecipeBase):
         newheader = hdulist['primary'].header.copy()
         hdulist.close()
         phdu = pyfits.PrimaryHDU(newdata, newheader)
-        image.lastname = _name_skyflat_proc(image.label, 0)
+        image.lastname = name_skyflat_proc(image.label, 0)
         image.flat_corrected = image.lastname
         phdu.writeto(image.lastname, clobber=True)
 

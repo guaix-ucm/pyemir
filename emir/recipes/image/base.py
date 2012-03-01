@@ -55,9 +55,16 @@ from numina.util.sextractor import open as sopen
 import numina.util.sexcatalog as sexcatalog
 
 
-from ...dataproducts import create_result, MasterBias, MasterDark 
-from ...dataproducts import MasterIntensityFlat, MasterBadPixelMask
-from ...dataproducts import SourcesCatalog
+from emir.dataproducts import create_result, MasterBias, MasterDark 
+from emir.dataproducts import MasterIntensityFlat, MasterBadPixelMask
+from emir.dataproducts import SourcesCatalog
+ 
+from .shared import name_skyflat, name_skyflat_proc
+from .shared import name_redimensioned_images, name_object_mask
+from .shared import name_skybackground, name_skybackgroundmask
+from .shared import name_skysub_proc, name_segmask
+
+
 #import .instrument.detector as detector
 
 __all__ = ['Recipe']
@@ -69,38 +76,6 @@ _logger = logging.getLogger("emir.recipes")
 #mpl.interactive(True)
 mpl.rcParams['toolbar'] = 'None'
 
-def _name_redimensioned_images(label, iteration, ext='.fits'):
-    dn = '%s_r%s' % (label, ext)
-    mn = '%s_mr%s' % (label, ext)
-    return dn, mn
-
-def _name_object_mask(label, iteration, ext='.fits'):
-    return '%s_mro_i%01d%s' % (label, iteration, ext)
-
-def _name_skyflat_proc(label, iteration, ext='.fits'):
-    dn = '%s_rf_i%01d%s' % (label, iteration, ext)
-    return dn
-
-def _name_skybackground(label, iteration, ext='.fits'):
-    dn = '%s_sky_i%01d%s' % (label, iteration, ext)
-    return dn
-
-def _name_skybackgroundmask(label, iteration, ext='.fits'):
-    dn = '%s_skymask_i%01d%s' % (label, iteration, ext)
-    return dn
-
-
-def _name_skysub_proc(label, iteration, ext='.fits'):
-    dn = '%s_rfs_i%01d%s' % (label, iteration, ext)
-    return dn
-
-def _name_skyflat(label, iteration, ext='.fits'):
-    dn = 'superflat_%s_i%01d%s' % (label, iteration, ext)
-    return dn
-
-def _name_segmask(iteration, ext='.fits'):
-    return "check_i%01d%s" % (iteration, ext)
-    
 def update_sky_related(images, nimages=5):
     
     nox = nimages
@@ -271,7 +246,7 @@ class Recipe(RecipeBase):
 
     def compute_simple_sky(self, image):
         
-        dst = _name_skysub_proc(image.label, self.iter)
+        dst = name_skysub_proc(image.label, self.iter)
         prev = image.lastname
         shutil.copy(image.lastname, dst)
         image.lastname = dst
@@ -302,7 +277,7 @@ class Recipe(RecipeBase):
     def compute_advanced_sky2(self, image, objmask):
         '''Create a background map of the image and subtract it.'''
         # Create a copy of the image
-        dst = _name_skysub_proc(image.label, self.iter)
+        dst = name_skysub_proc(image.label, self.iter)
         shutil.copy(image.lastname, dst)
         image.lastname = dst
         
@@ -317,7 +292,7 @@ class Recipe(RecipeBase):
         
             _logger.info('Iter %d, SC: subtracting sky to image %s', 
                      self.iter, image.label)
-            name = _name_skybackground(image.label, self.iter)
+            name = name_skybackground(image.label, self.iter)
             pyfits.writeto(name, sky, clobber=True)
             d -= sky
         
@@ -327,7 +302,7 @@ class Recipe(RecipeBase):
     def compute_advanced_sky(self, image, objmask):
         '''Create a background map from nearby images.'''
         # Create a copy of the image
-        dst = _name_skysub_proc(image.label, self.iter)
+        dst = name_skysub_proc(image.label, self.iter)
         shutil.copy(image.lastname, dst)
         image.lastname = dst
         
@@ -370,7 +345,7 @@ class Recipe(RecipeBase):
                 sky[binmask] = sky[num != 0].mean()
                 # To continue we interpolate over the patches
                 #fixpix2(sky, binmask, out=sky, iterations=1)
-                name = _name_skybackgroundmask(image.label, self.iter)
+                name = name_skybackgroundmask(image.label, self.iter)
                 pyfits.writeto(name, binmask.astype('int16'), clobber=True)
                 
             hdulist1 = pyfits.open(image.lastname, mode='update')
@@ -384,7 +359,7 @@ class Recipe(RecipeBase):
                 self.figure_image(sky, image)                 
                 d -= sky
                 
-                name = _name_skybackground(image.label, self.iter)
+                name = name_skybackground(image.label, self.iter)
                 pyfits.writeto(name, sky, clobber=True)
                 _logger.info('Iter %d, SC: subtracting sky %s to image %s', 
                              self.iter, name, image.lastname)                
@@ -597,7 +572,7 @@ class Recipe(RecipeBase):
         sf_data /= sf_data.mean()
         
         sfhdu = pyfits.PrimaryHDU(sf_data)            
-        sfhdu.writeto(_name_skyflat('comb', self.iter), clobber=True)
+        sfhdu.writeto(name_skyflat('comb', self.iter), clobber=True)
         return sf_data
 
     def apply_superflat(self, images_info, superflat):
@@ -624,7 +599,7 @@ class Recipe(RecipeBase):
         newheader = hdulist['primary'].header.copy()
         hdulist.close()
         phdu = pyfits.PrimaryHDU(newdata, newheader)
-        image.lastname = _name_skyflat_proc(image.label, self.iter)
+        image.lastname = name_skyflat_proc(image.label, self.iter)
         image.flat_corrected = image.lastname
         phdu.writeto(image.lastname, clobber=True)
         
@@ -695,7 +670,7 @@ class Recipe(RecipeBase):
         error = numpy.empty((len(images_info), OBJS_I_KEEP))
         
         for idx, image in enumerate(images_info):
-            imagename = _name_skysub_proc(image.label, self.iter)
+            imagename = name_skysub_proc(image.label, self.iter)
 
             sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (image.label, self.iter)
 
@@ -800,7 +775,7 @@ class Recipe(RecipeBase):
         master = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog[:OBJS_I_KEEP]]
         
         for image in images_info:
-            imagename = _name_skysub_proc(image.label, self.iter)
+            imagename = name_skysub_proc(image.label, self.iter)
 
             sex.config['CATALOG_NAME'] = 'catalogue-self-%s-i%01d.cat' % (image.label, self.iter)
 
@@ -869,7 +844,7 @@ class Recipe(RecipeBase):
         # sextractor takes care of bad pixels
         sex = SExtractor()
         sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
-        sex.config["CHECKIMAGE_NAME"] = _name_segmask(self.iter)
+        sex.config["CHECKIMAGE_NAME"] = name_segmask(self.iter)
         sex.config['VERBOSE_TYPE'] = 'QUIET'
         sex.config['PIXEL_SCALE'] = 1
         sex.config['BACK_TYPE'] = 'AUTO' 
@@ -968,7 +943,7 @@ class Recipe(RecipeBase):
             seeing_fwhm = None
         else:
             _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
-        objmask = pyfits.getdata(_name_segmask(self.iter))
+        objmask = pyfits.getdata(name_segmask(self.iter))
         return objmask, seeing_fwhm
     
 
@@ -989,7 +964,7 @@ class Recipe(RecipeBase):
                 noffset = None
             image.region = region
             image.noffset = noffset
-            imgn, maskn = _name_redimensioned_images(image.label, self.iter)
+            imgn, maskn = name_redimensioned_images(image.label, self.iter)
             image.resized_base = imgn
             image.resized_mask = maskn
                     
@@ -1147,7 +1122,7 @@ class Recipe(RecipeBase):
                 # Update objects mask
                 # For all images    
                 for image in images_info:
-                    image.objmask = _name_object_mask(image.label, self.iter)
+                    image.objmask = name_object_mask(image.label, self.iter)
                     _logger.info('Iter %d, create object mask %s', self.iter,  image.objmask)                 
                     image.objmask_data = objmask[image.region]
                     pyfits.writeto(image.objmask, image.objmask_data, clobber=True)
