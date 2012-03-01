@@ -39,7 +39,7 @@ _equiv = {
     'msm_and_lsm_check': 'auxiliary:Recipe',
     'stare_image': 'image.stare:StareImageRecipe',
     'nb_image': 'image:Recipe',
-    'dithered_image':'directimaging:Recipe',
+    'dithered_image':'image.dither:DitheredImageRecipe',
     'microdithered_image':'image:Recipe',
     'mosaiced_image': 'image:Recipe',
     'stare_spectra': 'mos:Recipe',

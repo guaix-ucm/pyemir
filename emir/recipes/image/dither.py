@@ -117,7 +117,7 @@ class ImageInformation(object):
 
 @provides(DataFrame)
 @provides(SourcesCatalog)
-class Recipe(RecipeBase):
+class DitheredImageRecipe(RecipeBase):
     '''Recipe for the reduction of imaging mode observations.
 
     Recipe to reduce observations obtained in imaging mode, considering different
@@ -211,7 +211,7 @@ class Recipe(RecipeBase):
     ]    
     
     def __init__(self):
-        super(Recipe, self).__init__(author=__author__, version="0.1.0")
+        super(DitheredImageRecipe, self).__init__(author=__author__, version="0.1.0")
         
         self.iter = 0
         self._figure = plt.figure(facecolor='white')

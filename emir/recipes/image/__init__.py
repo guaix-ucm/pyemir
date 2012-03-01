@@ -36,7 +36,7 @@ from emir.dataproducts import SourcesCatalog
 from emir.dataproducts import create_result
 
 from .stare import StareImageRecipe
-from .base import Recipe as DitheredImageRecipe
+from .dither import DitheredImageRecipe
  
 __all__ = []
 
