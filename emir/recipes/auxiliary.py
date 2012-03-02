@@ -79,7 +79,7 @@ class BiasRecipe(RecipeBase):
     def run(self, obresult):
         _logger.info('starting bias reduction')
 
-        images = obresult.images
+        images = obresult.frames
 
         cdata = []
 
@@ -289,7 +289,7 @@ class IntensityFlatRecipe(RecipeBase):
                 )
         
     @log_to_history(_logger)
-    def run(self, block):
+    def run(self, obresult):
         _logger.info('starting flat reduction')
                 
         # Basic processing
@@ -306,19 +306,19 @@ class IntensityFlatRecipe(RecipeBase):
         
         basicflow = SerialFlow([bias_corrector, dark_corrector, nl_corrector])
 
-        for img in block.images:
+        for img in obresult.frames:
 
             with pyfits.open(img[0], mode='update') as hdulist:
                 hdulist = basicflow(hdulist)
 
         # combine LAMP-ON
         
-        lampon = [img[0] for img in block.images if img[2] == 'LAMPON']
+        lampon = [img[0] for img in obresult.frames if img[2] == 'LAMPON']
         
         dataon = self.stack_images(lampon)
                 
         # combine LAMP-OFF
-        lampoff = [img[0] for img in block.images if img[2] == 'LAMPOFF']
+        lampoff = [img[0] for img in obresult.frames if img[2] == 'LAMPOFF']
         
         dataoff = self.stack_images(lampoff)
         

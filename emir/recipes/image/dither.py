@@ -993,7 +993,7 @@ class DitheredImageRecipe(RecipeBase):
             _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
         return images_info
             
-    def run(self, block):
+    def run(self, obresult):
         
         metadata = self.instrument['metadata']
         detector = self.instrument['detectors'][0] # One detector
@@ -1010,7 +1010,7 @@ class DitheredImageRecipe(RecipeBase):
         images_info = []
         
         # Creating ImageInformation
-        for image, offset in block.images2:
+        for image, offset in obresult.frames:
             # Label
             ii = ImageInformation()
             ii.label = os.path.splitext(image)[0]

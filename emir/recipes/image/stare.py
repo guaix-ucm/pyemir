@@ -268,11 +268,11 @@ class StareImageRecipe(RecipeBase):
         # Reference pixel in the center of the frame
         refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2)
         
-        labels = [img.label for img in obresult.images]
+        labels = [img.label for img in obresult.frames]
         list_of_offsets = offsets_from_wcs(labels, refpix)
         
         # Insert pixel offsets between images
-        for img, off in zip(obresult.images, list_of_offsets):
+        for img, off in zip(obresult.frames, list_of_offsets):
             img.pix_offset = off
             img.objmask_data = None
             img.valid_science = True
