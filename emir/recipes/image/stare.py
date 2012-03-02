@@ -173,7 +173,8 @@ class StareImageRecipe(RecipeBase):
     def resize(self, images, baseshape):
         _logger.info('Computing offsets')
         
-        offsets = [image.pix_offset for image in images]        
+        offsets = [image.pix_offset for image in images]
+        offsets = numpy.round(offsets).astype('int')        
         finalshape, offsetsp = combine_shape(baseshape, offsets)
         _logger.info('Shape of resized array is %s', finalshape)
 
@@ -276,7 +277,7 @@ class StareImageRecipe(RecipeBase):
             img.pix_offset = off
             img.objmask_data = None
             img.valid_science = True
-        
+            print 'load'
         # States
         BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
         
@@ -290,7 +291,7 @@ class StareImageRecipe(RecipeBase):
                 
                 # FIXME: add this
                 # bpm = pyfits.getdata(self.parameters['master_bpm'])
-                
+                print 'dum'
                 if self.parameters['master_bias']:
                     mbias = pyfits.getdata(self.parameters['master_bias'])
                     bias_corrector = BiasCorrector(mbias)
@@ -311,35 +312,37 @@ class StareImageRecipe(RecipeBase):
                                         ff_corrector
                                         ])
 
-                for img in obresult.images:
+                for img in obresult.frames:
                     with pyfits.open(img.label, mode='update') as hdulist:
                             hdulist = basicflow(hdulist)
-                            
+                  
+                          
                 state = PRERED
             elif state == PRERED:
-                # Resizing images                            
-                self.resize(obresult.images, 
+                # Resizing images
+                print 'resize'                            
+                self.resize(obresult.frames, 
                             self.instrument['detectors'][0])
-
+                
                 # superflat
                 _logger.info('Iter %d, superflat correction (SF)', 0)
                 # Compute scale factors (median)           
-                self.update_scale_factors(obresult.images)
+                self.update_scale_factors(obresult.frames)
 
                 # Create superflat
-                superflat = self.compute_superflat(obresult.images, None, amplifiers)
+                superflat = self.compute_superflat(obresult.frames, None, amplifiers)
             
                 # Apply superflat
-                images_info = self.apply_superflat(obresult.images, superflat)
+                images_info = self.apply_superflat(obresult.frames, superflat)
 
                 _logger.info('Simple sky correction')
-                for image in obresult.images:            
+                for image in obresult.frames:            
                     self.compute_simple_sky(image)
                 
                 # Combining the images
                 _logger.info("Iter %d, Combining the images", 0)
                 
-                sf_data = self.combine_images(obresult.images)
+                sf_data = self.combine_images(obresult.frames)
                       
                 _logger.info('Iter %d, finished', 0)
 
