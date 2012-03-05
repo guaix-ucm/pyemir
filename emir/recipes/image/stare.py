@@ -277,7 +277,6 @@ class StareImageRecipe(RecipeBase):
             img.pix_offset = off
             img.objmask_data = None
             img.valid_science = True
-            print 'load'
         # States
         BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
         
@@ -291,7 +290,6 @@ class StareImageRecipe(RecipeBase):
                 
                 # FIXME: add this
                 # bpm = pyfits.getdata(self.parameters['master_bpm'])
-                print 'dum'
                 if self.parameters['master_bias']:
                     mbias = pyfits.getdata(self.parameters['master_bias'])
                     bias_corrector = BiasCorrector(mbias)
