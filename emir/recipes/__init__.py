@@ -21,6 +21,9 @@
 
 __all__ = ['find_recipe']
 
+from .auxiliary import BiasRecipe, DarkRecipe, IntensityFlatRecipe
+from .image import StareImageRecipe, DitheredImageRecipe
+
 # equivalence
 _equiv = {
     'bias_image': 'auxiliary:BiasRecipe',
@@ -46,7 +49,32 @@ _equiv = {
     'dn_spectra': 'mos:Recipe',
     'offset_spectra': 'mos:Recipe',
     'raster_spectra': 'ls:Recipe',
-    
+}
+
+_equiv_class = {
+    'bias_image': BiasRecipe,
+    'dark_image': DarkRecipe,
+    'intensity_flatfield': IntensityFlatRecipe,
+    'msm_spectral_flatfield': 'auxiliary:Recipe',
+    'slit_transmission_calibration': 'auxiliary:Recipe',
+    'wavelength_calibration': 'auxiliary:Recipe',
+    'ts_rough_focus': 'auxiliary:Recipe',
+    'ts_fine_focus': 'auxiliary:Recipe',
+    'emir_focus_control': 'auxiliary:Recipe',
+    'image_setup': 'auxiliary:Recipe',
+    'mos_and_longslit_setup': 'auxiliary:Recipe',
+    'target_acquisition': 'auxiliary:Recipe',
+    'mask_imaging': 'auxiliary:Recipe',
+    'msm_and_lsm_check': 'auxiliary:Recipe',
+    'stare_image': ImageRecipe,
+    'nb_image': 'image:Recipe',
+    'dithered_image': DitheredImageRecipe,
+    'microdithered_image':'image:Recipe',
+    'mosaiced_image': 'image:Recipe',
+    'stare_spectra': 'mos:Recipe',
+    'dn_spectra': 'mos:Recipe',
+    'offset_spectra': 'mos:Recipe',
+    'raster_spectra': 'ls:Recipe',
 }
 
 def find_recipe(mode):
@@ -55,4 +83,10 @@ def find_recipe(mode):
 class Pipeline(object):
 
     def find_recipe(self, mode):
+	'''Return the recipe gualified name given the obs mode name'''
         return _equiv[mode]
+
+    def recipe(self, mode):
+	'''Return the recipe class given the obs mode name'''
+        return _equiv_class[mode]
+	
