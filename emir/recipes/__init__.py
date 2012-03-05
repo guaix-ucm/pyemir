@@ -66,7 +66,7 @@ _equiv_class = {
     'target_acquisition': 'auxiliary:Recipe',
     'mask_imaging': 'auxiliary:Recipe',
     'msm_and_lsm_check': 'auxiliary:Recipe',
-    'stare_image': ImageRecipe,
+    'stare_image': StareImageRecipe,
     'nb_image': 'image:Recipe',
     'dithered_image': DitheredImageRecipe,
     'microdithered_image':'image:Recipe',
@@ -80,7 +80,12 @@ _equiv_class = {
 def find_recipe(mode):
     return _equiv[mode]
 
+def find_recipe_class(mode):
+    return _equiv_class[mode]
+
 class Pipeline(object):
+    
+    instrument = 'EMIR'
 
     def find_recipe(self, mode):
 	'''Return the recipe gualified name given the obs mode name'''
