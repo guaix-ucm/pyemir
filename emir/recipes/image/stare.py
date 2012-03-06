@@ -25,14 +25,15 @@ Image mode recipes of EMIR
 import logging
 
 #
+import os
 import shutil
 #
 
 import pyfits
 import numpy
-from numina.image import get_image_shape, resize_fits
+from numina.image import get_image_shape, resize_fits, custom_region_to_str
 from numina.recipes import RecipeBase, Parameter, provides, DataFrame
-from numina.flow import SerialFlow
+from numina.flow import SerialFlow, Node
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, FlatFieldCorrector
 from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
@@ -52,7 +53,6 @@ from .shared import offsets_from_wcs
 
 _logger = logging.getLogger('emir.recipes')
 
-
 @provides(DataFrame, SourcesCatalog)
 class StareImageRecipe(RecipeBase):
     '''
@@ -65,6 +65,8 @@ class StareImageRecipe(RecipeBase):
         * Stare image
     
     '''
+
+    logger = _logger
 
     __requires__ = [
         Parameter('master_bpm', MasterBadPixelMask, 
@@ -88,58 +90,51 @@ class StareImageRecipe(RecipeBase):
             version="0.1.0"
         )
         
-    def compute_simple_sky(self, image):
+    def compute_simple_sky(self, frame, iter=0, save=False):
         
-        dst = name_skysub_proc(image.label, 0)
-        prev = image.lastname
-        shutil.copy(image.lastname, dst)
-        image.lastname = dst
+        dst = name_skysub_proc(frame.label, iter)
+        prev = frame.lastname
         
-        with pyfits.open(image.lastname, mode='update') as hdulist1:
-            data = hdulist1['primary'].data
-            d = data[image.region]
-            
-            if image.objmask_data is not None:
-                m = image.objmask_data[image.region]
-                sky = numpy.median(d[m == 0])
-            else:
-                _logger.debug('object mask empty')
-                sky = numpy.median(d)
+        if save:
+            shutil.copyfile(prev, dst)
+        else:
+            os.rename(prev, dst)
+        
+        frame.lastname = dst
+        
+        with pyfits.open(frame.lastname, mode='update') as hdulist:
+            data = hdulist['primary'].data
+            sky = numpy.median(data[frame.valid_region])
 
             _logger.debug('median sky value is %f', sky)
-            image.median_sky = sky
+            frame.median_sky = sky
             
-            _logger.info('Iter %d, SC: subtracting sky to image %s', 
-                         0, prev)
-            region = image.region
-            data[region] -= sky
+            _logger.info('Iter %d, SC: subtracting sky to frame %s', 
+                         iter, prev)
+            data[frame.valid_region] -= sky
                 
-    def compute_superflat(self, iinfo, segmask, amplifiers):
-        _logger.info("Iter %d, SF: combining the images without offsets", 0)
+    def compute_superflat(self, frames, amplifiers, segmask=None, iter=0):
+        _logger.info("Iter %d, SF: combining the images without offsets", iter)
         try:
             filelist = []
             data = []
-            for image in iinfo:
-                _logger.debug('Iter %d, opening resized image %s', 0, image.resized_base)
+            for image in frames:
+                _logger.debug('Iter %d, opening resized image %s', iter, image.resized_base)
                 hdulist = pyfits.open(image.resized_base, memmap=True, mode='readonly')
                 filelist.append(hdulist)
-                data.append(hdulist['primary'].data[image.region])
+                data.append(hdulist['primary'].data[image.valid_region])
 
-            scales = [image.median_scale for image in iinfo]
-
+            scales = [image.median_scale for image in frames]
             
-            # FIXME: plotting
-            #self.figure_median_background(scales)
-
             masks = None
             if segmask is not None:
-                masks = [segmask[image.region] for image in iinfo]
+                masks = [segmask[image.valid_region] for image in frames]
                 
-            _logger.debug('Iter %d, combining %d images', 0, len(data))
+            _logger.debug('Iter %d, combining %d images', iter, len(data))
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, 
                                                     blank=1.0 / scales[0])            
         finally:
-            _logger.debug('Iter %d, closing resized images and mask', 0)
+            _logger.debug('Iter %d, closing resized images and mask', iter)
             for fileh in filelist:               
                 fileh.close()            
 
@@ -152,116 +147,123 @@ class StareImageRecipe(RecipeBase):
         # Normalize, flat has mean = 1
         sf_data /= sf_data.mean()
         
+        # Auxilyary data
         sfhdu = pyfits.PrimaryHDU(sf_data)            
-        sfhdu.writeto(name_skyflat('comb', 0), clobber=True)
+        sfhdu.writeto(name_skyflat('comb', iter), clobber=True)
         return sf_data
         
-    def update_scale_factors(self, images_info):
-
-        _logger.info('Iter %d, SF: computing scale factors', 0)
+    def update_scale_factors(self, frames, iter=0):
+        _logger.info('Iter %d, SF: computing scale factors', iter)
         # FIXME: not sure
-        for image in images_info:
-            region = image.region
-            data = pyfits.getdata(image.resized_base)[region]
+        for frame in frames:
+            region = frame.valid_region
+            data = pyfits.getdata(frame.resized_base)[region]
             #mask = pyfits.getdata(image.resized_mask)[region]
             # FIXME: while developing this ::10 is faster, remove later            
             #image.median_scale = numpy.median(data[mask == 0][::10])
-            image.median_scale = numpy.median(data[::10])
-            _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
-        return images_info        
+            frame.median_scale = numpy.median(data[::10])
+            _logger.debug('median value of %s is %f', frame.resized_base, frame.median_scale)
+        return frames
         
-    def resize(self, images, baseshape):
-        _logger.info('Computing offsets')
-        
-        offsets = [image.pix_offset for image in images]
-        offsets = numpy.round(offsets).astype('int')        
-        finalshape, offsetsp = combine_shape(baseshape, offsets)
-        _logger.info('Shape of resized array is %s', finalshape)
-
+    def resize(self, frames, baseshape, offsetsp, finalshape, iter=0):
         _logger.info('Resizing images and masks')            
         
-        for image, noffset in zip(images, offsetsp):
-            region, _ = subarray_match(finalshape, noffset, baseshape)
-            image.region = region
-            image.noffset = noffset
-            imgn, maskn = name_redimensioned_images(image.label, 0)
-            image.resized_base = imgn
-            image.resized_mask = maskn
-                    
-            self.resize_image_and_mask(image, finalshape, imgn, maskn)
+        for frame, rel_offset in zip(frames, offsetsp):
+            region, _ = subarray_match(finalshape, rel_offset, baseshape)
+            # Valid region
+            frame.valid_region = region
+            # Relative offset
+            frame.rel_offset = rel_offset
+            # names of frame and mask
+            imgn, maskn = name_redimensioned_images(frame.label, iter)
+            frame.resized_base = imgn
+            frame.resized_mask = maskn
+            
+            _logger.debug('%s, valid region is %s, relative offset is %s', frame.label, 
+                          custom_region_to_str(region), rel_offset)
+            self.resize_image_and_mask(frame, finalshape, imgn, maskn)
 
-        return images
+        return frames
 
     def resize_image_and_mask(self, image, finalshape, imgn, maskn):
         _logger.info('Resizing image %s', image.label)
         #resize_fits(image.base, imgn, finalshape, image.region)
-        resize_fits(image.label, imgn, finalshape, image.region)
+        resize_fits(image.label, imgn, finalshape, image.valid_region)
 
         _logger.info('Resizing mask %s', image.label)
         #resize_fits(image.label+'mask', maskn, finalshape, image.region, fill=1)
 
-    def apply_superflat(self, images_info, superflat):
-        _logger.info("Iter %d, SF: apply superflat", 0)
+    def apply_superflat(self, frames, flatdata, iter=0):
+        _logger.info("Iter %d, SF: apply superflat", iter)
 
-        
-                    
+        #copynode = Copy()
+        ffcor = FlatFieldCorrector(flatdata=flatdata)
 
         # Process all images with the fitted flat
         # FIXME: not sure
-        for image in images_info:
-            self.correct_superflat(image, superflat)
-        return images_info
+        for frame in frames:
+            self.correct_superflat(frame, flatdata)
+        return frames
+            
+    def correct_superflat(self, frame, fitted, iter=0, save=False):
+        
+        frame.flat_corrected = name_skyflat_proc(frame.label, iter)
+        
+        if save:
+            shutil.copyfile(frame.resized_base, frame.flat_corrected)
+        else:
+            print frame.resized_base, frame.flat_corrected
+            os.rename(frame.resized_base, frame.flat_corrected)
+        
+        _logger.info("Iter %d, SF: apply superflat to image %s", iter, frame.flat_corrected)
+        with pyfits.open(frame.flat_corrected, mode='update') as hdulist:
+            data = hdulist['primary'].data
+            datar = data[frame.valid_region]
+            data[frame.valid_region] = correct_flatfield(datar, fitted)    
+        
+        # Copy primary image extension
+        frame.lastname = frame.flat_corrected
 
-    def combine_images(self, iinfo, out=None):
-        _logger.debug('Iter %d, opening sky-subtracted images', 0)
+    def combine_images(self, frames, out=None, iter=0):
+        _logger.debug('Iter %d, opening sky-subtracted images', iter)
 
-        def fun(name):
+        def fits_open(name):
             '''Open FITS with memmap in readonly mode'''
             return pyfits.open(name, mode='readonly', memmap=True)
 
-        imgslll = [fun(image.lastname) for image in iinfo if image.valid_science]
-        _logger.debug('Iter %d, opening mask images', 0)
-        #mskslll = [fun(image.resized_mask) for image in iinfo if image.valid_science]
-        #_logger.debug('Iter %d, combining %d images', 0, len(imgslll))
+        imgslll = [fits_open(image.lastname) for image in frames if image.valid_science]
+        #_logger.debug('Iter %d, opening mask images', iter)
+        #mskslll = [fun(image.resized_mask) for image in frames if image.valid_science]
+        _logger.debug('Iter %d, combining %d images', iter, len(imgslll))
         try:
-            extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in iinfo if image.valid_science]
+            extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in frames if image.valid_science]
             data = [i['primary'].data for i in imgslll]
             #masks = [i['primary'].data for i in mskslll]
             masks = None
-            if out is not None:
-                quantileclip(data, masks, scales=extinc, dtype='float32', out=out, fclip=0.1)
-            else:
-                out = quantileclip(data, masks, scales=extinc, dtype='float32', fclip=0.1)
-
+            
+            out = quantileclip(data, masks, scales=extinc, dtype='float32', out=out, fclip=0.1)
+            
             # saving the three extensions
-            pyfits.writeto('result_i%0d.fits' % 0, out[0], clobber=True)
-            pyfits.writeto('result_var_i%0d.fits' % 0, out[1], clobber=True)
-            pyfits.writeto('result_npix_i%0d.fits' % 0, out[2], clobber=True)
+            pyfits.writeto('result_i%0d.fits' % iter, out[0], clobber=True)
+            pyfits.writeto('result_var_i%0d.fits' % iter, out[1], clobber=True)
+            pyfits.writeto('result_npix_i%0d.fits' % iter, out[2], clobber=True)
                 
             return out
             
         finally:
-            _logger.debug('Iter %d, closing sky-subtracted images', 0)
+            _logger.debug('Iter %d, closing sky-subtracted images', iter)
             map(lambda x: x.close(), imgslll)
             #_logger.debug('Iter %d, closing mask images', 0)
             #map(lambda x: x.close(), mskslll)
-
-
-    def correct_superflat(self, image, fitted):
-        _logger.info("Iter %d, SF: apply superflat to image %s", 0, image.resized_base)
-        with pyfits.open(image.resized_base, mode='readonly') as hdulist:
-            data = hdulist['primary'].data[image.region]
-            newdata = hdulist['primary'].data.copy()
-            newdata[image.region] = correct_flatfield(data, fitted)    
-            newheader = hdulist['primary'].header.copy()
-        
-        # Copy primary image extension
-        phdu = pyfits.PrimaryHDU(newdata, newheader)
-        image.lastname = name_skyflat_proc(image.label, 0)
-        image.flat_corrected = image.lastname
-        phdu.writeto(image.lastname, clobber=True)
-
+            
     def run(self, obresult):
+        
+        store_intermediate = True
+        
+        recipe_result = {'products' : []}
+        
+        if store_intermediate:
+            recipe_result['intermediate'] = []
         
         baseshape = self.instrument['detectors'][0]
         amplifiers = self.instrument['amplifiers'][0]
@@ -269,14 +271,17 @@ class StareImageRecipe(RecipeBase):
         # Reference pixel in the center of the frame
         refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2)
         
+        _logger.info('Computing offsets from WCS information')
         labels = [img.label for img in obresult.frames]
         list_of_offsets = offsets_from_wcs(labels, refpix)
         
         # Insert pixel offsets between images
         for img, off in zip(obresult.frames, list_of_offsets):
-            img.pix_offset = off
+            img.pix_offset = off            
             img.objmask_data = None
             img.valid_science = True
+            _logger.debug('Frame %s, offset=%s', img.label, off)
+        
         # States
         BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
         
@@ -317,10 +322,15 @@ class StareImageRecipe(RecipeBase):
                           
                 state = PRERED
             elif state == PRERED:
-                # Resizing images
-                print 'resize'                            
-                self.resize(obresult.frames, 
-                            self.instrument['detectors'][0])
+                
+                _logger.info('Computing relative offsets')
+                offsets = [frame.pix_offset for frame in obresult.frames]
+                offsets = numpy.round(offsets).astype('int')        
+                finalshape, offsetsp = combine_shape(baseshape, offsets)
+                _logger.info('Shape of resized array is %s', finalshape)
+                
+                # Resizing images              
+                self.resize(obresult.frames, baseshape, offsetsp, finalshape)
                 
                 # superflat
                 _logger.info('Iter %d, superflat correction (SF)', 0)
@@ -328,7 +338,7 @@ class StareImageRecipe(RecipeBase):
                 self.update_scale_factors(obresult.frames)
 
                 # Create superflat
-                superflat = self.compute_superflat(obresult.frames, None, amplifiers)
+                superflat = self.compute_superflat(obresult.frames, amplifiers)
             
                 # Apply superflat
                 images_info = self.apply_superflat(obresult.frames, superflat)
@@ -357,6 +367,8 @@ class StareImageRecipe(RecipeBase):
         _logger.info("Final image created")
 
            
-        return {'products': [DataFrame(result), SourcesCatalog()]}
+        recipe_result['products'] = [DataFrame(result), SourcesCatalog()]
+        
+        return recipe_result
 
     
