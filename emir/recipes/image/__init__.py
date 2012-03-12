@@ -38,8 +38,6 @@ from emir.dataproducts import create_result
 from .stare import StareImageRecipe
 from .dither import DitheredImageRecipe
 from .micro import MicroditheredImageRecipe
- 
-__all__ = []
 
 _logger = logging.getLogger('emir.recipes')
 

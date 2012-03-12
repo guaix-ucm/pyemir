@@ -50,7 +50,7 @@ from .shared import DirectImageCommon
 _logger = logging.getLogger('emir.recipes')
 
 @provides(DataFrame, SourcesCatalog)
-class MicroditheredImageRecipe(RecipeBase):
+class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
     '''
     Recipe for the reduction of microdithering imaging.
     
@@ -165,22 +165,27 @@ class MicroditheredImageRecipe(RecipeBase):
         if store_intermediate:
             recipe_result['intermediate'] = []
         
+        subpix = self.parameters['subpixelization']
         baseshape = self.instrument['detectors'][0]
+        subpixshape = tuple((side * subpix) for side in baseshape)
+        
         amplifiers = self.instrument['amplifiers'][0]
                 
         # Reference pixel in the center of the frame
         refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2)
         
         _logger.info('Computing offsets from WCS information')
-        labels = [img.label for img in obresult.frames]
+        labels = [frame.label for frame in obresult.frames]
         list_of_offsets = offsets_from_wcs(labels, refpix)
         
-        # Insert pixel offsets between images
-        for img, off in zip(obresult.frames, list_of_offsets):
-            img.pix_offset = off            
-            img.objmask_data = None
-            img.valid_science = True
-            _logger.debug('Frame %s, offset=%s', img.label, off)
+        
+        for frame, off in zip(obresult.frames, list_of_offsets):
+            frame.baselabel = os.path.splitext(frame.label)[0]
+            # Insert pixel offsets between images
+            frame.pix_offset = off            
+            frame.objmask_data = None
+            frame.valid_science = True
+            _logger.debug('Frame %s, offset=%s', frame.label, off)
         
         # States
         BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
@@ -215,8 +220,8 @@ class MicroditheredImageRecipe(RecipeBase):
                                         ff_corrector
                                         ])
 
-                for img in obresult.frames:
-                    with pyfits.open(img.label, mode='update') as hdulist:
+                for frame in obresult.frames:
+                    with pyfits.open(frame.label, mode='update') as hdulist:
                             hdulist = basicflow(hdulist)
                   
                           
@@ -224,13 +229,13 @@ class MicroditheredImageRecipe(RecipeBase):
             elif state == PRERED:
                 
                 _logger.info('Computing relative offsets')
-                offsets = [frame.pix_offset for frame in obresult.frames]
+                offsets = [(frame.pix_offset * subpix) for frame in obresult.frames]
                 offsets = numpy.round(offsets).astype('int')        
-                finalshape, offsetsp = combine_shape(baseshape, offsets)
+                finalshape, offsetsp = combine_shape(subpixshape, offsets)
                 _logger.info('Shape of resized array is %s', finalshape)
                 
-                # Resizing images              
-                self.resize(obresult.frames, baseshape, offsetsp, finalshape)
+                # Resizing and subpieling frames              
+                self.resize(obresult.frames, subpixshape, offsetsp, finalshape, scale=subpix)
                 
                 # superflat
                 _logger.info('Iter %d, superflat correction (SF)', 0)
@@ -241,11 +246,11 @@ class MicroditheredImageRecipe(RecipeBase):
                 superflat = self.compute_superflat(obresult.frames, amplifiers)
             
                 # Apply superflat
-                images_info = self.apply_superflat(obresult.frames, superflat)
+                images_info = self.apply_superflat(obresult.frames, superflat, save=store_intermediate)
 
                 _logger.info('Simple sky correction')
                 for image in obresult.frames:            
-                    self.compute_simple_sky(image)
+                    self.compute_simple_sky(image, save=store_intermediate)
                 
                 # Combining the images
                 _logger.info("Iter %d, Combining the images", 0)

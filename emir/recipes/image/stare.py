@@ -107,6 +107,8 @@ class StareImageRecipe(RecipeBase, DirectImageCommon):
         
         # Insert pixel offsets between images
         for img, off in zip(obresult.frames, list_of_offsets):
+            img.baselabel = os.path.splitext(img.label)[0]
+            # Insert pixel offsets between images
             img.pix_offset = off            
             img.objmask_data = None
             img.valid_science = True

@@ -217,20 +217,6 @@ class DitheredImageRecipe(RecipeBase):
         self._figure = plt.figure(facecolor='white')
         self._figure.canvas.set_window_title('Recipe Plots')
         self._figure.canvas.draw()
-
-    def setup(self):
-        # Parameters will store the image with absolute paths
-        self.parameters['master_dark'] = DiskImage(os.path.abspath(self.parameters['master_dark']))
-        self.parameters['master_flat'] = DiskImage(os.path.abspath(self.parameters['master_flat']))
-        self.parameters['master_bpm'] = DiskImage(os.path.abspath(self.parameters['master_bpm']))
-        
-        # Converting self.parameters['images'] to DiskImage
-        # with absolute path
-        r = dict((key, numina.image.DiskImage(filename=os.path.abspath(key))) 
-             for key in self.parameters['images'])
-        
-        for key, val in self.parameters['images'].items():                
-            self.parameters['images'][key] = (r[key], val[0], [r[key] for key in val[1]])
                             
     def basic_processing(self, image, flow):
         hdulist = pyfits.open(image.base)

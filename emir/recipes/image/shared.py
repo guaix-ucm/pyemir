@@ -24,6 +24,7 @@ Routines shared by image mode recipes
 '''
 import os
 import logging
+import shutil
 
 import numpy
 import pyfits
@@ -107,7 +108,7 @@ class DirectImageCommon(object):
     
     def compute_simple_sky(self, frame, itr=0, save=False):
         
-        dst = name_skysub_proc(frame.label, itr)
+        dst = name_skysub_proc(frame.baselabel, itr)
         prev = frame.lastname
         
         if save:
@@ -168,7 +169,7 @@ class DirectImageCommon(object):
             #_logger.debug('Iter %d, closing mask images', 0)
             #map(lambda x: x.close(), mskslll)
             
-    def apply_superflat(self, frames, flatdata, iter=0):
+    def apply_superflat(self, frames, flatdata, iter=0, save=False):
         _logger.info("Iter %d, SF: apply superflat", iter)
 
         #copynode = Copy()
@@ -177,12 +178,12 @@ class DirectImageCommon(object):
         # Process all images with the fitted flat
         # FIXME: not sure
         for frame in frames:
-            self.correct_superflat(frame, flatdata)
+            self.correct_superflat(frame, flatdata, iter=iter, save=save)
         return frames
             
     def correct_superflat(self, frame, fitted, iter=0, save=False):
         
-        frame.flat_corrected = name_skyflat_proc(frame.label, iter)
+        frame.flat_corrected = name_skyflat_proc(frame.baselabel, iter)
         
         if save:
             shutil.copyfile(frame.resized_base, frame.flat_corrected)
@@ -204,23 +205,23 @@ class DirectImageCommon(object):
         try:
             filelist = []
             data = []
-            for image in frames:
-                _logger.debug('Iter %d, opening resized image %s', iter, image.resized_base)
-                hdulist = pyfits.open(image.resized_base, memmap=True, mode='readonly')
+            for frame in frames:
+                _logger.debug('Iter %d, opening resized frame %s', iter, frame.resized_base)
+                hdulist = pyfits.open(frame.resized_base, memmap=True, mode='readonly')
                 filelist.append(hdulist)
-                data.append(hdulist['primary'].data[image.valid_region])
+                data.append(hdulist['primary'].data[frame.valid_region])
 
-            scales = [image.median_scale for image in frames]
+            scales = [frame.median_scale for frame in frames]
             
             masks = None
             if segmask is not None:
-                masks = [segmask[image.valid_region] for image in frames]
+                masks = [segmask[frame.valid_region] for frame in frames]
                 
-            _logger.debug('Iter %d, combining %d images', iter, len(data))
+            _logger.debug('Iter %d, combining %d frames', iter, len(data))
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, 
                                                     blank=1.0 / scales[0])            
         finally:
-            _logger.debug('Iter %d, closing resized images and mask', iter)
+            _logger.debug('Iter %d, closing resized frames and mask', iter)
             for fileh in filelist:               
                 fileh.close()            
 
@@ -251,7 +252,7 @@ class DirectImageCommon(object):
             _logger.debug('median value of %s is %f', frame.resized_base, frame.median_scale)
         return frames
         
-    def resize(self, frames, baseshape, offsetsp, finalshape, itr=0):
+    def resize(self, frames, baseshape, offsetsp, finalshape, scale=1, itr=0):
         _logger.info('Resizing images and masks')            
         
         for frame, rel_offset in zip(frames, offsetsp):
@@ -261,20 +262,20 @@ class DirectImageCommon(object):
             # Relative offset
             frame.rel_offset = rel_offset
             # names of frame and mask
-            imgn, maskn = name_redimensioned_images(frame.label, itr)
+            imgn, maskn = name_redimensioned_images(frame.baselabel, itr)
             frame.resized_base = imgn
             frame.resized_mask = maskn
             
             _logger.debug('%s, valid region is %s, relative offset is %s', frame.label, 
                           custom_region_to_str(region), rel_offset)
-            self.resize_image_and_mask(frame, finalshape, imgn, maskn)
+            self.resize_image_and_mask(frame, finalshape, imgn, maskn, scale)
 
         return frames
 
-    def resize_image_and_mask(self, image, finalshape, imgn, maskn):
-        _logger.info('Resizing image %s', image.label)
+    def resize_image_and_mask(self, image, finalshape, imgn, maskn, scale):
+        _logger.info('Resizing image %s, subpix x%i', image.label, scale)
         #resize_fits(image.base, imgn, finalshape, image.region)
-        resize_fits(image.label, imgn, finalshape, image.valid_region)
+        resize_fits(image.label, imgn, finalshape, image.valid_region, scale=scale)
 
-        _logger.info('Resizing mask %s', image.label)
-        #resize_fits(image.label+'mask', maskn, finalshape, image.region, fill=1)
+        _logger.info('Resizing mask %s, subpix x%i', image.label, scale)
+        #resize_fits(image.label+'mask', maskn, finalshape, image.region, fill=1, scale=scale)
