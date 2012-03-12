@@ -22,7 +22,7 @@
 __all__ = ['find_recipe']
 
 from .auxiliary import BiasRecipe, DarkRecipe, IntensityFlatRecipe
-from .image import StareImageRecipe, DitheredImageRecipe
+from .image import StareImageRecipe, DitheredImageRecipe, MicroditheredImageRecipe
 
 # equivalence
 _equiv = {
@@ -69,7 +69,7 @@ _equiv_class = {
     'stare_image': StareImageRecipe,
     'nb_image': 'image:Recipe',
     'dithered_image': DitheredImageRecipe,
-    'microdithered_image':'image:Recipe',
+    'microdithered_image': MicroditheredImageRecipe,
     'mosaiced_image': 'image:Recipe',
     'stare_spectra': 'mos:Recipe',
     'dn_spectra': 'mos:Recipe',
