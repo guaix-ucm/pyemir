@@ -142,11 +142,12 @@ class MicroditheredImageRecipe(RecipeBase):
                   'Polynomial for non-linearity correction'),
         Parameter('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
-        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
-        # FIXME: this parameter is optional 
+        Parameter('extinction', 0.0, 'Mean atmospheric extinction'), 
         Parameter('sources', None, 
                   'List of x, y coordinates to measure FWHM',
-                  soft=True)
+                  soft=True),
+        Parameter('subpixelization', 4, 
+                  'Number of subdivisions in each pixel side')
     ]
 
     def __init__(self):
