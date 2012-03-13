@@ -37,7 +37,7 @@ import numdisplay.zscale
 from scipy.spatial import cKDTree as KDTree
 
 import numina.image
-from numina.image import get_image_shape, resize_fits
+from numina.image import get_hdu_shape, resize_fits
 from numina.flow import SerialFlow
 from numina.image.background import create_background_map
 from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
