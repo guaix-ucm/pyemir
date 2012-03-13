@@ -30,10 +30,20 @@ import numpy
 import pyfits
 import pywcs
 
+from numina.recipes import RecipeBase, Parameter, provides, DataFrame
+from numina.flow import SerialFlow, Node
+from numina.flow.node import IdNode
+from numina.flow.processing import BiasCorrector, FlatFieldCorrector
+from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
+from numina.array import combine_shape
+
 from numina.image import get_image_shape, resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield
 from numina.array import subarray_match
 from numina.array.combine import flatcombine, median, quantileclip
+
+from emir.dataproducts import SourcesCatalog
+from emir.dataproducts import create_result
 
 _logger = logging.getLogger('emir.recipes')
 
@@ -103,8 +113,136 @@ def offsets_from_wcs(frames, pixref):
 
     return result
 
+class RecipeParameters(object):
+    pass
 
 class DirectImageCommon(object):
+    
+    # States
+    BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
+    
+    logger = _logger
+    
+    
+    def process(self, obresult, baseshape, amplifiers, subpix=1, 
+                store_intermediate=True):
+        
+        recipe_result = {'products' : []}
+        
+        if store_intermediate:
+            recipe_result['intermediate'] = []
+                
+        subpixshape = tuple((side * subpix) for side in baseshape)   
+        
+        # Reference pixel in the center of the frame
+        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2)
+        
+        _logger.info('Computing offsets from WCS information')
+        labels = [img.label for img in obresult.frames]
+        list_of_offsets = offsets_from_wcs(labels, refpix)
+        
+        # Insert pixel offsets between images
+        for img, off in zip(obresult.frames, list_of_offsets):
+            img.baselabel = os.path.splitext(img.label)[0]
+            # Insert pixel offsets between images
+            img.pix_offset = off            
+            img.objmask_data = None
+            img.valid_science = True
+            _logger.debug('Frame %s, offset=%s', img.label, off)
+        
+        # States
+        BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
+        
+        state = BASIC
+        step = 0
+        
+        while True:
+            if state == BASIC:    
+                _logger.info('Basic processing')
+
+                # Basic processing
+                
+                # FIXME: add this
+                # bpm = pyfits.getdata(self.parameters['master_bpm'])
+                if self.parameters['master_bias']:
+                    mbias = pyfits.getdata(self.parameters['master_bias'])
+                    bias_corrector = BiasCorrector(mbias)
+                else:
+                    bias_corrector = IdNode()
+            
+                mdark = pyfits.getdata(self.parameters['master_dark'])
+                dark_corrector = DarkCorrector(mdark)
+                nl_corrector = NonLinearityCorrector(self.parameters['nonlinearity'])
+        
+                # FIXME
+                mflat = pyfits.getdata(self.parameters['master_intensity_ff'])
+                ff_corrector = FlatFieldCorrector(mflat)  
+                  
+                basicflow = SerialFlow([bias_corrector, 
+                                        dark_corrector, 
+                                        nl_corrector,
+                                        ff_corrector
+                                        ])
+
+                for img in obresult.frames:
+                    with pyfits.open(img.label, mode='update') as hdulist:
+                            hdulist = basicflow(hdulist)
+                  
+                          
+                state = PRERED
+            elif state == PRERED:
+                
+                _logger.info('Computing relative offsets')
+                offsets = [(frame.pix_offset * subpix) for frame in obresult.frames]
+                offsets = numpy.round(offsets).astype('int')        
+                finalshape, offsetsp = combine_shape(subpixshape, offsets)
+                _logger.info('Shape of resized array is %s', finalshape)
+                
+                # Resizing images              
+                self.resize(obresult.frames, subpixshape, offsetsp, finalshape, 
+                            scale=subpix)
+                
+                # superflat
+                _logger.info('Iter %d, superflat correction (SF)', step)
+                # Compute scale factors (median)           
+                self.update_scale_factors(obresult.frames)
+
+                # Create superflat
+                superflat = self.compute_superflat(obresult.frames, amplifiers)
+            
+                # Apply superflat
+                images_info = self.apply_superflat(obresult.frames, superflat)
+
+                _logger.info('Simple sky correction')
+                for image in obresult.frames:            
+                    self.compute_simple_sky(image)
+                
+                # Combining the images
+                _logger.info("Iter %d, Combining the images", step)
+                
+                sf_data = self.combine_images(obresult.frames)
+                      
+                _logger.info('Iter %d, finished', step)
+
+                state = CHECKRED                
+            else:
+                break
+
+        primary_headers = {'FILENAME': 'result.fits',}
+        
+        result = create_result(sf_data[0], headers=primary_headers,
+                                variance=sf_data[1], 
+                                exmap=sf_data[2].astype('int16'))
+        
+        _logger.info("Final image created")
+
+           
+        recipe_result['products'] = [DataFrame(result), SourcesCatalog()]
+        
+        return recipe_result    
+    
+    
+    
     
     def compute_simple_sky(self, frame, itr=0, save=False):
         

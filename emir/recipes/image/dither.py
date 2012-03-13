@@ -63,7 +63,7 @@ from .shared import name_skyflat, name_skyflat_proc
 from .shared import name_redimensioned_images, name_object_mask
 from .shared import name_skybackground, name_skybackgroundmask
 from .shared import name_skysub_proc, name_segmask
-
+from .shared import DirectImageCommon
 
 #import .instrument.detector as detector
 
