@@ -57,7 +57,7 @@ import numina.util.sexcatalog as sexcatalog
 
 from emir.dataproducts import create_result, MasterBias, MasterDark 
 from emir.dataproducts import MasterIntensityFlat, MasterBadPixelMask
-from emir.dataproducts import SourcesCatalog
+from emir.dataproducts import SourcesCatalog, NonLinearityCalibration
  
 from .shared import name_skyflat, name_skyflat_proc
 from .shared import name_redimensioned_images, name_object_mask
@@ -107,7 +107,7 @@ class ImageInformation(object):
     
     Selected metadata from an image. It stores also processing status'''
     def __init__(self):
-        self.label = ''
+        self.baselabel = ''
         self.airmass = 0
         self.mjd = 0
         self.exposure = 0 # Exposure time
@@ -195,17 +195,13 @@ class DitheredImageRecipe(RecipeBase):
         Parameter('master_bias', MasterBias, 'Master bias image'),
         Parameter('master_dark', MasterDark, 'Master dark image'),
         Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        Parameter('master_flat', MasterIntensityFlat, 'Master flat field image'),
-        # FIXME: this is candidate to be a non Image Product
-        Parameter('nonlinearity', [1.0, 0.0], 'Polynomial for non-linearity correction'),
+        Parameter('master_intensity_ff', MasterIntensityFlat, 
+                  'Master intensity flatfield'),
+        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction'),
         Parameter('iterations', 4, 'Iterations of the recipe'),
         Parameter('sky_images', 5, 'Images used to estimate the background before and after current image'),
         Parameter('sky_images_sep_time', 10, 'Maximum separation time between consecutive sky images in minutes'),
         Parameter('resultname', 'result.fits', 'Name of the output image'),
-#        Parameter('airmasskey', 'AIRMASS', 'Name of airmass header keyword'),
-#        Parameter('exposurekey', 'EXPOSED', 'Name of exposure header keyword'),
-#        Parameter('juliandatekey', 'MJD-OBS', 'Julian date keyword'),
-#        Parameter('detector', 'Hawaii2Detector', 'Name of the class containing the detector geometry'),
         Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
         Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
     ]    
@@ -229,56 +225,26 @@ class DitheredImageRecipe(RecipeBase):
             hdulist.writeto(os.path.basename(image.base), clobber=True)
         finally:
             hdulist.close()
-
-    def compute_simple_sky(self, image):
-        
-        dst = name_skysub_proc(image.label, self.iter)
-        prev = image.lastname
-        shutil.copy(image.lastname, dst)
-        image.lastname = dst
-        
-        hdulist1 = pyfits.open(image.lastname, mode='update')
-        try:
-            data = hdulist1['primary'].data
-            d = data[image.region]
-            
-            if image.objmask_data is not None:
-                m = image.objmask_data[image.region]
-                sky = numpy.median(d[m == 0])
-            else:
-                _logger.debug('object mask empty')
-                sky = numpy.median(d)
-
-            _logger.debug('median sky value is %f', sky)
-            image.median_sky = sky
-            
-            _logger.info('Iter %d, SC: subtracting sky to image %s', 
-                         self.iter, prev)
-            region = image.region
-            data[region] -= sky
-            
-        finally:
-            hdulist1.close()
             
     def compute_advanced_sky2(self, image, objmask):
         '''Create a background map of the image and subtract it.'''
         # Create a copy of the image
-        dst = name_skysub_proc(image.label, self.iter)
+        dst = name_skysub_proc(image.baselabel, self.iter)
         shutil.copy(image.lastname, dst)
         image.lastname = dst
         
         data = pyfits.getdata(image.lastname)
         sky, _ = create_background_map(data[image.region], 128, 128)
         
-        _logger.info('Computing advanced sky for %s', image.label)            
+        _logger.info('Computing advanced sky for %s', image.baselabel)            
         
         hdulist = pyfits.open(image.lastname, mode='update')
         try:
             d = hdulist['primary'].data[image.region]
         
             _logger.info('Iter %d, SC: subtracting sky to image %s', 
-                     self.iter, image.label)
-            name = name_skybackground(image.label, self.iter)
+                     self.iter, image.baselabel)
+            name = name_skybackground(image.baselabel, self.iter)
             pyfits.writeto(name, sky, clobber=True)
             d -= sky
         
@@ -288,7 +254,7 @@ class DitheredImageRecipe(RecipeBase):
     def compute_advanced_sky(self, image, objmask):
         '''Create a background map from nearby images.'''
         # Create a copy of the image
-        dst = name_skysub_proc(image.label, self.iter)
+        dst = name_skysub_proc(image.baselabel, self.iter)
         shutil.copy(image.lastname, dst)
         image.lastname = dst
         
@@ -296,7 +262,7 @@ class DitheredImageRecipe(RecipeBase):
         max_time_sep = self.parameters['sky_images_sep_time'] / 1440.0
         thistime = image.mjd
         
-        _logger.info('Iter %d, SC: computing advanced sky for %s', self.iter, image.label)
+        _logger.info('Iter %d, SC: computing advanced sky for %s', self.iter, image.baselabel)
         desc = []
         data = []
         masks = []
@@ -308,8 +274,8 @@ class DitheredImageRecipe(RecipeBase):
                 time_sep = abs(thistime - i.mjd)
                 if time_sep > max_time_sep:
                     _logger.warn('image %s is separated from %s more than %dm', 
-                                 i.label, image.label, self.parameters['sky_images_sep_time'])
-                    _logger.warn('image %s will not be used', i.label)
+                                 i.baselabel, image.baselabel, self.parameters['sky_images_sep_time'])
+                    _logger.warn('image %s will not be used', i.baselabel)
                     continue
                 filename = i.flat_corrected
                 hdulist = pyfits.open(filename, mode='readonly')
@@ -331,7 +297,7 @@ class DitheredImageRecipe(RecipeBase):
                 sky[binmask] = sky[num != 0].mean()
                 # To continue we interpolate over the patches
                 #fixpix2(sky, binmask, out=sky, iterations=1)
-                name = name_skybackgroundmask(image.label, self.iter)
+                name = name_skybackgroundmask(image.baselabel, self.iter)
                 pyfits.writeto(name, binmask.astype('int16'), clobber=True)
                 
             hdulist1 = pyfits.open(image.lastname, mode='update')
@@ -345,7 +311,7 @@ class DitheredImageRecipe(RecipeBase):
                 self.figure_image(sky, image)                 
                 d -= sky
                 
-                name = name_skybackground(image.label, self.iter)
+                name = name_skybackground(image.baselabel, self.iter)
                 pyfits.writeto(name, sky, clobber=True)
                 _logger.info('Iter %d, SC: subtracting sky %s to image %s', 
                              self.iter, name, image.lastname)                
@@ -585,7 +551,7 @@ class DitheredImageRecipe(RecipeBase):
         newheader = hdulist['primary'].header.copy()
         hdulist.close()
         phdu = pyfits.PrimaryHDU(newdata, newheader)
-        image.lastname = name_skyflat_proc(image.label, self.iter)
+        image.lastname = name_skyflat_proc(image.baselabel, self.iter)
         image.flat_corrected = image.lastname
         phdu.writeto(image.lastname, clobber=True)
         
@@ -656,9 +622,9 @@ class DitheredImageRecipe(RecipeBase):
         error = numpy.empty((len(images_info), OBJS_I_KEEP))
         
         for idx, image in enumerate(images_info):
-            imagename = name_skysub_proc(image.label, self.iter)
+            imagename = name_skysub_proc(image.baselabel, self.iter)
 
-            sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (image.label, self.iter)
+            sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (image.baselabel, self.iter)
 
             # Lauch SExtractor on a FITS file
             # om double image mode
@@ -684,16 +650,16 @@ class DitheredImageRecipe(RecipeBase):
         # Actions to carry over images when checking the flux
         # of the objects in different images
         def warn_action(img):
-            _logger.warn('Image %s has low flux in objects', img.label)
+            _logger.warn('Image %s has low flux in objects', img.baselabel)
             img.valid_science = True
         
         def reject_action(img):
             img.valid_science = False
-            _logger.info('Image %s rejected, has low flux in objects', img.label)            
+            _logger.info('Image %s rejected, has low flux in objects', img.baselabel)            
             pass
         
         def default_action(img):
-            _logger.info('Image %s accepted, has correct flux in objects', img.label)      
+            _logger.info('Image %s accepted, has correct flux in objects', img.baselabel)      
             img.valid_science = True
         
         # Actions
@@ -761,9 +727,9 @@ class DitheredImageRecipe(RecipeBase):
         master = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog[:OBJS_I_KEEP]]
         
         for image in images_info:
-            imagename = name_skysub_proc(image.label, self.iter)
+            imagename = name_skysub_proc(image.baselabel, self.iter)
 
-            sex.config['CATALOG_NAME'] = 'catalogue-self-%s-i%01d.cat' % (image.label, self.iter)
+            sex.config['CATALOG_NAME'] = 'catalogue-self-%s-i%01d.cat' % (image.baselabel, self.iter)
 
             # Lauch SExtractor on a FITS file
             # on double image mode
@@ -950,7 +916,7 @@ class DitheredImageRecipe(RecipeBase):
                 noffset = None
             image.region = region
             image.noffset = noffset
-            imgn, maskn = name_redimensioned_images(image.label, self.iter)
+            imgn, maskn = name_redimensioned_images(image.baselabel, self.iter)
             image.resized_base = imgn
             image.resized_mask = maskn
                     
@@ -959,10 +925,10 @@ class DitheredImageRecipe(RecipeBase):
         return images_info
         
     def resize_image_and_mask(self, image, finalshape, imgn, maskn):
-        _logger.info('Resizing image %s', image.label)
+        _logger.info('Resizing image %s', image.baselabel)
         resize_fits(image.base, imgn, finalshape, image.region)
 
-        _logger.info('Resizing mask %s', image.label)
+        _logger.info('Resizing mask %s', image.baselabel)
         resize_fits(image.mask, maskn, finalshape, image.region, fill=1)
 
 
@@ -999,7 +965,8 @@ class DitheredImageRecipe(RecipeBase):
         for image, offset in obresult.frames:
             # Label
             ii = ImageInformation()
-            ii.label = os.path.splitext(image)[0]
+            ii.baselabel = os.path.splitext(image)[0]
+            ii.label = image
             ii.base = image
             ii.mask = self.parameters['master_bpm']
             ii.offset = offset
@@ -1072,7 +1039,7 @@ class DitheredImageRecipe(RecipeBase):
 
                 _logger.info('Simple sky correction')
                 for image in images_info:            
-                    self.compute_simple_sky(image)
+                    self.compute_simple_sky(image, self.iter, save=True)
                 
                 # Combining the images
                 _logger.info("Iter %d, Combining the images", self.iter)
@@ -1108,7 +1075,7 @@ class DitheredImageRecipe(RecipeBase):
                 # Update objects mask
                 # For all images    
                 for image in images_info:
-                    image.objmask = name_object_mask(image.label, self.iter)
+                    image.objmask = name_object_mask(image.baselabel, self.iter)
                     _logger.info('Iter %d, create object mask %s', self.iter,  image.objmask)                 
                     image.objmask_data = objmask[image.region]
                     pyfits.writeto(image.objmask, image.objmask_data, clobber=True)

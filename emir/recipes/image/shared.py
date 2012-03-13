@@ -47,36 +47,36 @@ from emir.dataproducts import create_result
 
 _logger = logging.getLogger('emir.recipes')
 
-def name_redimensioned_images(label, iteration, ext='.fits'):
+def name_redimensioned_images(label, step, ext='.fits'):
     dn = '%s_r%s' % (label, ext)
     mn = '%s_mr%s' % (label, ext)
     return dn, mn
 
-def name_object_mask(label, iteration, ext='.fits'):
-    return '%s_mro_i%01d%s' % (label, iteration, ext)
+def name_object_mask(label, step, ext='.fits'):
+    return '%s_mro_i%01d%s' % (label, step, ext)
 
-def name_skybackground(label, iteration, ext='.fits'):
-    dn = '%s_sky_i%01d%s' % (label, iteration, ext)
+def name_skybackground(label, step, ext='.fits'):
+    dn = '%s_sky_i%01d%s' % (label, step, ext)
     return dn
 
-def name_skybackgroundmask(label, iteration, ext='.fits'):
-    dn = '%s_skymask_i%01d%s' % (label, iteration, ext)
+def name_skybackgroundmask(label, step, ext='.fits'):
+    dn = '%s_skymask_i%01d%s' % (label, step, ext)
     return dn
 
-def name_skysub_proc(label, iteration, ext='.fits'):
-    dn = '%s_rfs_i%01d%s' % (label, iteration, ext)
+def name_skysub_proc(label, step, ext='.fits'):
+    dn = '%s_rfs_i%01d%s' % (label, step, ext)
     return dn
 
-def name_skyflat(label, iteration, ext='.fits'):
-    dn = 'superflat_%s_i%01d%s' % (label, iteration, ext)
+def name_skyflat(label, step, ext='.fits'):
+    dn = 'superflat_%s_i%01d%s' % (label, step, ext)
     return dn
 
-def name_skyflat_proc(label, iteration, ext='.fits'):
-    dn = '%s_rf_i%01d%s' % (label, iteration, ext)
+def name_skyflat_proc(label, step, ext='.fits'):
+    dn = '%s_rf_i%01d%s' % (label, step, ext)
     return dn
 
-def name_segmask(iteration, ext='.fits'):
-    return "check_i%01d%s" % (iteration, ext)
+def name_segmask(step, ext='.fits'):
+    return "check_i%01d%s" % (step, ext)
 
 
 def offsets_from_wcs(frames, pixref):
@@ -113,14 +113,8 @@ def offsets_from_wcs(frames, pixref):
 
     return result
 
-class RecipeParameters(object):
-    pass
-
 class DirectImageCommon(object):
-    
-    # States
-    BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
-    
+        
     logger = _logger
     
     
@@ -203,7 +197,7 @@ class DirectImageCommon(object):
                             scale=subpix)
                 
                 # superflat
-                _logger.info('Iter %d, superflat correction (SF)', step)
+                _logger.info('Step %d, superflat correction (SF)', step)
                 # Compute scale factors (median)           
                 self.update_scale_factors(obresult.frames)
 
@@ -218,11 +212,11 @@ class DirectImageCommon(object):
                     self.compute_simple_sky(image)
                 
                 # Combining the images
-                _logger.info("Iter %d, Combining the images", step)
+                _logger.info("Step %d, Combining the images", step)
                 
                 sf_data = self.combine_images(obresult.frames)
                       
-                _logger.info('Iter %d, finished', step)
+                _logger.info('Step %d, finished', step)
 
                 state = CHECKRED                
             else:
@@ -244,9 +238,9 @@ class DirectImageCommon(object):
     
     
     
-    def compute_simple_sky(self, frame, itr=0, save=False):
+    def compute_simple_sky(self, frame, step=0, save=False):
         
-        dst = name_skysub_proc(frame.baselabel, itr)
+        dst = name_skysub_proc(frame.baselabel, step)
         prev = frame.lastname
         
         if save:
@@ -271,21 +265,21 @@ class DirectImageCommon(object):
             _logger.debug('median sky value is %f', sky)
             frame.median_sky = sky
             
-            _logger.info('Iter %d, SC: subtracting sky to frame %s', 
-                         itr, prev)
+            _logger.info('Step %d, SC: subtracting sky to frame %s', 
+                         step, prev)
             data[frame.valid_region] -= sky
 
     def combine_images(self, frames, out=None, itr=0):
-        _logger.debug('Iter %d, opening sky-subtracted images', itr)
+        _logger.debug('Step %d, opening sky-subtracted images', itr)
 
         def fits_open(name):
             '''Open FITS with memmap in readonly mode'''
             return pyfits.open(name, mode='readonly', memmap=True)
 
         imgslll = [fits_open(image.lastname) for image in frames if image.valid_science]
-        #_logger.debug('Iter %d, opening mask images', itr)
+        #_logger.debug('Step %d, opening mask images', itr)
         #mskslll = [fun(image.resized_mask) for image in frames if image.valid_science]
-        _logger.debug('Iter %d, combining %d images', itr, len(imgslll))
+        _logger.debug('Step %d, combining %d images', itr, len(imgslll))
         try:
             extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in frames if image.valid_science]
             data = [i['primary'].data for i in imgslll]
@@ -302,26 +296,23 @@ class DirectImageCommon(object):
             return out
             
         finally:
-            _logger.debug('Iter %d, closing sky-subtracted images', itr)
+            _logger.debug('Step %d, closing sky-subtracted images', itr)
             map(lambda x: x.close(), imgslll)
-            #_logger.debug('Iter %d, closing mask images', 0)
+            #_logger.debug('Step %d, closing mask images', 0)
             #map(lambda x: x.close(), mskslll)
             
-    def apply_superflat(self, frames, flatdata, iter=0, save=False):
-        _logger.info("Iter %d, SF: apply superflat", iter)
-
-        #copynode = Copy()
-        #ffcor = FlatFieldCorrector(flatdata=flatdata)
+    def apply_superflat(self, frames, flatdata, step=0, save=False):
+        _logger.info("Step %d, SF: apply superflat", step)
 
         # Process all images with the fitted flat
         # FIXME: not sure
         for frame in frames:
-            self.correct_superflat(frame, flatdata, iter=iter, save=save)
+            self.correct_superflat(frame, flatdata, step=step, save=save)
         return frames
             
-    def correct_superflat(self, frame, fitted, iter=0, save=False):
+    def correct_superflat(self, frame, fitted, step=0, save=False):
         
-        frame.flat_corrected = name_skyflat_proc(frame.baselabel, iter)
+        frame.flat_corrected = name_skyflat_proc(frame.baselabel, step)
         
         if save:
             shutil.copyfile(frame.resized_base, frame.flat_corrected)
@@ -329,7 +320,7 @@ class DirectImageCommon(object):
             print frame.resized_base, frame.flat_corrected
             os.rename(frame.resized_base, frame.flat_corrected)
         
-        _logger.info("Iter %d, SF: apply superflat to image %s", iter, frame.flat_corrected)
+        _logger.info("Step %d, SF: apply superflat to image %s", step, frame.flat_corrected)
         with pyfits.open(frame.flat_corrected, mode='update') as hdulist:
             data = hdulist['primary'].data
             datar = data[frame.valid_region]
@@ -338,13 +329,13 @@ class DirectImageCommon(object):
         # Copy primary image extension
         frame.lastname = frame.flat_corrected            
             
-    def compute_superflat(self, frames, amplifiers, segmask=None, iter=0):
-        _logger.info("Iter %d, SF: combining the images without offsets", iter)
+    def compute_superflat(self, frames, amplifiers, segmask=None, step=0):
+        _logger.info("Step %d, SF: combining the images without offsets", step)
         try:
             filelist = []
             data = []
             for frame in frames:
-                _logger.debug('Iter %d, opening resized frame %s', iter, frame.resized_base)
+                _logger.debug('Step %d, opening resized frame %s', step, frame.resized_base)
                 hdulist = pyfits.open(frame.resized_base, memmap=True, mode='readonly')
                 filelist.append(hdulist)
                 data.append(hdulist['primary'].data[frame.valid_region])
@@ -355,11 +346,11 @@ class DirectImageCommon(object):
             if segmask is not None:
                 masks = [segmask[frame.valid_region] for frame in frames]
                 
-            _logger.debug('Iter %d, combining %d frames', iter, len(data))
+            _logger.debug('Step %d, combining %d frames', step, len(data))
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, 
                                                     blank=1.0 / scales[0])            
         finally:
-            _logger.debug('Iter %d, closing resized frames and mask', iter)
+            _logger.debug('Step %d, closing resized frames and mask', step)
             for fileh in filelist:               
                 fileh.close()            
 
@@ -374,11 +365,11 @@ class DirectImageCommon(object):
         
         # Auxilyary data
         sfhdu = pyfits.PrimaryHDU(sf_data)            
-        sfhdu.writeto(name_skyflat('comb', iter), clobber=True)
+        sfhdu.writeto(name_skyflat('comb', step), clobber=True)
         return sf_data
         
-    def update_scale_factors(self, frames, iter=0):
-        _logger.info('Iter %d, SF: computing scale factors', iter)
+    def update_scale_factors(self, frames, step=0):
+        _logger.info('Step %d, SF: computing scale factors', step)
         # FIXME: not sure
         for frame in frames:
             region = frame.valid_region
