@@ -33,7 +33,6 @@ from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import NonLinearityCalibration
 from emir.dataproducts import SourcesCatalog
-from emir.dataproducts import create_result
 
 from .stare import StareImageRecipe
 from .dither import DitheredImageRecipe

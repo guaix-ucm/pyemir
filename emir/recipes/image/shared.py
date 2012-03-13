@@ -30,6 +30,7 @@ import numpy
 import pyfits
 import pywcs
 
+from numina import __version__
 from numina.recipes import RecipeBase, Parameter, provides, DataFrame
 from numina.flow import SerialFlow, Node
 from numina.flow.node import IdNode
@@ -43,7 +44,6 @@ from numina.array import subarray_match
 from numina.array.combine import flatcombine, median, quantileclip
 
 from emir.dataproducts import SourcesCatalog
-from emir.dataproducts import create_result
 
 _logger = logging.getLogger('emir.recipes')
 
@@ -224,15 +224,22 @@ class DirectImageCommon(object):
             else:
                 break
 
-        primary_headers = {'FILENAME': 'result.fits',}
+        hdu = pyfits.PrimaryHDU(sf_data[0])                
+        hdr = hdu.header
+        hdr.update('NUMXVER', __version__, 'Numina package version')
+        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
+        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
         
-        result = create_result(sf_data[0], headers=primary_headers,
-                                variance=sf_data[1], 
-                                exmap=sf_data[2].astype('int16'))
+        hdr.update('FILENAME', 'result.fits')
+        hdr.update('IMGTYP', 'TARGET', 'Image type')
+        hdr.update('NUMTYP', 'TARGET', 'Data product type')
+        
+        varhdu = pyfits.ImageHDU(sf_data[1], name='VARIANCE')
+        num = pyfits.ImageHDU(sf_data[2], name='MAP')
+
+        result = pyfits.HDUList([hdu, varhdu, num])        
         
         _logger.info("Final image created")
-
-           
         recipe_result['products'] = [DataFrame(result), SourcesCatalog()]
         
         return recipe_result    
@@ -318,7 +325,6 @@ class DirectImageCommon(object):
         if save:
             shutil.copyfile(frame.resized_base, frame.flat_corrected)
         else:
-            print frame.resized_base, frame.flat_corrected
             os.rename(frame.resized_base, frame.flat_corrected)
         
         _logger.info("Step %d, SF: apply superflat to image %s", step, frame.flat_corrected)
@@ -403,7 +409,7 @@ class DirectImageCommon(object):
 
     def resize_frame_and_mask(self, frame, finalshape, imgn, maskn, scale):
         _logger.info('Resizing frame %s, subpix x%i', frame.label, scale)
-        resize_fits(image.label, imgn, finalshape, image.valid_region, 
+        resize_fits(frame.label, imgn, finalshape, frame.valid_region, 
                     scale=scale)
 
         _logger.info('Resizing mask %s, subpix x%i', frame.label, scale)
