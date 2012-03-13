@@ -60,7 +60,7 @@ from emir.dataproducts import MasterIntensityFlat, MasterBadPixelMask
 from emir.dataproducts import SourcesCatalog, NonLinearityCalibration
  
 from .shared import name_skyflat, name_skyflat_proc
-from .shared import name_redimensioned_images, name_object_mask
+from .shared import name_redimensioned_frames, name_object_mask
 from .shared import name_skybackground, name_skybackgroundmask
 from .shared import name_skysub_proc, name_segmask
 from .shared import DirectImageCommon
@@ -969,7 +969,7 @@ class DitheredImageRecipe(RecipeBase):
                 # Combining the images
                 _logger.info("Iter %d, Combining the images", self.iter)
                 # FIXME: only for science
-                sf_data = self.combine_images(images_info, self.iter)
+                sf_data = self.combine_frames(images_info, self.iter)
             
                 self.figures_after_combine(sf_data)
                       
@@ -1026,7 +1026,7 @@ class DitheredImageRecipe(RecipeBase):
                 # Combining the images
                 _logger.info("Iter %d, Combining the images", self.iter)
                 # FIXME: only for science
-                sf_data = self.combine_images(images_info, self.iter)
+                sf_data = self.combine_frames(images_info, self.iter)
                 self.figures_after_combine(sf_data)
 
                 if self.iter >= niteration:

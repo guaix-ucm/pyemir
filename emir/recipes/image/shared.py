@@ -47,7 +47,7 @@ from emir.dataproducts import SourcesCatalog
 
 _logger = logging.getLogger('emir.recipes')
 
-def name_redimensioned_images(label, step, ext='.fits'):
+def name_redimensioned_frames(label, step, ext='.fits'):
     dn = '%s_r%s' % (label, ext)
     mn = '%s_mr%s' % (label, ext)
     return dn, mn
@@ -105,8 +105,8 @@ def offsets_from_wcs(frames, pixref):
 
     result[0] = pixref[0] - pixref[0]
 
-    for idx, img in enumerate(frames[1:]):
-        with pyfits.open(img) as hdulist:
+    for idx, frame in enumerate(frames[1:]):
+        with pyfits.open(frame) as hdulist:
             wcs = pywcs.WCS(hdulist[0].header)
             pixval = wcs.wcs_sky2pix(skyref, 1)
             result[idx + 1] = pixval[0] - pixref[0]
@@ -122,7 +122,10 @@ class DirectImageCommon(object):
                 store_intermediate=True):
         
         recipe_result = {'products' : []}
-        
+
+        # Convert channels to slices        
+        amplifiers = [(slice(*ch0), slice(*ch1)) for ch0, ch1 in amplifiers] 
+
         if store_intermediate:
             recipe_result['intermediate'] = []
                 
@@ -132,18 +135,18 @@ class DirectImageCommon(object):
         refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2)
         
         _logger.info('Computing offsets from WCS information')
-        labels = [img.label for img in obresult.frames]
+        labels = [frame.label for frame in obresult.frames]
         list_of_offsets = offsets_from_wcs(labels, refpix)
         
-        # Insert pixel offsets between images
-        for img, off in zip(obresult.frames, list_of_offsets):
-            img.baselabel = os.path.splitext(img.label)[0]
-            img.mask = self.parameters['master_bpm']
-            # Insert pixel offsets between images
-            img.pix_offset = off            
-            img.objmask_data = None
-            img.valid_science = True
-            _logger.debug('Frame %s, offset=%s', img.label, off)
+        # Insert pixel offsets between frames
+        for frame, off in zip(obresult.frames, list_of_offsets):
+            frame.baselabel = os.path.splitext(frame.label)[0]
+            frame.mask = self.parameters['master_bpm']
+            # Insert pixel offsets between frames
+            frame.pix_offset = off            
+            frame.objmask_data = None
+            frame.valid_science = True
+            _logger.debug('Frame %s, offset=%s', frame.label, off)
         
         # States
         BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
@@ -180,8 +183,8 @@ class DirectImageCommon(object):
                                         ff_corrector
                                         ])
 
-                for img in obresult.frames:
-                    with pyfits.open(img.label, mode='update') as hdulist:
+                for frame in obresult.frames:
+                    with pyfits.open(frame.label, mode='update') as hdulist:
                             hdulist = basicflow(hdulist)
                   
                           
@@ -194,7 +197,7 @@ class DirectImageCommon(object):
                 finalshape, offsetsp = combine_shape(subpixshape, offsets)
                 _logger.info('Shape of resized array is %s', finalshape)
                 
-                # Resizing images              
+                # Resizing frames              
                 self.resize(obresult.frames, subpixshape, offsetsp, finalshape, 
                             scale=subpix)
                 
@@ -207,16 +210,16 @@ class DirectImageCommon(object):
                 superflat = self.compute_superflat(obresult.frames, amplifiers)
             
                 # Apply superflat
-                images_info = self.apply_superflat(obresult.frames, superflat)
+                self.apply_superflat(obresult.frames, superflat)
 
                 _logger.info('Simple sky correction')
-                for image in obresult.frames:            
-                    self.compute_simple_sky(image)
+                for frame in obresult.frames:            
+                    self.compute_simple_sky(frame)
                 
-                # Combining the images
-                _logger.info("Step %d, Combining the images", step)
+                # Combining the frames
+                _logger.info("Step %d, Combining the frames", step)
                 
-                sf_data = self.combine_images(obresult.frames)
+                sf_data = self.combine_frames(obresult.frames)
                       
                 _logger.info('Step %d, finished', step)
 
@@ -239,7 +242,7 @@ class DirectImageCommon(object):
 
         result = pyfits.HDUList([hdu, varhdu, num])        
         
-        _logger.info("Final image created")
+        _logger.info("Final frame created")
         recipe_result['products'] = [DataFrame(result), SourcesCatalog()]
         
         return recipe_result    
@@ -278,20 +281,20 @@ class DirectImageCommon(object):
                          step, prev)
             data[frame.valid_region] -= sky
 
-    def combine_images(self, frames, out=None, step=0):
-        _logger.debug('Step %d, opening sky-subtracted images', step)
+    def combine_frames(self, frames, out=None, step=0):
+        _logger.debug('Step %d, opening sky-subtracted frames', step)
 
         def fits_open(name):
             '''Open FITS with memmap in readonly mode'''
             return pyfits.open(name, mode='readonly', memmap=True)
 
-        imgslll = [fits_open(image.lastname) for image in frames if image.valid_science]
-        _logger.debug('Step %d, opening mask images', step)
-        mskslll = [fits_open(image.resized_mask) for image in frames if image.valid_science]
-        _logger.debug('Step %d, combining %d images', step, len(imgslll))
+        frameslll = [fits_open(frame.lastname) for frame in frames if frame.valid_science]
+        _logger.debug('Step %d, opening mask frames', step)
+        mskslll = [fits_open(frame.resized_mask) for frame in frames if frame.valid_science]
+        _logger.debug('Step %d, combining %d frames', step, len(frameslll))
         try:
-            extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in frames if image.valid_science]
-            data = [i['primary'].data for i in imgslll]
+            extinc = [pow(10, -0.4 * frame.airmass * self.parameters['extinction']) for frame in frames if frame.valid_science]
+            data = [i['primary'].data for i in frameslll]
             masks = [i['primary'].data for i in mskslll]
             
             out = quantileclip(data, masks, scales=extinc, dtype='float32', out=out, fclip=0.1)
@@ -304,15 +307,15 @@ class DirectImageCommon(object):
             return out
             
         finally:
-            _logger.debug('Step %d, closing sky-subtracted images', step)
-            map(lambda x: x.close(), imgslll)
-            _logger.debug('Step %d, closing mask images', step)
+            _logger.debug('Step %d, closing sky-subtracted frames', step)
+            map(lambda x: x.close(), frameslll)
+            _logger.debug('Step %d, closing mask frames', step)
             map(lambda x: x.close(), mskslll)
             
     def apply_superflat(self, frames, flatdata, step=0, save=False):
         _logger.info("Step %d, SF: apply superflat", step)
 
-        # Process all images with the fitted flat
+        # Process all frames with the fitted flat
         # FIXME: not sure
         for frame in frames:
             self.correct_superflat(frame, flatdata, step=step, save=save)
@@ -333,11 +336,11 @@ class DirectImageCommon(object):
             datar = data[frame.valid_region]
             data[frame.valid_region] = correct_flatfield(datar, fitted)    
         
-        # Copy primary image extension
+        # Copy primary frame extension
         frame.lastname = frame.flat_corrected            
             
     def compute_superflat(self, frames, amplifiers, segmask=None, step=0):
-        _logger.info("Step %d, SF: combining the images without offsets", step)
+        _logger.info("Step %d, SF: combining the frames without offsets", step)
         try:
             filelist = []
             data = []
@@ -362,10 +365,11 @@ class DirectImageCommon(object):
                 fileh.close()            
 
         # We interpolate holes by channel
-        #for channel in amplifiers: 
-        #    mask = (sf_num[channel] == 0)
-        #    if numpy.any(mask):                    
-        #        fixpix2(sf_data[channel], mask, out=sf_data[channel])
+        _logger.debug('Step %d, interpolating holes by channel', step)
+        for channel in amplifiers:
+            mask = (sf_num[channel] == 0)
+            if numpy.any(mask):                    
+                fixpix2(sf_data[channel], mask, out=sf_data[channel])
 
         # Normalize, flat has mean = 1
         sf_data /= sf_data.mean()
@@ -388,7 +392,7 @@ class DirectImageCommon(object):
         return frames
         
     def resize(self, frames, baseshape, offsetsp, finalshape, scale=1, step=0):
-        _logger.info('Resizing images and masks')            
+        _logger.info('Resizing frames and masks')            
         
         for frame, rel_offset in zip(frames, offsetsp):
             region, _ = subarray_match(finalshape, rel_offset, baseshape)
@@ -397,19 +401,19 @@ class DirectImageCommon(object):
             # Relative offset
             frame.rel_offset = rel_offset
             # names of frame and mask
-            imgn, maskn = name_redimensioned_images(frame.baselabel, step)
-            frame.resized_base = imgn
+            framen, maskn = name_redimensioned_frames(frame.baselabel, step)
+            frame.resized_base = framen
             frame.resized_mask = maskn
             
             _logger.debug('%s, valid region is %s, relative offset is %s', frame.label, 
                           custom_region_to_str(region), rel_offset)
-            self.resize_frame_and_mask(frame, finalshape, imgn, maskn, scale)
+            self.resize_frame_and_mask(frame, finalshape, framen, maskn, scale)
 
         return frames
 
-    def resize_frame_and_mask(self, frame, finalshape, imgn, maskn, scale):
+    def resize_frame_and_mask(self, frame, finalshape, framen, maskn, scale):
         _logger.info('Resizing frame %s, subpix x%i', frame.label, scale)
-        resize_fits(frame.label, imgn, finalshape, frame.valid_region, 
+        resize_fits(frame.label, framen, finalshape, frame.valid_region, 
                     scale=scale)
 
         _logger.info('Resizing mask %s, subpix x%i', frame.label, scale)
