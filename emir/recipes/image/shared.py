@@ -138,6 +138,7 @@ class DirectImageCommon(object):
         # Insert pixel offsets between images
         for img, off in zip(obresult.frames, list_of_offsets):
             img.baselabel = os.path.splitext(img.label)[0]
+            img.mask = self.parameters['master_bpm']
             # Insert pixel offsets between images
             img.pix_offset = off            
             img.objmask_data = None
@@ -157,7 +158,8 @@ class DirectImageCommon(object):
                 # Basic processing
                 
                 # FIXME: add this
-                # bpm = pyfits.getdata(self.parameters['master_bpm'])
+                bpm = pyfits.getdata(self.parameters['master_bpm'])
+                
                 if self.parameters['master_bias']:
                     mbias = pyfits.getdata(self.parameters['master_bias'])
                     bias_corrector = BiasCorrector(mbias)
@@ -269,37 +271,36 @@ class DirectImageCommon(object):
                          step, prev)
             data[frame.valid_region] -= sky
 
-    def combine_images(self, frames, out=None, itr=0):
-        _logger.debug('Step %d, opening sky-subtracted images', itr)
+    def combine_images(self, frames, out=None, step=0):
+        _logger.debug('Step %d, opening sky-subtracted images', step)
 
         def fits_open(name):
             '''Open FITS with memmap in readonly mode'''
             return pyfits.open(name, mode='readonly', memmap=True)
 
         imgslll = [fits_open(image.lastname) for image in frames if image.valid_science]
-        #_logger.debug('Step %d, opening mask images', itr)
-        #mskslll = [fun(image.resized_mask) for image in frames if image.valid_science]
-        _logger.debug('Step %d, combining %d images', itr, len(imgslll))
+        _logger.debug('Step %d, opening mask images', step)
+        mskslll = [fits_open(image.resized_mask) for image in frames if image.valid_science]
+        _logger.debug('Step %d, combining %d images', step, len(imgslll))
         try:
             extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in frames if image.valid_science]
             data = [i['primary'].data for i in imgslll]
-            #masks = [i['primary'].data for i in mskslll]
-            masks = None
+            masks = [i['primary'].data for i in mskslll]
             
             out = quantileclip(data, masks, scales=extinc, dtype='float32', out=out, fclip=0.1)
             
             # saving the three extensions
-            pyfits.writeto('result_i%0d.fits' % itr, out[0], clobber=True)
-            pyfits.writeto('result_var_i%0d.fits' % itr, out[1], clobber=True)
-            pyfits.writeto('result_npix_i%0d.fits' % itr, out[2], clobber=True)
+            pyfits.writeto('result_i%0d.fits' % step, out[0], clobber=True)
+            pyfits.writeto('result_var_i%0d.fits' % step, out[1], clobber=True)
+            pyfits.writeto('result_npix_i%0d.fits' % step, out[2], clobber=True)
                 
             return out
             
         finally:
-            _logger.debug('Step %d, closing sky-subtracted images', itr)
+            _logger.debug('Step %d, closing sky-subtracted images', step)
             map(lambda x: x.close(), imgslll)
-            #_logger.debug('Step %d, closing mask images', 0)
-            #map(lambda x: x.close(), mskslll)
+            _logger.debug('Step %d, closing mask images', step)
+            map(lambda x: x.close(), mskslll)
             
     def apply_superflat(self, frames, flatdata, step=0, save=False):
         _logger.info("Step %d, SF: apply superflat", step)
@@ -363,7 +364,7 @@ class DirectImageCommon(object):
         # Normalize, flat has mean = 1
         sf_data /= sf_data.mean()
         
-        # Auxilyary data
+        # Auxiliary data
         sfhdu = pyfits.PrimaryHDU(sf_data)            
         sfhdu.writeto(name_skyflat('comb', step), clobber=True)
         return sf_data
@@ -374,14 +375,13 @@ class DirectImageCommon(object):
         for frame in frames:
             region = frame.valid_region
             data = pyfits.getdata(frame.resized_base)[region]
-            #mask = pyfits.getdata(image.resized_mask)[region]
+            mask = pyfits.getdata(frame.resized_mask)[region]
             # FIXME: while developing this ::10 is faster, remove later            
-            #image.median_scale = numpy.median(data[mask == 0][::10])
-            frame.median_scale = numpy.median(data[::10])
+            frame.median_scale = numpy.median(data[mask == 0][::10])
             _logger.debug('median value of %s is %f', frame.resized_base, frame.median_scale)
         return frames
         
-    def resize(self, frames, baseshape, offsetsp, finalshape, scale=1, itr=0):
+    def resize(self, frames, baseshape, offsetsp, finalshape, scale=1, step=0):
         _logger.info('Resizing images and masks')            
         
         for frame, rel_offset in zip(frames, offsetsp):
@@ -391,20 +391,24 @@ class DirectImageCommon(object):
             # Relative offset
             frame.rel_offset = rel_offset
             # names of frame and mask
-            imgn, maskn = name_redimensioned_images(frame.baselabel, itr)
+            imgn, maskn = name_redimensioned_images(frame.baselabel, step)
             frame.resized_base = imgn
             frame.resized_mask = maskn
             
             _logger.debug('%s, valid region is %s, relative offset is %s', frame.label, 
                           custom_region_to_str(region), rel_offset)
-            self.resize_image_and_mask(frame, finalshape, imgn, maskn, scale)
+            self.resize_frame_and_mask(frame, finalshape, imgn, maskn, scale)
 
         return frames
 
-    def resize_image_and_mask(self, image, finalshape, imgn, maskn, scale):
-        _logger.info('Resizing image %s, subpix x%i', image.label, scale)
-        #resize_fits(image.base, imgn, finalshape, image.region)
-        resize_fits(image.label, imgn, finalshape, image.valid_region, scale=scale)
+    def resize_frame_and_mask(self, frame, finalshape, imgn, maskn, scale):
+        _logger.info('Resizing frame %s, subpix x%i', frame.label, scale)
+        resize_fits(image.label, imgn, finalshape, image.valid_region, 
+                    scale=scale)
 
-        _logger.info('Resizing mask %s, subpix x%i', image.label, scale)
-        #resize_fits(image.label+'mask', maskn, finalshape, image.region, fill=1, scale=scale)
+        _logger.info('Resizing mask %s, subpix x%i', frame.label, scale)
+        # We don't conserve the sum of the values of the frame here, just
+        # expand the mask
+        resize_fits(frame.mask, maskn, finalshape, frame.valid_region, 
+                    fill=1, scale=scale, conserve=False)
+        

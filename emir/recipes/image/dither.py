@@ -215,16 +215,13 @@ class DitheredImageRecipe(RecipeBase):
         self._figure.canvas.draw()
                             
     def basic_processing(self, image, flow):
-        hdulist = pyfits.open(image.base)
-        try:
+        with pyfits.open(image.base) as hdulist:
             hdu = hdulist['primary']         
 
             # Processing
             hdu = flow(hdu)
             
             hdulist.writeto(os.path.basename(image.base), clobber=True)
-        finally:
-            hdulist.close()
             
     def compute_advanced_sky2(self, image, objmask):
         '''Create a background map of the image and subtract it.'''
@@ -234,22 +231,18 @@ class DitheredImageRecipe(RecipeBase):
         image.lastname = dst
         
         data = pyfits.getdata(image.lastname)
-        sky, _ = create_background_map(data[image.region], 128, 128)
+        sky, _ = create_background_map(data[image.valid_region], 128, 128)
         
         _logger.info('Computing advanced sky for %s', image.baselabel)            
         
-        hdulist = pyfits.open(image.lastname, mode='update')
-        try:
-            d = hdulist['primary'].data[image.region]
+        with pyfits.open(image.lastname, mode='update') as hdulist:
+            d = hdulist['primary'].data[image.valid_region]
         
             _logger.info('Iter %d, SC: subtracting sky to image %s', 
                      self.iter, image.baselabel)
             name = name_skybackground(image.baselabel, self.iter)
             pyfits.writeto(name, sky, clobber=True)
-            d -= sky
-        
-        finally:
-            hdulist.close()            
+            d -= sky            
             
     def compute_advanced_sky(self, image, objmask):
         '''Create a background map from nearby images.'''
@@ -279,9 +272,9 @@ class DitheredImageRecipe(RecipeBase):
                     continue
                 filename = i.flat_corrected
                 hdulist = pyfits.open(filename, mode='readonly')
-                data.append(hdulist['primary'].data[i.region])
+                data.append(hdulist['primary'].data[i.valid_region])
                 scales.append(numpy.median(data[-1]))
-                masks.append(objmask[i.region])
+                masks.append(objmask[i.valid_region])
                 desc.append(hdulist)
                 idx += 1
 
@@ -302,7 +295,7 @@ class DitheredImageRecipe(RecipeBase):
                 
             hdulist1 = pyfits.open(image.lastname, mode='update')
             try:
-                d = hdulist1['primary'].data[image.region]
+                d = hdulist1['primary'].data[image.valid_region]
                 
                 # FIXME
                 # sky median is 1.0 ?
@@ -322,41 +315,6 @@ class DitheredImageRecipe(RecipeBase):
         finally:
             for hdl in desc:
                 hdl.close()
-            
-            
-                
-    def combine_images(self, iinfo, out=None):
-        _logger.debug('Iter %d, opening sky-subtracted images', self.iter)
-
-        def fun(name):
-            '''Open FITS with memmap in readonly mode'''
-            return pyfits.open(name, mode='readonly', memmap=True)
-
-        imgslll = [fun(image.lastname) for image in iinfo if image.valid_science]
-        _logger.debug('Iter %d, opening mask images', self.iter)
-        mskslll = [fun(image.resized_mask) for image in iinfo if image.valid_science]
-        _logger.debug('Iter %d, combining %d images', self.iter, len(imgslll))
-        try:
-            extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in iinfo if image.valid_science]
-            data = [i['primary'].data for i in imgslll]
-            masks = [i['primary'].data for i in mskslll]
-            if out is not None:
-                quantileclip(data, masks, scales=extinc, dtype='float32', out=out, fclip=0.1)
-            else:
-                out = quantileclip(data, masks, scales=extinc, dtype='float32', fclip=0.1)
-
-            # saving the three extensions
-            pyfits.writeto('result_i%0d.fits' % self.iter, out[0], clobber=True)
-            pyfits.writeto('result_var_i%0d.fits' % self.iter, out[1], clobber=True)
-            pyfits.writeto('result_npix_i%0d.fits' % self.iter, out[2], clobber=True)
-                
-            return out
-            
-        finally:
-            _logger.debug('Iter %d, closing sky-subtracted images', self.iter)
-            map(lambda x: x.close(), imgslll)
-            _logger.debug('Iter %d, closing mask images', self.iter)
-            map(lambda x: x.close(), mskslll)
        
     def figures_after_combine(self, sf_data):
        
@@ -389,7 +347,7 @@ class DitheredImageRecipe(RecipeBase):
         fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
         self.figure_simple_image(fake, title='Fake sky error image')
         # store fake image
-        pyfits.writeto('fake_sky_rms_i%0d.fits' % self.iter, fake, clobber=True)
+        pyfits.writeto('fake_sky_rms_i%0d.fits' % step, fake, clobber=True)
 
 
 
@@ -418,7 +376,7 @@ class DitheredImageRecipe(RecipeBase):
         xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
         mpl.artist.setp(xticklabels, visible=False)
         self._figure.canvas.draw()
-        self._figure.savefig('figure-check-combination_i%01d.png' % self.iter)
+        self._figure.savefig('figure-check-combination_i%01d.png' % step)
         return avg_rms         
 
     def figure_simple_image(self, data, title=None):
@@ -452,7 +410,7 @@ class DitheredImageRecipe(RecipeBase):
         ax.set_title('FWHM of objects')
         ax.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
         self._figure.canvas.draw()
-        self._figure.savefig('figure-fwhm-histogram_i%01d.png' % self.iter)
+        self._figure.savefig('figure-fwhm-histogram_i%01d.png' % step)
                    
     def figure_init(self, shape):
         self._figure.clf()
@@ -483,18 +441,18 @@ class DitheredImageRecipe(RecipeBase):
         ax.set_xlabel('Image number')
         ax.set_ylabel('Median')
         self._figure.canvas.draw()
-        self._figure.savefig('figure-median-sky-background_i%01d.png' % self.iter)
+        self._figure.savefig('figure-median-sky-background_i%01d.png' % step)
 
     def compute_superflat(self, iinfo, segmask, amplifiers):
-        _logger.info("Iter %d, SF: combining the images without offsets", self.iter)
+        _logger.info("Iter %d, SF: combining the images without offsets", step)
         try:
             filelist = []
             data = []
             for image in iinfo:
-                _logger.debug('Iter %d, opening resized image %s', self.iter, image.resized_base)
+                _logger.debug('Iter %d, opening resized image %s', step, image.resized_base)
                 hdulist = pyfits.open(image.resized_base, memmap=True, mode='readonly')
                 filelist.append(hdulist)
-                data.append(hdulist['primary'].data[image.region])
+                data.append(hdulist['primary'].data[image.valid_region])
 
             scales = [image.median_scale for image in iinfo]
 
@@ -504,13 +462,13 @@ class DitheredImageRecipe(RecipeBase):
 
             masks = None
             if segmask is not None:
-                masks = [segmask[image.region] for image in iinfo]
+                masks = [segmask[image.valid_region] for image in iinfo]
                 
-            _logger.debug('Iter %d, combining %d images', self.iter, len(data))
+            _logger.debug('Iter %d, combining %d images', step, len(data))
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, 
                                                     blank=1.0 / scales[0])            
         finally:
-            _logger.debug('Iter %d, closing resized images and mask', self.iter)
+            _logger.debug('Iter %d, closing resized images and mask', step)
             for fileh in filelist:               
                 fileh.close()            
 
@@ -524,40 +482,27 @@ class DitheredImageRecipe(RecipeBase):
         sf_data /= sf_data.mean()
         
         sfhdu = pyfits.PrimaryHDU(sf_data)            
-        sfhdu.writeto(name_skyflat('comb', self.iter), clobber=True)
+        sfhdu.writeto(name_skyflat('comb', step), clobber=True)
         return sf_data
 
-    def apply_superflat(self, images_info, superflat):
-        _logger.info("Iter %d, SF: apply superflat", self.iter)
-
-        
-        self.figure_init(images_info[0].baseshape)            
-
-        # Process all images with the fitted flat
-        # FIXME: not sure
-        for image in images_info:
-            self.correct_superflat(image, superflat)
-        return images_info
-        
-
     def correct_superflat(self, image, fitted):
-        _logger.info("Iter %d, SF: apply superflat to image %s", self.iter, image.resized_base)
+        _logger.info("Iter %d, SF: apply superflat to image %s", step, image.resized_base)
         hdulist = pyfits.open(image.resized_base, mode='readonly')
-        data = hdulist['primary'].data[image.region]
+        data = hdulist['primary'].data[image.valid_region]
         newdata = hdulist['primary'].data.copy()
-        newdata[image.region] = correct_flatfield(data, fitted)
+        newdata[image.valid_region] = correct_flatfield(data, fitted)
 
                 
         newheader = hdulist['primary'].header.copy()
         hdulist.close()
         phdu = pyfits.PrimaryHDU(newdata, newheader)
-        image.lastname = name_skyflat_proc(image.baselabel, self.iter)
+        image.lastname = name_skyflat_proc(image.baselabel, step)
         image.flat_corrected = image.lastname
         phdu.writeto(image.lastname, clobber=True)
         
         # FIXME: plotting
         try:
-            self.figure_image(newdata[image.region], image)
+            self.figure_image(newdata[image.valid_region], image)
         except ValueError:
             _logger.warning('Problem plotting %s', image.lastname)
         
@@ -578,7 +523,7 @@ class DitheredImageRecipe(RecipeBase):
             ax.plot([x[0], x[-1]], [f, f], 'g--')
             
         self._figure.canvas.draw()
-        self._figure.savefig('figure-relative-flux_i%01d.png' % self.iter)
+        self._figure.savefig('figure-relative-flux_i%01d.png' % step)
         
     def check_photometry(self, images_info, sf_data, seeing_fwhm):
         # Check photometry of few objects
@@ -591,7 +536,7 @@ class DitheredImageRecipe(RecipeBase):
         wmap[border:-border, border:-border] = 1                    
         pyfits.writeto(weigthmap, wmap, clobber=True)
         
-        basename = 'result_i%0d.fits' % (self.iter)
+        basename = 'result_i%0d.fits' % (step)
         sex = SExtractor()
         sex.config['VERBOSE_TYPE'] = 'QUIET'
         sex.config['PIXEL_SCALE'] = 1
@@ -606,7 +551,7 @@ class DitheredImageRecipe(RecipeBase):
         sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
         sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
         
-        sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % self.iter
+        sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % step
         _logger.info('Runing sextractor in %s', basename)
         sex.run('%s,%s' % (basename, basename))
         
@@ -622,9 +567,9 @@ class DitheredImageRecipe(RecipeBase):
         error = numpy.empty((len(images_info), OBJS_I_KEEP))
         
         for idx, image in enumerate(images_info):
-            imagename = name_skysub_proc(image.baselabel, self.iter)
+            imagename = name_skysub_proc(image.baselabel, step)
 
-            sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (image.baselabel, self.iter)
+            sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (image.baselabel, step)
 
             # Lauch SExtractor on a FITS file
             # om double image mode
@@ -697,7 +642,7 @@ class DitheredImageRecipe(RecipeBase):
         wmap[border:-border, border:-border] = 1                    
         pyfits.writeto(weigthmap, wmap, clobber=True)
         
-        basename = 'result_i%0d.fits' % (self.iter)
+        basename = 'result_i%0d.fits' % (step)
         sex = SExtractor()
         sex.config['VERBOSE_TYPE'] = 'QUIET'
         sex.config['PIXEL_SCALE'] = 1
@@ -712,7 +657,7 @@ class DitheredImageRecipe(RecipeBase):
         sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
         sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
         
-        sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % self.iter
+        sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % step
         
         _logger.info('Runing sextractor in %s', basename)
         sex.run('%s,%s' % (basename, basename))
@@ -729,7 +674,7 @@ class DitheredImageRecipe(RecipeBase):
         for image in images_info:
             imagename = name_skysub_proc(image.baselabel, self.iter)
 
-            sex.config['CATALOG_NAME'] = 'catalogue-self-%s-i%01d.cat' % (image.baselabel, self.iter)
+            sex.config['CATALOG_NAME'] = 'catalogue-self-%s-i%01d.cat' % (image.baselabel, step)
 
             # Lauch SExtractor on a FITS file
             # on double image mode
@@ -796,7 +741,7 @@ class DitheredImageRecipe(RecipeBase):
         # sextractor takes care of bad pixels
         sex = SExtractor()
         sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
-        sex.config["CHECKIMAGE_NAME"] = name_segmask(self.iter)
+        sex.config["CHECKIMAGE_NAME"] = name_segmask(step)
         sex.config['VERBOSE_TYPE'] = 'QUIET'
         sex.config['PIXEL_SCALE'] = 1
         sex.config['BACK_TYPE'] = 'AUTO' 
@@ -845,7 +790,7 @@ class DitheredImageRecipe(RecipeBase):
             # sex.config['WEIGHT_THRESH'] = 50
             sex.config['WEIGHT_IMAGE'] = weigthmap
         
-        filename = 'result_i%0d.fits' % (self.iter)
+        filename = 'result_i%0d.fits' % (step)
         
         # Lauch SExtractor on a FITS file
         sex.run(filename)
@@ -881,7 +826,7 @@ class DitheredImageRecipe(RecipeBase):
         ax = self._figure.gca()
         ax.add_collection(p)
         self._figure.canvas.draw()
-        self._figure.savefig('figure-segmentation-overlay_%01d.png' % self.iter)
+        self._figure.savefig('figure-segmentation-overlay_%01d.png' % step)
 
         self.figure_fwhm_histogram(fwhms)
                     
@@ -895,7 +840,7 @@ class DitheredImageRecipe(RecipeBase):
             seeing_fwhm = None
         else:
             _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
-        objmask = pyfits.getdata(name_segmask(self.iter))
+        objmask = pyfits.getdata(name_segmask(step))
         return objmask, seeing_fwhm
     
 
@@ -914,35 +859,14 @@ class DitheredImageRecipe(RecipeBase):
             else:
                 region = None
                 noffset = None
-            image.region = region
+            image.valid_region = region
             image.noffset = noffset
-            imgn, maskn = name_redimensioned_images(image.baselabel, self.iter)
+            imgn, maskn = name_redimensioned_images(image.baselabel, step)
             image.resized_base = imgn
             image.resized_mask = maskn
                     
-            self.resize_image_and_mask(image, finalshape, imgn, maskn)
+            self.resize_frame_and_mask(image, finalshape, imgn, maskn, scale=1)
 
-        return images_info
-        
-    def resize_image_and_mask(self, image, finalshape, imgn, maskn):
-        _logger.info('Resizing image %s', image.baselabel)
-        resize_fits(image.base, imgn, finalshape, image.region)
-
-        _logger.info('Resizing mask %s', image.baselabel)
-        resize_fits(image.mask, maskn, finalshape, image.region, fill=1)
-
-
-    def update_scale_factors(self, images_info):
-
-        _logger.info('Iter %d, SF: computing scale factors', self.iter)
-        # FIXME: not sure
-        for image in images_info:
-            region = image.region
-            data = pyfits.getdata(image.resized_base)[region]
-            mask = pyfits.getdata(image.resized_mask)[region]
-            # FIXME: while developing this ::10 is faster, remove later            
-            image.median_scale = numpy.median(data[mask == 0][::10])
-            _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
         return images_info
             
     def run(self, obresult):
@@ -971,7 +895,7 @@ class DitheredImageRecipe(RecipeBase):
             ii.mask = self.parameters['master_bpm']
             ii.offset = offset
  
-            ii.region = None
+            ii.valid_region = None
             ii.resized_base = None
             ii.resized_mask = None
             ii.objmask = None
@@ -1029,13 +953,14 @@ class DitheredImageRecipe(RecipeBase):
                 # superflat
                 _logger.info('Iter %d, superflat correction (SF)', self.iter)
                 # Compute scale factors (median)           
-                images_info = self.update_scale_factors(images_info)
+                images_info = self.update_scale_factors(images_info, self.iter)
 
                 # Create superflat
                 superflat = self.compute_superflat(images_info, None, amplifiers)
             
                 # Apply superflat
-                images_info = self.apply_superflat(images_info, superflat)
+                self.figure_init(images_info[0].baseshape)
+                images_info = self.apply_superflat(images_info, superflat, step=self.iter, save=True)
 
                 _logger.info('Simple sky correction')
                 for image in images_info:            
@@ -1044,7 +969,7 @@ class DitheredImageRecipe(RecipeBase):
                 # Combining the images
                 _logger.info("Iter %d, Combining the images", self.iter)
                 # FIXME: only for science
-                sf_data = self.combine_images(images_info)
+                sf_data = self.combine_images(images_info, self.iter)
             
                 self.figures_after_combine(sf_data)
                       
@@ -1077,18 +1002,20 @@ class DitheredImageRecipe(RecipeBase):
                 for image in images_info:
                     image.objmask = name_object_mask(image.baselabel, self.iter)
                     _logger.info('Iter %d, create object mask %s', self.iter,  image.objmask)                 
-                    image.objmask_data = objmask[image.region]
+                    image.objmask_data = objmask[image.valid_region]
                     pyfits.writeto(image.objmask, image.objmask_data, clobber=True)
 
                 _logger.info('Iter %d, superflat correction (SF)', self.iter)
                 # Compute scale factors (median)           
-                images_info = self.update_scale_factors(images_info)
+                images_info = self.update_scale_factors(images_info, self.iter)
             
                 # Combining images to obtain the sky flat
                 superflat = self.compute_superflat(images_info, objmask, amplifiers)
     
                 # Apply superflat
-                images_info = self.apply_superflat(images_info, superflat)
+                self.figure_init(images_info[0].baseshape)
+                
+                images_info = self.apply_superflat(images_info, superflat, step=self.iter, save=True)
 
                 _logger.info('Iter %d, advanced sky correction (SC)', self.iter)
                 # FIXME: Only for science          
@@ -1099,7 +1026,7 @@ class DitheredImageRecipe(RecipeBase):
                 # Combining the images
                 _logger.info("Iter %d, Combining the images", self.iter)
                 # FIXME: only for science
-                sf_data = self.combine_images(images_info)
+                sf_data = self.combine_images(images_info, self.iter)
                 self.figures_after_combine(sf_data)
 
                 if self.iter >= niteration:
