@@ -61,6 +61,8 @@ class StareImageRecipe(RecipeBase, DirectImageCommon):
         # FIXME: this parameter is optional 
         Parameter('sources', None, 
                   'List of x, y coordinates to measure FWHM',
+                  soft=True),
+        Parameter('offsets', None, 'List of pairs of offsets',
                   soft=True)
     ]
 
@@ -74,7 +76,9 @@ class StareImageRecipe(RecipeBase, DirectImageCommon):
                 
         baseshape = self.instrument['detectors'][0]
         amplifiers = self.instrument['amplifiers'][0]
+        offsets = self.parameters['offsets']
         
-        return self.process(obresult, baseshape, amplifiers, subpix=1)
+        return self.process(obresult, baseshape, amplifiers, 
+                            offsets=offsets, subpix=1)
         
         

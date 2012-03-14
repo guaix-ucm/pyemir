@@ -134,7 +134,9 @@ class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
                   soft=True),
         Parameter('subpixelization', 4, 
                   'Number of subdivisions in each pixel side'),
-        Parameter('window', None, 'Region of interesting data', soft=True)
+        Parameter('window', None, 'Region of interesting data', soft=True),
+        Parameter('offsets', None, 'List of pairs of offsets',
+                  soft=True)
     ]
 
     def __init__(self):
@@ -149,9 +151,10 @@ class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
         baseshape = self.instrument['detectors'][0]
         amplifiers = self.instrument['amplifiers'][0]
         window = self.parameters['window']
+        offsets = self.parameters['offsets']
         
-        return self.process(obresult, baseshape, amplifiers, window, 
-                            subpix=subpix)
+        return self.process(obresult, baseshape, amplifiers, window=window, 
+                            offsets=offsets, subpix=subpix)
         
 
     

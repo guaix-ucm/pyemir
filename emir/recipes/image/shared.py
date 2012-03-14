@@ -154,7 +154,8 @@ class DirectImageCommon(object):
     logger = _logger
     
     
-    def process(self, obresult, baseshape, amplifiers, window=None, 
+    def process(self, obresult, baseshape, amplifiers, 
+                offsets=None, window=None, 
                 subpix=1, store_intermediate=True):
         
         recipe_result = {'products' : []}
@@ -229,9 +230,15 @@ class DirectImageCommon(object):
                 # Reference pixel in the center of the frame
                 refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
         
-                _logger.info('Computing offsets from WCS information')
                 labels = [frame.label for frame in obresult.frames]
-                list_of_offsets = offsets_from_wcs(labels, refpix)
+        
+                if offsets is None:
+                    _logger.info('Computing offsets from WCS information')
+                    
+                    list_of_offsets = offsets_from_wcs(labels, refpix)
+                else:
+                    _logger.info('Using offsets from parameters')
+                    list_of_offsets = numpy.asarray(offsets)
         
                 # Insert pixel offsets between frames
                 for frame, off in zip(obresult.frames, list_of_offsets):
