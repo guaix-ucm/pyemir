@@ -163,29 +163,13 @@ class DirectImageCommon(object):
             window = tuple((0, siz) for siz in baseshape)
 
         
-        print clip_slices(amplifiers, window)
+        #print clip_slices(amplifiers, window)
         # Convert channels to slices        
         amplifiers = [(slice(*ch0), slice(*ch1)) for ch0, ch1 in amplifiers] 
 
         if store_intermediate:
             recipe_result['intermediate'] = []
         
-        # Reference pixel in the center of the frame
-        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2)
-        
-        _logger.info('Computing offsets from WCS information')
-        labels = [frame.label for frame in obresult.frames]
-        list_of_offsets = offsets_from_wcs(labels, refpix)
-        
-        # Insert pixel offsets between frames
-        for frame, off in zip(obresult.frames, list_of_offsets):
-            frame.baselabel = os.path.splitext(frame.label)[0]
-            frame.mask = self.parameters['master_bpm']
-            # Insert pixel offsets between frames
-            frame.pix_offset = off            
-            frame.objmask_data = None
-            frame.valid_science = True
-            _logger.debug('Frame %s, offset=%s', frame.label, off)
         
         # States
         BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
@@ -232,6 +216,7 @@ class DirectImageCommon(object):
                 
                 # Shape of the window
                 windowshape = tuple((i[1] - i[0]) for i in window)
+                _logger.debug('Shape of window is %s', windowshape)
                 # Shape of the scaled window
                 subpixshape = tuple((side * subpix) for side in windowshape)
                 
@@ -240,9 +225,27 @@ class DirectImageCommon(object):
                 scalewindow = tuple(slice(*(subpix * i for i in p)) for p in window)
                 # Window region
                 window = tuple(slice(*p) for p in window)
-                
+
+                # Reference pixel in the center of the frame
+                refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
+        
+                _logger.info('Computing offsets from WCS information')
+                labels = [frame.label for frame in obresult.frames]
+                list_of_offsets = offsets_from_wcs(labels, refpix)
+        
+                # Insert pixel offsets between frames
+                for frame, off in zip(obresult.frames, list_of_offsets):
+                    frame.baselabel = os.path.splitext(frame.label)[0]
+                    frame.mask = self.parameters['master_bpm']
+                    # Insert pixel offsets between frames
+                    frame.pix_offset = off
+                    frame.scaled_pix_offset = subpix * off    
+                    frame.objmask_data = None
+                    frame.valid_science = True
+                    _logger.debug('Frame %s, offset=%s, scaled=%s', frame.label, off, subpix * off)
+
                 _logger.info('Computing relative offsets')
-                offsets = [(frame.pix_offset * subpix) for frame in obresult.frames]
+                offsets = [(frame.scaled_pix_offset) for frame in obresult.frames]
                 offsets = numpy.round(offsets).astype('int')        
                 finalshape, offsetsp = combine_shape(subpixshape, offsets)
                 _logger.info('Shape of resized array is %s', finalshape)
