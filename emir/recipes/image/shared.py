@@ -111,10 +111,15 @@ def offsets_from_wcs(frames, pixref):
 
     return result
 
-def intersection(a, b):
+def intersection(a, b, scale=1):
     '''Intersection between two segments.'''
     a1, a2 = a
-    b1, b2 = b
+    try:
+        b1, b2 = b
+    except TypeError:
+        b1 = b.start
+        b2 = b.stop
+        
 
     if a2 <= b1:
         return None
@@ -125,23 +130,23 @@ def intersection(a, b):
 
     if a2 <= b2:
         if a1 <= b1:
-            return slice(b1, a2)
+            return slice(b1 * scale, a2 * scale)
         else:
-            return slice(a1, a2)
+            return slice(a1 * scale, a2 * scale)
     else:
         if a1 <= b1:
-            return slice(b1, b2)
+            return slice(b1 * scale, b2 * scale)
         else:
-            return slice(a1, b2)
+            return slice(a1 * scale, b2 * scale)
 
-def clip_slices(r, region):
+def clip_slices(r, region, scale=1):
     '''Intersect slices with a region.''' 
     t = []
     for ch in r:
-        a1 = intersection(ch[0], region[0])
+        a1 = intersection(ch[0], region[0], scale=scale)
         if a1 is None:
             continue
-        a2 = intersection(ch[1], region[1])
+        a2 = intersection(ch[1], region[1], scale=scale)
         if a2 is None:
             continue
 
@@ -162,11 +167,6 @@ class DirectImageCommon(object):
 
         if window is None:
             window = tuple((0, siz) for siz in baseshape)
-
-        
-        #print clip_slices(amplifiers, window)
-        # Convert channels to slices        
-        amplifiers = [(slice(*ch0), slice(*ch1)) for ch0, ch1 in amplifiers] 
 
         if store_intermediate:
             recipe_result['intermediate'] = []
@@ -196,8 +196,7 @@ class DirectImageCommon(object):
                 mdark = pyfits.getdata(self.parameters['master_dark'])
                 dark_corrector = DarkCorrector(mdark)
                 nl_corrector = NonLinearityCorrector(self.parameters['nonlinearity'])
-        
-                # FIXME
+
                 mflat = pyfits.getdata(self.parameters['master_intensity_ff'])
                 ff_corrector = FlatFieldCorrector(mflat)  
                   
@@ -213,8 +212,7 @@ class DirectImageCommon(object):
                   
                           
                 state = PRERED
-            elif state == PRERED:
-                
+            elif state == PRERED:                
                 # Shape of the window
                 windowshape = tuple((i[1] - i[0]) for i in window)
                 _logger.debug('Shape of window is %s', windowshape)
@@ -226,6 +224,8 @@ class DirectImageCommon(object):
                 scalewindow = tuple(slice(*(subpix * i for i in p)) for p in window)
                 # Window region
                 window = tuple(slice(*p) for p in window)
+                
+                scaled_amp = clip_slices(amplifiers, window, scale=subpix)
 
                 # Reference pixel in the center of the frame
                 refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
@@ -267,7 +267,7 @@ class DirectImageCommon(object):
                 self.update_scale_factors(obresult.frames)
 
                 # Create superflat
-                superflat = self.compute_superflat(obresult.frames, amplifiers)
+                superflat = self.compute_superflat(obresult.frames, scaled_amp)
             
                 # Apply superflat
                 self.apply_superflat(obresult.frames, superflat)
@@ -306,10 +306,7 @@ class DirectImageCommon(object):
         recipe_result['products'] = [DataFrame(result), SourcesCatalog()]
         
         return recipe_result    
-    
-    
-    
-    
+
     def compute_simple_sky(self, frame, step=0, save=False):
         
         dst = name_skysub_proc(frame.baselabel, step)
