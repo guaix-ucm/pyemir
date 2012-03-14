@@ -56,8 +56,12 @@ class NBImageRecipe(RecipeBase, DirectImageCommon):
                   'Polynomial for non-linearity correction'),
         Parameter('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
+        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
         # FIXME: this parameter is optional 
-        Parameter('sources', None, 'List of x, y coordinates to measure FWHM')
+        Parameter('sources', None, 'List of x, y coordinates to measure FWHM',
+                  soft=True),
+        Parameter('offsets', None, 'List of pairs of offsets',
+                  soft=True)
     ]
 
     def __init__(self):
@@ -67,5 +71,11 @@ class NBImageRecipe(RecipeBase, DirectImageCommon):
         )
 
     def run(self, obresult):
-        return {'products': [DataFrame(None), SourcesCatalog()]}
+        
+        baseshape = self.instrument['detectors'][0]
+        amplifiers = self.instrument['amplifiers'][0]
+        offsets = self.parameters['offsets']
+
+        return self.process(obresult, baseshape, amplifiers, 
+                            offsets=offsets)
 
