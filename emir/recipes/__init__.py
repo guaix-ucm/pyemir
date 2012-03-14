@@ -19,37 +19,9 @@
 
 '''Recipes for EMIR Observing Modes.'''
 
-__all__ = ['find_recipe']
-
 from .auxiliary import BiasRecipe, DarkRecipe, IntensityFlatRecipe
 from .image import StareImageRecipe, DitheredImageRecipe, MicroditheredImageRecipe
-
-# equivalence
-_equiv = {
-    'bias_image': 'auxiliary:BiasRecipe',
-    'dark_image': 'auxiliary:DarkRecipe',
-    'intensity_flatfield': 'auxiliary:IntensityFlatRecipe',
-    'msm_spectral_flatfield': 'auxiliary:Recipe',
-    'slit_transmission_calibration': 'auxiliary:Recipe',
-    'wavelength_calibration': 'auxiliary:Recipe',
-    'ts_rough_focus': 'auxiliary:Recipe',
-    'ts_fine_focus': 'auxiliary:Recipe',
-    'emir_focus_control': 'auxiliary:Recipe',
-    'image_setup': 'auxiliary:Recipe',
-    'mos_and_longslit_setup': 'auxiliary:Recipe',
-    'target_acquisition': 'auxiliary:Recipe',
-    'mask_imaging': 'auxiliary:Recipe',
-    'msm_and_lsm_check': 'auxiliary:Recipe',
-    'stare_image': 'image.stare:StareImageRecipe',
-    'nb_image': 'image:Recipe',
-    'dithered_image':'image.dither:DitheredImageRecipe',
-    'microdithered_image':'image:Recipe',
-    'mosaiced_image': 'image:Recipe',
-    'stare_spectra': 'mos:Recipe',
-    'dn_spectra': 'mos:Recipe',
-    'offset_spectra': 'mos:Recipe',
-    'raster_spectra': 'ls:Recipe',
-}
+from .image import NBImageRecipe, MosaicRecipe
 
 _equiv_class = {
     'bias_image': BiasRecipe,
@@ -67,18 +39,15 @@ _equiv_class = {
     'mask_imaging': 'auxiliary:Recipe',
     'msm_and_lsm_check': 'auxiliary:Recipe',
     'stare_image': StareImageRecipe,
-    'nb_image': 'image:Recipe',
+    'nb_image': NBImageRecipe,
     'dithered_image': DitheredImageRecipe,
     'microdithered_image': MicroditheredImageRecipe,
-    'mosaiced_image': 'image:Recipe',
+    'mosaiced_image': MosaicRecipe,
     'stare_spectra': 'mos:Recipe',
     'dn_spectra': 'mos:Recipe',
     'offset_spectra': 'mos:Recipe',
     'raster_spectra': 'ls:Recipe',
 }
-
-def find_recipe(mode):
-    return _equiv[mode]
 
 def find_recipe_class(mode):
     return _equiv_class[mode]
@@ -86,10 +55,6 @@ def find_recipe_class(mode):
 class Pipeline(object):
     
     instrument = 'EMIR'
-
-    def find_recipe(self, mode):
-	'''Return the recipe gualified name given the obs mode name'''
-        return _equiv[mode]
 
     def recipe(self, mode):
 	'''Return the recipe class given the obs mode name'''
