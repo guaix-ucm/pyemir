@@ -133,7 +133,8 @@ class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
                   'List of x, y coordinates to measure FWHM',
                   soft=True),
         Parameter('subpixelization', 4, 
-                  'Number of subdivisions in each pixel side')
+                  'Number of subdivisions in each pixel side'),
+        Parameter('window', None, 'Region of interesting data', soft=True)
     ]
 
     def __init__(self):
@@ -147,8 +148,10 @@ class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
         subpix = self.parameters['subpixelization']
         baseshape = self.instrument['detectors'][0]
         amplifiers = self.instrument['amplifiers'][0]
+        window = self.parameters['window']
         
-        return self.process(obresult, baseshape, amplifiers, subpix=subpix)
+        return self.process(obresult, baseshape, amplifiers, window, 
+                            subpix=subpix)
         
 
     

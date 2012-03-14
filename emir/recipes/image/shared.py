@@ -38,7 +38,7 @@ from numina.flow.processing import BiasCorrector, FlatFieldCorrector
 from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 from numina.array import combine_shape
 
-from numina.image import get_image_shape, resize_fits, custom_region_to_str
+from numina.image import resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield
 from numina.array import subarray_match
 from numina.array.combine import flatcombine, median, quantileclip
@@ -82,7 +82,7 @@ def name_segmask(step, ext='.fits'):
 def offsets_from_wcs(frames, pixref):
     '''Compute offsets between frames using WCS information.
     
-    :parameter frames: sequence of FITS filenames or file descritors
+    :parameter frames: sequence of FITS filenames or file descriptors
     :parameter pixref: numpy array used as reference pixel
     
     The sky world coordinates are computed on *pixref* using
@@ -103,8 +103,6 @@ def offsets_from_wcs(frames, pixref):
         wcs = pywcs.WCS(hdulist[0].header)
         skyref = wcs.wcs_pix2sky(pixref, 1)
 
-    result[0] = pixref[0] - pixref[0]
-
     for idx, frame in enumerate(frames[1:]):
         with pyfits.open(frame) as hdulist:
             wcs = pywcs.WCS(hdulist[0].header)
@@ -113,23 +111,64 @@ def offsets_from_wcs(frames, pixref):
 
     return result
 
+def intersection(a, b):
+    '''Intersection between two segments.'''
+    a1, a2 = a
+    b1, b2 = b
+
+    if a2 <= b1:
+        return None
+    if a1 >= b2:
+        return None
+
+    # a2 > b1 and a1 < b2
+
+    if a2 <= b2:
+        if a1 <= b1:
+            return slice(b1, a2)
+        else:
+            return slice(a1, a2)
+    else:
+        if a1 <= b1:
+            return slice(b1, b2)
+        else:
+            return slice(a1, b2)
+
+def clip_slices(r, region):
+    '''Intersect slices with a region.''' 
+    t = []
+    for ch in r:
+        a1 = intersection(ch[0], region[0])
+        if a1 is None:
+            continue
+        a2 = intersection(ch[1], region[1])
+        if a2 is None:
+            continue
+
+        t.append((a1, a2))
+
+    return t
+
 class DirectImageCommon(object):
         
     logger = _logger
     
     
-    def process(self, obresult, baseshape, amplifiers, subpix=1, 
-                store_intermediate=True):
+    def process(self, obresult, baseshape, amplifiers, window=None, 
+                subpix=1, store_intermediate=True):
         
         recipe_result = {'products' : []}
 
+        if window is None:
+            window = tuple((0, siz) for siz in baseshape)
+
+        
+        print clip_slices(amplifiers, window)
         # Convert channels to slices        
         amplifiers = [(slice(*ch0), slice(*ch1)) for ch0, ch1 in amplifiers] 
 
         if store_intermediate:
             recipe_result['intermediate'] = []
-                
-        subpixshape = tuple((side * subpix) for side in baseshape)   
         
         # Reference pixel in the center of the frame
         refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2)
@@ -191,6 +230,17 @@ class DirectImageCommon(object):
                 state = PRERED
             elif state == PRERED:
                 
+                # Shape of the window
+                windowshape = tuple((i[1] - i[0]) for i in window)
+                # Shape of the scaled window
+                subpixshape = tuple((side * subpix) for side in windowshape)
+                
+                
+                # Scaled window region
+                scalewindow = tuple(slice(*(subpix * i for i in p)) for p in window)
+                # Window region
+                window = tuple(slice(*p) for p in window)
+                
                 _logger.info('Computing relative offsets')
                 offsets = [(frame.pix_offset * subpix) for frame in obresult.frames]
                 offsets = numpy.round(offsets).astype('int')        
@@ -199,7 +249,7 @@ class DirectImageCommon(object):
                 
                 # Resizing frames              
                 self.resize(obresult.frames, subpixshape, offsetsp, finalshape, 
-                            scale=subpix)
+                            window=window, scale=subpix)
                 
                 # superflat
                 _logger.info('Step %d, superflat correction (SF)', step)
@@ -391,11 +441,11 @@ class DirectImageCommon(object):
             _logger.debug('median value of %s is %f', frame.resized_base, frame.median_scale)
         return frames
         
-    def resize(self, frames, baseshape, offsetsp, finalshape, scale=1, step=0):
+    def resize(self, frames, shape, offsetsp, finalshape, window=None, scale=1, step=0):
         _logger.info('Resizing frames and masks')            
         
         for frame, rel_offset in zip(frames, offsetsp):
-            region, _ = subarray_match(finalshape, rel_offset, baseshape)
+            region, _ = subarray_match(finalshape, rel_offset, shape)
             # Valid region
             frame.valid_region = region
             # Relative offset
@@ -407,18 +457,19 @@ class DirectImageCommon(object):
             
             _logger.debug('%s, valid region is %s, relative offset is %s', frame.label, 
                           custom_region_to_str(region), rel_offset)
-            self.resize_frame_and_mask(frame, finalshape, framen, maskn, scale)
+            self.resize_frame_and_mask(frame, finalshape, framen, maskn, window, scale)
 
         return frames
 
-    def resize_frame_and_mask(self, frame, finalshape, framen, maskn, scale):
-        _logger.info('Resizing frame %s, subpix x%i', frame.label, scale)
+    def resize_frame_and_mask(self, frame, finalshape, framen, maskn, window, scale):
+        _logger.info('Resizing frame %s, window=%s, subpix=%i', frame.label, 
+                     custom_region_to_str(window), scale)
         resize_fits(frame.label, framen, finalshape, frame.valid_region, 
-                    scale=scale)
+                    window=window, scale=scale)
 
         _logger.info('Resizing mask %s, subpix x%i', frame.label, scale)
         # We don't conserve the sum of the values of the frame here, just
         # expand the mask
         resize_fits(frame.mask, maskn, finalshape, frame.valid_region, 
-                    fill=1, scale=scale, conserve=False)
+                    fill=1, window=window, scale=scale, conserve=False)
         
