@@ -157,11 +157,13 @@ def clip_slices(r, region, scale=1):
 class DirectImageCommon(object):
         
     logger = _logger
+    BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
     
     
     def process(self, obresult, baseshape, amplifiers, 
                 offsets=None, window=None, 
-                subpix=1, store_intermediate=True):
+                subpix=1, store_intermediate=True,
+                target_is_sky=True, stop_after=PRERED):
         
         recipe_result = {'products' : []}
 
@@ -210,8 +212,10 @@ class DirectImageCommon(object):
                     with pyfits.open(frame.label, mode='update') as hdulist:
                             hdulist = basicflow(hdulist)
                   
-                          
-                state = PRERED
+                if stop_after == state:
+                    break
+                else:
+                    state = PRERED
             elif state == PRERED:                
                 # Shape of the window
                 windowshape = tuple((i[1] - i[0]) for i in window)
@@ -283,7 +287,10 @@ class DirectImageCommon(object):
                       
                 _logger.info('Step %d, finished', step)
 
-                state = CHECKRED                
+                if stop_after == state:
+                    break
+                else:
+                    state = PRERED
             else:
                 break
 
