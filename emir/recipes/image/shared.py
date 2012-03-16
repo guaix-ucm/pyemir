@@ -252,11 +252,20 @@ class DirectImageCommon(object):
                     frame.pix_offset = off
                     frame.scaled_pix_offset = subpix * off    
                     frame.objmask_data = None
-                    frame.valid_science = True
+                    frame.valid_target = False
+                    frame.valid_sky = False
+                    if frame.itype == 'TARGET':
+                        frame.valid_target = True
+                        if target_is_sky:
+                            frame.valid_sky = True
+                    if frame.itype == 'SKY':
+                        frame.valid_sky = True
+ 
                     _logger.debug('Frame %s, offset=%s, scaled=%s', frame.label, off, subpix * off)
 
                 _logger.info('Computing relative offsets')
-                offsets = [(frame.scaled_pix_offset) for frame in obresult.frames]
+                offsets = [(fraitypeme.scaled_pix_offset) 
+                           for frame in obresult.frames if frame.valid_target]
                 offsets = numpy.round(offsets).astype('int')        
                 finalshape, offsetsp = combine_shape(subpixshape, offsets)
                 _logger.info('Shape of resized array is %s', finalshape)
@@ -352,12 +361,12 @@ class DirectImageCommon(object):
             '''Open FITS with memmap in readonly mode'''
             return pyfits.open(name, mode='readonly', memmap=True)
 
-        frameslll = [fits_open(frame.lastname) for frame in frames if frame.valid_science]
+        frameslll = [fits_open(frame.lastname) for frame in frames if frame.valid_target]
         _logger.debug('Step %d, opening mask frames', step)
-        mskslll = [fits_open(frame.resized_mask) for frame in frames if frame.valid_science]
+        mskslll = [fits_open(frame.resized_mask) for frame in frames if frame.valid_target]
         _logger.debug('Step %d, combining %d frames', step, len(frameslll))
         try:
-            extinc = [pow(10, -0.4 * frame.airmass * self.parameters['extinction']) for frame in frames if frame.valid_science]
+            extinc = [pow(10, -0.4 * frame.airmass * self.parameters['extinction']) for frame in frames if frame.valid_target]
             data = [i['primary'].data for i in frameslll]
             masks = [i['primary'].data for i in mskslll]
             
@@ -459,19 +468,19 @@ class DirectImageCommon(object):
         _logger.info('Resizing frames and masks')            
         
         for frame, rel_offset in zip(frames, offsetsp):
-            region, _ = subarray_match(finalshape, rel_offset, shape)
-            # Valid region
-            frame.valid_region = region
-            # Relative offset
-            frame.rel_offset = rel_offset
-            # names of frame and mask
-            framen, maskn = name_redimensioned_frames(frame.baselabel, step)
-            frame.resized_base = framen
-            frame.resized_mask = maskn
-            
-            _logger.debug('%s, valid region is %s, relative offset is %s', frame.label, 
-                          custom_region_to_str(region), rel_offset)
-            self.resize_frame_and_mask(frame, finalshape, framen, maskn, window, scale)
+            if frame.valid_target:
+                region, _ = subarray_match(finalshape, rel_offset, shape)
+                # Valid region
+                frame.valid_region = region
+                # Relative offset
+                frame.rel_offset = rel_offset
+                # names of frame and mask
+                framen, maskn = name_redimensioned_frames(frame.baselabel, step)
+                frame.resized_base = framen
+                frame.resized_mask = maskn
+                _logger.debug('%s, valid region is %s, relative offset is %s', frame.label, 
+                custom_region_to_str(region), rel_offset)
+                self.resize_frame_and_mask(frame, finalshape, framen, maskn, window, scale)
 
         return frames
 
