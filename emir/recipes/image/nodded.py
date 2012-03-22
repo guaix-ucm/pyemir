@@ -77,5 +77,5 @@ class NBImageRecipe(RecipeBase, DirectImageCommon):
         offsets = self.parameters['offsets']
 
         return self.process(obresult, baseshape, amplifiers, 
-                            offsets=offsets)
+                            offsets=offsets, target_is_sky=False)
 

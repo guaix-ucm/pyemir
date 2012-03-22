@@ -222,8 +222,7 @@ class DirectImageCommon(object):
                 _logger.debug('Shape of window is %s', windowshape)
                 # Shape of the scaled window
                 subpixshape = tuple((side * subpix) for side in windowshape)
-                
-                
+                    
                 # Scaled window region
                 scalewindow = tuple(slice(*(subpix * i for i in p)) for p in window)
                 # Window region
@@ -234,7 +233,29 @@ class DirectImageCommon(object):
                 # Reference pixel in the center of the frame
                 refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
         
-                labels = [frame.label for frame in obresult.frames]
+                # lists of targets and sky frames
+                targetframes = []
+                skyframes = []
+                
+                for frame in obresult.frames:
+                    frame.baselabel = os.path.splitext(frame.label)[0]
+                    frame.mask = self.parameters['master_bpm']
+                    # Insert pixel offsets between frames    
+                    frame.objmask_data = None
+                    frame.valid_target = False
+                    frame.valid_sky = False
+                    frame.valid_region = scalewindow
+                    if frame.itype == 'TARGET':
+                        frame.valid_target = True
+                        targetframes.append(frame)
+                        if target_is_sky:
+                            frame.valid_sky = True
+                            skyframes.append(frame)
+                    if frame.itype == 'SKY':
+                        frame.valid_sky = True
+                        skyframes.append(frame)
+        
+                labels = [frame.label for frame in targetframes]
         
                 if offsets is None:
                     _logger.info('Computing offsets from WCS information')
@@ -243,36 +264,31 @@ class DirectImageCommon(object):
                 else:
                     _logger.info('Using offsets from parameters')
                     list_of_offsets = numpy.asarray(offsets)
-        
+
                 # Insert pixel offsets between frames
-                for frame, off in zip(obresult.frames, list_of_offsets):
-                    frame.baselabel = os.path.splitext(frame.label)[0]
-                    frame.mask = self.parameters['master_bpm']
+                for frame, off in zip(targetframes, list_of_offsets):
+                    
                     # Insert pixel offsets between frames
                     frame.pix_offset = off
-                    frame.scaled_pix_offset = subpix * off    
-                    frame.objmask_data = None
-                    frame.valid_target = False
-                    frame.valid_sky = False
-                    if frame.itype == 'TARGET':
-                        frame.valid_target = True
-                        if target_is_sky:
-                            frame.valid_sky = True
-                    if frame.itype == 'SKY':
-                        frame.valid_sky = True
+                    frame.scaled_pix_offset = subpix * off
  
                     _logger.debug('Frame %s, offset=%s, scaled=%s', frame.label, off, subpix * off)
 
                 _logger.info('Computing relative offsets')
-                offsets = [(fraitypeme.scaled_pix_offset) 
-                           for frame in obresult.frames if frame.valid_target]
+                offsets = [(frame.scaled_pix_offset) 
+                           for frame in targetframes]
                 offsets = numpy.round(offsets).astype('int')        
                 finalshape, offsetsp = combine_shape(subpixshape, offsets)
                 _logger.info('Shape of resized array is %s', finalshape)
                 
-                # Resizing frames              
-                self.resize(obresult.frames, subpixshape, offsetsp, finalshape, 
+                # Resizing target frames        
+                self.resize(targetframes, subpixshape, offsetsp, finalshape, 
                             window=window, scale=subpix)
+                
+                if not target_is_sky:
+                    for frame in skyframes:
+                        frame.resized_base = frame.label
+                        frame.resized_mask = frame.mask    
                 
                 # superflat
                 _logger.info('Step %d, superflat correction (SF)', step)
@@ -286,13 +302,14 @@ class DirectImageCommon(object):
                 self.apply_superflat(obresult.frames, superflat)
 
                 _logger.info('Simple sky correction')
+                # FIXME: this method shall be corrected...
                 for frame in obresult.frames:            
                     self.compute_simple_sky(frame)
                 
                 # Combining the frames
                 _logger.info("Step %d, Combining the frames", step)
                 
-                sf_data = self.combine_frames(obresult.frames)
+                sf_data = self.combine_frames(targetframes)
                       
                 _logger.info('Step %d, finished', step)
 
@@ -465,8 +482,7 @@ class DirectImageCommon(object):
         return frames
         
     def resize(self, frames, shape, offsetsp, finalshape, window=None, scale=1, step=0):
-        _logger.info('Resizing frames and masks')            
-        
+        _logger.info('Resizing frames and masks')
         for frame, rel_offset in zip(frames, offsetsp):
             if frame.valid_target:
                 region, _ = subarray_match(finalshape, rel_offset, shape)
@@ -481,7 +497,7 @@ class DirectImageCommon(object):
                 _logger.debug('%s, valid region is %s, relative offset is %s', frame.label, 
                 custom_region_to_str(region), rel_offset)
                 self.resize_frame_and_mask(frame, finalshape, framen, maskn, window, scale)
-
+                
         return frames
 
     def resize_frame_and_mask(self, frame, finalshape, framen, maskn, window, scale):
