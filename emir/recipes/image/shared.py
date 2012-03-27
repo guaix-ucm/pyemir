@@ -25,12 +25,16 @@ Routines shared by image mode recipes
 import os
 import logging
 import shutil
+import math
 
 import numpy
 import pyfits
 import pywcs
 from scipy.spatial import KDTree as KDTree
-
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
+from matplotlib.collections import PatchCollection
 from numina import __version__
 from numina.recipes import RecipeBase, Parameter, provides, DataFrame
 from numina.flow import SerialFlow, Node
@@ -160,6 +164,12 @@ class DirectImageCommon(object):
     logger = _logger
     BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
     
+    def __init__(self, *args, **kwds):
+        super(DirectImageCommon, self).__init__()
+        
+        self._figure = plt.figure(facecolor='white')
+        self._figure.canvas.set_window_title('Recipe Plots')
+        self._figure.canvas.draw()
     
     def process(self, obresult, baseshape, amplifiers, 
                 offsets=None, window=None, 
@@ -322,6 +332,7 @@ class DirectImageCommon(object):
                 superflat = self.compute_superflat(obresult.frames, scaled_amp)
             
                 # Apply superflat
+                self.figure_init(subpixshape)
                 self.apply_superflat(obresult.frames, superflat)
 
                 _logger.info('Simple sky correction')
@@ -337,6 +348,8 @@ class DirectImageCommon(object):
                 _logger.info("Step %d, Combining target frames", step)
                 
                 sf_data = self.combine_frames(targetframes)
+                    
+                self.figures_after_combine(sf_data)
                       
                 _logger.info('Step %d, finished', step)
 
@@ -512,6 +525,9 @@ class DirectImageCommon(object):
 
             scales = [frame.median_scale for frame in frames]
             
+            # FIXME: plotting
+            self.figure_median_background(scales)
+            
             masks = None
             if segmask is not None:
                 masks = [segmask[frame.valid_region] for frame in frames]
@@ -581,4 +597,100 @@ class DirectImageCommon(object):
         # expand the mask
         resize_fits(frame.mask, maskn, finalshape, frame.valid_region, 
                     fill=1, window=window, scale=scale, conserve=False)
+        
+    def figure_init(self, shape):
+        self._figure.clf()
+        ax = self._figure.add_subplot(111)
+        cmap = mpl.cm.get_cmap('gray')
+        norm = mpl.colors.LogNorm()
+        ax.imshow(numpy.zeros(shape), cmap=cmap, norm=norm)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        self._figure.canvas.draw()
+        
+    def figures_after_combine(self, sf_data, step=0):
+       
+         # FIXME, more plots
+        def truncated(array, frac=0.1):
+            '''Dirty truncated mean'''
+            nf = int(array.size * frac)
+            array.sort()
+            new = array[nf:-nf]
+            return new.mean(), new.std()
+            
+        ndata = sf_data[2].astype('int')                        
+        data = sf_data[0]
+            
+        nimages = ndata.max()
+
+        rnimage = range(1, nimages + 1)
+        rmean = rnimage[:]
+        rstd = rnimage[:]
+            
+        for pix in rnimage:
+            rmean[pix - 1], rstd[pix - 1] = truncated(data[ndata == pix])                
+            
+        avg_rms = self.figure_check_combination(rnimage, rmean, rstd, step=step)
+                        
+        # Fake sky error image
+        self.figure_simple_image(sf_data[2], title='Number of images combined')
+
+        # Create fake error image
+        fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
+        self.figure_simple_image(fake, title='Fake sky error image')
+        # store fake image
+        pyfits.writeto('fake_sky_rms_i%0d.fits' % step, fake, clobber=True)
+        
+    def figure_check_combination(self, rnimage, rmean, rstd, step=0):            
+        self._figure.clf()
+        self._figure.subplots_adjust(hspace=0.001)
+        
+        ax1 = self._figure.add_subplot(3,1,1)
+        pred = [rstd[-1] * math.sqrt(rnimage[-1] / float(npix)) for npix in rnimage]
+        ax1.plot(rnimage, rstd, 'g*', rnimage, pred, 'y-')
+        ax1.set_title("")
+        ax1.set_ylabel('measured sky rms')
+        
+        ax2 = self._figure.add_subplot(3,1,2, sharex=ax1)
+        pred = [val * math.sqrt(npix) for val, npix in zip(rstd, rnimage)]
+        avg_rms = sum(pred) / len(pred)
+        ax2.plot(rnimage, pred, 'r*', [rnimage[0], rnimage[-1]], [avg_rms,avg_rms])
+        ax2.set_ylabel('scaled sky rms')
+
+        ax3 = self._figure.add_subplot(3,1,3, sharex=ax1)
+        ax3.plot(rnimage, rmean, 'b*')
+        ax3.set_ylabel('mean sky')
+        ax3.set_xlabel('number of frames per pixel')
+
+        xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
+        mpl.artist.setp(xticklabels, visible=False)
+        self._figure.canvas.draw()
+        self._figure.savefig('figure-check-combination_i%01d.png' % step)
+        return avg_rms        
+        
+    def figure_simple_image(self, data, title=None):
+        self._figure.clf()
+        ax = self._figure.add_subplot(111)
+        cmap = mpl.cm.get_cmap('gray')
+        norm = mpl.colors.LogNorm()
+        if title is not None:
+            ax.set_title(title)
+                          
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')            
+        ax.imshow(data, cmap=cmap, norm=norm)                                
+        self._figure.canvas.draw()
+  
+    def figure_median_background(self, scales, step=0):
+        # FIXME: plotting
+        self._figure.clf()
+        ax = self._figure.add_subplot(1,1,1) 
+        ax.plot(scales, 'r*')
+        ax.set_title("")
+        ax.set_xlabel('Image number')
+        ax.set_ylabel('Median')
+        self._figure.canvas.draw()
+        self._figure.savefig('figure-median-sky-background_i%01d.png' % step)
+              
+        
         
