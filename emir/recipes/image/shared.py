@@ -29,6 +29,7 @@ import shutil
 import numpy
 import pyfits
 import pywcs
+from scipy.spatial import KDTree as KDTree
 
 from numina import __version__
 from numina.recipes import RecipeBase, Parameter, provides, DataFrame
@@ -165,6 +166,16 @@ class DirectImageCommon(object):
                 subpix=1, store_intermediate=True,
                 target_is_sky=True, stop_after=PRERED):
         
+        # metadata = self.instrument['metadata']
+        # FIXME: hardcoded
+        metadata = {
+         "juliandate": "MJD-OBS", 
+         "airmass": "AIRMASS", 
+         "detector.mode": "CCDMODE", 
+         "filter0": "FILTER", 
+         "imagetype": "IMGTYP", 
+         "exposure": "EXPTIME"
+        }     
         recipe_result = {'products' : []}
 
         if window is None:
@@ -238,6 +249,18 @@ class DirectImageCommon(object):
                 skyframes = []
                 
                 for frame in obresult.frames:
+                    
+                    # Getting some metadata from FITS header
+                    hdr = pyfits.getheader(frame.label)
+                    try:
+                        frame.exposure = hdr[str(metadata['exposure'])]
+                        #frame.baseshape = get_image_shape(hdr)
+                        frame.airmass = hdr[str(metadata['airmass'])]
+                        frame.mjd = hdr[str(metadata['juliandate'])]
+                    except KeyError as e:
+                        raise KeyError("%s in image %s" % (str(e), frame.label))
+                    
+                    
                     frame.baselabel = os.path.splitext(frame.label)[0]
                     frame.mask = self.parameters['master_bpm']
                     # Insert pixel offsets between frames    
@@ -302,12 +325,16 @@ class DirectImageCommon(object):
                 self.apply_superflat(obresult.frames, superflat)
 
                 _logger.info('Simple sky correction')
-                # FIXME: this method shall be corrected...
-                for frame in obresult.frames:            
-                    self.compute_simple_sky(frame)
+                if target_is_sky:
+                    # Each frame is the closest sky frame available
+                    
+                    for frame in obresult.frames:            
+                        self.compute_simple_sky(frame)
+                else:
+                    self.compute_simple_sky_for_frames(targetframes, skyframes)
                 
                 # Combining the frames
-                _logger.info("Step %d, Combining the frames", step)
+                _logger.info("Step %d, Combining target frames", step)
                 
                 sf_data = self.combine_frames(targetframes)
                       
@@ -338,10 +365,64 @@ class DirectImageCommon(object):
         _logger.info("Final frame created")
         recipe_result['products'] = [DataFrame(result), SourcesCatalog()]
         
-        return recipe_result    
-
-    def compute_simple_sky(self, frame, step=0, save=False):
+        return recipe_result
+    
+    def compute_simple_sky_for_frames(self, targetframes, skyframes, 
+                            maxsep=5, step=0, save=True):
         
+        # build kdtree        
+        sarray = numpy.array([frame.mjd for frame in skyframes])
+        # shape must be (n, 1)
+        sarray = numpy.expand_dims(sarray, axis=1)
+        
+        # query
+        tarray = numpy.array([frame.mjd for frame in targetframes])
+        # shape must be (n, 1)
+        tarray = numpy.expand_dims(tarray, axis=1)
+        
+        kdtree = KDTree(sarray)
+        
+        # 1 / minutes in a day 
+        MIN_TO_DAY = 0.000694444
+        dis, idxs = kdtree.query(tarray, k=1, 
+                                 distance_upper_bound=maxsep * MIN_TO_DAY)
+        
+        nsky = len(sarray)
+        
+        for tid, idss in enumerate(idxs):
+            try:
+                tf = targetframes[tid]
+                sf = skyframes[idss]
+                self.compute_simple_sky_out(tf, sf, step=step, save=save)
+            except IndexError:
+                _logger.error('No sky image available for frame %s', tf.lastname)
+                raise
+
+
+    def compute_simple_sky_out(self, frame, skyframe, step=0, save=False):
+        _logger.info('Correcting sky in frame %s', frame.lastname)
+        _logger.info('with sky computed from frame %s', skyframe.lastname)
+        
+        if hasattr(skyframe, 'median_sky'):
+                sky = skyframe.median_sky
+        else:
+        
+            with pyfits.open(skyframe.lastname, mode='readonly') as hdulist:
+                data = hdulist['primary'].data
+                valid = data[frame.valid_region]
+
+
+                if skyframe.objmask_data is not None:
+                    _logger.debug('object mask defined')
+                    msk = frame.objmask_data[valid]
+                    sky = numpy.median(valid[msk == 0])
+                else:
+                    _logger.debug('object mask empty')
+                    sky = numpy.median(valid)
+
+            _logger.debug('median sky value is %f', sky)
+            skyframe.median_sky = sky
+                
         dst = name_skysub_proc(frame.baselabel, step)
         prev = frame.lastname
         
@@ -355,21 +436,10 @@ class DirectImageCommon(object):
         with pyfits.open(frame.lastname, mode='update') as hdulist:
             data = hdulist['primary'].data
             valid = data[frame.valid_region]
+            valid -= sky
 
-            if frame.objmask_data is not None:
-                _logger.debug('object mask defined')
-                msk = frame.objmask_data[valid]
-                sky = numpy.median(valid[msk == 0])
-            else:
-                _logger.debug('object mask empty')
-                sky = numpy.median(valid)
-
-            _logger.debug('median sky value is %f', sky)
-            frame.median_sky = sky
-            
-            _logger.info('Step %d, SC: subtracting sky to frame %s', 
-                         step, prev)
-            data[frame.valid_region] -= sky
+    def compute_simple_sky(self, frame, step=0, save=False):
+        self.compute_simple_sky_out(frame, skyframe=frame, step=0, save=False)
 
     def combine_frames(self, frames, out=None, step=0):
         _logger.debug('Step %d, opening sky-subtracted frames', step)
