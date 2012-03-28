@@ -26,6 +26,7 @@ import os
 import logging
 import shutil
 import math
+import operator
 
 import numpy
 import pyfits
@@ -47,6 +48,10 @@ from numina.image import resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield
 from numina.array import subarray_match
 from numina.array.combine import flatcombine, median, quantileclip
+
+from numina.util.sextractor import SExtractor
+from numina.util.sextractor import open as sopen
+import numina.util.sexcatalog as sexcatalog
 
 from emir.dataproducts import SourcesCatalog
 
@@ -203,6 +208,12 @@ class DirectImageCommon(object):
         state = BASIC
         step = 0
         
+        try:
+            niteration = self.parameters['iterations']
+        except KeyError:
+            niteration = 1
+        
+        
         while True:
             if state == BASIC:    
                 _logger.info('Basic processing')
@@ -270,7 +281,7 @@ class DirectImageCommon(object):
                         frame.airmass = hdr[str(metadata['airmass'])]
                         frame.mjd = hdr[str(metadata['juliandate'])]
                     except KeyError as e:
-                        raise KeyError("%s in image %s" % (str(e), frame.label))
+                        raise KeyError("%s in frame %s" % (str(e), frame.label))
                     
                     
                     frame.baselabel = os.path.splitext(frame.label)[0]
@@ -358,7 +369,67 @@ class DirectImageCommon(object):
                 if stop_after == state:
                     break
                 else:
+                    state = CHECKRED
+            elif state == CHECKRED:
+                
+                seeing_fwhm = None
+
+                #self.check_position(images_info, sf_data, seeing_fwhm)
+                recompute = False
+                if recompute:
+                    _logger.info('Recentering is needed')
                     state = PRERED
+                else:
+                    _logger.info('Recentering is not needed')
+                    _logger.info('Checking photometry')
+                    self.check_photometry(targetframes, sf_data, seeing_fwhm)
+                    
+                    if stop_after == state:
+                        break
+                    else:
+                        state = FULLRED
+            elif state == FULLRED:
+
+                # Generating segmentation image
+                _logger.info('Step %d, generating segmentation image', step)
+                objmask, seeing_fwhm = self.create_mask(sf_data, seeing_fwhm, step=step)
+                step +=1
+                # Update objects mask
+                # For all images    
+                # FIXME:
+                for frame in obresult.frames:
+                    frame.objmask = name_object_mask(frame.baselabel, step)
+                    _logger.info('Step %d, create object mask %s', step,  frame.objmask)                 
+                    frame.objmask_data = objmask[frame.valid_region]
+                    pyfits.writeto(frame.objmask, frame.objmask_data, clobber=True)
+
+                _logger.info('Step %d, superflat correction (SF)', step)
+                
+                # Compute scale factors (median)           
+                self.update_scale_factors(obresult.frames, step)
+
+                # Create superflat
+                superflat = self.compute_superflat(obresult.frames, scaled_amp, 
+                                                   segmask=objmask, step=step)
+                
+                # Apply superflat
+                self.figure_init(subpixshape)
+                
+                self.apply_superflat(obresult.frames, superflat, step=step, save=True)
+
+                _logger.info('Step %d, advanced sky correction (SC)', step)
+                # FIXME: Only for science          
+                for frame in targetframes:
+                    self.compute_advanced_sky(frame, objmask, step=step)
+            
+                # Combining the images
+                _logger.info("Step %d, Combining the images", step)
+                # FIXME: only for science
+                sf_data = self.combine_frames(targetframes, step=step)
+                self.figures_after_combine(sf_data)
+
+                if step >= niteration:
+                    state = COMPLETE
             else:
                 break
 
@@ -414,7 +485,7 @@ class DirectImageCommon(object):
                 raise
 
 
-    def compute_simple_sky_out(self, frame, skyframe, step=0, save=False):
+    def compute_simple_sky_out(self, frame, skyframe, step=0, save=True):
         _logger.info('Correcting sky in frame %s', frame.lastname)
         _logger.info('with sky computed from frame %s', skyframe.lastname)
         
@@ -453,8 +524,89 @@ class DirectImageCommon(object):
             valid = data[frame.valid_region]
             valid -= sky
 
-    def compute_simple_sky(self, frame, step=0, save=False):
-        self.compute_simple_sky_out(frame, skyframe=frame, step=0, save=False)
+    def compute_simple_sky(self, frame, step=0, save=True):
+        self.compute_simple_sky_out(frame, skyframe=frame, step=step, save=save)
+        
+    def compute_advanced_sky(self, frame, objmask, step=0):
+        self.compute_simple_sky_out(frame, frame, step=step, save=True)
+        return
+        
+        # FIXME
+        # FIXME
+        
+        
+        # Create a copy of the frame
+        dst = name_skysub_proc(frame.baselabel, step)
+        shutil.copy(frame.lastname, dst)
+        frame.lastname = dst
+        
+        # Fraction of julian day
+        max_time_sep = self.parameters['sky_images_sep_time'] / 1440.0
+        thistime = frame.mjd
+        
+        _logger.info('Iter %d, SC: computing advanced sky for %s', self.iter, frame.baselabel)
+        desc = []
+        data = []
+        masks = []
+        scales = []
+
+        try:
+            idx = 0
+            for i in itertools.chain(*frame.sky_related):
+                time_sep = abs(thistime - i.mjd)
+                if time_sep > max_time_sep:
+                    _logger.warn('frame %s is separated from %s more than %dm', 
+                                 i.baselabel, frame.baselabel, self.parameters['sky_frames_sep_time'])
+                    _logger.warn('frame %s will not be used', i.baselabel)
+                    continue
+                filename = i.flat_corrected
+                hdulist = pyfits.open(filename, mode='readonly')
+                data.append(hdulist['primary'].data[i.valid_region])
+                scales.append(numpy.median(data[-1]))
+                masks.append(objmask[i.valid_region])
+                desc.append(hdulist)
+                idx += 1
+
+            _logger.debug('computing background with %d frames', len(data))
+            sky, _, num = median(data, masks, scales=scales)
+            if numpy.any(num == 0):
+                # We have pixels without
+                # sky background information
+                _logger.warn('pixels without sky information in frame %s',
+                             i.flat_corrected)
+                binmask = num == 0
+                # FIXME: during development, this is faster
+                sky[binmask] = sky[num != 0].mean()
+                # To continue we interpolate over the patches
+                #fixpix2(sky, binmask, out=sky, iterations=1)
+                name = name_skybackgroundmask(frame.baselabel, self.iter)
+                pyfits.writeto(name, binmask.astype('int16'), clobber=True)
+                
+            hdulist1 = pyfits.open(frame.lastname, mode='update')
+            try:
+                d = hdulist1['primary'].data[frame.valid_region]
+                
+                # FIXME
+                # sky median is 1.0 ?
+                sky = sky / numpy.median(sky) * numpy.median(d)
+                # FIXME
+                self.figure_image(sky, frame)                 
+                d -= sky
+                
+                name = name_skybackground(frame.baselabel, self.iter)
+                pyfits.writeto(name, sky, clobber=True)
+                _logger.info('Iter %d, SC: subtracting sky %s to frame %s', 
+                             self.iter, name, frame.lastname)                
+            
+            finally:
+                hdulist1.close()
+                                                       
+        finally:
+            for hdl in desc:
+                hdl.close()
+        
+        
+        
 
     def combine_frames(self, frames, out=None, step=0):
         _logger.debug('Step %d, opening sky-subtracted frames', step)
@@ -487,7 +639,7 @@ class DirectImageCommon(object):
             _logger.debug('Step %d, closing mask frames', step)
             map(lambda x: x.close(), mskslll)
             
-    def apply_superflat(self, frames, flatdata, step=0, save=False):
+    def apply_superflat(self, frames, flatdata, step=0, save=True):
         _logger.info("Step %d, SF: apply superflat", step)
 
         # Process all frames with the fitted flat
@@ -496,7 +648,7 @@ class DirectImageCommon(object):
             self.correct_superflat(frame, flatdata, step=step, save=save)
         return frames
             
-    def correct_superflat(self, frame, fitted, step=0, save=False):
+    def correct_superflat(self, frame, fitted, step=0, save=True):
         
         frame.flat_corrected = name_skyflat_proc(frame.baselabel, step)
         
@@ -505,7 +657,7 @@ class DirectImageCommon(object):
         else:
             os.rename(frame.resized_base, frame.flat_corrected)
         
-        _logger.info("Step %d, SF: apply superflat to image %s", step, frame.flat_corrected)
+        _logger.info("Step %d, SF: apply superflat to frame %s", step, frame.flat_corrected)
         with pyfits.open(frame.flat_corrected, mode='update') as hdulist:
             data = hdulist['primary'].data
             datar = data[frame.valid_region]
@@ -646,9 +798,9 @@ class DirectImageCommon(object):
         avg_rms = self.figure_check_combination(rnimage, rmean, rstd, step=step)
                         
         # Fake sky error image
-        self.figure_simple_image(ndata, title='Number of images combined')
+        self.figure_simple_image(ndata, title='Number of frames combined')
 
-        # Create fake error image
+        # Create fake error frame
         mask = (ndata <= 0)
         ndata[mask] = 1
         fake = numpy.where(mask, 0.0, numpy.random.normal(avg_rms / numpy.sqrt(ndata)))
@@ -719,5 +871,292 @@ class DirectImageCommon(object):
         clim = image_axes.get_clim()
         ax.set_title('%s, bg=%g fg=%g, linscale' % (image.lastname, clim[0], clim[1]))        
         self._figure.canvas.draw()      
+
+    def check_photometry(self, frames, sf_data, seeing_fwhm, step=0):
+        # Check photometry of few objects
+        weigthmap = 'weights4rms.fits'
         
+        wmap = numpy.zeros_like(sf_data[0])
+        
+        # Center of the image
+        border = 300
+        wmap[border:-border, border:-border] = 1                    
+        pyfits.writeto(weigthmap, wmap, clobber=True)
+        
+        basename = 'result_i%0d.fits' % (step)
+        sex = SExtractor()
+        sex.config['VERBOSE_TYPE'] = 'QUIET'
+        sex.config['PIXEL_SCALE'] = 1
+        sex.config['BACK_TYPE'] = 'AUTO' 
+        if seeing_fwhm is not None:
+            sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+        sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+        sex.config['WEIGHT_IMAGE'] = weigthmap
+        
+        sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
+        sex.config['PARAMETERS_LIST'].append('FLUXERR_BEST')
+        sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
+        
+        sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % step
+        _logger.info('Runing sextractor in %s', basename)
+        sex.run('%s,%s' % (basename, basename))
+        
+        # Sort catalog by flux
+        catalog = sex.catalog()
+        catalog = sorted(catalog, key=operator.itemgetter('FLUX_BEST'), reverse=True)
+        
+        # set of indices of the N first objects
+        OBJS_I_KEEP = 3
+        indices = set(obj['NUMBER'] for obj in catalog[:OBJS_I_KEEP])
+        
+        base = numpy.empty((len(frames), OBJS_I_KEEP))
+        error = numpy.empty((len(frames), OBJS_I_KEEP))
+        
+        for idx, frame in enumerate(frames):
+            imagename = name_skysub_proc(frame.baselabel, step)
+
+            sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (frame.baselabel, step)
+
+            # Lauch SExtractor on a FITS file
+            # om double image mode
+            _logger.info('Runing sextractor in %s', imagename)
+            sex.run('%s,%s' % (basename, imagename))
+            catalog = sex.catalog()
+            
+            # Extinction correction
+            excor = pow(10, -0.4 * frame.airmass * self.parameters['extinction'])
+            excor = 1.0
+            base[idx] = [obj['FLUX_BEST'] / excor
+                                     for obj in catalog if obj['NUMBER'] in indices]
+            error[idx] = [obj['FLUXERR_BEST'] / excor
+                                     for obj in catalog if obj['NUMBER'] in indices]
+        
+        data = base / base[0]
+        err = error / base[0] # sigma
+        w = 1 / err / err
+        # weighted mean of the flux values
+        wdata = numpy.average(data, axis=1, weights=w)
+        wsigma = 1 / numpy.sqrt(w.sum(axis=1))
+        
+        # Actions to carry over images when checking the flux
+        # of the objects in different images
+        def warn_action(img):
+            _logger.warn('Image %s has low flux in objects', img.baselabel)
+            img.valid_science = True
+        
+        def reject_action(img):
+            img.valid_science = False
+            _logger.info('Image %s rejected, has low flux in objects', img.baselabel)            
+            pass
+        
+        def default_action(img):
+            _logger.info('Image %s accepted, has correct flux in objects', img.baselabel)      
+            img.valid_science = True
+        
+        # Actions
+        dactions = {'warn': warn_action, 'reject': reject_action, 'default': default_action}
+
+        levels = self.parameters['check_photometry_levels']
+        actions = self.parameters['check_photometry_actions']
+        
+        x = range(len(frames))
+        vals, (_, sigma) = self.check_photometry_categorize(x, wdata, 
+                                                           levels, tags=actions)
+        # n sigma level to plt
+        n = 3
+        self.check_photometry_plot(vals, wsigma, levels, n * sigma)
+        
+        for x, _, t in vals:
+            try:
+                action = dactions[t]
+            except KeyError:
+                _logger.warning('Action named %s not recognized, ignoring', t)
+                action = default_action
+            for p in x:
+                action(frames[p])
+                
+    def check_photometry_categorize(self, x, y, levels, tags=None):
+        '''Put every point in its category.
+    
+        levels must be sorted.'''   
+        x = numpy.asarray(x)
+        y = numpy.asarray(y)
+        ys = y.copy()
+        ys.sort()
+        # Mean of the upper half
+        m = ys[len(ys) / 2:].mean()
+        y /= m
+        m = 1.0
+        s = ys[len(ys) / 2:].std()
+        result = []
+
+        if tags is None:
+            tags = range(len(levels) + 1)
+
+        for l, t in zip(levels, tags):
+            indc = y < l
+            if indc.any():
+                x1 = x[indc]
+                y1 = y[indc]
+                result.append((x1, y1, t))
+
+                x = x[indc == False]
+                y = y[indc == False]
+        else:
+            result.append((x, y, tags[-1]))
+
+        return result, (m, s)
+               
+    def check_photometry_plot(self, vals, errors, levels, nsigma, step=0):
+        x = range(len(errors))
+        self._figure.clf()
+        ax = self._figure.add_subplot(111)
+        ax.set_title('Relative flux of brightest object')
+        for v,c in zip(vals, ['b', 'r', 'g', 'y']):
+            ax.scatter(v[0], v[1], c=c)
+            w = errors[v[0]]
+            ax.errorbar(v[0], v[1], yerr=w, fmt=None, c=c)
+            
+
+        ax.plot([x[0], x[-1]], [1, 1], 'r--')
+        ax.plot([x[0], x[-1]], [1 - nsigma, 1 - nsigma], 'b--')
+        for f in levels:
+            ax.plot([x[0], x[-1]], [f, f], 'g--')
+            
+        self._figure.canvas.draw()
+        self._figure.savefig('figure-relative-flux_i%01d.png' % step)
+        
+    def create_mask(self, sf_data, seeing_fwhm, step=0):
+        # FIXME more plots
+        self.figure_final_before_s(sf_data[0])
+
+        #
+        remove_border = True
+        
+        # sextractor takes care of bad pixels
+        sex = SExtractor()
+        sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
+        sex.config["CHECKIMAGE_NAME"] = name_segmask(step)
+        sex.config['VERBOSE_TYPE'] = 'QUIET'
+        sex.config['PIXEL_SCALE'] = 1
+        sex.config['BACK_TYPE'] = 'AUTO' 
+
+        if seeing_fwhm is not None and seeing_fwhm > 0:
+            sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+
+        sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
+        sex.config['PARAMETERS_LIST'].append('X_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('Y_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('A_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('B_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('THETA_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('CLASS_STAR')                
+        if remove_border:
+            weigthmap = 'weights4rms.fits'
+            
+            # Create weight map, remove n pixs from either side
+            # using a Hannig filter
+            # npix = 90          
+            # w1 = npix
+            # w2 = npix
+            # wmap = numpy.ones_like(sf_data[0])
+            
+            # cos_win1 = numpy.hanning(2 * w1)
+            # cos_win2 = numpy.hanning(2 * w2)
+                                   
+            # wmap[:,:w1] *= cos_win1[:w1]                    
+            # wmap[:,-w1:] *= cos_win1[-w1:]
+            # wmap[:w2,:] *= cos_win2[:w2, numpy.newaxis]
+            # wmap[-w2:,:] *= cos_win2[-w2:, numpy.newaxis]                 
+            
+            # Take the number of combined images from the combined image
+            wm = sf_data[2].copy()
+            # Dont search objects where nimages < lower
+            # FIXME: this is a magic number
+            # We ignore objects in regions where we have less
+            # than 10% of the images
+            lower = sf_data[2].max() / 10
+            wm[wm < lower] = 0
+            pyfits.writeto(weigthmap, wm, clobber=True)
+                                
+            sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+            # FIXME: this is a magic number
+            # sex.config['WEIGHT_THRESH'] = 50
+            sex.config['WEIGHT_IMAGE'] = weigthmap
+        
+        filename = 'result_i%0d.fits' % (step)
+        
+        # Lauch SExtractor on a FITS file
+        sex.run(filename)
+        
+        # Plot objects
+        # FIXME, plot sextractor objects on top of image
+        patches = []
+        fwhms = []
+        nfirst = 0
+        catalog_f = sopen(sex.config['CATALOG_NAME'])
+        try:
+            star = catalog_f.readline()
+            while star:
+                flags = star['FLAGS']
+                # ignoring those objects with corrupted apertures
+                if flags & sexcatalog.CORRUPTED_APER:
+                    star = catalog_f.readline()
+                    continue
+                center = (star['X_IMAGE'], star['Y_IMAGE'])
+                wd = 10 * star['A_IMAGE']
+                hd = 10 * star['B_IMAGE']
+                color = 'red'
+                e = Ellipse(center, wd, hd, star['THETA_IMAGE'], color=color)
+                patches.append(e)
+                fwhms.append(star['FWHM_IMAGE'])
+                nfirst += 1
+                # FIXME Plot a ellipse
+                star = catalog_f.readline()
+        finally:
+            catalog_f.close()
+            
+        p = PatchCollection(patches, alpha=0.4)
+        ax = self._figure.gca()
+        ax.add_collection(p)
+        self._figure.canvas.draw()
+        self._figure.savefig('figure-segmentation-overlay_%01d.png' % step)
+
+        self.figure_fwhm_histogram(fwhms, step=step)
+                    
+        # mode with an histogram
+        hist, edges = numpy.histogram(fwhms, 50)
+        idx = hist.argmax()
+        
+        seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1]) 
+        if seeing_fwhm <= 0:
+            _logger.warning('Seeing FHWM %f pixels is negative, reseting', seeing_fwhm)
+            seeing_fwhm = None
+        else:
+            _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
+        objmask = pyfits.getdata(name_segmask(step))
+        return objmask, seeing_fwhm
+    
+    def figure_final_before_s(self, data):
+        import numdisplay
+        self._figure.clf()
+        ax = self._figure.add_subplot(111)
+        cmap = mpl.cm.get_cmap('gray')
+        norm = mpl.colors.LogNorm()
+        ax.set_title('Result image')              
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        z1, z2 = numdisplay.zscale.zscale(data)
+        ax.imshow(data, cmap=cmap, clim=(z1, z2))                                
+        self._figure.canvas.draw()
+    
+    def figure_fwhm_histogram(self, fwhms, step=0):
+        self._figure.clf()
+        ax = self._figure.add_subplot(111)
+        ax.set_title('FWHM of objects')
+        ax.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
+        self._figure.canvas.draw()
+        self._figure.savefig('figure-fwhm-histogram_i%01d.png' % step)
         

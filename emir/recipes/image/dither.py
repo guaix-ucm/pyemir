@@ -143,7 +143,13 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
                   'List of x, y coordinates to measure FWHM',
                   soft=True),
         Parameter('offsets', None, 'List of pairs of offsets',
-                  soft=True)
+                  soft=True),
+        Parameter('iterations', 4, 'Iterations of the recipe'),
+        Parameter('sky_images', 5, 'Images used to estimate the background before and after current image'),
+        Parameter('sky_images_sep_time', 10, 'Maximum separation time between consecutive sky images in minutes'),
+        Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
+        Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),                    
+                    
     ]
 
     def __init__(self):
@@ -159,7 +165,7 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
         offsets = self.parameters['offsets']
         
         return self.process(obresult, baseshape, amplifiers, 
-                            offsets=offsets, subpix=1)
+                            offsets=offsets, subpix=1, stop_after=3)
         
 @provides(DataFrame)
 @provides(SourcesCatalog)
