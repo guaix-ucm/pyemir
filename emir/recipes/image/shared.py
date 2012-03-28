@@ -176,6 +176,8 @@ class DirectImageCommon(object):
                 subpix=1, store_intermediate=True,
                 target_is_sky=True, stop_after=PRERED):
         
+        numpy.seterr(divide='raise')
+        
         # metadata = self.instrument['metadata']
         # FIXME: hardcoded
         metadata = {
@@ -507,11 +509,16 @@ class DirectImageCommon(object):
         with pyfits.open(frame.flat_corrected, mode='update') as hdulist:
             data = hdulist['primary'].data
             datar = data[frame.valid_region]
-            data[frame.valid_region] = correct_flatfield(datar, fitted)    
-        
-        # Copy primary frame extension
-        frame.lastname = frame.flat_corrected            
+            data[frame.valid_region] = correct_flatfield(datar, fitted)
+
+            frame.lastname = frame.flat_corrected            
             
+            # FIXME: plotting
+            try:
+                self.figure_image(data[frame.valid_region], frame)
+            except ValueError:
+                _logger.warning('Problem plotting %s', frame.lastname)
+                        
     def compute_superflat(self, frames, amplifiers, segmask=None, step=0):
         _logger.info("Step %d, SF: combining the frames without offsets", step)
         try:
@@ -603,7 +610,7 @@ class DirectImageCommon(object):
         ax = self._figure.add_subplot(111)
         cmap = mpl.cm.get_cmap('gray')
         norm = mpl.colors.LogNorm()
-        ax.imshow(numpy.zeros(shape), cmap=cmap, norm=norm)
+        ax.imshow(numpy.ones(shape), cmap=cmap, norm=norm)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         self._figure.canvas.draw()
@@ -616,11 +623,17 @@ class DirectImageCommon(object):
             nf = int(array.size * frac)
             array.sort()
             new = array[nf:-nf]
-            return new.mean(), new.std()
+            lnew = len(new)
+            if lnew == 0:
+                return 0, 0
+            elif lnew == 1:
+                return new.mean(), 0.0
+            else:
+                return new.mean(), new.std()
             
-        ndata = sf_data[2].astype('int')                        
+        ndata = sf_data[2].astype('int')                    
         data = sf_data[0]
-            
+        
         nimages = ndata.max()
 
         rnimage = range(1, nimages + 1)
@@ -633,10 +646,13 @@ class DirectImageCommon(object):
         avg_rms = self.figure_check_combination(rnimage, rmean, rstd, step=step)
                         
         # Fake sky error image
-        self.figure_simple_image(sf_data[2], title='Number of images combined')
+        self.figure_simple_image(ndata, title='Number of images combined')
 
         # Create fake error image
-        fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
+        mask = (ndata <= 0)
+        ndata[mask] = 1
+        fake = numpy.where(mask, 0.0, numpy.random.normal(avg_rms / numpy.sqrt(ndata)))
+        ndata[mask] = 0
         self.figure_simple_image(fake, title='Fake sky error image')
         # store fake image
         pyfits.writeto('fake_sky_rms_i%0d.fits' % step, fake, clobber=True)
@@ -691,6 +707,17 @@ class DirectImageCommon(object):
         ax.set_ylabel('Median')
         self._figure.canvas.draw()
         self._figure.savefig('figure-median-sky-background_i%01d.png' % step)
-              
+        
+    def figure_image(self, thedata, image):
+        # FIXME: remove this dependency
+        import numdisplay        
+        ax = self._figure.gca()
+        image_axes, = ax.get_images()
+        image_axes.set_data(thedata)
+        z1, z2 = numdisplay.zscale.zscale(thedata)
+        image_axes.set_clim(z1, z2)
+        clim = image_axes.get_clim()
+        ax.set_title('%s, bg=%g fg=%g, linscale' % (image.lastname, clim[0], clim[1]))        
+        self._figure.canvas.draw()      
         
         

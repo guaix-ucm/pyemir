@@ -115,9 +115,55 @@ class ImageInformation(object):
         self.valid_science = True
         self.valid_sky = True
 
+@provides(DataFrame, SourcesCatalog)
+class DitheredImageRecipe(RecipeBase, DirectImageCommon):
+    '''
+    The effect of recording images of the sky in a given pointing
+    position of the TS
+
+
+    **Observing modes:**
+
+        * Stare image
+    
+    '''
+
+    __requires__ = [
+        Parameter('master_bpm', MasterBadPixelMask, 
+                  'Master bad pixel mask'),       
+        Parameter('master_bias', MasterBias, 'Master bias image', soft=True),
+        Parameter('master_dark', MasterDark, 'Master dark image'),
+        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+        Parameter('master_intensity_ff', MasterIntensityFlat, 
+                  'Master intensity flatfield'),
+        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
+        # FIXME: this parameter is optional 
+        Parameter('sources', None, 
+                  'List of x, y coordinates to measure FWHM',
+                  soft=True),
+        Parameter('offsets', None, 'List of pairs of offsets',
+                  soft=True)
+    ]
+
+    def __init__(self):
+        super(DitheredImageRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+        
+    def run(self, obresult):
+                
+        baseshape = self.instrument['detectors'][0]
+        amplifiers = self.instrument['amplifiers'][0]
+        offsets = self.parameters['offsets']
+        
+        return self.process(obresult, baseshape, amplifiers, 
+                            offsets=offsets, subpix=1)
+        
 @provides(DataFrame)
 @provides(SourcesCatalog)
-class DitheredImageRecipe(RecipeBase):
+class DitheredImageRecipe2(RecipeBase):
     '''Recipe for the reduction of imaging mode observations.
 
     Recipe to reduce observations obtained in imaging mode, considering different
