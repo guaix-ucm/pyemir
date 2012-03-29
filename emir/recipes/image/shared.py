@@ -355,7 +355,7 @@ class DirectImageCommon(object):
                     for frame in obresult.frames:            
                         self.compute_simple_sky(frame)
                 else:
-                    self.compute_simple_sky_for_frames(targetframes, skyframes)
+                    self.compute_simple_sky(targetframes, skyframes)
                 
                 # Combining the frames
                 _logger.info("Step %d, Combining target frames", step)
@@ -417,10 +417,11 @@ class DirectImageCommon(object):
                 
                 self.apply_superflat(obresult.frames, superflat, step=step, save=True)
 
-                _logger.info('Step %d, advanced sky correction (SC)', step)
-                # FIXME: Only for science          
-                for frame in targetframes:
-                    self.compute_advanced_sky(frame, objmask, step=step)
+                _logger.info('Step %d, advanced sky correction (SC)', step)                
+                self.compute_advanced_sky(targetframes, objmask, 
+                                          skyframes=skyframes,
+                                          target_is_sky=target_is_sky,
+                                          step=step)
             
                 # Combining the images
                 _logger.info("Step %d, Combining the images", step)
@@ -453,7 +454,7 @@ class DirectImageCommon(object):
         
         return recipe_result
     
-    def compute_simple_sky_for_frames(self, targetframes, skyframes, 
+    def compute_simple_sky(self, targetframes, skyframes, 
                             maxsep=5, step=0, save=True):
         
         # build kdtree        
@@ -479,13 +480,13 @@ class DirectImageCommon(object):
             try:
                 tf = targetframes[tid]
                 sf = skyframes[idss]
-                self.compute_simple_sky_out(tf, sf, step=step, save=save)
+                self.compute_simple_sky_for_frame(tf, sf, step=step, save=save)
             except IndexError:
                 _logger.error('No sky image available for frame %s', tf.lastname)
                 raise
 
 
-    def compute_simple_sky_out(self, frame, skyframe, step=0, save=True):
+    def compute_simple_sky_for_frame(self, frame, skyframe, step=0, save=True):
         _logger.info('Correcting sky in frame %s', frame.lastname)
         _logger.info('with sky computed from frame %s', skyframe.lastname)
         
@@ -523,42 +524,71 @@ class DirectImageCommon(object):
             data = hdulist['primary'].data
             valid = data[frame.valid_region]
             valid -= sky
+        
+    def compute_advanced_sky(self, targetframes, objmask, 
+                                        skyframes=None, target_is_sky=False,
+                                        maxsep=5.0,
+                                        nframes=10,
+                                        step=0):
+        
+        if target_is_sky:
+            skyframes = targetframes
+            # Each frame is its closets sky frmae 
+            nframes += 1
+        elif skyframes is None:
+            raise ValueError('skyframes not defined')
+        
+        # build kdtree        
+        sarray = numpy.array([frame.mjd for frame in skyframes])
+        # shape must be (n, 1)
+        sarray = numpy.expand_dims(sarray, axis=1)
+        
+        # query
+        tarray = numpy.array([frame.mjd for frame in targetframes])
+        # shape must be (n, 1)
+        tarray = numpy.expand_dims(tarray, axis=1)
+        
+        kdtree = KDTree(sarray)
+        
+        # 1 / minutes in a day 
+        MIN_TO_DAY = 0.000694444
+        #max_time_sep = self.parameters['sky_images_sep_time'] / 1440.0
+        dis, idxs = kdtree.query(tarray, k=nframes, 
+                                 distance_upper_bound=maxsep * MIN_TO_DAY)
+        
+        nsky = len(sarray)
+        
+        for tid, idss in enumerate(idxs):
+            try:
+                tf = targetframes[tid]
+                _logger.info('Step %d, SC: computing advanced sky for %s', step, tf.baselabel)
+                #filter(lambda x: x < nsky, idss)
+                locskyframes = []
+                for si in idss:
+                    if tid == si:
+                        # this sky frame its the current frame, reject
+                        continue 
+                    if si < nsky:
+                        _logger.debug('Step %d, SC: %s is a sky frame', step, skyframes[si].baselabel)
+                        locskyframes.append(skyframes[si])
+                self.compute_advanced_sky_for_frame(tf, sf, step=step, save=save)
+            except IndexError:
+                _logger.error('No sky image available for frame %s', tf.lastname)
+                raise
 
-    def compute_simple_sky(self, frame, step=0, save=True):
-        self.compute_simple_sky_out(frame, skyframe=frame, step=step, save=save)
-        
-    def compute_advanced_sky(self, frame, objmask, step=0):
-        self.compute_simple_sky_out(frame, frame, step=step, save=True)
-        return
-        
-        # FIXME
-        # FIXME
-        
-        
-        # Create a copy of the frame
-        dst = name_skysub_proc(frame.baselabel, step)
-        shutil.copy(frame.lastname, dst)
-        frame.lastname = dst
-        
-        # Fraction of julian day
-        max_time_sep = self.parameters['sky_images_sep_time'] / 1440.0
-        thistime = frame.mjd
-        
-        _logger.info('Iter %d, SC: computing advanced sky for %s', self.iter, frame.baselabel)
-        desc = []
+    def compute_advanced_sky_for_frame(self, frame, skyframes, step=0, save=True):
+        _logger.info('Correcting sky in frame %s', frame.lastname)
+        _logger.info('with sky computed from frames')
+        for i in skyframes:
+            _logger.info('%s', i.lastname)
+            
+            
         data = []
-        masks = []
         scales = []
-
+        masks = []
+        desc = []
         try:
-            idx = 0
-            for i in itertools.chain(*frame.sky_related):
-                time_sep = abs(thistime - i.mjd)
-                if time_sep > max_time_sep:
-                    _logger.warn('frame %s is separated from %s more than %dm', 
-                                 i.baselabel, frame.baselabel, self.parameters['sky_frames_sep_time'])
-                    _logger.warn('frame %s will not be used', i.baselabel)
-                    continue
+            for i in skyframes:
                 filename = i.flat_corrected
                 hdulist = pyfits.open(filename, mode='readonly')
                 data.append(hdulist['primary'].data[i.valid_region])
@@ -566,47 +596,40 @@ class DirectImageCommon(object):
                 masks.append(objmask[i.valid_region])
                 desc.append(hdulist)
                 idx += 1
-
-            _logger.debug('computing background with %d frames', len(data))
-            sky, _, num = median(data, masks, scales=scales)
-            if numpy.any(num == 0):
-                # We have pixels without
-                # sky background information
-                _logger.warn('pixels without sky information in frame %s',
-                             i.flat_corrected)
-                binmask = num == 0
-                # FIXME: during development, this is faster
-                sky[binmask] = sky[num != 0].mean()
-                # To continue we interpolate over the patches
-                #fixpix2(sky, binmask, out=sky, iterations=1)
-                name = name_skybackgroundmask(frame.baselabel, self.iter)
-                pyfits.writeto(name, binmask.astype('int16'), clobber=True)
+        
+                _logger.debug('computing background with %d frames', len(data))
+                sky, _, num = median(data, masks, scales=scales)
                 
-            hdulist1 = pyfits.open(frame.lastname, mode='update')
-            try:
-                d = hdulist1['primary'].data[frame.valid_region]
-                
-                # FIXME
-                # sky median is 1.0 ?
-                sky = sky / numpy.median(sky) * numpy.median(d)
-                # FIXME
-                self.figure_image(sky, frame)                 
-                d -= sky
-                
-                name = name_skybackground(frame.baselabel, self.iter)
-                pyfits.writeto(name, sky, clobber=True)
-                _logger.info('Iter %d, SC: subtracting sky %s to frame %s', 
-                             self.iter, name, frame.lastname)                
-            
-            finally:
-                hdulist1.close()
-                                                       
         finally:
             for hdl in desc:
-                hdl.close()
+                hdl.close()            
+            
+        if numpy.any(num == 0):
+            # We have pixels without
+            # sky background information
+            _logger.warn('pixels without sky information in frame %s',
+                         i.flat_corrected)
+            binmask = num == 0
+            # FIXME: during development, this is faster
+            sky[binmask] = sky[num != 0].mean()
         
+        # To continue we interpolate over the patches
+        #fixpix2(sky, binmask, out=sky, iterations=1)
+        name = name_skybackgroundmask(frame.baselabel, step)
+        pyfits.writeto(name, binmask.astype('int16'), clobber=True)        
         
+                
+        dst = name_skysub_proc(frame.baselabel, step)
+        prev = frame.lastname        
+        shutil.copyfile(prev, dst)        
+        frame.lastname = dst
         
+        with pyfits.open(frame.lastname, mode='update') as hdulist:
+            data = hdulist['primary'].data
+            valid = data[frame.valid_region]
+            valid -= sky
+
+
 
     def combine_frames(self, frames, out=None, step=0):
         _logger.debug('Step %d, opening sky-subtracted frames', step)
