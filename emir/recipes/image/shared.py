@@ -353,7 +353,7 @@ class DirectImageCommon(object):
                     # Each frame is the closest sky frame available
                     
                     for frame in obresult.frames:            
-                        self.compute_simple_sky(frame)
+                        self.compute_simple_sky_for_frame(frame, frame)
                 else:
                     self.compute_simple_sky(targetframes, skyframes)
                 
