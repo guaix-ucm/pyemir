@@ -71,7 +71,7 @@ __all__ = ['Recipe']
 
 __author__ = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
-_logger = logging.getLogger("emir.recipes")
+_logger = logging.getLogger("numina.recipes.emir")
 
 #mpl.interactive(True)
 mpl.rcParams['toolbar'] = 'None'

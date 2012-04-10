@@ -33,7 +33,7 @@ from emir.dataproducts import SourcesCatalog
 
 from .shared import DirectImageCommon
 
-_logger = logging.getLogger('emir.recipes')
+_logger = logging.getLogger('numina.recipes.emir')
 
 @provides(DataFrame, SourcesCatalog)
 class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):

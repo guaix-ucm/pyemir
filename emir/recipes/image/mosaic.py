@@ -28,7 +28,7 @@ from numina.recipes import RecipeBase, Parameter, provides, DataFrame
 
 from emir.dataproducts import SourcesCatalog
 
-_logger = logging.getLogger('emir.recipes')
+_logger = logging.getLogger('numina.recipes.emir')
 
 @provides(DataFrame, SourcesCatalog)
 class MosaicRecipe(RecipeBase):

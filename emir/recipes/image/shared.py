@@ -55,7 +55,7 @@ import numina.util.sexcatalog as sexcatalog
 
 from emir.dataproducts import SourcesCatalog
 
-_logger = logging.getLogger('emir.recipes')
+_logger = logging.getLogger('numina.recipes.emir')
 
 def name_redimensioned_frames(label, step, ext='.fits'):
     dn = '%s_r%s' % (label, ext)
