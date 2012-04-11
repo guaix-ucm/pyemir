@@ -20,84 +20,19 @@
 '''Recipe for the reduction of imaging mode observations.'''
 
 import logging
-import os.path
-import shutil
-import itertools
-import math
-import operator
 
-import numpy
-import pyfits
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
-from matplotlib.collections import PatchCollection
-import numdisplay.zscale
-from scipy.spatial import cKDTree as KDTree
-
-import numina.image
-from numina.image import get_hdu_shape, resize_fits
-from numina.flow import SerialFlow
-from numina.image.background import create_background_map
-from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
-from numina.array import subarray_match
-from numina.array import combine_shape, correct_flatfield
-from numina.array import fixpix2
-from numina.array.combine import flatcombine, median, quantileclip
-
-from numina import __version__
 from numina.recipes import Parameter, DataFrame, provides
 from numina.recipes import RecipeBase, RecipeError
-
-from numina.util.sextractor import SExtractor
-from numina.util.sextractor import open as sopen
-import numina.util.sexcatalog as sexcatalog
-
-
-from emir.dataproducts import create_result, MasterBias, MasterDark 
+from emir.dataproducts import MasterBias, MasterDark 
 from emir.dataproducts import MasterIntensityFlat, MasterBadPixelMask
 from emir.dataproducts import SourcesCatalog, NonLinearityCalibration
- 
-from .shared import name_skyflat, name_skyflat_proc
-from .shared import name_redimensioned_frames, name_object_mask
-from .shared import name_skybackground, name_skybackgroundmask
-from .shared import name_skysub_proc, name_segmask
+
 from .shared import DirectImageCommon
 
-#import .instrument.detector as detector
-
-__all__ = ['Recipe']
 
 __author__ = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 _logger = logging.getLogger("numina.recipes.emir")
-
-#mpl.interactive(True)
-mpl.rcParams['toolbar'] = 'None'
-
-def update_sky_related(images, nimages=5):
-    
-    nox = nimages
-    # The first nimages
-    for idx, image in enumerate(images[:nox]):
-        bw = images[0:2 * nox + 1][:idx]
-        fw = images[0:2 * nox + 1][idx + 1:]
-        image.sky_related = (bw, fw)
-
-    # Images between nimages and -nimages
-    for idx, image in enumerate(images[nox:-nox]):
-        bw = images[idx:idx + nox]
-        fw = images[idx + nox + 1:idx + 2 * nox + 1]
-        image.sky_related = (bw, fw)
- 
-    # The last nimages
-    for idx, image in enumerate(images[-nox:]):
-        bw = images[-2 * nox - 1:][0:idx + nox + 1]
-        fw = images[-2 * nox - 1:][nox + idx + 2:]
-        image.sky_related = (bw, fw)
-    
-    return images
 
 @provides(DataFrame, SourcesCatalog)
 class DitheredImageRecipe(RecipeBase, DirectImageCommon):
@@ -212,79 +147,3 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
         return self.process(obresult, baseshape, amplifiers, 
                             offsets=offsets, subpix=1, stop_after=3)
                                                             
-    def _compute_advanced_sky(self, image, objmask):
-        '''Create a background map from nearby images.'''
-        # Create a copy of the image
-        dst = name_skysub_proc(image.baselabel, self.iter)
-        shutil.copy(image.lastname, dst)
-        image.lastname = dst
-        
-        # Fraction of julian day
-        max_time_sep = self.parameters['sky_images_sep_time'] / 1440.0
-        thistime = image.mjd
-        
-        _logger.info('Iter %d, SC: computing advanced sky for %s', self.iter, image.baselabel)
-        desc = []
-        data = []
-        masks = []
-        scales = []
-
-        try:
-            idx = 0
-            for i in itertools.chain(*image.sky_related):
-                time_sep = abs(thistime - i.mjd)
-                if time_sep > max_time_sep:
-                    _logger.warn('image %s is separated from %s more than %dm', 
-                                 i.baselabel, image.baselabel, self.parameters['sky_images_sep_time'])
-                    _logger.warn('image %s will not be used', i.baselabel)
-                    continue
-                filename = i.flat_corrected
-                hdulist = pyfits.open(filename, mode='readonly')
-                data.append(hdulist['primary'].data[i.valid_region])
-                scales.append(numpy.median(data[-1]))
-                masks.append(objmask[i.valid_region])
-                desc.append(hdulist)
-                idx += 1
-
-            _logger.debug('computing background with %d images', len(data))
-            sky, _, num = median(data, masks, scales=scales)
-            if numpy.any(num == 0):
-                # We have pixels without
-                # sky background information
-                _logger.warn('pixels without sky information in image %s',
-                             i.flat_corrected)
-                binmask = num == 0
-                # FIXME: during development, this is faster
-                sky[binmask] = sky[num != 0].mean()
-                # To continue we interpolate over the patches
-                #fixpix2(sky, binmask, out=sky, iterations=1)
-                name = name_skybackgroundmask(image.baselabel, self.iter)
-                pyfits.writeto(name, binmask.astype('int16'), clobber=True)
-                
-            hdulist1 = pyfits.open(image.lastname, mode='update')
-            try:
-                d = hdulist1['primary'].data[image.valid_region]
-                
-                # FIXME
-                # sky median is 1.0 ?
-                sky = sky / numpy.median(sky) * numpy.median(d)
-                # FIXME
-                self.figure_image(sky, image)                 
-                d -= sky
-                
-                name = name_skybackground(image.baselabel, self.iter)
-                pyfits.writeto(name, sky, clobber=True)
-                _logger.info('Iter %d, SC: subtracting sky %s to image %s', 
-                             self.iter, name, image.lastname)                
-            
-            finally:
-                hdulist1.close()
-                                                       
-        finally:
-            for hdl in desc:
-                hdl.close()
-                
-
-
-    
-

@@ -44,7 +44,7 @@ from numina.flow.processing import BiasCorrector, FlatFieldCorrector
 from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 from numina.array import combine_shape
 from numina.array import fixpix2
-from numina.image import resize_fits, custom_region_to_str
+from numina.frame import resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield
 from numina.array import subarray_match
 from numina.array.combine import flatcombine, median, quantileclip
