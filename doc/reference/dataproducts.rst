@@ -3,4 +3,5 @@
 =======================================================
 
 .. automodule:: emir.dataproducts
+   :members:
 
