@@ -39,7 +39,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'contents'
+master_doc = 'index'
 
 # General information about the project.
 project = u'PyEmir'
@@ -191,3 +191,6 @@ latex_documents = [
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+# A list of ignored prefixes for module index sorting.
+modindex_common_prefix = ['emir.']

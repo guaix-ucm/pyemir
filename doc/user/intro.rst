@@ -15,8 +15,6 @@ be able to be installed and work properly:
  - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
  - numpy (http://numpy.scipy.org/)
  - scipy (http://www.scipy.org)
- - pyxdg (http://www.freedesktop.org/wiki/Software/pyxdg)
- - simplejson (http://undefined.org/python/#simplejson)
 
 Additional packages are optionally required:
  - nose (http://somethingaboutorange.com/mrl/projects/nose) to run the tests
