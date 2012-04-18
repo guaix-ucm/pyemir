@@ -3,11 +3,11 @@
 from setuptools import setup, find_packages
 
 setup(name='pyemir',
-      version='0.5.0',
+      version='0.6.0dev',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.5.0.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.6.0dev.tar.gz',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       packages=find_packages('.'),
@@ -17,7 +17,7 @@ setup(name='pyemir',
       test_suite="nose.collector",
       install_requires=['setuptools', 'numpy', 'pyfits', 'scipy', 
 		'sphinx', 'nose', 'pywcs',
-		'matplotlib', 'numdisplay', 'numina>=0.5.0'],
+		'matplotlib', 'numdisplay', 'numina>=0.6.0'],
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',
@@ -40,8 +40,6 @@ setup(name='pyemir',
       - numpy (http://numpy.scipy.org/)
       - scipy (http://www.scipy.org) 
       - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
-      - pyxdg (http://www.freedesktop.org/wiki/Software/pyxdg)
-      - simplejson (http://undefined.org/python/#simplejson)
       
       Webpage: https://guaix.fis.ucm.es/projects/emir
       Maintainer: sergiopr@fis.ucm.es

@@ -21,13 +21,17 @@
 
 import logging
 
-from emir.recipes import Pipeline
+from numina.pipeline import register_pipeline
+
 from .simulator import EmirImageFactory as ImageFactory
 from emir.simulator import Instrument
+from emir.recipes import EmirPipeline
 
-__all__ = ['Instrument', 'ImageFactory', 'Pipeline']
+__all__ = ['Instrument', 'ImageFactory']
 
-__version__ = '0.5.0'
+__version__ = '0.6.0dev'
+
+register_pipeline(EmirPipeline(version=__version__))
 
 # Top level NullHandler
 logging.getLogger("emir").addHandler(logging.NullHandler())

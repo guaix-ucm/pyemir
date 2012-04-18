@@ -19,6 +19,8 @@
 
 '''Recipes for EMIR Observing Modes.'''
 
+from numina.pipeline import Pipeline
+
 from .auxiliary import BiasRecipe, DarkRecipe, IntensityFlatRecipe
 from .image import StareImageRecipe, DitheredImageRecipe, MicroditheredImageRecipe
 from .image import NBImageRecipe, MosaicRecipe
@@ -49,14 +51,9 @@ _equiv_class = {
     'raster_spectra': 'ls:Recipe',
 }
 
-def find_recipe_class(mode):
-    return _equiv_class[mode]
+class EmirPipeline(Pipeline):
+    def __init__(self, version):
+        super(EmirPipeline, self).__init__(name='emir', 
+                version=version,
+                recipes=_equiv_class)
 
-class Pipeline(object):
-    
-    instrument = 'EMIR'
-
-    def recipe(self, mode):
-	'''Return the recipe class given the obs mode name'''
-        return _equiv_class[mode]
-	
