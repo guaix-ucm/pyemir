@@ -79,6 +79,7 @@ class StareImageRecipe(RecipeBase, DirectImageCommon):
         offsets = self.parameters['offsets']
         
         return self.process(obresult, baseshape, amplifiers, 
-                            offsets=offsets, subpix=1)
+                            offsets=offsets, subpix=1,
+                            stop_after=DirectImageCommon.PRERED)
         
         

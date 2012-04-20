@@ -202,10 +202,8 @@ class DirectImageCommon(object):
             recipe_result['intermediate'] = []
         
         
-        # States
-        BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
-        
-        state = BASIC
+        # States        
+        state = self.BASIC
         step = 0
         
         try:
@@ -215,7 +213,7 @@ class DirectImageCommon(object):
         
         
         while True:
-            if state == BASIC:    
+            if state == self.BASIC:    
                 _logger.info('Basic processing')
 
                 # Basic processing
@@ -249,8 +247,8 @@ class DirectImageCommon(object):
                 if stop_after == state:
                     break
                 else:
-                    state = PRERED
-            elif state == PRERED:                
+                    state = self.PRERED
+            elif state == self.PRERED:                
                 # Shape of the window
                 windowshape = tuple((i[1] - i[0]) for i in window)
                 _logger.debug('Shape of window is %s', windowshape)
@@ -342,7 +340,7 @@ class DirectImageCommon(object):
                 self.update_scale_factors(obresult.frames)
 
                 # Create superflat
-                superflat = self.compute_superflat(obresult.frames, scaled_amp)
+                superflat = self.compute_superflat(skyframes, scaled_amp)
             
                 # Apply superflat
                 self.figure_init(subpixshape)
@@ -369,8 +367,8 @@ class DirectImageCommon(object):
                 if stop_after == state:
                     break
                 else:
-                    state = CHECKRED
-            elif state == CHECKRED:
+                    state = self.CHECKRED
+            elif state == self.CHECKRED:
                 
                 seeing_fwhm = None
 
@@ -387,8 +385,8 @@ class DirectImageCommon(object):
                     if stop_after == state:
                         break
                     else:
-                        state = FULLRED
-            elif state == FULLRED:
+                        state = self.FULLRED
+            elif state == self.FULLRED:
 
                 # Generating segmentation image
                 _logger.info('Step %d, generating segmentation image', step)
@@ -397,7 +395,7 @@ class DirectImageCommon(object):
                 # Update objects mask
                 # For all images    
                 # FIXME:
-                for frame in obresult.frames:
+                for frame in targetframes:
                     frame.objmask = name_object_mask(frame.baselabel, step)
                     _logger.info('Step %d, create object mask %s', step,  frame.objmask)                 
                     frame.objmask_data = objmask[frame.valid_region]

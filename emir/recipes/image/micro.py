@@ -154,7 +154,8 @@ class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
         offsets = self.parameters['offsets']
         
         return self.process(obresult, baseshape, amplifiers, window=window, 
-                            offsets=offsets, subpix=subpix)
+                            offsets=offsets, subpix=subpix,
+                            stop_after=DirectImageCommon.FULLRED)
         
 
     
