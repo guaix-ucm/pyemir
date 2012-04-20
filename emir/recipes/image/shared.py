@@ -400,6 +400,11 @@ class DirectImageCommon(object):
                     _logger.info('Step %d, create object mask %s', step,  frame.objmask)                 
                     frame.objmask_data = objmask[frame.valid_region]
                     pyfits.writeto(frame.objmask, frame.objmask_data, clobber=True)
+                    
+                if not target_is_sky:
+                    
+                    for frame in skyframes:
+                        pass
 
                 _logger.info('Step %d, superflat correction (SF)', step)
                 
@@ -710,8 +715,10 @@ class DirectImageCommon(object):
             
             masks = None
             if segmask is not None:
-                masks = [segmask[frame.valid_region] for frame in frames]
-                
+                if target_is_sky:
+                    masks = [segmask[frame.valid_region] for frame in frames]
+                else:
+                    masks = [pyfits.getdata(frame.objmask) for frame in frames]
             _logger.debug('Step %d, combining %d frames', step, len(data))
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, 
                                                     blank=1.0 / scales[0])            
@@ -947,6 +954,7 @@ class DirectImageCommon(object):
             
             # Extinction correction
             excor = pow(10, -0.4 * frame.airmass * self.parameters['extinction'])
+            # FIXME: contradictory
             excor = 1.0
             base[idx] = [obj['FLUX_BEST'] / excor
                                      for obj in catalog if obj['NUMBER'] in indices]
@@ -1047,6 +1055,88 @@ class DirectImageCommon(object):
             
         self._figure.canvas.draw()
         self._figure.savefig('figure-relative-flux_i%01d.png' % step)
+
+    def create_mask_single(self, frame, seeing_fwhm, step=0):
+        #
+        remove_border = True
+        
+        # sextractor takes care of bad pixels
+        sex = SExtractor()
+        sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
+        sex.config["CHECKIMAGE_NAME"] = name_object_mask(frame.baselabel, step) 
+        
+
+        sex.config['VERBOSE_TYPE'] = 'QUIET'
+        sex.config['PIXEL_SCALE'] = 1
+        sex.config['BACK_TYPE'] = 'AUTO' 
+
+        if seeing_fwhm is not None and seeing_fwhm > 0:
+            sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+
+        sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
+        sex.config['PARAMETERS_LIST'].append('X_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('Y_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('A_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('B_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('THETA_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('CLASS_STAR')                
+        
+        filename = frame.lastname
+        
+        # Lauch SExtractor on a FITS file
+        sex.run(filename)
+        
+        # Plot objects
+        # FIXME, plot sextractor objects on top of image
+        patches = []
+        fwhms = []
+        nfirst = 0
+        catalog_f = sopen(sex.config['CATALOG_NAME'])
+        try:
+            star = catalog_f.readline()
+            while star:
+                flags = star['FLAGS']
+                # ignoring those objects with corrupted apertures
+                if flags & sexcatalog.CORRUPTED_APER:
+                    star = catalog_f.readline()
+                    continue
+                center = (star['X_IMAGE'], star['Y_IMAGE'])
+                wd = 10 * star['A_IMAGE']
+                hd = 10 * star['B_IMAGE']
+                color = 'red'
+                e = Ellipse(center, wd, hd, star['THETA_IMAGE'], color=color)
+                patches.append(e)
+                fwhms.append(star['FWHM_IMAGE'])
+                nfirst += 1
+                # FIXME Plot a ellipse
+                star = catalog_f.readline()
+        finally:
+            catalog_f.close()
+            
+        p = PatchCollection(patches, alpha=0.4)
+        ax = self._figure.gca()
+        ax.add_collection(p)
+        self._figure.canvas.draw()
+        self._figure.savefig('figure-sky-segmentation-overlay_%01d.png' % step)
+
+        self.figure_fwhm_histogram(fwhms, step=step)
+                    
+        # mode with an histogram
+        hist, edges = numpy.histogram(fwhms, 50)
+        idx = hist.argmax()
+        
+        seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1]) 
+        if seeing_fwhm <= 0:
+            _logger.warning('Seeing FHWM %f pixels is negative, reseting', seeing_fwhm)
+            seeing_fwhm = None
+        else:
+            _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
+        name_segmask(step)
+        _logger.info('Step %d, create object mask %s', step,  frame.objmask)
+        frame.objmask = name_object_mask(frame.baselabel, step)                 
+        frame.objmask_data = None
+        return frame, seeing_fwhm
         
     def create_mask(self, sf_data, seeing_fwhm, step=0):
         # FIXME more plots
