@@ -59,9 +59,9 @@ class NBImageRecipe(RecipeBase, DirectImageCommon):
         Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
         # FIXME: this parameter is optional 
         Parameter('sources', None, 'List of x, y coordinates to measure FWHM',
-                  soft=True),
+                  optional=True),
         Parameter('offsets', None, 'List of pairs of offsets',
-                  soft=True)
+                  optional=True)
     ]
 
     def __init__(self):

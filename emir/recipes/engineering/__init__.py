@@ -26,15 +26,15 @@ import logging
 from numina.recipes import RecipeBase, Parameter, provides, requires
 from numina.recipes import DataFrame
 
-from ...dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from ...dataproducts import TelescopeOffset, MSMPositions
-from ...dataproducts import MasterIntensityFlat
+from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from emir.dataproducts import TelescopeOffset, MSMPositions
+from emir.dataproducts import MasterIntensityFlat
 
-from ...dataproducts import DTU_XY_Calibration, DTU_Z_Calibration
-from ...dataproducts import CSU2DetectorCalibration, DTUFlexureCalibration
-from ...dataproducts import (PointingOriginCalibration, 
+from emir.dataproducts import DTU_XY_Calibration, DTU_Z_Calibration
+from emir.dataproducts import CSU2DetectorCalibration, DTUFlexureCalibration
+from emir.dataproducts import (PointingOriginCalibration, 
                              SpectroPhotometricCalibration)
-from ...dataproducts import PhotometricCalibration, WavelengthCalibration
+from emir.dataproducts import PhotometricCalibration, WavelengthCalibration
 __all__ = []
 
 _logger = logging.getLogger('emir.recipes')

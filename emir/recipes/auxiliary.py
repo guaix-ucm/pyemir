@@ -157,7 +157,7 @@ class DarkRecipe(RecipeBase):
     ''' 
 
     __requires__ = [Parameter('master_bias', MasterBias, 
-                              'Master bias calibration', soft=True)]
+                              'Master bias calibration', optional=True)]
 
     def __init__(self):
         super(DarkRecipe, self).__init__(author=_s_author, version="0.1.0")
@@ -274,7 +274,7 @@ class IntensityFlatRecipe(RecipeBase):
     
     '''
     __requires__ = [ 
-        Parameter('master_bias', MasterBias, 'Master bias image', soft=True),
+        Parameter('master_bias', MasterBias, 'Master bias image', optional=True),
         Parameter('master_dark', MasterDark, 'Master dark image'),
         Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),

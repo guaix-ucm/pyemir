@@ -111,7 +111,7 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
     __requires__ = [
         Parameter('master_bpm', MasterBadPixelMask, 
                   'Master bad pixel mask'),       
-        Parameter('master_bias', MasterBias, 'Master bias image', soft=True),
+        Parameter('master_bias', MasterBias, 'Master bias image', optional=True),
         Parameter('master_dark', MasterDark, 'Master dark image'),
         Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
@@ -121,9 +121,9 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
         # FIXME: this parameter is optional 
         Parameter('sources', None, 
                   'List of x, y coordinates to measure FWHM',
-                  soft=True),
+                  optional=True),
         Parameter('offsets', None, 'List of pairs of offsets',
-                  soft=True),
+                  optional=True),
         Parameter('iterations', 4, 'Iterations of the recipe'),
         Parameter('sky_images', 5, 'Images used to estimate the background before and after current image'),
         Parameter('sky_images_sep_time', 10, 'Maximum separation time between consecutive sky images in minutes'),
