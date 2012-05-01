@@ -22,7 +22,7 @@
 import logging
 
 from numina.recipes import Parameter, DataFrame, provides
-from numina.recipes import RecipeBase, RecipeError
+from numina.recipes import RecipeBase
 from emir.dataproducts import MasterBias, MasterDark 
 from emir.dataproducts import MasterIntensityFlat, MasterBadPixelMask
 from emir.dataproducts import SourcesCatalog, NonLinearityCalibration

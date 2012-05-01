@@ -20,11 +20,10 @@
 '''Auxiliary Recipes for EMIR'''
 
 import logging
-import time
 
 import numpy
 import pyfits
-from numina.recipes import RecipeBase, Parameter, provides, requires
+from numina.recipes import RecipeBase, RecipeError, Parameter, provides, requires
 from numina.logger import log_to_history
 from numina.array.combine import median
 from numina import __version__

@@ -29,7 +29,6 @@ import numpy # pylint: disable-msgs=E1101
 import numina.qa
 from numina.recipes import RecipeBase
 
-from numina.frame import DiskImage
 from emir.instrument.detector import CHANNELS_READOUT
 from emir.dataproducts import create_result
 

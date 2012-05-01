@@ -37,12 +37,11 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 from numina import __version__
-from numina.recipes import RecipeBase, Parameter, provides, DataFrame
-from numina.flow import SerialFlow, Node
+from numina.recipes import DataFrame
+from numina.flow import SerialFlow 
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, FlatFieldCorrector
 from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
-from numina.array import combine_shape
 from numina.array import fixpix2
 from numina.frame import resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield
@@ -376,7 +375,7 @@ class DirectImageCommon(object):
                 recompute = False
                 if recompute:
                     _logger.info('Recentering is needed')
-                    state = PRERED
+                    state = self.PRERED
                 else:
                     _logger.info('Recentering is not needed')
                     _logger.info('Checking photometry')
@@ -433,7 +432,7 @@ class DirectImageCommon(object):
                 self.figures_after_combine(sf_data)
 
                 if step >= niteration:
-                    state = COMPLETE
+                    state = self.COMPLETE
             else:
                 break
 
@@ -474,10 +473,8 @@ class DirectImageCommon(object):
         
         # 1 / minutes in a day 
         MIN_TO_DAY = 0.000694444
-        dis, idxs = kdtree.query(tarray, k=1, 
+        _dis, idxs = kdtree.query(tarray, k=1, 
                                  distance_upper_bound=maxsep * MIN_TO_DAY)
-        
-        nsky = len(sarray)
         
         for tid, idss in enumerate(idxs):
             try:
@@ -532,11 +529,11 @@ class DirectImageCommon(object):
                                         skyframes=None, target_is_sky=False,
                                         maxsep=5.0,
                                         nframes=10,
-                                        step=0):
+                                        step=0, save=True):
         
         if target_is_sky:
             skyframes = targetframes
-            # Each frame is its closets sky frmae 
+            # Each frame is its closets sky frame 
             nframes += 1
         elif skyframes is None:
             raise ValueError('skyframes not defined')
@@ -556,7 +553,7 @@ class DirectImageCommon(object):
         # 1 / minutes in a day 
         MIN_TO_DAY = 0.000694444
         #max_time_sep = self.parameters['sky_images_sep_time'] / 1440.0
-        dis, idxs = kdtree.query(tarray, k=nframes, 
+        _dis, idxs = kdtree.query(tarray, k=nframes, 
                                  distance_upper_bound=maxsep * MIN_TO_DAY)
         
         nsky = len(sarray)
@@ -574,7 +571,7 @@ class DirectImageCommon(object):
                     if si < nsky:
                         _logger.debug('Step %d, SC: %s is a sky frame', step, skyframes[si].baselabel)
                         locskyframes.append(skyframes[si])
-                self.compute_advanced_sky_for_frame(tf, sf, step=step, save=save)
+                self.compute_advanced_sky_for_frame(tf, locskyframes, step=step, save=save)
             except IndexError:
                 _logger.error('No sky image available for frame %s', tf.lastname)
                 raise
@@ -585,25 +582,32 @@ class DirectImageCommon(object):
         for i in skyframes:
             _logger.info('%s', i.lastname)
             
-            
         data = []
         scales = []
         masks = []
+        # handle to the FITS file to close it finally
         desc = []
         try:
             for i in skyframes:
                 filename = i.flat_corrected
-                hdulist = pyfits.open(filename, mode='readonly')
+                hdulist = pyfits.open(filename, mode='readonly', memmap=True)
+                
                 data.append(hdulist['primary'].data[i.valid_region])
-                scales.append(numpy.median(data[-1]))
-                masks.append(objmask[i.valid_region])
                 desc.append(hdulist)
-                idx += 1
-        
+                scales.append(numpy.median(data[-1]))
+                if i.objmask_data is not None:
+                    masks.append(i.objmask_data[i.valid_region])
+                else:
+                    maskfile = i.objmask
+                    hdulistmask = pyfits.open(maskfile, mode='readonly', memmap=True)
+                    masks.append(hdulistmask['primary'].data)
+                    desc.append(hdulistmask)
+                     
                 _logger.debug('computing background with %d frames', len(data))
                 sky, _, num = median(data, masks, scales=scales)
                 
         finally:
+            # Closing all FITS files
             for hdl in desc:
                 hdl.close()            
             
@@ -697,7 +701,7 @@ class DirectImageCommon(object):
             except ValueError:
                 _logger.warning('Problem plotting %s', frame.lastname)
                         
-    def compute_superflat(self, frames, amplifiers, segmask=None, step=0):
+    def compute_superflat(self, frames, amplifiers, target_is_sky, segmask=None, step=0):
         _logger.info("Step %d, SF: combining the frames without offsets", step)
         try:
             filelist = []
@@ -797,7 +801,7 @@ class DirectImageCommon(object):
         
     def figures_after_combine(self, sf_data, step=0):
        
-         # FIXME, more plots
+        # FIXME, more plots
         def truncated(array, frac=0.1):
             '''Dirty truncated mean'''
             nf = int(array.size * frac)
@@ -1058,7 +1062,7 @@ class DirectImageCommon(object):
 
     def create_mask_single(self, frame, seeing_fwhm, step=0):
         #
-        remove_border = True
+        #remove_border = True
         
         # sextractor takes care of bad pixels
         sex = SExtractor()
@@ -1255,7 +1259,7 @@ class DirectImageCommon(object):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
         cmap = mpl.cm.get_cmap('gray')
-        norm = mpl.colors.LogNorm()
+        #norm = mpl.colors.LogNorm()
         ax.set_title('Result image')              
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
@@ -1272,7 +1276,7 @@ class DirectImageCommon(object):
         self._figure.savefig('figure-fwhm-histogram_i%01d.png' % step)
         
         
-    def check_position(self, images_info, sf_data, seeing_fwhm):
+    def check_position(self, images_info, sf_data, seeing_fwhm, step=0):
         # FIXME: this method has to be updated
 
         _logger.info('Checking positions')

@@ -29,7 +29,6 @@ import numina.qa
 from numina.recipes import RecipeBase, provides, Parameter
 #from emir.dataproducts import create_result
 
-from numina.frame import DiskImage
 from emir.instrument.detector import CHANNELS, QUADRANTS
 
 from ...dataproducts import create_result

@@ -19,7 +19,6 @@
 
 '''EMIR simulator.'''
 
-from datetime import datetime
 from pkgutil import get_data
 from StringIO import StringIO
 import logging

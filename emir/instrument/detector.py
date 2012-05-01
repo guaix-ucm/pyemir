@@ -18,7 +18,6 @@
 # 
 
 import itertools as ito
-from datetime import datetime
 
 import numpy # pylint: disable-msgs=E1101
 
