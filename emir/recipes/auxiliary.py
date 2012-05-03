@@ -23,7 +23,8 @@ import logging
 
 import numpy
 import pyfits
-from numina.recipes import RecipeBase, RecipeError, Parameter, provides, requires
+from numina.recipes import RecipeBase, Parameter, provides, requires
+from numina.recipes import DataProductParameter
 from numina.logger import log_to_history
 from numina.array.combine import median
 from numina import __version__
@@ -156,8 +157,8 @@ class DarkRecipe(RecipeBase):
      * A combined dark frame, with variance extension.
     ''' 
 
-    __requires__ = [Parameter('master_bias', MasterBias, 
-                              'Master bias calibration', optional=True)]
+    __requires__ = [DataProductParameter('master_bias', MasterBias, 
+                              'Master bias calibration', soft=True)]
 
     def __init__(self):
         super(DarkRecipe, self).__init__(author=_s_author, version="0.1.0")
@@ -274,9 +275,9 @@ class IntensityFlatRecipe(RecipeBase):
     
     '''
     __requires__ = [ 
-        Parameter('master_bias', MasterBias, 'Master bias image', optional=True),
-        Parameter('master_dark', MasterDark, 'Master dark image'),
-        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductParameter('master_bias', MasterBias, 'Master bias image', soft=True),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
     ]
     
@@ -403,10 +404,10 @@ class SpectralFlatRecipe(RecipeBase):
 
 
     __requires__ = [       
-        Parameter('master_bias', MasterBias, 'Master bias image'),
-        Parameter('master_dark', MasterDark, 'Master dark image'),
-        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
     ]
 
@@ -443,10 +444,10 @@ class SlitTransmissionRecipe(RecipeBase):
     
 
     __requires__ = [       
-        Parameter('master_bias', MasterBias, 'Master bias image'),
-        Parameter('master_dark', MasterDark, 'Master dark image'),
-        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
     ]
 
@@ -485,14 +486,14 @@ class WavelengthCalibrationRecipe(RecipeBase):
     '''
 
     __requires__ = [       
-        Parameter('master_bias', MasterBias, 'Master bias image'),
-        Parameter('master_dark', MasterDark, 'Master dark image'),
-        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        Parameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
-        Parameter('master_spectral_ff', MasterSpectralFlat, 
+        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
                   'Master spectral flatfield'),
     ]
 

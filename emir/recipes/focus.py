@@ -25,6 +25,8 @@
 import logging
 
 from numina.recipes import RecipeBase, Parameter, provides
+from numina.recipes import DataProductParameter
+from numina.logger import log_to_history
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ..dataproducts import TelescopeFocus
@@ -60,12 +62,12 @@ class TelescopeRoughFocusRecipe(RecipeBase):
      * Best focus
     '''
     __requires__ = [       
-        Parameter('master_bias', MasterBias, 'Master bias image'),
-        Parameter('master_dark', MasterDark, 'Master dark image'),
-        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        Parameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
         Parameter('objects', None, 'List of x-y pair of object coordinates'),
         Parameter('focus_range', None, 'Focus range: begin, end and step')        
@@ -103,12 +105,12 @@ class TelescopeFineFocusRecipe(RecipeBase):
     '''
 
     __requires__ = [       
-        Parameter('master_bias', MasterBias, 'Master bias image'),
-        Parameter('master_dark', MasterDark, 'Master dark image'),
-        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        Parameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
         Parameter('objects', None, 'List of x-y pair of object coordinates'),        
     ]
@@ -145,12 +147,12 @@ class DTUFocusRecipe(RecipeBase):
     '''
 
     __requires__ = [       
-        Parameter('master_bias', MasterBias, 'Master bias image'),
-        Parameter('master_dark', MasterDark, 'Master dark image'),
-        Parameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        Parameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
         Parameter('objects', None, 'List of x-y pair of object coordinates'),
         Parameter('msm_pattern', None, 'List of x-y pair of slit coordinates'),
