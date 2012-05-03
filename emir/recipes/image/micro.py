@@ -24,7 +24,8 @@ Image mode recipes of EMIR
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, provides, DataFrame
+from numina.recipes import RecipeBase, Parameter, DataProductParameter
+from numina.recipes import provides, DataFrame
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
@@ -120,13 +121,13 @@ class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
     logger = _logger
 
     __requires__ = [
-        Parameter('master_bpm', MasterBadPixelMask, 
+        DataProductParameter('master_bpm', MasterBadPixelMask, 
                   'Master bad pixel mask'),       
-        Parameter('master_bias', MasterBias, 'Master bias image', soft=True),
-        Parameter('master_dark', MasterDark, 'Master dark image'),
-        Parameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductParameter('master_bias', MasterBias, 'Master bias image', soft=True),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        Parameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
         Parameter('extinction', 0.0, 'Mean atmospheric extinction'), 
         Parameter('sources', None, 
