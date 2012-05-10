@@ -23,7 +23,6 @@ import logging
 
 from numina.recipes import RecipeBase, Parameter, DataProductParameter
 from numina.recipes import provides, DataFrame
-from numina.recipes import RecipeBase, RecipeError
 
 from emir.dataproducts import MasterBias, MasterDark 
 from emir.dataproducts import MasterIntensityFlat, MasterBadPixelMask
@@ -113,7 +112,7 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
     __requires__ = [
         DataProductParameter('master_bpm', MasterBadPixelMask, 
                   'Master bad pixel mask'),       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image', soft=True),
+        DataProductParameter('master_bias', MasterBias, 'Master bias image', optional=True),
         DataProductParameter('master_dark', MasterDark, 'Master dark image'),
         DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),

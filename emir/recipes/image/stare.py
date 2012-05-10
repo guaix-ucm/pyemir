@@ -26,6 +26,7 @@ import logging
 
 from numina.recipes import RecipeBase, Parameter, DataProductParameter
 from numina.recipes import provides, DataFrame
+from numina.recipes.requirements import Requirement
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
@@ -64,7 +65,9 @@ class StareImageRecipe(RecipeBase, DirectImageCommon):
                   'List of x, y coordinates to measure FWHM',
                   optional=True),
         Parameter('offsets', None, 'List of pairs of offsets',
-                  optional=True)
+                  optional=True),
+        Requirement('instrument.detector.channels', 'List of channels'),
+        Requirement('instrument.detector.shape', 'Detector shape'),
     ]
 
     def __init__(self):
@@ -75,8 +78,8 @@ class StareImageRecipe(RecipeBase, DirectImageCommon):
         
     def run(self, obresult):
                 
-        baseshape = self.instrument['detectors'][0]
-        amplifiers = self.instrument['amplifiers'][0]
+        baseshape = self.parameters['instrument.detector.shape']
+        amplifiers = self.parameters['instrument.detector.channels']
         offsets = self.parameters['offsets']
         
         return self.process(obresult, baseshape, amplifiers, 

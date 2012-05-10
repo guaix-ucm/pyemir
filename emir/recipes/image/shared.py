@@ -175,7 +175,7 @@ class DirectImageCommon(object):
         self._figure.canvas.set_window_title('Recipe Plots')
         self._figure.canvas.draw()
     
-    def process(self, obresult, baseshape, amplifiers, 
+    def process(self, obresult, baseshape, channels, 
                 offsets=None, window=None, 
                 subpix=1, store_intermediate=True,
                 target_is_sky=True, stop_after=PRERED):
@@ -184,11 +184,9 @@ class DirectImageCommon(object):
         
         # metadata = self.instrument['metadata']
         # FIXME: hardcoded
-        metadata = {
+        keywords = {
          "juliandate": "MJD-OBS", 
          "airmass": "AIRMASS", 
-         "detector.mode": "CCDMODE", 
-         "filter0": "FILTER", 
          "imagetype": "IMGTYP", 
          "exposure": "EXPTIME"
         }     
@@ -259,7 +257,7 @@ class DirectImageCommon(object):
                 # Window region
                 window = tuple(slice(*p) for p in window)
                 
-                scaled_amp = clip_slices(amplifiers, window, scale=subpix)
+                scaled_chan = clip_slices(channels, window, scale=subpix)
 
                 # Reference pixel in the center of the frame
                 refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
@@ -273,10 +271,10 @@ class DirectImageCommon(object):
                     # Getting some metadata from FITS header
                     hdr = pyfits.getheader(frame.label)
                     try:
-                        frame.exposure = hdr[str(metadata['exposure'])]
+                        frame.exposure = hdr[str(keywords['exposure'])]
                         #frame.baseshape = get_image_shape(hdr)
-                        frame.airmass = hdr[str(metadata['airmass'])]
-                        frame.mjd = hdr[str(metadata['juliandate'])]
+                        frame.airmass = hdr[str(keywords['airmass'])]
+                        frame.mjd = hdr[str(keywords['juliandate'])]
                     except KeyError as e:
                         raise KeyError("%s in frame %s" % (str(e), frame.label))
                     
@@ -338,8 +336,9 @@ class DirectImageCommon(object):
                 # Compute scale factors (median)           
                 self.update_scale_factors(obresult.frames)
 
-                # Create superflat
-                superflat = self.compute_superflat(skyframes, scaled_amp)
+                # Create superflat                
+                superflat = self.compute_superflat(skyframes, channels=scaled_chan,
+                                                   target_is_sky=target_is_sky, step=step)
             
                 # Apply superflat
                 self.figure_init(subpixshape)
@@ -411,7 +410,7 @@ class DirectImageCommon(object):
                 self.update_scale_factors(obresult.frames, step)
 
                 # Create superflat
-                superflat = self.compute_superflat(obresult.frames, scaled_amp, 
+                superflat = self.compute_superflat(obresult.frames, scaled_chan, target_is_sky,
                                                    segmask=objmask, step=step)
                 
                 # Apply superflat
@@ -701,7 +700,7 @@ class DirectImageCommon(object):
             except ValueError:
                 _logger.warning('Problem plotting %s', frame.lastname)
                         
-    def compute_superflat(self, frames, amplifiers, target_is_sky, segmask=None, step=0):
+    def compute_superflat(self, frames, channels, target_is_sky, segmask=None, step=0):
         _logger.info("Step %d, SF: combining the frames without offsets", step)
         try:
             filelist = []
@@ -733,7 +732,7 @@ class DirectImageCommon(object):
 
         # We interpolate holes by channel
         _logger.debug('Step %d, interpolating holes by channel', step)
-        for channel in amplifiers:
+        for channel in channels:
             mask = (sf_num[channel] == 0)
             if numpy.any(mask):                    
                 fixpix2(sf_data[channel], mask, out=sf_data[channel])

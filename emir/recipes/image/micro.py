@@ -26,6 +26,7 @@ import logging
 
 from numina.recipes import RecipeBase, Parameter, DataProductParameter
 from numina.recipes import provides, DataFrame
+from numina.recipes.requirements import Requirement
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
@@ -138,7 +139,11 @@ class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
                   'Number of subdivisions in each pixel side'),
         Parameter('window', None, 'Region of interesting data', optional=True),
         Parameter('offsets', None, 'List of pairs of offsets',
-                  optional=True)
+                  optional=True),
+        Requirement('instrument.detector.channels', 'List of channels'),
+        Requirement('instrument.detector.shape', 'Detector shape'),
+        Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
+        Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
     ]
 
     def __init__(self):
@@ -150,8 +155,9 @@ class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
     def run(self, obresult):
         
         subpix = self.parameters['subpixelization']
-        baseshape = self.instrument['detectors'][0]
-        amplifiers = self.instrument['amplifiers'][0]
+        baseshape = self.parameters['instrument.detector.shape']
+        amplifiers = self.parameters['instrument.detector.channels']
+        offsets = self.parameters['offsets']
         window = self.parameters['window']
         offsets = self.parameters['offsets']
         

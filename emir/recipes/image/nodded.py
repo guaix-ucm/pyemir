@@ -23,6 +23,7 @@ Beam switched-nodded image mode recipe of EMIR
 '''
 
 from numina.recipes import RecipeBase, Parameter, DataProductParameter
+from numina.recipes.requirements import Requirement
 from numina.recipes import provides, DataFrame
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -58,6 +59,8 @@ class NBImageRecipe(RecipeBase, DirectImageCommon):
         DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
         Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
+        Requirement('instrument.detector.channels', 'List of channels'),
+        Requirement('instrument.detector.shape', 'Detector shape'),
         # FIXME: this parameter is optional 
         Parameter('sources', None, 'List of x, y coordinates to measure FWHM',
                   optional=True),
@@ -73,8 +76,8 @@ class NBImageRecipe(RecipeBase, DirectImageCommon):
 
     def run(self, obresult):
         
-        baseshape = self.instrument['detectors'][0]
-        amplifiers = self.instrument['amplifiers'][0]
+        baseshape = self.parameters['instrument.detector.shape']
+        amplifiers = self.parameters['instrument.detector.channels']
         offsets = self.parameters['offsets']
 
         return self.process(obresult, baseshape, amplifiers, 
