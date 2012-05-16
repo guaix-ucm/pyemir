@@ -22,6 +22,7 @@
 import logging
 
 from numina.recipes import RecipeBase, Parameter, DataProductParameter
+from numina.recipes.requirements import Requirement
 from numina.recipes import provides, DataFrame
 
 from emir.dataproducts import MasterBias, MasterDark 
@@ -129,7 +130,9 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
         Parameter('sky_images', 5, 'Images used to estimate the background before and after current image'),
         Parameter('sky_images_sep_time', 10, 'Maximum separation time between consecutive sky images in minutes'),
         Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
-        Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),                    
+        Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
+        Requirement('instrument.detector.channels', 'List of channels'),
+        Requirement('instrument.detector.shape', 'Detector shape'),                    
                     
     ]
 
@@ -139,11 +142,12 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
             version="0.1.0"
         )
         
-    def run(self, obresult):
-                
-        baseshape = self.instrument['detectors'][0]
-        amplifiers = self.instrument['amplifiers'][0]
+    def run(self, obresult):        
+        baseshape = self.parameters['instrument.detector.shape']
+        amplifiers = self.parameters['instrument.detector.channels']
         offsets = self.parameters['offsets']
+        
+        
         
         return self.process(obresult, baseshape, amplifiers, 
                             offsets=offsets, subpix=1, 

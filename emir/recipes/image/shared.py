@@ -500,7 +500,7 @@ class DirectImageCommon(object):
 
                 if skyframe.objmask_data is not None:
                     _logger.debug('object mask defined')
-                    msk = frame.objmask_data[valid]
+                    msk = frame.objmask_data
                     sky = numpy.median(valid[msk == 0])
                 else:
                     _logger.debug('object mask empty')
@@ -595,15 +595,18 @@ class DirectImageCommon(object):
                 desc.append(hdulist)
                 scales.append(numpy.median(data[-1]))
                 if i.objmask_data is not None:
-                    masks.append(i.objmask_data[i.valid_region])
+                    _logger.debug('object mask shape=%s', i.objmask_data.shape)
+                    masks.append(i.objmask_data)
+                    _logger.debug('object mask is shared')
                 else:
                     maskfile = i.objmask
                     hdulistmask = pyfits.open(maskfile, mode='readonly', memmap=True)
                     masks.append(hdulistmask['primary'].data)
                     desc.append(hdulistmask)
+                    _logger.debug('object mask is particular')
                      
-                _logger.debug('computing background with %d frames', len(data))
-                sky, _, num = median(data, masks, scales=scales)
+            _logger.debug('computing background with %d frames', len(data))
+            sky, _, num = median(data, masks, scales=scales)
                 
         finally:
             # Closing all FITS files
@@ -613,17 +616,15 @@ class DirectImageCommon(object):
         if numpy.any(num == 0):
             # We have pixels without
             # sky background information
-            _logger.warn('pixels without sky information in frame %s',
-                         i.flat_corrected)
+            _logger.warn('pixels without sky information when correcting %s', frame.flat_corrected)
             binmask = num == 0
             # FIXME: during development, this is faster
             sky[binmask] = sky[num != 0].mean()
         
-        # To continue we interpolate over the patches
-        #fixpix2(sky, binmask, out=sky, iterations=1)
-        name = name_skybackgroundmask(frame.baselabel, step)
-        pyfits.writeto(name, binmask.astype('int16'), clobber=True)        
-        
+            # To continue we interpolate over the patches
+            #fixpix2(sky, binmask, out=sky, iterations=1)
+            name = name_skybackgroundmask(frame.baselabel, step)
+            pyfits.writeto(name, binmask.astype('int16'), clobber=True)        
                 
         dst = name_skysub_proc(frame.baselabel, step)
         prev = frame.lastname        
