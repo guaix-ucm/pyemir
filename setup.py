@@ -21,9 +21,9 @@ setup(name='pyemir',
                         'numina>=0.6.0'],
       test_requires=['nose',
                      ],
-      # numina lives here
+      # numdisplay lives here
       dependency_links = [
-        "http://astrax.fis.ucm.es/software/numina/"
+        'http://stsdas.stsci.edu/numdisplay'
         ],
       classifiers=[
                    "Programming Language :: Python",
