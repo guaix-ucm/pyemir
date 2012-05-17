@@ -26,7 +26,6 @@ import os
 import logging
 import shutil
 import math
-import operator
 
 import numpy
 import pyfits
@@ -54,39 +53,13 @@ import numina.util.sexcatalog as sexcatalog
 
 from emir.dataproducts import SourcesCatalog
 
+from .checks import check_photometry
+from .naming import name_redimensioned_frames, name_object_mask, name_skybackground
+from .naming import name_skybackgroundmask, name_skysub_proc, name_skyflat
+from .naming import name_skyflat_proc, name_segmask
+
+
 _logger = logging.getLogger('numina.recipes.emir')
-
-def name_redimensioned_frames(label, step, ext='.fits'):
-    dn = '%s_r%s' % (label, ext)
-    mn = '%s_mr%s' % (label, ext)
-    return dn, mn
-
-def name_object_mask(label, step, ext='.fits'):
-    return '%s_mro_i%01d%s' % (label, step, ext)
-
-def name_skybackground(label, step, ext='.fits'):
-    dn = '%s_sky_i%01d%s' % (label, step, ext)
-    return dn
-
-def name_skybackgroundmask(label, step, ext='.fits'):
-    dn = '%s_skymask_i%01d%s' % (label, step, ext)
-    return dn
-
-def name_skysub_proc(label, step, ext='.fits'):
-    dn = '%s_rfs_i%01d%s' % (label, step, ext)
-    return dn
-
-def name_skyflat(label, step, ext='.fits'):
-    dn = 'superflat_%s_i%01d%s' % (label, step, ext)
-    return dn
-
-def name_skyflat_proc(label, step, ext='.fits'):
-    dn = '%s_rf_i%01d%s' % (label, step, ext)
-    return dn
-
-def name_segmask(step, ext='.fits'):
-    return "check_i%01d%s" % (step, ext)
-
 
 def offsets_from_wcs(frames, pixref):
     '''Compute offsets between frames using WCS information.
@@ -378,7 +351,7 @@ class DirectImageCommon(object):
                 else:
                     _logger.info('Recentering is not needed')
                     _logger.info('Checking photometry')
-                    self.check_photometry(targetframes, sf_data, seeing_fwhm)
+                    check_photometry(targetframes, sf_data, seeing_fwhm, figure=self._figure)
                     
                     if stop_after == state:
                         break
@@ -906,160 +879,6 @@ class DirectImageCommon(object):
         ax.set_title('%s, bg=%g fg=%g, linscale' % (image.lastname, clim[0], clim[1]))        
         self._figure.canvas.draw()      
 
-    def check_photometry(self, frames, sf_data, seeing_fwhm, step=0):
-        # Check photometry of few objects
-        weigthmap = 'weights4rms.fits'
-        
-        wmap = numpy.zeros_like(sf_data[0])
-        
-        # Center of the image
-        border = 300
-        wmap[border:-border, border:-border] = 1                    
-        pyfits.writeto(weigthmap, wmap, clobber=True)
-        
-        basename = 'result_i%0d.fits' % (step)
-        sex = SExtractor()
-        sex.config['VERBOSE_TYPE'] = 'QUIET'
-        sex.config['PIXEL_SCALE'] = 1
-        sex.config['BACK_TYPE'] = 'AUTO' 
-        if seeing_fwhm is not None:
-            sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
-        sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-        sex.config['WEIGHT_IMAGE'] = weigthmap
-        
-        sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
-        sex.config['PARAMETERS_LIST'].append('FLUXERR_BEST')
-        sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
-        
-        sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % step
-        _logger.info('Runing sextractor in %s', basename)
-        sex.run('%s,%s' % (basename, basename))
-        
-        # Sort catalog by flux
-        catalog = sex.catalog()
-        catalog = sorted(catalog, key=operator.itemgetter('FLUX_BEST'), reverse=True)
-        
-        # set of indices of the N first objects
-        OBJS_I_KEEP = 3
-        indices = set(obj['NUMBER'] for obj in catalog[:OBJS_I_KEEP])
-        
-        base = numpy.empty((len(frames), OBJS_I_KEEP))
-        error = numpy.empty((len(frames), OBJS_I_KEEP))
-        
-        for idx, frame in enumerate(frames):
-            imagename = name_skysub_proc(frame.baselabel, step)
-
-            sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (frame.baselabel, step)
-
-            # Lauch SExtractor on a FITS file
-            # om double image mode
-            _logger.info('Runing sextractor in %s', imagename)
-            sex.run('%s,%s' % (basename, imagename))
-            catalog = sex.catalog()
-            
-            # Extinction correction
-            excor = pow(10, -0.4 * frame.airmass * self.parameters['extinction'])
-            base[idx] = [obj['FLUX_BEST'] / excor
-                                     for obj in catalog if obj['NUMBER'] in indices]
-            error[idx] = [obj['FLUXERR_BEST'] / excor
-                                     for obj in catalog if obj['NUMBER'] in indices]
-        
-        data = base / base[0]
-        err = error / base[0] # sigma
-        w = 1 / err / err
-        # weighted mean of the flux values
-        wdata = numpy.average(data, axis=1, weights=w)
-        wsigma = 1 / numpy.sqrt(w.sum(axis=1))
-        
-        # Actions to carry over images when checking the flux
-        # of the objects in different images
-        def warn_action(img):
-            _logger.warn('Image %s has low flux in objects', img.baselabel)
-            img.valid_science = True
-        
-        def reject_action(img):
-            img.valid_science = False
-            _logger.info('Image %s rejected, has low flux in objects', img.baselabel)            
-            pass
-        
-        def default_action(img):
-            _logger.info('Image %s accepted, has correct flux in objects', img.baselabel)      
-            img.valid_science = True
-        
-        # Actions
-        dactions = {'warn': warn_action, 'reject': reject_action, 'default': default_action}
-
-        levels = self.parameters['check_photometry_levels']
-        actions = self.parameters['check_photometry_actions']
-        
-        x = range(len(frames))
-        vals, (_, sigma) = self.check_photometry_categorize(x, wdata, 
-                                                           levels, tags=actions)
-        # n sigma level to plt
-        n = 3
-        self.check_photometry_plot(vals, wsigma, levels, n * sigma)
-        
-        for x, _, t in vals:
-            try:
-                action = dactions[t]
-            except KeyError:
-                _logger.warning('Action named %s not recognized, ignoring', t)
-                action = default_action
-            for p in x:
-                action(frames[p])
-                
-    def check_photometry_categorize(self, x, y, levels, tags=None):
-        '''Put every point in its category.
-    
-        levels must be sorted.'''   
-        x = numpy.asarray(x)
-        y = numpy.asarray(y)
-        ys = y.copy()
-        ys.sort()
-        # Mean of the upper half
-        m = ys[len(ys) / 2:].mean()
-        y /= m
-        m = 1.0
-        s = ys[len(ys) / 2:].std()
-        result = []
-
-        if tags is None:
-            tags = range(len(levels) + 1)
-
-        for l, t in zip(levels, tags):
-            indc = y < l
-            if indc.any():
-                x1 = x[indc]
-                y1 = y[indc]
-                result.append((x1, y1, t))
-
-                x = x[indc == False]
-                y = y[indc == False]
-        else:
-            result.append((x, y, tags[-1]))
-
-        return result, (m, s)
-               
-    def check_photometry_plot(self, vals, errors, levels, nsigma, step=0):
-        x = range(len(errors))
-        self._figure.clf()
-        ax = self._figure.add_subplot(111)
-        ax.set_title('Relative flux of brightest object')
-        for v,c in zip(vals, ['b', 'r', 'g', 'y']):
-            ax.scatter(v[0], v[1], c=c)
-            w = errors[v[0]]
-            ax.errorbar(v[0], v[1], yerr=w, fmt=None, c=c)
-            
-
-        ax.plot([x[0], x[-1]], [1, 1], 'r--')
-        ax.plot([x[0], x[-1]], [1 - nsigma, 1 - nsigma], 'b--')
-        for f in levels:
-            ax.plot([x[0], x[-1]], [f, f], 'g--')
-            
-        self._figure.canvas.draw()
-        self._figure.savefig('figure-relative-flux_i%01d.png' % step)
-
     def create_mask_single(self, frame, seeing_fwhm, step=0):
         #
         #remove_border = True
@@ -1274,76 +1093,6 @@ class DirectImageCommon(object):
         ax.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
         self._figure.canvas.draw()
         self._figure.savefig('figure-fwhm-histogram_i%01d.png' % step)
-        
-        
-    def check_position(self, images_info, sf_data, seeing_fwhm, step=0):
-        # FIXME: this method has to be updated
-
-        _logger.info('Checking positions')
-        # Check position of bright objects
-        weigthmap = 'weights4rms.fits'
-        
-        wmap = numpy.zeros_like(sf_data[0])
-        
-        # Center of the image
-        border = 300
-        wmap[border:-border, border:-border] = 1                    
-        pyfits.writeto(weigthmap, wmap, clobber=True)
-        
-        basename = 'result_i%0d.fits' % (step)
-        sex = SExtractor()
-        sex.config['VERBOSE_TYPE'] = 'QUIET'
-        sex.config['PIXEL_SCALE'] = 1
-        sex.config['BACK_TYPE'] = 'AUTO'
-        if  seeing_fwhm is not None and seeing_fwhm > 0:
-            sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
-        sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-        sex.config['WEIGHT_IMAGE'] = weigthmap
-        
-        sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
-        sex.config['PARAMETERS_LIST'].append('FLUXERR_BEST')
-        sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
-        
-        sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % step
-        
-        _logger.info('Runing sextractor in %s', basename)
-        sex.run('%s,%s' % (basename, basename))
-        
-        # Sort catalog by flux
-        catalog = sex.catalog()
-        catalog = sorted(catalog, key=operator.itemgetter('FLUX_BEST'), reverse=True)
-        
-        # set of indices of the N first objects
-        OBJS_I_KEEP = 10
-        
-        master = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog[:OBJS_I_KEEP]]
-        
-        for image in images_info:
-            imagename = name_skysub_proc(image.baselabel, self.iter)
-
-            sex.config['CATALOG_NAME'] = 'catalogue-self-%s-i%01d.cat' % (image.baselabel, step)
-
-            # Lauch SExtractor on a FITS file
-            # on double image mode
-            _logger.info('Runing sextractor in %s', imagename)
-            sex.run(imagename)
-            catalog = sex.catalog()
-            
-            
-            data = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog]
-            
-            tree = KDTree(data)
-            
-            # Search 2 neighbors
-            dists, _ids = tree.query(master, 2, distance_upper_bound=5)
-            
-            for i in dists[:,0]:
-                print i
-            
-            
-            _logger.info('Mean offset correction for image %s is %f', imagename, dists[:,0].mean())
-            #raw_input('press any key')
 
         
         
