@@ -1,3 +1,8 @@
+Version 0.6.1 (17 May 2012)
+
+Bugfix:
+ * Incorrect version in doc and in emir/__init__.py
+
 Version 0.6.0 (17 May 2012)
 
 Changes:
