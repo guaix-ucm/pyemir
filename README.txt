@@ -11,32 +11,16 @@ be able to be installed and work properly:
  - numpy (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
  - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
- - pyxdg (http://www.freedesktop.org/wiki/Software/pyxdg)
- - simplejson (http://undefined.org/python/#simplejson)
  - numina (http://guaix.fis.ucm.es/hg/numina)
+ - pywcs (http://stsdas.stsci.edu/astrolib/pywcs/)
+
+EMIR is a wide-field, near-infrared, multi-object spectrograph proposed 
+for the Nasmyth focus of GTC. It will allow observers to obtain from tens to 
+hundreds of intermediate resolution spectra simultaneously, in the 
+nIR bands Z, J, H and K. A multi-slit mask unit will be used for target acquisition. 
+EMIR is designed to address the science goals of the proposing team and 
+of the Spanish community at large. 
 
 Webpage: https://guaix.fis.ucm.es/projects/emir
-Maintainer: sergiopr@fis.ucm.es
-
-
-Compilation 
------------
-
-Run the following command:
-
-   python setup.py build
-
-
-For additional options:
-
-   python setup.py build --help
-
-
-Installation
-------------
-
-   python setup.py install
-
-For additional options:
-
-   python setup.py install --help
+Maintainer: sergiopr@fis.ucm.es            
+      
