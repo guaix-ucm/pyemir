@@ -25,6 +25,7 @@ setup(name='pyemir',
       dependency_links = [
         'http://stsdas.stsci.edu/numdisplay'
         ],
+      data_files=[('share/numina/pipelines', ['emir-plugin.ini'])],
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',
