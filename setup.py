@@ -3,11 +3,11 @@
 from setuptools import setup, find_packages
 
 setup(name='pyemir',
-      version='0.6.2',
+      version='0.6.3',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='http://astrax.fis.ucm.es/software/pyemir/pyemir-0.6.2.tar.gz',
+      download_url='http://astrax.fis.ucm.es/software/pyemir/pyemir-0.6.3.tar.gz',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       packages=find_packages('.'),

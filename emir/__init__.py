@@ -29,7 +29,7 @@ from emir.recipes import EmirPipeline
 
 __all__ = ['Instrument', 'ImageFactory']
 
-__version__ = '0.6.2'
+__version__ = '0.6.3'
 
 register_pipeline(EmirPipeline(version=__version__))
 
