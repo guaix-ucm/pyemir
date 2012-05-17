@@ -619,10 +619,12 @@ class DirectImageCommon(object):
             _logger.warn('pixels without sky information when correcting %s', frame.flat_corrected)
             binmask = num == 0
             # FIXME: during development, this is faster
-            sky[binmask] = sky[num != 0].mean()
+            #sky[binmask] = sky[num != 0].mean()
         
             # To continue we interpolate over the patches
-            #fixpix2(sky, binmask, out=sky, iterations=1)
+            fixpix2(sky, binmask, out=sky, iterations=1)
+            name = name_skybackground(frame.baselabel, step)
+            pyfits.writeto(name, sky, clobber=True)
             name = name_skybackgroundmask(frame.baselabel, step)
             pyfits.writeto(name, binmask.astype('int16'), clobber=True)        
                 
@@ -958,8 +960,6 @@ class DirectImageCommon(object):
             
             # Extinction correction
             excor = pow(10, -0.4 * frame.airmass * self.parameters['extinction'])
-            # FIXME: contradictory
-            excor = 1.0
             base[idx] = [obj['FLUX_BEST'] / excor
                                      for obj in catalog if obj['NUMBER'] in indices]
             error[idx] = [obj['FLUXERR_BEST'] / excor
