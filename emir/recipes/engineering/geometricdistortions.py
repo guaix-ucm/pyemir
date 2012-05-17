@@ -15,23 +15,25 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
-'''The EMIR Data Reduction Pipeline'''
+'''Geometric Distortion Calibration.
 
-import logging
+**Observing modes:**
 
-from numina.pipeline import register_pipeline
+ * Not considered
 
-from .simulator import EmirImageFactory as ImageFactory
-from emir.simulator import Instrument
-from emir.recipes import EmirPipeline
+**Inputs:**
 
-__all__ = ['Instrument', 'ImageFactory']
+ * TBD
 
-__version__ = '0.6.0dev'
+**Outputs:**
 
-register_pipeline(EmirPipeline(version=__version__))
+ * TBD
 
-# Top level NullHandler
-logging.getLogger("emir").addHandler(logging.NullHandler())
+**Procedure:**
+
+ * TBD
+
+'''
+

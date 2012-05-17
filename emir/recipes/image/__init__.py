@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2011-2012 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -15,23 +15,15 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
-'''The EMIR Data Reduction Pipeline'''
+'''
+Image mode recipes of EMIR
 
-import logging
+'''
 
-from numina.pipeline import register_pipeline
-
-from .simulator import EmirImageFactory as ImageFactory
-from emir.simulator import Instrument
-from emir.recipes import EmirPipeline
-
-__all__ = ['Instrument', 'ImageFactory']
-
-__version__ = '0.6.0dev'
-
-register_pipeline(EmirPipeline(version=__version__))
-
-# Top level NullHandler
-logging.getLogger("emir").addHandler(logging.NullHandler())
+from .stare import StareImageRecipe
+from .dither import DitheredImageRecipe
+from .micro import MicroditheredImageRecipe
+from .nodded import NBImageRecipe
+from .mosaic import MosaicRecipe

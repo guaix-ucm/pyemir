@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -17,18 +17,18 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Recipes for Emir Observing Modes.'''
+'''Recipes for EMIR Observing Modes.'''
 
-__all__ = ['find_recipe']
+from numina.pipeline import Pipeline
 
-class EmirRecipeMixin:
-    instrument = ['emir']
+from .auxiliary import BiasRecipe, DarkRecipe, IntensityFlatRecipe
+from .image import StareImageRecipe, DitheredImageRecipe, MicroditheredImageRecipe
+from .image import NBImageRecipe, MosaicRecipe
 
-# equivalence
-_equiv = {
-    'bias_image': 'auxiliary:Recipe',
-    'dark_current_image': 'auxiliary:Recipe',
-    'intensity_flatfield': 'auxiliary:Recipe',
+_equiv_class = {
+    'bias_image': BiasRecipe,
+    'dark_image': DarkRecipe,
+    'intensity_flatfield': IntensityFlatRecipe,
     'msm_spectral_flatfield': 'auxiliary:Recipe',
     'slit_transmission_calibration': 'auxiliary:Recipe',
     'wavelength_calibration': 'auxiliary:Recipe',
@@ -40,17 +40,20 @@ _equiv = {
     'target_acquisition': 'auxiliary:Recipe',
     'mask_imaging': 'auxiliary:Recipe',
     'msm_and_lsm_check': 'auxiliary:Recipe',
-    'stare_image': 'image:Recipe',
-    'nb_image': 'image:Recipe',
-    'dithered_image':'directimaging:Recipe',
-    'microdithered_image':'image:Recipe',
-    'mosaiced_image': 'image:Recipe',
+    'stare_image': StareImageRecipe,
+    'nb_image': NBImageRecipe,
+    'dithered_image': DitheredImageRecipe,
+    'microdithered_image': MicroditheredImageRecipe,
+    'mosaiced_image': MosaicRecipe,
     'stare_spectra': 'mos:Recipe',
     'dn_spectra': 'mos:Recipe',
     'offset_spectra': 'mos:Recipe',
     'raster_spectra': 'ls:Recipe',
-    
 }
 
-def find_recipe(mode):
-    return _equiv[mode]
+class EmirPipeline(Pipeline):
+    def __init__(self, version):
+        super(EmirPipeline, self).__init__(name='emir', 
+                version=version,
+                recipes=_equiv_class)
+

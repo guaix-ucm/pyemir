@@ -1,5 +1,5 @@
 #
-# Copyright 2011 Sergio Pascual
+# Copyright 2011-2012 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -20,44 +20,66 @@
 '''Auxiliary Recipes for EMIR'''
 
 import logging
-import time
 
 import numpy
 import pyfits
+from numina.recipes import RecipeBase, Parameter, provides, requires
+from numina.recipes import DataProductParameter
+from numina.logger import log_to_history
+from numina.array.combine import median
+from numina import __version__
+from numina.flow import SerialFlow
+from numina.flow.node import IdNode
+from numina.flow.processing import BiasCorrector
+from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 
-from numina import RecipeBase, __version__
-from numina import FITSHistoryHandler
-from numina.recipes import Parameter
+from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from ..dataproducts import NonLinearityCalibration, MasterIntensityFlat
+from ..dataproducts import WavelengthCalibration, MasterSpectralFlat
+from ..dataproducts import SlitTransmissionCalibration, ChannelLevelStatistics
 
-from emir.dataproducts import MasterBias, MasterDark, MasterFlat
-
-__all__ = ['Recipe', 'BiasRecipe', 'DarkRecipe', 'FlatRecipe']
+__all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
+           'SpectralFlatRecipe', 'SlitTransmissionRecipe',
+           'WavelengthCalibrationRecipe']
 
 _logger = logging.getLogger('emir.recipes')
 
-class BiasRecipe(RecipeBase):
-    '''Process BIAS images and create MASTER_BIAS.'''
+_s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
-    __requires__ = []
-    __provides__ = [MasterBias]
+
+@requires()
+@provides(MasterBias, ChannelLevelStatistics)
+class BiasRecipe(RecipeBase):
+    '''
+    Recipe to process data taken in Bias image Mode.
+
+    Bias images only appear in Simple Readout mode.
+
+    **Observing modes:**
+    
+     * Bias Image (3.1)   
+    
+    **Inputs:**
+    
+    **Outputs:**
+    
+     * A combined bias frame, with variance extension.
+     * Statistics of the final image per channel (mean, median , variance) 
+    
+    **Procedure:**
+    
+    The list of images can be readly processed by combining them with a median algorithm.
+    
+    '''
 
     def __init__(self):
-        super(BiasRecipe, self).__init__(
-                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
-                        version="0.1.0"
-                )
+        super(BiasRecipe, self).__init__(author=_s_author,version="0.1.0")
 
-    def run(self, rb):
-
-        history_header = pyfits.Header()
-
-        fh =  FITSHistoryHandler(history_header)
-        fh.setLevel(logging.INFO)
-        _logger.addHandler(fh)
-
+    @log_to_history(_logger)
+    def run(self, obresult):
         _logger.info('starting bias reduction')
 
-        images = rb.images
+        images = obresult.frames
 
         cdata = []
 
@@ -66,15 +88,28 @@ class BiasRecipe(RecipeBase):
                 hdulist = pyfits.open(image, memmap=True, mode='readonly')
                 cdata.append(hdulist)
 
-            _logger.info('stacking images')
-            data = numpy.zeros(cdata[0]['PRIMARY'].data.shape, dtype='float32')
-            for hdulist in cdata:
-                data += hdulist['PRIMARY'].data
+            _logger.info('stacking %d images using median', len(cdata))
+            
+            data = median([d['primary'].data for d in cdata], dtype='float32')
 
-            data /= len(cdata)
-            data += 2.0
+            var2 = numpy.zeros_like(data[0])
 
-            hdu = pyfits.PrimaryHDU(data, header=cdata[0]['PRIMARY'].header)
+
+            cls = ChannelLevelStatistics(exposure=0.0)
+
+            for amp1, amp2 in self.instrument['amplifiers'][0]:
+                
+                region = (slice(*amp1), slice(*amp2))
+                
+                mean = numpy.mean(data[0][region])
+                med = numpy.median(data[0][region])
+                var = numpy.var(data[0][region])
+                stts = mean, med, var
+                sregion = amp1, amp2
+                cls.statistics.append([sregion, stts])
+                var2[region] = var
+
+            hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
     
             # update hdu header with
             # reduction keywords
@@ -83,169 +118,392 @@ class BiasRecipe(RecipeBase):
             hdr.update('IMGTYP', 'BIAS', 'Image type')
             hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
             hdr.update('NUMXVER', __version__, 'Numina package version')
-            hdr.update('NUMRNAM', 'BiasRecipe', 'Numina recipe name')
+            hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
             hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
 
-            hdulist = pyfits.HDUList([hdu])
+            exhdr = pyfits.Header()
+            exhdr.update('extver', 1)
+            varhdu = pyfits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
+            exhdr = pyfits.Header()
+            exhdr.update('extver', 2)
+            var2hdu = pyfits.ImageHDU(var2, name='VARIANCE', header=exhdr)
+            num = pyfits.ImageHDU(data[2], name='MAP')
+
+            hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
 
             _logger.info('bias reduction ended')
 
-            # merge header with HISTORY log
-            hdr.ascardlist().extend(history_header.ascardlist())    
-
-            return {'products': [MasterBias(hdulist)]}
+            return {'products': [MasterBias(hdulist), cls]}
         finally:
-            _logger.removeHandler(fh)
-
             for hdulist in cdata:
                 hdulist.close()
             
+@provides(MasterDark, ChannelLevelStatistics)   
 class DarkRecipe(RecipeBase):
-    '''Process DARK images and provide MASTER_DARK. '''
+    '''Recipe to process data taken in Dark current image Mode.
 
-    __requires__ = [Parameter('master_bias', MasterBias, 'comment')]
-    __provides__ = [MasterDark]
+    Recipe to process dark images. The dark images will be combined 
+    using the median.
+    They do have to be of the same exposure time t.
+    
+    **Observing mode:**
+    
+     * Dark current Image (3.2)
+    
+    **Inputs:**
+    
+    **Outputs:**
+    
+     * A combined dark frame, with variance extension.
+    ''' 
+
+    __requires__ = [DataProductParameter('master_bias', MasterBias, 
+                              'Master bias calibration', optional=True)]
 
     def __init__(self):
-        super(DarkRecipe, self).__init__(
-                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
-                        version="0.1.0"
-                )
-
-    def run(self, block):
-
-        # HISTORY logger
-        history_header = pyfits.Header()
-
-        fh =  FITSHistoryHandler(history_header)
-        fh.setLevel(logging.INFO)
-        _logger.addHandler(fh)
-
+        super(DarkRecipe, self).__init__(author=_s_author, version="0.1.0")
+        
+    @log_to_history(_logger)
+    def run(self, obresult):
         _logger.info('starting dark reduction')
 
+        cdata = []
+        expdata = []
+
         try:
-            _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
-            with pyfits.open(self.parameters['master_bias'], mode='readonly') as master_bias:
-                for image in block.images:
-                    with pyfits.open(image, memmap=True) as fd:
-                        data = fd['primary'].data
-                        data -= master_bias['primary'].data
-                
+                        
+            for name, exposure in obresult.images:
+                hdulist = pyfits.open(name, memmap=True, mode='readonly')
+                cdata.append(hdulist)
+                expdata.append(exposure)
 
-            _logger.info('stacking images from block %d', block.id)
+            if not all([exp == expdata[0] for exp in expdata]):
+                _logger.error('image with wrong exposure time')
+                raise RecipeError('image with wrong exposure time')
 
-            base = block.images[0]
-           
-            with pyfits.open(base, memmap=True) as fd:
-                data = fd['PRIMARY'].data.copy()
-                hdr = fd['PRIMARY'].header
-           
-            for image in block.images[1:]:
-                with pyfits.open(image, memmap=True) as fd:
-                    add_data = fd['primary'].data
-                    data += add_data
-
-            hdu = pyfits.PrimaryHDU(data, header=hdr)
-    
-            # update hdu header with
-            # reduction keywords
-            hdr = hdu.header
-            hdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
-            hdr.update('IMGTYP', 'DARK', 'Image type')
-            hdr.update('NUMTYP', 'MASTER_DARK', 'Data product type')
-            hdr.update('NUMXVER', __version__, 'Numina package version')
-            hdr.update('NUMRNAM', 'DarkRecipe', 'Numina recipe name')
-            hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
-
-            hdulist = pyfits.HDUList([hdu])
-
-            _logger.info('dark reduction ended')
-
-            # merge final header with HISTORY log
-            hdr.ascardlist().extend(history_header.ascardlist())    
-
-            return {'products': [MasterDark(hdulist)]}
+            _logger.info('stacking %d images using median', len(cdata))
+            
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+            hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
+            
         finally:
-            _logger.removeHandler(fh)
+            for hdulist in cdata:
+                hdulist.close()
 
-class FlatRecipe(RecipeBase):
-    '''Process FLAT images and provide MASTER_FLAT. '''
+        if self.parameters['master_bias'] is not None:
+            # load bias
+            
+            master_bias = pyfits.open(self.parameters['master_bias'], mode='readonly')
+            _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
+            # subtrac bias
+            data[0] -= master_bias[0].data
+            
+            idx = master_bias.index_of(('variance', 1))
+            data[1] += master_bias[idx].data
+            
 
-    __requires__ = [
-                    Parameter('master_bias', MasterBias, 'comment'),
-                    Parameter('master_dark', MasterDark, 'comment')
-                    ]
-    __provides__ = [MasterFlat]
+        var2 = numpy.zeros_like(data[0])
+
+        cls = ChannelLevelStatistics(exposure=exposure)
+
+        for amp1, amp2 in self.instrument['amplifiers'][0]:
+            
+            region = (slice(*amp1), slice(*amp2))
+            
+            mean = numpy.mean(data[0][region])
+            med = numpy.median(data[0][region])
+            var = numpy.var(data[0][region])
+            stts = mean, med, var
+            sregion = amp1, amp2
+            cls.statistics.append([sregion, stts])
+            var2[region] = var
+
+        # update hdu header with
+        # reduction keywords
+        hdr = hdu.header
+        hdr.update('NUMXVER', __version__, 'Numina package version')
+        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
+        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        
+        hdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
+        hdr.update('IMGTYP', 'DARK', 'Image type')
+        hdr.update('NUMTYP', 'MASTER_DARK', 'Data product type')
+        
+        exhdr = pyfits.Header()
+        exhdr.update('extver', 1)
+        varhdu = pyfits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
+        exhdr = pyfits.Header()
+        exhdr.update('extver', 2)
+        var2hdu = pyfits.ImageHDU(var2, name='VARIANCE', header=exhdr)
+        num = pyfits.ImageHDU(data[2], name='MAP')
+
+        hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
+
+        md = MasterDark(hdulist)
+
+        _logger.info('dark reduction ended')    
+
+        return {'products': [md, cls]}
+
+
+@provides(MasterIntensityFlat)
+class IntensityFlatRecipe(RecipeBase):
+    '''Recipe to process data taken in intensity flat-field mode.
+        
+    Recipe to process intensity flat-fields. The flat-on and flat-off images are
+    combined (method?) separately and the subtracted to obtain a thermal subtracted
+    flat-field.
+    
+    **Observing modes:**
+    
+     * Intensity Flat-Field
+    
+    **Inputs:**
+    
+      * A master dark frame
+      * Non linearity
+      * A model of the detector. 
+    
+    **Outputs:**
+    
+     * TBD
+    
+    **Procedure:**
+    
+     * A combined thermal subtracted flat field, normalized to median 1, 
+       with with variance extension and quality flag. 
+    
+    '''
+    __requires__ = [ 
+        DataProductParameter('master_bias', MasterBias, 'Master bias image', optional=True),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+    ]
+    
 
     def __init__(self):
-        super(FlatRecipe, self).__init__(
-                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
+        super(IntensityFlatRecipe, self).__init__(
+                        author=_s_author,
                         version="0.1.0"
                 )
-
-    def run(self, block):
-
-        # HISTORY logger
-        history_header = pyfits.Header()
-
-        fh =  FITSHistoryHandler(history_header)
-        fh.setLevel(logging.INFO)
-        _logger.addHandler(fh)
-
+        
+    @log_to_history(_logger)
+    def run(self, obresult):
         _logger.info('starting flat reduction')
+                
+        # Basic processing
+        if self.parameters['master_bias']:
+            mbias = pyfits.getdata(self.parameters['master_bias'])
+            bias_corrector = BiasCorrector(mbias)
+        else:
+            bias_corrector = IdNode()
+            
+        mdark = pyfits.getdata(self.parameters['master_dark'])
+        dark_corrector = DarkCorrector(mdark)
+        nl_corrector = NonLinearityCorrector(self.parameters['nonlinearity'])
+        
+        
+        basicflow = SerialFlow([bias_corrector, dark_corrector, nl_corrector])
+
+        for img in obresult.frames:
+
+            with pyfits.open(img[0], mode='update') as hdulist:
+                hdulist = basicflow(hdulist)
+
+        # combine LAMP-ON
+        
+        lampon = [img[0] for img in obresult.frames if img[2] == 'LAMPON']
+        
+        dataon = self.stack_images(lampon)
+                
+        # combine LAMP-OFF
+        lampoff = [img[0] for img in obresult.frames if img[2] == 'LAMPOFF']
+        
+        dataoff = self.stack_images(lampoff)
+        
+        # Subtract
+        datafin = dataon[0] - dataoff[0]
+        varfin = dataon[1] + dataoff[1]
+        mapfin = dataon[2] + dataoff[2]
+
+        meanval = datafin.mean()
+        
+        datafin /= meanval
+        varfin /= (meanval * meanval)
+
+        hdu = pyfits.PrimaryHDU(datafin)
+
+        # update hdu header with
+        # reduction keywords
+        hdr = hdu.header
+        hdr.update('NUMXVER', __version__, 'Numina package version')
+        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
+        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        
+        hdr.update('FILENAME', 'master_intensity_flat-%(block_id)d.fits' % self.environ)
+        hdr.update('IMGTYP', 'FLAT', 'Image type')
+        hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
+        
+        varhdu = pyfits.ImageHDU(varfin, name='VARIANCE')
+        num = pyfits.ImageHDU(mapfin, name='MAP')
+
+        hdulist = pyfits.HDUList([hdu, varhdu, num])
+
+        md = MasterIntensityFlat(hdulist)
+
+        return {'products': [md]}
+        
+        
+    def stack_images(self, images):
+        
+        cdata = []
 
         try:
-            _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
-            with pyfits.open(self.parameters['master_bias'], mode='readonly') as master_bias:
-                for image in block.images:
-                    with pyfits.open(image, memmap=True) as fd:
-                        data = fd['primary'].data
-                        data -= master_bias['primary'].data
-                
+            for name in images:
+                hdulist = pyfits.open(name, memmap=True, mode='readonly')
+                cdata.append(hdulist)
 
-            _logger.info('subtracting dark %s', str(self.parameters['master_dark']))
-            with pyfits.open(self.parameters['master_dark'], mode='readonly') as master_dark:
-                for image in block.images:
-                    with pyfits.open(image, memmap=True) as fd:
-                        data = fd['primary'].data
-                        data -= master_dark['primary'].data
-
-
-            _logger.info('stacking images from block %d', block.id)
-
-            base = block.images[0]
-           
-            with pyfits.open(base, memmap=True) as fd:
-                data = fd['PRIMARY'].data.copy()
-                hdr = fd['PRIMARY'].header
-           
-            for image in block.images[1:]:
-                with pyfits.open(image, memmap=True) as fd:
-                    add_data = fd['primary'].data
-                    data += add_data
-
-            # Normalize flat to mean 1.0
-            data[:] = 1.0
-
-            hdu = pyfits.PrimaryHDU(data, header=hdr)
-
-            # update hdu header with
-            # reduction keywords
-            hdr = hdu.header
-            hdr.update('FILENAME', 'master_flat-%(block_id)d.fits' % self.environ)
-            hdr.update('IMGTYP', 'FLAT', 'Image type')
-            hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
-            hdr.update('NUMXVER', __version__, 'Numina package version')
-            hdr.update('NUMRNAM', 'FlatRecipe', 'Numina recipe name')
-            hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
-
-            hdulist = pyfits.HDUList([hdu])
-
-            _logger.info('flat reduction ended')
-
-            # merge final header with HISTORY log
-            hdr.ascardlist().extend(history_header.ascardlist())    
-
-            return {'products': [MasterFlat(hdulist)]}
+            _logger.info('stacking %d images using median', len(cdata))
+            
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+            return data
+            
         finally:
-            _logger.removeHandler(fh)
+            for hdulist in cdata:
+                hdulist.close()
+        
+        
+        
+@provides(MasterSpectralFlat)
+class SpectralFlatRecipe(RecipeBase):
+    '''Spectral Flatfield Recipe.
+
+    Recipe to process spectral flat-fields. The flat-on and flat-off images are
+    combined (method?) separately and the subtracted to obtain a thermal subtracted
+    flat-field.
+
+    **Observing modes:**
+
+        * Multislit mask Flat-Field
+     
+    **Inputs:**
+
+     * A list of lamp-on flats
+     * A model of the detector 
+
+    **Outputs:**
+
+     * A combined spectral flat field with with variance extension and quality flag.
+
+    **Procedure:**
+
+     * TBD
+
+    '''
+
+
+    __requires__ = [       
+        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+    ]
+
+    def __init__(self):
+        super(SpectralFlatRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, obresult):
+        return {'products': [MasterSpectralFlat(None)]}
+
+@provides(SlitTransmissionCalibration)
+class SlitTransmissionRecipe(RecipeBase):
+    '''Recipe to calibrate the slit transmission.
+
+    **Observing modes:**
+
+        * Slit transmission calibration (4.4)
+     
+    **Inputs:**
+
+        * A list of uniformly illuminated images of MSM
+
+    **Outputs:**
+
+     * A list of slit transmission functions 
+
+    **Procedure:**
+
+     * TBD
+
+    '''
+    
+
+    __requires__ = [       
+        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+    ]
+
+    def __init__(self):
+        super(SlitTransmissionRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    @log_to_history(_logger)
+    def run(self, obresult):
+        return {'products': [SlitTransmissionCalibration()]}
+
+        
+        
+@provides(WavelengthCalibration)
+class WavelengthCalibrationRecipe(RecipeBase):
+    '''Recipe to calibrate the spectral response.
+
+    **Observing modes:**
+
+        * Wavelength calibration (4.5)
+     
+    **Inputs:**
+
+     * List of line positions
+     * Calibrations upto spectral flatfielding
+
+    **Outputs:**
+
+     * Wavelength calibration structure 
+
+    **Procedure:**
+
+     * TBD
+    '''
+
+    __requires__ = [       
+        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
+        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
+        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
+                  'Master intensity flatfield'),
+        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
+                  'Master spectral flatfield'),
+    ]
+
+    def __init__(self):
+        super(WavelengthCalibrationRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    @log_to_history(_logger)
+    def run(self, obresult):
+        return {'products': [WavelengthCalibration()]}
+

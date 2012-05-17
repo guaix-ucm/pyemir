@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -20,16 +20,15 @@
 '''Data products produced by the EMIR pipeline.'''
 
 import logging
-
 import pyfits
 
-from numina.recipes import Image
-from emir.instrument.headers import default
+from numina.recipes import DataFrame, DataProduct
+
+from .simulator import EmirImageFactory
 
 _logger = logging.getLogger('emir.dataproducts')
 
-
-class MasterBadPixelMask(Image):
+class MasterBadPixelMask(DataFrame):
     def __init__(self, hdu):
         super(MasterBias, self).__init__(hdu)
 
@@ -37,7 +36,18 @@ class MasterBadPixelMask(Image):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
 
-class MasterBias(Image):
+class MasterBias(DataFrame):
+    '''Master bias product
+    
+    This image has 4 extensions: primary, two variance extensions
+    and number of pixels used in the combination.
+    
+    The variance extensions are computed using two different methods. 
+    The first one is the variance of the same pixels in different images.
+    The second extension is the variance of each channel in the final image.
+    
+    
+    '''
     def __init__(self, hdu):
         super(MasterBias, self).__init__(hdu)
 
@@ -45,7 +55,18 @@ class MasterBias(Image):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
 
-class MasterDark(Image):
+class MasterDark(DataFrame):
+    '''Master dark product
+    
+    This image has 4 extensions: primary, two variance extensions
+    and number of pixels used in the combination.
+    
+    The variance extensions are computed using two different methods. 
+    The first one is the variance of the same pixels in different images.
+    The second extension is the variance of each channel in the final image.
+    
+    
+    '''
     def __init__(self, hdu):
         super(MasterDark, self).__init__(hdu)
 
@@ -53,16 +74,100 @@ class MasterDark(Image):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
 
-class MasterFlat(Image):
+class MasterIntensityFlat(DataFrame):
     def __init__(self, hdu):
-        super(MasterFlat, self).__init__(hdu)
+        super(MasterIntensityFlat, self).__init__(hdu)
+
+    def metadata(self):
+        hdr = self.image[0].header
+        yield 'detector0.mode', hdr['ccdmode']
+        yield 'filter0', hdr['filter']
+        
+class MasterSpectralFlat(DataFrame):
+    def __init__(self, hdu):
+        super(MasterSpectralFlat, self).__init__(hdu)
 
     def metadata(self):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
         yield 'filter0', hdr['filter']
 
-# Image -> Raw: PRIMARY
+class Spectra(DataFrame):
+    def __init__(self, hdu):
+        super(Spectra, self).__init__(hdu)
+
+    def metadata(self):
+        hdr = self.image[0].header
+        yield 'detector0.mode', hdr['ccdmode']
+        yield 'filter0', hdr['filter']
+        
+class DataCube(DataFrame):
+    def __init__(self, hdu):
+        super(DataFrame, self).__init__(None)
+
+class TelescopeFocus(DataProduct):
+    pass
+
+class DTUFocus(DataProduct):
+    pass
+
+class DTU_XY_Calibration(DataProduct):
+    pass
+
+class DTU_Z_Calibration(DataProduct):
+    pass
+
+class DTUFlexureCalibration(DataProduct):
+    pass
+
+class SlitTransmissionCalibration(DataProduct):
+    pass
+
+class WavelengthCalibration(DataProduct):
+    pass
+
+class CSU2DetectorCalibration(DataProduct):
+    pass
+
+class PointingOriginCalibration(DataProduct):
+    pass
+
+class SpectroPhotometricCalibration(DataProduct):
+    pass
+
+class PhotometricCalibration(DataProduct):
+    pass
+
+class MasterGainMap(DataProduct):
+    pass
+
+class MasterRONMap(DataProduct):
+    pass
+
+class NonLinearityCalibration(DataProduct):
+    def __init__(self, poly):
+        super(NonLinearityCalibration, self).__init__()
+        self.poly = poly
+
+class TelescopeOffset(DataProduct):
+    pass
+
+class MSMPositions(DataProduct):
+    pass
+
+class SourcesCatalog(DataProduct):
+    pass
+
+class LinesCatalog(DataProduct):
+    pass
+
+class ChannelLevelStatistics(DataProduct):
+    ''' A list of exposure time, mean, std dev and median per channel'''
+    def __init__(self, exposure):
+        self.exposure = exposure
+        self.statistics = []
+
+# DataFrame -> Raw: PRIMARY
 #       -> Result: PRIMARY, VARIANCE, MAP 
 
 _result_types = ['image', 'spectrum']
@@ -73,7 +178,7 @@ def create_raw(data=None, headers=None, default_headers=None, imgtype='image'):
     if imgtype not in _result_types:
         raise TypeError('%s not in %s' % (imgtype, _result_types))
     
-    hdefault = default_headers or default
+    hdefault = default_headers or EmirImageFactory.default
     
     hdu = pyfits.PrimaryHDU(data, hdefault[imgtype]['primary'])
                 
@@ -95,7 +200,7 @@ def create_result(data=None, headers=None,
     extensions['variance'] = (variance, variance_headers)
     extensions['map'] = (exmap, exmap_headers)
     
-    hdefault = default_headers or default
+    hdefault = default_headers or EmirImageFactory.default
     
     for extname in ['variance', 'map']:
         edata = extensions[extname]

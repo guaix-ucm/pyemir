@@ -4,56 +4,55 @@ TELESCOP= 'GTC     '           / Telescope id.
 LATITUDE=               28.762 / [deg] Telescope latitude, +28:45:53.2          
 LONGITUD=            17.877639 / [deg] Telescope longitude, +17:52:39.5
 HEIGHT  =                 2348 / [m] Height above sea level
-OBSGEOZ =          969439.1412 / [m] Observation Z-position                                        
 OBSGEOX =          5753296.428 / [m] Observation X-position                     
 OBSGEOY =          3005451.209 / [m] Observation Y-position
+OBSGEOZ =          969439.1412 / [m] Observation Z-position 
 INSTRUME= 'EMIR    '           / Name of the Instrument
-FSTATION= 'NASMYTH '           / Focal station of observation                         
-PLATESCA=             1.502645 / [d/m] Platescale 5.41 arcsec/mm)                                                                          
-ORIGIN  = '        '           / FITS file originator                           
-PROP_ID = '        '           / Proposal identification.                                        
-PROP_PI = '' / PI of proposal.                                                  
-OBSERVER= '        '           / Name of Observer           
+FSTATION= 'NASMYTH '           / Focal station of observation 
+PLATESCA=             1.502645 / [d/m] Platescale 5.41 arcsec/mm) 
+ORIGIN  = '%(control.name)'           / FITS file originator 
+PROP_ID = '%(proposal.id)'           / Proposal identification. 
+PROP_PI = '%(proposal.pi_id)' / PI of proposal. 
+OBSERVER= '%(ob.observer)' / Name of Observer
 CAT-NAME= '' / Target input-catalog name
-CAT-RA  = 'UNDEF   '           / Target Right-Ascension                         
+CAT-RA  = 'UNDEF   '           / Target Right-Ascension
 CAT-DEC = 'UNDEF   '           / Target Declination
 CAT-EPOC=               2000.0 / Target epoch of proper motions
 CAT-EQUI= 'J2000.0 '           / Equinox of target coordinates         
-OBJECT  = '' / Name of observed object
+OBJECT  = '%(ob.object)' / Name of observed object
 PARALLAX=                  0.0 / [arcsec] Target Parallax
 RADVEL  =                  0.0 / [km/s] Target radial velocity
-PM-RA   =                  0.0 / [s/yr] Target proper-motion RA                 
-PM-DEC  =                  0.0 / [arcsec/yr] Target proper-motion               
+PM-RA   =                  0.0 / [s/yr] Target proper-motion RA 
+PM-DEC  =                  0.0 / [arcsec/yr] Target proper-motion 
 BUNIT   = 'ADU     '           / Unit of the array of image data
-RUN     =                    0 / Run number
-DATE    = '' / Date FITS file was generated
-DATE-OBS= '' / Date of the begin of the observation
-MDJ-OBS = 23213.23 / MJD of the begin of the observation                                                                                                                                                                                                                                                                                                                                                                                                  
-AIRMASS =                  1.0 / Effective mean airmass                                
-OBS_MODE= 'Direct Imaging'     / Observing mode id.
-OBSTYPE = '' / Type of observation, e.g. TARGET
-IMAGETY = '' / Type of observation, e.g. object                                 
-DEC     = '00:00:00.000'       / DEC of the instrument scientific aperture      
-RA      = '00:00:00.000'       / RA of the instrument scientific aperture
-FILTER  = '' / Filter id.
-READSCHM= 'PERLINE '           / Read-out scheme of the detector                
-READMODE= 'CDS     '           / Detector read-out mode
-READNUM =                    1 / Number of reads in the mode
+RUN     = '%(control.runid)'  / Run number
+DATE    = '%(control.date)' / Date FITS file was generated
+DATE-OBS= '%(emir.das.dateobs)' / Date of the begin of the observation
+MDJ-OBS = '%(emir.das.mjdobs)' / MJD of the begin of the observation
+AIRMASS = '%(pointing.airmass)' / Effective mean airmass 
+OBS_MODE= '%(ob.mode)'     / Observing mode id.
+OBSTYPE = '%(emir.imagetype)' / Type of observation, e.g. TARGET
+IMAGETY = '%(emir.imagetype)' / Type of observation, e.g. object
+DEC     = '%(pointing.dec)' / DEC of the instrument scientific aperture 
+RA      = '%(pointing.ra)' / RA of the instrument scientific aperture
+FILTER  = '%(emir.filter)' / Filter id.
+READSCHM= '%(emir.das.readscheme)'/ Read-out scheme of the detector 
 READREPT=                    1 / Number of times to repeat the read-out
+READMODE= '%(emir.das.readmode)'/ Detector read-out mode
+EXPOSED = '%(emir.das.elapsed)' / [s] Time between correlated reads
 DARKTIME=                    0 / [s] Time from end of CLR to start of r/o
 EXPTIME =                    0 / [s] Time between correlated reads
 ELAPSED =                    0 / [s] Time from end of CLR to shutter close
-EXPOSED =                    0 / [s] Time between correlated reads
-READNOIS=                 2.16 / Readout noise in electrons per pixel
-GAIN    =                  3.6 / Electrons per ADU
+READNOIS= '%(emir.detector.readnoise)' / Readout noise in electrons per pixel
+GAIN    = '%(emir.detector.gain)' / Electrons per ADU
 COMMENT WCS starts here
 WCSNAME = 'RA-DEC'
-CRPIX1  = 1024.0
-CRPIX2  = 1024.0
-CDELT1  = 0.000055556
-CDELT2  = 0.000055556
-CRVAL1  = 0.0 / Right ascension
-CRVAL2  = 0.0 / Declination
+CRPIX1  = 1024.0 / Pixel coordinate at reference point
+CRPIX2  = 1024.0 / Pixel coordinate at reference point
+CDELT1  = -0.000055556 / 0.2 arcsec per pixel
+CDELT2  = 0.000055556 / 0.2 arcsec per pixel
+CRVAL1  = '%(pointing.ra)' / Right ascension at reference point
+CRVAL2  = '%(pointing.dec)' / Declination at reference point
 CTYPE1  = 'RA---TAN'
 CTYPE2  = 'DEC--TAN'
 CUNIT1  = 'deg'
@@ -62,13 +61,3 @@ LONPOLE = 180
 RADESYS = 'FK5'
 EQUINOX = 2000.0 / [yr] Equinox of equatorial coordinates
 COMMENT WCS ends here                                                           
-                    
-                     
-               
-             
-                                                      
-          
-                  
-         
-                                   
-   

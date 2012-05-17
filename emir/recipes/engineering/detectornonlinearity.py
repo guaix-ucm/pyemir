@@ -15,23 +15,31 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
-'''The EMIR Data Reduction Pipeline'''
+'''Detector Nonlinearity Recipe.
 
-import logging
+Recipe to calibrate the detector nonlinearity.
 
-from numina.pipeline import register_pipeline
+**Observing modes:**
 
-from .simulator import EmirImageFactory as ImageFactory
-from emir.simulator import Instrument
-from emir.recipes import EmirPipeline
+ * Not considered
 
-__all__ = ['Instrument', 'ImageFactory']
+**Inputs:**
 
-__version__ = '0.6.0dev'
+ * A list of dome flat fields with the adequate exposure times.
 
-register_pipeline(EmirPipeline(version=__version__))
+**Outputs:**
 
-# Top level NullHandler
-logging.getLogger("emir").addHandler(logging.NullHandler())
+ * The polynomial in a given format (TBD)
+
+**Procedure:**
+
+The median of the reduced flatfields is computed. For each exposure time, the
+average and standard deviation of the ADUs is computed. A linear fit is
+computed for the lowest ADU counts, with standard deviations as weights. A new
+fit is performed, this time of ADU_linear/ADU_obs, versus ADU_obs. The
+polynomial terms of the fit are computed.
+
+'''
+
