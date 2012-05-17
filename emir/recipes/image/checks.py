@@ -230,7 +230,7 @@ def check_position(images_info, sf_data, seeing_fwhm, step=0):
         # set of indices of the N first objects
         OBJS_I_KEEP = 10
         
-        master = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog[:OBJS_I_KEEP]]
+        # master = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog[:OBJS_I_KEEP]]
         
         for image in images_info:
             imagename = name_skysub_proc(image.baselabel, step)
@@ -244,7 +244,7 @@ def check_position(images_info, sf_data, seeing_fwhm, step=0):
             catalog = sex.catalog()
             
             
-            data = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog]
+            # data = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog]
             
             #tree = KDTree(data)
             

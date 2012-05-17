@@ -190,6 +190,7 @@ class DirectImageCommon(object):
                 
                 # FIXME: add this
                 bpm = pyfits.getdata(self.parameters['master_bpm'])
+                bpm_corrector = BadPixelCorrector(bpm)
                 
                 if self.parameters['master_bias']:
                     mbias = pyfits.getdata(self.parameters['master_bias'])
@@ -204,7 +205,8 @@ class DirectImageCommon(object):
                 mflat = pyfits.getdata(self.parameters['master_intensity_ff'])
                 ff_corrector = FlatFieldCorrector(mflat)  
                   
-                basicflow = SerialFlow([bias_corrector, 
+                basicflow = SerialFlow([bpm_corrector,
+                                        bias_corrector, 
                                         dark_corrector, 
                                         nl_corrector,
                                         ff_corrector
@@ -552,7 +554,7 @@ class DirectImageCommon(object):
         _logger.info('Correcting sky in frame %s', frame.lastname)
         _logger.info('with sky computed from frames')
         for i in skyframes:
-            _logger.info('%s', i.lastname)
+            _logger.info('%s', i.flat_corrected)
             
         data = []
         scales = []
@@ -568,7 +570,6 @@ class DirectImageCommon(object):
                 desc.append(hdulist)
                 scales.append(numpy.median(data[-1]))
                 if i.objmask_data is not None:
-                    _logger.debug('object mask shape=%s', i.objmask_data.shape)
                     masks.append(i.objmask_data)
                     _logger.debug('object mask is shared')
                 else:
