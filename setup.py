@@ -2,6 +2,10 @@
 
 from setuptools import setup, find_packages
 
+BASE_PKGS=find_packages('src', exclude=['drp', 'drp.*'])
+NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.emir']
+ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
+
 setup(name='pyemir',
       version='0.6.3',
       author='Sergio Pascual',
@@ -10,7 +14,8 @@ setup(name='pyemir',
       download_url='http://astrax.fis.ucm.es/software/pyemir/pyemir-0.6.3.tar.gz',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
-      packages=find_packages('.'),
+      packages=ALL_PKGS,
+      package_dir={'emir': 'src/emir', 'numina.pipelines': 'src/drp'},
       package_data={'emir.simulation': ['*.dat'],
                      'emir.instrument': ['image_*.txt', 'spectrum_*.txt'],
                    },
@@ -25,7 +30,6 @@ setup(name='pyemir',
       dependency_links = [
         'http://stsdas.stsci.edu/numdisplay'
         ],
-      data_files=[('share/numina/pipelines', ['emir-plugin.ini'])],
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',
