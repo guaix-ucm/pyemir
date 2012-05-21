@@ -27,6 +27,7 @@ from numina.pipeline import register_pipeline
 from numina.pipeline import BaseInstrument
 
 from emir.recipes import EmirPipeline
+import emir.recipes as recp
 from emir import __version__
 
 register_pipeline(EmirPipeline(version=__version__))
@@ -34,6 +35,12 @@ register_pipeline(EmirPipeline(version=__version__))
 _modes = [i for i in yaml.load_all(pkgutil.get_data('emir.instrument',
                                                    'obsmodes.yaml'))
           if i.instrument == 'EMIR']
+
+for m in _modes:
+    _fqn = m.recipe.split('.')[-1]
+    m.recipe_class = getattr(recp, _fqn)
+
+del m
 
 class EMIR_Instrument(BaseInstrument):
     name = 'EMIR'
