@@ -23,6 +23,7 @@ import logging
 
 from numina.pipeline import register_pipeline
 
+
 from .simulator import EmirImageFactory as ImageFactory
 from emir.simulator import Instrument
 from emir.recipes import EmirPipeline
@@ -35,3 +36,4 @@ register_pipeline(EmirPipeline(version=__version__))
 
 # Top level NullHandler
 logging.getLogger("emir").addHandler(logging.NullHandler())
+

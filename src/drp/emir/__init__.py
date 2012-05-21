@@ -20,10 +20,21 @@
 '''The EMIR Data Reduction Pipeline'''
 
 import logging
+import pkgutil
 
+import yaml
 from numina.pipeline import register_pipeline
+from numina.pipeline import BaseInstrument
 
 from emir.recipes import EmirPipeline
 from emir import __version__
 
 register_pipeline(EmirPipeline(version=__version__))
+
+_modes = [i for i in yaml.load_all(pkgutil.get_data('emir.instrument',
+                                                   'obsmodes.yaml'))
+          if i.instrument == 'EMIR']
+
+class EMIR_Instrument(BaseInstrument):
+    name = 'EMIR'
+    modes = _modes
