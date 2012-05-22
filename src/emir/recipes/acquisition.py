@@ -27,7 +27,7 @@ Recipe for the processing of target acquisition images.
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, DataProductParameter
+from numina.recipes import RecipeBase, Parameter, DataProductRequirement
 from numina.recipes import provides
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -54,12 +54,12 @@ class TargetAcquisitionRecipe(RecipeBase):
     '''
 
     __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
+        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
     ]
 
@@ -86,12 +86,12 @@ class MaskImagingRecipe(RecipeBase):
     '''
 
     __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
+        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
     ]
 
@@ -118,12 +118,12 @@ class MaskCheckRecipe(RecipeBase):
     '''
 
     __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
+        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
     ]
 

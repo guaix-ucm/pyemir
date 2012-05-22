@@ -21,7 +21,7 @@
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, DataProductParameter
+from numina.recipes import RecipeBase, Parameter, DataProductRequirement
 from numina.recipes.requirements import Requirement
 from numina.recipes import provides, DataFrame
 
@@ -111,13 +111,13 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
     '''
 
     __requires__ = [
-        DataProductParameter('master_bpm', MasterBadPixelMask, 
+        DataProductRequirement('master_bpm', MasterBadPixelMask, 
                   'Master bad pixel mask'),       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image', optional=True),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductRequirement('master_bias', MasterBias, 'Master bias image', optional=True),
+        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
         Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
         # FIXME: this parameter is optional 

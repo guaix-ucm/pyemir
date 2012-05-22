@@ -22,7 +22,7 @@
 import logging
 
 from numina.recipes import RecipeBase, Parameter, provides
-from numina.recipes import DataProductParameter
+from numina.recipes import DataProductRequirement
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask 
 from ..dataproducts import MasterIntensityFlat, MasterSpectralFlat
@@ -162,18 +162,18 @@ class StareSpectraRecipe(RecipeBase):
 
 
     __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
+        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
-        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
+        DataProductRequirement('master_spectral_ff', MasterSpectralFlat, 
                   'Master spectral flatfield'),
-        DataProductParameter('st_calibration', SlitTransmissionCalibration, 
+        DataProductRequirement('st_calibration', SlitTransmissionCalibration, 
                   'Slit tranmision calibration'),
-        DataProductParameter('w_calibration', WavelengthCalibration, 
+        DataProductRequirement('w_calibration', WavelengthCalibration, 
                   'Wavelength calibration'),
         Parameter('lines', None, 
                   'List of x-lambda pairs of line coordinates'),        
@@ -196,18 +196,18 @@ class DNSpectraRecipe(RecipeBase):
     '''
     
     __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
+        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
-        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
+        DataProductRequirement('master_spectral_ff', MasterSpectralFlat, 
                   'Master spectral flatfield'),
-        DataProductParameter('st_calibration', SlitTransmissionCalibration, 
+        DataProductRequirement('st_calibration', SlitTransmissionCalibration, 
                   'Slit tranmision calibration'),
-        DataProductParameter('w_calibration', WavelengthCalibration, 
+        DataProductRequirement('w_calibration', WavelengthCalibration, 
                   'Wavelength calibration'),
         Parameter('lines', None, 
                   'List of x-lambda pairs of line coordinates'),        
@@ -230,18 +230,18 @@ class OffsetSpectraRecipe(RecipeBase):
     '''
     
     __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
+        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
-        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
+        DataProductRequirement('master_spectral_ff', MasterSpectralFlat, 
                   'Master spectral flatfield'),
-        DataProductParameter('st_calibration', SlitTransmissionCalibration, 
+        DataProductRequirement('st_calibration', SlitTransmissionCalibration, 
                   'Slit tranmision calibration'),
-        DataProductParameter('w_calibration', WavelengthCalibration, 
+        DataProductRequirement('w_calibration', WavelengthCalibration, 
                   'Wavelength calibration'),
         Parameter('lines', None, 
                   'List of x-lambda pairs of line coordinates'),        
@@ -265,18 +265,18 @@ class RasterSpectraRecipe(RecipeBase):
     '''
     
     __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
+        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
+        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
+        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
                   'Master intensity flatfield'),
-        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
+        DataProductRequirement('master_spectral_ff', MasterSpectralFlat, 
                   'Master spectral flatfield'),
-        DataProductParameter('st_calibration', SlitTransmissionCalibration, 
+        DataProductRequirement('st_calibration', SlitTransmissionCalibration, 
                   'Slit tranmision calibration'),
-        DataProductParameter('w_calibration', WavelengthCalibration, 
+        DataProductRequirement('w_calibration', WavelengthCalibration, 
                   'Wavelength calibration')        
     ]
 
