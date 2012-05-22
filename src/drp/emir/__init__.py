@@ -37,6 +37,8 @@ _modes = [i for i in yaml.load_all(pkgutil.get_data('emir.instrument',
           if i.instrument == 'EMIR']
 
 for m in _modes:
+    # Assumptions are
+    # all recipes are in emir.recipes
     _fqn = m.recipe.split('.')[-1]
     m.recipe_class = getattr(recp, _fqn)
 
