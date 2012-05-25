@@ -19,41 +19,8 @@
 
 '''Recipes for EMIR Observing Modes.'''
 
-from numina.pipeline import Pipeline
-
 from .auxiliary import BiasRecipe, DarkRecipe, IntensityFlatRecipe
 from .image import StareImageRecipe, DitheredImageRecipe, MicroditheredImageRecipe
 from .image import NBImageRecipe, MosaicRecipe
 
-_equiv_class = {
-    'bias_image': BiasRecipe,
-    'dark_image': DarkRecipe,
-    'intensity_flatfield': IntensityFlatRecipe,
-    'msm_spectral_flatfield': 'auxiliary:Recipe',
-    'slit_transmission_calibration': 'auxiliary:Recipe',
-    'wavelength_calibration': 'auxiliary:Recipe',
-    'ts_rough_focus': 'auxiliary:Recipe',
-    'ts_fine_focus': 'auxiliary:Recipe',
-    'emir_focus_control': 'auxiliary:Recipe',
-    'image_setup': 'auxiliary:Recipe',
-    'mos_and_longslit_setup': 'auxiliary:Recipe',
-    'target_acquisition': 'auxiliary:Recipe',
-    'mask_imaging': 'auxiliary:Recipe',
-    'msm_and_lsm_check': 'auxiliary:Recipe',
-    'stare_image': StareImageRecipe,
-    'nb_image': NBImageRecipe,
-    'dithered_image': DitheredImageRecipe,
-    'microdithered_image': MicroditheredImageRecipe,
-    'mosaiced_image': MosaicRecipe,
-    'stare_spectra': 'mos:Recipe',
-    'dn_spectra': 'mos:Recipe',
-    'offset_spectra': 'mos:Recipe',
-    'raster_spectra': 'ls:Recipe',
-}
-
-class EmirPipeline(Pipeline):
-    def __init__(self, version):
-        super(EmirPipeline, self).__init__(name='emir', 
-                version=version,
-                recipes=_equiv_class)
 

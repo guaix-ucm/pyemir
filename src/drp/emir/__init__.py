@@ -21,28 +21,40 @@
 
 import logging
 import pkgutil
-
+import importlib
+    
 import yaml
-from numina.pipeline import register_pipeline
-from numina.pipeline import BaseInstrument
+from numina.pipeline import BaseInstrument, BasePipeline
 
-from emir.recipes import EmirPipeline
 import emir.recipes as recp
 from emir import __version__
 
-register_pipeline(EmirPipeline(version=__version__))
+
+def super_import(path):
+    spl = path.split('.')
+    cls = spl[-1]
+    mods = '.'.join(spl[:-1])
+    mm = importlib.import_module(mods)
+    Cls = getattr(mm, cls)
+    return Cls
 
 _modes = [i for i in yaml.load_all(pkgutil.get_data('emir.instrument',
                                                    'obsmodes.yaml'))
           if i.instrument == 'EMIR']
 
-for m in _modes:
-    # Assumptions are
-    # all recipes are in emir.recipes
-    _fqn = m.recipe.split('.')[-1]
-    m.recipe_class = getattr(recp, _fqn)
+_equiv_class = {}
 
-del m
+for _m in _modes:
+    _m.recipe_class = super_import(_m.recipe)
+    _equiv_class[_m.key] = _m.recipe_class
+
+del _m
+
+class EmirPipeline(BasePipeline):
+    def __init__(self):
+        super(EmirPipeline, self).__init__(name='emir', 
+                version=__version__,
+                recipes=_equiv_class)
 
 class EMIR_Instrument(BaseInstrument):
     name = 'EMIR'
