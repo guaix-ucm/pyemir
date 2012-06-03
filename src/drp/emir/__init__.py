@@ -52,7 +52,7 @@ del _m
 
 class EmirPipeline(BasePipeline):
     def __init__(self):
-        super(EmirPipeline, self).__init__(name='emir', 
+        super(EmirPipeline, self).__init__(name='EMIR', 
                 version=__version__,
                 recipes=_equiv_class)
 
