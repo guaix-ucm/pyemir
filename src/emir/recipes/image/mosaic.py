@@ -18,13 +18,13 @@
 #
 
 '''
-Mosiac image mode recipe of EMIR
+Mosaic image mode recipe of EMIR
 
 '''
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, provides, DataFrame
+from numina.core import RecipeBase, Parameter, provides, DataFrame
 
 from emir.dataproducts import SourcesCatalog
 

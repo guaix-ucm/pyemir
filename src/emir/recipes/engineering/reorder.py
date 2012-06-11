@@ -27,12 +27,12 @@ import numpy # pylint: disable-msgs=E1101
 
 
 import numina.qa
-from numina.recipes import RecipeBase
+from numina.core import RecipeBase
 
 from emir.instrument.detector import CHANNELS_READOUT
 from emir.dataproducts import create_result
 
-_logger = logging.getLogger("emir.recipes")
+_logger = logging.getLogger("numina.recipes.emir")
 
 class Recipe(RecipeBase):
     '''Reordering Recipe.

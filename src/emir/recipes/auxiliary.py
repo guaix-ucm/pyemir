@@ -24,8 +24,8 @@ import logging
 import numpy
 import pyfits
 from numina.exceptions import RecipeError
-from numina.recipes import RecipeBase, provides, requires
-from numina.recipes import DataProductRequirement
+from numina.core import RecipeBase, provides, requires
+from numina.core import DataProductRequirement
 from numina.logger import log_to_history
 from numina.array.combine import median
 from numina import __version__
@@ -43,7 +43,7 @@ __all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
            'SpectralFlatRecipe', 'SlitTransmissionRecipe',
            'WavelengthCalibrationRecipe']
 
-_logger = logging.getLogger('emir.recipes')
+_logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 

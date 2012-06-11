@@ -21,9 +21,9 @@
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, DataProductRequirement
-from numina.recipes.requirements import Requirement
-from numina.recipes import provides, DataFrame
+from numina.core import RecipeBase, Parameter, DataProductRequirement
+from numina.core import Requirement
+from numina.core import provides, DataFrame
 
 from emir.dataproducts import MasterBias, MasterDark 
 from emir.dataproducts import MasterIntensityFlat, MasterBadPixelMask

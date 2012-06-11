@@ -22,7 +22,7 @@
 import logging
 import pyfits
 
-from numina.recipes import DataFrame, DataProduct
+from numina.core import DataFrame, DataProduct
 
 from .simulator import EmirImageFactory
 

@@ -26,7 +26,7 @@ import numpy
 import scipy.stats
 
 import numina.qa
-from numina.recipes import RecipeBase, provides, Parameter
+from numina.core import RecipeBase, provides, Parameter
 #from emir.dataproducts import create_result
 
 from emir.instrument.detector import CHANNELS, QUADRANTS
@@ -35,7 +35,7 @@ from ...dataproducts import create_result
 
 from ...dataproducts import MasterGainMap, MasterRONMap
 
-_logger = logging.getLogger("emir.recipes")
+_logger = logging.getLogger("numina.recipes.emir")
 
 
 def multimap(fun, ll):

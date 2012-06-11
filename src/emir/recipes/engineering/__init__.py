@@ -23,8 +23,8 @@
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, provides, requires
-from numina.recipes import DataFrame
+from numina.core import RecipeBase, Parameter, provides, requires
+from numina.core import DataFrame
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import TelescopeOffset, MSMPositions
@@ -37,7 +37,7 @@ from emir.dataproducts import (PointingOriginCalibration,
 from emir.dataproducts import PhotometricCalibration, WavelengthCalibration
 __all__ = []
 
-_logger = logging.getLogger('emir.recipes')
+_logger = logging.getLogger('numina.recipes.emir')
 
 @provides(DTU_XY_Calibration)
 class DTU_XY_CalibrationRecipe(RecipeBase):

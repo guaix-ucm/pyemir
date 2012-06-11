@@ -24,14 +24,14 @@ import logging
 
 import numpy
 
-from numina.recipes import RecipeBase
+from numina.core import RecipeBase
 import numina.qa as qa
 from numina.simulation import run_counter
 
 from emir.instrument.detector import Hawaii2Detector
 from emir.dataproducts import create_raw
 
-_logger = logging.getLogger("emir.recipes")
+_logger = logging.getLogger("numina.recipes.core")
 
 class Recipe(RecipeBase):
     '''Recipe to simulate EMIR images.'''
