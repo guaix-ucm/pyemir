@@ -28,7 +28,6 @@ import pyfits
 import numina.qa
 from numina.recipes import RecipeBase, provides, Parameter, DataFrame
 from numina.exceptions import RecipeError
-#from emir.dataproducts import create_result
 
 from emir.instrument.detector import CHANNELS, QUADRANTS
 
@@ -37,7 +36,6 @@ from emir.dataproducts import create_result
 from emir.dataproducts import MasterGainMap, MasterRONMap
 
 _logger = logging.getLogger('numina.recipes.emir')
-
 
 @provides(MasterGainMap, MasterRONMap)
 class GainRecipe1(RecipeBase):
@@ -92,13 +90,18 @@ class GainRecipe1(RecipeBase):
 
 	ir = 0
 
+	last_reset = resets[-1]
+	_logger.debug('opening last reset image %s', last_reset)
+	last_reset_data = pyfits.getdata(last_reset)
+
         for i, di in enumerate(ramps):
             with pyfits.open(di, mode='readonly') as fd:
+		restdata = fd[0].data - last_reset_data
                 for j, channel in enumerate(channels):    
-                    c = fd[0].data[channel].mean()
+                    c = restdata[channel].mean()
                     _logger.debug('%f counts in channel', c)
                     counts[i][j] = c
-                    v = fd[0].data[channel].var(ddof=1)
+                    v = restdata[channel].var(ddof=1)
                     _logger.debug('%f variance in channel', v)
                     variance[i][j] = v
 
@@ -122,8 +125,6 @@ class GainRecipe1(RecipeBase):
         hdu = pyfits.PrimaryHDU(cube[0])
         hduvar = pyfits.ImageHDU(cube[1])
 	hdulist = pyfits.HDUList([hdu, hduvar])
-        rmean = map(float, rch_mean.flat)
-        rvar = map(float, rch_var.flat)
 
         return {'products': [MasterGainMap(mean=gch_mean, var=gch_var, 
 					frame=DataFrame(hdulist)),
