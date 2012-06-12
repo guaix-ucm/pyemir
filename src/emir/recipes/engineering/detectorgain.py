@@ -20,6 +20,7 @@
 '''Recipe for the reduction of gain calibration frames.'''
 
 import logging
+import math
 
 import numpy
 import scipy.stats
@@ -82,13 +83,11 @@ class GainRecipe1(RecipeBase):
                 raise RecipeError('frame is neither a RAMP nor a RESET')
 
         channels = self.region()
-        result_gain = numpy.zeros((len(ramps), len(channels)))
+        result_gain = numpy.zeros((len(channels), ))
         result_ron = numpy.zeros_like(result_gain)
         
         counts = numpy.zeros((len(ramps), len(channels)))
         variance = numpy.zeros_like(counts)
-
-	ir = 0
 
 	last_reset = resets[-1]
 	_logger.debug('opening last reset image %s', last_reset)
@@ -100,25 +99,19 @@ class GainRecipe1(RecipeBase):
                 for j, channel in enumerate(channels):    
                     c = restdata[channel].mean()
                     _logger.debug('%f counts in channel', c)
-                    counts[i][j] = c
+                    counts[i, j] = c
                     v = restdata[channel].var(ddof=1)
                     _logger.debug('%f variance in channel', v)
-                    variance[i][j] = v
+                    variance[i, j] = v
 
         for j, _ in enumerate(channels):
-            ig, ron,_,_,_ = scipy.stats.linregress(counts[:,j], variance[:,j])
+            slope, intercept, _r_value, _p_value, _std_err = scipy.stats.linregress(counts[:,j], variance[:,j])
 
-            result_gain[ir][j] = 1.0 / ig
-            result_ron[ir][j] = ron
-
-        gch_mean = result_gain.mean(axis=0)
-        gch_var = result_gain.var(axis=0, ddof=1)
-        rch_mean = result_ron.mean(axis=0)
-        rch_var = result_ron.var(axis=0, ddof=1)
-        
+            result_gain[j] = 1.0 / slope
+            result_ron[j] = math.sqrt(intercept)
         cube = numpy.zeros((2, 2048, 2048))
          
-        for gain, var, channel in zip(gch_mean, gch_var, channels):
+        for gain, var, channel in zip(result_gain, result_ron, channels):
             cube[0][channel] = gain
             cube[1][channel] = var
         
@@ -126,6 +119,6 @@ class GainRecipe1(RecipeBase):
         hduvar = pyfits.ImageHDU(cube[1])
 	hdulist = pyfits.HDUList([hdu, hduvar])
 
-        return {'products': [MasterGainMap(mean=gch_mean, var=gch_var, 
+        return {'products': [MasterGainMap(mean=result_gain, var=numpy.array([]), 
 					frame=DataFrame(hdulist)),
-			        MasterRONMap(mean=rch_mean, var=rch_var)]}
+			        MasterRONMap(mean=result_ron, var=numpy.array([]))]}
