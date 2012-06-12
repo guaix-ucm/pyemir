@@ -122,18 +122,9 @@ class GainRecipe1(RecipeBase):
         hdu = pyfits.PrimaryHDU(cube[0])
         hduvar = pyfits.ImageHDU(cube[1])
 	hdulist = pyfits.HDUList([hdu, hduvar])
-        gmean = map(float, gch_mean.flat)
-        gvar = map(float, gch_var.flat)
         rmean = map(float, rch_mean.flat)
         rvar = map(float, rch_var.flat)
 
-        prods= {'qa': numina.qa.UNKNOWN, 'gain': {'mean': gmean,
-                                                  'var': gvar,
-                                                  'image': DataFrame(hdulist)
-                                                  },
-                                          'ron': {'mean': rmean,
-                                                  'var': rvar
-                                                  }
- 		}
-        #return {'products': [MasterGainMap(), MasterRONMap()]}
-        return {'products': [prods]}
+        return {'products': [MasterGainMap(mean=gch_mean, var=gch_var, 
+					frame=DataFrame(hdulist)),
+			        MasterRONMap(mean=rch_mean, var=rch_var)]}

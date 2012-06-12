@@ -139,9 +139,26 @@ class PhotometricCalibration(DataProduct):
     pass
 
 class MasterGainMap(DataProduct):
-    pass
+    def __init__(self, mean, var, frame):
+        self.mean = mean
+        self.var = var
+        self.frame = frame
+
+    def __getstate__(self):
+        gmean = map(float, self.mean.flat)
+        gvar = map(float, self.var.flat)
+        return {'frame': self.frame, 'mean': gmean, 'var': gvar}
 
 class MasterRONMap(DataProduct):
+    def __init__(self, mean, var):
+        self.mean = mean
+        self.var = var
+
+    def __getstate__(self):
+        gmean = map(float, self.mean.flat)
+        gvar = map(float, self.var.flat)
+        return {'mean': gmean, 'var': gvar}
+
     pass
 
 class NonLinearityCalibration(DataProduct):
