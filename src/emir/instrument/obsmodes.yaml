@@ -118,4 +118,19 @@ reference: IPUREMI_323
 description: |
     Lines and mode lines
     of descriptions here
+---
+!om
+name: Gain Mode1
+uuid: ec9229d9-4c77-43a8-9dc0-77afd532e674
+key: gain_mode1
+url: http://somegtc_url.es/emir/obsmode4.html
+instrument: EMIR
+summary: Summary of GainMode1
+recipe: emir.recipes.GainRecipe1
+status: DRAFT
+date: 2012-06-12
+reference: IPUREMI_323
+description: |
+    Lines and mode lines
+    of descriptions here
 

@@ -35,9 +35,10 @@ from emir.dataproducts import CSU2DetectorCalibration, DTUFlexureCalibration
 from emir.dataproducts import (PointingOriginCalibration, 
                              SpectroPhotometricCalibration)
 from emir.dataproducts import PhotometricCalibration, WavelengthCalibration
-__all__ = []
 
 _logger = logging.getLogger('emir.recipes')
+
+from .detectorgain import GainRecipe1
 
 @provides(DTU_XY_Calibration)
 class DTU_XY_CalibrationRecipe(RecipeBase):
