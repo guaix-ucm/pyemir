@@ -49,9 +49,11 @@ def _ch4():
 
 # Channels are listed per quadrant and then in fast readout order
 CHANNELS = list(ito.chain(_ch1(), _ch2(), _ch3(), _ch4()))
+CHANNELS_2 = list(ito.chain(_ch3(), _ch4(), _ch1(), _ch2()))
 
 # Channels in read out order
 CHANNELS_READOUT = list(braid(_ch1(), _ch2(), _ch3(), _ch4()))
+CHANNELS_READOUT_2 = list(braid(_ch3(), _ch4(), _ch1(), _ch2()))
 
 # Quadrants are listed starting at left-top and counter-clockwise then
 QUADRANTS = [(slice(1024, 2048), slice(0, 1024)),
