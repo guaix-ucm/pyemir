@@ -26,7 +26,8 @@ import scipy.stats
 import pyfits
 
 import numina.qa
-from numina.recipes import RecipeBase, provides, Parameter
+from numina.recipes import RecipeBase, provides, Parameter, DataFrame
+from numina.exceptions import RecipeError
 #from emir.dataproducts import create_result
 
 from emir.instrument.detector import CHANNELS, QUADRANTS
@@ -75,8 +76,10 @@ class GainRecipe1(RecipeBase):
         for frame in obresult.frames:
             if frame.itype == 'RESET':
                 resets.append(frame.label)
+		_logger.debug('%s is RESET', frame.label)
             elif frame.itype == 'RAMP':
                 ramps.append(frame.label)
+		_logger.debug('%s is RAMP', frame.label)
             else:
                 raise RecipeError('frame is neither a RAMP nor a RESET')
 
@@ -87,11 +90,17 @@ class GainRecipe1(RecipeBase):
         counts = numpy.zeros((len(ramps), len(channels)))
         variance = numpy.zeros_like(counts)
 
+	ir = 0
+
         for i, di in enumerate(ramps):
             with pyfits.open(di, mode='readonly') as fd:
                 for j, channel in enumerate(channels):    
-                    counts[i][j] = fd[0].data[channel].mean()
-                    variance[i][j] = fd[0].data[channel].var(ddof=1)
+                    c = fd[0].data[channel].mean()
+                    _logger.debug('%f counts in channel', c)
+                    counts[i][j] = c
+                    v = fd[0].data[channel].var(ddof=1)
+                    _logger.debug('%f variance in channel', v)
+                    variance[i][j] = v
 
         for j, _ in enumerate(channels):
             ig, ron,_,_,_ = scipy.stats.linregress(counts[:,j], variance[:,j])
@@ -110,22 +119,21 @@ class GainRecipe1(RecipeBase):
             cube[0][channel] = gain
             cube[1][channel] = var
         
-        #result = create_result(cube[0], variance=cube[1])                                    
-        
-        val= {'qa': numina.qa.UNKNOWN, 'gain': {'mean': list(gch_mean.flat), 
-                                                  'var': list(gch_var.flat),
-                                                  'image': result
+        hdu = pyfits.PrimaryHDU(cube[0])
+        hduvar = pyfits.ImageHDU(cube[1])
+	hdulist = pyfits.HDUList([hdu, hduvar])
+        gmean = map(float, gch_mean.flat)
+        gvar = map(float, gch_var.flat)
+        rmean = map(float, rch_mean.flat)
+        rvar = map(float, rch_var.flat)
+
+        prods= {'qa': numina.qa.UNKNOWN, 'gain': {'mean': gmean,
+                                                  'var': gvar,
+                                                  'image': DataFrame(hdulist)
                                                   },
-                                          'ron': {'mean': list(rch_mean.flat), 
-                                                  'var': list(rch_var.flat)},
+                                          'ron': {'mean': rmean,
+                                                  'var': rvar
                                                   }
-        prods= {'qa': numina.qa.UNKNOWN, 'gain': {'mean': list(gch_mean.flat), 
-                                                  'var': list(gch_var.flat),
-                                                  'image': result
-                                                  },
-                                          'ron': {'mean': list(rch_mean.flat), 
-                                                  'var': list(rch_var.flat)},
-                                                  }
-        print val
+ 		}
         #return {'products': [MasterGainMap(), MasterRONMap()]}
         return {'products': [prods]}
