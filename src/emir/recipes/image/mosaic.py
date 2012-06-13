@@ -18,7 +18,7 @@
 #
 
 '''
-Mosiac image mode recipe of EMIR
+Mosaic image mode recipe of EMIR
 
 '''
 

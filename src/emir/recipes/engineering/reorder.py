@@ -25,10 +25,9 @@ import os.path
 
 import numpy # pylint: disable-msgs=E1101
 
-from numina.recipes import RecipeBase
+from numina.core import RecipeBase
 
 from emir.instrument.detector import CHANNELS_2
-from emir.dataproducts import create_result
 
 _logger = logging.getLogger("numina.recipes.emir")
 

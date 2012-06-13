@@ -27,8 +27,8 @@ Recipe for the processing of target acquisition images.
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, DataProductRequirement
-from numina.recipes import provides
+from numina.core import RecipeBase, Parameter, DataProductRequirement
+from numina.core import provides
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from ..dataproducts import TelescopeOffset, MSMPositions
