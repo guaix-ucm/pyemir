@@ -189,8 +189,8 @@ class DirectImageCommon(object):
                 # Basic processing
                 
                 # FIXME: add this
-                bpm = pyfits.getdata(self.parameters['master_bpm'])
-                bpm_corrector = BadPixelCorrector(bpm)
+                #bpm = pyfits.getdata(self.parameters['master_bpm'])
+                #bpm_corrector = BadPixelCorrector(bpm)
                 
                 if self.parameters['master_bias']:
                     mbias = pyfits.getdata(self.parameters['master_bias'])
@@ -205,7 +205,7 @@ class DirectImageCommon(object):
                 mflat = pyfits.getdata(self.parameters['master_intensity_ff'])
                 ff_corrector = FlatFieldCorrector(mflat)  
                   
-                basicflow = SerialFlow([bpm_corrector,
+                basicflow = SerialFlow([#bpm_corrector,
                                         bias_corrector, 
                                         dark_corrector, 
                                         nl_corrector,
