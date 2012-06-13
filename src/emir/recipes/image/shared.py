@@ -36,7 +36,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 from numina import __version__
-from numina.recipes import DataFrame
+from numina.core import DataFrame
 from numina.flow import SerialFlow 
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, FlatFieldCorrector

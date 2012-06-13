@@ -24,7 +24,7 @@ import pkgutil
 import importlib
     
 import yaml
-from numina.pipeline import BaseInstrument, BasePipeline
+from numina.core import BaseInstrument, BasePipeline
 
 import emir.recipes as recp
 from emir import __version__

@@ -21,9 +21,9 @@
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, DataProductRequirement
-from numina.recipes.requirements import Requirement
-from numina.recipes import provides, DataFrame
+from numina.core import RecipeBase, Parameter, DataProductRequirement
+from numina.core import Requirement
+from numina.core import provides, DataFrame
 
 from emir.dataproducts import MasterBias, MasterDark 
 from emir.dataproducts import MasterIntensityFlat, MasterBadPixelMask
@@ -36,7 +36,7 @@ __author__ = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 _logger = logging.getLogger("numina.recipes.emir")
 
-@provides(DataFrame, SourcesCatalog)
+#@provides(DataFrame, SourcesCatalog)
 class DitheredImageRecipe(RecipeBase, DirectImageCommon):
     '''Recipe for the reduction of imaging mode observations.
 
@@ -110,31 +110,30 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
     
     '''
 
-    __requires__ = [
-        DataProductRequirement('master_bpm', MasterBadPixelMask, 
-                  'Master bad pixel mask'),       
-        DataProductRequirement('master_bias', MasterBias, 'Master bias image', optional=True),
-        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
-        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
-        # FIXME: this parameter is optional 
-        Parameter('sources', None, 
-                  'List of x, y coordinates to measure FWHM',
-                  optional=True),
-        Parameter('offsets', None, 'List of pairs of offsets',
-                  optional=True),
-        Parameter('iterations', 4, 'Iterations of the recipe'),
-        Parameter('sky_images', 5, 'Images used to estimate the background before and after current image'),
-        Parameter('sky_images_sep_time', 10, 'Maximum separation time between consecutive sky images in minutes'),
-        Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
-        Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
-        Requirement('instrument.detector.channels', 'List of channels'),
-        Requirement('instrument.detector.shape', 'Detector shape'),                    
-                    
-    ]
+#    __requires__ = [
+#        DataProductRequirement('master_bpm', MasterBadPixelMask, 
+#                  'Master bad pixel mask'),       
+#        DataProductRequirement('master_bias', MasterBias, 'Master bias image', optional=True),
+#        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+#        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+#                  'Polynomial for non-linearity correction'),
+#        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
+#                  'Master intensity flatfield'),
+#        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
+#        # FIXME: this parameter is optional 
+#        Parameter('sources', None, 
+#                  'List of x, y coordinates to measure FWHM',
+#                  optional=True),
+#        Parameter('offsets', None, 'List of pairs of offsets',
+#                  optional=True),
+#        Parameter('iterations', 4, 'Iterations of the recipe'),
+#        Parameter('sky_images', 5, 'Images used to estimate the background before and after current image'),
+#        Parameter('sky_images_sep_time', 10, 'Maximum separation time between consecutive sky images in minutes'),
+#        Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
+#        Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
+#        Requirement('instrument.detector.channels', 'List of channels'),
+#        Requirement('instrument.detector.shape', 'Detector shape'),                    
+#    ]
 
     def __init__(self):
         super(DitheredImageRecipe, self).__init__(

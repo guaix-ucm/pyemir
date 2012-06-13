@@ -24,9 +24,9 @@ Image mode recipes of EMIR
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, DataProductRequirement
-from numina.recipes import provides, DataFrame
-from numina.recipes.requirements import Requirement
+from numina.core import RecipeBase, Parameter, DataProductRequirement
+from numina.core import provides, DataFrame
+from numina.core import Requirement
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
@@ -37,7 +37,7 @@ from .shared import DirectImageCommon
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-@provides(DataFrame, SourcesCatalog)
+#@provides(DataFrame, SourcesCatalog)
 class StareImageRecipe(RecipeBase, DirectImageCommon):
     '''
     The effect of recording images of the sky in a given pointing
@@ -50,25 +50,25 @@ class StareImageRecipe(RecipeBase, DirectImageCommon):
     
     '''
 
-    __requires__ = [
-        DataProductRequirement('master_bpm', MasterBadPixelMask, 
-                  'Master bad pixel mask'),       
-        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
-        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
-        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
-        # FIXME: this parameter is optional 
-        Parameter('sources', None, 
-                  'List of x, y coordinates to measure FWHM',
-                  optional=True),
-        Parameter('offsets', None, 'List of pairs of offsets',
-                  optional=True),
-        Requirement('instrument.detector.channels', 'List of channels'),
-        Requirement('instrument.detector.shape', 'Detector shape'),
-    ]
+#    __requires__ = [
+#        DataProductRequirement('master_bpm', MasterBadPixelMask, 
+#                  'Master bad pixel mask'),       
+#        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
+#        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+#        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+#                  'Polynomial for non-linearity correction'),
+#        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
+#                  'Master intensity flatfield'),
+#        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
+#        # FIXME: this parameter is optional 
+#        Parameter('sources', None, 
+#                  'List of x, y coordinates to measure FWHM',
+#                  optional=True),
+#        Parameter('offsets', None, 'List of pairs of offsets',
+#                  optional=True),
+#        Requirement('instrument.detector.channels', 'List of channels'),
+#        Requirement('instrument.detector.shape', 'Detector shape'),
+#    ]
 
     def __init__(self):
         super(StareImageRecipe, self).__init__(

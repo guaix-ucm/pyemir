@@ -24,9 +24,9 @@ Image mode recipes of EMIR
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, DataProductRequirement
-from numina.recipes import provides, DataFrame
-from numina.recipes.requirements import Requirement
+from numina.core import RecipeBase, Parameter, DataProductRequirement
+from numina.core import provides, DataFrame
+from numina.core import Requirement
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
@@ -37,7 +37,7 @@ from .shared import DirectImageCommon
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-@provides(DataFrame, SourcesCatalog)
+#@provides(DataFrame, SourcesCatalog)
 class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
     '''
     Recipe for the reduction of microdithering imaging.
@@ -121,30 +121,30 @@ class MicroditheredImageRecipe(RecipeBase, DirectImageCommon):
 
     logger = _logger
 
-    __requires__ = [
-        DataProductRequirement('master_bpm', MasterBadPixelMask, 
-                  'Master bad pixel mask'),       
-        DataProductRequirement('master_bias', MasterBias, 'Master bias image', 
-					optional=True),
-        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
-        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        Parameter('extinction', 0.0, 'Mean atmospheric extinction'), 
-        Parameter('sources', None, 
-                  'List of x, y coordinates to measure FWHM',
-                  optional=True),
-        Parameter('subpixelization', 4, 
-                  'Number of subdivisions in each pixel side'),
-        Parameter('window', None, 'Region of interesting data', optional=True),
-        Parameter('offsets', None, 'List of pairs of offsets',
-                  optional=True),
-        Requirement('instrument.detector.channels', 'List of channels'),
-        Requirement('instrument.detector.shape', 'Detector shape'),
-        Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
-        Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
-    ]
+#    __requires__ = [
+#        DataProductRequirement('master_bpm', MasterBadPixelMask, 
+#                  'Master bad pixel mask'),       
+#        DataProductRequirement('master_bias', MasterBias, 'Master bias image', 
+#					optional=True),
+#        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
+#        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
+#                  'Polynomial for non-linearity correction'),
+#        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
+#                  'Master intensity flatfield'),
+#        Parameter('extinction', 0.0, 'Mean atmospheric extinction'), 
+#        Parameter('sources', None, 
+#                  'List of x, y coordinates to measure FWHM',
+#                  optional=True),
+#        Parameter('subpixelization', 4, 
+#                  'Number of subdivisions in each pixel side'),
+#        Parameter('window', None, 'Region of interesting data', optional=True),
+#        Parameter('offsets', None, 'List of pairs of offsets',
+#        optional=True),
+#        Requirement('instrument.detector.channels', 'List of channels'),
+#        Requirement('instrument.detector.shape', 'Detector shape'),
+#        Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
+#        Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
+#    ]
 
     def __init__(self):
         super(MicroditheredImageRecipe, self).__init__(
