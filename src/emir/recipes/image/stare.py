@@ -53,8 +53,8 @@ class StareImageRecipeInput(RecipeInput):
     offsets = Parameter(None, 'List of pairs of offsets',
               optional=True)
     iterations = Parameter(4, 'Iterations of the recipe')
-    idc = Requirement('List of channels', dest='instrument.detector.channels')
-    ids = Requirement('Detector shape', dest='instrument.detector.shape')
+    idc = Requirement('List of channels', dest='instrument.detector.channels', hidden=True)
+    ids = Requirement('Detector shape', dest='instrument.detector.shape', hidden=True)
 
 class StareImageRecipeResult(ValidRecipeResult):
     frame = Product(FrameDataProduct)
