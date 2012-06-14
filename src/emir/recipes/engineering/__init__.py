@@ -23,7 +23,7 @@
 
 import logging
 
-from numina.core import RecipeBase, Parameter, provides, requires
+from numina.core import BaseRecipe, Parameter, provides, requires
 from numina.core import DataFrame
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -41,7 +41,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 from .detectorgain import GainRecipe1
 
 #@provides(DTU_XY_Calibration)
-class DTU_XY_CalibrationRecipe(RecipeBase):
+class DTU_XY_CalibrationRecipe(BaseRecipe):
     '''
 
     **Observing modes:**
@@ -64,7 +64,7 @@ class DTU_XY_CalibrationRecipe(RecipeBase):
         return {'products': [DTU_XY_Calibration()]}
     
 #@provides(DTU_Z_Calibration)
-class DTU_Z_CalibrationRecipe(RecipeBase):
+class DTU_Z_CalibrationRecipe(BaseRecipe):
     '''
 
     **Observing modes:**
@@ -87,7 +87,7 @@ class DTU_Z_CalibrationRecipe(RecipeBase):
 
 #@requires()
 #@provides(DTUFlexureCalibration)
-class DTUFlexureRecipe(RecipeBase):
+class DTUFlexureRecipe(BaseRecipe):
     '''
 
     **Observing modes:**
@@ -107,7 +107,7 @@ class DTUFlexureRecipe(RecipeBase):
         return {'products': [DTUFlexureCalibration()]}
 
 #@provides(DTU_XY_Calibration)
-class CSU2DetectorRecipe(RecipeBase):
+class CSU2DetectorRecipe(BaseRecipe):
     '''
 
     **Observing modes:**
@@ -130,7 +130,7 @@ class CSU2DetectorRecipe(RecipeBase):
 
 #@requires()
 #@provides(PointingOriginCalibration)
-class FocalPlaneCalibrationRecipe(RecipeBase):
+class FocalPlaneCalibrationRecipe(BaseRecipe):
     '''
 
     **Observing modes:**
@@ -151,7 +151,7 @@ class FocalPlaneCalibrationRecipe(RecipeBase):
 
 #@requires()
 #@provides(WavelengthCalibration)
-class SpectralCharacterizationRecipe(RecipeBase):
+class SpectralCharacterizationRecipe(BaseRecipe):
     '''
 
     **Observing modes:**
@@ -170,7 +170,7 @@ class SpectralCharacterizationRecipe(RecipeBase):
 
 #@requires()
 #@provides(PointingOriginCalibration)
-class RotationCenterRecipe(RecipeBase):
+class RotationCenterRecipe(BaseRecipe):
     '''
 
     **Observing modes:**
@@ -191,7 +191,7 @@ class RotationCenterRecipe(RecipeBase):
 
 #@requires()
 #@provides(DataFrame)
-class AstrometricCalibrationRecipe(RecipeBase):
+class AstrometricCalibrationRecipe(BaseRecipe):
     '''
 
     **Observing modes:**
@@ -211,7 +211,7 @@ class AstrometricCalibrationRecipe(RecipeBase):
         return {'products': [DataFrame(None)]}
 
 #@provides(PhotometricCalibration)
-class PhotometricCalibrationRecipe(RecipeBase):
+class PhotometricCalibrationRecipe(BaseRecipe):
     '''
 
     **Observing modes:**
@@ -233,7 +233,7 @@ class PhotometricCalibrationRecipe(RecipeBase):
         return {'products': [PhotometricCalibration()]}
 
 #@provides(SpectroPhotometricCalibration)
-class SpectroPhotometricCalibrationRecipe(RecipeBase):
+class SpectroPhotometricCalibrationRecipe(BaseRecipe):
     '''
 
     **Observing modes:**

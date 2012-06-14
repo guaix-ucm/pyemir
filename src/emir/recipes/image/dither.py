@@ -21,7 +21,7 @@
 
 import logging
 
-from numina.core import RecipeBase, Parameter, DataProductRequirement
+from numina.core import BaseRecipe, Parameter, DataProductRequirement
 from numina.core import Requirement, RecipeInput, FrameDataProduct
 from numina.core import DataFrame, Product, RecipeInput, ValidRecipeResult
 from numina.core import define_input, define_result
@@ -67,7 +67,7 @@ class DitheredImageRecipeResult(ValidRecipeResult):
 
 @define_input(DitheredImageRecipeInput)
 @define_result(DitheredImageRecipeResult)
-class DitheredImageRecipe(RecipeBase, DirectImageCommon):
+class DitheredImageRecipe(BaseRecipe, DirectImageCommon):
     '''Recipe for the reduction of imaging mode observations.
 
     Recipe to reduce observations obtained in imaging mode, considering different

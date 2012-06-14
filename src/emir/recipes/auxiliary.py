@@ -24,7 +24,7 @@ import logging
 import numpy
 import pyfits
 from numina.core import RecipeError
-from numina.core import RecipeBase, RecipeInput, ValidRecipeResult
+from numina.core import BaseRecipe, RecipeInput, ValidRecipeResult
 from numina.core import Requirement, Product,DataProductRequirement
 from numina.core import define_input, define_result
 from numina.logger import log_to_history
@@ -57,7 +57,7 @@ class BiasRecipeResult(ValidRecipeResult):
 
 @define_input(BiasRecipeInput)
 @define_result(BiasRecipeResult)
-class BiasRecipe(RecipeBase):
+class BiasRecipe(BaseRecipe):
     '''
     Recipe to process data taken in Bias image Mode.
 
@@ -155,7 +155,7 @@ class DarkRecipeResult(ValidRecipeResult):
 
 @define_input(DarkRecipeInput)
 @define_result(DarkRecipeResult)
-class DarkRecipe(RecipeBase):
+class DarkRecipe(BaseRecipe):
     '''Recipe to process data taken in Dark current image Mode.
 
     Recipe to process dark images. The dark images will be combined 
@@ -267,7 +267,7 @@ class IntensityFlatRecipeResult(ValidRecipeResult):
 
 @define_input(IntensityFlatRecipeInput)
 @define_result(IntensityFlatRecipeResult)
-class IntensityFlatRecipe(RecipeBase):
+class IntensityFlatRecipe(BaseRecipe):
     '''Recipe to process data taken in intensity flat-field mode.
         
     Recipe to process intensity flat-fields. The flat-on and flat-off images are
@@ -394,7 +394,7 @@ class SpectralFlatRecipeResult(ValidRecipeResult):
 
 @define_input(SpectralFlatRecipeInput)
 @define_result(SpectralFlatRecipeResult)
-class SpectralFlatRecipe(RecipeBase):
+class SpectralFlatRecipe(BaseRecipe):
     '''Spectral Flatfield Recipe.
 
     Recipe to process spectral flat-fields. The flat-on and flat-off images are
@@ -440,7 +440,7 @@ class SlitTransmissionRecipeResult(ValidRecipeResult):
 
 @define_input(SlitTransmissionRecipeInput)
 @define_result(SlitTransmissionRecipeResult)
-class SlitTransmissionRecipe(RecipeBase):
+class SlitTransmissionRecipe(BaseRecipe):
     '''Recipe to calibrate the slit transmission.
 
     **Observing modes:**
@@ -484,7 +484,7 @@ class WavelengthCalibrationRecipeResult(ValidRecipeResult):
         
 @define_input(WavelengthCalibrationRecipeInput)
 @define_result(WavelengthCalibrationRecipeResult)
-class WavelengthCalibrationRecipe(RecipeBase):
+class WavelengthCalibrationRecipe(BaseRecipe):
     '''Recipe to calibrate the spectral response.
 
     **Observing modes:**

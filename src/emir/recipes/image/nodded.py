@@ -22,7 +22,7 @@ Beam switched-nodded image mode recipe of EMIR
 
 '''
 
-from numina.core import RecipeBase, Parameter, DataProductRequirement
+from numina.core import BaseRecipe, Parameter, DataProductRequirement
 from numina.core import Requirement, RecipeInput, ValidRecipeResult
 from numina.core import DataFrame, define_input, define_result
 from numina.core import Product, FrameDataProduct 
@@ -57,7 +57,7 @@ class NBImageRecipeResult(ValidRecipeResult):
 
 @define_input(NBImageRecipeInput)
 @define_result(NBImageRecipeResult)
-class NBImageRecipe(RecipeBase, DirectImageCommon):
+class NBImageRecipe(BaseRecipe, DirectImageCommon):
     '''
     The effect of recording a series of stare images, with the same
     acquisition parameters, and taken by pointing the TS in cycles

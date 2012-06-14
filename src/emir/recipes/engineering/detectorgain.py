@@ -27,7 +27,7 @@ import scipy.stats
 import pyfits
 
 import numina.qa
-from numina.core import RecipeBase, provides, Parameter, DataFrame
+from numina.core import BaseRecipe, provides, Parameter, DataFrame
 from numina.core import RecipeError
 
 from emir.instrument.detector import CHANNELS, QUADRANTS
@@ -39,7 +39,7 @@ from emir.dataproducts import MasterGainMap, MasterRONMap
 _logger = logging.getLogger('numina.recipes.emir')
 
 #@provides(MasterGainMap, MasterRONMap)
-class GainRecipe1(RecipeBase):
+class GainRecipe1(BaseRecipe):
     '''Detector Gain Recipe.
     
     Recipe to calibrate the detector gain.

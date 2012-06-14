@@ -27,7 +27,7 @@ Recipe for the processing of target acquisition images.
 
 import logging
 
-from numina.core import RecipeBase, Parameter, DataProductRequirement
+from numina.core import BaseRecipe, Parameter, DataProductRequirement
 from numina.core import RecipeInput, ValidRecipeResult, Product
 from numina.core import define_input, define_result
 
@@ -54,7 +54,7 @@ class TargetAcquisitionRecipeResult(ValidRecipeResult):
     
 @define_input(TargetAcquisitionRecipeInput)
 @define_result(TargetAcquisitionRecipeResult)
-class TargetAcquisitionRecipe(RecipeBase):
+class TargetAcquisitionRecipe(BaseRecipe):
     '''
     Acquire a target.
     
@@ -90,7 +90,7 @@ class MaskImagingRecipeResult(ValidRecipeResult):
     
 @define_input(MaskImagingRecipeInput)
 @define_result(MaskImagingRecipeResult)
-class MaskImagingRecipe(RecipeBase):
+class MaskImagingRecipe(BaseRecipe):
     '''Acquire a target.
     
     Mask image Recipe.
@@ -126,7 +126,7 @@ class MaskCheckRecipeResult(ValidRecipeResult):
     
 @define_input(MaskCheckRecipeInput)
 @define_result(MaskCheckRecipeResult)
-class MaskCheckRecipe(RecipeBase):
+class MaskCheckRecipe(BaseRecipe):
     '''
     Acquire a target.
     
