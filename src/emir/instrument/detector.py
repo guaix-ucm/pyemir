@@ -23,7 +23,7 @@ import numpy # pylint: disable-msgs=E1101
 
 from numina.extraiter import braid
 from numina.treedict import TreeDict
-from numina.instrument.detector import nIRDetector, Amplifier, Das
+from numina.instrument.detector import nIRDetector, Amplifier, DAS
 from numina.instrument.detector import SingleReadoutMode
 from numina.instrument.detector import CdsReadoutMode
 from numina.instrument.detector import RampReadoutMode
@@ -49,10 +49,12 @@ def _ch4():
 
 # Channels are listed per quadrant and then in fast readout order
 CHANNELS = list(ito.chain(_ch1(), _ch2(), _ch3(), _ch4()))
+# Channels as they are populated during recosntruction
 CHANNELS_2 = list(ito.chain(_ch3(), _ch4(), _ch1(), _ch2()))
 
 # Channels in read out order
 CHANNELS_READOUT = list(braid(_ch1(), _ch2(), _ch3(), _ch4()))
+# Channels as they are populated during recosntruction
 CHANNELS_READOUT_2 = list(braid(_ch3(), _ch4(), _ch1(), _ch2()))
 
 # Quadrants are listed starting at left-top and counter-clockwise then
@@ -62,9 +64,9 @@ QUADRANTS = [(slice(1024, 2048), slice(0, 1024)),
              (slice(1024, 2048), slice(1024, 2048))
              ]
 
-class EmirDas(Das):
+class EMIR_DAS(DAS):
     def __init__(self, detector):
-        Das.__init__(self, detector)
+        super(EMIR_DAS, self).__init__(detector)
                 
     def readout_mode_single(self, repeat=1):
         self.readmode(SingleReadoutMode(repeat=repeat)) 
@@ -116,7 +118,7 @@ class Hawaii2Detector(nIRDetector):
         
         nIRDetector.__init__(self, self.shape, amps, dark, pedestal, flat, resetval, resetnoise)
         
-class EmirDetector(Hawaii2Detector):
+class EMIR_Detector(Hawaii2Detector):
     def __init__(self, flat=1.0):        
         # ADU, per AMP
         ron = [3.14, 3.060, 3.09, 3.08, 3.06, 3.20, 3.13, 3.10, 2.98, 2.98, 
@@ -148,4 +150,4 @@ class EmirDetector(Hawaii2Detector):
 if __name__ == '__main__':
     
     
-    det = EmirDetector()
+    det = EMIR_Detector()

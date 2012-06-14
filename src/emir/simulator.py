@@ -29,7 +29,7 @@ from numina.treedict import TreeDict
 from numina.instrument import Shutter
 from numina.instrument.template import interpolate
 
-from emir.instrument.detector import EmirDetector, EmirDas
+from emir.instrument.detector import EMIR_Detector, EMIR_DAS
 
 _logger = logging.getLogger('emir.simulator')
 
@@ -39,7 +39,7 @@ class BaseInstrument(object):
         self.shutter = Shutter()
 
         self.detector = detector
-        self.das = EmirDas(detector)
+        self.das = EMIR_DAS(detector)
         
         # Connect components
         self.detector.connect(self.shutter)
@@ -76,7 +76,7 @@ class Instrument(BaseInstrument):
         flat = 2 - 0.7 * (xx**2+yy**2)
         flat /= flat.mean()
         
-        detector = EmirDetector(flat=flat)
+        detector = EMIR_Detector(flat=flat)
         BaseInstrument.__init__(self, detector)
 
 _result_types = ['image', 'spectrum']

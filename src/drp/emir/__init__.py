@@ -41,9 +41,9 @@ for _m in _modes:
 
 del _m
 
-class EmirPipeline(BasePipeline):
+class EMIR_Pipeline(BasePipeline):
     def __init__(self):
-        super(EmirPipeline, self).__init__(name='EMIR', 
+        super(EMIR_Pipeline, self).__init__(name='EMIR', 
                 version=__version__,
                 recipes=_equiv_class)
 
