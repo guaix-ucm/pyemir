@@ -102,16 +102,6 @@ class MaskImagingRecipe(RecipeBase):
       *  Mask imaging
     '''
 
-    __requires__ = [       
-        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
-        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
-        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-    ]
-
     def __init__(self):
         super(MaskImagingRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
@@ -121,7 +111,21 @@ class MaskImagingRecipe(RecipeBase):
     def run(self, obresult):
         return {'products': [MSMPositions()]}
     
-@provides(TelescopeOffset, MSMPositions)
+class MaskCheckRecipeInput(RecipeInput):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
+    
+
+class MaskCheckRecipeResult(ValidRecipeResult):
+    msm_positions = Product(MSMPositions)
+    telescope_offset = Product(TelescopeOffset)
+    
+@define_input(MaskCheckRecipeInput)
+@define_result(MaskCheckRecipeResult)
 class MaskCheckRecipe(RecipeBase):
     '''
     Acquire a target.
@@ -133,16 +137,6 @@ class MaskCheckRecipe(RecipeBase):
         * MSM and LSM check 
             
     '''
-
-    __requires__ = [       
-        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
-        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
-        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-    ]
 
     def __init__(self):
         super(MaskCheckRecipe, self).__init__(
