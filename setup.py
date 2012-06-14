@@ -7,7 +7,7 @@ NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.emir']
 ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 
 setup(name='pyemir',
-      version='0.6.4',
+      version='0.6.5',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',

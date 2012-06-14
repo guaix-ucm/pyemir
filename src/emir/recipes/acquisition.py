@@ -28,18 +28,32 @@ Recipe for the processing of target acquisition images.
 import logging
 
 from numina.core import RecipeBase, Parameter, DataProductRequirement
-from numina.core import provides
+from numina.core import RecipeInput, ValidRecipeResult, Product
+from numina.core import define_input, define_result
 
-from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from ..dataproducts import TelescopeOffset, MSMPositions
-from ..dataproducts import MasterIntensityFlat
-from ..dataproducts import NonLinearityCalibration
+from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from emir.dataproducts import TelescopeOffset, MSMPositions
+from emir.dataproducts import MasterIntensityFlat
+from emir.dataproducts import NonLinearityCalibration
 
 __all__ = ['TargetAcquisitionRecipe', 'MaskImagingRecipe', 'MaskCheckRecipe']
 
 _logger = logging.getLogger('emir.recipes')
 
-@provides(TelescopeOffset)
+class TargetAcquisitionRecipeInput(RecipeInput):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
+    
+
+class TargetAcquisitionRecipeResult(ValidRecipeResult):
+    telescope_offset = Product(TelescopeOffset)
+    
+@define_input(TargetAcquisitionRecipeInput)
+@define_result(TargetAcquisitionRecipeResult)
 class TargetAcquisitionRecipe(RecipeBase):
     '''
     Acquire a target.
@@ -53,16 +67,6 @@ class TargetAcquisitionRecipe(RecipeBase):
     
     '''
 
-    __requires__ = [       
-        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
-        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
-        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-    ]
-
     def __init__(self):
         super(TargetAcquisitionRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
@@ -72,7 +76,20 @@ class TargetAcquisitionRecipe(RecipeBase):
     def run(self, obresult):
         return {'products': [TelescopeOffset()]}
     
-@provides(MSMPositions)
+class MaskImagingRecipeInput(RecipeInput):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
+                  'Polynomial for non-linearity correction'),
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
+    
+
+class MaskImagingRecipeResult(ValidRecipeResult):
+    msm_positions = Product(MSMPositions)
+    
+@define_input(MaskImagingRecipeInput)
+@define_result(MaskImagingRecipeResult)
 class MaskImagingRecipe(RecipeBase):
     '''Acquire a target.
     
