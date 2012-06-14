@@ -27,26 +27,31 @@ import scipy.stats
 import pyfits
 
 import numina.qa
-from numina.core import BaseRecipe, provides, Parameter, DataFrame
-from numina.core import RecipeError
+from numina.core import BaseRecipe, Parameter, DataFrame
+from numina.core import RecipeError,RecipeInput, ValidRecipeResult
+from numina.core import Product, define_input, define_result
 
 from emir.instrument.detector import CHANNELS, QUADRANTS
-
-from emir.dataproducts import create_result
 
 from emir.dataproducts import MasterGainMap, MasterRONMap
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-#@provides(MasterGainMap, MasterRONMap)
+class GainRecipe1Input(RecipeInput):
+    region = Parameter('channel', 'Region used to compute: (full|quadrant|channel)', 
+                       choices=['full','quadrant', 'channel'])
+    
+class GainRecipe1InputResult(ValidRecipeResult):
+    gain = Product(MasterGainMap(None, None, None))
+    ron = Product(MasterRONMap(None, None))
+    
+@define_input(GainRecipe1Input)
+@define_result(GainRecipe1InputResult)
 class GainRecipe1(BaseRecipe):
     '''Detector Gain Recipe.
     
     Recipe to calibrate the detector gain.
     '''
-#    __requires__ = [
-#        Parameter('region', 'channel', 'Region used to compute: (full|quadrant|channel)', choices=['full','quadrant', 'channel'])
-#    ]
 
     def __init__(self):
         super(GainRecipe1, self).__init__(
@@ -75,10 +80,10 @@ class GainRecipe1(BaseRecipe):
         for frame in obresult.frames:
             if frame.itype == 'RESET':
                 resets.append(frame.label)
-		_logger.debug('%s is RESET', frame.label)
+                _logger.debug('%s is RESET', frame.label)
             elif frame.itype == 'RAMP':
                 ramps.append(frame.label)
-		_logger.debug('%s is RAMP', frame.label)
+                _logger.debug('%s is RAMP', frame.label)
             else:
                 raise RecipeError('frame is neither a RAMP nor a RESET')
 
@@ -89,13 +94,13 @@ class GainRecipe1(BaseRecipe):
         counts = numpy.zeros((len(ramps), len(channels)))
         variance = numpy.zeros_like(counts)
 
-	last_reset = resets[-1]
-	_logger.debug('opening last reset image %s', last_reset)
-	last_reset_data = pyfits.getdata(last_reset)
+        last_reset = resets[-1]
+        _logger.debug('opening last reset image %s', last_reset)
+        last_reset_data = pyfits.getdata(last_reset)
 
         for i, di in enumerate(ramps):
             with pyfits.open(di, mode='readonly') as fd:
-		restdata = fd[0].data - last_reset_data
+                restdata = fd[0].data - last_reset_data
                 for j, channel in enumerate(channels):    
                     c = restdata[channel].mean()
                     _logger.debug('%f counts in channel', c)
@@ -117,7 +122,7 @@ class GainRecipe1(BaseRecipe):
         
         hdu = pyfits.PrimaryHDU(cube[0])
         hduvar = pyfits.ImageHDU(cube[1])
-	hdulist = pyfits.HDUList([hdu, hduvar])
+        hdulist = pyfits.HDUList([hdu, hduvar])
 
         return {'products': [MasterGainMap(mean=result_gain, var=numpy.array([]), 
 					frame=DataFrame(hdulist)),

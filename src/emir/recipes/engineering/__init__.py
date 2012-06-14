@@ -23,8 +23,8 @@
 
 import logging
 
-from numina.core import BaseRecipe, Parameter, provides, requires
-from numina.core import DataFrame
+from numina.core import BaseRecipe, Parameter, define_result, define_input
+from numina.core import FrameDataProduct, ValidRecipeResult, Product, RecipeInput 
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import TelescopeOffset, MSMPositions
@@ -40,7 +40,15 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 from .detectorgain import GainRecipe1
 
-#@provides(DTU_XY_Calibration)
+class DTU_XY_CalibrationRecipeInput(RecipeInput):
+    slit_pattern = Parameter(None, 'Slit pattern'),
+    dtu_range = Parameter(None, 'DTU range: begin, end and step')
+
+class DTU_XY_CalibrationRecipeResult(ValidRecipeResult):
+    calibration = Product(DTU_XY_Calibration)
+
+@define_input(DTU_XY_CalibrationRecipeInput)
+@define_result(DTU_XY_CalibrationRecipeResult)
 class DTU_XY_CalibrationRecipe(BaseRecipe):
     '''
 
@@ -48,11 +56,6 @@ class DTU_XY_CalibrationRecipe(BaseRecipe):
 
         * DTU X_Y calibration
     '''
-
-#    __requires__ = [
-#        Parameter('slit_pattern', None, 'Slit pattern'),
-#        Parameter('dtu_range', None, 'DTU range: begin, end and step')
-#    ]
 
     def __init__(self):
         super(DTU_XY_CalibrationRecipe, self).__init__(
@@ -62,8 +65,15 @@ class DTU_XY_CalibrationRecipe(BaseRecipe):
 
     def run(self, obresult):
         return {'products': [DTU_XY_Calibration()]}
-    
-#@provides(DTU_Z_Calibration)
+
+class DTU_Z_CalibrationRecipeInput(RecipeInput):
+    dtu_range = Parameter(None, 'DTU range: begin, end and step')
+
+class DTU_Z_CalibrationRecipeResult(ValidRecipeResult):
+    calibration = Product(DTU_Z_Calibration)
+
+@define_input(DTU_Z_CalibrationRecipeInput)
+@define_result(DTU_Z_CalibrationRecipeResult) 
 class DTU_Z_CalibrationRecipe(BaseRecipe):
     '''
 
@@ -71,10 +81,6 @@ class DTU_Z_CalibrationRecipe(BaseRecipe):
 
         * DTU Z calibration
     '''
-
-#    __requires__ = [
-#        Parameter('dtu_range', None, 'DTU range: begin, end and step')
-#    ]
 
     def __init__(self):
         super(DTU_Z_CalibrationRecipe, self).__init__(
@@ -85,8 +91,14 @@ class DTU_Z_CalibrationRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [DTU_Z_Calibration()]}
 
-#@requires()
-#@provides(DTUFlexureCalibration)
+class DTU_FlexureRecipeInput(RecipeInput):
+    pass
+
+class DTU_FlexureRecipeResult(ValidRecipeResult):
+    calibration = Product(DTUFlexureCalibration)
+
+@define_input(DTU_FlexureRecipeInput)
+@define_result(DTU_FlexureRecipeResult)
 class DTUFlexureRecipe(BaseRecipe):
     '''
 
@@ -94,8 +106,6 @@ class DTUFlexureRecipe(BaseRecipe):
 
         * DTU Flexure compensation
     '''
-
-    # __requires__ = []
 
     def __init__(self):
         super(DTUFlexureRecipe, self).__init__(
@@ -106,7 +116,14 @@ class DTUFlexureRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [DTUFlexureCalibration()]}
 
-#@provides(DTU_XY_Calibration)
+class CSU2DetectorRecipeInput(RecipeInput):
+    dtu_range = Parameter(None, 'DTU range: begin, end and step')
+
+class CSU2DetectorRecipeResult(ValidRecipeResult):
+    calibration = Product(DTU_XY_Calibration)
+
+@define_input(CSU2DetectorRecipeInput)
+@define_result(CSU2DetectorRecipeResult)
 class CSU2DetectorRecipe(BaseRecipe):
     '''
 
@@ -114,10 +131,6 @@ class CSU2DetectorRecipe(BaseRecipe):
 
         * CSU2Detector calibration
     '''
-
-#    __requires__ = [
-#        Parameter('dtu_range', None, 'DTU range: begin, end and step')
-#    ]
 
     def __init__(self):
         super(CSU2DetectorRecipe, self).__init__(
@@ -128,8 +141,14 @@ class CSU2DetectorRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [DTU_XY_Calibration()]}
 
-#@requires()
-#@provides(PointingOriginCalibration)
+class FocalPlaneCalibrationRecipeInput(RecipeInput):
+    pass
+
+class FocalPlaneCalibrationRecipeResult(ValidRecipeResult):
+    calibration = Product(PointingOriginCalibration)
+
+@define_input(FocalPlaneCalibrationRecipeInput)
+@define_result(FocalPlaneCalibrationRecipeResult)
 class FocalPlaneCalibrationRecipe(BaseRecipe):
     '''
 
@@ -137,8 +156,6 @@ class FocalPlaneCalibrationRecipe(BaseRecipe):
 
         * Lateral color
     '''
-
-    # __requires__ = []
 
     def __init__(self):
         super(FocalPlaneCalibrationRecipe, self).__init__(
@@ -149,8 +166,14 @@ class FocalPlaneCalibrationRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [PointingOriginCalibration()]}
 
-#@requires()
-#@provides(WavelengthCalibration)
+class SpectralCharacterizationRecipeInput(RecipeInput):
+    pass
+
+class SpectralCharacterizationRecipeResult(ValidRecipeResult):
+    calibration = Product(WavelengthCalibration)
+
+@define_input(SpectralCharacterizationRecipeInput)
+@define_result(SpectralCharacterizationRecipeResult)
 class SpectralCharacterizationRecipe(BaseRecipe):
     '''
 
@@ -168,8 +191,14 @@ class SpectralCharacterizationRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [WavelengthCalibration()]}
 
-#@requires()
-#@provides(PointingOriginCalibration)
+class RotationCenterRecipeInput(RecipeInput):
+    pass
+
+class RotationCenterRecipeResult(ValidRecipeResult):
+    calibration = Product(PointingOriginCalibration)
+
+@define_input(RotationCenterRecipeInput)
+@define_result(RotationCenterRecipeResult)
 class RotationCenterRecipe(BaseRecipe):
     '''
 
@@ -177,8 +206,6 @@ class RotationCenterRecipe(BaseRecipe):
 
         * Centre of rotation
     '''
-
-    # __requires__ = []
 
     def __init__(self):
         super(RotationCenterRecipe, self).__init__(
@@ -189,8 +216,14 @@ class RotationCenterRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [PointingOriginCalibration()]}
 
-#@requires()
-#@provides(DataFrame)
+class AstrometricCalibrationRecipeInput(RecipeInput):
+    pass
+
+class AstrometricCalibrationRecipeResult(ValidRecipeResult):
+    calibration = Product(FrameDataProduct)
+
+@define_input(AstrometricCalibrationRecipeInput)
+@define_result(AstrometricCalibrationRecipeResult)
 class AstrometricCalibrationRecipe(BaseRecipe):
     '''
 
@@ -199,8 +232,6 @@ class AstrometricCalibrationRecipe(BaseRecipe):
         * Astrometric calibration
     '''
 
-    # __requires__ = []
-
     def __init__(self):
         super(AstrometricCalibrationRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
@@ -208,9 +239,16 @@ class AstrometricCalibrationRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [DataFrame(None)]}
+        return AstrometricCalibrationRecipeResult(calibration=None)
 
-#@provides(PhotometricCalibration)
+class PhotometricCalibrationRecipeInput(RecipeInput):
+    phot = Parameter(None, 'Information about standard stars')
+    
+class PhotometricCalibrationRecipeResult(ValidRecipeResult):
+    calibration = Product(PhotometricCalibration)
+    
+@define_input(PhotometricCalibrationRecipeInput)
+@define_result(PhotometricCalibrationRecipeResult)
 class PhotometricCalibrationRecipe(BaseRecipe):
     '''
 
@@ -218,10 +256,6 @@ class PhotometricCalibrationRecipe(BaseRecipe):
 
         * Photometric calibration
     '''
-
-#    __requires__ = [
-#        Parameter('phot', None, 'Information about standard stars')
-#    ]
 
     def __init__(self):
         super(PhotometricCalibrationRecipe, self).__init__(
@@ -232,7 +266,14 @@ class PhotometricCalibrationRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [PhotometricCalibration()]}
 
-#@provides(SpectroPhotometricCalibration)
+class SpectroPhotometricCalibrationRecipeInput(RecipeInput):
+    sphot = Parameter(None, 'Information about standard stars')
+    
+class SpectroPhotometricCalibrationRecipeResult(ValidRecipeResult):
+    calibration = Product(SpectroPhotometricCalibration)
+    
+@define_input(SpectroPhotometricCalibrationRecipeInput)
+@define_result(SpectroPhotometricCalibrationRecipeResult)
 class SpectroPhotometricCalibrationRecipe(BaseRecipe):
     '''
 
@@ -240,10 +281,6 @@ class SpectroPhotometricCalibrationRecipe(BaseRecipe):
 
         * Spectrophotometric calibration
     '''
-
-#    __requires__ = [
-#        Parameter('sphot', None, 'Information about standard stars')
-#    ]
 
     def __init__(self):
         super(SpectroPhotometricCalibrationRecipe, self).__init__(
@@ -253,6 +290,3 @@ class SpectroPhotometricCalibrationRecipe(BaseRecipe):
 
     def run(self, obresult):
         return {'products': [SpectroPhotometricCalibration()]}
-
-
-
