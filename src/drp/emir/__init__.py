@@ -24,19 +24,10 @@ import pkgutil
 import importlib
     
 import yaml
-from numina.core import BaseInstrument, BasePipeline
+from numina.core import BaseInstrument, BasePipeline, import_object
 
 import emir.recipes as recp
 from emir import __version__
-
-
-def super_import(path):
-    spl = path.split('.')
-    cls = spl[-1]
-    mods = '.'.join(spl[:-1])
-    mm = importlib.import_module(mods)
-    Cls = getattr(mm, cls)
-    return Cls
 
 _modes = [i for i in yaml.load_all(pkgutil.get_data('emir.instrument',
                                                    'obsmodes.yaml'))
@@ -45,7 +36,7 @@ _modes = [i for i in yaml.load_all(pkgutil.get_data('emir.instrument',
 _equiv_class = {}
 
 for _m in _modes:
-    _m.recipe_class = super_import(_m.recipe)
+    _m.recipe_class = import_object(_m.recipe)
     _equiv_class[_m.key] = _m.recipe_class
 
 del _m
