@@ -24,14 +24,24 @@ Mosaic image mode recipe of EMIR
 
 import logging
 
-from numina.core import RecipeBase, Parameter, provides, DataFrame
+from numina.core import BaseRecipe, Parameter, DataProductRequirement
+from numina.core import define_input, define_result, DataFrame, ValidRecipeResult
+from numina.core import Requirement, Product, FrameDataProduct, RecipeInput
 
 from emir.dataproducts import SourcesCatalog
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-#@provides(DataFrame, SourcesCatalog)
-class MosaicRecipe(RecipeBase):
+class MosaicRecipeInput(RecipeInput):
+    # FIXME: this parameter is optional 
+    sources = Parameter(None, 'List of x, y coordinates to measure FWHM')
+
+class MosaicRecipeResult(ValidRecipeResult):
+    frame = Product(FrameDataProduct)
+    catalog = Product(SourcesCatalog)
+
+@define_result(MosaicRecipeResult)
+class MosaicRecipe(BaseRecipe):
     '''
     The effect of recording a series of stare images, with the same
     acquisition parameters, and taken by pointing to a number of
@@ -48,9 +58,7 @@ class MosaicRecipe(RecipeBase):
     '''
 
 #    __requires__ = [
-#        # FIXME: this parameter is optional 
-#        Parameter('sources', None, 
-#                  'List of x, y coordinates to measure FWHM')
+
 #    ]
 
     def __init__(self):
