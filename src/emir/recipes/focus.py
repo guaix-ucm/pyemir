@@ -24,25 +24,39 @@
 
 import logging
 
-from numina.core import RecipeBase, Parameter, provides
-from numina.core import DataProductRequirement
+from numina.core import BaseRecipe, Parameter, define_input, define_result
+from numina.core import DataProductRequirement, RecipeInput, ValidRecipeResult
+from numina.core import Product
 from numina.logger import log_to_history
 
-from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from ..dataproducts import TelescopeFocus
-from ..dataproducts import DTUFocus
-from ..dataproducts import MasterIntensityFlat
-from ..dataproducts import NonLinearityCalibration
+from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from emir.dataproducts import TelescopeFocus
+from emir.dataproducts import DTUFocus
+from emir.dataproducts import MasterIntensityFlat
+from emir.dataproducts import NonLinearityCalibration
 
 __all__ = ['TelescopeRoughFocusRecipe', 
            'TelescopeFineFocusRecipe',
            'DTUFocusRecipe',           
            ]
 
-_logger = logging.getLogger('emir.recipes')
+_logger = logging.getLogger('numina.recipes.emir')
 
-@provides(TelescopeFocus)
-class TelescopeRoughFocusRecipe(RecipeBase):
+class TelescopeRoughFocusRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
+    objects = Parameter(None, 'List of x-y pair of object coordinates'),
+    focus_range = Parameter(None, 'Focus range: begin, end and step')   
+
+class TelescopeRoughFocusRecipeResult(ValidRecipeResult):
+    focus = Product(TelescopeFocus)
+
+@define_input(TelescopeRoughFocusRecipeInput)
+@define_result(TelescopeRoughFocusRecipeResult)
+class TelescopeRoughFocusRecipe(BaseRecipe):
     '''Recipe to compute the telescope focus.
     
     **Observing modes:**
@@ -61,17 +75,6 @@ class TelescopeRoughFocusRecipe(RecipeBase):
     **Outputs:**
      * Best focus
     '''
-    __requires__ = [       
-        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
-        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
-        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        Parameter('objects', None, 'List of x-y pair of object coordinates'),
-        Parameter('focus_range', None, 'Focus range: begin, end and step')        
-    ]
 
     def __init__(self):
         super(TelescopeRoughFocusRecipe, self).__init__(
@@ -82,8 +85,21 @@ class TelescopeRoughFocusRecipe(RecipeBase):
     def run(self, obresult):
         return {'products': [TelescopeFocus()]}
 
-@provides(TelescopeFocus)
-class TelescopeFineFocusRecipe(RecipeBase):
+
+class TelescopeFineFocusRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
+    objects = Parameter(None, 'List of x-y pair of object coordinates'),   
+
+class TelescopeFineFocusRecipeResult(ValidRecipeResult):
+    focus = Product(TelescopeFocus)
+
+@define_input(TelescopeFineFocusRecipeInput)
+@define_result(TelescopeFineFocusRecipeResult)
+class TelescopeFineFocusRecipe(BaseRecipe):
     '''
     Recipe to compute the telescope focus.
     
@@ -104,17 +120,6 @@ class TelescopeFineFocusRecipe(RecipeBase):
     
     '''
 
-    __requires__ = [       
-        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
-        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
-        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        Parameter('objects', None, 'List of x-y pair of object coordinates'),        
-    ]
-
     def __init__(self):
         super(TelescopeFineFocusRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
@@ -124,8 +129,22 @@ class TelescopeFineFocusRecipe(RecipeBase):
     def run(self, obresult):
         return {'products': [TelescopeFocus()]}
 
-@provides(DTUFocus)
-class DTUFocusRecipe(RecipeBase):
+class DTUFocusRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
+    objects = Parameter(None, 'List of x-y pair of object coordinates'),   
+    msm_pattern = Parameter(None, 'List of x-y pair of slit coordinates'),
+    dtu_focus_range = Parameter('dtu_focus_range', None, 'Focus range of the DTU: begin, end and step')
+    
+class DTUFocusRecipeResult(ValidRecipeResult):
+    focus = Product(DTUFocus)
+
+@define_input(DTUFocusRecipeInput)
+@define_result(DTUFocusRecipeResult)
+class DTUFocusRecipe(BaseRecipe):
     '''
     Recipe to compute the DTU focus.
     
@@ -145,20 +164,6 @@ class DTUFocusRecipe(RecipeBase):
      * Best focus
     
     '''
-
-    __requires__ = [       
-        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
-        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
-        DataProductRequirement('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        Parameter('objects', None, 'List of x-y pair of object coordinates'),
-        Parameter('msm_pattern', None, 'List of x-y pair of slit coordinates'),
-        Parameter('dtu_focus_range', None, 
-                  'Focus range of the DTU: begin, end and step')        
-    ]
 
     def __init__(self):
         super(DTUFocusRecipe, self).__init__(
