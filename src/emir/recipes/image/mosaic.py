@@ -53,13 +53,9 @@ class MosaicRecipe(BaseRecipe):
 
     **Observing modes:**
 
-        * Mosiac images
+        * Mosaic images
     
     '''
-
-#    __requires__ = [
-
-#    ]
 
     def __init__(self):
         super(MosaicRecipe, self).__init__(
