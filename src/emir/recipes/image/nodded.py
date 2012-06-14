@@ -23,17 +23,40 @@ Beam switched-nodded image mode recipe of EMIR
 '''
 
 from numina.core import RecipeBase, Parameter, DataProductRequirement
-from numina.core import Requirement
-from numina.core import provides, DataFrame
-
+from numina.core import Requirement, RecipeInput, ValidRecipeResult
+from numina.core import DataFrame, define_input, define_result
+from numina.core import Product, FrameDataProduct 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import NonLinearityCalibration
 from emir.dataproducts import SourcesCatalog
 
 from .shared import DirectImageCommon
-    
-#@provides(DataFrame, SourcesCatalog)
+
+class NBImageRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
+              'Polynomial for non-linearity correction')
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+              'Master intensity flatfield')
+    extinction = Parameter(0.0, 'Mean atmospheric extinction')
+    #       # FIXME: this parameter is optional 
+    sources = Parameter(None, 
+              'List of x, y coordinates to measure FWHM',
+              optional=True)
+    offsets = Parameter(None, 'List of pairs of offsets',
+              optional=True)
+    idc = Requirement('List of channels', dest='instrument.detector.channels')
+    ids = Requirement('Detector shape', dest='instrument.detector.shape')  
+
+class NBImageRecipeResult(ValidRecipeResult):
+    frame = Product(FrameDataProduct)
+    catalog = Product(SourcesCatalog)
+
+@define_input(NBImageRecipeInput)
+@define_result(NBImageRecipeResult)
 class NBImageRecipe(RecipeBase, DirectImageCommon):
     '''
     The effect of recording a series of stare images, with the same
@@ -49,24 +72,6 @@ class NBImageRecipe(RecipeBase, DirectImageCommon):
     
     '''
 
-#    __requires__ = [
-#        DataProductRequirement('master_bpm', MasterBadPixelMask, 
-#                  'Master bad pixel mask'),       
-#        DataProductRequirement('master_bias', MasterBias, 'Master bias image'),
-#        DataProductRequirement('master_dark', MasterDark, 'Master dark image'),
-#        DataProductRequirement('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-#                  'Polynomial for non-linearity correction'),
-#        DataProductRequirement('master_intensity_ff', MasterIntensityFlat, 
-#                  'Master intensity flatfield'),
-#        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
-#        Requirement('instrument.detector.channels', 'List of channels'),
-#        Requirement('instrument.detector.shape', 'Detector shape'),
-#        # FIXME: this parameter is optional 
-#        Parameter('sources', None, 'List of x, y coordinates to measure FWHM',
-#                  optional=True),
-#        Parameter('offsets', None, 'List of pairs of offsets',
-#                  optional=True)
-#    ]
 
     def __init__(self):
         super(NBImageRecipe, self).__init__(
