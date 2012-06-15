@@ -41,15 +41,11 @@ class NBImageRecipeInput(RecipeInput):
               'Polynomial for non-linearity correction')
     master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
-    extinction = Parameter(0.0, 'Mean atmospheric extinction')
-    #       # FIXME: this parameter is optional 
-    sources = Parameter(None, 
-              'List of x, y coordinates to measure FWHM',
-              optional=True)
-    offsets = Parameter(None, 'List of pairs of offsets',
-              optional=True)
-    idc = Requirement('List of channels', dest='instrument.detector.channels')
-    ids = Requirement('Detector shape', dest='instrument.detector.shape')  
+    extinction = Parameter(0.0, 'Mean atmospheric extinction') 
+    sources = Parameter(None, 'List of x, y coordinates to measure FWHM', optional=True)
+    offsets = Parameter(None, 'List of pairs of offsets', optional=True)
+    idc = Requirement('List of channels', dest='instrument.detector.channels', hidden=True)
+    ids = Requirement('Detector shape', dest='instrument.detector.shape', hidden=True)
 
 class NBImageRecipeResult(ValidRecipeResult):
     frame = Product(FrameDataProduct)
@@ -85,7 +81,8 @@ class NBImageRecipe(BaseRecipe, DirectImageCommon):
         amplifiers = self.parameters['instrument.detector.channels']
         offsets = self.parameters['offsets']
 
-        return self.process(obresult, baseshape, amplifiers, 
+        frame, catalog = self.process(obresult, baseshape, amplifiers, 
                             offsets=offsets, target_is_sky=False,
                             stop_after=DirectImageCommon.FULLRED)
 
+        return NBImageRecipeResult(frame=frame, catalog=catalog)

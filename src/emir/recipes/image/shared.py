@@ -162,14 +162,13 @@ class DirectImageCommon(object):
          "airmass": "AIRMASS", 
          "imagetype": "IMGTYP", 
          "exposure": "EXPTIME"
-        }     
-        recipe_result = {'products' : []}
+        }        
 
         if window is None:
             window = tuple((0, siz) for siz in baseshape)
 
         if store_intermediate:
-            recipe_result['intermediate'] = []
+            pass
         
         
         # States        
@@ -425,10 +424,9 @@ class DirectImageCommon(object):
 
         result = pyfits.HDUList([hdu, varhdu, num])        
         
-        _logger.info("Final frame created")
-        recipe_result['products'] = [DataFrame(result), SourcesCatalog()]
+        _logger.info("Final frame created")        
         
-        return recipe_result
+        return DataFrame(result), SourcesCatalog()
     
     def compute_simple_sky(self, targetframes, skyframes, 
                             maxsep=5, step=0, save=True):

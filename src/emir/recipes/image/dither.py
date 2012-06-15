@@ -26,12 +26,17 @@ from numina.core import Requirement, RecipeInput, FrameDataProduct
 from numina.core import DataFrame, Product, RecipeInput, ValidRecipeResult
 from numina.core import define_input, define_result
 
-from emir.dataproducts import MasterBias, MasterDark 
-from emir.dataproducts import MasterIntensityFlat, MasterBadPixelMask
-from emir.dataproducts import SourcesCatalog, NonLinearityCalibration
+from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
+from emir.requirements import MasterDark_Requirement, NonLinearityCalibration_Requirement
+from emir.requirements import MasterIntensityFlatField_Requirement
+from emir.requirements import Channels_Requirement, Extinction_Requirement
+from emir.requirements import DetectorShape_Requirement, Offsets_Requirement
+from emir.requirements import Catalog_Requirement
+
+
+from emir.dataproducts import SourcesCatalog
 
 from .shared import DirectImageCommon
-
 
 __author__ = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
@@ -39,27 +44,23 @@ _logger = logging.getLogger("numina.recipes.emir")
 
 
 class DitheredImageRecipeInput(RecipeInput):
-    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
-    master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
-    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
-              'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
-              'Master intensity flatfield')
-    extinction = Parameter(0.0, 'Mean atmospheric extinction')
-    #       # FIXME: this parameter is optional 
-    sources = Parameter(None, 
-              'List of x, y coordinates to measure FWHM',
-              optional=True)
-    offsets = Parameter(None, 'List of pairs of offsets',
-              optional=True)
+    master_bpm = MasterBadPixelMask_Requirement()
+    master_bias = MasterBias_Requirement()
+    master_dark = MasterDark_Requirement()
+    nonlinearity = NonLinearityCalibration_Requirement()
+    master_intensity_ff = MasterIntensityFlatField_Requirement()    
+    extinction = Extinction_Requirement() 
+    sources = Catalog_Requirement()
+    offsets = Offsets_Requirement()
+    
     iterations = Parameter(4, 'Iterations of the recipe')
     sky_images = Parameter(5, 'Images used to estimate the background before and after current image')
     sky_images_sep_time = Parameter(10, 'Maximum separation time between consecutive sky images in minutes')
     check_photometry_levels = Parameter([0.5, 0.8], 'Levels to check the flux of the objects')
     check_photometry_actions = Parameter(['warn', 'warn', 'default'], 'Actions to take on images')
-    idc = Requirement('List of channels', dest='instrument.detector.channels')
-    ids = Requirement('Detector shape', dest='instrument.detector.shape')                    
+    idc = Channels_Requirement()
+    ids = DetectorShape_Requirement()
+                    
 
 class DitheredImageRecipeResult(ValidRecipeResult):
     frame = Product(FrameDataProduct)
@@ -150,10 +151,11 @@ class DitheredImageRecipe(BaseRecipe, DirectImageCommon):
         baseshape = self.parameters['instrument.detector.shape']
         amplifiers = self.parameters['instrument.detector.channels']
         offsets = self.parameters['offsets']
-        
-        
-        
-        return self.process(obresult, baseshape, amplifiers, 
+                
+        frame, catalog = self.process(obresult, baseshape, amplifiers, 
                             offsets=offsets, subpix=1, 
                             stop_after=DirectImageCommon.FULLRED)
+        
+        result = DitheredImageRecipeResult(frame=frame, catalog=catalog)
+        return result
                                                             

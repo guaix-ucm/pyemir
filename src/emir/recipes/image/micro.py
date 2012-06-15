@@ -45,8 +45,7 @@ class MicroditheredImageRecipeInput(RecipeInput):
               'Polynomial for non-linearity correction')
     master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
-    extinction = Parameter(0.0, 'Mean atmospheric extinction')
-    # FIXME: this parameter is optional 
+    extinction = Parameter(0.0, 'Mean atmospheric extinction') 
     sources = Parameter(None, 
               'List of x, y coordinates to measure FWHM',
               optional=True)
@@ -57,8 +56,8 @@ class MicroditheredImageRecipeInput(RecipeInput):
     sky_images_sep_time = Parameter(10, 'Maximum separation time between consecutive sky images in minutes')
     check_photometry_levels = Parameter([0.5, 0.8], 'Levels to check the flux of the objects')
     check_photometry_actions = Parameter(['warn', 'warn', 'default'], 'Actions to take on images')
-    idc = Requirement('List of channels', dest='instrument.detector.channels')
-    ids = Requirement('Detector shape', dest='instrument.detector.shape')
+    idc = Requirement('List of channels', dest='instrument.detector.channels', hidden=True)
+    ids = Requirement('Detector shape', dest='instrument.detector.shape', hidden=True)
     subpixelization = Parameter(4, 'Number of subdivisions in each pixel side')
     window = Parameter(None, 'Region of interesting data', optional=True)
     offsets = Parameter(None, 'List of pairs of offsets', optional=True)
@@ -165,13 +164,14 @@ class MicroditheredImageRecipe(BaseRecipe, DirectImageCommon):
         subpix = self.parameters['subpixelization']
         baseshape = self.parameters['instrument.detector.shape']
         amplifiers = self.parameters['instrument.detector.channels']
-        offsets = self.parameters['offsets']
+        #offsets = self.parameters['offsets']
         window = self.parameters['window']
         offsets = self.parameters['offsets']
         
-        return self.process(obresult, baseshape, amplifiers, window=window, 
+        frame, catalog = self.process(obresult, baseshape, amplifiers, window=window, 
                             offsets=offsets, subpix=subpix,
                             stop_after=DirectImageCommon.FULLRED)
         
-
+        result = MicroditheredImageRecipeResult(frame=frame, catalog=catalog)
+        return result
     

@@ -64,6 +64,6 @@ class MosaicRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [DataFrame(None), SourcesCatalog()]}
+        return MosaicRecipeResult(frame=DataFrame(None), catalog=SourcesCatalog())
 
 #
