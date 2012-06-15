@@ -169,7 +169,7 @@ class MicroditheredImageRecipe(BaseRecipe, DirectImageCommon):
         offsets = self.parameters['offsets']
         
         frame, catalog = self.process(obresult, baseshape, amplifiers, window=window, 
-                            offsets=offsets, subpix=subpix,
+                            offsets=offsets, subpix=subpix, target_is_sky=True,
                             stop_after=DirectImageCommon.FULLRED)
         
         result = MicroditheredImageRecipeResult(frame=frame, catalog=catalog)
