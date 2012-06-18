@@ -32,11 +32,12 @@ The Recipe announces the required parameters with the following syntax (the synt
 
 .. code-block:: python
 
-    class SomeRecipe(RecipeBase):
-        __requires__ = [
-            Parameter('master_dark', MasterDark, 'Master dark image'),
-            Parameter('some_numeric_value', 0.45, 'Some numeric value'),
-        ]
+    class SomeRecipeInput(RecipeInput):
+        master_dark = DataProductParameter(MasterDark, 'Master dark image') 
+        some_numeric_value = Parameter(0.45, 'Some numeric value'),
+
+    @define_input(SomeRecipeInput)
+    class SomeRecipe(RecipeBase):        
         ...
 
 When the reduction is run from the command line using Numina CLI, the program
@@ -49,6 +50,27 @@ When the Recipe is properly configured, it is executed with an observing block
 data structure as input. When run using Numina CLI, this data structure is
 created from a text file. When run with Pontifex, the observing block data
 structure is created from the contents of the database.
+
+Recipe Products
+--------------- 
+Recipes based on Numina provide a list of products created by the recipe.
+The Recipe announces the required parameters with the following syntax
+(the syntax is subject to changes).
+
+.. code-block:: python
+
+    class SomeRecipeInput(RecipeInput):
+        master_dark = DataProductParameter(MasterDark, 'Master dark image') 
+        some_numeric_value = Parameter(0.45, 'Some numeric value'),
+        
+    class SomeRecipeResult(RecipeResult):
+        master_flat = Product(MasterDark) 
+        
+    @define_input(SomeRecipeInput)
+    @define_result(SomeRecipeResult)
+    class SomeRecipe(RecipeBase):        
+        ...
+
 
 In the following two sections, we list the Reduction Recipes for the DRP and
 for the DFP. The format is: name of the Python class of the recipe, name of the
