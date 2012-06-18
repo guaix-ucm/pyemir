@@ -28,7 +28,7 @@ import pyfits
 
 import numina.qa
 from numina.core import BaseRecipe, Parameter, DataFrame
-from numina.core import RecipeError,RecipeInput, ValidRecipeResult
+from numina.core import RecipeError,RecipeInput, RecipeResult
 from numina.core import Product, define_input, define_result
 
 from emir.instrument.detector import CHANNELS, QUADRANTS
@@ -41,7 +41,7 @@ class GainRecipe1Input(RecipeInput):
     region = Parameter('channel', 'Region used to compute: (full|quadrant|channel)', 
                        choices=['full','quadrant', 'channel'])
     
-class GainRecipe1InputResult(ValidRecipeResult):
+class GainRecipe1InputResult(RecipeResult):
     gain = Product(MasterGainMap(None, None, None))
     ron = Product(MasterRONMap(None, None))
     

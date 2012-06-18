@@ -25,7 +25,7 @@ Image mode recipes of EMIR
 import logging
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import define_input, define_result, DataFrame, ValidRecipeResult
+from numina.core import define_input, define_result, DataFrame, RecipeResult
 from numina.core import Requirement, Product, FrameDataProduct, RecipeInput
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -62,7 +62,7 @@ class MicroditheredImageRecipeInput(RecipeInput):
     window = Parameter(None, 'Region of interesting data', optional=True)
     offsets = Parameter(None, 'List of pairs of offsets', optional=True)
 
-class MicroditheredImageRecipeResult(ValidRecipeResult):
+class MicroditheredImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     catalog = Product(SourcesCatalog)
 

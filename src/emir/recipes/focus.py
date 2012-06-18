@@ -25,7 +25,7 @@
 import logging
 
 from numina.core import BaseRecipe, Parameter, define_input, define_result
-from numina.core import DataProductRequirement, RecipeInput, ValidRecipeResult
+from numina.core import DataProductRequirement, RecipeInput, RecipeResult
 from numina.core import Product
 from numina.logger import log_to_history
 
@@ -51,7 +51,7 @@ class TelescopeRoughFocusRecipeInput(RecipeInput):
     objects = Parameter(None, 'List of x-y pair of object coordinates'),
     focus_range = Parameter(None, 'Focus range: begin, end and step')   
 
-class TelescopeRoughFocusRecipeResult(ValidRecipeResult):
+class TelescopeRoughFocusRecipeResult(RecipeResult):
     focus = Product(TelescopeFocus)
 
 @define_input(TelescopeRoughFocusRecipeInput)
@@ -94,7 +94,7 @@ class TelescopeFineFocusRecipeInput(RecipeInput):
     master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     objects = Parameter(None, 'List of x-y pair of object coordinates'),   
 
-class TelescopeFineFocusRecipeResult(ValidRecipeResult):
+class TelescopeFineFocusRecipeResult(RecipeResult):
     focus = Product(TelescopeFocus)
 
 @define_input(TelescopeFineFocusRecipeInput)
@@ -139,7 +139,7 @@ class DTUFocusRecipeInput(RecipeInput):
     msm_pattern = Parameter(None, 'List of x-y pair of slit coordinates'),
     dtu_focus_range = Parameter('dtu_focus_range', None, 'Focus range of the DTU: begin, end and step')
     
-class DTUFocusRecipeResult(ValidRecipeResult):
+class DTUFocusRecipeResult(RecipeResult):
     focus = Product(DTUFocus)
 
 @define_input(DTUFocusRecipeInput)

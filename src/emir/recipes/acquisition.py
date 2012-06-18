@@ -28,7 +28,7 @@ Recipe for the processing of target acquisition images.
 import logging
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import RecipeInput, ValidRecipeResult, Product
+from numina.core import RecipeInput, RecipeResult, Product
 from numina.core import define_input, define_result
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -49,7 +49,7 @@ class TargetAcquisitionRecipeInput(RecipeInput):
     master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
     
 
-class TargetAcquisitionRecipeResult(ValidRecipeResult):
+class TargetAcquisitionRecipeResult(RecipeResult):
     telescope_offset = Product(TelescopeOffset)
     
 @define_input(TargetAcquisitionRecipeInput)
@@ -85,7 +85,7 @@ class MaskImagingRecipeInput(RecipeInput):
     master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
     
 
-class MaskImagingRecipeResult(ValidRecipeResult):
+class MaskImagingRecipeResult(RecipeResult):
     msm_positions = Product(MSMPositions)
     
 @define_input(MaskImagingRecipeInput)
@@ -120,7 +120,7 @@ class MaskCheckRecipeInput(RecipeInput):
     master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
     
 
-class MaskCheckRecipeResult(ValidRecipeResult):
+class MaskCheckRecipeResult(RecipeResult):
     msm_positions = Product(MSMPositions)
     telescope_offset = Product(TelescopeOffset)
     

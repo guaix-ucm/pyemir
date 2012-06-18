@@ -24,7 +24,7 @@ import logging
 import numpy
 import pyfits
 from numina.core import RecipeError
-from numina.core import BaseRecipe, RecipeInput, ValidRecipeResult
+from numina.core import BaseRecipe, RecipeInput, RecipeResult
 from numina.core import Requirement, Product,DataProductRequirement
 from numina.core import define_input, define_result
 from numina.logger import log_to_history
@@ -51,7 +51,7 @@ _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 class BiasRecipeInput(RecipeInput):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
 
-class BiasRecipeResult(ValidRecipeResult):
+class BiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
     stats = Product(ChannelLevelStatistics)
 
@@ -149,7 +149,7 @@ class BiasRecipe(BaseRecipe):
 class DarkRecipeInput(BiasRecipeInput):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
 
-class DarkRecipeResult(ValidRecipeResult):
+class DarkRecipeResult(RecipeResult):
     darkframe = Product(MasterDark)
     stats = Product(ChannelLevelStatistics)
 
@@ -262,7 +262,7 @@ class IntensityFlatRecipeInput(DarkRecipeInput):
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
     nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
 
-class IntensityFlatRecipeResult(ValidRecipeResult):
+class IntensityFlatRecipeResult(RecipeResult):
     flatframe = Product(MasterIntensityFlat)
 
 @define_input(IntensityFlatRecipeInput)
@@ -389,7 +389,7 @@ class IntensityFlatRecipe(BaseRecipe):
 class SpectralFlatRecipeInput(IntensityFlatRecipeInput):
     pass
 
-class SpectralFlatRecipeResult(ValidRecipeResult):
+class SpectralFlatRecipeResult(RecipeResult):
     flatframe = Product(MasterSpectralFlat)
 
 @define_input(SpectralFlatRecipeInput)
@@ -435,7 +435,7 @@ class SlitTransmissionRecipeInput(RecipeInput):
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
     nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
 
-class SlitTransmissionRecipeResult(ValidRecipeResult):
+class SlitTransmissionRecipeResult(RecipeResult):
     slit = Product(SlitTransmissionCalibration)
 
 @define_input(SlitTransmissionRecipeInput)
@@ -479,7 +479,7 @@ class WavelengthCalibrationRecipeInput(RecipeInput):
     master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 'Master spectral flatfield')
         
-class WavelengthCalibrationRecipeResult(ValidRecipeResult):
+class WavelengthCalibrationRecipeResult(RecipeResult):
     cal = Product(WavelengthCalibration)
         
 @define_input(WavelengthCalibrationRecipeInput)

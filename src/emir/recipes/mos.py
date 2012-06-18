@@ -23,7 +23,7 @@ import logging
 
 from numina.core import BaseRecipe, Parameter, RecipeInput
 from numina.core import DataProductRequirement, define_input
-from numina.core import define_result, Product, ValidRecipeResult
+from numina.core import define_result, Product, RecipeResult
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask 
 from ..dataproducts import MasterIntensityFlat, MasterSpectralFlat
@@ -50,7 +50,7 @@ class StareSpectraRecipeInput(RecipeInput):
     w_calibration = DataProductRequirement(WavelengthCalibration, 'Wavelength calibration')
     lines = Parameter('lines', None, 'List of x-lambda pairs of line coordinates')
 
-class StareSpectraRecipeResult(ValidRecipeResult):
+class StareSpectraRecipeResult(RecipeResult):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
 
@@ -207,7 +207,7 @@ class DNSSpectraRecipeInput(RecipeInput):
     w_calibration = DataProductRequirement(WavelengthCalibration, 'Wavelength calibration')
     lines = Parameter('lines', None, 'List of x-lambda pairs of line coordinates')
 
-class DNSSpectraRecipeResult(ValidRecipeResult):
+class DNSSpectraRecipeResult(RecipeResult):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
 
@@ -241,7 +241,7 @@ class OffsetSpectraRecipeInput(RecipeInput):
     w_calibration = DataProductRequirement(WavelengthCalibration, 'Wavelength calibration')
     lines = Parameter('lines', None, 'List of x-lambda pairs of line coordinates')
 
-class OffsetSpectraRecipeResult(ValidRecipeResult):
+class OffsetSpectraRecipeResult(RecipeResult):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
 
@@ -274,7 +274,7 @@ class RasterSpectraRecipeInput(RecipeInput):
     st_calibration = DataProductRequirement(SlitTransmissionCalibration, 'Slit tranmision calibration')
     w_calibration = DataProductRequirement(WavelengthCalibration, 'Wavelength calibration')
 
-class RasterSpectraRecipeResult(ValidRecipeResult):
+class RasterSpectraRecipeResult(RecipeResult):
     cube = Product(DataCube)
 
 @define_input(RasterSpectraRecipeInput)

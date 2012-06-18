@@ -25,7 +25,7 @@ Image mode recipes of EMIR
 import logging
 
 from numina.core import BaseRecipe, Parameter
-from numina.core import RecipeInput, ValidRecipeResult, Product
+from numina.core import RecipeInput, RecipeResult, Product
 from numina.core import FrameDataProduct, define_input, define_result
 
 from emir.dataproducts import SourcesCatalog
@@ -54,7 +54,7 @@ class StareImageRecipeInput(RecipeInput):
     idc = Channels_Requirement()
     ids = DetectorShape_Requirement()
 
-class StareImageRecipeResult(ValidRecipeResult):
+class StareImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     catalog = Product(SourcesCatalog)
 

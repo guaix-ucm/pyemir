@@ -23,7 +23,7 @@ Beam switched-nodded image mode recipe of EMIR
 '''
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import Requirement, RecipeInput, ValidRecipeResult
+from numina.core import Requirement, RecipeInput, RecipeResult
 from numina.core import DataFrame, define_input, define_result
 from numina.core import Product, FrameDataProduct 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -47,7 +47,7 @@ class NBImageRecipeInput(RecipeInput):
     idc = Requirement('List of channels', dest='instrument.detector.channels', hidden=True)
     ids = Requirement('Detector shape', dest='instrument.detector.shape', hidden=True)
 
-class NBImageRecipeResult(ValidRecipeResult):
+class NBImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     catalog = Product(SourcesCatalog)
 

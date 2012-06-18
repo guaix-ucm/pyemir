@@ -23,7 +23,7 @@ import logging
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
 from numina.core import Requirement, RecipeInput, FrameDataProduct
-from numina.core import DataFrame, Product, RecipeInput, ValidRecipeResult
+from numina.core import DataFrame, Product, RecipeInput, RecipeResult
 from numina.core import define_input, define_result
 
 from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
@@ -62,7 +62,7 @@ class DitheredImageRecipeInput(RecipeInput):
     ids = DetectorShape_Requirement()
                     
 
-class DitheredImageRecipeResult(ValidRecipeResult):
+class DitheredImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     catalog = Product(SourcesCatalog)
 

@@ -24,7 +24,7 @@
 import logging
 
 from numina.core import BaseRecipe, Parameter, define_result, define_input
-from numina.core import FrameDataProduct, ValidRecipeResult, Product, RecipeInput 
+from numina.core import FrameDataProduct, RecipeResult, Product, RecipeInput 
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import TelescopeOffset, MSMPositions
@@ -44,7 +44,7 @@ class DTU_XY_CalibrationRecipeInput(RecipeInput):
     slit_pattern = Parameter(None, 'Slit pattern'),
     dtu_range = Parameter(None, 'DTU range: begin, end and step')
 
-class DTU_XY_CalibrationRecipeResult(ValidRecipeResult):
+class DTU_XY_CalibrationRecipeResult(RecipeResult):
     calibration = Product(DTU_XY_Calibration)
 
 @define_input(DTU_XY_CalibrationRecipeInput)
@@ -69,7 +69,7 @@ class DTU_XY_CalibrationRecipe(BaseRecipe):
 class DTU_Z_CalibrationRecipeInput(RecipeInput):
     dtu_range = Parameter(None, 'DTU range: begin, end and step')
 
-class DTU_Z_CalibrationRecipeResult(ValidRecipeResult):
+class DTU_Z_CalibrationRecipeResult(RecipeResult):
     calibration = Product(DTU_Z_Calibration)
 
 @define_input(DTU_Z_CalibrationRecipeInput)
@@ -94,7 +94,7 @@ class DTU_Z_CalibrationRecipe(BaseRecipe):
 class DTU_FlexureRecipeInput(RecipeInput):
     pass
 
-class DTU_FlexureRecipeResult(ValidRecipeResult):
+class DTU_FlexureRecipeResult(RecipeResult):
     calibration = Product(DTUFlexureCalibration)
 
 @define_input(DTU_FlexureRecipeInput)
@@ -119,7 +119,7 @@ class DTUFlexureRecipe(BaseRecipe):
 class CSU2DetectorRecipeInput(RecipeInput):
     dtu_range = Parameter(None, 'DTU range: begin, end and step')
 
-class CSU2DetectorRecipeResult(ValidRecipeResult):
+class CSU2DetectorRecipeResult(RecipeResult):
     calibration = Product(DTU_XY_Calibration)
 
 @define_input(CSU2DetectorRecipeInput)
@@ -144,7 +144,7 @@ class CSU2DetectorRecipe(BaseRecipe):
 class FocalPlaneCalibrationRecipeInput(RecipeInput):
     pass
 
-class FocalPlaneCalibrationRecipeResult(ValidRecipeResult):
+class FocalPlaneCalibrationRecipeResult(RecipeResult):
     calibration = Product(PointingOriginCalibration)
 
 @define_input(FocalPlaneCalibrationRecipeInput)
@@ -169,7 +169,7 @@ class FocalPlaneCalibrationRecipe(BaseRecipe):
 class SpectralCharacterizationRecipeInput(RecipeInput):
     pass
 
-class SpectralCharacterizationRecipeResult(ValidRecipeResult):
+class SpectralCharacterizationRecipeResult(RecipeResult):
     calibration = Product(WavelengthCalibration)
 
 @define_input(SpectralCharacterizationRecipeInput)
@@ -194,7 +194,7 @@ class SpectralCharacterizationRecipe(BaseRecipe):
 class RotationCenterRecipeInput(RecipeInput):
     pass
 
-class RotationCenterRecipeResult(ValidRecipeResult):
+class RotationCenterRecipeResult(RecipeResult):
     calibration = Product(PointingOriginCalibration)
 
 @define_input(RotationCenterRecipeInput)
@@ -219,7 +219,7 @@ class RotationCenterRecipe(BaseRecipe):
 class AstrometricCalibrationRecipeInput(RecipeInput):
     pass
 
-class AstrometricCalibrationRecipeResult(ValidRecipeResult):
+class AstrometricCalibrationRecipeResult(RecipeResult):
     calibration = Product(FrameDataProduct)
 
 @define_input(AstrometricCalibrationRecipeInput)
@@ -244,7 +244,7 @@ class AstrometricCalibrationRecipe(BaseRecipe):
 class PhotometricCalibrationRecipeInput(RecipeInput):
     phot = Parameter(None, 'Information about standard stars')
     
-class PhotometricCalibrationRecipeResult(ValidRecipeResult):
+class PhotometricCalibrationRecipeResult(RecipeResult):
     calibration = Product(PhotometricCalibration)
     
 @define_input(PhotometricCalibrationRecipeInput)
@@ -269,7 +269,7 @@ class PhotometricCalibrationRecipe(BaseRecipe):
 class SpectroPhotometricCalibrationRecipeInput(RecipeInput):
     sphot = Parameter(None, 'Information about standard stars')
     
-class SpectroPhotometricCalibrationRecipeResult(ValidRecipeResult):
+class SpectroPhotometricCalibrationRecipeResult(RecipeResult):
     calibration = Product(SpectroPhotometricCalibration)
     
 @define_input(SpectroPhotometricCalibrationRecipeInput)
