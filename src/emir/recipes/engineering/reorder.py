@@ -20,72 +20,60 @@
 '''Recipe for the reordering of frames.'''
 
 import logging
+from itertools import repeat, chain, izip
 import os.path
-import itertools as ito
 
 import numpy # pylint: disable-msgs=E1101
 
+from numina.core import RecipeBase
 
-import numina.qa
-from numina.recipes import RecipeBase
+from emir.instrument.detector import CHANNELS_2
 
-from emir.instrument.detector import CHANNELS_READOUT
-from emir.dataproducts import create_result
-
-_logger = logging.getLogger("emir.recipes")
+_logger = logging.getLogger("numina.recipes.emir")
 
 class Recipe(RecipeBase):
     '''Reordering Recipe.
     
     Recipe to reorder images created by the detector.
     '''
-    required_parameters = [
-    ]
-    
     
     def __init__(self, param, runinfo):
         super(Recipe, self).__init__(param, runinfo)
         
-    def setup(self):
-        self.parameters['images'] = [DiskImage(os.path.abspath(path)) 
-                  for path in self.parameters['images']]
+    def run(self, obsblock):
 
-    def run(self):
-        
-        images = self.parameters['images']
-        
+        f1 = lambda x: x
+        f2 = lambda x: numpy.fliplr(numpy.transpose(x))
+        f3 = lambda x: numpy.fliplr(numpy.flipud(x))
+        f4 = lambda x: numpy.flipud(numpy.transpose(x))
+
         results = []
-
-        for img in images:
+        
+        for frame, _ in obsblock.frames:
             # Using numpy memmap instead of pyfits
             # Images are a in a format unrecognized by pyfits
-            _logger.debug('processing %s', img.filename)
-            f = numpy.memmap(img.filename, 
-                                  dtype='uint16', mode='r', offset=36 * 80)            
+            _logger.debug('processing %s', frame)
+            f = numpy.memmap(frame, dtype='>u2', mode='r', offset=36 * 80) 
             try:                                
                 f.shape = (1024, 4096)
                 rr = numpy.zeros((2048, 2048), dtype='int16')
-                for idx, channel, conv in ito.izip(ito.count(0), 
-                                                   CHANNELS_READOUT,
-                                                   ito.cycle([lambda x:x, lambda x:x.T])
-                                                   ):
-                    rr[channel] = conv(f[:,slice(128 * idx, 128 * (idx + 1))])
+                cc = chain(repeat(f1, 8), repeat(f2, 8), repeat(f3, 8), repeat(f4, 8))
+                for idx, (channel, conv) in enumerate(izip(CHANNELS_2, cc)):
+                    rr[channel] = conv(f[:, idx::32])
 
-                basename = os.path.basename(img.filename)
+                basename = os.path.basename(frame)
                 primary_headers = {'FILENAME': basename}
-                result = create_result(rr, 
-                                       headers=primary_headers)
-                result.writeto(basename)
+                hdu = pyfits.PrimaryHDU(rr, header=primary_headers)
+                hdu.scale('int16', '', bzero=32768)
+                hdu.writeto(basename, clobber=True)
                 
-                result.close()                
-                results.append(DiskImage(os.path.abspath(basename)))
+                results.append(DataFrame(frame=hdu))
             finally:
                 del f
-                img.close()
         
-        return {'qa': numina.qa.UNKNOWN, 'images': results}
-                                                  
-    
+        return {'products': results}
+                                                 
+
 if __name__ == '__main__':
     import uuid
     import glob

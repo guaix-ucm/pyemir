@@ -23,8 +23,10 @@ import logging
 
 import numpy
 import pyfits
-from numina.recipes import RecipeBase, Parameter, provides, requires
-from numina.recipes import DataProductParameter
+from numina.core import RecipeError
+from numina.core import BaseRecipe, RecipeInput, RecipeResult
+from numina.core import Requirement, Product,DataProductRequirement
+from numina.core import define_input, define_result
 from numina.logger import log_to_history
 from numina.array.combine import median
 from numina import __version__
@@ -33,23 +35,29 @@ from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector
 from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 
-from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from ..dataproducts import NonLinearityCalibration, MasterIntensityFlat
-from ..dataproducts import WavelengthCalibration, MasterSpectralFlat
-from ..dataproducts import SlitTransmissionCalibration, ChannelLevelStatistics
+from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from emir.dataproducts import NonLinearityCalibration, MasterIntensityFlat
+from emir.dataproducts import WavelengthCalibration, MasterSpectralFlat
+from emir.dataproducts import SlitTransmissionCalibration, ChannelLevelStatistics
 
 __all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
            'SpectralFlatRecipe', 'SlitTransmissionRecipe',
            'WavelengthCalibrationRecipe']
 
-_logger = logging.getLogger('emir.recipes')
+_logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
+class BiasRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
 
-@requires()
-@provides(MasterBias, ChannelLevelStatistics)
-class BiasRecipe(RecipeBase):
+class BiasRecipeResult(RecipeResult):
+    biasframe = Product(MasterBias)
+    stats = Product(ChannelLevelStatistics)
+
+@define_input(BiasRecipeInput)
+@define_result(BiasRecipeResult)
+class BiasRecipe(BaseRecipe):
     '''
     Recipe to process data taken in Bias image Mode.
 
@@ -138,8 +146,16 @@ class BiasRecipe(RecipeBase):
             for hdulist in cdata:
                 hdulist.close()
             
-@provides(MasterDark, ChannelLevelStatistics)   
-class DarkRecipe(RecipeBase):
+class DarkRecipeInput(BiasRecipeInput):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+
+class DarkRecipeResult(RecipeResult):
+    darkframe = Product(MasterDark)
+    stats = Product(ChannelLevelStatistics)
+
+@define_input(DarkRecipeInput)
+@define_result(DarkRecipeResult)
+class DarkRecipe(BaseRecipe):
     '''Recipe to process data taken in Dark current image Mode.
 
     Recipe to process dark images. The dark images will be combined 
@@ -156,9 +172,6 @@ class DarkRecipe(RecipeBase):
     
      * A combined dark frame, with variance extension.
     ''' 
-
-    __requires__ = [DataProductParameter('master_bias', MasterBias, 
-                              'Master bias calibration', optional=True)]
 
     def __init__(self):
         super(DarkRecipe, self).__init__(author=_s_author, version="0.1.0")
@@ -245,9 +258,16 @@ class DarkRecipe(RecipeBase):
 
         return {'products': [md, cls]}
 
+class IntensityFlatRecipeInput(DarkRecipeInput):
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
 
-@provides(MasterIntensityFlat)
-class IntensityFlatRecipe(RecipeBase):
+class IntensityFlatRecipeResult(RecipeResult):
+    flatframe = Product(MasterIntensityFlat)
+
+@define_input(IntensityFlatRecipeInput)
+@define_result(IntensityFlatRecipeResult)
+class IntensityFlatRecipe(BaseRecipe):
     '''Recipe to process data taken in intensity flat-field mode.
         
     Recipe to process intensity flat-fields. The flat-on and flat-off images are
@@ -274,14 +294,6 @@ class IntensityFlatRecipe(RecipeBase):
        with with variance extension and quality flag. 
     
     '''
-    __requires__ = [ 
-        DataProductParameter('master_bias', MasterBias, 'Master bias image', optional=True),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-    ]
-    
-
     def __init__(self):
         super(IntensityFlatRecipe, self).__init__(
                         author=_s_author,
@@ -374,9 +386,15 @@ class IntensityFlatRecipe(RecipeBase):
                 hdulist.close()
         
         
-        
-@provides(MasterSpectralFlat)
-class SpectralFlatRecipe(RecipeBase):
+class SpectralFlatRecipeInput(IntensityFlatRecipeInput):
+    pass
+
+class SpectralFlatRecipeResult(RecipeResult):
+    flatframe = Product(MasterSpectralFlat)
+
+@define_input(SpectralFlatRecipeInput)
+@define_result(SpectralFlatRecipeResult)
+class SpectralFlatRecipe(BaseRecipe):
     '''Spectral Flatfield Recipe.
 
     Recipe to process spectral flat-fields. The flat-on and flat-off images are
@@ -402,15 +420,6 @@ class SpectralFlatRecipe(RecipeBase):
 
     '''
 
-
-    __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-    ]
-
     def __init__(self):
         super(SpectralFlatRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
@@ -418,10 +427,20 @@ class SpectralFlatRecipe(RecipeBase):
         )
 
     def run(self, obresult):
-        return {'products': [MasterSpectralFlat(None)]}
+        return SpectralFlatRecipeResult(flatframe=MasterSpectralFlat(None))
 
-@provides(SlitTransmissionCalibration)
-class SlitTransmissionRecipe(RecipeBase):
+class SlitTransmissionRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
+
+class SlitTransmissionRecipeResult(RecipeResult):
+    slit = Product(SlitTransmissionCalibration)
+
+@define_input(SlitTransmissionRecipeInput)
+@define_result(SlitTransmissionRecipeResult)
+class SlitTransmissionRecipe(BaseRecipe):
     '''Recipe to calibrate the slit transmission.
 
     **Observing modes:**
@@ -441,15 +460,6 @@ class SlitTransmissionRecipe(RecipeBase):
      * TBD
 
     '''
-    
-
-    __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-    ]
 
     def __init__(self):
         super(SlitTransmissionRecipe, self).__init__(
@@ -461,10 +471,20 @@ class SlitTransmissionRecipe(RecipeBase):
     def run(self, obresult):
         return {'products': [SlitTransmissionCalibration()]}
 
+class WavelengthCalibrationRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
+    master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 'Master spectral flatfield')
         
+class WavelengthCalibrationRecipeResult(RecipeResult):
+    cal = Product(WavelengthCalibration)
         
-@provides(WavelengthCalibration)
-class WavelengthCalibrationRecipe(RecipeBase):
+@define_input(WavelengthCalibrationRecipeInput)
+@define_result(WavelengthCalibrationRecipeResult)
+class WavelengthCalibrationRecipe(BaseRecipe):
     '''Recipe to calibrate the spectral response.
 
     **Observing modes:**
@@ -484,18 +504,6 @@ class WavelengthCalibrationRecipe(RecipeBase):
 
      * TBD
     '''
-
-    __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
-                  'Master spectral flatfield'),
-    ]
 
     def __init__(self):
         super(WavelengthCalibrationRecipe, self).__init__(

@@ -1,5 +1,5 @@
 include MANIFEST.in *.txt
-include emir/instrument/*.txt
-include emir/simulation/*.dat
+include src/emir/instrument/*.txt
+include src/emir/simulation/*.dat
 recursive-include doc *
 

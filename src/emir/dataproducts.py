@@ -22,21 +22,19 @@
 import logging
 import pyfits
 
-from numina.recipes import DataFrame, DataProduct
+from numina.core import FrameDataProduct, DataProduct
 
 from .simulator import EmirImageFactory
 
 _logger = logging.getLogger('emir.dataproducts')
 
-class MasterBadPixelMask(DataFrame):
-    def __init__(self, hdu):
-        super(MasterBias, self).__init__(hdu)
+class MasterBadPixelMask(FrameDataProduct):
 
     def metadata(self):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
 
-class MasterBias(DataFrame):
+class MasterBias(FrameDataProduct):
     '''Master bias product
     
     This image has 4 extensions: primary, two variance extensions
@@ -48,14 +46,11 @@ class MasterBias(DataFrame):
     
     
     '''
-    def __init__(self, hdu):
-        super(MasterBias, self).__init__(hdu)
-
     def metadata(self):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
 
-class MasterDark(DataFrame):
+class MasterDark(FrameDataProduct):
     '''Master dark product
     
     This image has 4 extensions: primary, two variance extensions
@@ -67,43 +62,33 @@ class MasterDark(DataFrame):
     
     
     '''
-    def __init__(self, hdu):
-        super(MasterDark, self).__init__(hdu)
-
     def metadata(self):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
 
-class MasterIntensityFlat(DataFrame):
-    def __init__(self, hdu):
-        super(MasterIntensityFlat, self).__init__(hdu)
+class MasterIntensityFlat(FrameDataProduct):
 
     def metadata(self):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
         yield 'filter0', hdr['filter']
         
-class MasterSpectralFlat(DataFrame):
-    def __init__(self, hdu):
-        super(MasterSpectralFlat, self).__init__(hdu)
+class MasterSpectralFlat(FrameDataProduct):
 
     def metadata(self):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
         yield 'filter0', hdr['filter']
 
-class Spectra(DataFrame):
-    def __init__(self, hdu):
-        super(Spectra, self).__init__(hdu)
+class Spectra(FrameDataProduct):
 
     def metadata(self):
         hdr = self.image[0].header
         yield 'detector0.mode', hdr['ccdmode']
         yield 'filter0', hdr['filter']
         
-class DataCube(DataFrame):
-    def __init__(self, hdu):
-        super(DataFrame, self).__init__(None)
+class DataCube(FrameDataProduct):
+    pass
 
 class TelescopeFocus(DataProduct):
     pass
@@ -139,9 +124,26 @@ class PhotometricCalibration(DataProduct):
     pass
 
 class MasterGainMap(DataProduct):
-    pass
+    def __init__(self, mean, var, frame):
+        self.mean = mean
+        self.var = var
+        self.frame = frame
+
+    def __getstate__(self):
+        gmean = map(float, self.mean.flat)
+        gvar = map(float, self.var.flat)
+        return {'frame': self.frame, 'mean': gmean, 'var': gvar}
 
 class MasterRONMap(DataProduct):
+    def __init__(self, mean, var):
+        self.mean = mean
+        self.var = var
+
+    def __getstate__(self):
+        gmean = map(float, self.mean.flat)
+        gvar = map(float, self.var.flat)
+        return {'mean': gmean, 'var': gvar}
+
     pass
 
 class NonLinearityCalibration(DataProduct):
@@ -163,11 +165,11 @@ class LinesCatalog(DataProduct):
 
 class ChannelLevelStatistics(DataProduct):
     ''' A list of exposure time, mean, std dev and median per channel'''
-    def __init__(self, exposure):
+    def __init__(self, exposure=None):
         self.exposure = exposure
         self.statistics = []
 
-# DataFrame -> Raw: PRIMARY
+# FrameDataProduct -> Raw: PRIMARY
 #       -> Result: PRIMARY, VARIANCE, MAP 
 
 _result_types = ['image', 'spectrum']

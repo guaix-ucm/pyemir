@@ -1,20 +1,42 @@
+Version 0.6.5 (19 Jun 2012)
+---------------------------
+
+Changes:
+  * Updated to use RecipeInput and RecipeResult
+
+Version 0.6.4 (20 Mayo 2012)
+---------------------------
+
+Changes:
+  * Updated to use namespace package numina.pipelines
+
+Version 0.6.3 (17 May 2012)
+---------------------------
+
+Changes:
+ * Installs -plugin file into numina pipline directory
+
 Version 0.6.2 (17 May 2012)
+---------------------------
 
 Changes:
  * Added URl to numdisplay in setup.py
 
 Version 0.6.1 (17 May 2012)
+---------------------------
 
 Bugfix:
  * Incorrect version in doc and in emir/__init__.py
 
 Version 0.6.0 (17 May 2012)
+---------------------------
 
 Changes:
  * Implemented auxiliary Recipes (flat, dark, etc.)
  * Implemented Direct Image Recipes
 
 Version 0.5.0 (27 Oct 2011)
+---------------------------
 
 Changes:
  * Recipe API changed
@@ -22,23 +44,27 @@ Changes:
  * Numina removed from package
 
 Version 0.4.2 (07 Oct 2011)
+---------------------------
 
 Changes:
  * Fixed error with object mask creation
  * Added numdisplay to required packages
 
 Version 0.4.1 (23 Sep 2011)
+---------------------------
 
 Changes:
  * Allows installation using pip
 
 Version 0.4.0 (7 Sep 2011)
+---------------------------
 
 Changes:
  * Direct image implemented
  * Minor bugs and fixes
    
 Version 0.3.0 (24 Feb 2011)
+---------------------------
 
 Changes:
  * Implemented some recipes for detector characterization
@@ -52,6 +78,7 @@ Changes:
    - Sigclip
  
 Version 0.2.5 (09 Sep 2010)
+---------------------------
 
 Changes:
  * Combine internals changed
@@ -59,6 +86,7 @@ Changes:
  * Recipe classes announce their capabilities
 
 Version 0.2.4 (08 Jul 2010)
+---------------------------
 
 Changes:
  * Parameter-passing API for Recipes has been changed.
@@ -68,12 +96,14 @@ Changes:
  * Parallel version of map (para_map) in numina.worker   
  
 Version 0.2.3 (13 Apr 2010) Bugfix release
+---------------------------
 
 Bugfixes:
  * #94  Missing header files inside src
  * Errors in documentation fixed
 
 Version 0.2.2 (13 Apr 2010) Bugfix release
+---------------------------
 
 Bugfixes:
  * #91  Error creating object mask in direct_imaging
@@ -85,6 +115,7 @@ Enhancements:
  * repository migrated to mercurial
 
 Version 0.2.1
+---------------------------
 (15 March 2010, from /pyemir/trunk revision 647)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.2.1/
 
@@ -92,6 +123,7 @@ Bugfixes: #89, pkgutil.get_data not present in python 2.5
 
 
 Version 0.2.0
+---------------------------
 (18 February 2010, from /pyemir/trunk revision 639)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.2.0/
 
@@ -101,6 +133,7 @@ Simulation tools moved to numina
 
 
 Version 0.1.0
+---------------------------
 (08 February 2010, from /pyemir/trunk revision 627)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.1.0/
 
@@ -109,36 +142,42 @@ The performance of _combine has been increased in a factor of 2
 
 
 Version 0.0.6
+---------------------------
 (27 January 2010, from /pyemir/trunk revision 602)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.6/
 
 Internal release
 
 Version 0.0.5
+---------------------------
 (27 January 2010, from /pyemir/trunk revision 596)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.5/
 
 Bugfixes: #53, false result in direct_image
 
 Version 0.0.4
+---------------------------
 (27 January 2010, from /pyemir/trunk revision 595)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.4/
 
 Internal release
 
 Version 0.0.3
+---------------------------
 (26 January 2010, from /pyemir/trunk revision 586)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.3/
 
 Internal release
 
 Version 0.0.2
+---------------------------
 (12 November 2009, from /pyemir/trunk revision 516)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.2/
 
 Internal release
 
 Version 0.0.1
+---------------------------
 (12 March 2009, from /pyemir/trunk revision 413)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.1/
 

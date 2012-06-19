@@ -21,8 +21,9 @@
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, provides
-from numina.recipes import DataProductParameter
+from numina.core import BaseRecipe, Parameter, RecipeInput
+from numina.core import DataProductRequirement, define_input
+from numina.core import define_result, Product, RecipeResult
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask 
 from ..dataproducts import MasterIntensityFlat, MasterSpectralFlat
@@ -32,10 +33,30 @@ from ..dataproducts import Spectra, LinesCatalog, DataCube
 
 __all__ = []
 
-_logger = logging.getLogger('emir.recipes')
+_logger = logging.getLogger('numina.recipes.emir')
 
-@provides(Spectra, LinesCatalog)
-class StareSpectraRecipe(RecipeBase):
+
+class StareSpectraRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
+              'Polynomial for non-linearity correction')
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+              'Master intensity flatfield')
+    master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 
+                  'Master spectral flatfield')
+    st_calibration = DataProductRequirement(SlitTransmissionCalibration, 'Slit tranmision calibration')
+    w_calibration = DataProductRequirement(WavelengthCalibration, 'Wavelength calibration')
+    lines = Parameter('lines', None, 'List of x-lambda pairs of line coordinates')
+
+class StareSpectraRecipeResult(RecipeResult):
+    spectra = Product(Spectra)
+    catalog = Product(LinesCatalog)
+
+@define_input(StareSpectraRecipeInput)
+@define_result(StareSpectraRecipeResult)
+class StareSpectraRecipe(BaseRecipe):
     '''Recipe for the reduction of multiobject spectroscopy.
     
     Recipe to reduce observations obtained in multiobject spectroscopy,
@@ -161,23 +182,6 @@ class StareSpectraRecipe(RecipeBase):
     '''
 
 
-    __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
-                  'Master spectral flatfield'),
-        DataProductParameter('st_calibration', SlitTransmissionCalibration, 
-                  'Slit tranmision calibration'),
-        DataProductParameter('w_calibration', WavelengthCalibration, 
-                  'Wavelength calibration'),
-        Parameter('lines', None, 
-                  'List of x-lambda pairs of line coordinates'),        
-    ]
 
     def __init__(self):
         super(StareSpectraRecipe, self).__init__(
@@ -188,31 +192,32 @@ class StareSpectraRecipe(RecipeBase):
     def run(self, obresult):
         return {'products': [Spectra(), LinesCatalog()]}
 
-@provides(Spectra, LinesCatalog)
-class DNSpectraRecipe(RecipeBase):
+
+class DNSSpectraRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
+              'Polynomial for non-linearity correction')
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+              'Master intensity flatfield')
+    master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 
+                  'Master spectral flatfield')
+    st_calibration = DataProductRequirement(SlitTransmissionCalibration, 'Slit tranmision calibration')
+    w_calibration = DataProductRequirement(WavelengthCalibration, 'Wavelength calibration')
+    lines = Parameter('lines', None, 'List of x-lambda pairs of line coordinates')
+
+class DNSSpectraRecipeResult(RecipeResult):
+    spectra = Product(Spectra)
+    catalog = Product(LinesCatalog)
+
+@define_input(DNSSpectraRecipeInput)
+@define_result(DNSSpectraRecipeResult)
+class DNSpectraRecipe(BaseRecipe):
     '''
     Observing mode:
         Dithered/Nodded spectra along the slit
     '''
-    
-    __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
-                  'Master spectral flatfield'),
-        DataProductParameter('st_calibration', SlitTransmissionCalibration, 
-                  'Slit tranmision calibration'),
-        DataProductParameter('w_calibration', WavelengthCalibration, 
-                  'Wavelength calibration'),
-        Parameter('lines', None, 
-                  'List of x-lambda pairs of line coordinates'),        
-    ]
-
     def __init__(self):
         super(DNSpectraRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
@@ -221,32 +226,32 @@ class DNSpectraRecipe(RecipeBase):
 
     def run(self, obresult):
         return {'products': [Spectra(), LinesCatalog()]}
-    
-@provides(Spectra, LinesCatalog)
-class OffsetSpectraRecipe(RecipeBase):
+
+class OffsetSpectraRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
+              'Polynomial for non-linearity correction')
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+              'Master intensity flatfield')
+    master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 
+                  'Master spectral flatfield')
+    st_calibration = DataProductRequirement(SlitTransmissionCalibration, 'Slit tranmision calibration')
+    w_calibration = DataProductRequirement(WavelengthCalibration, 'Wavelength calibration')
+    lines = Parameter('lines', None, 'List of x-lambda pairs of line coordinates')
+
+class OffsetSpectraRecipeResult(RecipeResult):
+    spectra = Product(Spectra)
+    catalog = Product(LinesCatalog)
+
+@define_input(OffsetSpectraRecipeInput)
+@define_result(OffsetSpectraRecipeResult)
+class OffsetSpectraRecipe(BaseRecipe):
     '''
     Observing mode:
         Offset spectra beyond the slit
     '''
-    
-    __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
-                  'Master spectral flatfield'),
-        DataProductParameter('st_calibration', SlitTransmissionCalibration, 
-                  'Slit tranmision calibration'),
-        DataProductParameter('w_calibration', WavelengthCalibration, 
-                  'Wavelength calibration'),
-        Parameter('lines', None, 
-                  'List of x-lambda pairs of line coordinates'),        
-    ]
-
     def __init__(self):
         super(OffsetSpectraRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
@@ -256,30 +261,30 @@ class OffsetSpectraRecipe(RecipeBase):
     def run(self, obresult):
         return {'products': [Spectra(), LinesCatalog()]}
     
-    
-@provides(DataCube)
-class RasterSpectraRecipe(RecipeBase):
+class RasterSpectraRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
+              'Polynomial for non-linearity correction')
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+              'Master intensity flatfield')
+    master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 
+                  'Master spectral flatfield')
+    st_calibration = DataProductRequirement(SlitTransmissionCalibration, 'Slit tranmision calibration')
+    w_calibration = DataProductRequirement(WavelengthCalibration, 'Wavelength calibration')
+
+class RasterSpectraRecipeResult(RecipeResult):
+    cube = Product(DataCube)
+
+@define_input(RasterSpectraRecipeInput)
+@define_result(RasterSpectraRecipeResult)
+class RasterSpectraRecipe(BaseRecipe):
     '''
     Observing mode:
         Raster spectra
     '''
     
-    __requires__ = [       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('master_bpm', MasterBadPixelMask, 'Master bad pixel mask'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        DataProductParameter('master_spectral_ff', MasterSpectralFlat, 
-                  'Master spectral flatfield'),
-        DataProductParameter('st_calibration', SlitTransmissionCalibration, 
-                  'Slit tranmision calibration'),
-        DataProductParameter('w_calibration', WavelengthCalibration, 
-                  'Wavelength calibration')        
-    ]
-
     def __init__(self):
         super(RasterSpectraRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",

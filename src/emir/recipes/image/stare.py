@@ -24,21 +24,43 @@ Image mode recipes of EMIR
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, DataProductParameter
-from numina.recipes import provides, DataFrame
-from numina.recipes.requirements import Requirement
+from numina.core import BaseRecipe, Parameter
+from numina.core import RecipeInput, RecipeResult, Product
+from numina.core import FrameDataProduct, define_input, define_result
 
-from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emir.dataproducts import MasterIntensityFlat
-from emir.dataproducts import NonLinearityCalibration
 from emir.dataproducts import SourcesCatalog
+
+from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
+from emir.requirements import MasterDark_Requirement, NonLinearityCalibration_Requirement
+from emir.requirements import MasterIntensityFlatField_Requirement
+from emir.requirements import Channels_Requirement, Extinction_Requirement
+from emir.requirements import DetectorShape_Requirement, Offsets_Requirement
+from emir.requirements import Catalog_Requirement
 
 from .shared import DirectImageCommon
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-@provides(DataFrame, SourcesCatalog)
-class StareImageRecipe(RecipeBase, DirectImageCommon):
+class StareImageRecipeInput(RecipeInput):
+    master_bpm = MasterBadPixelMask_Requirement()
+    master_bias = MasterBias_Requirement()
+    master_dark = MasterDark_Requirement()
+    nonlinearity = NonLinearityCalibration_Requirement()
+    master_intensity_ff = MasterIntensityFlatField_Requirement()    
+    extinction = Extinction_Requirement() 
+    sources = Catalog_Requirement()
+    offsets = Offsets_Requirement()
+    iterations = Parameter(4, 'Iterations of the recipe')
+    idc = Channels_Requirement()
+    ids = DetectorShape_Requirement()
+
+class StareImageRecipeResult(RecipeResult):
+    frame = Product(FrameDataProduct)
+    catalog = Product(SourcesCatalog)
+
+@define_input(StareImageRecipeInput)
+@define_result(StareImageRecipeResult)    
+class StareImageRecipe(BaseRecipe, DirectImageCommon):
     '''
     The effect of recording images of the sky in a given pointing
     position of the TS
@@ -49,26 +71,6 @@ class StareImageRecipe(RecipeBase, DirectImageCommon):
         * Stare image
     
     '''
-
-    __requires__ = [
-        DataProductParameter('master_bpm', MasterBadPixelMask, 
-                  'Master bad pixel mask'),       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
-        # FIXME: this parameter is optional 
-        Parameter('sources', None, 
-                  'List of x, y coordinates to measure FWHM',
-                  optional=True),
-        Parameter('offsets', None, 'List of pairs of offsets',
-                  optional=True),
-        Requirement('instrument.detector.channels', 'List of channels'),
-        Requirement('instrument.detector.shape', 'Detector shape'),
-    ]
 
     def __init__(self):
         super(StareImageRecipe, self).__init__(
@@ -82,8 +84,8 @@ class StareImageRecipe(RecipeBase, DirectImageCommon):
         amplifiers = self.parameters['instrument.detector.channels']
         offsets = self.parameters['offsets']
         
-        return self.process(obresult, baseshape, amplifiers, 
+        frame, catalog = self.process(obresult, baseshape, amplifiers, 
                             offsets=offsets, subpix=1,
                             stop_after=DirectImageCommon.PRERED)
         
-        
+        return StareImageRecipeResult(frame=frame, catalog=catalog)

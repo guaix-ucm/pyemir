@@ -87,9 +87,15 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0, border=300, extinctio
     catalog = sorted(catalog, key=operator.itemgetter('FLUX_BEST'), reverse=True)
     
     # set of indices of the N first objects
-    OBJS_I_KEEP = 3
-    indices = set(obj['NUMBER'] for obj in catalog[:OBJS_I_KEEP])
+    MAX_OBJS_I_KEEP = 3
+    OBJS_I_KEEP = min(MAX_OBJS_I_KEEP, len(catalog))
     
+    if OBJS_I_KEEP < 1:
+        _logger.warn('I cannot check photometry, no objects detected in frame')
+        return
+        
+    indices = set(obj['NUMBER'] for obj in catalog[:OBJS_I_KEEP])
+        
     base = numpy.empty((len(frames), OBJS_I_KEEP))
     error = numpy.empty((len(frames), OBJS_I_KEEP))
     
@@ -106,10 +112,11 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0, border=300, extinctio
         
         # Extinction correction
         excor = pow(10, -0.4 * frame.airmass * extinction)
-        base[idx] = [obj['FLUX_BEST'] / excor
-                                 for obj in catalog if obj['NUMBER'] in indices]
-        error[idx] = [obj['FLUXERR_BEST'] / excor
-                                 for obj in catalog if obj['NUMBER'] in indices]
+        fluxes = [obj['FLUX_BEST'] / excor for obj in catalog if obj['NUMBER'] in indices]
+        errors = [obj['FLUXERR_BEST'] / excor for obj in catalog if obj['NUMBER'] in indices]
+        
+        base[idx] = fluxes
+        error[idx] = errors
     
     data = base / base[0]
     err = error / base[0] # sigma

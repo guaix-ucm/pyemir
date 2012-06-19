@@ -18,20 +18,30 @@
 #
 
 '''
-Mosiac image mode recipe of EMIR
+Mosaic image mode recipe of EMIR
 
 '''
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, provides, DataFrame
+from numina.core import BaseRecipe, Parameter, DataProductRequirement
+from numina.core import define_input, define_result, DataFrame, RecipeResult
+from numina.core import Requirement, Product, FrameDataProduct, RecipeInput
 
 from emir.dataproducts import SourcesCatalog
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-@provides(DataFrame, SourcesCatalog)
-class MosaicRecipe(RecipeBase):
+class MosaicRecipeInput(RecipeInput):
+    # FIXME: this parameter is optional 
+    sources = Parameter(None, 'List of x, y coordinates to measure FWHM')
+
+class MosaicRecipeResult(RecipeResult):
+    frame = Product(FrameDataProduct)
+    catalog = Product(SourcesCatalog)
+
+@define_result(MosaicRecipeResult)
+class MosaicRecipe(BaseRecipe):
     '''
     The effect of recording a series of stare images, with the same
     acquisition parameters, and taken by pointing to a number of
@@ -43,15 +53,9 @@ class MosaicRecipe(RecipeBase):
 
     **Observing modes:**
 
-        * Mosiac images
+        * Mosaic images
     
     '''
-
-    __requires__ = [
-        # FIXME: this parameter is optional 
-        Parameter('sources', None, 
-                  'List of x, y coordinates to measure FWHM')
-    ]
 
     def __init__(self):
         super(MosaicRecipe, self).__init__(
@@ -60,6 +64,6 @@ class MosaicRecipe(RecipeBase):
         )
 
     def run(self, obresult):
-        return {'products': [DataFrame(None), SourcesCatalog()]}
+        return MosaicRecipeResult(frame=DataFrame(None), catalog=SourcesCatalog())
 
-
+#

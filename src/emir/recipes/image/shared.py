@@ -36,7 +36,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 from numina import __version__
-from numina.recipes import DataFrame
+from numina.core import DataFrame
 from numina.flow import SerialFlow 
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, FlatFieldCorrector
@@ -162,14 +162,13 @@ class DirectImageCommon(object):
          "airmass": "AIRMASS", 
          "imagetype": "IMGTYP", 
          "exposure": "EXPTIME"
-        }     
-        recipe_result = {'products' : []}
+        }        
 
         if window is None:
             window = tuple((0, siz) for siz in baseshape)
 
         if store_intermediate:
-            recipe_result['intermediate'] = []
+            pass
         
         
         # States        
@@ -189,8 +188,8 @@ class DirectImageCommon(object):
                 # Basic processing
                 
                 # FIXME: add this
-                bpm = pyfits.getdata(self.parameters['master_bpm'])
-                bpm_corrector = BadPixelCorrector(bpm)
+                #bpm = pyfits.getdata(self.parameters['master_bpm'])
+                #bpm_corrector = BadPixelCorrector(bpm)
                 
                 if self.parameters['master_bias']:
                     mbias = pyfits.getdata(self.parameters['master_bias'])
@@ -205,7 +204,7 @@ class DirectImageCommon(object):
                 mflat = pyfits.getdata(self.parameters['master_intensity_ff'])
                 ff_corrector = FlatFieldCorrector(mflat)  
                   
-                basicflow = SerialFlow([bpm_corrector,
+                basicflow = SerialFlow([#bpm_corrector,
                                         bias_corrector, 
                                         dark_corrector, 
                                         nl_corrector,
@@ -313,7 +312,7 @@ class DirectImageCommon(object):
 
                 # Create superflat                
                 superflat = self.compute_superflat(skyframes, channels=scaled_chan,
-                                                   target_is_sky=target_is_sky, step=step)
+                                                   step=step)
             
                 # Apply superflat
                 self.figure_init(subpixshape)
@@ -375,9 +374,11 @@ class DirectImageCommon(object):
                     pyfits.writeto(frame.objmask, frame.objmask_data, clobber=True)
                     
                 if not target_is_sky:
+                    # Empty object mask for sky frames
+                    bogus_objmask = numpy.zeros(windowshape, dtype='int')
                     
                     for frame in skyframes:
-                        pass
+                        frame.objmask_data = bogus_objmask
 
                 _logger.info('Step %d, superflat correction (SF)', step)
                 
@@ -385,7 +386,7 @@ class DirectImageCommon(object):
                 self.update_scale_factors(obresult.frames, step)
 
                 # Create superflat
-                superflat = self.compute_superflat(obresult.frames, scaled_chan, target_is_sky,
+                superflat = self.compute_superflat(skyframes, scaled_chan,
                                                    segmask=objmask, step=step)
                 
                 # Apply superflat
@@ -425,10 +426,9 @@ class DirectImageCommon(object):
 
         result = pyfits.HDUList([hdu, varhdu, num])        
         
-        _logger.info("Final frame created")
-        recipe_result['products'] = [DataFrame(result), SourcesCatalog()]
+        _logger.info("Final frame created")        
         
-        return recipe_result
+        return DataFrame(result), SourcesCatalog()
     
     def compute_simple_sky(self, targetframes, skyframes, 
                             maxsep=5, step=0, save=True):
@@ -559,7 +559,7 @@ class DirectImageCommon(object):
         data = []
         scales = []
         masks = []
-        # handle to the FITS file to close it finally
+        # handle the FITS file to close it finally
         desc = []
         try:
             for i in skyframes:
@@ -572,12 +572,13 @@ class DirectImageCommon(object):
                 if i.objmask_data is not None:
                     masks.append(i.objmask_data)
                     _logger.debug('object mask is shared')
-                else:
-                    maskfile = i.objmask
-                    hdulistmask = pyfits.open(maskfile, mode='readonly', memmap=True)
+                elif i.objmask is not None: 
+                    hdulistmask = pyfits.open(i.objmask, mode='readonly', memmap=True)
                     masks.append(hdulistmask['primary'].data)
                     desc.append(hdulistmask)
                     _logger.debug('object mask is particular')
+                else:
+                    _logger.warn('no object mask for %s', filename)
                      
             _logger.debug('computing background with %d frames', len(data))
             sky, _, num = median(data, masks, scales=scales)
@@ -677,11 +678,12 @@ class DirectImageCommon(object):
             except ValueError:
                 _logger.warning('Problem plotting %s', frame.lastname)
                         
-    def compute_superflat(self, frames, channels, target_is_sky, segmask=None, step=0):
+    def compute_superflat(self, frames, channels, segmask=None, step=0):
         _logger.info("Step %d, SF: combining the frames without offsets", step)
         try:
             filelist = []
             data = []
+            masks = []
             for frame in frames:
                 _logger.debug('Step %d, opening resized frame %s', step, frame.resized_base)
                 hdulist = pyfits.open(frame.resized_base, memmap=True, mode='readonly')
@@ -693,13 +695,17 @@ class DirectImageCommon(object):
             # FIXME: plotting
             self.figure_median_background(scales)
             
-            masks = None
             if segmask is not None:
-                if target_is_sky:
-                    masks = [segmask[frame.valid_region] for frame in frames]
-                else:
-                    masks = [pyfits.getdata(frame.objmask) for frame in frames]
+                masks = [segmask[frame.valid_region] for frame in frames]
+            else:
+                for frame in frames:
+                    _logger.debug('Step %d, opening resized mask %s', step, frame.resized_mask)
+                    hdulist = pyfits.open(frame.resized_mask, memmap=True, mode='readonly')
+                    filelist.append(hdulist)
+                    masks.append(hdulist['primary'].data[frame.valid_region])
+            
             _logger.debug('Step %d, combining %d frames', step, len(data))
+
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, 
                                                     blank=1.0 / scales[0])            
         finally:

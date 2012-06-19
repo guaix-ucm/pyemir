@@ -22,19 +22,38 @@ Beam switched-nodded image mode recipe of EMIR
 
 '''
 
-from numina.recipes import RecipeBase, Parameter, DataProductParameter
-from numina.recipes.requirements import Requirement
-from numina.recipes import provides, DataFrame
-
+from numina.core import BaseRecipe, Parameter, DataProductRequirement
+from numina.core import Requirement, RecipeInput, RecipeResult
+from numina.core import DataFrame, define_input, define_result
+from numina.core import Product, FrameDataProduct 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import NonLinearityCalibration
 from emir.dataproducts import SourcesCatalog
 
 from .shared import DirectImageCommon
-    
-@provides(DataFrame, SourcesCatalog)
-class NBImageRecipe(RecipeBase, DirectImageCommon):
+
+class NBImageRecipeInput(RecipeInput):
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
+              'Polynomial for non-linearity correction')
+    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+              'Master intensity flatfield')
+    extinction = Parameter(0.0, 'Mean atmospheric extinction') 
+    sources = Parameter(None, 'List of x, y coordinates to measure FWHM', optional=True)
+    offsets = Parameter(None, 'List of pairs of offsets', optional=True)
+    idc = Requirement('List of channels', dest='instrument.detector.channels', hidden=True)
+    ids = Requirement('Detector shape', dest='instrument.detector.shape', hidden=True)
+
+class NBImageRecipeResult(RecipeResult):
+    frame = Product(FrameDataProduct)
+    catalog = Product(SourcesCatalog)
+
+@define_input(NBImageRecipeInput)
+@define_result(NBImageRecipeResult)
+class NBImageRecipe(BaseRecipe, DirectImageCommon):
     '''
     The effect of recording a series of stare images, with the same
     acquisition parameters, and taken by pointing the TS in cycles
@@ -49,24 +68,6 @@ class NBImageRecipe(RecipeBase, DirectImageCommon):
     
     '''
 
-    __requires__ = [
-        DataProductParameter('master_bpm', MasterBadPixelMask, 
-                  'Master bad pixel mask'),       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image'),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
-        Requirement('instrument.detector.channels', 'List of channels'),
-        Requirement('instrument.detector.shape', 'Detector shape'),
-        # FIXME: this parameter is optional 
-        Parameter('sources', None, 'List of x, y coordinates to measure FWHM',
-                  optional=True),
-        Parameter('offsets', None, 'List of pairs of offsets',
-                  optional=True)
-    ]
 
     def __init__(self):
         super(NBImageRecipe, self).__init__(
@@ -80,7 +81,8 @@ class NBImageRecipe(RecipeBase, DirectImageCommon):
         amplifiers = self.parameters['instrument.detector.channels']
         offsets = self.parameters['offsets']
 
-        return self.process(obresult, baseshape, amplifiers, 
+        frame, catalog = self.process(obresult, baseshape, amplifiers, 
                             offsets=offsets, target_is_sky=False,
                             stop_after=DirectImageCommon.FULLRED)
 
+        return NBImageRecipeResult(frame=frame, catalog=catalog)

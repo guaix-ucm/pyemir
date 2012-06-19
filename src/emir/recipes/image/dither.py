@@ -21,23 +21,54 @@
 
 import logging
 
-from numina.recipes import RecipeBase, Parameter, DataProductParameter
-from numina.recipes.requirements import Requirement
-from numina.recipes import provides, DataFrame
+from numina.core import BaseRecipe, Parameter, DataProductRequirement
+from numina.core import Requirement, RecipeInput, FrameDataProduct
+from numina.core import DataFrame, Product, RecipeInput, RecipeResult
+from numina.core import define_input, define_result
 
-from emir.dataproducts import MasterBias, MasterDark 
-from emir.dataproducts import MasterIntensityFlat, MasterBadPixelMask
-from emir.dataproducts import SourcesCatalog, NonLinearityCalibration
+from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
+from emir.requirements import MasterDark_Requirement, NonLinearityCalibration_Requirement
+from emir.requirements import MasterIntensityFlatField_Requirement
+from emir.requirements import Channels_Requirement, Extinction_Requirement
+from emir.requirements import DetectorShape_Requirement, Offsets_Requirement
+from emir.requirements import Catalog_Requirement
+
+
+from emir.dataproducts import SourcesCatalog
 
 from .shared import DirectImageCommon
-
 
 __author__ = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 _logger = logging.getLogger("numina.recipes.emir")
 
-@provides(DataFrame, SourcesCatalog)
-class DitheredImageRecipe(RecipeBase, DirectImageCommon):
+
+class DitheredImageRecipeInput(RecipeInput):
+    master_bpm = MasterBadPixelMask_Requirement()
+    master_bias = MasterBias_Requirement()
+    master_dark = MasterDark_Requirement()
+    nonlinearity = NonLinearityCalibration_Requirement()
+    master_intensity_ff = MasterIntensityFlatField_Requirement()    
+    extinction = Extinction_Requirement() 
+    sources = Catalog_Requirement()
+    offsets = Offsets_Requirement()
+    
+    iterations = Parameter(4, 'Iterations of the recipe')
+    sky_images = Parameter(5, 'Images used to estimate the background before and after current image')
+    sky_images_sep_time = Parameter(10, 'Maximum separation time between consecutive sky images in minutes')
+    check_photometry_levels = Parameter([0.5, 0.8], 'Levels to check the flux of the objects')
+    check_photometry_actions = Parameter(['warn', 'warn', 'default'], 'Actions to take on images')
+    idc = Channels_Requirement()
+    ids = DetectorShape_Requirement()
+                    
+
+class DitheredImageRecipeResult(RecipeResult):
+    frame = Product(FrameDataProduct)
+    catalog = Product(SourcesCatalog)
+
+@define_input(DitheredImageRecipeInput)
+@define_result(DitheredImageRecipeResult)
+class DitheredImageRecipe(BaseRecipe, DirectImageCommon):
     '''Recipe for the reduction of imaging mode observations.
 
     Recipe to reduce observations obtained in imaging mode, considering different
@@ -110,32 +141,6 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
     
     '''
 
-    __requires__ = [
-        DataProductParameter('master_bpm', MasterBadPixelMask, 
-                  'Master bad pixel mask'),       
-        DataProductParameter('master_bias', MasterBias, 'Master bias image', optional=True),
-        DataProductParameter('master_dark', MasterDark, 'Master dark image'),
-        DataProductParameter('nonlinearity', NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-        DataProductParameter('master_intensity_ff', MasterIntensityFlat, 
-                  'Master intensity flatfield'),
-        Parameter('extinction', 0.0, 'Mean atmospheric extinction'),
-        # FIXME: this parameter is optional 
-        Parameter('sources', None, 
-                  'List of x, y coordinates to measure FWHM',
-                  optional=True),
-        Parameter('offsets', None, 'List of pairs of offsets',
-                  optional=True),
-        Parameter('iterations', 4, 'Iterations of the recipe'),
-        Parameter('sky_images', 5, 'Images used to estimate the background before and after current image'),
-        Parameter('sky_images_sep_time', 10, 'Maximum separation time between consecutive sky images in minutes'),
-        Parameter('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
-        Parameter('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
-        Requirement('instrument.detector.channels', 'List of channels'),
-        Requirement('instrument.detector.shape', 'Detector shape'),                    
-                    
-    ]
-
     def __init__(self):
         super(DitheredImageRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
@@ -146,10 +151,11 @@ class DitheredImageRecipe(RecipeBase, DirectImageCommon):
         baseshape = self.parameters['instrument.detector.shape']
         amplifiers = self.parameters['instrument.detector.channels']
         offsets = self.parameters['offsets']
-        
-        
-        
-        return self.process(obresult, baseshape, amplifiers, 
+                
+        frame, catalog = self.process(obresult, baseshape, amplifiers, 
                             offsets=offsets, subpix=1, 
                             stop_after=DirectImageCommon.FULLRED)
+        
+        result = DitheredImageRecipeResult(frame=frame, catalog=catalog)
+        return result
                                                             
