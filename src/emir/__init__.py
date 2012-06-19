@@ -26,7 +26,7 @@ from emir.simulator import Instrument
 
 __all__ = ['Instrument', 'ImageFactory']
 
-__version__ = '0.6.3'
+__version__ = '0.6.5'
 
 
 # Top level NullHandler

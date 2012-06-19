@@ -1,8 +1,14 @@
+Version 0.6.5 (19 Jun 2012)
+---------------------------
 
 Changes:
-
-  * Updated to use namespace package numina.pipelines
   * Updated to use RecipeInput and RecipeResult
+
+Version 0.6.4 (20 Mayo 2012)
+---------------------------
+
+Changes:
+  * Updated to use namespace package numina.pipelines
 
 Version 0.6.3 (17 May 2012)
 ---------------------------
