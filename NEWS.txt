@@ -1,3 +1,10 @@
+Version 0.6.6 (20 Jun 2012)
+---------------------------
+
+Bugfixes:
+  * Add obsmodes.yaml to MANIFEST.in so it is distributed
+  * Use Agg backend by default
+
 Version 0.6.5 (19 Jun 2012)
 ---------------------------
 
