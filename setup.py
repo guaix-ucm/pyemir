@@ -7,11 +7,11 @@ NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.emir']
 ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 
 setup(name='pyemir',
-      version='0.6.5',
+      version='0.6.6',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='http://astrax.fis.ucm.es/software/pyemir/pyemir-0.6.5.tar.gz',
+      download_url='http://astrax.fis.ucm.es/software/pyemir/pyemir-0.6.6.tar.gz',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       packages=ALL_PKGS,
