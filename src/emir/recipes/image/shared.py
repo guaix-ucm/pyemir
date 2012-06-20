@@ -32,8 +32,8 @@ import pyfits
 import pywcs
 from scipy.spatial import KDTree as KDTree
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 mpl.use('Agg')
+import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 from numina import __version__
