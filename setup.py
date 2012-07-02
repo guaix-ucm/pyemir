@@ -6,6 +6,10 @@ BASE_PKGS=find_packages('src', exclude=['drp', 'drp.*'])
 NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.emir']
 ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 
+# There is a problem installing/uninstalling with pip
+# pip will uninstall pyemir AND numina 
+# this is the bug https://github.com/pypa/pip/issues/355
+
 setup(name='pyemir',
       version='0.6.6',
       author='Sergio Pascual',
