@@ -24,8 +24,9 @@ from itertools import repeat, chain, izip
 import os.path
 
 import numpy # pylint: disable-msgs=E1101
+import pyfits
 
-from numina.core import RecipeBase
+from numina.core import RecipeBase, DataFrame
 
 from emir.instrument.detector import CHANNELS_2
 
