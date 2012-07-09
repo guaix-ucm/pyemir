@@ -133,4 +133,19 @@ reference: IPUREMI_323
 description: |
     Lines and mode lines
     of descriptions here
+---
+!om
+name: Cosmetics
+uuid: 63f13bf6-b821-4c3d-9eee-32f6f924844b
+key: cosmetics
+url: http://somegtc_url.es/emir/obsmode4.html
+instrument: EMIR
+summary: Summary of GainMode1
+recipe: emir.recipes.CosmeticsRecipe
+status: DRAFT
+date: 2012-07-09
+reference: IPUREMI_323
+description: |
+    Lines and mode lines
+    of descriptions here
 

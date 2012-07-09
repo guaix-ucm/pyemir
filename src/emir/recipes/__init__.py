@@ -22,5 +22,5 @@
 from .auxiliary import BiasRecipe, DarkRecipe, IntensityFlatRecipe
 from .image import StareImageRecipe, DitheredImageRecipe, MicroditheredImageRecipe
 from .image import NBImageRecipe, MosaicRecipe
-from .engineering import GainRecipe1
+from .engineering import GainRecipe1, CosmeticsRecipe
 

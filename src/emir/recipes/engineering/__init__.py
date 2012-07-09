@@ -39,6 +39,7 @@ from emir.dataproducts import PhotometricCalibration, WavelengthCalibration
 _logger = logging.getLogger('numina.recipes.emir')
 
 from .detectorgain import GainRecipe1
+from .cosmetics import CosmeticsRecipe
 
 class DTU_XY_CalibrationRecipeInput(RecipeInput):
     slit_pattern = Parameter(None, 'Slit pattern'),
