@@ -36,7 +36,9 @@ from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 _logger = logging.getLogger('numina.recipes.emir')
 
 class CosmeticsRecipeInput(RecipeInput):
-    pass
+    lowercut = Parameter(4.0, 'Values bellow this sigma level are flagged as dead pixels')
+    uppercut = Parameter(4.0, 'Values above this sigma level are flagged as hot pixels')
+    maxiter = Parameter(30, 'Maximum number of iterations')
     
 class CosmeticsRecipeResult(RecipeResult):
     ratio = Product(FrameDataProduct)
@@ -83,7 +85,10 @@ class CosmeticsRecipe(BaseRecipe):
         f1 = pyfits.getdata(flats[0]) - reset
         f2 = pyfits.getdata(flats[1]) - reset
         
-        maxiter = 30
+        maxiter = self.parameters['maxiter']
+        lowercut = self.parameters['lowercut']
+        uppercut = self.parameters['uppercut']
+        
         ninvalid = 0
         mask = None
         
@@ -95,7 +100,7 @@ class CosmeticsRecipe(BaseRecipe):
     
         for niter in range(1, maxiter + 1):
             _logger.info('iter %d', niter)
-            ratio, m, sigma = cosmetics(f1, f2, m)
+            ratio, m, sigma = cosmetics(f1, f2, m, lowercut=lowercut, uppercut=uppercut)
             # FIXME
             # These are intermediate results that 
             # can be removed later
@@ -135,7 +140,7 @@ class CosmeticsRecipe(BaseRecipe):
             warnings.simplefilter('ignore')
             pyfits.writeto('numina-cosmetics.fits', ratio, clobber=True)
             pyfits.writeto('numina-mask.fits', m, clobber=True)
-            pyfits.writeto('numina-sigma.fits', m * 0.0 + sigma, clobber=True)
+            pyfits.writeto('numina-sigma.fits', sigma * numpy.ones_like(m), clobber=True)
             
         ratiohdu = pyfits.PrimaryHDU(ratio)
         hdr = ratiohdu.header
