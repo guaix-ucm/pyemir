@@ -24,14 +24,15 @@ from itertools import repeat, chain, izip
 import os.path
 
 import numpy # pylint: disable-msgs=E1101
+import pyfits
 
-from numina.core import RecipeBase
+from numina.core import BaseRecipe, DataFrame
 
 from emir.instrument.detector import CHANNELS_2
 
 _logger = logging.getLogger("numina.recipes.emir")
 
-class Recipe(RecipeBase):
+class Recipe(BaseRecipe):
     '''Reordering Recipe.
     
     Recipe to reorder images created by the detector.

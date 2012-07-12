@@ -23,3 +23,10 @@ Recipes for image mode
 
 .. automodule:: emir.recipes.image.shared
    :members:
+
+Recipes for engineering
+-----------------------
+
+.. automodule:: emir.recipes.engineering.cosmetics
+   :members:
+

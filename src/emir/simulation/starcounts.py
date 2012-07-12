@@ -96,14 +96,14 @@ class SpagnaModel:
     Number of stars per square arc minute
     '''
     
-    _J_counts_data = loadtxt(StringIO(pkgutil.get_data('numina.simulation','spagna-J.dat')))
+    _J_counts_data = loadtxt(StringIO(pkgutil.get_data('emir.simulation','spagna-J.dat')))
     # Data in file is for square degree
     _J_counts_data[:, 1:3] /= 3600.0
     _spl_J_1 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 1])
     _spl_J_2 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 2])
     del _J_counts_data
     
-    _K_counts_data = loadtxt(StringIO(pkgutil.get_data('numina.simulation','spagna-K.dat')))    
+    _K_counts_data = loadtxt(StringIO(pkgutil.get_data('emir.simulation','spagna-K.dat')))    
     # Data in file is for square degree
     _K_counts_data[:, 1:3] /= 3600.0
     _spl_K_1 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 1])

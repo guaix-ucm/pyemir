@@ -1,17 +1,27 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+import sys, os
 
 BASE_PKGS=find_packages('src', exclude=['drp', 'drp.*'])
 NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.emir']
 ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 
+# There is a problem installing/uninstalling with pip
+# pip will uninstall pyemir AND numina 
+# this is the bug https://github.com/pypa/pip/issues/355
+
+
+sys.path.append(os.path.abspath('src'))
+import emir
+version = emir.__version__
+
 setup(name='pyemir',
-      version='0.6.6',
+      version=version,
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='http://astrax.fis.ucm.es/software/pyemir/pyemir-0.6.6.tar.gz',
+      download_url='http://astrax.fis.ucm.es/software/pyemir/pyemir-%s.tar.gz' % version,
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       packages=ALL_PKGS,
@@ -24,7 +34,7 @@ setup(name='pyemir',
       install_requires=['setuptools', 'numpy', 'pyfits', 
                         'scipy', 'sphinx', 'pywcs',
                         'matplotlib', 'numdisplay', 
-                        'numina>=0.8.0'],
+                        'numina>=0.8.1'],
       test_requires=['nose',
                      ],
       # numdisplay lives here
