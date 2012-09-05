@@ -26,4 +26,3 @@ classes contained in the package, see the :ref:`reference`.
    engineering
    auxiliary
    imaging
-   spectroscopy
