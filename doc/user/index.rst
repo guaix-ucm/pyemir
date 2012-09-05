@@ -22,4 +22,8 @@ classes contained in the package, see the :ref:`reference`.
    intro
    deploy
    recipes
+   highlevel
    engineering
+   auxiliary
+   imaging
+   spectroscopy

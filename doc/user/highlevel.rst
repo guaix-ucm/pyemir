@@ -104,7 +104,7 @@ many purposes it may constitute an extremely expensive method in
 terms of observing time, its applicability on a general situation 
 seems rather unlikely.
 
-.. image:: images/method1.jpg
+.. image:: ../images/method1.jpg
    :width: 800
    :alt: method 1
 
@@ -147,7 +147,7 @@ set of reduced simulated observations provides then a good estimation of the fin
 However, and although this method overcome the problem of wasting observing time, 
 it can also be terribly expensive, but now in terms of computing time.
 
-.. image:: images/method2.jpg
+.. image:: ../images/method2.jpg
    :width: 800
    :alt: method 2
 
@@ -166,7 +166,7 @@ Unfortunately, typical astronomical data reduction packages (e.g. Iraf, Midas, e
 do not consider random error propagation as a **by default** operation and, thus, 
 some kind of additional programming is unavoidable.
 
-.. image:: images/method3.jpg
+.. image:: ../images/method3.jpg
    :width: 800
    :alt: method 3
 
@@ -197,7 +197,7 @@ covariance terms starts to increase too rapidly to make it feasible the
 possibility of stacking up and propagate all the new coefficients for every 
 single pixel of an image.
 
-.. image:: images/correlation.jpg
+.. image:: ../images/correlation.jpg
    :width: 800
    :alt: Correlation
 
@@ -236,7 +236,7 @@ More precisely, the reduction steps can be segregated in two groups:
 
  * **Complex filters**, those suitable of introducing error correlation between adjacent pixels.
 
-.. image:: images/newreduction.jpg
+.. image:: ../images/newreduction.jpg
    :width: 800
    :alt: New reduction
 
@@ -264,7 +264,7 @@ However this is not the only option. Instead of trying to obtain completely redu
 ready for starting the analysis work, one can directly feed a **clever analysis tool** 
 with the end products of the modified reduction procedure, as depicted in this figure:
 
-.. figure:: images/cleverreduction.jpg
+.. figure:: ../images/cleverreduction.jpg
    :width: 800
    :alt: Clever reduction
 
@@ -604,7 +604,7 @@ will be in practice carried out by extracting the individual aligned slits
 long-slit observations in the near infrared. Most of the steps to be applied 
 to these **pseudo long-slit** subimages are those graphically depicted in this figure
 
-.. image:: images/reduceme_spectra.jpg
+.. image:: ../images/reduceme_spectra.jpg
    :width: 800
    :alt: REDUCEME spectra
 
