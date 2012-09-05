@@ -140,8 +140,10 @@ class BiasRecipe(BaseRecipe):
             hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
 
             _logger.info('bias reduction ended')
-
-            return {'products': [MasterBias(hdulist), cls]}
+            
+            result = BiasRecipeResult(biasframe=MasterBias(hdulist),
+                                      stats=cls)
+            return result
         finally:
             for hdulist in cdata:
                 hdulist.close()
@@ -254,9 +256,11 @@ class DarkRecipe(BaseRecipe):
 
         md = MasterDark(hdulist)
 
-        _logger.info('dark reduction ended')    
+        _logger.info('dark reduction ended')
+        result = DarkRecipeResult(darkframe=md,
+                                      stats=cls)
+        return result
 
-        return {'products': [md, cls]}
 
 class IntensityFlatRecipeInput(DarkRecipeInput):
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -364,7 +368,9 @@ class IntensityFlatRecipe(BaseRecipe):
 
         md = MasterIntensityFlat(hdulist)
 
-        return {'products': [md]}
+        result = IntensityFlatRecipeResult(flatframe=md)
+
+        return result
         
         
     def stack_images(self, images):
