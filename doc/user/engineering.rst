@@ -8,17 +8,20 @@ unit.
 Cosmetics
 +++++++++
 Detector cosmetics include: dead and hot pixels, 
-inhomogenitites in pixel-to-pixel response, stripes pattern and
+inhomogenities in pixel-to-pixel response, stripes pattern and
 bias in the least significative bit.
 
 Dead and hot pixels
 -------------------
+
+.. versionadded:: 0.6.8
+
 Dead pixels have low response independently of the brightness of the 
 incident light. Hot pixels have high response even in low brightness conditions.
 Both types of pixels are related with problem in detector electronics.
 
 Dead and hot pixels are detected using two flat illuminated images
-of different exposure time. The ratio of this images would be a constant,
+of different exposure time. The ratio of these images would be a constant,
 except in dead or hot pixels, which will deviate significantly.
 
 Asumming a normal distribution for the vast majority of the pixels in
@@ -35,7 +38,7 @@ between the pixel values divided by two times `nsig`.
 The ratio image is then normalized with this standard deviation.
 
 In the image below we plot the histogram of the ratio image (with median
-subtracted). The red curve represents a median distribution with mean 0
+subtracted). The red curve represents a normal distribution with mean 0
 and sigma computed from 1-sigma percentiles. The normal distribution
 is plotted upto 4-sigma. Overplotted in green are the regions at
 6-sigma level. These points would be flagged as bad pixels in the final output
@@ -43,7 +46,7 @@ mask.
 
 .. image:: ../images/cosmetics.png
       :width: 800
-      :alt: REDUCEME spectra
+      :alt: Histogram of the ratio of two flat field images
 
 .. note::
     The procedure is similar to the algorithm of the IRAF task `ccdmask`
