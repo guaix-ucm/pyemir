@@ -14,8 +14,6 @@ bias in the least significative bit.
 Dead and hot pixels
 -------------------
 
-.. versionadded:: 0.6.8
-
 Dead pixels have low response independently of the brightness of the 
 incident light. Hot pixels have high response even in low brightness conditions.
 Both types of pixels are related with problem in detector electronics.
@@ -52,7 +50,7 @@ mask.
     The procedure is similar to the algorithm of the IRAF task `ccdmask`
 
 The recipe are that created the cosmetic mask is
-:class:`emir.recipes.engineering.cosmetics.CosmeticsRecipe`
+:class:`emir.recipes.CosmeticsRecipe`
 
 :mode: Engineering
 :requires:

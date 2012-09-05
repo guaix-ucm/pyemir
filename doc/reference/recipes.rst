@@ -2,31 +2,49 @@
 :mod:`emir.recipes` --- Reduction Recipes for EMIR
 ==================================================
 
-.. automodule:: emir.recipes
+.. module:: emir.recipes
    :synopsis:  Reduction Recipes for EMIR
-   :members:
 
-Recipes for image mode
-----------------------
+Recipes for auxiliary modes
+----------------------------
 
-.. automodule:: emir.recipes.image.dither
-   :members:
+.. class:: BiasRecipe
 
-.. automodule:: emir.recipes.image.micro
-   :members:
+   Bias Recipe
 
-.. automodule:: emir.recipes.image.nodded
-   :members:
+.. class:: DarkRecipe
 
-.. automodule:: emir.recipes.image.stare
-   :members:
+   Dark Recipe
 
-.. automodule:: emir.recipes.image.shared
-   :members:
+.. class:: IntensityFlatRecipe
+
+   Intensity Flat Recipe
+
+Recipes for image modes
+-----------------------
+
+.. class:: StareImageRecipe
+
+   Stare Image Recipe
+
+.. class:: DitheredImageRecipe
+
+   Dithered Image Recipe
+
+.. class:: NBImageRecipe
+
+   Nodded/Beam-switched Image Recipe
+
+.. class:: MicroDitheredImageRecipe
+
+   Micro Dithered Image Recipe
+
 
 Recipes for engineering
 -----------------------
 
-.. automodule:: emir.recipes.engineering.cosmetics
-   :members:
+.. class:: CosmeticsRecipe
 
+   .. versionadded:: 0.6.8
+
+   Cosmetics Recipe
