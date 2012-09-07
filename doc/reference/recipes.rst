@@ -27,6 +27,15 @@ Recipes for image modes
 
    Stare Image Recipe
 
+.. class:: StareImageRecipeInput
+
+   Stare Image Recipe Input
+
+.. class:: StareImageRecipeResult
+
+   Stare Image Recipe Result
+
+
 .. class:: DitheredImageRecipe
 
    Dithered Image Recipe

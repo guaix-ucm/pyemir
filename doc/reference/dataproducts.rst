@@ -1,7 +1,14 @@
 
-:mod:`emir.dataproducts` --- 
-=======================================================
+:mod:`emir.dataproducts` --- Data products of the EMIR pipeline
+===============================================================
 
-.. automodule:: emir.dataproducts
-   :members:
+.. module:: emir.dataproducts
+   :synopsis:  Data products of the EMIR pipeline
 
+.. class:: FrameDataProduct
+
+   EMIR Frame Data Product
+
+.. class:: SourcesCatalog
+
+   Sources catalog
