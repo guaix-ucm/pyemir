@@ -22,6 +22,7 @@ classes contained in the package, see the :ref:`reference`.
    intro
    deploy
    recipes
+   products
    highlevel
    engineering
    auxiliary
