@@ -5,12 +5,13 @@ Imaging Recipes
 Stare Image
 -----------
 
+:Mode: Stare Image
+
 The effect of recording images of the sky in a given pointing 
 position of the TS.
 
-Inputs
-++++++
-
+Requeriments
+++++++++++++
 +--------------------------+---------------+------------+-------------------------------+
 | Name                     | Type          | Default    | Meaning                       |
 +==========================+===============+============+===============================+
@@ -26,12 +27,12 @@ Inputs
 |``'master_intensity_ff'`` | Product       | NA         | Master Intensity flat-field   |
 |                          |               |            | frame                         |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'extinction '``        | Parameter     | 0.0        | Mean atmospheric extinction   |
+| ``'extinction'``         | Parameter     | 0.0        | Mean atmospheric extinction   |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'sources    '``        | Parameter     | None       | List of (x, y) coordinates to |
+| ``'sources'``            | Parameter     | None       | List of (x, y) coordinates to |
 |                          |               |            | measure FWHM                  |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'offsets    '``        | Parameter     | None       | List of pairs of offsets      |
+| ``'offsets'``            | Parameter     | None       | List of pairs of offsets      |
 +--------------------------+---------------+------------+-------------------------------+
 | ``'iterations'``         | Parameter     | 4          | Iterations of the recipe      |
 +--------------------------+---------------+------------+-------------------------------+
@@ -50,14 +51,16 @@ and a :class:`emir.dataproducts.SourcesCatalog` containing a catalog of sources.
 Nodded/Beam-switched images
 ---------------------------
 
+:Mode: Nodded/Beam-switched images
+
 The effect of recording a series of stare images, with the same
 acquisition parameters, and taken by pointing the TS in cycles
 between two, or more, sky positions. Displacements are larger
 than the EMIR FOV, so the images have no common area. Used
 for sky subtraction.
 
-Inputs
-++++++
+Requeriments
+++++++++++++
 
 +--------------------------+---------------+------------+-------------------------------+
 | Name                     | Type          | Default    | Meaning                       |
@@ -74,12 +77,12 @@ Inputs
 |``'master_intensity_ff'`` | Product       | NA         | Master Intensity flat-field   |
 |                          |               |            | frame                         |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'extinction '``        | Parameter     | 0.0        | Mean atmospheric extinction   |
+| ``'extinction'``         | Parameter     | 0.0        | Mean atmospheric extinction   |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'sources    '``        | Parameter     | None       | List of (x, y) coordinates to |
+| ``'sources'``            | Parameter     | None       | List of (x, y) coordinates to |
 |                          |               |            | measure FWHM                  |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'offsets    '``        | Parameter     | None       | List of pairs of offsets      |
+| ``'offsets'``            | Parameter     | None       | List of pairs of offsets      |
 +--------------------------+---------------+------------+-------------------------------+
 | ``'iterations'``         | Parameter     | 4          | Iterations of the recipe      |
 +--------------------------+---------------+------------+-------------------------------+
@@ -91,6 +94,9 @@ Procedure
 
 Dithered images
 ---------------
+
+:Mode: Dithered images
+
 The effect of recording a series of stare images, with the same
 acquisition parameters, and taken by pointing to a number of
 sky positions, with separations of the order of arcsec, either by
@@ -101,9 +107,8 @@ so they can be coadded. Used for avoid cosmetic effects and/or
 improve the SNR. Superflat and/or supersky frames can be built
 from the image series.
 
-Inputs
-++++++
-
+Requeriments
+++++++++++++
 +------------------------------+---------------+------------------+-------------------------------+
 | Name                         | Type          | Default          | Meaning                       |
 +==============================+===============+==================+===============================+
@@ -152,6 +157,9 @@ process starts
 
 Micro-dithered images
 ---------------------
+
+:Mode: Micro-dithered images
+
 The effect of recording a series of stare images, with the same
 acquisition parameters, and taken by pointing to a number of
 sky positions, with separations of the order of sub arcsecs,
@@ -162,8 +170,9 @@ Images share the large majority of the sky positions so they can
 be coadded. Used for improving the spatial resolution of the
 resulting images and not valid for sky or superflat images.
 
-Inputs
-++++++
+
+Requeriments
+++++++++++++
 
 +------------------------------+---------------+------------------+-------------------------------+
 | Name                         | Type          | Default          | Meaning                       |
