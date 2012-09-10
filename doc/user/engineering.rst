@@ -60,3 +60,19 @@ The recipe are that created the cosmetic mask is
     - ratio = DataFrame(Normalized ratio of the two flat images)
     - mask = DataFrame(Frame with zero for valid pixel and non zero for invalid)
 
+
+Requeriments
+++++++++++++
+
++--------------------------+---------------+------------+-------------------------------+
+| Name                     | Type          | Default    | Meaning                       |
++==========================+===============+============+===============================+
+| ``'lowercut'``           | Parameter     | 4.0        | Values below this sigma level |
+|                          |               |            | are flagged as dead pixels    |
++--------------------------+---------------+------------+-------------------------------+
+| ``'uppercut'``           | Parameter     | 4.0        | Values above this sigma level |
+|                          |               |            | are flagged as hot pixels     |
++--------------------------+---------------+------------+-------------------------------+
+
+
+
