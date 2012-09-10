@@ -62,6 +62,8 @@ Products
 Procedure
 +++++++++
 
+.. _ff-recipe-label:
+
 Intensity Flat-Field
 --------------------
 The required actions to set the TS and EMIR at the
