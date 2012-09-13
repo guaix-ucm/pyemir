@@ -12,41 +12,61 @@ position of the TS.
 
 Requeriments
 ++++++++++++
-+--------------------------+---------------+------------+-------------------------------+
-| Name                     | Type          | Default    | Meaning                       |
-+==========================+===============+============+===============================+
-| ``'master_bpm'``         | Product       | NA         |      Master BPM frame         |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_bias'``        | Product       | NA         | Master Bias frame             |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_dark'``        | Product       | NA         | Master Dark frame             |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'nonlinearity'``       | Product       | [1.0, 0.0] | Master non-linearity          |
-|                          |               |            | calibration                   |
-+--------------------------+---------------+------------+-------------------------------+
-|``'master_intensity_ff'`` | Product       | NA         | Master Intensity flat-field   |
-|                          |               |            | frame                         |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'extinction'``         | Parameter     | 0.0        | Mean atmospheric extinction   |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'sources'``            | Parameter     | None       | List of (x, y) coordinates to |
-|                          |               |            | measure FWHM                  |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'offsets'``            | Parameter     | None       | List of pairs of offsets      |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'iterations'``         | Parameter     | 4          | Iterations of the recipe      |
-+--------------------------+---------------+------------+-------------------------------+
+
+=========================== ========== =========== ==============================
+ Name                       Type       Default     Meaning                       
+=========================== ========== =========== ==============================
+``'master_bpm'``            Product     NA         Master BPM frame              
+``'master_bias'``           Product     NA         Master Bias frame             
+``'master_dark'``           Product     NA         Master Dark frame             
+``'nonlinearity'``          Product     [1.0, 0.0] Master non-linearity          
+                                                   calibration                   
+``'master_intensity_ff'``   Product     NA         Master Intensity flat-field   
+                                                   frame                         
+``'extinction'``            Parameter   0.0        Mean atmospheric extinction   
+``'sources'``               Parameter   None       List of (x, y) coordinates to 
+                                                   measure FWHM                  
+``'offsets'``               Parameter   None       List of pairs of offsets      
+``'iterations'``            Parameter   4          Iterations of the recipe      
+=========================== ========== =========== ==============================
 
 Procedure
 +++++++++
 
+The block of raw frames are processed in several stages. First, the frames
+are corrected from bias, dark, non-linearity and intensity flat field. For
+these steps we use the frames in the requeriments from ``'master_bpm'``
+to ``'master_intensity_ff'``
+
+.. note::
+   It is not clear the need to have a master_bias requirement, as it is
+   only needed in one readout mode
+
+If the parameter ``offsets`` is ``None``, the recipe computes
+offset information using the WCS stored in each frame FITS header. If it
+is defined, the information in ``offsets`` is used instead.
+
+The size of the result frame is computed using the sizes of the input
+frames and the offstes between them. New intermediate frames are
+created resizing the input frames.
+
+A sky flat is computed using the input frames. Each frame is scaled
+acording to its mean value and then they are combined together
+using a sigma clipping algorithm with low and high rejection limits
+of 3 sigma.  Each input frame is then divided by the sky flat. 
+
+Next, the sky level is estimated in each frame by obtaining the median.
+The sky value is then subtracted of each frame. The frames 
+(sky-subtracted, flat-fielded and resized) are then stacked. The frames
+are scaled acording to its airmass and the value of ``'extinction'``.
+The algorithm used to stack frames is :func:`numina.array.combine.quantileclip`
+with 10% points rejected at both ends of the distribution.
 
 Results
 +++++++
-
-The result of the Recipe is an object of type :class:`emir.recipes.StareImageRecipeResult`. 
-It contains two objects, a :class:`emir.dataproducts.FrameDataProduct` containing the result frame
-and a :class:`emir.dataproducts.SourcesCatalog` containing a catalog of sources.
+The result of the Recipe is an object of type :class:`~emir.recipes.StareImageRecipeResult`. 
+It contains two objects, a :class:`~emir.dataproducts.FrameDataProduct` containing the result frame
+and a :class:`~emir.dataproducts.SourcesCatalog` containing a catalog of sources.
 
 Nodded/Beam-switched images
 ---------------------------
@@ -62,35 +82,41 @@ for sky subtraction.
 Requeriments
 ++++++++++++
 
-+--------------------------+---------------+------------+-------------------------------+
-| Name                     | Type          | Default    | Meaning                       |
-+==========================+===============+============+===============================+
-| ``'master_bpm'``         | Product       | NA         |      Master BPM frame         |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_bias'``        | Product       | NA         | Master Bias frame             |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_dark'``        | Product       | NA         | Master Dark frame             |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'nonlinearity'``       | Product       | [1.0, 0.0] | Master non-linearity          |
-|                          |               |            | calibration                   |
-+--------------------------+---------------+------------+-------------------------------+
-|``'master_intensity_ff'`` | Product       | NA         | Master Intensity flat-field   |
-|                          |               |            | frame                         |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'extinction'``         | Parameter     | 0.0        | Mean atmospheric extinction   |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'sources'``            | Parameter     | None       | List of (x, y) coordinates to |
-|                          |               |            | measure FWHM                  |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'offsets'``            | Parameter     | None       | List of pairs of offsets      |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'iterations'``         | Parameter     | 4          | Iterations of the recipe      |
-+--------------------------+---------------+------------+-------------------------------+
++---------------------------+---------------+------------+-------------------------------+
+| Name                      | Type          | Default    | Meaning                       |
++===========================+===============+============+===============================+
+| ``'master_bpm'``          | Product       | NA         |      Master BPM frame         |
++---------------------------+---------------+------------+-------------------------------+
+| ``'master_bias'``         | Product       | NA         | Master Bias frame             |
++---------------------------+---------------+------------+-------------------------------+
+| ``'master_dark'``         | Product       | NA         | Master Dark frame             |
++---------------------------+---------------+------------+-------------------------------+
+| ``'nonlinearity'``        | Product       | [1.0, 0.0] | Master non-linearity          |
+|                           |               |            | calibration                   |
++---------------------------+---------------+------------+-------------------------------+
+| ``'master_intensity_ff'`` | Product       | NA         | Master Intensity flat-field   |
+|                           |               |            | frame                         |
++---------------------------+---------------+------------+-------------------------------+
+| ``'extinction'``          | Parameter     | 0.0        | Mean atmospheric extinction   |
++---------------------------+---------------+------------+-------------------------------+
+| ``'sources'``             | Parameter     | None       | List of (x, y) coordinates to |
+|                           |               |            | measure FWHM                  |
++---------------------------+---------------+------------+-------------------------------+
+| ``'offsets'``             | Parameter     | None       | List of pairs of offsets      |
++---------------------------+---------------+------------+-------------------------------+
+| ``'iterations'``          | Parameter     | 4          | Iterations of the recipe      |
++---------------------------+---------------+------------+-------------------------------+
 
 
 
 Procedure
 +++++++++
+
+Results
++++++++
+The result of the Recipe is an object of type :class:`~emir.recipes.NBImageRecipeResult`. 
+It contains two objects, a :class:`~emir.dataproducts.FrameDataProduct` containing the result frame
+and a :class:`~emir.dataproducts.SourcesCatalog` containing a catalog of sources.
 
 Dithered images
 ---------------
@@ -109,51 +135,129 @@ from the image series.
 
 Requeriments
 ++++++++++++
-+------------------------------+---------------+------------------+-------------------------------+
-| Name                         | Type          | Default          | Meaning                       |
-+==============================+===============+==================+===============================+
-| ``'master_bpm'``             | Product       | NA               |      Master BPM frame         |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'master_bias'``            | Product       | NA               | Master Bias frame             |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'master_dark'``            | Product       | NA               | Master Dark frame             |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'nonlinearity'``           | Product       | [1.0, 0.0]       | Master non-linearity          |
-|                              |               |                  | calibration                   |
-+------------------------------+---------------+------------------+-------------------------------+
-|``'master_intensity_ff'``     | Product       | NA               | Master Intensity flat-field   |
-|                              |               |                  | frame                         |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'extinction'``             | Parameter     | 0.0              | Mean atmospheric extinction   |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'sources'``                | Parameter     | None             | List of (x, y) coordinates to |
-|                              |               |                  | measure FWHM                  |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'offsets'``                | Parameter     | None             | List of pairs of offsets      |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'iterations'``             | Parameter     | 4                | Iterations of the recipe      |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'sky_images'``             | Parameter     | 5                | Images used to estimate the   | 
-|                              |               |                  | background before and after   |
-|                              |               |                  | current image                 |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'sky_images_sep_time'``    | Parameter     | 10               | Maximum separation time       |
-|                              |               |                  | between consecutive sky images| 
-|                              |               |                  | in minutes                    |
-+------------------------------+---------------+------------------+-------------------------------+
-|``'check_photometry_levels'`` | Parameter     | [0.5, 0.8]       | Levels to check the flux of   |
-|                              |               |                  | the objects                   |
-+------------------------------+---------------+------------------+-------------------------------+
-|``'chec_photometry_actions'`` | Parameter     | ['warn', 'warn', | Actions to take on images     |
-|                              |               | 'default']       |                               |     
-+------------------------------+---------------+------------------+-------------------------------+
++-------------------------------+---------------+------------------+-------------------------------+
+| Name                          | Type          | Default          | Meaning                       |
++===============================+===============+==================+===============================+
+| ``'master_bpm'``              | Product       | NA               |      Master BPM frame         |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'master_bias'``             | Product       | NA               | Master Bias frame             |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'master_dark'``             | Product       | NA               | Master Dark frame             |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'nonlinearity'``            | Product       | [1.0, 0.0]       | Master non-linearity          |
+|                               |               |                  | calibration                   |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'master_intensity_ff'``     | Product       | NA               | Master Intensity flat-field   |
+|                               |               |                  | frame                         |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'extinction'``              | Parameter     | 0.0              | Mean atmospheric extinction   |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'sources'``                 | Parameter     | None             | List of (x, y) coordinates to |
+|                               |               |                  | measure FWHM                  |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'offsets'``                 | Parameter     | None             | List of pairs of offsets      |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'iterations'``              | Parameter     | 4                | Iterations of the recipe      |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'sky_images'``              | Parameter     | 5                | Images used to estimate the   | 
+|                               |               |                  | background before and after   |
+|                               |               |                  | current image                 |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'sky_images_sep_time'``     | Parameter     | 10               | Maximum separation time       |
+|                               |               |                  | between consecutive sky images| 
+|                               |               |                  | in minutes                    |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'check_photometry_levels'`` | Parameter     | [0.5, 0.8]       | Levels to check the flux of   |
+|                               |               |                  | the objects                   |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'chec_photometry_actions'`` | Parameter     | ['warn', 'warn', | Actions to take on images     |
+|                               |               | 'default']       |                               |     
++-------------------------------+---------------+------------------+-------------------------------+
 
 
 Procedure
 +++++++++
 
-Images are corrected from dark, non-linearity and flat. Then, an iterative
-process starts
+The block of raw frames are processed in several stages. First, the frames
+are corrected from bias, dark, non-linearity and intensity flat field. For
+these steps we use the frames in the requeriments from ``'master_bpm'``
+to ``'master_intensity_ff'``
+
+.. note::
+   It is not clear the need to have a master_bias requirement, as it is
+   only needed in one readout mode
+
+Then, an iterative process starts. The number of iterations is controlled by the
+parameter ``'iterations'``.
+
+Base step
+'''''''''
+Offsets between the frames are obtained. If the parameter ``offsets`` 
+is ``None``, the recipe computes
+offset information using the WCS stored in each frame FITS header. If it
+is defined, the information in ``offsets`` is used instead.
+
+The size of the result frame is computed using the sizes of the input
+frames and the offstes between them. New intermediate frames are
+created resizing the input frames.
+
+A sky flat is computed using the input frames. Each frame is scaled
+acording to its mean value and then they are combined together
+using a sigma clipping algorithm with low and high rejection limits
+of 3 sigma.  Each input frame is then divided by the sky flat. 
+
+Next, the sky level is estimated in each frame by obtaining the median.
+The sky value is then subtracted of each frame. The frames 
+(sky-subtracted, flat-fielded and resized) are then stacked. The frames
+are scaled acording to its airmass and the value of ``'extinction'``.
+The algorithm used to stack frames is :func:`numina.array.combine.quantileclip`
+with 10% points rejected at both ends of the distribution.
+
+Check step
+''''''''''
+In the next step, several checkings are performed in the result image.
+
+The centroids of bright objects are compared between the input
+frames and the result frame. This test allows to check if the
+offsets are correct and to refine the offsets.
+
+The flux of bright objects is compared between the input frames
+and the result frame. This test allows to find frames with
+abnormal illumination (due to clouds, for eample). The 
+parameter ``'check_photometry_levels'`` mark different categories
+of clasification of the frames acording the fraction of the median
+flux level of the frames. The parameter ``'check_photometry_actions'``
+allow the user to select the action to take in each category.
+The allowed actions are ``'default'`, ``'warn'`` and ``'reject'``.
+
+.. warning::
+   The offset-recompute routine is not yet implemented
+
+Full reduction step
+'''''''''''''''''''
+Using the latest available result image (in the first iteration, that of the base step), 
+a segmentation mask is computed.
+The segmentation mask is used to avoid objects when computing a new sky flat.
+With the frames corrected with the new sky flat, the sky level is estimated.
+For each frame, we use frames before and after in the series to compute a
+median sky, that is subtracted from each frame. We use a number of 
+``'sky_images'`` frames before and after and never separated more than 
+ ``'sky_images_sep_time'`` minutes.
+
+The frames (sky-subtracted, flat-fielded and resized) are then stacked. The frames
+are scaled acording to its airmass and the value of ``'extinction'``.
+The algorithm used to stack frames is :func:`numina.array.combine.quantileclip`
+with 10% points rejected at both ends of the distribution.
+
+This last step is repeated ``'iterations'`` times, the segmentation mask computed
+from the result of the previous step.
+
+
+Results
++++++++
+The result of the Recipe is an object of type :class:`~emir.recipes.DitheredImageRecipeResult`. 
+It contains two objects, a :class:`~emir.dataproducts.FrameDataProduct` containing the result frame
+and a :class:`~emir.dataproducts.SourcesCatalog` containing a catalog of sources.
 
 Micro-dithered images
 ---------------------
@@ -174,49 +278,48 @@ resulting images and not valid for sky or superflat images.
 Requeriments
 ++++++++++++
 
-+------------------------------+---------------+------------------+-------------------------------+
-| Name                         | Type          | Default          | Meaning                       |
-+==============================+===============+==================+===============================+
-| ``'master_bpm'``             | Product       | NA               |      Master BPM frame         |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'master_bias'``            | Product       | NA               | Master Bias frame             |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'master_dark'``            | Product       | NA               | Master Dark frame             |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'nonlinearity'``           | Product       | [1.0, 0.0]       | Master non-linearity          |
-|                              |               |                  | calibration                   |
-+------------------------------+---------------+------------------+-------------------------------+
-|``'master_intensity_ff'``     | Product       | NA               | Master Intensity flat-field   |
-|                              |               |                  | frame                         |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'extinction'``             | Parameter     | 0.0              | Mean atmospheric extinction   |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'sources'``                | Parameter     | None             | List of (x, y) coordinates to |
-|                              |               |                  | measure FWHM                  |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'offsets'``                | Parameter     | None             | List of pairs of offsets      |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'iterations'``             | Parameter     | 4                | Iterations of the recipe      |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'sky_images'``             | Parameter     | 5                | Images used to estimate the   | 
-|                              |               |                  | background before and after   |
-|                              |               |                  | current image                 |
-+------------------------------+---------------+------------------+-------------------------------+
-| ``'sky_images_sep_time'``    | Parameter     | 10               | Maximum separation time       |
-|                              |               |                  | between consecutive sky images| 
-|                              |               |                  | in minutes                    |
-+------------------------------+---------------+------------------+-------------------------------+
-|``'check_photometry_levels'`` | Parameter     | [0.5, 0.8]       | Levels to check the flux of   |
-|                              |               |                  | the objects                   |
-+------------------------------+---------------+------------------+-------------------------------+
-|``'chec_photometry_actions'`` | Parameter     | ['warn', 'warn', | Actions to take on images     |
-|                              |               | 'default']       |                               |     
-+------------------------------+---------------+------------------+-------------------------------+
-|``'subpixelization'``         | Parameter     | 4                | Number of subdivision of each |
-|                              |               |                  | pixel side                    |     
-+------------------------------+---------------+------------------+-------------------------------+
-|``'window'``                  | Parameter     | None             | Region of interest            |
-+------------------------------+---------------+------------------+-------------------------------+
++-------------------------------+---------------+------------------+-------------------------------+
+| Name                          | Type          | Default          | Meaning                       |
++===============================+===============+==================+===============================+
+| ``'master_bpm'``              | Product       | NA               |      Master BPM frame         |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'master_bias'``             | Product       | NA               | Master Bias frame             |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'master_dark'``             | Product       | NA               | Master Dark frame             |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'nonlinearity'``            | Product       | [1.0, 0.0]       | Master non-linearity          |
+|                               |               |                  | calibration                   |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'master_intensity_ff'``     | Product       | NA               | Master Intensity flat-field   |
+|                               |               |                  | frame                         |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'extinction'``              | Parameter     | 0.0              | Mean atmospheric extinction   |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'sources'``                 | Parameter     | None             | List of (x, y) coordinates to |
+|                               |               |                  | measure FWHM                  |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'offsets'``                 | Parameter     | None             | List of pairs of offsets      |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'iterations'``              | Parameter     | 4                | Iterations of the recipe      |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'sky_images'``              | Parameter     | 5                | Images used to estimate the   | 
+|                               |               |                  | background before and after   |
+|                               |               |                  | current image                 |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'sky_images_sep_time'``     | Parameter     | 10               | Maximum separation time       |
+|                               |               |                  | between consecutive sky images| 
+|                               |               |                  | in minutes                    |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'check_photometry_levels'`` | Parameter     | [0.5, 0.8]       | Levels to check the flux of   |
+|                               |               |                  | the objects                   |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'chec_photometry_actions'`` | Parameter     | ['warn', 'warn', | Actions to take on images     |
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'subpixelization'``         | Parameter     | 4                | Number of subdivision of each |
+|                               |               |                  | pixel side                    |     
++-------------------------------+---------------+------------------+-------------------------------+
+| ``'window'``                  | Parameter     | None             | Region of interest            |
++-------------------------------+---------------+------------------+-------------------------------+
 
 
 Procedure
