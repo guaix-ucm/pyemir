@@ -6,6 +6,7 @@ Stare Image
 -----------
 
 :Mode: Stare Image
+:Recipe class: :class:`~emir.recipes.StareImageRecipeResult`.
 
 The effect of recording images of the sky in a given pointing 
 position of the TS.
@@ -252,7 +253,7 @@ Requeriments
 |                               |               |                  | the objects                   |
 +-------------------------------+---------------+------------------+-------------------------------+
 | ``'chec_photometry_actions'`` | Parameter     | ['warn', 'warn', | Actions to take on images     |
-|                               |               | 'default']       |                               |     
+|                               |               | 'default']       |                               |
 +-------------------------------+---------------+------------------+-------------------------------+
 
 
@@ -395,6 +396,7 @@ Requeriments
 |                               |               |                  | the objects                   |
 +-------------------------------+---------------+------------------+-------------------------------+
 | ``'chec_photometry_actions'`` | Parameter     | ['warn', 'warn', | Actions to take on images     |
+|                               |               | 'default']       |                               |
 +-------------------------------+---------------+------------------+-------------------------------+
 | ``'subpixelization'``         | Parameter     | 4                | Number of subdivision of each |
 |                               |               |                  | pixel side                    |
@@ -405,4 +407,15 @@ Requeriments
 
 Procedure
 +++++++++
+
+The procedure followed by this recipe is equivalent to Dithered images. They differ in the aspects
+controlled by the parameters ``'subpixelization'`` and  ``'window'``. If ``'window'`` is different
+to ``None``, the frames are clipped to the size ``'window'``. Each pixel of the input frames
+is subdivided in ``'subpixelization'`` x ``'subpixelization'`` pixels. 
+
+Results
++++++++
+The result of the Recipe is an object of type :class:`~emir.recipes.MicroDitheredImageRecipeResult`. 
+It contains two objects, a :class:`~emir.dataproducts.FrameDataProduct` containing the result frame
+and a :class:`~emir.dataproducts.SourcesCatalog` containing a catalog of sources.
 
