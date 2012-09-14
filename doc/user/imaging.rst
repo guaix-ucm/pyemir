@@ -111,6 +111,87 @@ Requeriments
 
 Procedure
 +++++++++
+The block of raw frames contains both sky and target images. They are treated differently at some
+stages. Sky frames have ``IMGTYP = 'SKY'`` in their FITS headers. Target frames have 
+``IMGTYP = 'TARGET'``. 
+
+All the frames are corrected from bias, dark, non-linearity and intensity flat field. For
+these steps we use the frames in the requeriments from ``'master_bpm'``
+to ``'master_intensity_ff'``
+
+.. note::
+   It is not clear the need to have a master_bias requirement, as it is
+   only needed in one readout mode
+
+Then, an iterative process starts. The number of iterations is controlled by the
+parameter ``'iterations'``.
+
+Base step
+'''''''''
+Offsets between the target frames are obtained. If the parameter ``offsets`` 
+is ``None``, the recipe computes
+offset information using the WCS stored in each frame FITS header. If it
+is defined, the information in ``offsets`` is used instead.
+
+The size of the result frame is computed using the sizes of the target
+frames and the offsets between them. New intermediate frames are
+created resizing the target input frames.
+
+A sky flat is computed using the input sky frames. Each sky frame is scaled
+acording to its mean value and then they are combined together
+using a sigma clipping algorithm with low and high rejection limits
+of 3 sigma.  Each input target frame is then divided by the sky flat. 
+
+Next, the sky level is estimated in each frame by obtaining the median of the
+nearest sky image.
+The sky value is then subtracted of each frame. The target frames 
+(sky-subtracted, flat-fielded and resized) are then stacked. The frames
+are scaled acording to its airmass and the value of ``'extinction'``.
+The algorithm used to stack frames is :func:`numina.array.combine.quantileclip`
+with 10% points rejected at both ends of the distribution.
+
+Check step
+''''''''''
+In the next step, several checkings are performed in the result image.
+
+The centroids of bright objects are compared between the input target
+frames and the result frame. This test allows to check if the
+offsets are correct and to refine the offsets.
+
+The flux of bright objects is compared between the input target frames
+and the result frame. This test allows to find target frames with
+abnormal illumination (due to clouds, for example). The 
+parameter ``'check_photometry_levels'`` mark different categories
+of clasification of the frames acording the fraction of the median
+flux level of the frames. The parameter ``'check_photometry_actions'``
+allow the user to select the action to take in each category.
+The allowed actions are ``'default'`, ``'warn'`` and ``'reject'``.
+
+.. warning::
+   The offset-recompute routine is not yet implemented
+
+Full reduction step
+'''''''''''''''''''
+Using the latest available result image (in the first iteration, that of the base step), 
+a segmentation mask is computed. This segmentation mask applies to target frames only.
+
+.. note::
+   A segmentation mask for each **sky frame** is being considered
+
+The sky flat is applied to the target frames.
+
+The sky level for target frames is estimated using the median value of the nearest
+sky frames in the observed series. We use a number of 
+``'sky_images'`` frames before and after and never separated more than 
+``'sky_images_sep_time'`` minutes.
+
+The target frames (sky-subtracted, flat-fielded and resized) are then stacked. The frames
+are scaled acording to its airmass and the value of ``'extinction'``.
+The algorithm used to stack frames is :func:`numina.array.combine.quantileclip`
+with 10% points rejected at both ends of the distribution.
+
+This last step is repeated ``'iterations'`` times, the segmentation mask computed
+from the result of the previous step.
 
 Results
 +++++++
@@ -242,7 +323,7 @@ With the frames corrected with the new sky flat, the sky level is estimated.
 For each frame, we use frames before and after in the series to compute a
 median sky, that is subtracted from each frame. We use a number of 
 ``'sky_images'`` frames before and after and never separated more than 
- ``'sky_images_sep_time'`` minutes.
+``'sky_images_sep_time'`` minutes.
 
 The frames (sky-subtracted, flat-fielded and resized) are then stacked. The frames
 are scaled acording to its airmass and the value of ``'extinction'``.
@@ -316,7 +397,7 @@ Requeriments
 | ``'chec_photometry_actions'`` | Parameter     | ['warn', 'warn', | Actions to take on images     |
 +-------------------------------+---------------+------------------+-------------------------------+
 | ``'subpixelization'``         | Parameter     | 4                | Number of subdivision of each |
-|                               |               |                  | pixel side                    |     
+|                               |               |                  | pixel side                    |
 +-------------------------------+---------------+------------------+-------------------------------+
 | ``'window'``                  | Parameter     | None             | Region of interest            |
 +-------------------------------+---------------+------------------+-------------------------------+
