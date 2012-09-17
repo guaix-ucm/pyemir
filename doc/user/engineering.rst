@@ -7,6 +7,13 @@ unit.
 
 Cosmetics
 +++++++++
+
+:Mode: Engineering
+:Recipe class: :class:`~emir.recipes.CosmeticsRecipe`
+:Input class: :class:`~emir.recipes.CosmeticsRecipeInput`
+:Result class: :class:`~emir.recipes.CosmeticsRecipeResult`
+
+
 Detector cosmetics include: dead and hot pixels, 
 inhomogenities in pixel-to-pixel response, stripes pattern and
 bias in the least significative bit.
@@ -49,20 +56,8 @@ mask.
 .. note::
     The procedure is similar to the algorithm of the IRAF task `ccdmask`
 
-The recipe are that created the cosmetic mask is
-:class:`emir.recipes.CosmeticsRecipe`
-
-:mode: Engineering
-:requires:
-    -  lowercut = Parameter(default=4.0, Values below this sigma level are flagged as dead pixels)
-    -  uppercut = parameter(default=4.0, Values above this sigma level are flagged as hot pixels)
-:provides:  
-    - ratio = DataFrame(Normalized ratio of the two flat images)
-    - mask = DataFrame(Frame with zero for valid pixel and non zero for invalid)
-
-
 Requeriments
-++++++++++++
+------------
 
 +--------------------------+---------------+------------+-------------------------------+
 | Name                     | Type          | Default    | Meaning                       |
@@ -73,6 +68,20 @@ Requeriments
 | ``'uppercut'``           | Parameter     | 4.0        | Values above this sigma level |
 |                          |               |            | are flagged as hot pixels     |
 +--------------------------+---------------+------------+-------------------------------+
+
+Products
+--------
+``'ratio'`` contains the normalized ratio of the two flat images.
+``'mask'`` contains a frame with zero for valid pixels and non zero for invalid.
+
+============ ============================================== 
+ Name        Type       
+============ ============================================== 
+``'ratio'``  :class:`~emir.dataproducts.EmirDataFrame`
+``'mask'``   :class:`~emir.dataproducts.EmirDataFrame`
+============ ============================================== 
+
+
 
 
 
