@@ -6,7 +6,9 @@ Stare Image
 -----------
 
 :Mode: Stare Image
-:Recipe class: :class:`~emir.recipes.StareImageRecipeResult`.
+:Recipe class: :class:`~emir.recipes.StareImageRecipe`
+:Input class: :class:`~emir.recipes.StareImageRecipeInput`
+:Result class: :class:`~emir.recipes.StareImageRecipeResult`
 
 The effect of recording images of the sky in a given pointing 
 position of the TS.
@@ -73,6 +75,9 @@ Nodded/Beam-switched images
 ---------------------------
 
 :Mode: Nodded/Beam-switched images
+:Recipe class: :class:`~emir.recipes.NBImageRecipe`
+:Input class: :class:`~emir.recipes.NBImageRecipeInput`
+:Result class: :class:`~emir.recipes.NBImageRecipeResult`
 
 The effect of recording a series of stare images, with the same
 acquisition parameters, and taken by pointing the TS in cycles
@@ -204,6 +209,9 @@ Dithered images
 ---------------
 
 :Mode: Dithered images
+:Recipe class: :class:`~emir.recipes.DitheredImageRecipe`
+:Input class: :class:`~emir.recipes.DitheredImageRecipeInput`
+:Result class: :class:`~emir.recipes.DitheredImageRecipeResult`
 
 The effect of recording a series of stare images, with the same
 acquisition parameters, and taken by pointing to a number of
@@ -345,6 +353,9 @@ Micro-dithered images
 ---------------------
 
 :Mode: Micro-dithered images
+:Recipe class: :class:`~emir.recipes.MicroDitheredImageRecipe`
+:Input class: :class:`~emir.recipes.MicroDitheredImageRecipeInput`
+:Result class: :class:`~emir.recipes.MicroDitheredImageRecipeResult`
 
 The effect of recording a series of stare images, with the same
 acquisition parameters, and taken by pointing to a number of
