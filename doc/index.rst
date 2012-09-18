@@ -17,7 +17,6 @@ PyEmir reference guide: :ref:`reference`
    :maxdepth: 1
 
    user/index 
-   highlevel
    reference/index
    glossary
 
