@@ -1,7 +1,7 @@
 
-===================
+*******************
 PyEmir Installation
-===================
+*******************
 
 This is PyEmir, the data reduction pipeline for EMIR. 
 
