@@ -15,4 +15,5 @@ the recipe :class:`~emir.recipes.DarkRecipe`, which in turn requires a
 .. toctree::
 
    keywords.rst
+   rawimages
    images
