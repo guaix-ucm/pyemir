@@ -111,11 +111,11 @@ def axis_fowler(data, badpix, img, var, nmap, mask, hsize, saturation, blank=0):
             mask[...] = MASK_SATURATION
         elif npix == 1:
             img[...] = mm.mean()
-            var[...] = 0
+            var[...] = blank
             mask[...] = MASK_GOOD
         else:
             img[...] = mm.mean()
-            var[...] = mm.var()
+            var[...] = mm.var() / npix
             mask[...] = MASK_GOOD
 
 
