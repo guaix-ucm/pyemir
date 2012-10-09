@@ -17,43 +17,51 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Tests for Fowler readout mode.'''
+'''Tests for RAMP readout mode.'''
 
 import unittest
 
 import numpy
 import pyfits
 
-from ..preprocess import axis_fowler, preprocess_fowler
+from ..preprocess import axis_ramp, preprocess_ramp
 
-class FowlerReadoutAxisTestCase(unittest.TestCase):
+class RampReadoutAxisTestCase(unittest.TestCase):
     
     def setUp(self):
         self.emptybp = numpy.zeros((10,), dtype='uint8')
-        self.data = numpy.zeros((10,), dtype='uint16')
+        self.data = numpy.arange(10, dtype='uint16')
         
         self.mask = numpy.zeros((10,), dtype='uint8')
         self.nmap = numpy.zeros((10,), dtype='uint8')
+        self.crmask = numpy.zeros((10,), dtype='uint8')
 
         self.img = numpy.zeros((10,))
         self.var = numpy.zeros((10,))
         self.saturation = 65536
         self.hsize = 5
+        self.dt = 1.0
+        self.gain = 1.0
+        self.ron = 1.0
+        self.nsig = 4.0
         self.blank = 0
-    
-    def test_saturation(self):        
-        '''Test we count correctly saturated pixels in Fowler mode.'''
+
+    def test_saturation0(self):        
+        '''Test we count correctly saturated pixels in RAMP mode.'''
         
         MASK_SATURATION = 3 
         MASK_GOOD = 0
     
-        # 5 to 9 are saturated, no points 
-        self.data[5:] = 50000 #- 32768
+        # Nno points 
+        self.data[:] = 50000 #- 32768
         saturation = 40000 #- 32767
         
-        axis_fowler(self.data, self.emptybp, self.img, self.var, self.nmap, 
-                    self.mask, self.hsize, 
-                    saturation, blank=self.blank)
+        axis_ramp(self.data, self.emptybp, self.img, self.var, self.nmap, 
+                    self.mask, self.crmask, 
+                    saturation, 
+                    self.dt, self.gain, self.ron, 
+                    self.nsig, 
+                    blank=self.blank)
 
         for nn in self.nmap:
             self.assertEqual(nn, 0)
@@ -67,21 +75,25 @@ class FowlerReadoutAxisTestCase(unittest.TestCase):
         for v in self.img:
             self.assertEqual(v, self.blank)
             
-            
-        # 5 and 6 are OK, 7,8 and 9 are saturated, 2 points
-        val = 400
+
+    def test_saturation1(self):        
+        '''Test we count correctly saturated pixels in RAMP mode.'''
         
-        self.data[7:] = 50000
-        self.data[:5] = 0
-        self.data[5:7] = 400 
+        MASK_SATURATION = 3 
+        MASK_GOOD = 0
+            
+        saturation = 50000
+        self.data[7:] = saturation 
         
-        axis_fowler(self.data, self.emptybp, self.img, self.var, self.nmap, 
-                    self.mask, self.hsize, 
-                    saturation, blank=self.blank)            
-            
-            
+        axis_ramp(self.data, self.emptybp, self.img, self.var, self.nmap, 
+                    self.mask, self.crmask, 
+                    saturation, 
+                    self.dt, self.gain, self.ron, 
+                    self.nsig, 
+                    blank=self.blank)
+        
         for nn in self.nmap:
-            self.assertEqual(nn, 2)
+            self.assertEqual(nn, 7)
             
         for n in self.mask:
             self.assertEqual(n, MASK_GOOD)
@@ -90,16 +102,20 @@ class FowlerReadoutAxisTestCase(unittest.TestCase):
             self.assertEqual(v, 0)
             
         for v in self.img:
-            self.assertEqual(v, val)
+            self.assertEqual(v, 1)
+            
             
         
     def test_badpixel(self):
-        '''Test we ignore badpixels in Fowler mode.'''
+        '''Test we ignore badpixels in RAMP mode.'''
         self.emptybp[...] = 1
 
-        axis_fowler(self.data, self.emptybp, self.img, self.var, self.nmap, 
-                    self.mask, self.hsize, 
-                    self.saturation, blank=self.blank)
+        axis_ramp(self.data, self.emptybp, self.img, self.var, self.nmap, 
+                    self.mask, self.crmask, 
+                    self.saturation, 
+                    self.dt, self.gain, self.ron, 
+                    self.nsig, 
+                    blank=self.blank)
         
         for nn in self.nmap:
             self.assertEqual(nn, 0)
@@ -114,18 +130,20 @@ class FowlerReadoutAxisTestCase(unittest.TestCase):
             self.assertEqual(v, self.blank)
             
             
-    def test_results(self):
-        '''Test we obtain correct values in Fowler mode'''
+    def test_results1(self):
+        '''Test we obtain correct values in RAMP mode'''
         
-        self.data = numpy.array([3,4,5,6,7, 403, 404, 405, 406, 407])
-        
-        axis_fowler(self.data, self.emptybp, self.img, self.var, self.nmap, 
-                    self.mask, self.hsize, 
-                    self.saturation, blank=self.blank)
-            
-        
+        self.data = numpy.arange(10, dtype='int16')
+
+        axis_ramp(self.data, self.emptybp, self.img, self.var, self.nmap, 
+                    self.mask, self.crmask, 
+                    self.saturation, 
+                    self.dt, self.gain, self.ron, 
+                    self.nsig, 
+                    blank=self.blank)        
+                    
         for nn in self.nmap:
-            self.assertEqual(nn, 5)
+            self.assertEqual(nn, 10)
             
         for n in self.mask:
             self.assertEqual(n, 0)
@@ -134,30 +152,32 @@ class FowlerReadoutAxisTestCase(unittest.TestCase):
             self.assertEqual(v, 0)
             
         for v in self.img:
-            self.assertEqual(v, 400)
+            self.assertEqual(v, 1.0)
             
-            
-        self.data = numpy.array([2343,2454, 2578, 2661,2709, 24311, 24445, 
-                                 24405, 24612, 24707])
+    def test_results2(self):
+        '''Test we obtain correct values in RAMP mode'''            
+        self.data = numpy.arange(10, dtype='int16')
         
-        axis_fowler(self.data, self.emptybp, self.img, self.var, self.nmap, 
-                    self.mask, self.hsize, 
-                    self.saturation, blank=self.blank)
-            
-        
+        axis_ramp(self.data, self.emptybp, self.img, self.var, self.nmap, 
+                self.mask, self.crmask, 
+                self.saturation, 
+                self.dt, self.gain, self.ron, 
+                self.nsig, 
+                blank=self.blank)
+                
         for nn in self.nmap:
-            self.assertEqual(nn, 5)
+            self.assertEqual(nn, 10)
             
         for n in self.mask:
             self.assertEqual(n, 0)
         
         for v in self.var:
-            self.assertEqual(v, 775.76)
+            self.assertEqual(v, 0.0)
             
         for v in self.img:
-            self.assertEqual(v, 21947.0)
+            self.assertEqual(v, 1.0)
             
-class FowlerReadoutFrameTestCase(unittest.TestCase):
+class RampReadoutFrameTestCase(unittest.TestCase):
     def setUp(self):
         self.frame = None
         
@@ -170,33 +190,34 @@ class FowlerReadoutFrameTestCase(unittest.TestCase):
         hdu.data = self.data
 
         tbcr = 100
-        elapsed = 101
+        elapsed = 102
 
+        hdu.header.update('readsamp', 10)
         hdu.header.update('exptime', tbcr)
         hdu.header.update('elapsed', elapsed)
         hdu.header.update('readproc', False)
-        hdu.header.update('readmode', 'FOWLER')
+        hdu.header.update('readmode', 'RAMP')
 
         self.frame = pyfits.HDUList([hdu])
         
     def test_readmode_keyword(self):
-        '''Test we raise ValueError if readmode is not FOWLER'''
+        '''Test we raise ValueError if readmode is not RAMP'''
         #preprocess_fowler(frame, saturation=65536, badpixels=None, blank=0):
         
-        self.frame[0].header['readmode'] = 'NOFOWLER'
+        self.frame[0].header['readmode'] = 'NORAMP'
         
-        self.assertRaises(ValueError, preprocess_fowler, self.frame)
+        self.assertRaises(ValueError, preprocess_ramp, self.frame)
         
     def  test_output(self):
-        '''Test Fowler output'''
+        '''Test RAMP output'''
         
-        result = preprocess_fowler(self.frame)
+        result = preprocess_ramp(self.frame)
         
         self.assertIsInstance(result, pyfits.HDUList)
         
         nex = len(result)
         
-        self.assertEqual(nex, 4, 'The number of extensions is not equal to 4')
+        self.assertEqual(nex, 5, 'The number of extensions is not equal to 5')
         
         # first extension
         ext = result[0]
@@ -215,6 +236,11 @@ class FowlerReadoutFrameTestCase(unittest.TestCase):
         ext = result[3]
         self.assertIsInstance(ext, pyfits.ImageHDU)
         self.assertEqual(ext.header.get('extname'), 'MASK')
+        self.assertEqual(ext.data.dtype, numpy.dtype('uint8'))
+        # 5th extension
+        ext = result[4]
+        self.assertIsInstance(ext, pyfits.ImageHDU)
+        self.assertEqual(ext.header.get('extname'), 'CRMASK')
         self.assertEqual(ext.data.dtype, numpy.dtype('uint8'))
         
         

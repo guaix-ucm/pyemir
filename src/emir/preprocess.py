@@ -21,6 +21,7 @@
 
 import pyfits
 import numpy
+import math
 
 def fits_wrapper(frame):
     if isinstance(frame, basestring):
@@ -123,6 +124,35 @@ def axis_fowler(data, badpix, img, var, nmap, mask, hsize, saturation, blank=0):
             mask[...] = MASK_GOOD
 
 
+def axis_ramp(data, badpix, img, var, nmap, mask, crmask, 
+              saturation, dt, gain, ron, nsig, blank=0):
+    MASK_SATURATION = 3 
+    MASK_GOOD = 0
+
+    if badpix[0] != MASK_GOOD:
+        img[...] = blank
+        var[...] = blank
+        mask[...] = badpix[0]
+    else:
+        mm = data[data < saturation]
+        print 'axis ramp',mm
+        if len(mm) <= 1:
+            img[...] = blank
+            var[...] = blank
+            mask[...] = MASK_SATURATION
+        else:
+            v, vr, n, glt = ramp(mm, saturation, dt, gain, ron, nsig)
+            print v
+            img[...] = v
+            print img[0]
+            var[...] = vr
+            mask[...] = MASK_GOOD
+            nmap[...] = n
+            # If there is a pixel in the list of CR, put it in the crmask
+            if glt:                
+                crmask[...] = glt[0]
+
+
 def loopover_fowler(data, badpixels, saturation, hsize, blank=0):
     '''Loop over the 3d array applying Fowler processing.'''
     imgfin = None
@@ -161,5 +191,126 @@ def loopover_fowler(data, badpixels, saturation, hsize, blank=0):
     return tuple(it.operands[i] for i in range(2, 6))
 
 
-def preprocess_ramp(frame):
-    pass
+def preprocess_ramp(frame, saturation=65000, badpixels=None, blank=0, 
+                    nsig=4.0, gain=1.0, ron=0.0):
+    if frame[0].header['readmode'] != 'RAMP':
+        raise ValueError('Frame is not in RAMP mode')
+
+    elapsed = frame[0].header['elapsed']
+    nsamples = frame[0].header['readsamp']
+ 
+    if badpixels is None:
+        badpixels = numpy.zeros(frame[0].data[..., 0].shape, dtype='uint8')
+
+    # time between samples
+    dt = elapsed / nsamples
+
+    img, var, nmap, mask, crmask = loopover_ramp(frame[0].data, badpixels, saturation, dt, gain, ron, nsig)
+
+    frame[0].data = img
+    frame[0].header['READPROC'] = True
+    varhdu = pyfits.ImageHDU(var)
+    varhdu.update_ext_name('Variance')
+    frame.append(varhdu)
+    nmap = pyfits.ImageHDU(nmap)
+    nmap.update_ext_name('MAP')
+    frame.append(nmap)
+    nmask = pyfits.ImageHDU(mask)
+    nmask.update_ext_name('MASK')
+    frame.append(nmask)
+    crmaskhdu = pyfits.ImageHDU(crmask)
+    crmaskhdu.update_ext_name('CRMASK')
+    frame.append(crmaskhdu)
+    return frame
+
+def loopover_ramp(data, badpixels, saturation, dt, gain, ron, nsig, blank=0):
+
+    imgfin = None
+    varfin = None
+
+#    imgfin = numpy.empty(badpixels.shape, dtype='>i2') # int16, bigendian
+#    varfin = numpy.empty(badpixels.shape, dtype='>i2') # int16, bigendian
+
+    ncrs = numpy.empty(badpixels.shape, dtype='>u1') # uint8, bigendian
+    nmask = numpy.empty(badpixels.shape, dtype='>u1') # uint8, bigendian
+    npixmask = numpy.empty(badpixels.shape, dtype='>u1') # uint8, bigendian
+
+    it = numpy.nditer([data, badpixels, imgfin, varfin, npixmask, nmask, ncrs], 
+                flags=['reduce_ok', 'external_loop',
+                    'buffered', 'delay_bufalloc'],
+                    op_flags=[['readonly'], ['readonly', 'no_broadcast'], 
+                            ['readwrite', 'allocate'], 
+                            ['readwrite', 'allocate'],
+                            ['readwrite', 'allocate'], 
+                            ['readwrite', 'allocate'],
+                            ['readwrite', 'allocate'], 
+                            ],
+                    op_axes=[None,
+                            [0,1,-1], 
+                            [0,1,-1], 
+                            [0,1,-1],
+                            [0,1,-1], 
+                            [0,1,-1], 
+                            [0,1,-1]
+                           ])
+    for i in range(2, 7):
+        it.operands[i][...] = 0
+    it.reset()
+
+    for x, badpix, img, var, nmap, mask, crmask in it:
+        axis_ramp(x, badpix, img, var, nmap, mask, crmask, 
+              saturation, dt, gain, ron, nsig, blank=blank)
+        
+
+    # Building final frame
+
+    return tuple(it.operands[i] for i in range(2, 7))
+
+def ramp(data, saturation, dt, gain, ron, nsig):
+    nsdata = data[data < saturation]
+
+# Finding glitches in the pixels
+    intervals, glitches = rglitches(nsdata, gain=gain, ron=ron, nsig=nsig)
+    vals = numpy.asarray([slope(nsdata[intls], dt=dt, ron=ron) for intls in intervals if len(nsdata[intls]) >= 2])
+    weights = (1.0 / vals[:,1])
+    average = numpy.average(vals[:,0], weights=weights)
+    variance = numpy.dot(weights, (vals[:,0] - average)**2) / weights.sum()
+    return average, variance, vals[:,2].sum(), glitches
+
+def rglitches(nsdata, gain, ron, nsig):
+    diffs = nsdata[1:] - nsdata[:-1]
+    psmedian = numpy.median(diffs)
+    sigma = math.sqrt(psmedian / gain + 2 * ron * ron)
+
+    start = 0
+    intervals = []
+    glitches = []
+    for idx, diff in enumerate(diffs):
+        if not (psmedian - nsig * sigma < diff < psmedian + nsig * sigma):
+            intervals.append(slice(start, idx + 1))
+            start = idx + 1
+            glitches.append(start)
+    else:
+        intervals.append(slice(start, None))
+
+    return intervals, glitches
+
+
+def slope(nsdata, dt, ron):
+
+    if len(nsdata) < 2:
+        raise ValueError('Two points needed to compute the slope')
+
+    FIXME_BASE = 10
+
+    nn = len(nsdata)
+    delt = 12.0 / (nn * (nn + 1) * (nn - 1))
+    nf = (nn - 1) / 2.0
+
+    add = 0
+    for idx, d in enumerate(nsdata):
+        add += d * (idx - nf)
+    final = delt * add / dt
+    variance = FIXME_BASE + delt * ron * ron / dt / dt
+
+    return final, variance, nn
