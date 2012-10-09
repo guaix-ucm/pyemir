@@ -22,10 +22,11 @@
 import unittest
 
 import numpy
+import pyfits
 
-from ..preprocess import axis_fowler
+from ..preprocess import axis_fowler, preprocess_fowler
 
-class FowlerReadoutTestCase(unittest.TestCase):
+class FowlerReadoutAxisTestCase(unittest.TestCase):
     
     def setUp(self):
         self.emptybp = numpy.zeros((10,), dtype='uint8')
@@ -156,4 +157,68 @@ class FowlerReadoutTestCase(unittest.TestCase):
         for v in self.img:
             self.assertEqual(v, 21947.0)
             
-            
+class FowlerReadoutFrameTestCase(unittest.TestCase):
+    def setUp(self):
+        self.frame = None
+        
+        self.data = numpy.array([[[2343,2454, 2578, 2661,2709, 24311, 24445, 
+                                 24405, 24612, 24707]]])
+        # self.data is (1,1, 10)
+        
+        
+        hdu = pyfits.PrimaryHDU()
+        hdu.data = self.data
+
+        tbcr = 100
+        elapsed = 101
+
+        hdu.header.update('exptime', tbcr)
+        hdu.header.update('elapsed', elapsed)
+        hdu.header.update('readproc', False)
+        hdu.header.update('readmode', 'FOWLER')
+
+        self.frame = pyfits.HDUList([hdu])
+        
+    def test_readmode_keyword(self):
+        '''Test we raise ValueError if readmode is not FOWLER'''
+        #preprocess_fowler(frame, saturation=65536, badpixels=None, blank=0):
+        
+        self.frame[0].header['readmode'] = 'NOFOWLER'
+        
+        self.assertRaises(ValueError, preprocess_fowler, self.frame)
+        
+    def  test_output(self):
+        '''Test output'''
+        
+        result = preprocess_fowler(self.frame)
+        
+        self.assertIsInstance(result, pyfits.HDUList)
+        
+        nex = len(result)
+        
+        self.assertEqual(nex, 4, 'The number of extensions is not equal to 4')
+        
+        # first extension
+        ext = result[0]
+        self.assertTrue(ext.header['readproc'])
+        
+        # second extension
+        ext = result[1]
+        self.assertIsInstance(ext, pyfits.ImageHDU)
+        self.assertEqual(ext.header.get('extname'), 'VARIANCE')
+        # 3rd extension
+        ext = result[2]
+        self.assertIsInstance(ext, pyfits.ImageHDU)
+        self.assertEqual(ext.header.get('extname'), 'MAP')
+        self.assertEqual(ext.data.dtype, numpy.dtype('uint8'))
+        # 4th extension
+        ext = result[3]
+        self.assertIsInstance(ext, pyfits.ImageHDU)
+        self.assertEqual(ext.header.get('extname'), 'MASK')
+        self.assertEqual(ext.data.dtype, numpy.dtype('uint8'))
+        
+        
+        
+        
+        
+        
