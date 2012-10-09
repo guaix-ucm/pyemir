@@ -67,6 +67,10 @@ def preprocess_cds(frame):
 
 def preprocess_fowler(frame, saturation=65536, badpixels=None, blank=0):
 
+    if frame[0].header['readmode'] != 'FOWLER':
+        raise ValueError('Frame is not in Fowler mode')
+
+
     # We are assuming here that the 3rd axis is the number of frames
     shape = frame[0].shape
     # This construction could be handled inside loopover_fowler
