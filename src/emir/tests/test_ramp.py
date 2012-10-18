@@ -19,12 +19,17 @@
 
 '''Tests for RAMP readout mode.'''
 
+from __future__ import division
+
 import unittest
 
 import numpy
 import pyfits
+from numina.instrument.detector import nIRDetector, Amplifier
+from numina.instrument.sources import ThermalBackground
 
 from ..preprocess import axis_ramp, preprocess_ramp
+from numina.array._ramp import loopover_ramp_c
 
 class RampReadoutAxisTestCase(unittest.TestCase):
     
@@ -99,7 +104,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
             self.assertEqual(n, MASK_GOOD)
 
         for v in self.var:
-            self.assertEqual(v, 0)
+            self.assertEqual(v, 0.2142857142857143)
             
         for v in self.img:
             self.assertEqual(v, 1)
@@ -149,7 +154,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
             self.assertEqual(n, 0)
         
         for v in self.var:
-            self.assertEqual(v, 0)
+            self.assertEqual(v, 0.13454545454545455)
             
         for v in self.img:
             self.assertEqual(v, 1.0)
@@ -172,11 +177,12 @@ class RampReadoutAxisTestCase(unittest.TestCase):
             self.assertEqual(n, 0)
         
         for v in self.var:
-            self.assertEqual(v, 0.0)
+            self.assertEqual(v, 0.13454545454545455)
             
         for v in self.img:
             self.assertEqual(v, 1.0)
             
+    
 class RampReadoutFrameTestCase(unittest.TestCase):
     def setUp(self):
         self.frame = None
@@ -244,7 +250,98 @@ class RampReadoutFrameTestCase(unittest.TestCase):
         self.assertEqual(ext.data.dtype, numpy.dtype('uint8'))
         
         
+class RampReadoutFrameTestCase2(unittest.TestCase):
+    def setUp(self):
+        pass
         
+    def create_frame(self, source, gain, ron, saturation):
+        rows = 6
+        columns = 5
         
+        chans = [Amplifier((slice(0,rows), slice(0,columns)), gain, ron, saturation)]
+        exposure = 10.0
+        samples = 10
         
+        detector = nIRDetector((rows, columns), chans, dark=0.0, pedestal=0.0)
+        detector.readout_time = 0.01
+        detector.connect(ThermalBackground(source))
+        dt = exposure / samples
+        print 'test dt', dt
+        print 'ron', ron
+        final = numpy.empty((rows, columns, samples), dtype='int32')
+        final2 = final[:]
+        detector.reset()
+        detector.expose(dt)
+        final[..., 0] = numpy.random.poisson(dt * source) #detector.readout()
+        
+        for i in range(1, samples):
+            detector.expose(dt)
+            final[..., i] = final[..., i -1] + numpy.random.poisson(dt * source) #detector.readout()
+            if ron > 0:
+                final2[..., i] = numpy.random.normal(final[..., i], ron) / gain
+            else:
+                final2[..., i] = final[..., i] / gain
+            
+        final2[final2 < 0] = 0
+            
+        hdu = pyfits.PrimaryHDU()
+        hdu.data = final2
+
+        hdu.header.update('exptime', exposure)
+        hdu.header.update('elapsed', detector.time_since_last_reset())
+        hdu.header.update('readproc', False)
+        hdu.header.update('readmode', 'RAMP')
+        hdu.header.update('readsamp', samples)
+        hdu.header.update('gain', gain)
+        hdu.header.update('ron', ron)
+
+        frame = pyfits.HDUList([hdu])
+        return frame 
+              
+    def test1(self):
+        '''Test RAMP output.'''
+        
+        gain = 1.0
+        ron = 0.0
+        source = 1000
+        saturation = 65000
+        
+        frame = self.create_frame(source, gain, ron, saturation)
+        
+        result = preprocess_ramp(frame, saturation=saturation, 
+                                 gain=gain, ron=ron)
+        
+        self.assertIsInstance(result, pyfits.HDUList)
+        
+        nex = len(result)
+        
+        print result[0].data
+        
+        print result[0].data.mean()
+        print result[1].data.mean()
+        self.assertEqual(nex, 5, 'The number of extensions is not equal to 5')
+        
+        # first extension
+        ext = result[0]
+        self.assertTrue(ext.header['readproc'])
+        
+        # second extension
+        ext = result[1]
+        self.assertIsInstance(ext, pyfits.ImageHDU)
+        self.assertEqual(ext.header.get('extname'), 'VARIANCE')
+        # 3rd extension
+        ext = result[2]
+        self.assertIsInstance(ext, pyfits.ImageHDU)
+        self.assertEqual(ext.header.get('extname'), 'MAP')
+        self.assertEqual(ext.data.dtype, numpy.dtype('uint8'))
+        # 4th extension
+        ext = result[3]
+        self.assertIsInstance(ext, pyfits.ImageHDU)
+        self.assertEqual(ext.header.get('extname'), 'MASK')
+        self.assertEqual(ext.data.dtype, numpy.dtype('uint8'))
+        # 5th extension
+        ext = result[4]
+        self.assertIsInstance(ext, pyfits.ImageHDU)
+        self.assertEqual(ext.header.get('extname'), 'CRMASK')
+        self.assertEqual(ext.data.dtype, numpy.dtype('uint8'))
         
