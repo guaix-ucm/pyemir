@@ -222,19 +222,18 @@ def preprocess_ramp(frame, gain, ron, badpixels=None, saturation=60000, nsig=4.0
     frame.append(crmaskhdu)
     return frame
 
-def loopover_ramp(rampdata, dt, gain, ron, badpixels=None, outvalue=None,
+def loopover_ramp(rampdata, dt, gain, ron, badpixels=None, outtype='float64',
                  saturation=60000, nsig=4.0, blank=0):
+
     outvalue = None
     outvar = None
     npixmask, nmask, ncrs = None, None, None
+
     if badpixels is None:
         badpixels = numpy.zeros((rampdata.shape[0], rampdata.shape[1]), 
                                 dtype='uint8')
-    if outvalue:
-        fdtype = numpy.result_type(rampdata.dtype, outvalue)
-    else:
-        fdtype = rampdata.dtype
-        
+
+    fdtype = numpy.result_type(rampdata.dtype, outtype)
     mdtype = 'uint8'
 
     it = numpy.nditer([rampdata, badpixels, outvalue, outvar, 
