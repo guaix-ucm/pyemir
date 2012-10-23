@@ -25,6 +25,8 @@ import pyfits
 import numpy
 import math
 
+from numina.array import ramp_array
+
 def fits_wrapper(frame):
     if isinstance(frame, basestring):
         return pyfits.open(frame)
@@ -203,7 +205,7 @@ def preprocess_ramp(frame, gain, ron, badpixels=None, saturation=60000, nsig=4.0
     # time between samples
     dt = elapsed / (nsamples - 1)
 
-    img, var, nmap, mask, crmask = loopover_ramp(frame[0].data, dt, gain, ron, 
+    img, var, nmap, mask, crmask = ramp_array(frame[0].data, dt, gain, ron, 
         saturation=saturation, nsig=nsig, blank=blank)
 
     frame[0].data = img * elapsed
@@ -222,100 +224,3 @@ def preprocess_ramp(frame, gain, ron, badpixels=None, saturation=60000, nsig=4.0
     frame.append(crmaskhdu)
     return frame
 
-def loopover_ramp(rampdata, dt, gain, ron, badpixels=None, outtype='float64',
-                 saturation=60000, nsig=4.0, blank=0):
-
-    outvalue = None
-    outvar = None
-    npixmask, nmask, ncrs = None, None, None
-
-    if badpixels is None:
-        badpixels = numpy.zeros((rampdata.shape[0], rampdata.shape[1]), 
-                                dtype='uint8')
-
-    fdtype = numpy.result_type(rampdata.dtype, outtype)
-    mdtype = 'uint8'
-
-    it = numpy.nditer([rampdata, badpixels, outvalue, outvar, 
-                        npixmask, nmask, ncrs], 
-                flags=['reduce_ok', 'external_loop',
-                    'buffered', 'delay_bufalloc'],
-                    op_flags=[['readonly'], ['readonly', 'no_broadcast'], 
-                            ['readwrite', 'allocate'], 
-                            ['readwrite', 'allocate'],
-                            ['readwrite', 'allocate'], 
-                            ['readwrite', 'allocate'],
-                            ['readwrite', 'allocate'], 
-                            ],
-                    order='A',
-                    op_dtypes=(fdtype, mdtype, fdtype, 
-                               fdtype, mdtype, mdtype, mdtype),
-                    op_axes=[None,
-                            [0,1,-1], 
-                            [0,1,-1], 
-                            [0,1,-1],
-                            [0,1,-1], 
-                            [0,1,-1], 
-                            [0,1,-1]
-                           ])
-    for i in range(2, 7):
-        it.operands[i][...] = 0
-    it.reset()
-
-    for x, badpix, img, var, nmap, mask, crmask in it:
-        axis_ramp(x, badpix, img, var, nmap, mask, crmask, 
-              saturation, dt, gain, ron, nsig, blank=blank)
-        
-
-    # Building final frame
-
-    return tuple(it.operands[i] for i in range(2, 7))
-
-def ramp(data, saturation, dt, gain, ron, nsig):
-    nsdata = data[data < saturation]
-
-# Finding glitches in the pixels
-    intervals, glitches = rglitches(nsdata, gain=gain, ron=ron, nsig=nsig)
-    vals = numpy.asarray([slope(nsdata[intls], dt=dt, gain=gain, ron=ron) for intls in intervals if len(nsdata[intls]) >= 2])
-    weights = (1.0 / vals[:,1])
-    average = numpy.average(vals[:,0], weights=weights)
-    variance = 1.0 / weights.sum()
-    return average, variance, vals[:,2].sum(), glitches
-
-def rglitches(nsdata, gain, ron, nsig):
-    diffs = nsdata[1:] - nsdata[:-1]
-    psmedian = numpy.median(diffs)
-    sigma = math.sqrt(abs(psmedian / gain) + 2 * ron * ron)
-
-    start = 0
-    intervals = []
-    glitches = []
-    for idx, diff in enumerate(diffs):
-        if not (psmedian - nsig * sigma < diff < psmedian + nsig * sigma):
-            intervals.append(slice(start, idx + 1))
-            start = idx + 1
-            glitches.append(start)
-    else:
-        intervals.append(slice(start, None))
-
-    return intervals, glitches
-
-
-def slope(nsdata, dt, gain, ron):
-
-    if len(nsdata) < 2:
-        raise ValueError('Two points needed to compute the slope')
-
-    nn = len(nsdata)
-    delt = dt * nn * (nn + 1) * (nn - 1) / 12
-    ww = numpy.arange(1, nn + 1) - (nn + 1) / 2
-    
-    final = (ww * nsdata).sum() / delt
-    
-    # Readout limited case
-    delt2 = dt * delt
-    variance1 = (ron / gain)**2 / delt2
-    # Photon limiting case
-    variance2 = (6 * final * (nn * nn + 1)) / (5 * nn * dt * (nn * nn - 1) * gain)
-    variance = variance1 + variance2
-    return final, variance, nn
