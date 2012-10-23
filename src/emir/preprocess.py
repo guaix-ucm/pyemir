@@ -192,22 +192,19 @@ def loopover_fowler(data, badpixels, saturation, hsize, blank=0):
     # Building final frame
     return tuple(it.operands[i] for i in range(2, 6))
 
+def preprocess_ramp(frame, gain, ron, badpixels=None, saturation=60000, nsig=4.0, blank=0):
 
-def preprocess_ramp(frame, saturation=65000, badpixels=None, blank=0, 
-                    nsig=4.0, gain=1.0, ron=0.0):
     if frame[0].header['readmode'] != 'RAMP':
         raise ValueError('Frame is not in RAMP mode')
 
     elapsed = frame[0].header['elapsed']
     nsamples = frame[0].header['readsamp']
  
-    if badpixels is None:
-        badpixels = numpy.zeros(frame[0].data[..., 0].shape, dtype='uint8')
-
     # time between samples
     dt = elapsed / (nsamples - 1)
 
-    img, var, nmap, mask, crmask = loopover_ramp(frame[0].data, badpixels, saturation, dt, gain, ron, nsig)
+    img, var, nmap, mask, crmask = loopover_ramp(frame[0].data, dt, gain, ron, 
+        saturation=saturation, nsig=nsig, blank=blank)
 
     frame[0].data = img * elapsed
     frame[0].header['READPROC'] = True
@@ -225,23 +222,23 @@ def preprocess_ramp(frame, saturation=65000, badpixels=None, blank=0,
     frame.append(crmaskhdu)
     return frame
 
-def loopovr_ramp(inpt, dt, gain, ron, badpixels=None, out=None, var=None, 
+def loopover_ramp(rampdata, dt, gain, ron, badpixels=None, outvalue=None,
                  saturation=60000, nsig=4.0, blank=0):
-    pass
+    outvalue = None
+    outvar = None
+    npixmask, nmask, ncrs = None, None, None
+    if badpixels is None:
+        badpixels = numpy.zeros((rampdata.shape[0], rampdata.shape[1]), 
+                                dtype='uint8')
+    if outvalue:
+        fdtype = numpy.result_type(rampdata.dtype, outvalue)
+    else:
+        fdtype = rampdata.dtype
+        
+    mdtype = 'uint8'
 
-def loopover_ramp(data, badpixels, saturation, dt, gain, ron, nsig, blank=0):
-
-    imgfin = None
-    varfin = None
-
-#    imgfin = numpy.empty(badpixels.shape, dtype='>i2') # int16, bigendian
-#    varfin = numpy.empty(badpixels.shape, dtype='>i2') # int16, bigendian
-
-    ncrs = numpy.empty(badpixels.shape, dtype='>u1') # uint8, bigendian
-    nmask = numpy.empty(badpixels.shape, dtype='>u1') # uint8, bigendian
-    npixmask = numpy.empty(badpixels.shape, dtype='>u1') # uint8, bigendian
-
-    it = numpy.nditer([data, badpixels, imgfin, varfin, npixmask, nmask, ncrs], 
+    it = numpy.nditer([rampdata, badpixels, outvalue, outvar, 
+                        npixmask, nmask, ncrs], 
                 flags=['reduce_ok', 'external_loop',
                     'buffered', 'delay_bufalloc'],
                     op_flags=[['readonly'], ['readonly', 'no_broadcast'], 
@@ -251,6 +248,9 @@ def loopover_ramp(data, badpixels, saturation, dt, gain, ron, nsig, blank=0):
                             ['readwrite', 'allocate'],
                             ['readwrite', 'allocate'], 
                             ],
+                    order='A',
+                    op_dtypes=(fdtype, mdtype, fdtype, 
+                               fdtype, mdtype, mdtype, mdtype),
                     op_axes=[None,
                             [0,1,-1], 
                             [0,1,-1], 

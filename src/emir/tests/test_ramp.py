@@ -190,6 +190,8 @@ class RampReadoutFrameTestCase(unittest.TestCase):
         self.data = numpy.array([[[2343,2454, 2578, 2661,2709, 24311, 24445, 
                                  24405, 24612, 24707]]])
         # self.data is (1,1, 10)
+        self.gain = 1.0
+        self.ron = 1.0
         
         
         hdu = pyfits.PrimaryHDU()
@@ -212,12 +214,12 @@ class RampReadoutFrameTestCase(unittest.TestCase):
         
         self.frame[0].header['readmode'] = 'NORAMP'
         
-        self.assertRaises(ValueError, preprocess_ramp, self.frame)
+        self.assertRaises(ValueError, preprocess_ramp, self.frame, self.gain, self.ron)
         
     def  test_output(self):
         '''Test RAMP output'''
         
-        result = preprocess_ramp(self.frame)
+        result = preprocess_ramp(self.frame, self.gain, self.ron)
         
         self.assertIsInstance(result, pyfits.HDUList)
         
@@ -266,8 +268,6 @@ class RampReadoutFrameTestCase2(unittest.TestCase):
         detector.readout_time = 0.01
         detector.connect(ThermalBackground(source))
         dt = exposure / samples
-        print 'test dt', dt
-        print 'ron', ron
         final = numpy.empty((rows, columns, samples), dtype='int32')
         final2 = final[:]
         detector.reset()
@@ -308,17 +308,12 @@ class RampReadoutFrameTestCase2(unittest.TestCase):
         
         frame = self.create_frame(source, gain, ron, saturation)
         
-        result = preprocess_ramp(frame, saturation=saturation, 
-                                 gain=gain, ron=ron)
+        result = preprocess_ramp(frame, gain, ron, saturation=saturation)
         
         self.assertIsInstance(result, pyfits.HDUList)
         
         nex = len(result)
         
-        print result[0].data
-        
-        print result[0].data.mean()
-        print result[1].data.mean()
         self.assertEqual(nex, 5, 'The number of extensions is not equal to 5')
         
         # first extension
@@ -344,4 +339,5 @@ class RampReadoutFrameTestCase2(unittest.TestCase):
         self.assertIsInstance(ext, pyfits.ImageHDU)
         self.assertEqual(ext.header.get('extname'), 'CRMASK')
         self.assertEqual(ext.data.dtype, numpy.dtype('uint8'))
-        
+
+
