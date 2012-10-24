@@ -21,10 +21,10 @@
 
 import logging
 
-from .simulator import EmirImageFactory as ImageFactory
-from emir.simulator import Instrument
+#from .simulator import EmirImageFactory as ImageFactory
+#from emir.simulator import Instrument
 
-__all__ = ['Instrument', 'ImageFactory']
+#__all__ = ['Instrument', 'ImageFactory']
 
 __version__ = '0.6.8dev'
 
