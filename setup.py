@@ -30,13 +30,12 @@ setup(name='pyemir',
                      'emir.instrument': ['obsmodes.yaml', 
                      'image_*.txt', 'spectrum_*.txt'],
                    },
-      test_suite="nose.collector",
+      test_suite="emir.tests",
       install_requires=['setuptools', 'numpy', 'pyfits', 
                         'scipy', 'sphinx', 'pywcs',
                         'matplotlib', 'numdisplay', 
                         'numina>=0.8.1'],
-      test_requires=['nose',
-                     ],
+      use_2to3=True,
       # numdisplay lives here
       dependency_links = [
         'http://stsdas.stsci.edu/numdisplay'
