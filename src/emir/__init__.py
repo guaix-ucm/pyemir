@@ -26,7 +26,7 @@ import logging
 
 #__all__ = ['Instrument', 'ImageFactory']
 
-__version__ = '0.6.8dev'
+__version__ = '0.6.9dev'
 
 
 # Top level NullHandler
