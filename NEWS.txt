@@ -1,3 +1,12 @@
+Version 0.6.9
+--------------------------
+Changes:
+
+Version 0.6.8 (18 Sep 2012)
+--------------------------
+Changes:
+  * Added CosmeticsRecipe
+
 Version 0.6.7 (12 Jul 2012)
 --------------------------
 
