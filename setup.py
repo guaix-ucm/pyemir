@@ -15,6 +15,7 @@ ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 sys.path.append(os.path.abspath('src'))
 import emir
 version = emir.__version__
+del sys.path[-1]
 
 setup(name='pyemir',
       version=version,
@@ -29,6 +30,7 @@ setup(name='pyemir',
                      'emir.instrument': ['obsmodes.yaml', 
                      'image_*.txt', 'spectrum_*.txt'],
                    },
+      scripts=['tasks/pyemir-task1.py'],
       test_suite="emir.tests",
       install_requires=['setuptools', 'numpy', 'pyfits', 
                         'scipy', 'sphinx', 'pywcs',
