@@ -15,13 +15,13 @@ ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 sys.path.append(os.path.abspath('src'))
 import emir
 version = emir.__version__
+del sys.path[-1]
 
 setup(name='pyemir',
       version=version,
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='http://astrax.fis.ucm.es/software/pyemir/pyemir-%s.tar.gz' % version,
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       packages=ALL_PKGS,
@@ -30,13 +30,13 @@ setup(name='pyemir',
                      'emir.instrument': ['obsmodes.yaml', 
                      'image_*.txt', 'spectrum_*.txt'],
                    },
-      test_suite="nose.collector",
+      scripts=['tasks/pyemir-task1.py'],
+      test_suite="emir.tests",
       install_requires=['setuptools', 'numpy', 'pyfits', 
                         'scipy', 'sphinx', 'pywcs',
                         'matplotlib', 'numdisplay', 
                         'numina>=0.8.1'],
-      test_requires=['nose',
-                     ],
+      use_2to3=True,
       # numdisplay lives here
       dependency_links = [
         'http://stsdas.stsci.edu/numdisplay'

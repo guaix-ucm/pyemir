@@ -21,13 +21,7 @@
 
 import logging
 
-from .simulator import EmirImageFactory as ImageFactory
-from emir.simulator import Instrument
-
-__all__ = ['Instrument', 'ImageFactory']
-
-__version__ = '0.6.8'
-
+__version__ = '0.6.9'
 
 # Top level NullHandler
 logging.getLogger("emir").addHandler(logging.NullHandler())
