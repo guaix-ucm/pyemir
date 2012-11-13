@@ -1,5 +1,6 @@
 Version 0.6.10 
 --------------------------
+Changes:
 
 Version 0.6.9 (07 Nov 2012)
 --------------------------
@@ -13,58 +14,49 @@ Changes:
 
 Version 0.6.7 (12 Jul 2012)
 --------------------------
-
 Changes:
   * Added recipe to create baxpixel masks
   * Minor fixes
 
 Version 0.6.6 (20 Jun 2012)
 ---------------------------
-
 Bugfixes:
   * Add obsmodes.yaml to MANIFEST.in so it is distributed
   * Use Agg backend by default
 
 Version 0.6.5 (19 Jun 2012)
 ---------------------------
-
 Changes:
   * Updated to use RecipeInput and RecipeResult
 
 Version 0.6.4 (20 Mayo 2012)
 ---------------------------
-
 Changes:
   * Updated to use namespace package numina.pipelines
 
 Version 0.6.3 (17 May 2012)
 ---------------------------
-
 Changes:
  * Installs -plugin file into numina pipline directory
 
 Version 0.6.2 (17 May 2012)
 ---------------------------
-
 Changes:
  * Added URl to numdisplay in setup.py
 
 Version 0.6.1 (17 May 2012)
 ---------------------------
-
 Bugfix:
  * Incorrect version in doc and in emir/__init__.py
 
 Version 0.6.0 (17 May 2012)
 ---------------------------
-
 Changes:
  * Implemented auxiliary Recipes (flat, dark, etc.)
  * Implemented Direct Image Recipes
 
 Version 0.5.0 (27 Oct 2011)
 ---------------------------
-
 Changes:
  * Recipe API changed
  * Needs standalone Numina
@@ -72,27 +64,23 @@ Changes:
 
 Version 0.4.2 (07 Oct 2011)
 ---------------------------
-
 Changes:
  * Fixed error with object mask creation
  * Added numdisplay to required packages
 
 Version 0.4.1 (23 Sep 2011)
 ---------------------------
-
 Changes:
  * Allows installation using pip
 
 Version 0.4.0 (7 Sep 2011)
 ---------------------------
-
 Changes:
  * Direct image implemented
  * Minor bugs and fixes
    
 Version 0.3.0 (24 Feb 2011)
 ---------------------------
-
 Changes:
  * Implemented some recipes for detector characterization
  * Full treatment of EMIR detector amplifiers
@@ -106,7 +94,6 @@ Changes:
  
 Version 0.2.5 (09 Sep 2010)
 ---------------------------
-
 Changes:
  * Combine internals changed
  * New method to load recipes, based in subclasses
@@ -114,7 +101,6 @@ Changes:
 
 Version 0.2.4 (08 Jul 2010)
 ---------------------------
-
 Changes:
  * Parameter-passing API for Recipes has been changed.
  * JSON serialization format has been changed.
@@ -124,14 +110,12 @@ Changes:
  
 Version 0.2.3 (13 Apr 2010) Bugfix release
 ---------------------------
-
 Bugfixes:
  * #94  Missing header files inside src
  * Errors in documentation fixed
 
 Version 0.2.2 (13 Apr 2010) Bugfix release
 ---------------------------
-
 Bugfixes:
  * #91  Error creating object mask in direct_imaging
  * Doctest errors fixed
