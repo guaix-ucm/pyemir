@@ -1,6 +1,8 @@
 Version 0.6.10 
 --------------------------
 Changes:
+  * All Recipes use frame.label as filename to
+    open FITS frames
 
 Version 0.6.9 (07 Nov 2012)
 --------------------------
