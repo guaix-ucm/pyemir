@@ -70,11 +70,19 @@ The requirements of pyemir will be downloaded and installed inside
 the virtual environment. Once the installation is finished, you can check
 by listing the installed recipes::
 
-  (myenv) $ ./bin/numina list
-  <class 'emir.recipes.auxiliary.BiasRecipe'>
-  <class 'emir.recipes.auxiliary.DarkRecipe'>
-  <class 'emir.recipes.auxiliary.IntensityFlatRecipe'>
-  <class 'emir.recipes.auxiliary.SpectralFlatRecipe'>
+  (myenv) $ ./bin/numina show
+  Bias Image: Recipe to process bias images
+  Instrument: EMIR
+  Recipe: emir.recipes.BiasRecipe
+  Key: bias_image
+  UUID: a7ea9c0c-76a6-4609-8413-0157102ec284
+  --
+  Dark current Image: Summary of Dark current Image
+  Instrument: EMIR
+  Recipe: emir.recipes.DarkRecipe
+  Key: dark_image
+  UUID: 5b15db30-7774-4823-9645-e8ca27a866af
+  --
   ...
 
 

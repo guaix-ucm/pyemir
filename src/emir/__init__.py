@@ -21,7 +21,7 @@
 
 import logging
 
-__version__ = '0.6.9'
+__version__ = '0.6.10'
 
 # Top level NullHandler
 logging.getLogger("emir").addHandler(logging.NullHandler())

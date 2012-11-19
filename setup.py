@@ -35,7 +35,7 @@ setup(name='pyemir',
       install_requires=['setuptools', 'numpy', 'pyfits', 
                         'scipy', 'sphinx', 'pywcs',
                         'matplotlib', 'numdisplay', 
-                        'numina>=0.8.1'],
+                        'numina>=0.8.7'],
       use_2to3=True,
       # numdisplay lives here
       dependency_links = [
