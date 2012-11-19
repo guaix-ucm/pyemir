@@ -87,13 +87,11 @@ class BiasRecipe(BaseRecipe):
     def run(self, obresult):
         _logger.info('starting bias reduction')
 
-        images = obresult.frames
-
         cdata = []
 
         try:
-            for image in images:
-                hdulist = pyfits.open(image, memmap=True, mode='readonly')
+            for frame in obresult.frames:
+                hdulist = pyfits.open(frame.label, memmap=True, mode='readonly')
                 cdata.append(hdulist)
 
             _logger.info('stacking %d images using median', len(cdata))
@@ -187,8 +185,9 @@ class DarkRecipe(BaseRecipe):
 
         try:
                         
-            for name, exposure in obresult.images:
-                hdulist = pyfits.open(name, memmap=True, mode='readonly')
+            for frame in obresult.frames:
+                hdulist = pyfits.open(frame.label, memmap=True, mode='readonly')
+                exposure = hdulist[0].header['EXPTIME']
                 cdata.append(hdulist)
                 expdata.append(exposure)
 
@@ -322,19 +321,19 @@ class IntensityFlatRecipe(BaseRecipe):
         
         basicflow = SerialFlow([bias_corrector, dark_corrector, nl_corrector])
 
-        for img in obresult.frames:
+        for frame in obresult.frames:
 
-            with pyfits.open(img[0], mode='update') as hdulist:
+            with pyfits.open(frame.label, mode='update') as hdulist:
                 hdulist = basicflow(hdulist)
 
         # combine LAMP-ON
         
-        lampon = [img[0] for img in obresult.frames if img[2] == 'LAMPON']
+        lampon = [img[0] for img in obresult.frames if img[1] == 'LAMPON']
         
         dataon = self.stack_images(lampon)
                 
         # combine LAMP-OFF
-        lampoff = [img[0] for img in obresult.frames if img[2] == 'LAMPOFF']
+        lampoff = [img[0] for img in obresult.frames if img[1] == 'LAMPOFF']
         
         dataoff = self.stack_images(lampoff)
         
