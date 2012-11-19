@@ -50,11 +50,11 @@ class Recipe(BaseRecipe):
 
         results = []
         
-        for frame, _ in obsblock.frames:
+        for frame in obsblock.frames:
             # Using numpy memmap instead of pyfits
             # Images are a in a format unrecognized by pyfits
-            _logger.debug('processing %s', frame)
-            f = numpy.memmap(frame, dtype='>u2', mode='r', offset=36 * 80) 
+            _logger.debug('processing %s', frame.label)
+            f = numpy.memmap(frame.label, dtype='>u2', mode='r', offset=36 * 80) 
             try:                                
                 f.shape = (1024, 4096)
                 rr = numpy.zeros((2048, 2048), dtype='int16')
@@ -62,7 +62,7 @@ class Recipe(BaseRecipe):
                 for idx, (channel, conv) in enumerate(izip(CHANNELS_2, cc)):
                     rr[channel] = conv(f[:, idx::32])
 
-                basename = os.path.basename(frame)
+                basename = os.path.basename(frame.label)
                 primary_headers = {'FILENAME': basename}
                 hdu = pyfits.PrimaryHDU(rr, header=primary_headers)
                 hdu.scale('int16', '', bzero=32768)
