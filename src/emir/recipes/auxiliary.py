@@ -178,7 +178,7 @@ class DarkRecipe(BaseRecipe):
     def __init__(self):
         super(DarkRecipe, self).__init__(author=_s_author, version="0.1.0")
         
-    @log_to_history(_logger)
+    # @log_to_history(_logger)
     def run(self, obresult):
         _logger.info('starting dark reduction')
 
@@ -222,7 +222,7 @@ class DarkRecipe(BaseRecipe):
 
         cls = ChannelLevelStatistics(exposure=exposure)
 
-        for amp1, amp2 in self.instrument['amplifiers'][0]:
+        for amp1, amp2 in self.instrument['detector']['channels'][0]:
             
             region = (slice(*amp1), slice(*amp2))
             
@@ -241,7 +241,7 @@ class DarkRecipe(BaseRecipe):
         hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
         hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
         
-        hdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
+        #hdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
         hdr.update('IMGTYP', 'DARK', 'Image type')
         hdr.update('NUMTYP', 'MASTER_DARK', 'Data product type')
         
@@ -255,7 +255,7 @@ class DarkRecipe(BaseRecipe):
 
         hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
 
-        md = MasterDark(hdulist)
+        md = DataFrame(hdulist)
 
         _logger.info('dark reduction ended')
         result = DarkRecipeResult(darkframe=md,
@@ -305,7 +305,7 @@ class IntensityFlatRecipe(BaseRecipe):
                         version="0.1.0"
                 )
         
-    @log_to_history(_logger)
+    #@log_to_history(_logger)
     def run(self, obresult):
         _logger.info('starting flat reduction')
                 
@@ -330,12 +330,18 @@ class IntensityFlatRecipe(BaseRecipe):
 
         # combine LAMP-ON
         
-        lampon = [img[0] for img in obresult.frames if img[1] == 'LAMPON']
+        lampon = [img.label for img in obresult.frames if img.itype == 'LAMPON']
+        if not lampon:
+            _logger.error('no LAMPON images in the ObservationResult')
+            raise RecipeError('no LAMPON images in the ObservationResult')
         
         dataon = self.stack_images(lampon)
                 
         # combine LAMP-OFF
-        lampoff = [img[0] for img in obresult.frames if img[1] == 'LAMPOFF']
+        lampoff = [img.label for img in obresult.frames if img.itype == 'LAMPOFF']
+        if not lampoff:
+            _logger.error('no LAMPOFF images in the ObservationResult')
+            raise RecipeError('no LAMPOFF images in the ObservationResult')
         
         dataoff = self.stack_images(lampoff)
         
@@ -358,7 +364,7 @@ class IntensityFlatRecipe(BaseRecipe):
         hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
         hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
         
-        hdr.update('FILENAME', 'master_intensity_flat-%(block_id)d.fits' % self.environ)
+        #hdr.update('FILENAME', 'master_intensity_flat-%(block_id)d.fits' % self.environ)
         hdr.update('IMGTYP', 'FLAT', 'Image type')
         hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
         
@@ -367,7 +373,7 @@ class IntensityFlatRecipe(BaseRecipe):
 
         hdulist = pyfits.HDUList([hdu, varhdu, num])
 
-        md = MasterIntensityFlat(hdulist)
+        md = DataFrame(hdulist)
 
         result = IntensityFlatRecipeResult(flatframe=md)
 
