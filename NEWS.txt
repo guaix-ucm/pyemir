@@ -1,4 +1,4 @@
-Version 0.6.10 
+Version 0.6.10 (19 Nov 2012)
 --------------------------
 Changes:
   * All Recipes use frame.label as filename to
