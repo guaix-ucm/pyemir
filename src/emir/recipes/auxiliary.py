@@ -24,8 +24,8 @@ import logging
 import numpy
 import pyfits
 from numina.core import RecipeError
-from numina.core import BaseRecipe, RecipeInput, RecipeResult
-from numina.core import Requirement, Product,DataProductRequirement
+from numina.core import BaseRecipe, RecipeInput, RecipeResult, DataFrame
+from numina.core import Requirement, Product, DataProductRequirement
 from numina.core import define_input, define_result
 from numina.logger import log_to_history
 from numina.array.combine import median
@@ -83,7 +83,8 @@ class BiasRecipe(BaseRecipe):
     def __init__(self):
         super(BiasRecipe, self).__init__(author=_s_author,version="0.1.0")
 
-    @log_to_history(_logger)
+    # FIXME find a better way of doing this automatically
+    # @log_to_history(_logger)
     def run(self, obresult):
         _logger.info('starting bias reduction')
 
@@ -103,7 +104,8 @@ class BiasRecipe(BaseRecipe):
 
             cls = ChannelLevelStatistics(exposure=0.0)
 
-            for amp1, amp2 in self.instrument['amplifiers'][0]:
+            # FIXME: instrumetn API is horrible
+            for amp1, amp2 in self.instrument['detector']['channels'][0]:
                 
                 region = (slice(*amp1), slice(*amp2))
                 
@@ -120,7 +122,7 @@ class BiasRecipe(BaseRecipe):
             # update hdu header with
             # reduction keywords
             hdr = hdu.header
-            hdr.update('FILENAME', 'master_bias-%(block_id)d.fits' % self.environ)
+            #hdr.update('FILENAME', 'master_bias-%(block_id)d.fits' % self.environ)
             hdr.update('IMGTYP', 'BIAS', 'Image type')
             hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
             hdr.update('NUMXVER', __version__, 'Numina package version')
@@ -139,7 +141,7 @@ class BiasRecipe(BaseRecipe):
 
             _logger.info('bias reduction ended')
             
-            result = BiasRecipeResult(biasframe=MasterBias(hdulist),
+            result = BiasRecipeResult(biasframe=DataFrame(hdulist),
                                       stats=cls)
             return result
         finally:
