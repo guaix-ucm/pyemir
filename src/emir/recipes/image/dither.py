@@ -22,9 +22,9 @@
 import logging
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import Requirement, RecipeInput, FrameDataProduct
-from numina.core import DataFrame, Product, RecipeInput, RecipeResult
-from numina.core import define_input, define_result
+from numina.core import Requirement, RecipeRequirements, FrameDataProduct
+from numina.core import DataFrame, Product, RecipeRequirements, RecipeResult
+from numina.core import define_requirements, define_result
 
 from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
 from emir.requirements import MasterDark_Requirement, NonLinearityCalibration_Requirement
@@ -43,7 +43,7 @@ __author__ = "Sergio Pascual <sergiopr@fis.ucm.es>"
 _logger = logging.getLogger("numina.recipes.emir")
 
 
-class DitheredImageRecipeInput(RecipeInput):
+class DitheredImageRecipeRequirements(RecipeRequirements):
     master_bpm = MasterBadPixelMask_Requirement()
     master_bias = MasterBias_Requirement()
     master_dark = MasterDark_Requirement()
@@ -66,7 +66,7 @@ class DitheredImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     catalog = Product(SourcesCatalog)
 
-@define_input(DitheredImageRecipeInput)
+@define_requirements(DitheredImageRecipeRequirements)
 @define_result(DitheredImageRecipeResult)
 class DitheredImageRecipe(BaseRecipe, DirectImageCommon):
     '''Recipe for the reduction of imaging mode observations.

@@ -25,8 +25,8 @@ Image mode recipes of EMIR
 import logging
 
 from numina.core import BaseRecipe, Parameter
-from numina.core import RecipeInput, RecipeResult, Product
-from numina.core import FrameDataProduct, define_input, define_result
+from numina.core import RecipeRequirements, RecipeResult, Product
+from numina.core import FrameDataProduct, define_requirements, define_result
 
 from emir.dataproducts import SourcesCatalog
 
@@ -41,7 +41,7 @@ from .shared import DirectImageCommon
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-class StareImageRecipeInput(RecipeInput):
+class StareImageRecipeRequirements(RecipeRequirements):
     master_bpm = MasterBadPixelMask_Requirement()
     master_bias = MasterBias_Requirement()
     master_dark = MasterDark_Requirement()
@@ -58,7 +58,7 @@ class StareImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     catalog = Product(SourcesCatalog)
 
-@define_input(StareImageRecipeInput)
+@define_requirements(StareImageRecipeRequirements)
 @define_result(StareImageRecipeResult)    
 class StareImageRecipe(BaseRecipe, DirectImageCommon):
     '''

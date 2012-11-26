@@ -21,8 +21,8 @@
 
 import logging
 
-from numina.core import BaseRecipe, Parameter, RecipeInput
-from numina.core import DataProductRequirement, define_input
+from numina.core import BaseRecipe, Parameter, RecipeRequirements
+from numina.core import DataProductRequirement, define_requirements
 from numina.core import define_result, Product, RecipeResult
 
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask 
@@ -36,7 +36,7 @@ __all__ = []
 _logger = logging.getLogger('numina.recipes.emir')
 
 
-class StareSpectraRecipeInput(RecipeInput):
+class StareSpectraRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -54,7 +54,7 @@ class StareSpectraRecipeResult(RecipeResult):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
 
-@define_input(StareSpectraRecipeInput)
+@define_requirements(StareSpectraRecipeRequirements)
 @define_result(StareSpectraRecipeResult)
 class StareSpectraRecipe(BaseRecipe):
     '''Recipe for the reduction of multiobject spectroscopy.
@@ -193,7 +193,7 @@ class StareSpectraRecipe(BaseRecipe):
         return {'products': [Spectra(), LinesCatalog()]}
 
 
-class DNSSpectraRecipeInput(RecipeInput):
+class DNSSpectraRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -211,7 +211,7 @@ class DNSSpectraRecipeResult(RecipeResult):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
 
-@define_input(DNSSpectraRecipeInput)
+@define_requirements(DNSSpectraRecipeRequirements)
 @define_result(DNSSpectraRecipeResult)
 class DNSpectraRecipe(BaseRecipe):
     '''
@@ -227,7 +227,7 @@ class DNSpectraRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [Spectra(), LinesCatalog()]}
 
-class OffsetSpectraRecipeInput(RecipeInput):
+class OffsetSpectraRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -245,7 +245,7 @@ class OffsetSpectraRecipeResult(RecipeResult):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
 
-@define_input(OffsetSpectraRecipeInput)
+@define_requirements(OffsetSpectraRecipeRequirements)
 @define_result(OffsetSpectraRecipeResult)
 class OffsetSpectraRecipe(BaseRecipe):
     '''
@@ -261,7 +261,7 @@ class OffsetSpectraRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [Spectra(), LinesCatalog()]}
     
-class RasterSpectraRecipeInput(RecipeInput):
+class RasterSpectraRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -277,7 +277,7 @@ class RasterSpectraRecipeInput(RecipeInput):
 class RasterSpectraRecipeResult(RecipeResult):
     cube = Product(DataCube)
 
-@define_input(RasterSpectraRecipeInput)
+@define_requirements(RasterSpectraRecipeRequirements)
 @define_result(RasterSpectraRecipeResult)
 class RasterSpectraRecipe(BaseRecipe):
     '''

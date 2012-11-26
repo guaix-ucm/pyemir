@@ -28,8 +28,8 @@ Recipe for the processing of target acquisition images.
 import logging
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import RecipeInput, RecipeResult, Product
-from numina.core import define_input, define_result
+from numina.core import RecipeRequirements, RecipeResult, Product
+from numina.core import define_requirements, define_result
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import TelescopeOffset, MSMPositions
@@ -40,7 +40,7 @@ __all__ = ['TargetAcquisitionRecipe', 'MaskImagingRecipe', 'MaskCheckRecipe']
 
 _logger = logging.getLogger('emir.recipes')
 
-class TargetAcquisitionRecipeInput(RecipeInput):
+class TargetAcquisitionRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
     master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
@@ -52,7 +52,7 @@ class TargetAcquisitionRecipeInput(RecipeInput):
 class TargetAcquisitionRecipeResult(RecipeResult):
     telescope_offset = Product(TelescopeOffset)
     
-@define_input(TargetAcquisitionRecipeInput)
+@define_requirements(TargetAcquisitionRecipeRequirements)
 @define_result(TargetAcquisitionRecipeResult)
 class TargetAcquisitionRecipe(BaseRecipe):
     '''
@@ -76,7 +76,7 @@ class TargetAcquisitionRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [TelescopeOffset()]}
     
-class MaskImagingRecipeInput(RecipeInput):
+class MaskImagingRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
     master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
@@ -88,7 +88,7 @@ class MaskImagingRecipeInput(RecipeInput):
 class MaskImagingRecipeResult(RecipeResult):
     msm_positions = Product(MSMPositions)
     
-@define_input(MaskImagingRecipeInput)
+@define_requirements(MaskImagingRecipeRequirements)
 @define_result(MaskImagingRecipeResult)
 class MaskImagingRecipe(BaseRecipe):
     '''Acquire a target.
@@ -111,7 +111,7 @@ class MaskImagingRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [MSMPositions()]}
     
-class MaskCheckRecipeInput(RecipeInput):
+class MaskCheckRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
     master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
@@ -124,7 +124,7 @@ class MaskCheckRecipeResult(RecipeResult):
     msm_positions = Product(MSMPositions)
     telescope_offset = Product(TelescopeOffset)
     
-@define_input(MaskCheckRecipeInput)
+@define_requirements(MaskCheckRecipeRequirements)
 @define_result(MaskCheckRecipeResult)
 class MaskCheckRecipe(BaseRecipe):
     '''
