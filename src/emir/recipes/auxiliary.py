@@ -316,20 +316,21 @@ class IntensityFlatRecipe(BaseRecipe):
         else:
             bias_corrector = IdNode()
             
-        mdark = pyfits.getdata(reqs.master_dark)
+        mdark = pyfits.getdata(reqs.master_dark.label)
         dark_corrector = DarkCorrector(mdark)
         nl_corrector = NonLinearityCorrector(reqs.nonlinearity)
         
         
         basicflow = SerialFlow([bias_corrector, dark_corrector, nl_corrector])
-
+        
+        _logger.info('basic frame reduction')
         for frame in obresult.frames:
 
             with pyfits.open(frame.label, mode='update') as hdulist:
                 hdulist = basicflow(hdulist)
 
         # combine LAMP-ON
-        
+        _logger.info('gathering LAMPON frames')
         lampon = [img.label for img in obresult.frames if img.itype == 'LAMPON']
         if not lampon:
             _logger.error('no LAMPON images in the ObservationResult')
@@ -338,6 +339,7 @@ class IntensityFlatRecipe(BaseRecipe):
         dataon = self.stack_images(lampon)
                 
         # combine LAMP-OFF
+        _logger.info('gathering LAMPOFF frames')
         lampoff = [img.label for img in obresult.frames if img.itype == 'LAMPOFF']
         if not lampoff:
             _logger.error('no LAMPOFF images in the ObservationResult')
