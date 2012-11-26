@@ -55,7 +55,7 @@ class EMIR_Pipeline_ALT(BasePipeline):
                 recipes=_equiv_class)
 
 _conf1 = InstrumentConfiguration('default', yaml.load(pkgutil.get_data('emir.instrument', 'default.yaml')))
-_conf2 = InstrumentConfiguration('alternate', yaml.load(pkgutil.get_data('emir.instrument', 'default.yaml')))
+_conf2 = InstrumentConfiguration('alternate', yaml.load(pkgutil.get_data('emir.instrument', 'alt.yaml')))
 
 class EMIR_Instrument(BaseInstrument):
     name = 'EMIR'
