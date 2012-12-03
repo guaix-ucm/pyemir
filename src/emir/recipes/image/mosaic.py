@@ -40,6 +40,7 @@ class MosaicRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     catalog = Product(SourcesCatalog)
 
+@define_requirements(MosaicRecipeRequirements)
 @define_result(MosaicRecipeResult)
 class MosaicRecipe(BaseRecipe):
     '''
