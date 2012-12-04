@@ -148,7 +148,7 @@ class MasterRONMap(DataProduct):
 
 class NonLinearityCalibration(DataProduct):
     def __init__(self, poly):
-        super(NonLinearityCalibration, self).__init__()
+        super(NonLinearityCalibration, self).__init__(default=poly)
         self.poly = poly
 
 class TelescopeOffset(DataProduct):
