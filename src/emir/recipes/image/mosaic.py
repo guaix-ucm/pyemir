@@ -25,14 +25,14 @@ Mosaic image mode recipe of EMIR
 import logging
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import define_input, define_result, DataFrame, RecipeResult
-from numina.core import Requirement, Product, FrameDataProduct, RecipeInput
+from numina.core import define_requirements, define_result, DataFrame, RecipeResult
+from numina.core import Requirement, Product, FrameDataProduct, RecipeRequirements
 
 from emir.dataproducts import SourcesCatalog
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-class MosaicRecipeInput(RecipeInput):
+class MosaicRecipeRequirements(RecipeRequirements):
     # FIXME: this parameter is optional 
     sources = Parameter(None, 'List of x, y coordinates to measure FWHM')
 
@@ -40,6 +40,7 @@ class MosaicRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     catalog = Product(SourcesCatalog)
 
+@define_requirements(MosaicRecipeRequirements)
 @define_result(MosaicRecipeResult)
 class MosaicRecipe(BaseRecipe):
     '''

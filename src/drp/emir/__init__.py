@@ -24,7 +24,8 @@ import pkgutil
 import importlib
     
 import yaml
-from numina.core import BaseInstrument, BasePipeline, import_object
+from numina.core import BaseInstrument, BasePipeline, InstrumentConfiguration
+from numina.core import import_object
 
 import emir.recipes as recp
 from emir import __version__
@@ -40,13 +41,34 @@ for _m in _modes:
     _equiv_class[_m.key] = _m.recipe_class
 
 del _m
-
+        
 class EMIR_Pipeline(BasePipeline):
     def __init__(self):
-        super(EMIR_Pipeline, self).__init__(name='EMIR', 
+        super(EMIR_Pipeline, self).__init__(name='default',
+                version=__version__,
+                recipes=_equiv_class)
+        
+class EMIR_Pipeline_ALT(BasePipeline):
+    def __init__(self):
+        super(EMIR_Pipeline_ALT, self).__init__(name='alternate',
                 version=__version__,
                 recipes=_equiv_class)
 
+_conf1 = InstrumentConfiguration('default', yaml.load(pkgutil.get_data('emir.instrument', 'default.yaml')))
+_conf2 = InstrumentConfiguration('alternate', yaml.load(pkgutil.get_data('emir.instrument', 'alt.yaml')))
+
 class EMIR_Instrument(BaseInstrument):
     name = 'EMIR'
+    configurations = {'default': _conf1,
+                      'alt': _conf2}
+    
+    pipelines = {'default': EMIR_Pipeline(),
+                'alternate': EMIR_Pipeline_ALT()}
     modes = _modes
+
+    def __init__(self, configuration):
+        super(EMIR_Instrument, self).__init__('EMIR',
+                    configuration)
+
+del _modes
+

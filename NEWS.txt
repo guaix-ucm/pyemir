@@ -1,5 +1,10 @@
+Version 0.6.11 (05 Dec 2012)
+----------------------------
+Changes:
+  * Updates to work with numina 0.9
+
 Version 0.6.10 (19 Nov 2012)
---------------------------
+----------------------------
 Changes:
   * All Recipes use frame.label as filename to
     open FITS frames

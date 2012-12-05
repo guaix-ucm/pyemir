@@ -24,8 +24,8 @@
 
 import logging
 
-from numina.core import BaseRecipe, Parameter, define_input, define_result
-from numina.core import DataProductRequirement, RecipeInput, RecipeResult
+from numina.core import BaseRecipe, Parameter, define_requirements, define_result
+from numina.core import DataProductRequirement, RecipeRequirements, RecipeResult
 from numina.core import Product
 from numina.logger import log_to_history
 
@@ -42,7 +42,7 @@ __all__ = ['TelescopeRoughFocusRecipe',
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-class TelescopeRoughFocusRecipeInput(RecipeInput):
+class TelescopeRoughFocusRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -54,7 +54,7 @@ class TelescopeRoughFocusRecipeInput(RecipeInput):
 class TelescopeRoughFocusRecipeResult(RecipeResult):
     focus = Product(TelescopeFocus)
 
-@define_input(TelescopeRoughFocusRecipeInput)
+@define_requirements(TelescopeRoughFocusRecipeRequirements)
 @define_result(TelescopeRoughFocusRecipeResult)
 class TelescopeRoughFocusRecipe(BaseRecipe):
     '''Recipe to compute the telescope focus.
@@ -86,7 +86,7 @@ class TelescopeRoughFocusRecipe(BaseRecipe):
         return {'products': [TelescopeFocus()]}
 
 
-class TelescopeFineFocusRecipeInput(RecipeInput):
+class TelescopeFineFocusRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -97,7 +97,7 @@ class TelescopeFineFocusRecipeInput(RecipeInput):
 class TelescopeFineFocusRecipeResult(RecipeResult):
     focus = Product(TelescopeFocus)
 
-@define_input(TelescopeFineFocusRecipeInput)
+@define_requirements(TelescopeFineFocusRecipeRequirements)
 @define_result(TelescopeFineFocusRecipeResult)
 class TelescopeFineFocusRecipe(BaseRecipe):
     '''
@@ -129,7 +129,7 @@ class TelescopeFineFocusRecipe(BaseRecipe):
     def run(self, obresult):
         return {'products': [TelescopeFocus()]}
 
-class DTUFocusRecipeInput(RecipeInput):
+class DTUFocusRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -142,7 +142,7 @@ class DTUFocusRecipeInput(RecipeInput):
 class DTUFocusRecipeResult(RecipeResult):
     focus = Product(DTUFocus)
 
-@define_input(DTUFocusRecipeInput)
+@define_requirements(DTUFocusRecipeRequirements)
 @define_result(DTUFocusRecipeResult)
 class DTUFocusRecipe(BaseRecipe):
     '''

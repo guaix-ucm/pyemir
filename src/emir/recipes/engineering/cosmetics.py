@@ -28,14 +28,14 @@ import numpy
 import pyfits
 
 from numina.core import BaseRecipe, Parameter, DataFrame
-from numina.core import RecipeError,RecipeInput, RecipeResult
-from numina.core import Product, define_input, define_result
+from numina.core import RecipeError,RecipeRequirements, RecipeResult
+from numina.core import Product, define_requirements, define_result
 from numina.core import FrameDataProduct
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-class CosmeticsRecipeInput(RecipeInput):
+class CosmeticsRecipeRequirements(RecipeRequirements):
     lowercut = Parameter(4.0, 'Values bellow this sigma level are flagged as dead pixels')
     uppercut = Parameter(4.0, 'Values above this sigma level are flagged as hot pixels')
     maxiter = Parameter(30, 'Maximum number of iterations')
@@ -44,7 +44,7 @@ class CosmeticsRecipeResult(RecipeResult):
     ratio = Product(FrameDataProduct)
     mask = Product(FrameDataProduct)
     
-@define_input(CosmeticsRecipeInput)
+@define_requirements(CosmeticsRecipeRequirements)
 @define_result(CosmeticsRecipeResult)
 class CosmeticsRecipe(BaseRecipe):
     '''Detector Cosmetics.

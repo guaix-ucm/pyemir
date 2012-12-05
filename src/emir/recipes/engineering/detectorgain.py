@@ -28,8 +28,8 @@ import pyfits
 
 import numina.qa
 from numina.core import BaseRecipe, Parameter, DataFrame
-from numina.core import RecipeError,RecipeInput, RecipeResult
-from numina.core import Product, define_input, define_result
+from numina.core import RecipeError,RecipeRequirements, RecipeResult
+from numina.core import Product, define_requirements, define_result
 
 from emir.instrument.detector import CHANNELS, QUADRANTS
 
@@ -37,7 +37,7 @@ from emir.dataproducts import MasterGainMap, MasterRONMap
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-class GainRecipe1Input(RecipeInput):
+class GainRecipe1Input(RecipeRequirements):
     region = Parameter('channel', 'Region used to compute: (full|quadrant|channel)', 
                        choices=['full','quadrant', 'channel'])
     
@@ -45,7 +45,7 @@ class GainRecipe1InputResult(RecipeResult):
     gain = Product(MasterGainMap(None, None, None))
     ron = Product(MasterRONMap(None, None))
     
-@define_input(GainRecipe1Input)
+@define_requirements(GainRecipe1Input)
 @define_result(GainRecipe1InputResult)
 class GainRecipe1(BaseRecipe):
     '''Detector Gain Recipe.

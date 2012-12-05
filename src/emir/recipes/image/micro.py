@@ -25,8 +25,8 @@ Image mode recipes of EMIR
 import logging
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import define_input, define_result, DataFrame, RecipeResult
-from numina.core import Requirement, Product, FrameDataProduct, RecipeInput
+from numina.core import define_requirements, define_result, DataFrame, RecipeResult
+from numina.core import Requirement, Product, FrameDataProduct, RecipeRequirements
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
@@ -37,7 +37,7 @@ from .shared import DirectImageCommon
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-class MicroditheredImageRecipeInput(RecipeInput):
+class MicroditheredImageRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -66,7 +66,7 @@ class MicroditheredImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     catalog = Product(SourcesCatalog)
 
-@define_input(MicroditheredImageRecipeInput)
+@define_requirements(MicroditheredImageRecipeRequirements)
 @define_result(MicroditheredImageRecipeResult)
 #@provides(DataFrame, SourcesCatalog)
 class MicroditheredImageRecipe(BaseRecipe, DirectImageCommon):

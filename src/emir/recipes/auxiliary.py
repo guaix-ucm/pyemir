@@ -24,9 +24,9 @@ import logging
 import numpy
 import pyfits
 from numina.core import RecipeError
-from numina.core import BaseRecipe, RecipeInput, RecipeResult, DataFrame
+from numina.core import BaseRecipe, RecipeRequirements, RecipeResult, DataFrame
 from numina.core import Requirement, Product, DataProductRequirement
-from numina.core import define_input, define_result
+from numina.core import define_requirements, define_result
 from numina.logger import log_to_history
 from numina.array.combine import median
 from numina import __version__
@@ -48,14 +48,14 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
-class BiasRecipeInput(RecipeInput):
+class BiasRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
 
 class BiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
     stats = Product(ChannelLevelStatistics)
 
-@define_input(BiasRecipeInput)
+@define_requirements(BiasRecipeRequirements)
 @define_result(BiasRecipeResult)
 class BiasRecipe(BaseRecipe):
     '''
@@ -85,7 +85,7 @@ class BiasRecipe(BaseRecipe):
 
     # FIXME find a better way of doing this automatically
     # @log_to_history(_logger)
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         _logger.info('starting bias reduction')
 
         cdata = []
@@ -148,14 +148,14 @@ class BiasRecipe(BaseRecipe):
             for hdulist in cdata:
                 hdulist.close()
             
-class DarkRecipeInput(BiasRecipeInput):
+class DarkRecipeRequirements(BiasRecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
 
 class DarkRecipeResult(RecipeResult):
     darkframe = Product(MasterDark)
     stats = Product(ChannelLevelStatistics)
 
-@define_input(DarkRecipeInput)
+@define_requirements(DarkRecipeRequirements)
 @define_result(DarkRecipeResult)
 class DarkRecipe(BaseRecipe):
     '''Recipe to process data taken in Dark current image Mode.
@@ -179,7 +179,7 @@ class DarkRecipe(BaseRecipe):
         super(DarkRecipe, self).__init__(author=_s_author, version="0.1.0")
         
     # @log_to_history(_logger)
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         _logger.info('starting dark reduction')
 
         cdata = []
@@ -263,14 +263,14 @@ class DarkRecipe(BaseRecipe):
         return result
 
 
-class IntensityFlatRecipeInput(DarkRecipeInput):
+class IntensityFlatRecipeRequirements(DarkRecipeRequirements):
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
     nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
 
 class IntensityFlatRecipeResult(RecipeResult):
     flatframe = Product(MasterIntensityFlat)
 
-@define_input(IntensityFlatRecipeInput)
+@define_requirements(IntensityFlatRecipeRequirements)
 @define_result(IntensityFlatRecipeResult)
 class IntensityFlatRecipe(BaseRecipe):
     '''Recipe to process data taken in intensity flat-field mode.
@@ -306,30 +306,31 @@ class IntensityFlatRecipe(BaseRecipe):
                 )
         
     #@log_to_history(_logger)
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         _logger.info('starting flat reduction')
                 
         # Basic processing
-        if self.parameters['master_bias']:
-            mbias = pyfits.getdata(self.parameters['master_bias'])
+        if reqs.master_bias:
+            mbias = pyfits.getdata(reqs.master_bias)
             bias_corrector = BiasCorrector(mbias)
         else:
             bias_corrector = IdNode()
             
-        mdark = pyfits.getdata(self.parameters['master_dark'])
+        mdark = pyfits.getdata(reqs.master_dark.label)
         dark_corrector = DarkCorrector(mdark)
-        nl_corrector = NonLinearityCorrector(self.parameters['nonlinearity'])
+        nl_corrector = NonLinearityCorrector(reqs.nonlinearity)
         
         
         basicflow = SerialFlow([bias_corrector, dark_corrector, nl_corrector])
-
+        
+        _logger.info('basic frame reduction')
         for frame in obresult.frames:
 
             with pyfits.open(frame.label, mode='update') as hdulist:
                 hdulist = basicflow(hdulist)
 
         # combine LAMP-ON
-        
+        _logger.info('gathering LAMPON frames')
         lampon = [img.label for img in obresult.frames if img.itype == 'LAMPON']
         if not lampon:
             _logger.error('no LAMPON images in the ObservationResult')
@@ -338,6 +339,7 @@ class IntensityFlatRecipe(BaseRecipe):
         dataon = self.stack_images(lampon)
                 
         # combine LAMP-OFF
+        _logger.info('gathering LAMPOFF frames')
         lampoff = [img.label for img in obresult.frames if img.itype == 'LAMPOFF']
         if not lampoff:
             _logger.error('no LAMPOFF images in the ObservationResult')
@@ -399,13 +401,13 @@ class IntensityFlatRecipe(BaseRecipe):
                 hdulist.close()
         
         
-class SpectralFlatRecipeInput(IntensityFlatRecipeInput):
+class SpectralFlatRecipeRequirements(IntensityFlatRecipeRequirements):
     pass
 
 class SpectralFlatRecipeResult(RecipeResult):
     flatframe = Product(MasterSpectralFlat)
 
-@define_input(SpectralFlatRecipeInput)
+@define_requirements(SpectralFlatRecipeRequirements)
 @define_result(SpectralFlatRecipeResult)
 class SpectralFlatRecipe(BaseRecipe):
     '''Spectral Flatfield Recipe.
@@ -439,10 +441,10 @@ class SpectralFlatRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return SpectralFlatRecipeResult(flatframe=MasterSpectralFlat(None))
 
-class SlitTransmissionRecipeInput(RecipeInput):
+class SlitTransmissionRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -451,7 +453,7 @@ class SlitTransmissionRecipeInput(RecipeInput):
 class SlitTransmissionRecipeResult(RecipeResult):
     slit = Product(SlitTransmissionCalibration)
 
-@define_input(SlitTransmissionRecipeInput)
+@define_requirements(SlitTransmissionRecipeRequirements)
 @define_result(SlitTransmissionRecipeResult)
 class SlitTransmissionRecipe(BaseRecipe):
     '''Recipe to calibrate the slit transmission.
@@ -481,10 +483,10 @@ class SlitTransmissionRecipe(BaseRecipe):
         )
 
     @log_to_history(_logger)
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return {'products': [SlitTransmissionCalibration()]}
 
-class WavelengthCalibrationRecipeInput(RecipeInput):
+class WavelengthCalibrationRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -495,7 +497,7 @@ class WavelengthCalibrationRecipeInput(RecipeInput):
 class WavelengthCalibrationRecipeResult(RecipeResult):
     cal = Product(WavelengthCalibration)
         
-@define_input(WavelengthCalibrationRecipeInput)
+@define_requirements(WavelengthCalibrationRecipeRequirements)
 @define_result(WavelengthCalibrationRecipeResult)
 class WavelengthCalibrationRecipe(BaseRecipe):
     '''Recipe to calibrate the spectral response.
@@ -525,6 +527,6 @@ class WavelengthCalibrationRecipe(BaseRecipe):
         )
 
     @log_to_history(_logger)
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return {'products': [WavelengthCalibration()]}
 

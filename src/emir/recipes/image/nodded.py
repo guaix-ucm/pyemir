@@ -23,8 +23,8 @@ Beam switched-nodded image mode recipe of EMIR
 '''
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import Requirement, RecipeInput, RecipeResult
-from numina.core import DataFrame, define_input, define_result
+from numina.core import Requirement, RecipeRequirements, RecipeResult
+from numina.core import DataFrame, define_requirements, define_result
 from numina.core import Product, FrameDataProduct 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
@@ -33,7 +33,7 @@ from emir.dataproducts import SourcesCatalog
 
 from .shared import DirectImageCommon
 
-class NBImageRecipeInput(RecipeInput):
+class NBImageRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -51,7 +51,7 @@ class NBImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     catalog = Product(SourcesCatalog)
 
-@define_input(NBImageRecipeInput)
+@define_requirements(NBImageRecipeRequirements)
 @define_result(NBImageRecipeResult)
 class NBImageRecipe(BaseRecipe, DirectImageCommon):
     '''
