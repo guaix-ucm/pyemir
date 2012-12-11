@@ -17,11 +17,8 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import itertools as ito
-
 import numpy # pylint: disable-msgs=E1101
 
-from numina.extraiter import braid
 from numina.treedict import TreeDict
 from numina.instrument.detector import nIRDetector, Amplifier, DAS
 from numina.instrument.detector import SingleReadoutMode
@@ -29,40 +26,8 @@ from numina.instrument.detector import CdsReadoutMode
 from numina.instrument.detector import RampReadoutMode
 from numina.instrument.detector import FowlerReadoutMode
 
-def _channel_gen1(beg, end, step):
-    return ito.imap(lambda x: (x, x + step), xrange(beg, end, step))
-
-def _channel_gen2(beg, end, step):
-    return ito.imap(lambda x: (x - step, x), xrange(beg, end, -step))
-
-def _ch1():
-    return ito.izip(ito.repeat(slice(1024, 2048)), ito.starmap(slice, _channel_gen2(1024, 0, 128)))
-
-def _ch2():  
-    return ito.izip(ito.starmap(slice, _channel_gen2(1024, 0, 128)), ito.repeat(slice(0, 1024)))
-
-def _ch3():
-    return ito.izip(ito.repeat(slice(0, 1024)), ito.starmap(slice, _channel_gen1(1024, 2048, 128)))
-
-def _ch4():
-    return ito.izip(ito.starmap(slice, _channel_gen1(1024, 2048, 128)), ito.repeat(slice(1024, 2048)))
-
-# Channels are listed per quadrant and then in fast readout order
-CHANNELS = list(ito.chain(_ch1(), _ch2(), _ch3(), _ch4()))
-# Channels as they are populated during recosntruction
-CHANNELS_2 = list(ito.chain(_ch3(), _ch4(), _ch1(), _ch2()))
-
-# Channels in read out order
-CHANNELS_READOUT = list(braid(_ch1(), _ch2(), _ch3(), _ch4()))
-# Channels as they are populated during recosntruction
-CHANNELS_READOUT_2 = list(braid(_ch3(), _ch4(), _ch1(), _ch2()))
-
-# Quadrants are listed starting at left-top and counter-clockwise then
-QUADRANTS = [(slice(1024, 2048), slice(0, 1024)),
-             (slice(0, 1024), slice(0, 1024)),
-             (slice(0, 1024), slice(1024, 2048)),
-             (slice(1024, 2048), slice(1024, 2048))
-             ]
+from .channels import CHANNELS, CHANNELS_2, CHANNELS_READOUT
+from .channels import CHANNELS_READOUT_2, QUADRANTS
 
 class EMIR_DAS(DAS):
     def __init__(self, detector):
