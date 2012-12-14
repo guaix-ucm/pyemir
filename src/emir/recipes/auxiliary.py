@@ -100,21 +100,13 @@ class BiasRecipe(BaseRecipe):
             data = median([d['primary'].data for d in cdata], dtype='float32')
 
             var2 = numpy.zeros_like(data[0])
-
-
             cls = ChannelLevelStatistics(exposure=0.0)
-
-            # FIXME: instrumetn API is horrible
-            for amp1, amp2 in self.instrument['detector']['channels'][0]:
-                
-                region = (slice(*amp1), slice(*amp2))
-                
+            for region in self.instrument.detector['channels']:
                 mean = numpy.mean(data[0][region])
                 med = numpy.median(data[0][region])
                 var = numpy.var(data[0][region])
                 stts = mean, med, var
-                sregion = amp1, amp2
-                cls.statistics.append([sregion, stts])
+                cls.statistics.append([region, stts])
                 var2[region] = var
 
             hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
@@ -206,11 +198,11 @@ class DarkRecipe(BaseRecipe):
             for hdulist in cdata:
                 hdulist.close()
 
-        if self.parameters['master_bias'] is not None:
+        if reqs.master_bias is not None:
             # load bias
             
-            master_bias = pyfits.open(self.parameters['master_bias'], mode='readonly')
-            _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
+            master_bias = pyfits.open(reqs.master_bias, mode='readonly')
+            _logger.info('subtracting bias %s', str(reqs.master_bias))
             # subtrac bias
             data[0] -= master_bias[0].data
             
@@ -221,17 +213,12 @@ class DarkRecipe(BaseRecipe):
         var2 = numpy.zeros_like(data[0])
 
         cls = ChannelLevelStatistics(exposure=exposure)
-
-        for amp1, amp2 in self.instrument['detector']['channels'][0]:
-            
-            region = (slice(*amp1), slice(*amp2))
-            
+        for region in self.instrument.detector['channels']:
             mean = numpy.mean(data[0][region])
             med = numpy.median(data[0][region])
             var = numpy.var(data[0][region])
             stts = mean, med, var
-            sregion = amp1, amp2
-            cls.statistics.append([sregion, stts])
+            cls.statistics.append([region, stts])
             var2[region] = var
 
         # update hdu header with
