@@ -55,7 +55,6 @@ def preprocess(frame):
             pass
         else:
             raise ValueError
-    pass
 
 def preprocess_single(frame, saturation=65536, badpixels=None, blank=0):
     pass
@@ -63,8 +62,8 @@ def preprocess_single(frame, saturation=65536, badpixels=None, blank=0):
 
 def preprocess_cds(frame):
     
-    samp1 = frame[0].data[...,0]
-    samp2 = frame[0].data[...,1]
+    samp1 = frame[0].data[..., 0]
+    samp2 = frame[0].data[..., 1]
     final = samp2 - samp1
     frame[0].data = final
     frame[0].header['READPROC'] = True
@@ -111,7 +110,7 @@ def axis_fowler(data, badpix, img, var, nmap, mask, hsize, saturation, blank=0):
         var[...] = blank
         mask[...] = badpix[0]
     else:
-        mm = numpy.asarray([(b - a) for a,b in zip(data[:hsize],data[hsize:]) if b < saturation and a < saturation])
+        mm = numpy.asarray([(b - a) for a, b in zip(data[:hsize], data[hsize:]) if b < saturation and a < saturation])
         npix = len(mm)
         nmap[...] = npix
         if npix == 0:
@@ -126,35 +125,6 @@ def axis_fowler(data, badpix, img, var, nmap, mask, hsize, saturation, blank=0):
             img[...] = mm.mean()
             var[...] = mm.var() / npix
             mask[...] = MASK_GOOD
-
-
-def axis_ramp(data, badpix, img, var, nmap, mask, crmask, 
-              saturation, dt, gain, ron, nsig, blank=0):
-    MASK_SATURATION = 3 
-    MASK_GOOD = 0
-
-    if badpix[0] != MASK_GOOD:
-        img[...] = blank
-        var[...] = blank
-        mask[...] = badpix[0]
-    else:
-        mm = data[data < saturation]
-
-        if len(mm) <= 1:
-            img[...] = blank
-            var[...] = blank
-            mask[...] = MASK_SATURATION
-        else:
-            v, vr, n, glt = ramp(mm, saturation, dt, gain, ron, nsig)
-
-            img[...] = v
-
-            var[...] = vr
-            mask[...] = MASK_GOOD
-            nmap[...] = n
-            # If there is a pixel in the list of CR, put it in the crmask
-            if glt:                
-                crmask[...] = glt[0]
 
 
 def loopover_fowler(data, badpixels, saturation, hsize, blank=0):

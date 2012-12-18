@@ -29,10 +29,7 @@ from .simulator import EmirImageFactory
 _logger = logging.getLogger('emir.dataproducts')
 
 class MasterBadPixelMask(FrameDataProduct):
-
-    def metadata(self):
-        hdr = self.image[0].header
-        yield 'detector0.mode', hdr['ccdmode']
+    pass
 
 class MasterBias(FrameDataProduct):
     '''Master bias product
@@ -46,9 +43,7 @@ class MasterBias(FrameDataProduct):
     
     
     '''
-    def metadata(self):
-        hdr = self.image[0].header
-        yield 'detector0.mode', hdr['ccdmode']
+    pass
 
 class MasterDark(FrameDataProduct):
     '''Master dark product
@@ -62,31 +57,17 @@ class MasterDark(FrameDataProduct):
     
     
     '''
-    def metadata(self):
-        hdr = self.image[0].header
-        yield 'detector0.mode', hdr['ccdmode']
+    pass
 
 class MasterIntensityFlat(FrameDataProduct):
-
-    def metadata(self):
-        hdr = self.image[0].header
-        yield 'detector0.mode', hdr['ccdmode']
-        yield 'filter0', hdr['filter']
+    pass
         
 class MasterSpectralFlat(FrameDataProduct):
-
-    def metadata(self):
-        hdr = self.image[0].header
-        yield 'detector0.mode', hdr['ccdmode']
-        yield 'filter0', hdr['filter']
+    pass
 
 class Spectra(FrameDataProduct):
-
-    def metadata(self):
-        hdr = self.image[0].header
-        yield 'detector0.mode', hdr['ccdmode']
-        yield 'filter0', hdr['filter']
-        
+    pass
+ 
 class DataCube(FrameDataProduct):
     pass
 

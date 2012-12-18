@@ -33,8 +33,8 @@ from emir.dataproducts import SourcesCatalog
 from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
 from emir.requirements import MasterDark_Requirement, NonLinearityCalibration_Requirement
 from emir.requirements import MasterIntensityFlatField_Requirement
-from emir.requirements import Channels_Requirement, Extinction_Requirement
-from emir.requirements import DetectorShape_Requirement, Offsets_Requirement
+from emir.requirements import Extinction_Requirement
+from emir.requirements import Offsets_Requirement
 from emir.requirements import Catalog_Requirement
 
 from .shared import DirectImageCommon
@@ -51,8 +51,6 @@ class StareImageRecipeRequirements(RecipeRequirements):
     sources = Catalog_Requirement()
     offsets = Offsets_Requirement()
     iterations = Parameter(4, 'Iterations of the recipe')
-    idc = Channels_Requirement()
-    ids = DetectorShape_Requirement()
 
 class StareImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
@@ -60,7 +58,7 @@ class StareImageRecipeResult(RecipeResult):
 
 @define_requirements(StareImageRecipeRequirements)
 @define_result(StareImageRecipeResult)    
-class StareImageRecipe(BaseRecipe, DirectImageCommon):
+class StareImageRecipe(DirectImageCommon):
     '''
     The effect of recording images of the sky in a given pointing
     position of the TS
@@ -78,14 +76,10 @@ class StareImageRecipe(BaseRecipe, DirectImageCommon):
             version="0.1.0"
         )
         
-    def run(self, obresult):
+    def run(self, obresult, reqs):
                 
-        baseshape = self.parameters['instrument.detector.shape']
-        amplifiers = self.parameters['instrument.detector.channels']
-        offsets = self.parameters['offsets']
-        
-        frame, catalog = self.process(obresult, baseshape, amplifiers, 
-                            offsets=offsets, subpix=1,
+        frame, catalog = self.process(obresult, reqs,
+                            window=None, subpix=1,
                             stop_after=DirectImageCommon.PRERED)
         
         return StareImageRecipeResult(frame=frame, catalog=catalog)

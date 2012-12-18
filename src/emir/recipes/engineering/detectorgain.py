@@ -59,20 +59,18 @@ class GainRecipe1(BaseRecipe):
             version="0.1.0"
         )
 
-    def region_full(self):
-        return [(slice(0, 2048), slice(0, 2048))]
+    def region(self, reqs):
+        mm = reqs['region'].tolower()
+        if mm  == 'full':
+            return ((slice(0, 2048), slice(0, 2048)))
+        elif mm == 'quadrant':
+            return QUADRANTS
+        elif mm == 'channel':
+            return CHANNELS
+        else:
+            raise ValueError
     
-    def region_quadrant(self):
-        return QUADRANTS
-    
-    def region_channel(self):
-        return CHANNELS
-
-    def region(self):
-        fun = getattr(self, 'region_%s' %  self.parameters['region'])  
-        return fun()
-    
-    def run(self, obresult):
+    def run(self, obresult, reqs):
 
         resets = []
         ramps = []
@@ -87,7 +85,7 @@ class GainRecipe1(BaseRecipe):
             else:
                 raise RecipeError('frame is neither a RAMP nor a RESET')
 
-        channels = self.region()
+        channels = self.region(reqs)
         result_gain = numpy.zeros((len(channels), ))
         result_ron = numpy.zeros_like(result_gain)
         

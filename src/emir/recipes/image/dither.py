@@ -29,8 +29,8 @@ from numina.core import define_requirements, define_result
 from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
 from emir.requirements import MasterDark_Requirement, NonLinearityCalibration_Requirement
 from emir.requirements import MasterIntensityFlatField_Requirement
-from emir.requirements import Channels_Requirement, Extinction_Requirement
-from emir.requirements import DetectorShape_Requirement, Offsets_Requirement
+from emir.requirements import Extinction_Requirement
+from emir.requirements import Offsets_Requirement
 from emir.requirements import Catalog_Requirement
 
 
@@ -58,8 +58,6 @@ class DitheredImageRecipeRequirements(RecipeRequirements):
     sky_images_sep_time = Parameter(10, 'Maximum separation time between consecutive sky images in minutes')
     check_photometry_levels = Parameter([0.5, 0.8], 'Levels to check the flux of the objects')
     check_photometry_actions = Parameter(['warn', 'warn', 'default'], 'Actions to take on images')
-    idc = Channels_Requirement()
-    ids = DetectorShape_Requirement()
                     
 
 class DitheredImageRecipeResult(RecipeResult):
@@ -68,7 +66,7 @@ class DitheredImageRecipeResult(RecipeResult):
 
 @define_requirements(DitheredImageRecipeRequirements)
 @define_result(DitheredImageRecipeResult)
-class DitheredImageRecipe(BaseRecipe, DirectImageCommon):
+class DitheredImageRecipe(DirectImageCommon):
     '''Recipe for the reduction of imaging mode observations.
 
     Recipe to reduce observations obtained in imaging mode, considering different
@@ -147,13 +145,9 @@ class DitheredImageRecipe(BaseRecipe, DirectImageCommon):
             version="0.1.0"
         )
         
-    def run(self, obresult):        
-        baseshape = self.parameters['instrument.detector.shape']
-        amplifiers = self.parameters['instrument.detector.channels']
-        offsets = self.parameters['offsets']
-                
-        frame, catalog = self.process(obresult, baseshape, amplifiers, 
-                            offsets=offsets, subpix=1, 
+    def run(self, obresult, reqs):        
+        frame, catalog = self.process(obresult, reqs, 
+                            window=None, subpix=1, 
                             stop_after=DirectImageCommon.FULLRED)
         
         result = DitheredImageRecipeResult(frame=frame, catalog=catalog)

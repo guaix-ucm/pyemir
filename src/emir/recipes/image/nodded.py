@@ -30,6 +30,7 @@ from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import NonLinearityCalibration
 from emir.dataproducts import SourcesCatalog
+from emir.requirements import Offsets_Requirement
 
 from .shared import DirectImageCommon
 
@@ -43,9 +44,7 @@ class NBImageRecipeRequirements(RecipeRequirements):
               'Master intensity flatfield')
     extinction = Parameter(0.0, 'Mean atmospheric extinction') 
     sources = Parameter(None, 'List of x, y coordinates to measure FWHM', optional=True)
-    offsets = Parameter(None, 'List of pairs of offsets', optional=True)
-    idc = Requirement('List of channels', dest='instrument.detector.channels', hidden=True)
-    ids = Requirement('Detector shape', dest='instrument.detector.shape', hidden=True)
+    offsets = Offsets_Requirement()
 
 class NBImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
@@ -75,14 +74,11 @@ class NBImageRecipe(BaseRecipe, DirectImageCommon):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         
-        baseshape = self.parameters['instrument.detector.shape']
-        amplifiers = self.parameters['instrument.detector.channels']
-        offsets = self.parameters['offsets']
-
-        frame, catalog = self.process(obresult, baseshape, amplifiers, 
-                            offsets=offsets, target_is_sky=False,
+        frame, catalog = self.process(obresult, reqs, 
+                            window=None, subpix=1,
+                            target_is_sky=False,
                             stop_after=DirectImageCommon.FULLRED)
 
         return NBImageRecipeResult(frame=frame, catalog=catalog)

@@ -51,19 +51,6 @@ class MasterIntensityFlatField_Requirement(DataProductRequirement):
               self).__init__(MasterIntensityFlat, 'Master intensity flatfield')
               
               
-class Channels_Requirement(Requirement):
-    def __init__(self):
-        super(Channels_Requirement, self).__init__('List of channels', 
-                                                   dest='instrument.detector.channels', 
-                                                   hidden=True)
-
-class DetectorShape_Requirement(Requirement):
-    def __init__(self):
-        super(DetectorShape_Requirement, self).__init__('Detector shape', 
-                                                    dest='instrument.detector.shape', 
-                                                    hidden=True)
-        
-        
 class Extinction_Requirement(Parameter):
     def __init__(self):
         super(Extinction_Requirement, self).__init__(0.0, 'Mean atmospheric extinction')

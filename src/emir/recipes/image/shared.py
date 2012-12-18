@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 from numina import __version__
-from numina.core import DataFrame, RecipeError
+from numina.core import DataFrame, BaseRecipe, RecipeError
 from numina.flow import SerialFlow 
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, FlatFieldCorrector
@@ -137,40 +137,35 @@ def clip_slices(r, region, scale=1):
 
     return t
 
-class DirectImageCommon(object):
+class DirectImageCommon(BaseRecipe):
         
     logger = _logger
     BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
+    __version__ = '0.1.0'
     
     def __init__(self, *args, **kwds):
-        super(DirectImageCommon, self).__init__()
+        super(DirectImageCommon, self).__init__(version=__version__)
         
         self._figure = plt.figure(facecolor='white')
         self._figure.canvas.set_window_title('Recipe Plots')
         self._figure.canvas.draw()
     
-    def process(self, obresult, baseshape, channels, 
-                offsets=None, window=None, 
-                subpix=1, store_intermediate=True,
+    def process(self, obresult, reqs,
+                window=None, subpix=1, 
+                store_intermediate=True,
                 target_is_sky=True, stop_after=PRERED):
         
         numpy.seterr(divide='raise')
         
-        # metadata = self.instrument['metadata']
-        # FIXME: hardcoded
-        keywords = {
-         "juliandate": "MJD-OBS", 
-         "airmass": "AIRMASS", 
-         "imagetype": "IMGTYP", 
-         "exposure": "EXPTIME"
-        }        
-
+        keywords = self.instrument.keywords
+        baseshape = self.instrument.detector['shape']
+        channels = self.instrument.detector['channels']
+        
         if window is None:
             window = tuple((0, siz) for siz in baseshape)
 
         if store_intermediate:
             pass
-        
         
         # States        
         sf_data = None
@@ -178,7 +173,7 @@ class DirectImageCommon(object):
         step = 0
         
         try:
-            niteration = self.parameters['iterations']
+            niteration = reqs['iterations']
         except KeyError:
             niteration = 1
         
@@ -190,20 +185,20 @@ class DirectImageCommon(object):
                 # Basic processing
                 
                 # FIXME: add this
-                #bpm = pyfits.getdata(self.parameters['master_bpm'])
+                #bpm = pyfits.getdata(reqs['master_bpm'])
                 #bpm_corrector = BadPixelCorrector(bpm)
                 
-                if self.parameters['master_bias']:
-                    mbias = pyfits.getdata(self.parameters['master_bias'])
+                if reqs['master_bias']:
+                    mbias = pyfits.getdata(reqs['master_bias'])
                     bias_corrector = BiasCorrector(mbias)
                 else:
                     bias_corrector = IdNode()
             
-                mdark = pyfits.getdata(self.parameters['master_dark'])
+                mdark = pyfits.getdata(reqs['master_dark'])
                 dark_corrector = DarkCorrector(mdark)
-                nl_corrector = NonLinearityCorrector(self.parameters['nonlinearity'])
+                nl_corrector = NonLinearityCorrector(reqs['nonlinearity'])
 
-                mflat = pyfits.getdata(self.parameters['master_intensity_ff'])
+                mflat = pyfits.getdata(reqs['master_intensity_ff'])
                 ff_corrector = FlatFieldCorrector(mflat)  
                   
                 basicflow = SerialFlow([#bpm_corrector,
@@ -256,7 +251,7 @@ class DirectImageCommon(object):
                     
                     
                     frame.baselabel = os.path.splitext(frame.label)[0]
-                    frame.mask = self.parameters['master_bpm']
+                    frame.mask = reqs['master_bpm']
                     # Insert pixel offsets between frames    
                     frame.objmask_data = None
                     frame.valid_target = False
@@ -274,13 +269,13 @@ class DirectImageCommon(object):
         
                 labels = [frame.label for frame in targetframes]
         
-                if offsets is None:
+                if reqs['offsets'] is None:
                     _logger.info('Computing offsets from WCS information')
                     
                     list_of_offsets = offsets_from_wcs(labels, refpix)
                 else:
                     _logger.info('Using offsets from parameters')
-                    list_of_offsets = numpy.asarray(offsets)
+                    list_of_offsets = numpy.asarray(reqs['offsets'])
 
                 # Insert pixel offsets between frames
                 for frame, off in zip(targetframes, list_of_offsets):
@@ -332,7 +327,7 @@ class DirectImageCommon(object):
                 # Combining the frames
                 _logger.info("Step %d, Combining target frames", step)
                 
-                sf_data = self.combine_frames(targetframes)
+                sf_data = self.combine_frames(targetframes, extinction=reqs['extinction'])
                     
                 self.figures_after_combine(sf_data)
                       
@@ -405,7 +400,7 @@ class DirectImageCommon(object):
                 # Combining the images
                 _logger.info("Step %d, Combining the images", step)
                 # FIXME: only for science
-                sf_data = self.combine_frames(targetframes, step=step)
+                sf_data = self.combine_frames(targetframes, reqs['extinction'], step=step)
                 self.figures_after_combine(sf_data)
 
                 if step >= niteration:
@@ -531,7 +526,7 @@ class DirectImageCommon(object):
         
         # 1 / minutes in a day 
         MIN_TO_DAY = 0.000694444
-        #max_time_sep = self.parameters['sky_images_sep_time'] / 1440.0
+        #max_time_sep = reqs['sky_images_sep_time'] / 1440.0
         _dis, idxs = kdtree.query(tarray, k=nframes, 
                                  distance_upper_bound=maxsep * MIN_TO_DAY)
         
@@ -620,7 +615,7 @@ class DirectImageCommon(object):
 
 
 
-    def combine_frames(self, frames, out=None, step=0):
+    def combine_frames(self, frames, extinction, out=None, step=0):
         _logger.debug('Step %d, opening sky-subtracted frames', step)
 
         def fits_open(name):
@@ -632,7 +627,7 @@ class DirectImageCommon(object):
         mskslll = [fits_open(frame.resized_mask) for frame in frames if frame.valid_target]
         _logger.debug('Step %d, combining %d frames', step, len(frameslll))
         try:
-            extinc = [pow(10, -0.4 * frame.airmass * self.parameters['extinction']) for frame in frames if frame.valid_target]
+            extinc = [pow(10, -0.4 * frame.airmass * extinction) for frame in frames if frame.valid_target]
             data = [i['primary'].data for i in frameslll]
             masks = [i['primary'].data for i in mskslll]
             

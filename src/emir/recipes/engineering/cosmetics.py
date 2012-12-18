@@ -58,7 +58,11 @@ class CosmeticsRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    # FIXME: this function is useless
+    def update_header(self, hdr):
+        return hdr
+
+    def run(self, obresult, reqs):
 
         resets = []
         flats = []
@@ -85,9 +89,9 @@ class CosmeticsRecipe(BaseRecipe):
         f1 = pyfits.getdata(flats[0]) - reset
         f2 = pyfits.getdata(flats[1]) - reset
         
-        maxiter = self.parameters['maxiter']
-        lowercut = self.parameters['lowercut']
-        uppercut = self.parameters['uppercut']
+        maxiter = reqs['maxiter']
+        lowercut = reqs['lowercut']
+        uppercut = reqs['uppercut']
         
         ninvalid = 0
         mask = None

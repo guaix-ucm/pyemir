@@ -23,7 +23,7 @@ import logging
 from itertools import repeat, chain, izip
 import os.path
 
-import numpy # pylint: disable-msgs=E1101
+import numpy
 import pyfits
 
 from numina.core import BaseRecipe, DataFrame
@@ -75,49 +75,3 @@ class Recipe(BaseRecipe):
         return {'products': results}
                                                  
 
-if __name__ == '__main__':
-    import uuid
-    import glob
-    
-    from numina.compatibility import json
-    from numina.user import main
-    from numina.jsonserializer import to_json
-
-    logging.basicConfig(level=logging.DEBUG)
-    _logger.setLevel(logging.DEBUG)
-        
-    pv = {'recipes': {'default': {'parameters': {
-                                    'region': 'channel'
-                                },
-                     'run': {'repeat': 1,
-                             },   
-                        },                 
-                      },                      
-          'observing_block': {'instrument': 'emir',
-                       'mode': 'detector_reorder',
-                       'id': 1,
-                       'result': {
-                                  'images': [], 
-
-                            },
-                       },                     
-    }
-    os.chdir('/home/spr/Datos/emir/test6/data')
-    
-    pv['observing_block']['result']['images'] = glob.glob('*serie*.fits')
-    #pv['observing_block']['result']['images'] = ['pozo_BG33_VR05_OFF11_serie.0054.fits']
-    os.chdir('/home/spr/Datos/emir/test6')
-    
-    # Creating base directory for storing results
-    uuidstr = str(uuid.uuid1()) 
-    basedir = os.path.join(os.getcwd(), uuidstr)
-    os.mkdir(basedir)
-    
-    ff = open('config.txt', 'w+')
-    try:
-        json.dump(pv, ff, default=to_json, encoding='utf-8', indent=2)
-    finally:
-        ff.close()
-
-    main(['-d', '--basedir', basedir, '--datadir', 'data',
-          '--run', 'config.txt'])

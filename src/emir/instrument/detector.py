@@ -17,7 +17,9 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import numpy # pylint: disable-msgs=E1101
+import itertools as ito
+
+import numpy
 
 from numina.treedict import TreeDict
 from numina.instrument.detector import nIRDetector, Amplifier, DAS
