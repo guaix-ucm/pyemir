@@ -52,7 +52,7 @@ class NBImageRecipeResult(RecipeResult):
 
 @define_requirements(NBImageRecipeRequirements)
 @define_result(NBImageRecipeResult)
-class NBImageRecipe(BaseRecipe, DirectImageCommon):
+class NBImageRecipe(DirectImageCommon):
     '''
     The effect of recording a series of stare images, with the same
     acquisition parameters, and taken by pointing the TS in cycles

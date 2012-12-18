@@ -66,7 +66,7 @@ class MicroditheredImageRecipeResult(RecipeResult):
 @define_requirements(MicroditheredImageRecipeRequirements)
 @define_result(MicroditheredImageRecipeResult)
 #@provides(DataFrame, SourcesCatalog)
-class MicroditheredImageRecipe(BaseRecipe, DirectImageCommon):
+class MicroditheredImageRecipe(DirectImageCommon):
     '''
     Recipe for the reduction of microdithering imaging.
     
