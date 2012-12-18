@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 from numina import __version__
-from numina.core import DataFrame
+from numina.core import DataFrame, RecipeError
 from numina.flow import SerialFlow 
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, FlatFieldCorrector
@@ -173,6 +173,7 @@ class DirectImageCommon(object):
         
         
         # States        
+        sf_data = None
         state = self.BASIC
         step = 0
         
@@ -411,6 +412,9 @@ class DirectImageCommon(object):
                     state = self.COMPLETE
             else:
                 break
+
+        if sf_data is None:
+            raise RecipeError('no combined image has been generated at step %d', state)
 
         hdu = pyfits.PrimaryHDU(sf_data[0])                
         hdr = hdu.header
