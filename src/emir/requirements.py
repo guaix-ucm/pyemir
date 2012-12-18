@@ -55,6 +55,11 @@ class Extinction_Requirement(Parameter):
     def __init__(self):
         super(Extinction_Requirement, self).__init__(0.0, 'Mean atmospheric extinction')
         
+class SkyImageSepTime_Requirement(Parameter):
+    def __init__(self):
+        super(SkyImageSepTime_Requirement, self).__init__(10.0, 
+            'Maximum time interval between target and sky images [minutes]')
+        
 class Catalog_Requirement(Parameter):
     def __init__(self, optional=True):
         super(Catalog_Requirement, self).__init__(None, 

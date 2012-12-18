@@ -31,6 +31,7 @@ from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import NonLinearityCalibration
 from emir.dataproducts import SourcesCatalog
 from emir.requirements import Offsets_Requirement
+from emir.requirements import SkyImageSepTime_Requirement
 
 from .shared import DirectImageCommon
 
@@ -45,6 +46,10 @@ class NBImageRecipeRequirements(RecipeRequirements):
     extinction = Parameter(0.0, 'Mean atmospheric extinction') 
     sources = Parameter(None, 'List of x, y coordinates to measure FWHM', optional=True)
     offsets = Offsets_Requirement()
+    sky_images = Parameter(5, 'Images used to estimate the background before and after current image')
+    sky_images_sep_time = SkyImageSepTime_Requirement()
+    check_photometry_levels = Parameter([0.5, 0.8], 'Levels to check the flux of the objects')
+    check_photometry_actions = Parameter(['warn', 'warn', 'default'], 'Actions to take on images')
 
 class NBImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)

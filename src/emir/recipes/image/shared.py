@@ -322,7 +322,8 @@ class DirectImageCommon(BaseRecipe):
                     for frame in obresult.frames:            
                         self.compute_simple_sky_for_frame(frame, frame)
                 else:
-                    self.compute_simple_sky(targetframes, skyframes)
+                    self.compute_simple_sky(targetframes, skyframes,
+                            maxsep=reqs['sky_images_sep_time'])
                 
                 # Combining the frames
                 _logger.info("Step %d, Combining target frames", step)
@@ -384,23 +385,25 @@ class DirectImageCommon(BaseRecipe):
 
                 # Create superflat
                 superflat = self.compute_superflat(skyframes, scaled_chan,
-                                                   segmask=objmask, step=step)
+                                   segmask=objmask, step=step)
                 
                 # Apply superflat
                 self.figure_init(subpixshape)
                 
-                self.apply_superflat(obresult.frames, superflat, step=step, save=True)
+                self.apply_superflat(obresult.frames, superflat, 
+                      step=step, save=True)
 
                 _logger.info('Step %d, advanced sky correction (SC)', step)                
                 self.compute_advanced_sky(targetframes, objmask, 
-                                          skyframes=skyframes,
-                                          target_is_sky=target_is_sky,
-                                          step=step)
+                       skyframes=skyframes, target_is_sky=target_is_sky,
+                       maxsep=reqs['sky_images_sep_time'],
+                       nframes=reqs['sky_images'], step=step)
             
                 # Combining the images
                 _logger.info("Step %d, Combining the images", step)
                 # FIXME: only for science
-                sf_data = self.combine_frames(targetframes, reqs['extinction'], step=step)
+                sf_data = self.combine_frames(targetframes, 
+                                 reqs['extinction'], step=step)
                 self.figures_after_combine(sf_data)
 
                 if step >= niteration:
@@ -431,7 +434,7 @@ class DirectImageCommon(BaseRecipe):
         return DataFrame(result), SourcesCatalog()
     
     def compute_simple_sky(self, targetframes, skyframes, 
-                            maxsep=5, step=0, save=True):
+                            maxsep=10.0, step=0, save=True):
         
         # build kdtree        
         sarray = numpy.array([frame.mjd for frame in skyframes])
@@ -501,7 +504,7 @@ class DirectImageCommon(BaseRecipe):
         
     def compute_advanced_sky(self, targetframes, objmask, 
                                         skyframes=None, target_is_sky=False,
-                                        maxsep=5.0,
+                                        maxsep=10.0,
                                         nframes=10,
                                         step=0, save=True):
         
@@ -524,9 +527,8 @@ class DirectImageCommon(BaseRecipe):
         
         kdtree = KDTree(sarray)
         
-        # 1 / minutes in a day 
+        # 1 / minutes in a Julian day 
         MIN_TO_DAY = 0.000694444
-        #max_time_sep = reqs['sky_images_sep_time'] / 1440.0
         _dis, idxs = kdtree.query(tarray, k=nframes, 
                                  distance_upper_bound=maxsep * MIN_TO_DAY)
         

@@ -32,7 +32,7 @@ from emir.requirements import MasterIntensityFlatField_Requirement
 from emir.requirements import Extinction_Requirement
 from emir.requirements import Offsets_Requirement
 from emir.requirements import Catalog_Requirement
-
+from emir.requirements import SkyImageSepTime_Requirement
 
 from emir.dataproducts import SourcesCatalog
 
@@ -55,7 +55,7 @@ class DitheredImageRecipeRequirements(RecipeRequirements):
     
     iterations = Parameter(4, 'Iterations of the recipe')
     sky_images = Parameter(5, 'Images used to estimate the background before and after current image')
-    sky_images_sep_time = Parameter(10, 'Maximum separation time between consecutive sky images in minutes')
+    sky_images_sep_time = SkyImageSepTime_Requirement()
     check_photometry_levels = Parameter([0.5, 0.8], 'Levels to check the flux of the objects')
     check_photometry_actions = Parameter(['warn', 'warn', 'default'], 'Actions to take on images')
                     
