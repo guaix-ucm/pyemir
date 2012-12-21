@@ -158,8 +158,8 @@ class MicroditheredImageRecipe(DirectImageCommon):
         
     def run(self, obresult, reqs):
         
-        subpix = reqs['subpixelization']
-        window = reqs['window']
+        subpix = reqs.subpixelization
+        window = reqs.window
         
         frame, catalog = self.process(obresult, reqs, 
                             window=window, subpix=subpix, 

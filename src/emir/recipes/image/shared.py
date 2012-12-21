@@ -96,7 +96,12 @@ def offsets_from_wcs(frames, pixref):
 
 def intersection(a, b, scale=1):
     '''Intersection between two segments.'''
-    a1, a2 = a
+    try:
+        a1, a2 = a
+    except TypeError:
+        a1 = a.start
+        a2 = a.stop
+        
     try:
         b1, b2 = b
     except TypeError:
@@ -126,7 +131,9 @@ def clip_slices(r, region, scale=1):
     '''Intersect slices with a region.''' 
     t = []
     for ch in r:
+        print ch[0], region[0], scale
         a1 = intersection(ch[0], region[0], scale=scale)
+        print a1
         if a1 is None:
             continue
         a2 = intersection(ch[1], region[1], scale=scale)
@@ -173,7 +180,7 @@ class DirectImageCommon(BaseRecipe):
         step = 0
         
         try:
-            niteration = reqs['iterations']
+            niteration = reqs.iterations
         except KeyError:
             niteration = 1
         
@@ -185,20 +192,20 @@ class DirectImageCommon(BaseRecipe):
                 # Basic processing
                 
                 # FIXME: add this
-                #bpm = pyfits.getdata(reqs['master_bpm'])
+                #bpm = pyfits.getdata(reqs.master_bpm)
                 #bpm_corrector = BadPixelCorrector(bpm)
                 
-                if reqs['master_bias']:
-                    mbias = pyfits.getdata(reqs['master_bias'])
+                if reqs.master_bias:
+                    mbias = pyfits.getdata(reqs.master_bias)
                     bias_corrector = BiasCorrector(mbias)
                 else:
                     bias_corrector = IdNode()
             
-                mdark = pyfits.getdata(reqs['master_dark'])
+                mdark = pyfits.getdata(reqs.master_dark.label)
                 dark_corrector = DarkCorrector(mdark)
-                nl_corrector = NonLinearityCorrector(reqs['nonlinearity'])
+                nl_corrector = NonLinearityCorrector(reqs.nonlinearity)
 
-                mflat = pyfits.getdata(reqs['master_intensity_ff'])
+                mflat = pyfits.getdata(reqs.master_intensity_ff.label)
                 ff_corrector = FlatFieldCorrector(mflat)  
                   
                 basicflow = SerialFlow([#bpm_corrector,
@@ -251,7 +258,7 @@ class DirectImageCommon(BaseRecipe):
                     
                     
                     frame.baselabel = os.path.splitext(frame.label)[0]
-                    frame.mask = reqs['master_bpm']
+                    frame.mask = reqs.master_bpm
                     # Insert pixel offsets between frames    
                     frame.objmask_data = None
                     frame.valid_target = False
@@ -269,13 +276,13 @@ class DirectImageCommon(BaseRecipe):
         
                 labels = [frame.label for frame in targetframes]
         
-                if reqs['offsets'] is None:
+                if reqs.offsets is None:
                     _logger.info('Computing offsets from WCS information')
                     
                     list_of_offsets = offsets_from_wcs(labels, refpix)
                 else:
                     _logger.info('Using offsets from parameters')
-                    list_of_offsets = numpy.asarray(reqs['offsets'])
+                    list_of_offsets = numpy.asarray(reqs.offsets)
 
                 # Insert pixel offsets between frames
                 for frame, off in zip(targetframes, list_of_offsets):
@@ -327,7 +334,7 @@ class DirectImageCommon(BaseRecipe):
                 # Combining the frames
                 _logger.info("Step %d, Combining target frames", step)
                 
-                sf_data = self.combine_frames(targetframes, extinction=reqs['extinction'])
+                sf_data = self.combine_frames(targetframes, extinction=reqs.extinction)
                     
                 self.figures_after_combine(sf_data)
                       
@@ -400,7 +407,7 @@ class DirectImageCommon(BaseRecipe):
                 # Combining the images
                 _logger.info("Step %d, Combining the images", step)
                 # FIXME: only for science
-                sf_data = self.combine_frames(targetframes, reqs['extinction'], step=step)
+                sf_data = self.combine_frames(targetframes, reqs.extinction, step=step)
                 self.figures_after_combine(sf_data)
 
                 if step >= niteration:
@@ -526,7 +533,7 @@ class DirectImageCommon(BaseRecipe):
         
         # 1 / minutes in a day 
         MIN_TO_DAY = 0.000694444
-        #max_time_sep = reqs['sky_images_sep_time'] / 1440.0
+        #max_time_sep = reqs.sky_images_sep_time / 1440.0
         _dis, idxs = kdtree.query(tarray, k=nframes, 
                                  distance_upper_bound=maxsep * MIN_TO_DAY)
         
@@ -768,7 +775,8 @@ class DirectImageCommon(BaseRecipe):
         _logger.info('Resizing mask %s, subpix x%i', frame.label, scale)
         # We don't conserve the sum of the values of the frame here, just
         # expand the mask
-        resize_fits(frame.mask, maskn, finalshape, frame.valid_region, 
+        print frame.mask
+        resize_fits(frame.mask.label, maskn, finalshape, frame.valid_region, 
                     fill=1, window=window, scale=scale, conserve=False)
         
     def figure_init(self, shape):
