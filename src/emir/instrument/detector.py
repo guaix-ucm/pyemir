@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -22,7 +22,7 @@ import itertools as ito
 import numpy
 
 from numina.treedict import TreeDict
-from numina.instrument.detector import nIRDetector, Amplifier, DAS
+from numina.instrument.detector import nIRDetector, Channel, DAS
 from numina.instrument.detector import SingleReadoutMode
 from numina.instrument.detector import CdsReadoutMode
 from numina.instrument.detector import RampReadoutMode
@@ -81,7 +81,7 @@ class Hawaii2Detector(nIRDetector):
         ampgain = ito.cycle(numpy.asarray(gain).flat)
         ampron = ito.cycle(numpy.asarray(ron).flat)
         ampwell = ito.cycle(numpy.asarray(ron).flat)
-        amps = [Amplifier(geom, gain, ron, well) for geom, gain, ron, well in zip(self.amplifiers, ampgain, ampron, ampwell)]
+        amps = [Channel(geom, gain, ron, well) for geom, gain, ron, well in zip(self.amplifiers, ampgain, ampron, ampwell)]
         
         nIRDetector.__init__(self, self.shape, amps, dark, pedestal, flat, resetval, resetnoise)
         
