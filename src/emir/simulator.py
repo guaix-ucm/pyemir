@@ -99,7 +99,7 @@ def _load_header(res, ext):
     except KeyError:
         return pyfits.Header()    
     sfile = StringIO(get_data('emir.instrument', res))
-    hh = pyfits.Header(txtfile=sfile)
+    hh = pyfits.Header.fromtextfile(sfile)
     return hh
 
 def _load_all_headers():
@@ -118,7 +118,7 @@ class EmirImageFactory(object):
     # FIXME: workaround
     def __init__(self):
         sfile = StringIO(get_data('emir.instrument', 'image_primary.txt'))
-        self.p_templ = pyfits.Header(txtfile=sfile)
+        self.p_templ = pyfits.Header.fromtextfile(sfile)
         del sfile
 
     def create(self, meta, data):

@@ -11,7 +11,3 @@ CDELT1  =                    1 / Spatial interval in pixels
 CDELT2  =                    1 / Spatial interval in pixels                                   
 CTYPE1  = 'LINEAR  '           / Type of WCS1                  
 CTYPE2  = 'LINEAR  '           / Type of WCS2                                                          
-                                     
-                     
-                
-                   
