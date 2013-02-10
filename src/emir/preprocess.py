@@ -164,19 +164,19 @@ def loopover_fowler(data, badpixels, saturation, hsize, blank=0):
     # Building final frame
     return tuple(it.operands[i] for i in range(2, 6))
 
-def preprocess_ramp(frame, gain, ron, badpixels=None, saturation=60000, nsig=4.0, blank=0):
+def preprocess_ramp(frame, gain, ron, badpixels=None, saturation=60000, nsig=4.0, blank=0, dtype='float32'):
 
-    if frame[0].header['readmode'] != 'RAMP':
+    if frame[0].header['readmode'].upper() != 'RAMP':
         raise ValueError('Frame is not in RAMP mode')
 
-    elapsed = frame[0].header['elapsed']
+    elapsed = frame[0].header['exposed']
     nsamples = frame[0].header['readsamp']
  
     # time between samples
     dt = elapsed / (nsamples - 1)
 
     img, var, nmap, mask, crmask = ramp_array(frame[0].data, dt, gain, ron, 
-        saturation=saturation, nsig=nsig, blank=blank)
+        saturation=saturation, nsig=nsig, blank=blank, dtype=dtype)
 
     frame[0].data = img * elapsed
     frame[0].header['READPROC'] = True

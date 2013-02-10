@@ -39,6 +39,7 @@ FILTER  = '%(emir.filter)' / Filter id.
 READSCHM= '%(emir.das.readscheme)'/ Read-out scheme of the detector 
 READREPT=                    1 / Number of times to repeat the read-out
 READMODE= '%(emir.das.readmode)'/ Detector read-out mode
+READSAMP= '%(emir.das.readnum)'/ Mode sampling
 EXPOSED = '%(emir.das.elapsed)' / [s] Time between correlated reads
 DARKTIME=                    0 / [s] Time from end of CLR to start of r/o
 EXPTIME =                    0 / [s] Time between correlated reads
