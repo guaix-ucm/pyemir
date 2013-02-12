@@ -166,7 +166,7 @@ def loopover_fowler(data, badpixels, saturation, hsize, blank=0):
 
 def preprocess_ramp(frame, gain, ron, badpixels=None, saturation=60000, nsig=4.0, blank=0, dtype='float32'):
 
-    if frame[0].header['READPROC']:
+    if 'readproc' in frame[0].header and frame[0].header['readproc']:
         # Already processsed
         return frame
 
