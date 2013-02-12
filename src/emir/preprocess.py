@@ -166,6 +166,10 @@ def loopover_fowler(data, badpixels, saturation, hsize, blank=0):
 
 def preprocess_ramp(frame, gain, ron, badpixels=None, saturation=60000, nsig=4.0, blank=0, dtype='float32'):
 
+    if frame[0].header['READPROC']:
+        # Already processsed
+        return frame
+
     if frame[0].header['readmode'].upper() != 'RAMP':
         raise ValueError('Frame is not in RAMP mode')
 
