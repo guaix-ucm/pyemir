@@ -124,7 +124,7 @@ class EmirImageFactory(object):
     # FIXME: workaround
     def __init__(self):
         sfile = StringIO(get_data('emir.instrument', 'image_primary.txt'))
-        self.p_templ = pyfits.Header.fromtextfile(sfile)
+        self.p_templ = my_fromtextfile(sfile)
         del sfile
 
     def create(self, meta, data):
