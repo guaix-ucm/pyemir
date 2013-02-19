@@ -80,46 +80,8 @@ class EMIR_Detector_4(nIRDetector):
                 resetval=resetval, resetnoise=resetnoise, 
                 bad_pixel_mask=bad_pixel_mask)
 
-#class EMIR_Detector_32(nIRDetector):
-#    def __init__(self):
-#        super(EMIR_Detector_32, self).__init__()
-
-class Hawaii2Detector(nIRDetector):
-    '''Hawaii2 detector.'''
-    
-    AMP1 = QUADRANTS # 1 amplifier per quadrant
-    AMP8 = CHANNELS # 8 amplifiers per quadrant
-    
-    shape = (2048, 2048)
-    amplifiers = CHANNELS
-    
-    def __init__(self, gain=1.0, ron=0.0, dark=1.0, well=65535,
-                 pedestal=200., flat=1.0, resetval=0, resetnoise=0.0,
-                 ampmode='8'):
-        '''
-            :parameter gain: gain in e-/ADU
-            :parameter ron: ron in ADU
-            :parameter dark: dark current in e-/s
-            :parameter well: well depth in ADUs 
-        '''
-        
-        
-        if ampmode not in ['1', '8']:
-            raise ValueError('ampmode must be "1" or "8"')
-        
-        self.ampmode = ampmode
-        # Amplifier region
-        self.ampgeom = self.AMP1 if ampmode == '1' else self.AMP8
-        
-        ampgain = ito.cycle(numpy.asarray(gain).flat)
-        ampron = ito.cycle(numpy.asarray(ron).flat)
-        ampwell = ito.cycle(numpy.asarray(ron).flat)
-        amps = [Channel(geom, gain, ron, well) for geom, gain, ron, well in zip(self.amplifiers, ampgain, ampron, ampwell)]
-        
-        nIRDetector.__init__(self, self.shape, amps, dark, pedestal, flat, resetval, resetnoise)
-        
-class EMIR_Detector(Hawaii2Detector):
-    def __init__(self, flat=1.0):        
+class EMIR_Detector_32(nIRDetector):
+    def __init__(self, dark=0.25, flat=1.0, bad_pixel_mask=None):
         # ADU, per AMP
         ron = [3.14, 3.060, 3.09, 3.08, 3.06, 3.20, 3.13, 3.10, 2.98, 2.98, 
                2.95, 3.06, 3.050, 3.01, 3.05, 3.20, 2.96, 3.0, 3.0, 2.99, 3.14, 
@@ -130,9 +92,6 @@ class EMIR_Detector(Hawaii2Detector):
                 3.07, 3.03, 2.91, 3.16, 3.22, 2.93, 2.88, 2.99, 3.24, 3.25, 3.12, 
                 3.29, 3.03, 3.04, 3.35, 3.11, 3.25, 3.29, 3.17, 2.93, 3.05]
 
-        # e-/s global median
-        dark = 0.298897832632
-
         # ADU per AMP
         wdepth = [42353.1, 42148.3, 42125.5, 42057.9, 41914.1, 42080.2, 42350.3, 
                   41830.3, 41905.3, 42027.9, 41589.5, 41712.7, 41404.9, 41068.5, 
@@ -140,14 +99,14 @@ class EMIR_Detector(Hawaii2Detector):
                   41803.7, 41450.2, 41306.2, 41609.4, 41414.1, 41324.5, 41691.1, 
                   41360.0, 41551.2, 41618.6, 41553.5]
         
-        self.meta = TreeDict()
-        self.meta['gain'] = 2.8
-        self.meta['readnoise'] = 3.0
+        pedestal = 2
+        resetval = 2
+        resetnoise = 0.0
 
-        Hawaii2Detector.__init__(self, gain=gain, ron=ron, dark=dark, 
-                                           well=wdepth, flat=flat)
+        channels = [Channel(*vs) for vs in zip(CHANNELS, gain, ron, wdepth)]
+        super(EMIR_Detector_32, self).__init__((2048, 2048), channels, 
+                dark=dark, pedestal=pedestal, flat=flat,
+                resetval=resetval, resetnoise=resetnoise, 
+                bad_pixel_mask=bad_pixel_mask)
 
-if __name__ == '__main__':
-    
-    
-    det = EMIR_Detector()
+EMIR_Detector = EMIR_Detector_32
