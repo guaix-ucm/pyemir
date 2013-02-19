@@ -183,7 +183,7 @@ def preprocess_ramp(frame, gain, ron, badpixels=None, saturation=60000, nsig=4.0
         saturation=saturation, nsig=nsig, blank=blank, dtype=dtype)
 
     frame[0].data = img * elapsed
-    frame[0].header['READPROC'] = True
+    frame[0].header.update('READPROC', True)
     varhdu = pyfits.ImageHDU(var * elapsed * elapsed)
     varhdu.update_ext_name('Variance')
     frame.append(varhdu)

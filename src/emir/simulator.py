@@ -24,6 +24,12 @@ from StringIO import StringIO
 import logging
 
 import pyfits
+
+try:
+    my_fromtextfile = getattr(pyfits.Header, 'fromtextfile') # pyfits 3.1
+except AttributeError: # pyfits 3.0.9
+    my_fromtextfile = lambda fileobj: pyfits.Header(txtfile=fileobj) 
+
 import numpy
 from numina.treedict import TreeDict
 from numina.instrument import Shutter
@@ -99,7 +105,7 @@ def _load_header(res, ext):
     except KeyError:
         return pyfits.Header()    
     sfile = StringIO(get_data('emir.instrument', res))
-    hh = pyfits.Header.fromtextfile(sfile)
+    hh = my_fromtextfile(sfile)
     return hh
 
 def _load_all_headers():
@@ -118,7 +124,7 @@ class EmirImageFactory(object):
     # FIXME: workaround
     def __init__(self):
         sfile = StringIO(get_data('emir.instrument', 'image_primary.txt'))
-        self.p_templ = pyfits.Header.fromtextfile(sfile)
+        self.p_templ = my_fromtextfile(sfile)
         del sfile
 
     def create(self, meta, data):
