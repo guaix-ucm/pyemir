@@ -51,6 +51,39 @@ class EMIR_DAS(DAS):
         mode = RampReadoutMode(reads, repeat=repeat)
         self.readmode(mode)
 
+class EMIR_Detector_1(nIRDetector):
+    def __init__(self, dark=0.25, flat=1.0, bad_pixel_mask=None):
+        gain = 3.02
+        ron = 6.1 # Electrons
+        wdepth = 55292
+        pedestal = 2
+        resetval = 2
+        resetnoise = 0.0
+        channels = [Channel((slice(0,2048), slice(0,2048)), gain, ron, wdepth)]
+        super(EMIR_Detector_1, self).__init__((2048, 2048), channels, 
+                dark=dark, pedestal=pedestal, flat=flat,
+                resetval=resetval, resetnoise=resetnoise, 
+                bad_pixel_mask=bad_pixel_mask)
+
+class EMIR_Detector_4(nIRDetector):
+    def __init__(self, dark=0.25, flat=1.0, bad_pixel_mask=None):
+        gain = [3.02, 2.98, 3.00, 2.91]
+        ron = [6.1, 5.9, 5.9, 6.2] # Electrons
+        wdepth = [55292, 56000, 56000, 56000]
+        pedestal = 2
+        resetval = 2
+        resetnoise = 0.0
+
+        channels = [Channel(*vs) for vs in zip(QUADRANTS, gain, ron, wdepth)]
+        super(EMIR_Detector_4, self).__init__((2048, 2048), channels, 
+                dark=dark, pedestal=pedestal, flat=flat,
+                resetval=resetval, resetnoise=resetnoise, 
+                bad_pixel_mask=bad_pixel_mask)
+
+#class EMIR_Detector_32(nIRDetector):
+#    def __init__(self):
+#        super(EMIR_Detector_32, self).__init__()
+
 class Hawaii2Detector(nIRDetector):
     '''Hawaii2 detector.'''
     
