@@ -25,7 +25,7 @@ import unittest
 
 import numpy
 import pyfits
-from numina.instrument.detector import nIRDetector, Amplifier
+from numina.instrument.detector import nIRDetector, Channel
 from numina.instrument.sources import ThermalBackground
 
 from ..preprocess import preprocess_ramp
@@ -49,6 +49,7 @@ class RampReadoutFrameTestCase(unittest.TestCase):
 
         hdu.header.update('readsamp', 10)
         hdu.header.update('exptime', tbcr)
+        hdu.header.update('exposed', tbcr)
         hdu.header.update('elapsed', elapsed)
         hdu.header.update('readproc', False)
         hdu.header.update('readmode', 'RAMP')
@@ -107,7 +108,7 @@ class RampReadoutFrameTestCase2(unittest.TestCase):
         rows = 6
         columns = 5
         
-        chans = [Amplifier((slice(0,rows), slice(0,columns)), gain, ron, saturation)]
+        chans = [Channel((slice(0,rows), slice(0,columns)), gain, ron, saturation)]
         exposure = 10.0
         samples = 10
         
@@ -135,6 +136,7 @@ class RampReadoutFrameTestCase2(unittest.TestCase):
         hdu.data = final2
 
         hdu.header.update('exptime', exposure)
+        hdu.header.update('exposed', exposure)
         hdu.header.update('elapsed', detector.time_since_last_reset())
         hdu.header.update('readproc', False)
         hdu.header.update('readmode', 'RAMP')
