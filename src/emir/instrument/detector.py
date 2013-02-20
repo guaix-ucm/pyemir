@@ -57,7 +57,7 @@ class EMIR_Detector_1(nIRDetector):
         ron = 6.1 # Electrons
         wdepth = 55292
         pedestal = 2
-        resetval = 2
+        resetval = 21000
         resetnoise = 0.0
         channels = [Channel((slice(0,2048), slice(0,2048)), gain, ron, wdepth)]
         super(EMIR_Detector_1, self).__init__((2048, 2048), channels, 
@@ -71,7 +71,7 @@ class EMIR_Detector_4(nIRDetector):
         ron = [6.1, 5.9, 5.9, 6.2] # Electrons
         wdepth = [55292, 56000, 56000, 56000]
         pedestal = 2
-        resetval = 2
+        resetval = 21000
         resetnoise = 0.0
 
         channels = [Channel(*vs) for vs in zip(QUADRANTS, gain, ron, wdepth)]
@@ -100,7 +100,7 @@ class EMIR_Detector_32(nIRDetector):
                   41360.0, 41551.2, 41618.6, 41553.5]
         
         pedestal = 2
-        resetval = 2
+        resetval = 21000
         resetnoise = 0.0
 
         channels = [Channel(*vs) for vs in zip(CHANNELS, gain, ron, wdepth)]
