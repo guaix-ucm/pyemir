@@ -28,7 +28,7 @@ from numina.instrument.detector import CdsReadoutMode
 from numina.instrument.detector import RampReadoutMode
 from numina.instrument.detector import FowlerReadoutMode
 
-from .channels import CHANNELS, CHANNELS_2, CHANNELS_READOUT
+from .channels import CHANNELS, CHANNELS_2, CHANNELS_3, CHANNELS_READOUT
 from .channels import CHANNELS_READOUT_2, QUADRANTS
 
 class EMIR_DAS(DAS):
@@ -82,15 +82,21 @@ class EMIR_Detector_4(nIRDetector):
 
 class EMIR_Detector_32(nIRDetector):
     def __init__(self, dark=0.25, flat=1.0, bad_pixel_mask=None):
-        # ADU, per AMP
-        ron = [3.14, 3.060, 3.09, 3.08, 3.06, 3.20, 3.13, 3.10, 2.98, 2.98, 
-               2.95, 3.06, 3.050, 3.01, 3.05, 3.20, 2.96, 3.0, 3.0, 2.99, 3.14, 
-               2.99, 3.06, 3.05, 3.08, 3.06, 3.01, 3.02, 3.07, 2.99, 3.03, 3.06]
+        # from Carlos Gonzalez Thesis, page 147
+        # ADU
+        ron = [2.03, 1.98, 1.96, 1.95, 1.99, 1.95, 1.97, 1.95,
+               1.94, 1.96, 1.94, 1.92, 2.03, 1.93, 1.96, 1.98,
+               2.01, 1.99, 1.97, 1.98, 1.99, 1.97, 1.97, 2.00,
+               2.02, 2.02, 2.05, 1.98, 2.00, 2.02, 2.01, 2.03
+              ]
 
-        # e-/ADU per AMP
-        gain = [2.83, 2.84, 2.82, 2.92, 2.98, 2.71, 3.03, 2.92, 3.04, 2.79, 2.72, 
-                3.07, 3.03, 2.91, 3.16, 3.22, 2.93, 2.88, 2.99, 3.24, 3.25, 3.12, 
-                3.29, 3.03, 3.04, 3.35, 3.11, 3.25, 3.29, 3.17, 2.93, 3.05]
+        # from Carlos Gonzalez Thesis, page 127
+        # e-/ADU
+        gain = [3.08, 2.90, 2.68, 3.12, 2.63, 3.10, 3.00, 3.02,
+                3.18, 3.11, 3.09, 3.19, 3.11, 2.99, 2.60, 3.02,
+                2.99, 3.16, 3.18, 3.11, 3.17, 3.07, 3.12, 3.02,
+                2.92, 3.07, 2.90, 2.91, 2.95, 3.00, 3.01, 3.01
+                ]
 
         # ADU per AMP
         wdepth = [42353.1, 42148.3, 42125.5, 42057.9, 41914.1, 42080.2, 42350.3, 
@@ -99,11 +105,11 @@ class EMIR_Detector_32(nIRDetector):
                   41803.7, 41450.2, 41306.2, 41609.4, 41414.1, 41324.5, 41691.1, 
                   41360.0, 41551.2, 41618.6, 41553.5]
         
-        pedestal = 2
-        resetval = 21000
+        pedestal = 5362
+        resetval = 0.0
         resetnoise = 0.0
 
-        channels = [Channel(*vs) for vs in zip(CHANNELS, gain, ron, wdepth)]
+        channels = [Channel(*vs) for vs in zip(CHANNELS_3, gain, ron, wdepth)]
         super(EMIR_Detector_32, self).__init__((2048, 2048), channels, 
                 dark=dark, pedestal=pedestal, flat=flat,
                 resetval=resetval, resetnoise=resetnoise, 
