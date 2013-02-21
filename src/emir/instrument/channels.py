@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -41,8 +41,14 @@ def _ch4():
 
 # Channels are listed per quadrant and then in fast readout order
 CHANNELS = list(ito.chain(_ch1(), _ch2(), _ch3(), _ch4()))
-# Channels as they are populated during recosntruction
+# Channels as they are populated during reconstruction
 CHANNELS_2 = list(ito.chain(_ch3(), _ch4(), _ch1(), _ch2()))
+# Channels as listed in Carlos Gonzalez Ph. D. Thesis
+CHANNELS_3 = list(ito.chain(reversed(list(_ch2())), 
+                            reversed(list(_ch3())),
+                            reversed(list(_ch4())),
+                            reversed(list(_ch1()))
+                            ))
 
 # Channels in read out order
 CHANNELS_READOUT = list(braid(_ch1(), _ch2(), _ch3(), _ch4()))
