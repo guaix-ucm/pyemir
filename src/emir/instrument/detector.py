@@ -105,7 +105,7 @@ class EMIR_Detector_32(nIRDetector):
         pedestal = [5362]*32
         saturation = [57000]*32
 
-        channels = [Channel(*vs) for vs in zip(CHANNELS_3, gain, ron, wdepth)]
+        channels = [Channel(*vs) for vs in zip(CHANNELS_3, gain, ron, pedestal, wdepth, saturation)]
         super(EMIR_Detector_32, self).__init__((2048, 2048), channels, 
                 dark=dark,flat=flat,
                 bad_pixel_mask=bad_pixel_mask)
