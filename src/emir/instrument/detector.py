@@ -110,9 +110,13 @@ class EMIR_Detector_32(nIRDetector):
                     5651, 5707, 5604, 5260, 4696, 5053, 5032, 5155
                     ]
 
-
-
-        saturation = [57000]*32
+        # from Carlos Gonzalez Thesis, page 132
+        # ADU
+        saturation = [56811, 57011, 57042, 57057, 57178, 56738, 57171, 57094,
+                      56866, 57215, 57022, 56761, 56983, 57655, 57329, 57212,
+                      57299, 57047, 56943, 57377, 56878, 57035, 57048, 57072,
+                      57224, 57829, 57407, 57178, 57398, 57496, 57564, 57938
+                      ]
 
         channels = [Channel(*vs) for vs in zip(CHANNELS_3, gain, ron, pedestal, wdepth, saturation)]
         super(EMIR_Detector_32, self).__init__((2048, 2048), channels, 
