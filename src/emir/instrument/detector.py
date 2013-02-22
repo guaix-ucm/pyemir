@@ -102,7 +102,16 @@ class EMIR_Detector_32(nIRDetector):
                   41803.7, 41450.2, 41306.2, 41609.4, 41414.1, 41324.5, 41691.1, 
                   41360.0, 41551.2, 41618.6, 41553.5]
         
-        pedestal = [5362]*32
+        # from Carlos Gonzalez Thesis, page 130
+        # ADU
+        pedestal = [3776, 4428, 4071, 4161, 5540, 5623, 5819, 5933,
+                    6245, 6151, 5746, 5477, 4976, 4937, 4966, 4576,
+                    5605, 5525, 5532, 5643, 5505, 5371, 5535, 4985,
+                    5651, 5707, 5604, 5260, 4696, 5053, 5032, 5155
+                    ]
+
+
+
         saturation = [57000]*32
 
         channels = [Channel(*vs) for vs in zip(CHANNELS_3, gain, ron, pedestal, wdepth, saturation)]
