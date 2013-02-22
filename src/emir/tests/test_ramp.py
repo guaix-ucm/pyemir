@@ -104,15 +104,15 @@ class RampReadoutFrameTestCase2(unittest.TestCase):
     def setUp(self):
         pass
         
-    def create_frame(self, source, gain, ron, saturation):
+    def create_frame(self, source, gain, ron, pedestal, wdepth, saturation):
         rows = 6
         columns = 5
         
-        chans = [Channel((slice(0,rows), slice(0,columns)), gain, ron, saturation)]
+        chans = [Channel((slice(0,rows), slice(0,columns)), gain, ron, pedestal, wdepth, saturation)]
         exposure = 10.0
         samples = 10
         
-        detector = nIRDetector((rows, columns), chans, dark=0.0, pedestal=0.0)
+        detector = nIRDetector((rows, columns), chans, dark=0.0)
         detector.readout_time = 0.01
         detector.connect(ThermalBackground(source))
         dt = exposure / samples
@@ -153,9 +153,11 @@ class RampReadoutFrameTestCase2(unittest.TestCase):
         gain = 1.0
         ron = 0.0
         source = 1000
+        pedestal = 65000
+        wdepth = 65000
         saturation = 65000
         
-        frame = self.create_frame(source, gain, ron, saturation)
+        frame = self.create_frame(source, gain, ron, pedestal, wdepth, saturation)
         
         result = preprocess_ramp(frame, gain, ron, saturation=saturation)
         

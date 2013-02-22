@@ -54,30 +54,27 @@ class EMIR_DAS(DAS):
 class EMIR_Detector_1(nIRDetector):
     def __init__(self, dark=0.25, flat=1.0, bad_pixel_mask=None):
         gain = 3.02
-        ron = 6.1 # Electrons
+        ron = 2.1 # ADU
+        pedestal = 5362
         wdepth = 55292
-        pedestal = 2
-        resetval = 21000
-        resetnoise = 0.0
-        channels = [Channel((slice(0,2048), slice(0,2048)), gain, ron, wdepth)]
+        saturation = 57000
+        channels = [Channel((slice(0,2048), slice(0,2048)), gain, ron, pedestal, wdepth, saturation)]
         super(EMIR_Detector_1, self).__init__((2048, 2048), channels, 
-                dark=dark, pedestal=pedestal, flat=flat,
-                resetval=resetval, resetnoise=resetnoise, 
+                dark=dark, flat=flat,
                 bad_pixel_mask=bad_pixel_mask)
 
 class EMIR_Detector_4(nIRDetector):
     def __init__(self, dark=0.25, flat=1.0, bad_pixel_mask=None):
         gain = [3.02, 2.98, 3.00, 2.91]
-        ron = [6.1, 5.9, 5.9, 6.2] # Electrons
+        ron = [2.1, 1.9, 1.9, 2.2] # Electrons
+        pedestal = [5362, 5362, 5362, 5362]
         wdepth = [55292, 56000, 56000, 56000]
-        pedestal = 2
-        resetval = 21000
-        resetnoise = 0.0
+        saturation = [57292, 57000, 57000, 57000]
 
-        channels = [Channel(*vs) for vs in zip(QUADRANTS, gain, ron, wdepth)]
+        channels = [Channel(*vs) for vs in zip(QUADRANTS, gain, ron, pedestal, 
+        wdepth, saturation)]
         super(EMIR_Detector_4, self).__init__((2048, 2048), channels, 
-                dark=dark, pedestal=pedestal, flat=flat,
-                resetval=resetval, resetnoise=resetnoise, 
+                dark=dark, flat=flat,
                 bad_pixel_mask=bad_pixel_mask)
 
 class EMIR_Detector_32(nIRDetector):
@@ -105,14 +102,12 @@ class EMIR_Detector_32(nIRDetector):
                   41803.7, 41450.2, 41306.2, 41609.4, 41414.1, 41324.5, 41691.1, 
                   41360.0, 41551.2, 41618.6, 41553.5]
         
-        pedestal = 5362
-        resetval = 0.0
-        resetnoise = 0.0
+        pedestal = [5362]*32
+        saturation = [57000]*32
 
         channels = [Channel(*vs) for vs in zip(CHANNELS_3, gain, ron, wdepth)]
         super(EMIR_Detector_32, self).__init__((2048, 2048), channels, 
-                dark=dark, pedestal=pedestal, flat=flat,
-                resetval=resetval, resetnoise=resetnoise, 
+                dark=dark,flat=flat,
                 bad_pixel_mask=bad_pixel_mask)
 
 EMIR_Detector = EMIR_Detector_32
