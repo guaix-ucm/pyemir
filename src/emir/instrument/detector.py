@@ -17,19 +17,14 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import itertools as ito
-
-import numpy
-
-from numina.treedict import TreeDict
 from numina.instrument.detector import nIRDetector, Channel, DAS
 from numina.instrument.detector import SingleReadoutMode
 from numina.instrument.detector import CdsReadoutMode
 from numina.instrument.detector import RampReadoutMode
 from numina.instrument.detector import FowlerReadoutMode
 
-from .channels import CHANNELS, CHANNELS_2, CHANNELS_3, CHANNELS_READOUT
-from .channels import CHANNELS_READOUT_2, QUADRANTS
+from .channels import CHANNELS_3
+from .channels import QUADRANTS
 
 class EMIR_DAS(DAS):
     def __init__(self, detector):
