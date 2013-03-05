@@ -24,6 +24,7 @@ from numina.instrument.detector import RampReadoutMode
 from numina.instrument.detector import FowlerReadoutMode
 
 from .channels import CHANNELS_3
+from .channels import CHANNELS
 from .channels import QUADRANTS
 
 class EMIR_DAS(DAS):
