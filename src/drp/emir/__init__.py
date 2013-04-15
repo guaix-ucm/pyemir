@@ -91,5 +91,25 @@ class EMIR_Instrument(BaseInstrument):
         super(EMIR_Instrument, self).__init__('EMIR',
                     configuration)
 
+_conf = InstrumentConfiguration('default', yaml.load(pkgutil.get_data('emir.instrument', 'default.yaml')))
+
+class EMIR_MUX_Pipeline(BasePipeline):
+    def __init__(self):
+        super(EMIR_MUX_Pipeline, self).__init__(name='default',
+                version=__version__, recipes={})
+
+class EMIR_MUX_Instrument(BaseInstrument):
+    name = 'EMIR_MUX'
+    configurations = {'default': _conf}
+    
+    pipelines = {'default': EMIR_MUX_Pipeline()}
+    modes = [i for i in yaml.load_all(pkgutil.get_data('emir.instrument',
+                                                   'obsmodesmux.yaml'))
+          if i.instrument == 'EMIR_MUX']
+
+    def __init__(self, configuration):
+        super(EMIR_MUX_Instrument, self).__init__('EMIR_MUX',
+                    configuration)
+
 del _modes
 

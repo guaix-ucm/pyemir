@@ -1,6 +1,6 @@
 include MANIFEST.in *.txt
 include src/emir/instrument/*.txt
-include src/emir/instrument/obsmodes.yaml
+include src/emir/instrument/*.yaml
 include src/emir/simulation/*.dat
 recursive-include doc *
 
