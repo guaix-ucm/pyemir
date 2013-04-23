@@ -36,6 +36,7 @@ IMAGETY = '%(emir.imagetype)' / Type of observation, e.g. object
 DEC     = '%(pointing.dec)' / DEC of the instrument scientific aperture 
 RA      = '%(pointing.ra)' / RA of the instrument scientific aperture
 FILTER  = '%(emir.filter)' / Filter id.
+FOCUS   = '%(emir.focus)' / Focus in mm
 READSCHM= '%(emir.das.readscheme)'/ Read-out scheme of the detector 
 READREPT=                    1 / Number of times to repeat the read-out
 READMODE= '%(emir.das.readmode)'/ Detector read-out mode
