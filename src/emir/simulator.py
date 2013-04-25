@@ -30,64 +30,12 @@ try:
 except AttributeError: # pyfits 3.0.9
     my_fromtextfile = lambda fileobj: pyfits.Header(txtfile=fileobj) 
 
-import numpy
-from numina.treedict import TreeDict
-from numina.instrument import Shutter
 from numina.instrument.template import interpolate
-
-from emir.instrument.detector import EMIR_Detector, EMIR_DAS
 
 _logger = logging.getLogger('emir.simulator')
 
-class BaseInstrument(object):
-    def __init__(self, detector):
-
-        self.shutter = Shutter()
-
-        self.detector = detector
-        self.das = EMIR_DAS(detector)
-        
-        # Connect components
-        self.detector.connect(self.shutter)
-        
-        self.detector.meta['gain'] = 2.8
-        self.detector.meta['readnoise'] = 3.5
-
-        self.meta = TreeDict()
-        self.meta['name'] = 'EMIR'
-        self.meta['focalstation'] = 'NASMYTH'
-        self.meta['filter'] = 'J'
-        self.meta['imagetype'] = ''
-        self.meta['detector'] = self.detector.meta
-        self.meta['das'] = self.das.meta
-    
-    def connect(self, source):
-        self.shutter.connect(source)
- 
-    def filter(self, name):
-        self.meta['filter'] = name
-
-    def acquire(self, time):
-        img = self.das.acquire(time)
-        return self.meta, img
-
-    def imagetype(self, name):
-        self.meta['imagetype'] = name
-
-class Instrument(BaseInstrument):
-    def __init__(self):
-        
-        # FIXME: Testing flat
-        xx, yy= numpy.mgrid[-1:1:2048j, -1:1:2048j]
-        flat = 2 - 0.7 * (xx**2+yy**2)
-        flat /= flat.mean()
-        
-        detector = EMIR_Detector(flat=flat)
-        BaseInstrument.__init__(self, detector)
-
 _result_types = ['image', 'spectrum']
 _extensions = ['primary', 'variance', 'map', 'wcs']
-
 
 _table = {('image','primary'): 'image_primary.txt',
           ('image', 'map'): 'image_map.txt',
