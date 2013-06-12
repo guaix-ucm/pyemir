@@ -28,7 +28,7 @@ from numina.core import BaseInstrument, BasePipeline, InstrumentConfiguration
 from numina.core import import_object
 
 import emir.recipes as recp
-import emir.instrument.channels as chmod
+from emir.instrument.channels import convert_name_to_channels
 from emir import __version__
 
 _logger = logging.getLogger('emir')
@@ -57,24 +57,13 @@ class EMIR_Pipeline_ALT(BasePipeline):
                 version=__version__,
                 recipes=_equiv_class)
 
-# FIXME: this is a hack to convert channel name to a structure
-def _convert_name_to_channels(conf):
-    chname = conf.configuration['detector']['channels']
-    try:
-        allcha = getattr(chmod, chname)
-        conf.configuration['detector']['channels'] = allcha
-        return conf
-    except AttributeError:
-        _logger.warning("incorrect %r name %s", 'channels', chname)
-        return None
-
 _conf1 = InstrumentConfiguration('default', yaml.load(pkgutil.get_data('emir.instrument', 'default.yaml')))
 # converting
-_conf1 = _convert_name_to_channels(_conf1)
+_conf1 = convert_name_to_channels(_conf1)
 _logger.warning("default configuration for EMIR is broken")
     
 _conf2 = InstrumentConfiguration('alternate', yaml.load(pkgutil.get_data('emir.instrument', 'alt.yaml')))
-_conf2 = _convert_name_to_channels(_conf2)
+_conf2 = convert_name_to_channels(_conf2)
 
 class EMIR_Instrument(BaseInstrument):
     name = 'EMIR'

@@ -21,6 +21,7 @@ import itertools as ito
 
 from numina.extraiter import braid
 
+
 def _channel_gen1(beg, end, step):
     return ito.imap(lambda x: (x, x + step), xrange(beg, end, step))
 
@@ -63,3 +64,14 @@ QUADRANTS = [(slice(1024, 2048), slice(0, 1024)),
              ]
 
 FULL = CHANNELS_2
+
+# FIXME: this is a hack to convert channel name to a structure
+def convert_name_to_channels(conf):
+    chname = conf.configuration['detector']['channels']
+    try:
+        allcha = globals()[chname]
+        conf.configuration['detector']['channels'] = allcha
+        return conf
+    except KeyError:
+        _logger.warning("incorrect %r name %s", 'channels', chname)
+        return None
