@@ -39,21 +39,15 @@ def _load_modes():
         equiv_class[m.key] = m.recipe_class
     return modes, equiv_class
 
+class EMIR_Pipeline(BasePipeline):
+    def __init__(self, name, version, recipes):
+        super(EMIR_Pipeline, self).__init__(name=name,
+                    version=version,
+                    recipes=recipes)
+
 def sup1():
 
     _modes, equiv_class = _load_modes()
-
-    class EMIR_Pipeline(BasePipeline):
-        def __init__(self):
-            super(EMIR_Pipeline, self).__init__(name='default',
-                    version=__version__,
-                    recipes=equiv_class)
-        
-    class EMIR_Pipeline_ALT(BasePipeline):
-        def __init__(self):
-            super(EMIR_Pipeline_ALT, self).__init__(name='alternate',
-                    version=__version__,
-                    recipes=equiv_class)
 
     _conf1 = InstrumentConfiguration('default', yaml.load(pkgutil.get_data('emir.instrument', 'default.yaml')))
     # converting
@@ -69,8 +63,8 @@ def sup1():
         if _conf2 is None:
             del configurations['alt']
     
-        pipelines = {'default': EMIR_Pipeline(),
-                    'alternate': EMIR_Pipeline_ALT()}
+        pipelines = {'default': EMIR_Pipeline(name='default', version=__version__, recipes=equiv_class),
+                     'alternate': EMIR_Pipeline(name='alternate', version=__version__, recipes=equiv_class)}
         modes = _modes
 
         def __init__(self, configuration):
@@ -82,16 +76,11 @@ def sup1():
 def sup2():
     _conf = InstrumentConfiguration('default', yaml.load(pkgutil.get_data('emir.instrument', 'default.yaml')))
 
-    class EMIR_MUX_Pipeline(BasePipeline):
-        def __init__(self):
-            super(EMIR_MUX_Pipeline, self).__init__(name='default',
-                    version=__version__, recipes={})
-
     class EMIR_MUX_Instrument(BaseInstrument):
         name = 'EMIR_MUX'
         configurations = {'default': _conf}
     
-        pipelines = {'default': EMIR_MUX_Pipeline()}
+        pipelines = {'default': EMIR_Pipeline(name='default', version=__version__, recipes={})}
         modes = [i for i in yaml.load_all(pkgutil.get_data('emir.instrument',
                                                    'obsmodesmux.yaml'))
             if i.instrument == 'EMIR_MUX']
