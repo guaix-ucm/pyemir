@@ -148,4 +148,19 @@ reference: IPUREMI_323
 description: |
     Lines and mode lines
     of descriptions here
+---
+!om
+name: DarkCurrent
+uuid: acd1de1e-bc5f-4948-965e-d7f5b8f637b9
+key: dark_current
+url: http://somegtc_url.es/emir/obsmode4.html
+instrument: EMIR
+summary: Summary of DarkCurrent
+recipe: emir.recipes.aiv.DarkCurrentRecipe
+status: DRAFT
+date: 2013-06-25
+reference: TTL 2.1.03
+description: |
+    Lines and mode lines
+    of descriptions here
 

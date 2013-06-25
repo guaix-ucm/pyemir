@@ -59,6 +59,9 @@ class MasterDark(FrameDataProduct):
     '''
     pass
 
+class DarkCurrentValue(DataProduct):
+    pass
+
 class MasterIntensityFlat(FrameDataProduct):
     pass
         
