@@ -19,11 +19,7 @@
 
 '''The EMIR Data Reduction Pipeline'''
 
-import logging
-
-from emir.instrument import sup1, sup2
-
-_logger = logging.getLogger('emir')
+from emir.core import sup1, sup2
 
 EMIR_Instrument = sup1()
 
