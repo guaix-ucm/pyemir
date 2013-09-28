@@ -19,9 +19,6 @@
 
 '''The EMIR Data Reduction Pipeline'''
 
-from emir.core import sup1, sup2
+from numina.core import drp_load
 
-EMIR_Instrument = sup1()
-
-EMIR_MUX_Instrument = sup2()
-
+__numina_drp__ = drp_load('emir.instrument', 'emir.yaml')

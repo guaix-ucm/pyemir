@@ -1,0 +1,156 @@
+name: EMIR
+configurations:
+  alt:
+    detector:
+      channels: FULL
+      shape:
+      - 2048
+      - 2048
+    keywords:
+      airmass: AIRMASS
+      exposure: EXPTIME
+      imagetype: IMGTYP
+      juliandate: MJD-OBS
+    pipeline: alt
+  default:
+    detector:
+      channels: FULL
+      shape:
+      - 2048
+      - 2048
+    keywords:
+      airmass: AIRMASS
+      exposure: EXPTIME
+      imagetype: IMGTYP
+      juliandate: MJD-OBS
+    pipeline: default
+modes:
+- date: 2012-05-21
+  description: Recipe to process bias images
+  key: bias_image
+  name: Bias Image
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Recipe to process bias images
+  url: http://somegtc_url.es/emir/obsmode1.html
+  uuid: a7ea9c0c-76a6-4609-8413-0157102ec284
+- date: 2012-05-21
+  description: Lines and mode lines
+  key: dark_image
+  name: Dark current Image
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Dark current Image
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 5b15db30-7774-4823-9645-e8ca27a866af
+- date: 2012-05-21
+  description: Lines and mode lines
+  key: intensity_flatfield
+  name: Intensity Flat-Field
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Intensity Flat-Field
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: bd22b260-38f9-427f-bbfd-c7767dc51e33
+- date: 2012-05-21
+  description: Lines and mode lines
+  key: stare_image
+  name: Stare Image
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Stare Image
+  url: http://somegtc_url.es/emir/obsmode2.html
+  uuid: 0325bcf1-ab5c-4946-a797-e341d8f82e0d
+- date: 2012-05-21
+  description: Lines and mode lines
+  key: nb_image
+  name: Nodded/Beam-switched images
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Nodded/Beam-switched images
+  url: http://somegtc_url.es/emir/obsmode3.html
+  uuid: 2e9bf628-962d-4c12-b203-1a488325ac5c
+- date: 2012-05-21
+  description: Lines and mode lines
+  key: dithered_image
+  name: Dithered images
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Dithered images
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 3675a7b5-7455-492e-947a-2e607c388d1c
+- date: 2012-05-21
+  description: Lines and mode lines
+  key: microdithered_image
+  name: Micro-dithered images
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Micro-dithered images
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 8553b9cc-7564-469d-b230-be44051eeb90
+- date: 2012-05-21
+  description: Lines and mode lines
+  key: mosaiced_image
+  name: Mosaiced images
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Mosaiced images
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: ec9229d9-4c77-43a8-9dc0-77afd532e673
+- date: 2012-06-12
+  description: Lines and mode lines
+  key: gain_mode1
+  name: Gain Mode1
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of GainMode1
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: ec9229d9-4c77-43a8-9dc0-77afd532e674
+- date: 2012-07-09
+  description: Lines and mode lines
+  key: cosmetics
+  name: Cosmetics
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of GainMode1
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 63f13bf6-b821-4c3d-9eee-32f6f924844b
+- date: 2013-06-25
+  description: Lines and mode lines
+  key: dark_current
+  name: DarkCurrent
+  recipe: emir.recipes.aiv.DarkCurrentRecipe
+  reference: TTL 2.1.03
+  status: DRAFT
+  summary: Summary of DarkCurrent
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: acd1de1e-bc5f-4948-965e-d7f5b8f637b9
+pipelines:
+  alt:
+    recipes:
+      bias_image: emir.recipes.BiasRecipe
+      cosmetics: emir.recipes.CosmeticsRecipe
+      dark_current: emir.recipes.aiv.DarkCurrentRecipe
+      dark_image: emir.recipes.DarkRecipe
+      dithered_image: emir.recipes.DitheredImageRecipe
+      gain_mode1: emir.recipes.GainRecipe1
+      intensity_flatfield: emir.recipes.IntensityFlatRecipe
+      microdithered_image: emir.recipes.MicroditheredImageRecipe
+      mosaiced_image: emir.recipes.MosaicRecipe
+      nb_image: emir.recipes.NBImageRecipe
+      stare_image: emir.recipes.StareImageRecipe
+    version: 1
+  default:
+    recipes:
+      bias_image: emir.recipes.BiasRecipe
+      cosmetics: emir.recipes.CosmeticsRecipe
+      dark_current: emir.recipes.aiv.DarkCurrentRecipe
+      dark_image: emir.recipes.DarkRecipe
+      dithered_image: emir.recipes.DitheredImageRecipe
+      gain_mode1: emir.recipes.GainRecipe1
+      intensity_flatfield: emir.recipes.IntensityFlatRecipe
+      microdithered_image: emir.recipes.MicroditheredImageRecipe
+      mosaiced_image: emir.recipes.MosaicRecipe
+      nb_image: emir.recipes.NBImageRecipe
+      stare_image: emir.recipes.StareImageRecipe
+    version: 1
