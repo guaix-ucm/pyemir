@@ -471,7 +471,7 @@ class SlitTransmissionRecipe(BaseRecipe):
 
     @log_to_history(_logger)
     def run(self, obresult, reqs):
-        return {'products': [SlitTransmissionCalibration()]}
+        return SlitTransmissionRecipeResult(slit=SlitTransmissionCalibration())
 
 class WavelengthCalibrationRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
@@ -515,5 +515,6 @@ class WavelengthCalibrationRecipe(BaseRecipe):
 
     @log_to_history(_logger)
     def run(self, obresult, reqs):
-        return {'products': [WavelengthCalibration()]}
+        return WavelengthCalibrationRecipeResult(cal=WavelengthCalibration())
+
 

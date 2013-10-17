@@ -1,5 +1,5 @@
 
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -65,7 +65,7 @@ class DTU_XY_CalibrationRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [DTU_XY_Calibration()]}
+        return DTU_XY_CalibrationRecipeResult(calibration=DTU_XY_Calibration())
 
 class DTU_Z_CalibrationRecipeRequirements(RecipeRequirements):
     dtu_range = Parameter(None, 'DTU range: begin, end and step')
@@ -90,7 +90,7 @@ class DTU_Z_CalibrationRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [DTU_Z_Calibration()]}
+        return DTU_Z_CalibrationRecipeResult(calibration=DTU_Z_Calibration())
 
 class DTU_FlexureRecipeRequirements(RecipeRequirements):
     pass
@@ -115,7 +115,7 @@ class DTUFlexureRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [DTUFlexureCalibration()]}
+        return DTU_FlexureRecipeResult(calibration=DTUFlexureCalibration())
 
 class CSU2DetectorRecipeRequirements(RecipeRequirements):
     dtu_range = Parameter(None, 'DTU range: begin, end and step')
@@ -140,7 +140,7 @@ class CSU2DetectorRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [DTU_XY_Calibration()]}
+        return CSU2DetectorRecipeResult(calibration=DTU_XY_Calibration())
 
 class FocalPlaneCalibrationRecipeRequirements(RecipeRequirements):
     pass
@@ -165,7 +165,7 @@ class FocalPlaneCalibrationRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [PointingOriginCalibration()]}
+        return FocalPlaneCalibrationRecipeResult(calibration=PointingOriginCalibration())
 
 class SpectralCharacterizationRecipeRequirements(RecipeRequirements):
     pass
@@ -190,7 +190,7 @@ class SpectralCharacterizationRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [WavelengthCalibration()]}
+        return SpectralCharacterizationRecipeResult(calibration=WavelengthCalibration())
 
 class RotationCenterRecipeRequirements(RecipeRequirements):
     pass
@@ -215,7 +215,7 @@ class RotationCenterRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [PointingOriginCalibration()]}
+        return RotationCenterRecipeResult(calibration=PointingOriginCalibration())
 
 class AstrometricCalibrationRecipeRequirements(RecipeRequirements):
     pass
@@ -265,7 +265,7 @@ class PhotometricCalibrationRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [PhotometricCalibration()]}
+        return AstrometricCalibrationRecipeResult(calibration=PhotometricCalibration())
 
 class SpectroPhotometricCalibrationRecipeRequirements(RecipeRequirements):
     sphot = Parameter(None, 'Information about standard stars')
@@ -290,4 +290,4 @@ class SpectroPhotometricCalibrationRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [SpectroPhotometricCalibration()]}
+        return SpectroPhotometricCalibrationRecipeResult(calibration=SpectroPhotometricCalibration())

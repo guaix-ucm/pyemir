@@ -83,7 +83,7 @@ class TelescopeRoughFocusRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [TelescopeFocus()]}
+        return TelescopeRoughFocusRecipeResult(focus=TelescopeFocus())
 
 
 class TelescopeFineFocusRecipeRequirements(RecipeRequirements):
@@ -127,7 +127,7 @@ class TelescopeFineFocusRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [TelescopeFocus()]}
+        return TelescopeFineFocusRecipeResult(focus=TelescopeFocus())
 
 class DTUFocusRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
@@ -172,4 +172,5 @@ class DTUFocusRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [DTUFocus()]}
+        return DTUFocusRecipeResult(focus=DTUFocus())
+

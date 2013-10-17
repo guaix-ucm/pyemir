@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -74,7 +74,7 @@ class TargetAcquisitionRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [TelescopeOffset()]}
+        return TargetAcquisitionRecipeResult(telescope_offset=TelescopeOffset())
     
 class MaskImagingRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
@@ -109,7 +109,7 @@ class MaskImagingRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [MSMPositions()]}
+        return MaskImagingRecipeResult(msm_positions=MSMPositions())
     
 class MaskCheckRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
@@ -145,4 +145,5 @@ class MaskCheckRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [TelescopeOffset(), MSMPositions()]}
+        return MaskCheckRecipeResult(msm_positions=MSMPositions(), 
+                                     telescope_offset=TelescopeOffset())

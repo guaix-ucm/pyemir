@@ -190,7 +190,7 @@ class StareSpectraRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [Spectra(), LinesCatalog()]}
+        return StareSpectraRecipeResult(spectra=Spectra(), catalog=LinesCatalog())
 
 
 class DNSSpectraRecipeRequirements(RecipeRequirements):
@@ -225,7 +225,7 @@ class DNSpectraRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [Spectra(), LinesCatalog()]}
+        return DNSSpectraRecipeResult(spectra=Spectra(), catalog=LinesCatalog())
 
 class OffsetSpectraRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
@@ -259,7 +259,8 @@ class OffsetSpectraRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [Spectra(), LinesCatalog()]}
+        return OffsetSpectraRecipeResult(spectra=Spectra(), catalog=LinesCatalog())
+
     
 class RasterSpectraRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
@@ -292,4 +293,5 @@ class RasterSpectraRecipe(BaseRecipe):
         )
 
     def run(self, obresult):
-        return {'products': [DataCube()]}
+        return RasterSpectraRecipeResult(cube=DataCube())
+

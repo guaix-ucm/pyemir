@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2012 Universidad Complutense de Madrid
+# Copyright 2010-2013 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -122,6 +122,8 @@ class GainRecipe1(BaseRecipe):
         hduvar = pyfits.ImageHDU(cube[1])
         hdulist = pyfits.HDUList([hdu, hduvar])
 
-        return {'products': [MasterGainMap(mean=result_gain, var=numpy.array([]), 
-					frame=DataFrame(hdulist)),
-			        MasterRONMap(mean=result_ron, var=numpy.array([]))]}
+        gain = MasterGainMap(mean=result_gain, var=numpy.array([]), 
+                    frame=DataFrame(hdulist))
+        ron = MasterRONMap(mean=result_ron, var=numpy.array([]))
+        return GainRecipe1InputResult(gain=gain, ron=ron)
+        
