@@ -20,6 +20,7 @@
 import yaml
 from numina.core import BaseInstrument, BasePipeline, InstrumentConfiguration
 from numina.core import import_object
+from numina.core.reciperesult import RecipeResultAutoQA as RecipeResult
 import logging
 import pkgutil
 
