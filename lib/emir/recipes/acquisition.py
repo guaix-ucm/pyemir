@@ -28,9 +28,10 @@ Recipe for the processing of target acquisition images.
 import logging
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import RecipeRequirements, RecipeResult, Product
+from numina.core import RecipeRequirements, Product
 from numina.core import define_requirements, define_result
 
+from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import TelescopeOffset, MSMPositions
 from emir.dataproducts import MasterIntensityFlat

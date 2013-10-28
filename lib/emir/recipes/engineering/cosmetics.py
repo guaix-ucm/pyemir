@@ -28,10 +28,12 @@ import numpy
 import pyfits
 
 from numina.core import BaseRecipe, Parameter, DataFrame
-from numina.core import RecipeError,RecipeRequirements, RecipeResult
+from numina.core import RecipeError,RecipeRequirements
 from numina.core import Product, define_requirements, define_result
 from numina.core import FrameDataProduct
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
+
+from emir.core import RecipeResult
 
 _logger = logging.getLogger('numina.recipes.emir')
 

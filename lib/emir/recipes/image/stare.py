@@ -25,9 +25,10 @@ Image mode recipes of EMIR
 import logging
 
 from numina.core import BaseRecipe, Parameter
-from numina.core import RecipeRequirements, RecipeResult, Product
+from numina.core import RecipeRequirements, Product
 from numina.core import FrameDataProduct, define_requirements, define_result
 
+from emir.core import RecipeResult
 from emir.dataproducts import SourcesCatalog
 
 from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement

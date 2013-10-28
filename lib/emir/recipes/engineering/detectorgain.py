@@ -28,11 +28,11 @@ import pyfits
 
 import numina.qa
 from numina.core import BaseRecipe, Parameter, DataFrame
-from numina.core import RecipeError,RecipeRequirements, RecipeResult
+from numina.core import RecipeError,RecipeRequirements
 from numina.core import Product, define_requirements, define_result
 
+from emir.core import RecipeResult
 from emir.instrument.detector import CHANNELS, QUADRANTS
-
 from emir.dataproducts import MasterGainMap, MasterRONMap
 
 _logger = logging.getLogger('numina.recipes.emir')

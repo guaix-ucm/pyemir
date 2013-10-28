@@ -25,9 +25,10 @@ Mosaic image mode recipe of EMIR
 import logging
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import define_requirements, define_result, DataFrame, RecipeResult
+from numina.core import define_requirements, define_result, DataFrame
 from numina.core import Requirement, Product, FrameDataProduct, RecipeRequirements
 
+from emir.core import RecipeResult
 from emir.dataproducts import SourcesCatalog
 
 _logger = logging.getLogger('numina.recipes.emir')

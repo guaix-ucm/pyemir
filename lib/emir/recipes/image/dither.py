@@ -23,9 +23,10 @@ import logging
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
 from numina.core import Requirement, RecipeRequirements, FrameDataProduct
-from numina.core import DataFrame, Product, RecipeRequirements, RecipeResult
+from numina.core import DataFrame, Product, RecipeRequirements
 from numina.core import define_requirements, define_result
 
+from emir.core import RecipeResult
 from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
 from emir.requirements import MasterDark_Requirement, NonLinearityCalibration_Requirement
 from emir.requirements import MasterIntensityFlatField_Requirement

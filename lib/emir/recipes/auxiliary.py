@@ -24,7 +24,7 @@ import logging
 import numpy
 import pyfits
 from numina.core import RecipeError
-from numina.core import BaseRecipe, RecipeRequirements, RecipeResult, DataFrame
+from numina.core import BaseRecipe, RecipeRequirements, DataFrame
 from numina.core import Requirement, Product, DataProductRequirement
 from numina.core import define_requirements, define_result
 from numina.logger import log_to_history
@@ -35,6 +35,7 @@ from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector
 from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 
+from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import NonLinearityCalibration, MasterIntensityFlat
 from emir.dataproducts import WavelengthCalibration, MasterSpectralFlat

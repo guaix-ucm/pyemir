@@ -24,8 +24,9 @@
 import logging
 
 from numina.core import BaseRecipe, Parameter, define_result, define_requirements
-from numina.core import FrameDataProduct, RecipeResult, Product, RecipeRequirements 
+from numina.core import FrameDataProduct, Product, RecipeRequirements 
 
+from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import TelescopeOffset, MSMPositions
 from emir.dataproducts import MasterIntensityFlat

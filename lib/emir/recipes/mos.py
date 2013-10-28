@@ -23,8 +23,9 @@ import logging
 
 from numina.core import BaseRecipe, Parameter, RecipeRequirements
 from numina.core import DataProductRequirement, define_requirements
-from numina.core import define_result, Product, RecipeResult
+from numina.core import define_result, Product
 
+from emir.core import RecipeResult
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask 
 from ..dataproducts import MasterIntensityFlat, MasterSpectralFlat
 from ..dataproducts import (NonLinearityCalibration, SlitTransmissionCalibration,

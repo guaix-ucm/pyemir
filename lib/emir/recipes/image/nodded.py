@@ -23,9 +23,11 @@ Beam switched-nodded image mode recipe of EMIR
 '''
 
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import Requirement, RecipeRequirements, RecipeResult
+from numina.core import Requirement, RecipeRequirements
 from numina.core import DataFrame, define_requirements, define_result
 from numina.core import Product, FrameDataProduct 
+
+from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import NonLinearityCalibration

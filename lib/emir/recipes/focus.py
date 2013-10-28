@@ -25,10 +25,11 @@
 import logging
 
 from numina.core import BaseRecipe, Parameter, define_requirements, define_result
-from numina.core import DataProductRequirement, RecipeRequirements, RecipeResult
+from numina.core import DataProductRequirement, RecipeRequirements
 from numina.core import Product
 from numina.logger import log_to_history
 
+from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import TelescopeFocus
 from emir.dataproducts import DTUFocus
