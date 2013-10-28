@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-BASE_PKGS=find_packages('src', exclude=['drp', 'drp.*'])
+BASE_PKGS=find_packages('lib', exclude=['drp', 'drp.*'])
 NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.emir']
 ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 
@@ -12,7 +12,7 @@ ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 # this is the bug https://github.com/pypa/pip/issues/355
 
 
-sys.path.append(os.path.abspath('src'))
+sys.path.append(os.path.abspath('lib'))
 import emir
 version = emir.__version__
 del sys.path[-1]
@@ -25,13 +25,10 @@ setup(name='pyemir',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       packages=ALL_PKGS,
-      package_dir={'emir': 'src/emir', 'numina.pipelines': 'src/drp'},
+      package_dir={'emir': 'lib/emir', 'numina.pipelines': 'lib/drp'},
       package_data={'emir.simulation': ['*.dat'],
-                     'emir.instrument': ['obsmodes.yaml',
-                     'default.yaml', 'alt.yaml',
-                     'image_*.txt', 'spectrum_*.txt'],
+                     'emir.instrument': ['emir.yaml', 'image_*.txt', 'spectrum_*.txt'],
                    },
-      scripts=['tasks/pyemir-task1.py'],
       test_suite="emir.tests",
       install_requires=['setuptools', 'numpy', 'pyfits', 
                         'scipy', 'sphinx', 'pywcs',

@@ -1,7 +1,6 @@
 include MANIFEST.in *.txt
-include src/emir/instrument/*.txt
-include src/emir/instrument/*.yaml
-include src/emir/simulation/*.dat
-include tasks/*.py
+include lib/emir/instrument/*.txt
+include lib/emir/instrument/*.yaml
+include lib/emir/simulation/*.dat
 recursive-include doc *
 

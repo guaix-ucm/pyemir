@@ -1,7 +1,0 @@
-detector:
-  channels: FULL
-  shape: [2048, 2048]
-keywords: {airmass: AIRMASS, exposure: EXPTIME, imagetype: IMGTYP, juliandate: MJD-OBS}
-instrument: EMIR
-name: default
-pipeline: default
