@@ -83,7 +83,7 @@ class TelescopeRoughFocusRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return TelescopeRoughFocusRecipeResult(focus=TelescopeFocus())
 
 
@@ -127,7 +127,7 @@ class TelescopeFineFocusRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return TelescopeFineFocusRecipeResult(focus=TelescopeFocus())
 
 class DTUFocusRecipeRequirements(RecipeRequirements):
@@ -172,6 +172,6 @@ class DTUFocusRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return DTUFocusRecipeResult(focus=DTUFocus())
 

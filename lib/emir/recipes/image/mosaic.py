@@ -65,7 +65,7 @@ class MosaicRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return MosaicRecipeResult(frame=DataFrame(None), catalog=SourcesCatalog())
 
 #

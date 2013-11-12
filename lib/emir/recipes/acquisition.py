@@ -74,7 +74,7 @@ class TargetAcquisitionRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return TargetAcquisitionRecipeResult(telescope_offset=TelescopeOffset())
     
 class MaskImagingRecipeRequirements(RecipeRequirements):
@@ -109,7 +109,7 @@ class MaskImagingRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return MaskImagingRecipeResult(msm_positions=MSMPositions())
     
 class MaskCheckRecipeRequirements(RecipeRequirements):
@@ -145,6 +145,6 @@ class MaskCheckRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return MaskCheckRecipeResult(msm_positions=MSMPositions(), 
                                      telescope_offset=TelescopeOffset())
