@@ -190,7 +190,7 @@ class StareSpectraRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return StareSpectraRecipeResult(spectra=Spectra(), catalog=LinesCatalog())
 
 
@@ -225,7 +225,7 @@ class DNSpectraRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return DNSSpectraRecipeResult(spectra=Spectra(), catalog=LinesCatalog())
 
 class OffsetSpectraRecipeRequirements(RecipeRequirements):
@@ -259,7 +259,7 @@ class OffsetSpectraRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return OffsetSpectraRecipeResult(spectra=Spectra(), catalog=LinesCatalog())
 
     
@@ -293,6 +293,6 @@ class RasterSpectraRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return RasterSpectraRecipeResult(cube=DataCube())
 

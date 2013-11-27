@@ -65,7 +65,7 @@ class DTU_XY_CalibrationRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return DTU_XY_CalibrationRecipeResult(calibration=DTU_XY_Calibration())
 
 class DTU_Z_CalibrationRecipeRequirements(RecipeRequirements):
@@ -90,7 +90,7 @@ class DTU_Z_CalibrationRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return DTU_Z_CalibrationRecipeResult(calibration=DTU_Z_Calibration())
 
 class DTU_FlexureRecipeRequirements(RecipeRequirements):
@@ -115,7 +115,7 @@ class DTUFlexureRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return DTU_FlexureRecipeResult(calibration=DTUFlexureCalibration())
 
 class CSU2DetectorRecipeRequirements(RecipeRequirements):
@@ -140,7 +140,7 @@ class CSU2DetectorRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return CSU2DetectorRecipeResult(calibration=DTU_XY_Calibration())
 
 class FocalPlaneCalibrationRecipeRequirements(RecipeRequirements):
@@ -165,7 +165,7 @@ class FocalPlaneCalibrationRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return FocalPlaneCalibrationRecipeResult(calibration=PointingOriginCalibration())
 
 class SpectralCharacterizationRecipeRequirements(RecipeRequirements):
@@ -190,7 +190,7 @@ class SpectralCharacterizationRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return SpectralCharacterizationRecipeResult(calibration=WavelengthCalibration())
 
 class RotationCenterRecipeRequirements(RecipeRequirements):
@@ -215,7 +215,7 @@ class RotationCenterRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return RotationCenterRecipeResult(calibration=PointingOriginCalibration())
 
 class AstrometricCalibrationRecipeRequirements(RecipeRequirements):
@@ -240,7 +240,7 @@ class AstrometricCalibrationRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return AstrometricCalibrationRecipeResult(calibration=None)
 
 class PhotometricCalibrationRecipeRequirements(RecipeRequirements):
@@ -265,7 +265,7 @@ class PhotometricCalibrationRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return AstrometricCalibrationRecipeResult(calibration=PhotometricCalibration())
 
 class SpectroPhotometricCalibrationRecipeRequirements(RecipeRequirements):
@@ -290,5 +290,5 @@ class SpectroPhotometricCalibrationRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult):
+    def run(self, obresult, reqs):
         return SpectroPhotometricCalibrationRecipeResult(calibration=SpectroPhotometricCalibration())
