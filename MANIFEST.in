@@ -1,6 +1,6 @@
 include MANIFEST.in *.txt
 include lib/emir/instrument/*.txt
-include lib/emir/instrument/*.yaml
+include lib/emir/drp.yaml
 include lib/emir/simulation/*.dat
 recursive-include doc *
 

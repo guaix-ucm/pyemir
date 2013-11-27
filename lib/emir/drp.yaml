@@ -25,6 +25,15 @@ configurations:
       juliandate: MJD-OBS
     pipeline: default
 modes:
+- date: 2013-11-12
+  description: A recipe that always fails
+  key: fail
+  name: Fail
+  reference: numina
+  status: DRAFT
+  summary: A recipe that always fails
+  url: http://somegtc_url.es/emir/obsmode1.html
+  uuid: a7cf7b82-e527-4d53-ad7a-3dae009a1b4e
 - date: 2012-05-21
   description: Recipe to process bias images
   key: bias_image
@@ -139,6 +148,7 @@ pipelines:
       mosaiced_image: emir.recipes.MosaicRecipe
       nb_image: emir.recipes.NBImageRecipe
       stare_image: emir.recipes.StareImageRecipe
+      fail: numina.core.utils.AlwaysFailRecipe
     version: 1
   default:
     recipes:
@@ -153,4 +163,5 @@ pipelines:
       mosaiced_image: emir.recipes.MosaicRecipe
       nb_image: emir.recipes.NBImageRecipe
       stare_image: emir.recipes.StareImageRecipe
+      fail: numina.core.utils.AlwaysFailRecipe
     version: 1
