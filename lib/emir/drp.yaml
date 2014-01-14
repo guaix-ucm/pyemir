@@ -134,6 +134,14 @@ modes:
   summary: Summary of DarkCurrent
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: acd1de1e-bc5f-4948-965e-d7f5b8f637b9
+- date: 2014-01-14
+  description: A Simple Bias recipe for testing
+  key: simple_bias
+  name: Simple Bias
+  reference: test
+  status: DRAFT
+  summary: Summary of Simple Bias
+  url: http://somegtc_url.es/emir/obsmode4.html
 pipelines:
   alt:
     recipes:
@@ -164,4 +172,5 @@ pipelines:
       nb_image: emir.recipes.NBImageRecipe
       stare_image: emir.recipes.StareImageRecipe
       fail: numina.core.utils.AlwaysFailRecipe
+      simple_bias: emir.recipes.aiv.SimpleBiasRecipe
     version: 1
