@@ -1,7 +1,26 @@
+Version 0.7.2 (17 Dec 2013)
+----------------------------
+Bugfix:
+  * Install drp.yaml file in its location
+
+Version 0.7.1 (27 Nov 2013)
+----------------------------
+Bugfix:
+  * Add missing 'reqs' arguments in run method of recipes
+
+Changes:
+  * instrument/emir.yaml moved to drp.yaml
+
 Version 0.7.0 (28 Oct 2013)
 ----------------------------
 Changes:
   * Updates to work with numina 0.10
+
+Version 0.6.12 (05 Dec 2012)
+----------------------------
+Bugfix:
+  * yaml files in emir.instrument not installed.
+    Added to MANIFEST.in
 
 Version 0.6.11 (05 Dec 2012)
 ----------------------------
@@ -21,6 +40,7 @@ Changes:
 
 Version 0.6.8 (18 Sep 2012)
 --------------------------
+
 Changes:
   * Added CosmeticsRecipe
 

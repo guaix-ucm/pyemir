@@ -101,3 +101,76 @@ class DarkCurrentRecipe(BaseRecipe):
         result = DarkCurrentRecipeResult(darkcurrent=DarkCurrentValue())
         return result
 
+class SimpleBiasRecipeRequirements(RecipeRequirements):
+    pass
+
+class SimpleBiasRecipeResult(RecipeResult):
+    biasframe = Product(MasterBias)
+
+@define_requirements(SimpleBiasRecipeRequirements)
+@define_result(SimpleBiasRecipeResult)
+class SimpleBiasRecipe(BaseRecipe):
+    '''    
+    Recipe to process data taken in SimpleBias image Mode.
+
+    Bias images only appear in Simple Readout mode.
+
+    **Outputs:**
+
+     * A combined bias frame, with variance extension.
+
+    **Procedure:**
+    
+    The list of images can be readly processed by combining them 
+    with a median algorithm.
+    '''
+
+    def __init__(self):
+        super(SimpleBiasRecipe, self).__init__(author=_s_author, 
+            version="0.1.0")
+
+    def run(self, obresult, reqs):
+        _logger.info('starting simple bias reduction')
+
+        cdata = []
+
+        try:
+            for frame in obresult.frames:
+                hdulist = pyfits.open(frame.label, memmap=True, mode='readonly')
+                cdata.append(hdulist)
+
+            _logger.info('stacking %d images using median', len(cdata))
+            
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+
+            hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
+
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
+            
+        # update hdu header with
+        # reduction keywords
+        hdr = hdu.header
+
+        hdr.update('IMGTYP', 'BIAS', 'Image type')
+        hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
+        hdr.update('NUMXVER', __version__, 'Numina package version')
+        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
+        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+
+        exhdr = pyfits.Header()
+        exhdr.update('extver', 1)
+        varhdu = pyfits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
+        exhdr = pyfits.Header()
+        exhdr.update('extver', 2)
+        var2hdu = pyfits.ImageHDU(var2, name='VARIANCE', header=exhdr)
+        num = pyfits.ImageHDU(data[2], name='MAP')
+
+        hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
+
+        _logger.info('simple bias reduction ended')
+ 
+        result = SimpleBiasRecipeResult(biasframe=DataFrame(hdulist))
+        return result
+
