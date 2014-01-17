@@ -162,12 +162,9 @@ class SimpleBiasRecipe(BaseRecipe):
         exhdr = pyfits.Header()
         exhdr.update('extver', 1)
         varhdu = pyfits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
-        exhdr = pyfits.Header()
-        exhdr.update('extver', 2)
-        var2hdu = pyfits.ImageHDU(var2, name='VARIANCE', header=exhdr)
         num = pyfits.ImageHDU(data[2], name='MAP')
 
-        hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
+        hdulist = pyfits.HDUList([hdu, varhdu, num])
 
         _logger.info('simple bias reduction ended')
  
