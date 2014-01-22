@@ -1,5 +1,5 @@
 #
-# Copyright 2013 Universidad Complutense de Madrid
+# Copyright 2013-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
