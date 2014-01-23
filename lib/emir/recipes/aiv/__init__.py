@@ -132,18 +132,19 @@ class SimpleBiasRecipe(BaseRecipe):
     def run(self, obresult, reqs):
         _logger.info('starting simple bias reduction')
 
-        cdata = []
 
+        # On Pyhton >= 3.3 we can use ExitStack as context manager
+        # for all the file openings
+        cdata = []
         try:
             for frame in obresult.frames:
-                hdulist = pyfits.open(frame.label, memmap=True, mode='readonly')
-                cdata.append(hdulist)
+                cdata.append(frame.open())
 
             _logger.info('stacking %d images using median', len(cdata))
             
             data = median([d['primary'].data for d in cdata], dtype='float32')
-
-            hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
+            template_head = cdata[0]['PRIMARY'].header
+            hdu = pyfits.PrimaryHDU(data[0], header=template_head)
 
         finally:
             for hdulist in cdata:
@@ -168,6 +169,7 @@ class SimpleBiasRecipe(BaseRecipe):
 
         _logger.info('simple bias reduction ended')
  
+        # qa is QA.UNKNOWN
         result = SimpleBiasRecipeResult(biasframe=DataFrame(hdulist))
         return result
 
