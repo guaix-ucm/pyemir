@@ -54,10 +54,28 @@ class MMTestCase(unittest.TestCase):
         recipe = SimpleBiasRecipe()
         #
         result = recipe(reqs)
-        assert isinstance(result, SimpleBiasRecipe.RecipeResult)
 
-    def test3(self):
-        import os
+        self.verify_result(result)
+        
+    def verify_result(self, result):
+
+        self.assertIsInstance(result, SimpleBiasRecipe.RecipeResult)
+        self.assertTrue(hasattr(result, "biasframe"))
+        self.assertIsInstance(result.biasframe, DataFrame)
+        
+        frame = result.biasframe.frame
+
+        self.assertIsInstance(frame, pyfits.HDUList)
+
+        # Number of extensions
+        self.assertEqual(len(frame), 3)
+
+        self.assertIsInstance(frame[0], pyfits.PrimaryHDU)
+        self.assertIsInstance(frame[1], pyfits.ImageHDU)
+        self.assertIsInstance(frame[2], pyfits.ImageHDU)
+   
+     def test3(self):
+
         # Create some HDUList
         somefits = []
         nimg = 10
@@ -80,5 +98,6 @@ class MMTestCase(unittest.TestCase):
 
         for fname in somefits:
             os.remove(fname)
-
-        assert isinstance(result, SimpleBiasRecipe.RecipeResult)
+        
+        self.verify_result(result)
+        
