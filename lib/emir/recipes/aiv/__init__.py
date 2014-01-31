@@ -30,7 +30,10 @@ from numina.core import RecipeError
 from numina.core import BaseRecipe, RecipeRequirements, DataFrame
 from numina.core import Requirement, Product, DataProductRequirement
 from numina.core import define_requirements, define_result
-from numina.logger import log_to_history
+from numina.core.recipes import BaseRecipeSingle
+from numina.core.requirements import ObservationResultRequirement
+#from numina.logger import log_to_history
+
 from numina.array.combine import median
 from numina import __version__
 from numina.flow.processing import BiasCorrector
@@ -102,14 +105,14 @@ class DarkCurrentRecipe(BaseRecipe):
         return result
 
 class SimpleBiasRecipeRequirements(RecipeRequirements):
-    pass
+    obresult = ObservationResultRequirement()
 
 class SimpleBiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
 
 @define_requirements(SimpleBiasRecipeRequirements)
 @define_result(SimpleBiasRecipeResult)
-class SimpleBiasRecipe(BaseRecipe):
+class SimpleBiasRecipe(BaseRecipeSingle):
     '''    
     Recipe to process data taken in SimpleBias image Mode.
 
@@ -129,7 +132,7 @@ class SimpleBiasRecipe(BaseRecipe):
         super(SimpleBiasRecipe, self).__init__(author=_s_author, 
             version="0.1.0")
 
-    def run(self, obresult, reqs):
+    def run(self, inputs):
         _logger.info('starting simple bias reduction')
 
 
@@ -137,7 +140,7 @@ class SimpleBiasRecipe(BaseRecipe):
         # for all the file openings
         cdata = []
         try:
-            for frame in obresult.frames:
+            for frame in inputs.obresult.frames:
                 cdata.append(frame.open())
 
             _logger.info('stacking %d images using median', len(cdata))

@@ -50,11 +50,10 @@ class MMTestCase(unittest.TestCase):
         obsres = ObservationResult()
         obsres.frames = [dataframe_from_list(val) for val in somefits]
         # empty requirements
-        reqs = SimpleBiasRecipe.RecipeRequirements()
-        recipe_input = RecipeInput(obsres, reqs)
+        reqs = SimpleBiasRecipe.RecipeRequirements(obresult=obsres)
         recipe = SimpleBiasRecipe()
         #
-        result = recipe(recipe_input)
+        result = recipe(reqs)
         assert isinstance(result, SimpleBiasRecipe.RecipeResult)
 
     def test3(self):
@@ -74,11 +73,10 @@ class MMTestCase(unittest.TestCase):
         obsres = ObservationResult()
         obsres.frames = [dataframe_from_list(val) for val in somefits]
         # empty requirements
-        reqs = SimpleBiasRecipe.RecipeRequirements()
-        recipe_input = RecipeInput(obsres, reqs)
+        reqs = SimpleBiasRecipe.RecipeRequirements(obresult=obsres)
         #
         recipe = SimpleBiasRecipe()
-        result = recipe(recipe_input)
+        result = recipe(reqs)
 
         for fname in somefits:
             os.remove(fname)
