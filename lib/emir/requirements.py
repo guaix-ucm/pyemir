@@ -24,7 +24,20 @@ from numina.core import Parameter, DataProductRequirement, Requirement
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import NonLinearityCalibration
-from emir.dataproducts import SourcesCatalog
+#from emir.dataproducts import SourcesCatalog
+from emir.dataproducts import EMIRConfigurationType
+
+class EMIRConfigurationRequirement(Requirement):
+    '''The Recipe requires the configuration of EMIR.'''
+    def __init__(self):
+        
+        super(EMIRConfigurationRequirement, self).__init__("EMIR Configuration", 
+            type=EMIRConfigurationType, validate=True)
+
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
+
 
 class MasterBadPixelMask_Requirement(DataProductRequirement):
     def __init__(self):

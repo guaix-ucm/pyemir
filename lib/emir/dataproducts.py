@@ -20,6 +20,14 @@
 '''Data products produced by the EMIR pipeline.'''
 
 from numina.core import FrameDataProduct, DataProduct
+from numina.core.requirements import InstrumentConfigurationType
+    
+    
+    
+class EMIRConfigurationType(InstrumentConfigurationType):
+    
+    def validate(self, value):
+        super(EMIRConfigurationType, self).validate(value)
 
 class MasterBadPixelMask(FrameDataProduct):
     pass
