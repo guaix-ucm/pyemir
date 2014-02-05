@@ -18,9 +18,11 @@
 # 
 
 import itertools as ito
+import logging
 
 from numina.extraiter import braid
 
+_logger = logging.getLogger('emir.instrument.channels')
 
 def _channel_gen1(beg, end, step):
     return ito.imap(lambda x: (x, x + step), xrange(beg, end, step))
