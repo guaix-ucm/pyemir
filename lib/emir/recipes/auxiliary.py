@@ -108,10 +108,15 @@ class BiasRecipe(BaseRecipe):
             _logger.info('stacking %d images using median', len(cdata))
             
             data = median([d['primary'].data for d in cdata], dtype='float32')
+            template_header = cdata[0]['PRIMARY'].header
+            hdu = fits.PrimaryHDU(data[0], header=template_header)
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
 
-            var2 = numpy.zeros_like(data[0])
-            cls = ChannelLevelStatistics(exposure=0.0)
-            for region in channels:
+        var2 = numpy.zeros_like(data[0])
+        cls = ChannelLevelStatistics(exposure=0.0)
+        for region in channels:
                 mean = numpy.mean(data[0][region])
                 med = numpy.median(data[0][region])
                 var = numpy.var(data[0][region])
@@ -119,36 +124,32 @@ class BiasRecipe(BaseRecipe):
                 cls.statistics.append([region, stts])
                 var2[region] = var
 
-            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
+        hdu = fits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
     
-            # update hdu header with
-            # reduction keywords
-            hdr = hdu.header
-            #hdr.update('FILENAME', 'master_bias-%(block_id)d.fits' % self.environ)
-            hdr.update('IMGTYP', 'BIAS', 'Image type')
-            hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
-            hdr.update('NUMXVER', __version__, 'Numina package version')
-            hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
-            hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        # update hdu header with
+        # reduction keywords
+        hdr = hdu.header
+        hdr.update('IMGTYP', 'BIAS', 'Image type')
+        hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
+        hdr.update('NUMXVER', __version__, 'Numina package version')
+        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
+        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
 
-            exhdr = fits.Header()
-            exhdr.update('extver', 1)
-            varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
-            exhdr = fits.Header()
-            exhdr.update('extver', 2)
-            var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
-            num = fits.ImageHDU(data[2], name='MAP')
+        exhdr = fits.Header()
+        exhdr.update('extver', 1)
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
+        exhdr = fits.Header()
+        exhdr.update('extver', 2)
+        var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
+        num = fits.ImageHDU(data[2], name='MAP')
 
-            hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
+        hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
 
-            _logger.info('bias reduction ended')
+        _logger.info('bias reduction ended')
             
-            result = BiasRecipeResult(biasframe=DataFrame(hdulist),
+        result = BiasRecipeResult(biasframe=DataFrame(hdulist),
                                       stats=cls)
-            return result
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
+        return result
             
 class DarkRecipeRequirements(BiasRecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
