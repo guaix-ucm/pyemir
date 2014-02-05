@@ -103,8 +103,7 @@ class BiasRecipe(BaseRecipe):
         cdata = []
         try:
             for frame in rinput.obresult.frames:
-                hdulist = fits.open(frame.label, memmap=True, mode='readonly')
-                cdata.append(hdulist)
+                cdata.append(frame.open())
 
             _logger.info('stacking %d images using median', len(cdata))
             
