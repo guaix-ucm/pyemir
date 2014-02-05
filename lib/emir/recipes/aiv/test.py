@@ -27,8 +27,6 @@ from astropy.io import fits
 import numpy as np
 
 from numina.core.oresult import ObservationResult, dataframe_from_list
-from numina.core.reciperesult import ErrorRecipeResult
-from numina.core.recipeinput import RecipeInput
 from numina.core.dataframe import DataFrame
 
 from . import SimpleBiasRecipe
