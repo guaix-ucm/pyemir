@@ -34,7 +34,10 @@ from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector
 from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
+from numina.core.requirements import ObservationResultRequirement
+from numina.core.requirements import InstrumentConfigurationRequirement
 
+import emir.instrument.channels as allchannels
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import NonLinearityCalibration, MasterIntensityFlat
@@ -51,6 +54,8 @@ _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 class BiasRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
 
 class BiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
@@ -86,13 +91,17 @@ class BiasRecipe(BaseRecipe):
 
     # FIXME find a better way of doing this automatically
     # @log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         _logger.info('starting bias reduction')
 
+        
+        insconf = rinput.insconf.values
+        channels_name = insconf['detector']['channels']
+        channels = getattr(allchannels, channels_name)
+        
         cdata = []
-
         try:
-            for frame in obresult.frames:
+            for frame in rinput.obresult.frames:
                 hdulist = pyfits.open(frame.label, memmap=True, mode='readonly')
                 cdata.append(hdulist)
 
@@ -102,7 +111,7 @@ class BiasRecipe(BaseRecipe):
 
             var2 = numpy.zeros_like(data[0])
             cls = ChannelLevelStatistics(exposure=0.0)
-            for region in self.instrument.detector['channels']:
+            for region in channels:
                 mean = numpy.mean(data[0][region])
                 med = numpy.median(data[0][region])
                 var = numpy.var(data[0][region])
