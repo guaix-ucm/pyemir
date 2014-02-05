@@ -23,12 +23,12 @@ from pkgutil import get_data
 from StringIO import StringIO
 import logging
 
-import pyfits
+from astropy.io import fits
 
 try:
-    my_fromtextfile = getattr(pyfits.Header, 'fromtextfile') # pyfits 3.1
+    my_fromtextfile = getattr(fits.Header, 'fromtextfile') # pyfits 3.1
 except AttributeError: # pyfits 3.0.9
-    my_fromtextfile = lambda fileobj: pyfits.Header(txtfile=fileobj) 
+    my_fromtextfile = lambda fileobj: fits.Header(txtfile=fileobj) 
 
 from numina.instrument.template import interpolate
 
@@ -51,7 +51,7 @@ def _load_header(res, ext):
     try:
         res = _table[(res, ext)]
     except KeyError:
-        return pyfits.Header()    
+        return fits.Header()
     sfile = StringIO(get_data('emir.instrument', res))
     hh = my_fromtextfile(sfile)
     return hh
@@ -81,8 +81,8 @@ class EmirImageFactory(object):
         for rr in hh.ascardlist():
             rr.value = interpolate(meta, rr.value)
 
-        prim = pyfits.PrimaryHDU(data=data, header=hh)
+        prim = fits.PrimaryHDU(data=data, header=hh)
         hl = [prim]
 
-        hdulist = pyfits.HDUList(hl)
+        hdulist = fits.HDUList(hl)
         return hdulist

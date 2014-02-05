@@ -25,7 +25,7 @@ import logging
 import warnings
 
 import numpy
-import pyfits
+from astropy.io import fits
 
 from numina.core import BaseRecipe, Parameter, DataFrame
 from numina.core import RecipeError,RecipeRequirements
@@ -87,9 +87,9 @@ class CosmeticsRecipe(BaseRecipe):
         if len(resets) < 1:
             raise ValueError('The recipe requires 1 reset frame')
         
-        reset = pyfits.getdata(resets[-1])
-        f1 = pyfits.getdata(flats[0]) - reset
-        f2 = pyfits.getdata(flats[1]) - reset
+        reset = fits.getdata(resets[-1])
+        f1 = fits.getdata(flats[0]) - reset
+        f2 = fits.getdata(flats[1]) - reset
         
         maxiter = reqs['maxiter']
         lowercut = reqs['lowercut']
@@ -99,7 +99,7 @@ class CosmeticsRecipe(BaseRecipe):
         mask = None
         
         if mask:
-            m = pyfits.getdata(mask)
+            m = fits.getdata(mask)
             ninvalid = numpy.count_nonzero(m)
         else:
             m = numpy.zeros_like(reset, dtype='int')
@@ -112,9 +112,9 @@ class CosmeticsRecipe(BaseRecipe):
             # can be removed later
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
-                pyfits.writeto('numina-cosmetics-i%02d.fits' % niter, ratio, clobber=True)
-                pyfits.writeto('numina-mask-i%02d.fits' % niter, m, clobber=True)
-                pyfits.writeto('numina-sigma-i%02d.fits' % niter, m * 0.0 + sigma, clobber=True)
+                fits.writeto('numina-cosmetics-i%02d.fits' % niter, ratio, clobber=True)
+                fits.writeto('numina-mask-i%02d.fits' % niter, m, clobber=True)
+                fits.writeto('numina-sigma-i%02d.fits' % niter, m * 0.0 + sigma, clobber=True)
             _logger.info('iter %d, invalid points in input mask: %d', niter, ninvalid)
             _logger.info('iter %d, estimated sigma is %f', niter, sigma)
             n_ninvalid = numpy.count_nonzero(m)
@@ -144,23 +144,23 @@ class CosmeticsRecipe(BaseRecipe):
         # caN be removed later
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            pyfits.writeto('numina-cosmetics.fits', ratio, clobber=True)
-            pyfits.writeto('numina-mask.fits', m, clobber=True)
-            pyfits.writeto('numina-sigma.fits', sigma * numpy.ones_like(m), clobber=True)
+            fits.writeto('numina-cosmetics.fits', ratio, clobber=True)
+            fits.writeto('numina-mask.fits', m, clobber=True)
+            fits.writeto('numina-sigma.fits', sigma * numpy.ones_like(m), clobber=True)
             
-        ratiohdu = pyfits.PrimaryHDU(ratio)
+        ratiohdu = fits.PrimaryHDU(ratio)
         hdr = ratiohdu.header
         hdr.update('FILENAME', 'ratio.fits')
         hdr = self.update_header(hdr)        
         # hdr.update('IMGTYP', 'TARGET', 'Image type')
         # hdr.update('NUMTYP', 'TARGET', 'Data product type')
-        ratiohdl = pyfits.HDUList([ratiohdu])    
+        ratiohdl = fits.HDUList([ratiohdu])    
         
-        maskhdu = pyfits.PrimaryHDU(m)
+        maskhdu = fits.PrimaryHDU(m)
         hdr = maskhdu.header
         hdr.update('filename', 'mask.fits')
         hdr = self.update_header(hdr)
-        maskhdl = pyfits.HDUList([maskhdu])
+        maskhdl = fits.HDUList([maskhdu])
         
 
         res = CosmeticsRecipeResult(ratio=DataFrame(ratiohdl), 

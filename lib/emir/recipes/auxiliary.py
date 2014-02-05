@@ -22,10 +22,10 @@
 import logging
 
 import numpy
-import pyfits
+from astropy.io import fits
 from numina.core import RecipeError
 from numina.core import BaseRecipe, RecipeRequirements, DataFrame
-from numina.core import Requirement, Product, DataProductRequirement
+from numina.core import Product, DataProductRequirement
 from numina.core import define_requirements, define_result
 from numina.logger import log_to_history
 from numina.array.combine import median
@@ -33,7 +33,8 @@ from numina import __version__
 from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector
-from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
+from numina.flow.processing import DarkCorrector, NonLinearityCorrector
+# from numina.flow.processing import BadPixelCorrector
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
 
@@ -102,7 +103,7 @@ class BiasRecipe(BaseRecipe):
         cdata = []
         try:
             for frame in rinput.obresult.frames:
-                hdulist = pyfits.open(frame.label, memmap=True, mode='readonly')
+                hdulist = fits.open(frame.label, memmap=True, mode='readonly')
                 cdata.append(hdulist)
 
             _logger.info('stacking %d images using median', len(cdata))
@@ -119,7 +120,7 @@ class BiasRecipe(BaseRecipe):
                 cls.statistics.append([region, stts])
                 var2[region] = var
 
-            hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
     
             # update hdu header with
             # reduction keywords
@@ -131,15 +132,15 @@ class BiasRecipe(BaseRecipe):
             hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
             hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
 
-            exhdr = pyfits.Header()
+            exhdr = fits.Header()
             exhdr.update('extver', 1)
-            varhdu = pyfits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
-            exhdr = pyfits.Header()
+            varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
+            exhdr = fits.Header()
             exhdr.update('extver', 2)
-            var2hdu = pyfits.ImageHDU(var2, name='VARIANCE', header=exhdr)
-            num = pyfits.ImageHDU(data[2], name='MAP')
+            var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
+            num = fits.ImageHDU(data[2], name='MAP')
 
-            hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
+            hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
 
             _logger.info('bias reduction ended')
             
@@ -190,7 +191,7 @@ class DarkRecipe(BaseRecipe):
         try:
                         
             for frame in obresult.frames:
-                hdulist = pyfits.open(frame.label, memmap=True, mode='readonly')
+                hdulist = fits.open(frame.label, memmap=True, mode='readonly')
                 exposure = hdulist[0].header['EXPTIME']
                 cdata.append(hdulist)
                 expdata.append(exposure)
@@ -202,7 +203,7 @@ class DarkRecipe(BaseRecipe):
             _logger.info('stacking %d images using median', len(cdata))
             
             data = median([d['primary'].data for d in cdata], dtype='float32')
-            hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
             
         finally:
             for hdulist in cdata:
@@ -211,7 +212,7 @@ class DarkRecipe(BaseRecipe):
         if reqs.master_bias is not None:
             # load bias
             
-            master_bias = pyfits.open(reqs.master_bias, mode='readonly')
+            master_bias = fits.open(reqs.master_bias, mode='readonly')
             _logger.info('subtracting bias %s', str(reqs.master_bias))
             # subtrac bias
             data[0] -= master_bias[0].data
@@ -242,15 +243,15 @@ class DarkRecipe(BaseRecipe):
         hdr.update('IMGTYP', 'DARK', 'Image type')
         hdr.update('NUMTYP', 'MASTER_DARK', 'Data product type')
         
-        exhdr = pyfits.Header()
+        exhdr = fits.Header()
         exhdr.update('extver', 1)
-        varhdu = pyfits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
-        exhdr = pyfits.Header()
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
+        exhdr = fits.Header()
         exhdr.update('extver', 2)
-        var2hdu = pyfits.ImageHDU(var2, name='VARIANCE', header=exhdr)
-        num = pyfits.ImageHDU(data[2], name='MAP')
+        var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
+        num = fits.ImageHDU(data[2], name='MAP')
 
-        hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
+        hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
 
         md = DataFrame(hdulist)
 
@@ -308,12 +309,12 @@ class IntensityFlatRecipe(BaseRecipe):
                 
         # Basic processing
         if reqs.master_bias:
-            mbias = pyfits.getdata(reqs.master_bias)
+            mbias = fits.getdata(reqs.master_bias)
             bias_corrector = BiasCorrector(mbias)
         else:
             bias_corrector = IdNode()
             
-        mdark = pyfits.getdata(reqs.master_dark.label)
+        mdark = fits.getdata(reqs.master_dark.label)
         dark_corrector = DarkCorrector(mdark)
         nl_corrector = NonLinearityCorrector(reqs.nonlinearity)
         
@@ -323,7 +324,7 @@ class IntensityFlatRecipe(BaseRecipe):
         _logger.info('basic frame reduction')
         for frame in obresult.frames:
 
-            with pyfits.open(frame.label, mode='update') as hdulist:
+            with fits.open(frame.label, mode='update') as hdulist:
                 hdulist = basicflow(hdulist)
 
         # combine LAMP-ON
@@ -354,7 +355,7 @@ class IntensityFlatRecipe(BaseRecipe):
         datafin /= meanval
         varfin /= (meanval * meanval)
 
-        hdu = pyfits.PrimaryHDU(datafin)
+        hdu = fits.PrimaryHDU(datafin)
 
         # update hdu header with
         # reduction keywords
@@ -367,10 +368,10 @@ class IntensityFlatRecipe(BaseRecipe):
         hdr.update('IMGTYP', 'FLAT', 'Image type')
         hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
         
-        varhdu = pyfits.ImageHDU(varfin, name='VARIANCE')
-        num = pyfits.ImageHDU(mapfin, name='MAP')
+        varhdu = fits.ImageHDU(varfin, name='VARIANCE')
+        num = fits.ImageHDU(mapfin, name='MAP')
 
-        hdulist = pyfits.HDUList([hdu, varhdu, num])
+        hdulist = fits.HDUList([hdu, varhdu, num])
 
         md = DataFrame(hdulist)
 
@@ -385,7 +386,7 @@ class IntensityFlatRecipe(BaseRecipe):
 
         try:
             for name in images:
-                hdulist = pyfits.open(name, memmap=True, mode='readonly')
+                hdulist = fits.open(name, memmap=True, mode='readonly')
                 cdata.append(hdulist)
 
             _logger.info('stacking %d images using median', len(cdata))

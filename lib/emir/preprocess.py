@@ -22,7 +22,7 @@
 from __future__ import print_function
 from __future__ import division
 
-import pyfits
+from astropy.io import fits
 
 from numina.array import ramp_array, fowler_array
 
@@ -78,13 +78,13 @@ def preprocess_fowler(hdulist):
         gain=gain, ron=ron, badpixels=None, dtype='float32',
         saturation=55000.0)
     hdulist[0].data = res
-    varhdu = pyfits.ImageHDU(var)
+    varhdu = fits.ImageHDU(var)
     varhdu.update_ext_name('VARIANCE')
     hdulist.append(varhdu)
-    nmap = pyfits.ImageHDU(npix)
+    nmap = fits.ImageHDU(npix)
     nmap.update_ext_name('MAP')
     hdulist.append(nmap)
-    nmask_hdu = pyfits.ImageHDU(mask)
+    nmask_hdu = fits.ImageHDU(mask)
     nmask_hdu.update_ext_name('MASK')
     hdulist.append(nmask_hdu)
     return hdulist
@@ -101,29 +101,29 @@ def preprocess_ramp(hdulist):
         saturation=55000.0)
     result, var, npix, mask = rslt
 
-    hdulist[0].data = res
-    varhdu = pyfits.ImageHDU(var)
+    hdulist[0].data = result
+    varhdu = fits.ImageHDU(var)
     varhdu.update_ext_name('VARIANCE')
     hdulist.append(varhdu)
 
-    nmap = pyfits.ImageHDU(npix)
+    nmap = fits.ImageHDU(npix)
     nmap.update_ext_name('MAP')
     hdulist.append(nmap)
-    nmask = pyfits.ImageHDU(mask)
+    nmask = fits.ImageHDU(mask)
     nmask.update_ext_name('MASK')
     hdulist.append(nmask)
     return hdulist
 
 def fits_wrapper(frame):
     if isinstance(frame, basestring):
-        return pyfits.open(frame)
-    elif isinstance(frame, pyfits.HDUList):
+        return fits.open(frame)
+    elif isinstance(frame, fits.HDUList):
         return frame
     else:
         raise TypeError
 
-def preprocess(input, output):
-    with fits_wrapper(input) as hdulist:
+def preprocess(input_, output):
+    with fits_wrapper(input_) as hdulist:
         header = hdulist[0].header
         if 'PREPROC' in header:
             # if the image is preprocessed, do nothing

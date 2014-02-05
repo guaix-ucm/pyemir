@@ -23,7 +23,7 @@ import os
 from tempfile import mkstemp
 import unittest
 
-import pyfits
+from astropy.io import fits
 import numpy as np
 
 from numina.core.oresult import ObservationResult, dataframe_from_list
@@ -41,11 +41,11 @@ class MMTestCase(unittest.TestCase):
         somefits = []
         nimg = 10
         for i in range(nimg):
-            hdu = pyfits.PrimaryHDU(data=np.zeros((10,10), dtype='int16'))
-            hdul = pyfits.HDUList([hdu])
+            hdu = fits.PrimaryHDU(data=np.zeros((10,10), dtype='int16'))
+            hdul = fits.HDUList([hdu])
             somefits.append(hdul)
 
-         #
+        #
         # Create the recipe_input
         obsres = ObservationResult()
         obsres.frames = [dataframe_from_list(val) for val in somefits]
@@ -65,23 +65,23 @@ class MMTestCase(unittest.TestCase):
         
         frame = result.biasframe.frame
 
-        self.assertIsInstance(frame, pyfits.HDUList)
+        self.assertIsInstance(frame, fits.HDUList)
 
         # Number of extensions
         self.assertEqual(len(frame), 3)
 
-        self.assertIsInstance(frame[0], pyfits.PrimaryHDU)
-        self.assertIsInstance(frame[1], pyfits.ImageHDU)
-        self.assertIsInstance(frame[2], pyfits.ImageHDU)
-   
-     def test3(self):
+        self.assertIsInstance(frame[0], fits.PrimaryHDU)
+        self.assertIsInstance(frame[1], fits.ImageHDU)
+        self.assertIsInstance(frame[2], fits.ImageHDU)
+
+    def test3(self):
 
         # Create some HDUList
         somefits = []
         nimg = 10
         for i in range(nimg):
-            hdu = pyfits.PrimaryHDU(data=np.zeros((10,10), dtype='int16'))
-            hdul = pyfits.HDUList([hdu])
+            hdu = fits.PrimaryHDU(data=np.zeros((10,10), dtype='int16'))
+            hdul = fits.HDUList([hdu])
             fd, filename = mkstemp()
             hdul.writeto(filename, clobber=True)
             somefits.append(filename)

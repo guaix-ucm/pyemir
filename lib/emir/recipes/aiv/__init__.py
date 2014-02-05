@@ -22,7 +22,7 @@
 import logging
 
 import numpy
-import pyfits
+from astropy.io import fits
 from scipy.stats import linregress
 import matplotlib.pyplot as plt
 
@@ -70,7 +70,7 @@ class DarkCurrentRecipe(BaseRecipe):
 
         if reqs.master_bias is not None:
             _logger.debug("master bias=%s",reqs.master_bias)
-            master_bias = pyfits.getdata(reqs.master_bias.filename)
+            master_bias = fits.getdata(reqs.master_bias.filename)
             master_bias_base = master_bias
         else:
             master_bias_base = 0
@@ -78,7 +78,7 @@ class DarkCurrentRecipe(BaseRecipe):
         values_t = []
         values_d = []
         for frame in obresult.frames:
-            with pyfits.open(frame.label) as hdulist:
+            with fits.open(frame.label) as hdulist:
                 # FIXME: single images must be corrected to have an uniform 
                 # exposure time
                 texp = hdulist[0].header['exposed']
@@ -90,7 +90,7 @@ class DarkCurrentRecipe(BaseRecipe):
 
         values_t = numpy.array(values_t)
         values_d = numpy.array(values_d)
-        slope, intercept, r_value, p_value, std_err = linregress(values_t, values_d)
+        slope, intercept, _r_value, _p_value, _std_err = linregress(values_t, values_d)
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_xlabel('Exposure time')
@@ -147,7 +147,7 @@ class SimpleBiasRecipe(BaseRecipeSingle):
             
             data = median([d['primary'].data for d in cdata], dtype='float32')
             template_head = cdata[0]['PRIMARY'].header
-            hdu = pyfits.PrimaryHDU(data[0], header=template_head)
+            hdu = fits.PrimaryHDU(data[0], header=template_head)
 
         finally:
             for hdulist in cdata:
@@ -163,12 +163,12 @@ class SimpleBiasRecipe(BaseRecipeSingle):
         hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
         hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
 
-        exhdr = pyfits.Header()
+        exhdr = fits.Header()
         exhdr.update('extver', 1)
-        varhdu = pyfits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
-        num = pyfits.ImageHDU(data[2], name='MAP')
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
+        num = fits.ImageHDU(data[2], name='MAP')
 
-        hdulist = pyfits.HDUList([hdu, varhdu, num])
+        hdulist = fits.HDUList([hdu, varhdu, num])
 
         _logger.info('simple bias reduction ended')
  

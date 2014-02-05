@@ -18,12 +18,14 @@
 # 
 
 '''Data products produced by the EMIR pipeline.'''
+import logging
+
+from astropy.io import fits
 
 from .simulator import EmirImageFactory
 
-# FrameDataProduct -> Raw: PRIMARY
-#       -> Result: PRIMARY, VARIANCE, MAP 
-
+_logger = logging.getLogger('emir.utils')
+ 
 _result_types = ['image', 'spectrum']
 _extensions = ['primary', 'variance', 'map', 'wcs']
 
@@ -34,7 +36,7 @@ def create_raw(data=None, headers=None, default_headers=None, imgtype='image'):
     
     hdefault = default_headers or EmirImageFactory.default
     
-    hdu = pyfits.PrimaryHDU(data, hdefault[imgtype]['primary'])
+    hdu = fits.PrimaryHDU(data, hdefault[imgtype]['primary'])
                 
     if headers is not None:
         _logger.info('Updating keywords in %s header', 'PRIMARY')      
@@ -42,7 +44,7 @@ def create_raw(data=None, headers=None, default_headers=None, imgtype='image'):
             _logger.debug('Updating keyword %s with value %s', 
                           key, headers[key])
             hdu.header.update(key, headers[key])
-    return pyfits.HDUList([hdu])
+    return fits.HDUList([hdu])
 
 
 def create_result(data=None, headers=None, 
@@ -58,7 +60,7 @@ def create_result(data=None, headers=None,
     
     for extname in ['variance', 'map']:
         edata = extensions[extname]
-        hdu = pyfits.ImageHDU(edata[0], hdefault[imgtype][extname], name=extname)
+        hdu = fits.ImageHDU(edata[0], hdefault[imgtype][extname], name=extname)
         hdulist.append(hdu)
     return hdulist
 
