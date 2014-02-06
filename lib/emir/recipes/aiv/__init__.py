@@ -30,7 +30,6 @@ from numina.core import RecipeError
 from numina.core import BaseRecipe, RecipeRequirements, DataFrame
 from numina.core import Requirement, Product, DataProductRequirement
 from numina.core import define_requirements, define_result
-from numina.core.recipes import BaseRecipeSingle
 from numina.core.requirements import ObservationResultRequirement
 #from numina.logger import log_to_history
 
@@ -112,7 +111,7 @@ class SimpleBiasRecipeResult(RecipeResult):
 
 @define_requirements(SimpleBiasRecipeRequirements)
 @define_result(SimpleBiasRecipeResult)
-class SimpleBiasRecipe(BaseRecipeSingle):
+class SimpleBiasRecipe(BaseRecipe):
     '''    
     Recipe to process data taken in SimpleBias image Mode.
 
