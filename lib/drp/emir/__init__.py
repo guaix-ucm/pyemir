@@ -22,3 +22,5 @@
 from numina.core import drp_load
 
 __numina_drp__ = drp_load('emir', 'drp.yaml')
+
+__numina_store__ = {'default': 'emir.store'}
