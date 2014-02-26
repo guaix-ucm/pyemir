@@ -43,6 +43,7 @@ from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import NonLinearityCalibration, MasterIntensityFlat
 from emir.dataproducts import WavelengthCalibration, MasterSpectralFlat
+from emir.dataproducts import ChannelLevelStatisticsType
 from emir.dataproducts import SlitTransmissionCalibration, ChannelLevelStatistics
 
 __all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
@@ -60,7 +61,7 @@ class BiasRecipeRequirements(RecipeRequirements):
 
 class BiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
-    stats = Product(ChannelLevelStatistics)
+    stats = Product(ChannelLevelStatisticsType)
 
 @define_requirements(BiasRecipeRequirements)
 @define_result(BiasRecipeResult)
@@ -115,17 +116,24 @@ class BiasRecipe(BaseRecipe):
                 hdulist.close()
 
         var2 = numpy.zeros_like(data[0])
-        cls = ChannelLevelStatistics(exposure=0.0)
-        for region in channels:
-                mean = numpy.mean(data[0][region])
-                med = numpy.median(data[0][region])
-                var = numpy.var(data[0][region])
-                stts = mean, med, var
-                cls.statistics.append([region, stts])
-                var2[region] = var
-
-        hdu = fits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
+        
+        def _s_to_f(myslice):
+            b = myslice.start
+            e = myslice.stop
+            return b+1, e
+        
+        # FIXME: This could be a recarray
+        statistics = numpy.empty((len(channels), 7))
+        for idx, region in enumerate(channels):
+            mean = numpy.mean(data[0][region])
+            med = numpy.median(data[0][region])
+            var = numpy.var(data[0][region])
+            regy, regx = region
+            stats = _s_to_f(regy) + _s_to_f(regx) + (mean, med, var)
+            statistics[idx, :] = stats 
+            var2[region] = var
     
+        cls = ChannelLevelStatistics(exposure=0.0, statistics=statistics)
         # update hdu header with
         # reduction keywords
         hdr = hdu.header
@@ -156,7 +164,7 @@ class DarkRecipeRequirements(BiasRecipeRequirements):
 
 class DarkRecipeResult(RecipeResult):
     darkframe = Product(MasterDark)
-    stats = Product(ChannelLevelStatistics)
+    stats = Product(ChannelLevelStatisticsType)
 
 @define_requirements(DarkRecipeRequirements)
 @define_result(DarkRecipeResult)
