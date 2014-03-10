@@ -190,16 +190,21 @@ class DarkRecipe(BaseRecipe):
         super(DarkRecipe, self).__init__(author=_s_author, version="0.1.0")
         
     # @log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         _logger.info('starting dark reduction')
 
+        
+        insconf = rinput.insconf.values
+        channels_name = insconf['detector']['channels']
+        channels = getattr(allchannels, channels_name)
+        
         cdata = []
         expdata = []
 
         try:
                         
-            for frame in obresult.frames:
-                hdulist = fits.open(frame.label, memmap=True, mode='readonly')
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open()
                 exposure = hdulist[0].header['EXPTIME']
                 cdata.append(hdulist)
                 expdata.append(exposure)
@@ -220,8 +225,8 @@ class DarkRecipe(BaseRecipe):
         if reqs.master_bias is not None:
             # load bias
             
-            master_bias = fits.open(reqs.master_bias, mode='readonly')
-            _logger.info('subtracting bias %s', str(reqs.master_bias))
+            master_bias = rinput.master_bias.open()
+            _logger.info('subtracting bias %r', reqs.master_bias)
             # subtrac bias
             data[0] -= master_bias[0].data
             
@@ -231,15 +236,17 @@ class DarkRecipe(BaseRecipe):
 
         var2 = numpy.zeros_like(data[0])
 
-        cls = ChannelLevelStatistics(exposure=exposure)
-        for region in self.instrument.detector['channels']:
+        statistics = numpy.empty((len(channels), 7))
+        for idx, region in enumerate(channels):
             mean = numpy.mean(data[0][region])
             med = numpy.median(data[0][region])
             var = numpy.var(data[0][region])
-            stts = mean, med, var
-            cls.statistics.append([region, stts])
+            regy, regx = region
+            stats = _s_to_f(regy) + _s_to_f(regx) + (mean, med, var)
+            statistics[idx, :] = stats 
             var2[region] = var
-
+    
+        cls = ChannelLevelStatistics(exposure=expdata[0], statistics=statistics)
         # update hdu header with
         # reduction keywords
         hdr = hdu.header
