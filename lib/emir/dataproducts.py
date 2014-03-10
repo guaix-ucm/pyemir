@@ -148,29 +148,13 @@ class SourcesCatalog(DataProduct):
 class LinesCatalog(DataProduct):
     pass
 
-def _s_to_f(myslice):
-    b = myslice.start
-    e = myslice.stop
-    return slice(b+1, e)
+class ChannelLevelStatisticsType(DataProduct):
+    ''' A list of exposure time, mean, std dev and median per channel'''
+    pass
 
 class ChannelLevelStatistics(DataProduct):
     ''' A list of exposure time, mean, std dev and median per channel'''
-    def __init__(self, exposure=None):
+    def __init__(self, exposure, statistics):
         self.exposure = exposure
-        self.statistics = []
-
-    def __getstate__(self):
-        fname = 'statistics.txt'
-        fs = '{1.start:5} {1.stop:5} {0.start:5} {0.stop:5} {2[0]} {2[1]} {2[2]}\n'
-        with open(fname, 'w') as fd:
-            fd.write('# Channel Level Statistics\n')
-            fd.write('# comment 2\n')
-            fd.write('# pixels start in 1\n')
-            fd.write('# pixels end in 2048\n')
-            fd.write('## exposure=%s\n' % self.exposure)
-            fd.write('# xbegin xend ybegin yend mean median var\n')
-            fd.write('#\n')
-            for (regy, regx), vals in self.statistics:
-                fd.write(fs.format(_s_to_f(regy), _s_to_f(regx), vals))
-        return dict(filename=fname)
+        self.statistics = statistics
 

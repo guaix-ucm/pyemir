@@ -17,10 +17,31 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''The EMIR Data Reduction Pipeline'''
+'''Data products produced by the EMIR pipeline.'''
 
-from numina.core import drp_load
+import numpy
 
-__numina_drp__ = drp_load('emir', 'drp.yaml')
+from numina.user.store import store
+    
+from .dataproducts import ChannelLevelStatistics
+    
+@store.register(ChannelLevelStatistics)
+def store_cl(obj, where):
+    fname = 'statistics.txt'
+    
+    header = '''Channel Level Statistics
+comment 2
+pixels start in 1 
+pixels end in 2048 
+exposure=%s
+xbegin xend ybegin yend mean median var
 
-__numina_store__ = {'default': 'emir.store'}
+'''
+    inter = header % obj.exposure
+    numpy.savetxt(fname, obj.statistics, header=inter)
+    obj.storage = {}
+    obj.storage['stored'] = True
+    obj.storage['where'] = fname
+    return obj
+
+
