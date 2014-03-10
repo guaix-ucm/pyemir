@@ -55,7 +55,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 class BiasRecipeRequirements(RecipeRequirements):
-    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask', optional=True)
     obresult = ObservationResultRequirement()
     insconf = InstrumentConfigurationRequirement()
 
