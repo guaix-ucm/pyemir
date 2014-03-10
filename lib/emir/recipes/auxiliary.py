@@ -161,6 +161,12 @@ class BiasRecipe(BaseRecipe):
             
 class DarkRecipeRequirements(BiasRecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask', optional=True)
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask', optional=True)
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
 
 class DarkRecipeResult(RecipeResult):
     darkframe = Product(MasterDark)
@@ -222,11 +228,11 @@ class DarkRecipe(BaseRecipe):
             for hdulist in cdata:
                 hdulist.close()
 
-        if reqs.master_bias is not None:
+        if rinput.master_bias is not None:
             # load bias
             
             master_bias = rinput.master_bias.open()
-            _logger.info('subtracting bias %r', reqs.master_bias)
+            _logger.info('subtracting bias %r', rinput.master_bias)
             # subtrac bias
             data[0] -= master_bias[0].data
             
@@ -236,6 +242,11 @@ class DarkRecipe(BaseRecipe):
 
         var2 = numpy.zeros_like(data[0])
 
+        def _s_to_f(myslice):
+            b = myslice.start
+            e = myslice.stop
+            return b+1, e
+        
         statistics = numpy.empty((len(channels), 7))
         for idx, region in enumerate(channels):
             mean = numpy.mean(data[0][region])
