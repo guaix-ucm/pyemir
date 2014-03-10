@@ -162,9 +162,6 @@ class BiasRecipe(BaseRecipe):
 class DarkRecipeRequirements(BiasRecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask', optional=True)
-    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask', optional=True)
-    obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
     obresult = ObservationResultRequirement()
     insconf = InstrumentConfigurationRequirement()
 
@@ -288,6 +285,10 @@ class DarkRecipe(BaseRecipe):
 
 
 class IntensityFlatRecipeRequirements(DarkRecipeRequirements):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask', optional=True)
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
     nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
 
@@ -329,59 +330,43 @@ class IntensityFlatRecipe(BaseRecipe):
                         version="0.1.0"
                 )
         
-    #@log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         _logger.info('starting flat reduction')
                 
         # Basic processing
-        if reqs.master_bias:
-            mbias = fits.getdata(reqs.master_bias)
-            bias_corrector = BiasCorrector(mbias)
+        if rinput.master_bias:
+            _logger.info('loading bias')
+            with rinput.master_bias.open() as hdul:
+                mbias = hdul[0].data
+                bias_corrector = BiasCorrector(mbiasdata)
         else:
             bias_corrector = IdNode()
             
-        mdark = fits.getdata(reqs.master_dark.label)
-        dark_corrector = DarkCorrector(mdark)
-        nl_corrector = NonLinearityCorrector(reqs.nonlinearity)
-        
+        with rinput.master_dark.open() as mdark_hdul:
+            _logger.info('loading dark')
+            mdark = mdark_hdul[0].data
+            dark_corrector = DarkCorrector(mdark)
+
+        nl_corrector = NonLinearityCorrector(rinput.nonlinearity)
         
         basicflow = SerialFlow([bias_corrector, dark_corrector, nl_corrector])
-        
-        _logger.info('basic frame reduction')
-        for frame in obresult.frames:
-
-            with fits.open(frame.label, mode='update') as hdulist:
+       
+        cdata = []
+        try:
+            _logger.info('basic frame reduction')
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open()
                 hdulist = basicflow(hdulist)
+                cdata.append(hdulist)
 
-        # combine LAMP-ON
-        _logger.info('gathering LAMPON frames')
-        lampon = [img.label for img in obresult.frames if img.itype == 'LAMPON']
-        if not lampon:
-            _logger.error('no LAMPON images in the ObservationResult')
-            raise RecipeError('no LAMPON images in the ObservationResult')
-        
-        dataon = self.stack_images(lampon)
-                
-        # combine LAMP-OFF
-        _logger.info('gathering LAMPOFF frames')
-        lampoff = [img.label for img in obresult.frames if img.itype == 'LAMPOFF']
-        if not lampoff:
-            _logger.error('no LAMPOFF images in the ObservationResult')
-            raise RecipeError('no LAMPOFF images in the ObservationResult')
-        
-        dataoff = self.stack_images(lampoff)
-        
-        # Subtract
-        datafin = dataon[0] - dataoff[0]
-        varfin = dataon[1] + dataoff[1]
-        mapfin = dataon[2] + dataoff[2]
-
-        meanval = datafin.mean()
-        
-        datafin /= meanval
-        varfin /= (meanval * meanval)
-
-        hdu = fits.PrimaryHDU(datafin)
+            _logger.info('stacking %d images using median', len(cdata))
+            
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
+            
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
 
         # update hdu header with
         # reduction keywords
@@ -390,7 +375,6 @@ class IntensityFlatRecipe(BaseRecipe):
         hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
         hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
         
-        #hdr.update('FILENAME', 'master_intensity_flat-%(block_id)d.fits' % self.environ)
         hdr.update('IMGTYP', 'FLAT', 'Image type')
         hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
         
@@ -404,25 +388,6 @@ class IntensityFlatRecipe(BaseRecipe):
         result = IntensityFlatRecipeResult(flatframe=md)
 
         return result
-        
-        
-    def stack_images(self, images):
-        
-        cdata = []
-
-        try:
-            for name in images:
-                hdulist = fits.open(name, memmap=True, mode='readonly')
-                cdata.append(hdulist)
-
-            _logger.info('stacking %d images using median', len(cdata))
-            
-            data = median([d['primary'].data for d in cdata], dtype='float32')
-            return data
-            
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
         
         
 class SpectralFlatRecipeRequirements(IntensityFlatRecipeRequirements):
@@ -465,7 +430,7 @@ class SpectralFlatRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult, reqs):
+    def run(self, obresult, rinput):
         return SpectralFlatRecipeResult(flatframe=MasterSpectralFlat(None))
 
 class SlitTransmissionRecipeRequirements(RecipeRequirements):
@@ -507,7 +472,7 @@ class SlitTransmissionRecipe(BaseRecipe):
         )
 
     @log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, obresult, rinput):
         return SlitTransmissionRecipeResult(slit=SlitTransmissionCalibration())
 
 class WavelengthCalibrationRecipeRequirements(RecipeRequirements):
@@ -551,7 +516,7 @@ class WavelengthCalibrationRecipe(BaseRecipe):
         )
 
     @log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, obresult, rinput):
         return WavelengthCalibrationRecipeResult(cal=WavelengthCalibration())
 
 
