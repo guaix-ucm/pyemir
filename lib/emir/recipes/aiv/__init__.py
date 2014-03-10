@@ -172,7 +172,7 @@ class SimpleBiasRecipe(BaseRecipeSingle):
 
         _logger.info('simple bias reduction ended')
  
-        # qa is QA.UNKNOWN
+        # qc is QC.UNKNOWN
         result = SimpleBiasRecipeResult(biasframe=DataFrame(hdulist))
         return result
 
