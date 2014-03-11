@@ -65,7 +65,23 @@ QUADRANTS = [(slice(1024, 2048), slice(0, 1024)),
              (slice(1024, 2048), slice(1024, 2048))
              ]
 
-FULL = CHANNELS_2
+
+# This is the current configuration of the detector
+def _ch1():
+    return ito.izip(ito.repeat(slice(0, 1024)), (slice(a*128, (a +1)*128) for a in range(8)))
+
+def _ch2():
+    return ito.izip(ito.repeat(slice(1024, 2048)), (slice(1024 + a*128, 1024 + (a +1)*128) for a in range(8)))
+
+def _ch3():
+    return ito.izip((slice(1024 + a*128, 1024 + (a +1)*128) for a in range(8)), ito.repeat(slice(0, 1024)))
+
+def _ch4():
+    return ito.izip((slice(a*128, (a +1)*128) for a in range(8)), ito.repeat(slice(1024, 2048)))
+
+RCHANNELS_1 = list(ito.chain(_ch1(), _ch2(), _ch3(), _ch4()))
+
+FULL = RCHANNELS_1
 
 # FIXME: this is a hack to convert channel name to a structure
 def convert_name_to_channels(conf):
