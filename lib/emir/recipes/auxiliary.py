@@ -33,7 +33,7 @@ from numina import __version__
 from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector
-from numina.flow.processing import DarkCorrector, NonLinearityCorrector
+from numina.flow.processing import DarkCorrector
 # from numina.flow.processing import BadPixelCorrector
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
@@ -41,7 +41,7 @@ from numina.core.requirements import InstrumentConfigurationRequirement
 import emir.instrument.channels as allchannels
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emir.dataproducts import NonLinearityCalibration, MasterIntensityFlat
+from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import WavelengthCalibration, MasterSpectralFlat
 from emir.dataproducts import ChannelLevelStatisticsType
 from emir.dataproducts import SlitTransmissionCalibration, ChannelLevelStatistics
@@ -289,7 +289,6 @@ class DarkRecipe(BaseRecipe):
 
 class IntensityFlatRecipeRequirements(DarkRecipeRequirements):
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
 
 class IntensityFlatRecipeResult(RecipeResult):
     flatframe = Product(MasterIntensityFlat)
@@ -358,9 +357,7 @@ class IntensityFlatRecipe(BaseRecipe):
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark, scale=dark_adu_s)
 
-        nl_corrector = NonLinearityCorrector(rinput.nonlinearity)
-        
-        basicflow = SerialFlow([bias_corrector, dark_corrector, nl_corrector])
+        basicflow = SerialFlow([bias_corrector, dark_corrector])
        
         cdata = []
         try:
@@ -445,7 +442,6 @@ class SlitTransmissionRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
 
 class SlitTransmissionRecipeResult(RecipeResult):
     slit = Product(SlitTransmissionCalibration)
@@ -487,7 +483,6 @@ class WavelengthCalibrationRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
     master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 'Master spectral flatfield')
         
