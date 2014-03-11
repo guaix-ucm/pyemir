@@ -39,9 +39,5 @@ xbegin xend ybegin yend mean median var
 '''
     inter = header % obj.exposure
     numpy.savetxt(fname, obj.statistics, header=inter)
-    obj.storage = {}
-    obj.storage['stored'] = True
-    obj.storage['where'] = fname
-    return obj
-
+    return fname
 
