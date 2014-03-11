@@ -35,7 +35,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 class MosaicRecipeRequirements(RecipeRequirements):
     # FIXME: this parameter is optional 
-    sources = Parameter(None, 'List of x, y coordinates to measure FWHM')
+    sources = Parameter([], 'List of x, y coordinates to measure FWHM')
 
 class MosaicRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)

@@ -75,11 +75,11 @@ class SkyImageSepTime_Requirement(Parameter):
         
 class Catalog_Requirement(Parameter):
     def __init__(self, optional=True):
-        super(Catalog_Requirement, self).__init__(None, 
+        super(Catalog_Requirement, self).__init__([], 
               'List of x, y coordinates to measure FWHM',
               optional=optional)
         
 class Offsets_Requirement(Parameter):
     def __init__(self, optional=True):
-        super(Offsets_Requirement, self).__init__(None, 'List of pairs of offsets',
+        super(Offsets_Requirement, self).__init__([], 'List of pairs of offsets',
                                                   optional=optional)

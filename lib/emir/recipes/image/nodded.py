@@ -46,7 +46,7 @@ class NBImageRecipeRequirements(RecipeRequirements):
     master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
     extinction = Parameter(0.0, 'Mean atmospheric extinction') 
-    sources = Parameter(None, 'List of x, y coordinates to measure FWHM', optional=True)
+    sources = Parameter([], 'List of x, y coordinates to measure FWHM', optional=True)
     offsets = Offsets_Requirement()
     sky_images = Parameter(5, 'Images used to estimate the background before and after current image')
     sky_images_sep_time = SkyImageSepTime_Requirement()

@@ -49,7 +49,7 @@ class MicroditheredImageRecipeRequirements(RecipeRequirements):
     master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
     extinction = Parameter(0.0, 'Mean atmospheric extinction') 
-    sources = Parameter(None, 
+    sources = Parameter([], 
               'List of x, y coordinates to measure FWHM',
               optional=True)
     offsets = Offsets_Requirement()
@@ -59,7 +59,7 @@ class MicroditheredImageRecipeRequirements(RecipeRequirements):
     check_photometry_levels = Parameter([0.5, 0.8], 'Levels to check the flux of the objects')
     check_photometry_actions = Parameter(['warn', 'warn', 'default'], 'Actions to take on images')
     subpixelization = Parameter(4, 'Number of subdivisions in each pixel side')
-    window = Parameter(None, 'Region of interesting data', optional=True)
+    window = Parameter([], 'Region of interesting data', optional=True)
 
 class MicroditheredImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)

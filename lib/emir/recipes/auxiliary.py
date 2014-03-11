@@ -161,9 +161,6 @@ class BiasRecipe(BaseRecipe):
             
 class DarkRecipeRequirements(BiasRecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
-    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask', optional=True)
-    obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
 
 class DarkRecipeResult(RecipeResult):
     darkframe = Product(MasterDark)
@@ -285,10 +282,6 @@ class DarkRecipe(BaseRecipe):
 
 
 class IntensityFlatRecipeRequirements(DarkRecipeRequirements):
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
-    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask', optional=True)
-    obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
     nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
 
@@ -378,10 +371,7 @@ class IntensityFlatRecipe(BaseRecipe):
         hdr.update('IMGTYP', 'FLAT', 'Image type')
         hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
         
-        varhdu = fits.ImageHDU(varfin, name='VARIANCE')
-        num = fits.ImageHDU(mapfin, name='MAP')
-
-        hdulist = fits.HDUList([hdu, varhdu, num])
+        hdulist = fits.HDUList([hdu])
 
         md = DataFrame(hdulist)
 

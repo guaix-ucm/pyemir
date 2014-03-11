@@ -60,7 +60,7 @@ class MasterDark(FrameDataProduct):
     '''
     pass
 
-class DarkCurrentValue(DataProduct):
+class DarkCurrentValue(FrameDataProduct):
     pass
 
 class MasterIntensityFlat(FrameDataProduct):
@@ -81,31 +81,33 @@ class TelescopeFocus(DataProduct):
 class DTUFocus(DataProduct):
     pass
 
-class DTU_XY_Calibration(DataProduct):
+class DTU_XY_Calibration(FrameDataProduct):
     pass
 
-class DTU_Z_Calibration(DataProduct):
+class DTU_Z_Calibration(FrameDataProduct):
     pass
 
-class DTUFlexureCalibration(DataProduct):
+class DTUFlexureCalibration(FrameDataProduct):
     pass
 
-class SlitTransmissionCalibration(DataProduct):
+# FIXME:
+class SlitTransmissionCalibration(FrameDataProduct):
     pass
 
-class WavelengthCalibration(DataProduct):
+# FIXME:
+class WavelengthCalibration(FrameDataProduct):
     pass
 
-class CSU2DetectorCalibration(DataProduct):
+class CSU2DetectorCalibration(FrameDataProduct):
     pass
 
-class PointingOriginCalibration(DataProduct):
+class PointingOriginCalibration(FrameDataProduct):
     pass
 
-class SpectroPhotometricCalibration(DataProduct):
+class SpectroPhotometricCalibration(FrameDataProduct):
     pass
 
-class PhotometricCalibration(DataProduct):
+class PhotometricCalibration(FrameDataProduct):
     pass
 
 class MasterGainMap(DataProduct):
@@ -131,10 +133,13 @@ class MasterRONMap(DataProduct):
 
     pass
 
+class NonLinearityPolynomial(list):
+    def __init__(self, *args, **kwds):
+        super(NonLinearityPolynomial, self).__init__(self, *args, **kwds)
+
 class NonLinearityCalibration(DataProduct):
-    def __init__(self, poly):
-        super(NonLinearityCalibration, self).__init__(default=poly)
-        self.poly = poly
+    def __init__(self, default=[1.0, 0.0]):
+        super(NonLinearityCalibration, self).__init__(ptype=NonLinearityPolynomial,                 default=default)
 
 class TelescopeOffset(DataProduct):
     pass
@@ -143,13 +148,11 @@ class MSMPositions(DataProduct):
     pass
 
 class SourcesCatalog(DataProduct):
-    pass
+    def __init__(self):
+        super(SourcesCatalog, self).__init__(ptype=list)
+
 
 class LinesCatalog(DataProduct):
-    pass
-
-class ChannelLevelStatisticsType(DataProduct):
-    ''' A list of exposure time, mean, std dev and median per channel'''
     pass
 
 class ChannelLevelStatistics(DataProduct):
@@ -157,4 +160,9 @@ class ChannelLevelStatistics(DataProduct):
     def __init__(self, exposure, statistics):
         self.exposure = exposure
         self.statistics = statistics
+
+class ChannelLevelStatisticsType(DataProduct):
+    ''' A list of exposure time, mean, std dev and median per channel'''
+    def __init__(self):
+        super(ChannelLevelStatisticsType, self).__init__(ptype=ChannelLevelStatistics)
 
