@@ -142,6 +142,15 @@ modes:
   status: DRAFT
   summary: Summary of Simple Bias
   url: http://somegtc_url.es/emir/obsmode4.html
+- date: 2014-03-11
+  description: Bias correct
+  key: test_bias_correct
+  name: Test Bias Correct
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 3847286a-e39e-419b-89bd-d53555a9043c
 pipelines:
   alt:
     recipes:
@@ -173,4 +182,5 @@ pipelines:
       STARE_IMAGE: emir.recipes.StareImageRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       simple_bias: emir.recipes.aiv.SimpleBiasRecipe
+      test_bias_correct: emir.recipes.aiv.TestBiasCorrectRecipe
     version: 1

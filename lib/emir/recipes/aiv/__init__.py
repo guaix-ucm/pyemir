@@ -31,6 +31,7 @@ from numina.core import BaseRecipe, RecipeRequirements, DataFrame
 from numina.core import Requirement, Product, DataProductRequirement
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
+from numina.core.types import ListOf
 #from numina.logger import log_to_history
 
 from numina.array.combine import median
@@ -39,7 +40,7 @@ from numina.flow.processing import BiasCorrector
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emir.dataproducts import NonLinearityCalibration, MasterIntensityFlat
+from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
 from emir.dataproducts import DarkCurrentValue
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -173,5 +174,56 @@ class SimpleBiasRecipe(BaseRecipe):
  
         # qc is QC.UNKNOWN
         result = SimpleBiasRecipeResult(biasframe=DataFrame(hdulist))
+        return result
+
+class TestBiasCorrectRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+
+class TestBiasCorrectRecipeResult(RecipeResult):
+    frames = Product(ListOf(FrameDataProduct))
+
+@define_requirements(TestBiasCorrectRecipeRequirements)
+@define_result(TestBiasCorrectRecipeResult)
+class TestBiasCorrectRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(TestBiasCorrectRecipe, self).__init__(author=_s_author, 
+            version="0.1.0")
+
+    def run(self, rinput):
+        _logger.info('starting simple bias reduction')
+
+        has_bias = False
+        bias_corrector = None
+        if rinput.master_bias:
+            _logger.info('loading bias')
+            has_bias = True
+            with rinput.master_bias.open() as hdul:
+                mbias = hdul[0].data
+                bias_corrector = BiasCorrector(mbias)
+
+        cdata = []
+        try:
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open() # Check if I can return the same HDUList
+                readmode = hdulist[0].header.get('READMODE')
+                if readmode:
+                    if readmode.lower() == 'simple':
+                        if has_bias:
+                            hdulist = bias_corrector(hdulist)
+                        else:
+                            _logger.warning("Bias required but not available")
+                    else:
+                        pass # do nothing
+                else:
+                    _logger.warning("Image hasn't keyword 'READMODE'")
+                cdata.append(hdulist)
+
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
+            
+        result = TestBiasCorrectRecipeResult(frames=cdata)
         return result
 
