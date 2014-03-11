@@ -194,6 +194,7 @@ class DarkRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting dark reduction')
 
+        output_in_adu_s = True
         
         insconf = rinput.insconf.values
         channels_name = insconf['detector']['channels']
@@ -234,6 +235,9 @@ class DarkRecipe(BaseRecipe):
             #idx = master_bias.index_of(('variance', 1))
             #data[1] += master_bias[idx].data
             
+        if output_in_adu_s:
+            data[0] /= expdata[0]
+            data[1] /= (expdata[0])**2
 
         var2 = numpy.zeros_like(data[0])
 
@@ -256,13 +260,13 @@ class DarkRecipe(BaseRecipe):
         # update hdu header with
         # reduction keywords
         hdr = hdu.header
-        hdr.update('NUMXVER', __version__, 'Numina package version')
-        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
-        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        hdr['NUMXVER'] = ( __version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['BUNIT'] = 'ADU/s'
         
-        #hdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
-        hdr.update('IMGTYP', 'DARK', 'Image type')
-        hdr.update('NUMTYP', 'MASTER_DARK', 'Data product type')
+        hdr['IMGTYP'] = ('DARK', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_DARK', 'Data product type')
         
         exhdr = fits.Header()
         exhdr.update('extver', 1)
