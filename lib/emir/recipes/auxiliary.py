@@ -151,7 +151,8 @@ class BiasRecipe(BaseRecipe):
         var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
         num = fits.ImageHDU(data[2], name='MAP')
 
-        hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
+        #hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
+        hdulist = fits.HDUList([hdu])
 
         _logger.info('bias reduction ended')
             
@@ -230,8 +231,8 @@ class DarkRecipe(BaseRecipe):
             # subtrac bias
             data[0] -= master_bias[0].data
             
-            idx = master_bias.index_of(('variance', 1))
-            data[1] += master_bias[idx].data
+            #idx = master_bias.index_of(('variance', 1))
+            #data[1] += master_bias[idx].data
             
 
         var2 = numpy.zeros_like(data[0])
@@ -271,7 +272,8 @@ class DarkRecipe(BaseRecipe):
         var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
         num = fits.ImageHDU(data[2], name='MAP')
 
-        hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
+        #hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
+        hdulist = fits.HDUList([hdu])
 
         md = DataFrame(hdulist)
 
