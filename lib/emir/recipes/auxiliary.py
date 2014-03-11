@@ -343,8 +343,20 @@ class IntensityFlatRecipe(BaseRecipe):
             
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
+            dark_bunit = mdark_hdul[0].header.get('BUNIT')
+            dark_adu_s = False
+            if dark_bunit:
+                if dark_bunit.lower() == 'adu':
+                    dark_adu_s = False
+                elif dark_bunit.lower() == 'adu/s':
+                    dark_adu_s = True
+                else:
+                    _logger.warning('Unrecognized value for BUNIT %s', dark_bunit)
+            else:
+                _logger.warning('BUNIT is not defined in master_dark')
+
             mdark = mdark_hdul[0].data
-            dark_corrector = DarkCorrector(mdark)
+            dark_corrector = DarkCorrector(mdark, scale=dark_adu_s)
 
         nl_corrector = NonLinearityCorrector(rinput.nonlinearity)
         
