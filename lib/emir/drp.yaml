@@ -169,6 +169,24 @@ modes:
   summary: Summary
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: bd30730a-29ca-4b3c-a494-f95b4ce668b6
+- date: 2014-03-12
+  description: Sky subtracction
+  key: TEST5
+  name: Test sky subtraction
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: ac94be00-92ed-43d1-94f8-0bd8a6b3deef
+- date: 2014-03-12
+  description: Flat correct
+  key: TEST6
+  name: Test pinhole extraction
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 8dfef954-d3f8-4f7f-9a5a-87609ddbfb41
 pipelines:
   alt:
     recipes:
@@ -203,4 +221,7 @@ pipelines:
       TEST1: emir.recipes.aiv.TestBiasCorrectRecipe
       TEST2: emir.recipes.aiv.TestDarkCorrectRecipe
       TEST3: emir.recipes.aiv.TestFlatCorrectRecipe
+      TEST4: emir.recipes.aiv.TestFlatCorrectRecipe
+      TEST5: emir.recipes.aiv.TestSkyCorrectRecipe
+      TEST6: emir.recipes.aiv.TestPinholeRecipe
     version: 1
