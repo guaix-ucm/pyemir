@@ -137,17 +137,17 @@ class BiasRecipe(BaseRecipe):
         # update hdu header with
         # reduction keywords
         hdr = hdu.header
-        hdr.update('IMGTYP', 'BIAS', 'Image type')
-        hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
-        hdr.update('NUMXVER', __version__, 'Numina package version')
-        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
-        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        hdr['IMGTYP'] = ('BIAS', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
 
         exhdr = fits.Header()
-        exhdr.update('extver', 1)
+        exhdr['extver'] = 1
         varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
         exhdr = fits.Header()
-        exhdr.update('extver', 2)
+        exhdr['extver'] = 2
         var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
         num = fits.ImageHDU(data[2], name='MAP')
 
@@ -267,22 +267,22 @@ class DarkRecipe(BaseRecipe):
         
         hdr['IMGTYP'] = ('DARK', 'Image type')
         hdr['NUMTYP'] = ('MASTER_DARK', 'Data product type')
+        if output_in_adu_s:
+            hdr['BUNIT'] = 'ADU/s'
         
         exhdr = fits.Header()
-        exhdr.update('extver', 1)
+        exhdr['extver'] = 1
         varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
         exhdr = fits.Header()
-        exhdr.update('extver', 2)
+        exhdr['extver'] = 2
         var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
         num = fits.ImageHDU(data[2], name='MAP')
 
         #hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
         hdulist = fits.HDUList([hdu])
 
-        md = DataFrame(hdulist)
-
         _logger.info('dark reduction ended')
-        result = DarkRecipeResult(darkframe=md,
+        result = DarkRecipeResult(darkframe=hdulist,
                                       stats=cls)
         return result
 
@@ -379,12 +379,12 @@ class IntensityFlatRecipe(BaseRecipe):
         # update hdu header with
         # reduction keywords
         hdr = hdu.header
-        hdr.update('NUMXVER', __version__, 'Numina package version')
-        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
-        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         
-        hdr.update('IMGTYP', 'FLAT', 'Image type')
-        hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
+        hdr['IMGTYP'] = ('FLAT', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_FLAT', 'Data product type')
         
         #varhdu = fits.ImageHDU(varfin, name='VARIANCE')
         #num = fits.ImageHDU(mapfin, name='MAP')
@@ -392,9 +392,7 @@ class IntensityFlatRecipe(BaseRecipe):
         #hdulist = fits.HDUList([hdu, varhdu, num])
         hdulist = fits.HDUList([hdu])
 
-        md = DataFrame(hdulist)
-
-        result = IntensityFlatRecipeResult(flatframe=md)
+        result = IntensityFlatRecipeResult(flatframe=hdulist)
 
         return result
         
