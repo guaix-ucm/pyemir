@@ -178,7 +178,10 @@ class SimpleBiasRecipe(BaseRecipe):
 
 def gather_info(hdulist):
     n_ext = len(hdulist)
-    readmode = hdulist[0].header.get('READMODE', 'undefined')
+
+    # READMODE is NUMERIC
+    readmode = hdulist[0].header.get('READMODE', -1)
+    readmods = hdulist[0].header.get('READMODS', 'undefined')
     bunit = hdulist[0].header.get('BUNIT', 'undefined')
     texp = hdulist[0].header.get('EXPTIME')
     adu_s = True
@@ -190,7 +193,10 @@ def gather_info(hdulist):
         else:
             _logger.warning('Unrecognized value for BUNIT %s', bunit)
 
-    return {'n_ext': n_ext, 'readmode': readmode, 'adu_s': adu_s}
+    return {'n_ext': n_ext, 
+            'readmode': readmode, 
+            'readmods': readmods, 
+            'adu_s': adu_s}
 
 
 class TestBiasCorrectRecipeRequirements(RecipeRequirements):
@@ -225,8 +231,15 @@ class TestBiasCorrectRecipe(BaseRecipe):
         print(iinfo)
         print(bias_info)
 
+        # SINGLE 0
+        # CDS 1
+        # FOWLER 2
+        # RAMP 3
+        # HDR_noseque $
+        # BIAS 5
+
         for idx, ii in enumerate(iinfo):
-            if not ii['readmode'] in [0, 5]:
+            if not ii['readmode'].lower() in [0, 5]:
                 # We have images in mode other than simple or bias BAD
                 raise RecipeError('Image %d in inputs has READMODE %s' % (idx, ii['readmode']))
             #if not ii['readmode'].lower() in ['single', 'simple', 'bias']:
@@ -349,7 +362,7 @@ class TestFlatCorrectRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
-    master_intensity_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
 
 class TestFlatCorrectRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
@@ -379,7 +392,73 @@ class TestFlatCorrectRecipe(BaseRecipe):
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
-        with rinput.master_intensity_flat.open() as mflat_hdul:
+        with rinput.master_flat.open() as mflat_hdul:
+            _logger.info('loading intensity flat')
+            mflat = mflat_hdul[0].data
+            flat_corrector = FlatFieldCorrector(mflat)
+
+        flow = SerialFlow([bias_corrector, dark_corrector, flat_corrector])
+
+        cdata = []
+        try:
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open()
+                final = flow(hdulist)
+                cdata.append(final)
+
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
+
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
+            
+        hdr = hdu.header
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdulist = fits.HDUList([hdu])
+        result = TestFlatCorrectRecipeResult(frame=hdulist)
+
+        return result
+
+
+class TestSkyCorrectRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+    master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
+    master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
+
+class TestSkyCorrectRecipeResult(RecipeResult):
+    frame = Product(FrameDataProduct)
+
+@define_requirements(TestSkyCorrectRecipeRequirements)
+@define_result(TestSkyCorrectRecipeResult)
+class TestSkyCorrectRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(TestSkyCorrectRecipe, self).__init__(author=_s_author, 
+            version="0.1.0")
+
+    def run(self, rinput):
+        _logger.info('starting simple sky reduction')
+
+        # Loading calibrations
+        if rinput.master_bias:
+            _logger.info('loading bias')
+            with rinput.master_bias.open() as hdul:
+                mbias = hdul[0].data
+                bias_corrector = BiasCorrector(mbias)
+        else:
+            bias_corrector = IdNode()
+            
+        with rinput.master_dark.open() as mdark_hdul:
+            _logger.info('loading dark')
+            mdark = mdark_hdul[0].data
+            dark_corrector = DarkCorrector(mdark)
+
+        with rinput.master_flat.open() as mflat_hdul:
             _logger.info('loading intensity flat')
             mflat = mflat_hdul[0].data
             flat_corrector = FlatFieldCorrector(mflat)
