@@ -144,7 +144,7 @@ modes:
   url: http://somegtc_url.es/emir/obsmode4.html
 - date: 2014-03-11
   description: Bias correct
-  key: test_bias_correct
+  key: TEST1
   name: Test Bias Correct
   reference: test
   status: DRAFT
@@ -153,7 +153,7 @@ modes:
   uuid: 3847286a-e39e-419b-89bd-d53555a9043c
 - date: 2014-03-11
   description: Dark correct
-  key: test_dark_correct
+  key: TEST2
   name: Test Dark Correct
   reference: test
   status: DRAFT
@@ -162,7 +162,7 @@ modes:
   uuid: 4d92f7cd-3127-4fb4-a40c-758d565d9ca9 
 - date: 2014-03-12
   description: Flat correct
-  key: test_flat_correct
+  key: TEST3
   name: Test Flat Correct
   reference: test
   status: DRAFT
@@ -200,7 +200,7 @@ pipelines:
       cosmetics: emir.recipes.CosmeticsRecipe
       dark_current: emir.recipes.aiv.DarkCurrentRecipe
       simple_bias: emir.recipes.aiv.SimpleBiasRecipe
-      test_bias_correct: emir.recipes.aiv.TestBiasCorrectRecipe
-      test_dark_correct: emir.recipes.aiv.TestDarkCorrectRecipe
-      test_flat_correct: emir.recipes.aiv.TestFlatCorrectRecipe
+      TEST1: emir.recipes.aiv.TestBiasCorrectRecipe
+      TEST2: emir.recipes.aiv.TestDarkCorrectRecipe
+      TEST3: emir.recipes.aiv.TestFlatCorrectRecipe
     version: 1
