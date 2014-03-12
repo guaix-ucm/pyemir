@@ -151,6 +151,24 @@ modes:
   summary: Summary
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: 3847286a-e39e-419b-89bd-d53555a9043c
+- date: 2014-03-11
+  description: Dark correct
+  key: test_dark_correct
+  name: Test Dark Correct
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 4d92f7cd-3127-4fb4-a40c-758d565d9ca9 
+- date: 2014-03-12
+  description: Flat correct
+  key: test_flat_correct
+  name: Test Flat Correct
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: bd30730a-29ca-4b3c-a494-f95b4ce668b6
 pipelines:
   alt:
     recipes:
@@ -170,17 +188,19 @@ pipelines:
   default:
     recipes:
       BIAS_IMAGE: emir.recipes.BiasRecipe
-      cosmetics: emir.recipes.CosmeticsRecipe
-      dark_current: emir.recipes.aiv.DarkCurrentRecipe
       DARK_CURRENT_IMAGE: emir.recipes.DarkRecipe
       DITHERED_IMAGE: emir.recipes.DitheredImageRecipe
-      gain_mode1: emir.recipes.GainRecipe1
       INTENSITY_FLAT_FIELD: emir.recipes.IntensityFlatRecipe
       MICRODITHERED_IMAGE: emir.recipes.MicroditheredImageRecipe
       MOSAICED_IMAGE: emir.recipes.MosaicRecipe
       NODDED_BEAM_SWITCHED_IMAGE: emir.recipes.NBImageRecipe
       STARE_IMAGE: emir.recipes.StareImageRecipe
       fail: numina.core.utils.AlwaysFailRecipe
+      gain_mode1: emir.recipes.GainRecipe1
+      cosmetics: emir.recipes.CosmeticsRecipe
+      dark_current: emir.recipes.aiv.DarkCurrentRecipe
       simple_bias: emir.recipes.aiv.SimpleBiasRecipe
       test_bias_correct: emir.recipes.aiv.TestBiasCorrectRecipe
+      test_dark_correct: emir.recipes.aiv.TestDarkCorrectRecipe
+      test_flat_correct: emir.recipes.aiv.TestFlatCorrectRecipe
     version: 1

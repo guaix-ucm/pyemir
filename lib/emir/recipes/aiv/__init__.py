@@ -31,12 +31,12 @@ from numina.core import BaseRecipe, RecipeRequirements, DataFrame
 from numina.core import Requirement, Product, DataProductRequirement
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.types import ListOf
-#from numina.logger import log_to_history
 
 from numina.array.combine import median
 from numina import __version__
-from numina.flow.processing import BiasCorrector
+from numina.flow.processing import BiasCorrector, DarkCorrector
+from numina.flow.processing import FlatFieldCorrector
+from numina.flow import SerialFlow
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -181,7 +181,7 @@ class TestBiasCorrectRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
 
 class TestBiasCorrectRecipeResult(RecipeResult):
-    frames = Product(ListOf(FrameDataProduct))
+    frame = Product(FrameDataProduct)
 
 @define_requirements(TestBiasCorrectRecipeRequirements)
 @define_result(TestBiasCorrectRecipeResult)
@@ -219,11 +219,176 @@ class TestBiasCorrectRecipe(BaseRecipe):
                 else:
                     _logger.warning("Image hasn't keyword 'READMODE'")
                 cdata.append(hdulist)
+            _logger.info('stacking %d images using median', len(cdata))
+            
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
 
         finally:
             for hdulist in cdata:
                 hdulist.close()
             
-        result = TestBiasCorrectRecipeResult(frames=cdata)
+        # Setup final header
+        hdr = hdu.header
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdulist = fits.HDUList([hdu])
+
+        result = TestBiasCorrectRecipeResult(frame=hdulist)
         return result
+
+class TestDarkCorrectRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+    master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
+
+class TestDarkCorrectRecipeResult(RecipeResult):
+    frame = Product(FrameDataProduct)
+
+@define_requirements(TestDarkCorrectRecipeRequirements)
+@define_result(TestDarkCorrectRecipeResult)
+class TestDarkCorrectRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(TestDarkCorrectRecipe, self).__init__(author=_s_author, 
+            version="0.1.0")
+
+    def gather_info(self, hdulist):
+        n_ext = len(hdulist)
+        readmode = hdulist[0].header.get('READMODE')
+        bunit = hdulist[0].header.get('BUNIT')
+        texp = hdulist[0].header.get('EXPTIME')
+        adu_s = True
+        if bunit:
+            if bunit.lower() == 'adu':
+                adu_s = False
+            elif bunit.lower() == 'adu/s':
+                adu_s = True
+            else:
+                _logger.warning('Unrecognized value for BUNIT %s', bunit)
+
+        return {'n_ext': n_ext, 'readmode': readmode, 'adu_s': adu_s}
+
+    def run(self, rinput):
+        _logger.info('starting simple dark reduction')
+
+        iinfo = []
+        for frame in rinput.obresult.frames:
+            with frame.open() as hdulist:
+                iinfo.append(self.gather_info(hdulist))
+
+        bias_info = {}
+        dark_info = {}
+
+        if rinput.master_bias:
+            with rinput.master_bias.open() as hdul:
+                bias_info = self.gather_info(hdul)
+
+        with rinput.master_dark.open() as hdul:
+            dark_info = self.gather_info(hdul)
+
+        print(iinfo)
+        print(bias_info)
+        print(dark_info)
+
+        # Loading calibrations
+        if rinput.master_bias:
+            _logger.info('loading bias')
+            with rinput.master_bias.open() as hdul:
+                mbias = hdul[0].data
+                bias_corrector = BiasCorrector(mbias)
+        else:
+            bias_corrector = IdNode()
+            
+        with rinput.master_dark.open() as mdark_hdul:
+            _logger.info('loading dark')
+            mdark = mdark_hdul[0].data
+            dark_corrector = DarkCorrector(mdark)
+
+        flow = SerialFlow([bias_corrector, dark_corrector])
+
+        cdata = []
+        try:
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open() # Check if I can return the same HDUList
+                hdulist = flow(hdulist)
+                cdata.append(hdulist)
+
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
+
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
+            
+        hdr = hdu.header
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdulist = fits.HDUList([hdu])
+        result = TestDarkCorrectRecipeResult(frame=hdulist)
+        return result
+
+class TestFlatCorrectRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+    master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
+    master_intensity_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
+
+class TestFlatCorrectRecipeResult(RecipeResult):
+    frame = Product(FrameDataProduct)
+
+@define_requirements(TestFlatCorrectRecipeRequirements)
+@define_result(TestFlatCorrectRecipeResult)
+class TestFlatCorrectRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(TestFlatCorrectRecipe, self).__init__(author=_s_author, 
+            version="0.1.0")
+
+    def run(self, rinput):
+        _logger.info('starting simple flat reduction')
+
+        # Loading calibrations
+        if rinput.master_bias:
+            _logger.info('loading bias')
+            with rinput.master_bias.open() as hdul:
+                mbias = hdul[0].data
+                bias_corrector = BiasCorrector(mbias)
+        else:
+            bias_corrector = IdNode()
+            
+        with rinput.master_dark.open() as mdark_hdul:
+            _logger.info('loading dark')
+            mdark = mdark_hdul[0].data
+            dark_corrector = DarkCorrector(mdark)
+
+        with rinput.master_intensity_flat.open() as mflat_hdul:
+            _logger.info('loading intensity flat')
+            mflat = mflat_hdul[0].data
+            flat_corrector = FlatFieldCorrector(mflat)
+
+        flow = SerialFlow([bias_corrector, dark_corrector, flat_corrector])
+
+        cdata = []
+        try:
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open()
+                final = flow(hdulist)
+                cdata.append(final)
+
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
+
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
+            
+        hdr = hdu.header
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdulist = fits.HDUList([hdu])
+        result = TestFlatCorrectRecipeResult(frame=hdulist)
+
+        return result
+
 
