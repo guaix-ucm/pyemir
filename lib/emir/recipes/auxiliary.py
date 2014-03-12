@@ -386,6 +386,10 @@ class IntensityFlatRecipe(BaseRecipe):
         hdr.update('IMGTYP', 'FLAT', 'Image type')
         hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
         
+        #varhdu = fits.ImageHDU(varfin, name='VARIANCE')
+        #num = fits.ImageHDU(mapfin, name='MAP')
+
+        #hdulist = fits.HDUList([hdu, varhdu, num])
         hdulist = fits.HDUList([hdu])
 
         md = DataFrame(hdulist)
