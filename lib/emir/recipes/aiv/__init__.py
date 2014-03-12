@@ -178,7 +178,10 @@ class SimpleBiasRecipe(BaseRecipe):
 
 def gather_info(hdulist):
     n_ext = len(hdulist)
-    readmode = hdulist[0].header.get('READMODE', 'undefined')
+
+    # READMODE is NUMERIC
+    readmode = hdulist[0].header.get('READMODE', -1)
+    readmods = hdulist[0].header.get('READMODS', 'undefined')
     bunit = hdulist[0].header.get('BUNIT', 'undefined')
     texp = hdulist[0].header.get('EXPTIME')
     adu_s = True
@@ -190,7 +193,10 @@ def gather_info(hdulist):
         else:
             _logger.warning('Unrecognized value for BUNIT %s', bunit)
 
-    return {'n_ext': n_ext, 'readmode': readmode, 'adu_s': adu_s}
+    return {'n_ext': n_ext, 
+            'readmode': readmode, 
+            'readmods': readmods, 
+            'adu_s': adu_s}
 
 
 class TestBiasCorrectRecipeRequirements(RecipeRequirements):
@@ -225,8 +231,15 @@ class TestBiasCorrectRecipe(BaseRecipe):
         print(iinfo)
         print(bias_info)
 
+        # SINGLE 0
+        # CDS 1
+        # FOWLER 2
+        # RAMP 3
+        # HDR_noseque $
+        # BIAS 5
+
         for idx, ii in enumerate(iinfo):
-            if not ii['readmode'].lower() in ['simple', 'bias']:
+            if not ii['readmode'].lower() in [0, 5]:
                 # We have images in mode other than simple or bias BAD
                 raise RecipeError('Image %d in inputs has READMODE %s', ii.readmode)
 
