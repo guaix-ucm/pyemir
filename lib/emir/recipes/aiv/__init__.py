@@ -228,7 +228,7 @@ class TestBiasCorrectRecipe(BaseRecipe):
         for idx, ii in enumerate(iinfo):
             if not ii['readmode'].lower() in ['simple', 'bias']:
                 # We have images in mode other than simple or bias BAD
-                raise RecipeError('Image %d in inputs has READMODE %s', ii.readmode)
+                raise RecipeError('Image %d in inputs has READMODE %s', idx, ii.readmode)
 
         # Loading calibrations
         has_bias = False
