@@ -336,7 +336,7 @@ class IntensityFlatRecipe(BaseRecipe):
             _logger.info('loading bias')
             with rinput.master_bias.open() as hdul:
                 mbias = hdul[0].data
-                bias_corrector = BiasCorrector(mbiasdata)
+                bias_corrector = BiasCorrector(mbias)
         else:
             bias_corrector = IdNode()
             
