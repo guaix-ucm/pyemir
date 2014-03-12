@@ -228,7 +228,7 @@ class TestBiasCorrectRecipe(BaseRecipe):
         for idx, ii in enumerate(iinfo):
             if not ii['readmode'] in [0, 5]:
                 # We have images in mode other than simple or bias BAD
-                raise RecipeError('Image %d in inputs has READMODE %s', idx, ii.readmode)
+                raise RecipeError('Image %d in inputs has READMODE %s' % (idx, ii['readmode']))
             #if not ii['readmode'].lower() in ['single', 'simple', 'bias']:
             #    # We have images in mode other than simple or bias BAD
             #    raise RecipeError('Image %d in inputs has READMODE %s', idx, ii.readmode)
@@ -245,22 +245,21 @@ class TestBiasCorrectRecipe(BaseRecipe):
         else:
             raise RecipeError("Bias required but not available")
 
-        cdata = []
-
-        with rinput.obresult.frames[0].open() as hdulist:
-            header = hdulist[0].header.copy()
-
-        for frame in rinput.obresult.frames:
-            with frame.open() as hdulist:
-                #hdulist = bias_corrector(hdulist)
-                result = hdulist[0].data - mbias
-                cdata.append(result)
-
         _logger.info('stacking %d images using median', len(cdata))
        
-        data = mean(cdata, dtype='float32')
-        hdu = fits.PrimaryHDU(data[0], header=header)
+        cdata = []
+        try:
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open() # Check if I can return the same HDUList
+                hdulist = bias_corrector(hdulist)
+                cdata.append(hdulist)
 
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
+
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
             
         # Setup final header
         hdr = hdu.header
@@ -305,9 +304,9 @@ class TestDarkCorrectRecipe(BaseRecipe):
         with rinput.master_dark.open() as hdul:
             dark_info = gather_info(hdul)
 
-        print(iinfo)
-        print(bias_info)
-        print(dark_info)
+        print('images:', iinfo)
+        print('bias:', bias_info)
+        print('dark:', dark_info)
 
         # Loading calibrations
         if rinput.master_bias:
@@ -404,6 +403,7 @@ class TestFlatCorrectRecipe(BaseRecipe):
         hdr = hdu.header
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
         result = TestFlatCorrectRecipeResult(frame=hdulist)
 
