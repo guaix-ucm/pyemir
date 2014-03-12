@@ -32,7 +32,7 @@ from numina.core import Requirement, Product, DataProductRequirement
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 
-from numina.array.combine import median
+from numina.array.combine import median, mean
 from numina import __version__
 from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.processing import FlatFieldCorrector
@@ -226,9 +226,12 @@ class TestBiasCorrectRecipe(BaseRecipe):
         print(bias_info)
 
         for idx, ii in enumerate(iinfo):
-            if not ii['readmode'].lower() in ['simple', 'bias']:
+            if not ii['readmode'] in [0, 5]:
                 # We have images in mode other than simple or bias BAD
                 raise RecipeError('Image %d in inputs has READMODE %s', idx, ii.readmode)
+            #if not ii['readmode'].lower() in ['single', 'simple', 'bias']:
+            #    # We have images in mode other than simple or bias BAD
+            #    raise RecipeError('Image %d in inputs has READMODE %s', idx, ii.readmode)
 
         # Loading calibrations
         has_bias = False
@@ -237,35 +240,27 @@ class TestBiasCorrectRecipe(BaseRecipe):
             _logger.info('loading bias')
             has_bias = True
             with rinput.master_bias.open() as hdul:
-                mbias = hdul[0].data
+                mbias = hdul[0].data.copy()
                 bias_corrector = BiasCorrector(mbias)
         else:
             raise RecipeError("Bias required but not available")
 
         cdata = []
-        try:
-            for frame in rinput.obresult.frames:
-                hdulist = frame.open() # Check if I can return the same HDUList
-                readmode = hdulist[0].header.get('READMODE')
-                if readmode:
-                    if readmode.lower() == 'simple':
-                        if has_bias:
-                            hdulist = bias_corrector(hdulist)
-                        else:
-                            _logger.warning("Bias required but not available")
-                    else:
-                        pass # do nothing
-                else:
-                    _logger.warning("Image hasn't keyword 'READMODE'")
-                cdata.append(hdulist)
-            _logger.info('stacking %d images using median', len(cdata))
-            
-            data = median([d['primary'].data for d in cdata], dtype='float32')
-            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
 
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
+        with rinput.obresult.frames[0].open() as hdulist:
+            header = hdulist[0].header.copy()
+
+        for frame in rinput.obresult.frames:
+            with frame.open() as hdulist:
+                #hdulist = bias_corrector(hdulist)
+                result = hdulist[0].data - mbias
+                cdata.append(result)
+
+        _logger.info('stacking %d images using median', len(cdata))
+       
+        data = mean(cdata, dtype='float32')
+        hdu = fits.PrimaryHDU(data[0], header=header)
+
             
         # Setup final header
         hdr = hdu.header
