@@ -41,7 +41,7 @@ from numina.flow import SerialFlow
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
-from emir.dataproducts import DarkCurrentValue
+from emir.dataproducts import DarkCurrentValue, CoordinateListType
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -484,10 +484,9 @@ class TestSkyCorrectRecipe(BaseRecipe):
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
-        result = TestFlatCorrectRecipeResult(frame=hdulist)
+        result = TestSkyCorrectRecipeResult(frame=hdulist)
 
         return result
-
 
 class TestPinholeRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
@@ -495,9 +494,9 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
     master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
     master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
     master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
-    pinhole_nominal_positions = None
+    pinhole_nominal_positions = Requirement(CoordinateListType, 'Nominal positions of the pinholes')
 
-class TestPinholetRecipeResult(RecipeResult):
+class TestPinholeRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
 
 @define_requirements(TestPinholeRecipeRequirements)
@@ -510,6 +509,9 @@ class TestPinholeRecipe(BaseRecipe):
 
     def run(self, rinput):
         _logger.info('starting simple sky reduction')
+
+        pepe = rinput.pinhole_nominal_positions
+        print(type(pepe), pepe.dtype, pepe.shape)
 
         # Loading calibrations
         if rinput.master_bias:
@@ -551,7 +553,7 @@ class TestPinholeRecipe(BaseRecipe):
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
-        result = TestFlatCorrectRecipeResult(frame=hdulist)
+        result = TestPinholeRecipeResult(frame=hdulist)
 
         return result
 

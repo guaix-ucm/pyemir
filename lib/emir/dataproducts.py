@@ -19,6 +19,8 @@
 
 '''Data products produced by the EMIR pipeline.'''
 
+import numpy
+
 from numina.core import FrameDataProduct, DataProduct
 from numina.core.requirements import InstrumentConfigurationType
     
@@ -139,7 +141,11 @@ class NonLinearityPolynomial(list):
 
 class NonLinearityCalibration(DataProduct):
     def __init__(self, default=[1.0, 0.0]):
-        super(NonLinearityCalibration, self).__init__(ptype=NonLinearityPolynomial,                 default=default)
+        super(NonLinearityCalibration, self).__init__(ptype=NonLinearityPolynomial, default=default)
+
+class CoordinateListType(DataProduct):
+    def __init__(self, default=None):
+        super(CoordinateListType, self).__init__(ptype=numpy.ndarray, default=default)
 
 class TelescopeOffset(DataProduct):
     pass
