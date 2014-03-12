@@ -176,6 +176,23 @@ class SimpleBiasRecipe(BaseRecipe):
         result = SimpleBiasRecipeResult(biasframe=DataFrame(hdulist))
         return result
 
+def gather_info(hdulist):
+    n_ext = len(hdulist)
+    readmode = hdulist[0].header.get('READMODE', 'undefined')
+    bunit = hdulist[0].header.get('BUNIT', 'undefined')
+    texp = hdulist[0].header.get('EXPTIME')
+    adu_s = True
+    if bunit:
+        if bunit.lower() == 'adu':
+            adu_s = False
+        elif bunit.lower() == 'adu/s':
+            adu_s = True
+        else:
+            _logger.warning('Unrecognized value for BUNIT %s', bunit)
+
+    return {'n_ext': n_ext, 'readmode': readmode, 'adu_s': adu_s}
+
+
 class TestBiasCorrectRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
@@ -194,6 +211,26 @@ class TestBiasCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple bias reduction')
 
+        iinfo = []
+        for frame in rinput.obresult.frames:
+            with frame.open() as hdulist:
+                iinfo.append(gather_info(hdulist))
+
+        bias_info = {}
+
+        if rinput.master_bias:
+            with rinput.master_bias.open() as hdul:
+                bias_info = gather_info(hdul)
+
+        print(iinfo)
+        print(bias_info)
+
+        for idx, ii in enumerate(iinfo):
+            if not ii['readmode'].lower() in ['simple', 'bias']:
+                # We have images in mode other than simple or bias BAD
+                raise RecipeError('Image %d in inputs has READMODE %s', ii.readmode)
+
+        # Loading calibrations
         has_bias = False
         bias_corrector = None
         if rinput.master_bias:
@@ -202,6 +239,8 @@ class TestBiasCorrectRecipe(BaseRecipe):
             with rinput.master_bias.open() as hdul:
                 mbias = hdul[0].data
                 bias_corrector = BiasCorrector(mbias)
+        else:
+            raise RecipeError("Bias required but not available")
 
         cdata = []
         try:
@@ -253,39 +292,23 @@ class TestDarkCorrectRecipe(BaseRecipe):
         super(TestDarkCorrectRecipe, self).__init__(author=_s_author, 
             version="0.1.0")
 
-    def gather_info(self, hdulist):
-        n_ext = len(hdulist)
-        readmode = hdulist[0].header.get('READMODE')
-        bunit = hdulist[0].header.get('BUNIT')
-        texp = hdulist[0].header.get('EXPTIME')
-        adu_s = True
-        if bunit:
-            if bunit.lower() == 'adu':
-                adu_s = False
-            elif bunit.lower() == 'adu/s':
-                adu_s = True
-            else:
-                _logger.warning('Unrecognized value for BUNIT %s', bunit)
-
-        return {'n_ext': n_ext, 'readmode': readmode, 'adu_s': adu_s}
-
     def run(self, rinput):
         _logger.info('starting simple dark reduction')
 
         iinfo = []
         for frame in rinput.obresult.frames:
             with frame.open() as hdulist:
-                iinfo.append(self.gather_info(hdulist))
+                iinfo.append(gather_info(hdulist))
 
         bias_info = {}
         dark_info = {}
 
         if rinput.master_bias:
             with rinput.master_bias.open() as hdul:
-                bias_info = self.gather_info(hdul)
+                bias_info = gather_info(hdul)
 
         with rinput.master_dark.open() as hdul:
-            dark_info = self.gather_info(hdul)
+            dark_info = gather_info(hdul)
 
         print(iinfo)
         print(bias_info)
