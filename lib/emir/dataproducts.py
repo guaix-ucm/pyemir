@@ -25,7 +25,11 @@ from numina.core import FrameDataProduct, DataProduct
 from numina.core.requirements import InstrumentConfigurationType
 
 # FIXME
-import ext.gtc
+try:
+    import ext.gtc
+except ImportError:
+    # We are not in GTC
+    pass
     
 class EMIRConfigurationType(InstrumentConfigurationType):
     
