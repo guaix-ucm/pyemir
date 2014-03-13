@@ -172,6 +172,11 @@ class SourcesCatalog(DataProduct):
 class LinesCatalog(DataProduct):
     pass
 
+class CentroidsTableType(DataProduct):
+    '''Table with information about focus centroids.'''
+    def __init__(self):
+        super(CentroidsTableType, self).__init__(ptype=numpy.ndarray)
+
 class ChannelLevelStatistics(DataProduct):
     ''' A list of exposure time, mean, std dev and median per channel'''
     def __init__(self, exposure, statistics):
