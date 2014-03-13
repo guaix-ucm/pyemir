@@ -223,5 +223,5 @@ pipelines:
       TEST3: emir.recipes.aiv.TestFlatCorrectRecipe
       TEST4: emir.recipes.aiv.TestFlatCorrectRecipe
       TEST5: emir.recipes.aiv.TestSkyCorrectRecipe
-      TEST6: emir.recipes.aiv.TestPinholeRecipe
+      TEST6: emir.recipes.aiv.mask.TestPinholeRecipe
     version: 1

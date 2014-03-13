@@ -41,7 +41,7 @@ from numina.flow import SerialFlow
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
-from emir.dataproducts import DarkCurrentValue, CoordinateListType
+from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -497,74 +497,4 @@ class TestSkyCorrectRecipe(BaseRecipe):
         result = TestSkyCorrectRecipeResult(frame=hdulist)
 
         return result
-
-class TestPinholeRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
-    master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
-    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
-    master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
-    pinhole_nominal_positions = Requirement(CoordinateListType, 'Nominal positions of the pinholes')
-
-class TestPinholeRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
-
-@define_requirements(TestPinholeRecipeRequirements)
-@define_result(TestPinholeRecipeResult)
-class TestPinholeRecipe(BaseRecipe):
-
-    def __init__(self):
-        super(TestPinholeRecipe, self).__init__(author=_s_author, 
-            version="0.1.0")
-
-    def run(self, rinput):
-        _logger.info('starting simple sky reduction')
-
-        pepe = rinput.pinhole_nominal_positions
-        print(type(pepe), pepe.dtype, pepe.shape)
-
-        # Loading calibrations
-        if rinput.master_bias:
-            _logger.info('loading bias')
-            with rinput.master_bias.open() as hdul:
-                mbias = hdul[0].data
-                bias_corrector = BiasCorrector(mbias)
-        else:
-            bias_corrector = IdNode()
-            
-        with rinput.master_dark.open() as mdark_hdul:
-            _logger.info('loading dark')
-            mdark = mdark_hdul[0].data
-            dark_corrector = DarkCorrector(mdark)
-
-        with rinput.master_flat.open() as mflat_hdul:
-            _logger.info('loading intensity flat')
-            mflat = mflat_hdul[0].data
-            flat_corrector = FlatFieldCorrector(mflat)
-
-        flow = SerialFlow([bias_corrector, dark_corrector, flat_corrector])
-
-        cdata = []
-        try:
-            for frame in rinput.obresult.frames:
-                hdulist = frame.open()
-                final = flow(hdulist)
-                cdata.append(final)
-
-            data = median([d['primary'].data for d in cdata], dtype='float32')
-            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
-
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
-            
-        hdr = hdu.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdulist = fits.HDUList([hdu])
-        result = TestPinholeRecipeResult(frame=hdulist)
-
-        return result
-
 
