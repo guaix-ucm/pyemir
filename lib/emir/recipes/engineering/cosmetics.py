@@ -38,6 +38,8 @@ from emir.core import RecipeResult
 _logger = logging.getLogger('numina.recipes.emir')
 
 class CosmeticsRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
     lowercut = Parameter(4.0, 'Values bellow this sigma level are flagged as dead pixels')
     uppercut = Parameter(4.0, 'Values above this sigma level are flagged as hot pixels')
     maxiter = Parameter(30, 'Maximum number of iterations')
@@ -60,40 +62,26 @@ class CosmeticsRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    # FIXME: this function is useless
-    def update_header(self, hdr):
-        return hdr
-
-    def run(self, obresult, reqs):
-
-        resets = []
-        flats = []
-
-        for frame in obresult.frames:
-            if frame.itype == 'RESET':
-                resets.append(frame.label)
-                _logger.debug('%s is RESET', frame.label)
-            elif frame.itype == 'FLAT':
-                flats.append(frame.label)
-                _logger.debug('%s is FLAT', frame.label)
-            else:
-                raise RecipeError('frame is neither a FLAT nor a RESET')
-
-
-        # we need 2 flats and 1 reset
-        if len(flats) < 2:
-            raise ValueError('The recipe requires 2 flat frames')
+    def run(self, rinput):
         
-        if len(resets) < 1:
-            raise ValueError('The recipe requires 1 reset frame')
+        # FIXME:
+        # We need 2 flats
+        # Of different exposure times
+        #
+        # And their calibrations
+        #
+        if len(rinput.obresult.frames) < 2:
+            raise RecipeError('The recipe requires 2 flat frames')
         
-        reset = fits.getdata(resets[-1])
-        f1 = fits.getdata(flats[0]) - reset
-        f2 = fits.getdata(flats[1]) - reset
-        
-        maxiter = reqs['maxiter']
-        lowercut = reqs['lowercut']
-        uppercut = reqs['uppercut']
+        with fits.open(rinput.obresult.frames[0]) as hdul:
+            f1 = hdul[0].data.copy()
+
+        with fits.open(rinput.obresult.frames[1]) as hdul:
+            f2 = hdul[0].data.copy()
+
+        maxiter = rinput.maxiter
+        lowercut = rinput.lowercut
+        uppercut = rinput.uppercut
         
         ninvalid = 0
         mask = None
@@ -102,7 +90,7 @@ class CosmeticsRecipe(BaseRecipe):
             m = fits.getdata(mask)
             ninvalid = numpy.count_nonzero(m)
         else:
-            m = numpy.zeros_like(reset, dtype='int')
+            m = numpy.zeros_like(f1, dtype='int')
     
         for niter in range(1, maxiter + 1):
             _logger.info('iter %d', niter)
@@ -148,21 +136,20 @@ class CosmeticsRecipe(BaseRecipe):
             fits.writeto('numina-mask.fits', m, clobber=True)
             fits.writeto('numina-sigma.fits', sigma * numpy.ones_like(m), clobber=True)
             
-        ratiohdu = fits.PrimaryHDU(ratio)
-        hdr = ratiohdu.header
-        hdr.update('FILENAME', 'ratio.fits')
-        hdr = self.update_header(hdr)        
-        # hdr.update('IMGTYP', 'TARGET', 'Image type')
-        # hdr.update('NUMTYP', 'TARGET', 'Data product type')
-        ratiohdl = fits.HDUList([ratiohdu])    
+        hdu = fits.PrimaryHDU(ratio)
+        hdr = hdu.header
+        hdr['NUMXVER'] = ( __version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        ratiohdl = fits.HDUList([hdu])    
         
         maskhdu = fits.PrimaryHDU(m)
         hdr = maskhdu.header
-        hdr.update('filename', 'mask.fits')
-        hdr = self.update_header(hdr)
+        hdr['NUMXVER'] = ( __version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         maskhdl = fits.HDUList([maskhdu])
-        
 
-        res = CosmeticsRecipeResult(ratio=DataFrame(ratiohdl), 
-                                        mask=DataFrame(maskhdl))        
+        res = CosmeticsRecipeResult(ratio=ratiohdl, mask=maskhdl)
         return res
+
