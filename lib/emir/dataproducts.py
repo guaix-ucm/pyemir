@@ -23,8 +23,9 @@ import numpy
 
 from numina.core import FrameDataProduct, DataProduct
 from numina.core.requirements import InstrumentConfigurationType
-    
-    
+
+# FIXME
+import ext.gtc
     
 class EMIRConfigurationType(InstrumentConfigurationType):
     
@@ -133,11 +134,29 @@ class MasterRONMap(DataProduct):
         gvar = map(float, self.var.flat)
         return {'mean': gmean, 'var': gvar}
 
+class TelescopeOffset(DataProduct):
     pass
 
-class CoordinateListType(DataProduct):
+class CoordinateListNType(DataProduct):
+    def __init__(self, dimensions, default=None):
+        super(CoordinateListNType, self).__init__(ptype=numpy.ndarray, default=default)
+        self.N = dimensions
+
+    def validate(self, obj):
+        ndims = len(obj.shape)
+        if ndims != 2:
+            raise TypeError('%r is not a valid %r' % (obj, self.__class__.__name__))
+        if obj.shape[1] != self.N:
+            raise TypeError('%r is not a valid %r' % (obj, self.__class__.__name__))
+            
+
+    def store(self, obj):
+        result = numpy.array(obj)
+        return result
+
+class CoordinateList2DType(CoordinateListNType):
     def __init__(self, default=None):
-        super(CoordinateListType, self).__init__(ptype=numpy.ndarray, default=default)
+        super(CoordinateList2DType, self).__init__(2, default=default)
 
 class TelescopeOffset(DataProduct):
     pass
