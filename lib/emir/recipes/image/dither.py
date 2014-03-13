@@ -28,7 +28,7 @@ from numina.core import define_requirements, define_result
 
 from emir.core import RecipeResult
 from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
-from emir.requirements import MasterDark_Requirement, NonLinearityCalibration_Requirement
+from emir.requirements import MasterDark_Requirement
 from emir.requirements import MasterIntensityFlatField_Requirement
 from emir.requirements import Extinction_Requirement
 from emir.requirements import Offsets_Requirement
