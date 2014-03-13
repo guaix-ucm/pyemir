@@ -151,8 +151,7 @@ class BiasRecipe(BaseRecipe):
         var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
         num = fits.ImageHDU(data[2], name='MAP')
 
-        #hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
-        hdulist = fits.HDUList([hdu])
+        hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
 
         _logger.info('bias reduction ended')
             
@@ -195,6 +194,11 @@ class DarkRecipe(BaseRecipe):
         _logger.info('starting dark reduction')
 
         output_in_adu_s = True
+        expt_in_ms = True
+        if expt_in_ms:
+            factor = 1e-3
+        else:
+            factor = 1.0
         
         insconf = rinput.insconf.values
         channels_name = insconf['detector']['channels']
@@ -207,7 +211,7 @@ class DarkRecipe(BaseRecipe):
                         
             for frame in rinput.obresult.frames:
                 hdulist = frame.open()
-                exposure = hdulist[0].header['EXPTIME']
+                exposure = hdulist[0].header['EXPTIME'] * factor
                 cdata.append(hdulist)
                 expdata.append(exposure)
 
@@ -229,15 +233,15 @@ class DarkRecipe(BaseRecipe):
             
             master_bias = rinput.master_bias.open()
             _logger.info('subtracting bias %r', rinput.master_bias)
-            # subtrac bias
+            # subtract bias
             data[0] -= master_bias[0].data
             
-            #idx = master_bias.index_of(('variance', 1))
-            #data[1] += master_bias[idx].data
+            idx = master_bias.index_of(('variance', 1))
+            data[1] += master_bias[idx].data
             
         if output_in_adu_s:
             data[0] /= expdata[0]
-            data[1] /= (expdata[0])**2
+            data[1] /= expdata[0]**2
 
         var2 = numpy.zeros_like(data[0])
 
@@ -278,8 +282,7 @@ class DarkRecipe(BaseRecipe):
         var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
         num = fits.ImageHDU(data[2], name='MAP')
 
-        #hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
-        hdulist = fits.HDUList([hdu])
+        hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
 
         _logger.info('dark reduction ended')
         result = DarkRecipeResult(darkframe=hdulist,
@@ -370,8 +373,9 @@ class IntensityFlatRecipe(BaseRecipe):
             _logger.info('stacking %d images using median', len(cdata))
             
             data = median([d['primary'].data for d in cdata], dtype='float32')
-            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
-            
+            # divide data by its own mean
+            mm = data[0].mean()
+            hdu = fits.PrimaryHDU(data[0] / mm, header=cdata[0]['primary'].header)
         finally:
             for hdulist in cdata:
                 hdulist.close()
@@ -386,11 +390,10 @@ class IntensityFlatRecipe(BaseRecipe):
         hdr['IMGTYP'] = ('FLAT', 'Image type')
         hdr['NUMTYP'] = ('MASTER_FLAT', 'Data product type')
         
-        #varhdu = fits.ImageHDU(varfin, name='VARIANCE')
-        #num = fits.ImageHDU(mapfin, name='MAP')
+        varhdu = fits.ImageHDU(varfin, name='VARIANCE')
+        num = fits.ImageHDU(mapfin, name='MAP')
 
-        #hdulist = fits.HDUList([hdu, varhdu, num])
-        hdulist = fits.HDUList([hdu])
+        hdulist = fits.HDUList([hdu, varhdu, num])
 
         result = IntensityFlatRecipeResult(flatframe=hdulist)
 
