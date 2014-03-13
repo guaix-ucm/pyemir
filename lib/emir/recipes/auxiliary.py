@@ -123,7 +123,6 @@ class BiasRecipe(BaseRecipe):
             e = myslice.stop
             return b+1, e
         
-        # FIXME: This could be a recarray
         statistics = numpy.empty((len(channels), 7))
         for idx, region in enumerate(channels):
             mean = numpy.mean(data[0][region])
@@ -162,7 +161,7 @@ class BiasRecipe(BaseRecipe):
         return result
             
 class DarkRecipeRequirements(BiasRecipeRequirements):
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
 
 class DarkRecipeResult(RecipeResult):
     darkframe = Product(MasterDark)
@@ -209,17 +208,24 @@ class DarkRecipe(BaseRecipe):
         expdata = []
 
         # Basic processing
-        if rinput.master_bias:
-            _logger.info('loading bias')
-            with rinput.master_bias.open() as hdul:
+        with rinput.master_bias.open() as hdul:
+            bunit = hdul[0].header.get('BUNIT')
+            if bunit and bunit.lower() == 'adu':
+                _logger.info('loading bias')
                 mbias = hdul[0].data
+                # FIXME
+                # check the READMODE of BIAS
+                # to see if its in an
+                # impossible mode
                 bias_corrector = BiasCorrector(mbias)
-        else:
-            bias_corrector = IdNode()
-            
+            else:
+                _logger.info('ignoring bias')
+                bias_corrector = IdNode()
+
         exposure_corrector = DivideByExposure(factor=factor)
 
         basicflow = SerialFlow([bias_corrector, exposure_corrector])
+
         try:
                         
             for frame in rinput.obresult.frames:
@@ -274,11 +280,9 @@ class DarkRecipe(BaseRecipe):
         
         exhdr = fits.Header()
         exhdr['extver'] = 1
-        exhdr['BUNIT'] = 'ADU/s'
         varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
         exhdr = fits.Header()
         exhdr['extver'] = 2
-        exhdr['BUNIT'] = 'ADU/s'
         var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
         num = fits.ImageHDU(data[2], name='MAP')
 
@@ -340,20 +344,26 @@ class IntensityFlatRecipe(BaseRecipe):
         else:
             factor = 1.0
 
-        # Basic processing
-        if rinput.master_bias:
-            _logger.info('loading bias')
-            with rinput.master_bias.open() as hdul:
+        # Loading calibrations
+        with rinput.master_bias.open() as hdul:
+            bunit = hdul[0].header.get('BUNIT')
+            if bunit and bunit.lower() == 'adu':
+                _logger.info('loading bias')
                 mbias = hdul[0].data
+                # FIXME
+                # check the READMODE of BIAS
+                # to see if its in an
+                # impossible mode
                 bias_corrector = BiasCorrector(mbias)
-        else:
-            bias_corrector = IdNode()
-            
+            else:
+                _logger.info('ignoring bias')
+                bias_corrector = IdNode()
+
+
         exposure_corrector = DivideByExposure(factor=factor)
 
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
-
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
@@ -372,6 +382,7 @@ class IntensityFlatRecipe(BaseRecipe):
             
             data = median([d['primary'].data for d in cdata], dtype='float32')
             # divide data by its own mean
+            # FIXME, check that the mean is not zero or negative...
             mm = data[0].mean()
             hdu = fits.PrimaryHDU(data[0] / mm, header=cdata[0]['primary'].header)
         finally:
@@ -387,9 +398,10 @@ class IntensityFlatRecipe(BaseRecipe):
         
         hdr['IMGTYP'] = ('FLAT', 'Image type')
         hdr['NUMTYP'] = ('MASTER_FLAT', 'Data product type')
+        hdr['BUNIT'] = 'ADU/s'
         
-        varhdu = fits.ImageHDU(varfin, name='VARIANCE')
-        num = fits.ImageHDU(mapfin, name='MAP')
+        varhdu = fits.ImageHDU(data[1] / (mm*mm), name='VARIANCE')
+        num = fits.ImageHDU(data[2], name='MAP')
 
         hdulist = fits.HDUList([hdu, varhdu, num])
 
