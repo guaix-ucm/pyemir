@@ -41,7 +41,7 @@ from numina.core import DataFrame, BaseRecipe, RecipeError
 from numina.flow import SerialFlow 
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, FlatFieldCorrector
-from numina.flow.processing import DarkCorrector, NonLinearityCorrector
+from numina.flow.processing import DarkCorrector
 #from numina.flow.processing import BadPixelCorrector
 from numina.array import fixpix2
 from numina.frame import resize_fits, custom_region_to_str
@@ -202,15 +202,13 @@ class DirectImageCommon(BaseRecipe):
             
                 mdark = fits.getdata(reqs.master_dark.label)
                 dark_corrector = DarkCorrector(mdark)
-                nl_corrector = NonLinearityCorrector(reqs.nonlinearity)
 
-                mflat = fits.getdata(reqs.master_intensity_ff.label)
+                mflat = fits.getdata(reqs.master_flat.label)
                 ff_corrector = FlatFieldCorrector(mflat)  
                   
                 basicflow = SerialFlow([#bpm_corrector,
                                         bias_corrector, 
                                         dark_corrector, 
-                                        nl_corrector,
                                         ff_corrector
                                         ])
 

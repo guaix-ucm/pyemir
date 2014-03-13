@@ -32,7 +32,7 @@ from emir.core import RecipeResult
 from emir.dataproducts import SourcesCatalog
 
 from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
-from emir.requirements import MasterDark_Requirement, NonLinearityCalibration_Requirement
+from emir.requirements import MasterDark_Requirement
 from emir.requirements import MasterIntensityFlatField_Requirement
 from emir.requirements import Extinction_Requirement
 from emir.requirements import Offsets_Requirement
@@ -46,8 +46,7 @@ class StareImageRecipeRequirements(RecipeRequirements):
     master_bpm = MasterBadPixelMask_Requirement()
     master_bias = MasterBias_Requirement()
     master_dark = MasterDark_Requirement()
-    nonlinearity = NonLinearityCalibration_Requirement()
-    master_intensity_ff = MasterIntensityFlatField_Requirement()    
+    master_flat = MasterIntensityFlatField_Requirement()    
     extinction = Extinction_Requirement() 
     sources = Catalog_Requirement()
     offsets = Offsets_Requirement()

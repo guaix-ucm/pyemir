@@ -135,14 +135,6 @@ class MasterRONMap(DataProduct):
 
     pass
 
-class NonLinearityPolynomial(list):
-    def __init__(self, *args, **kwds):
-        super(NonLinearityPolynomial, self).__init__(self, *args, **kwds)
-
-class NonLinearityCalibration(DataProduct):
-    def __init__(self, default=[1.0, 0.0]):
-        super(NonLinearityCalibration, self).__init__(ptype=NonLinearityPolynomial, default=default)
-
 class CoordinateListType(DataProduct):
     def __init__(self, default=None):
         super(CoordinateListType, self).__init__(ptype=numpy.ndarray, default=default)

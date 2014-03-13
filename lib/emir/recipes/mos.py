@@ -28,8 +28,7 @@ from numina.core import define_result, Product
 from emir.core import RecipeResult
 from ..dataproducts import MasterBias, MasterDark, MasterBadPixelMask 
 from ..dataproducts import MasterIntensityFlat, MasterSpectralFlat
-from ..dataproducts import (NonLinearityCalibration, SlitTransmissionCalibration,
-WavelengthCalibration)
+from ..dataproducts import SlitTransmissionCalibration, WavelengthCalibration
 from ..dataproducts import Spectra, LinesCatalog, DataCube
 
 __all__ = []
@@ -41,9 +40,7 @@ class StareSpectraRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
-              'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+    master_flat = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
     master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 
                   'Master spectral flatfield')
@@ -198,9 +195,7 @@ class DNSSpectraRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
-              'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+    master_flat = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
     master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 
                   'Master spectral flatfield')
@@ -232,9 +227,7 @@ class OffsetSpectraRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
-              'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+    master_flat = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
     master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 
                   'Master spectral flatfield')
@@ -267,9 +260,7 @@ class RasterSpectraRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
-              'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+    master_flat = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
     master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 
                   'Master spectral flatfield')

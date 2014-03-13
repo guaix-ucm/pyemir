@@ -23,7 +23,6 @@ from numina.core import Parameter, DataProductRequirement, Requirement
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
-from emir.dataproducts import NonLinearityCalibration
 #from emir.dataproducts import SourcesCatalog
 from emir.dataproducts import EMIRConfigurationType
 
@@ -53,16 +52,10 @@ class MasterDark_Requirement(DataProductRequirement):
     def __init__(self):
         super(MasterDark_Requirement, self).__init__(MasterDark, 'Master DARK image')
         
-class NonLinearityCalibration_Requirement(DataProductRequirement):
-    def __init__(self):
-        super(NonLinearityCalibration_Requirement, self).__init__(NonLinearityCalibration([1.0, 0.0]), 
-            'Polynomial for non-linearity correction')
-        
 class MasterIntensityFlatField_Requirement(DataProductRequirement):
     def __init__(self):
         super(MasterIntensityFlatField_Requirement, 
               self).__init__(MasterIntensityFlat, 'Master intensity flatfield')
-              
               
 class Extinction_Requirement(Parameter):
     def __init__(self):

@@ -35,7 +35,6 @@ from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import TelescopeOffset, MSMPositions
 from emir.dataproducts import MasterIntensityFlat
-from emir.dataproducts import NonLinearityCalibration
 
 __all__ = ['TargetAcquisitionRecipe', 'MaskImagingRecipe', 'MaskCheckRecipe']
 
@@ -45,9 +44,8 @@ class TargetAcquisitionRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
     master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
     
 
 class TargetAcquisitionRecipeResult(RecipeResult):
@@ -81,9 +79,8 @@ class MaskImagingRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
     master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
                   'Polynomial for non-linearity correction'),
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
     
 
 class MaskImagingRecipeResult(RecipeResult):
@@ -116,9 +113,7 @@ class MaskCheckRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
     master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
-                  'Polynomial for non-linearity correction'),
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
     
 
 class MaskCheckRecipeResult(RecipeResult):

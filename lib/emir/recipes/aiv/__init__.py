@@ -35,7 +35,7 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median, mean
 from numina import __version__
 from numina.flow.processing import BiasCorrector, DarkCorrector
-from numina.flow.processing import FlatFieldCorrector
+from numina.flow.processing import FlatFieldCorrector, SkyCorrector
 from numina.flow import SerialFlow
 
 from emir.core import RecipeResult
@@ -157,14 +157,14 @@ class SimpleBiasRecipe(BaseRecipe):
         # reduction keywords
         hdr = hdu.header
 
-        hdr.update('IMGTYP', 'BIAS', 'Image type')
-        hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
-        hdr.update('NUMXVER', __version__, 'Numina package version')
-        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
-        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        hdr['IMGTYP'] = ('BIAS', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
 
         exhdr = fits.Header()
-        exhdr.update('extver', 1)
+        exhdr['extver'] = 1
         varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
         num = fits.ImageHDU(data[2], name='MAP')
 
@@ -235,16 +235,13 @@ class TestBiasCorrectRecipe(BaseRecipe):
         # CDS 1
         # FOWLER 2
         # RAMP 3
-        # HDR_noseque $
+        # HDR_noseque 4
         # BIAS 5
 
         for idx, ii in enumerate(iinfo):
-            if not ii['readmode'].lower() in [0, 5]:
+            if not ii['readmode'] in [0, 5]:
                 # We have images in mode other than simple or bias BAD
                 raise RecipeError('Image %d in inputs has READMODE %s' % (idx, ii['readmode']))
-            #if not ii['readmode'].lower() in ['single', 'simple', 'bias']:
-            #    # We have images in mode other than simple or bias BAD
-            #    raise RecipeError('Image %d in inputs has READMODE %s', idx, ii.readmode)
 
         # Loading calibrations
         has_bias = False
@@ -257,8 +254,6 @@ class TestBiasCorrectRecipe(BaseRecipe):
                 bias_corrector = BiasCorrector(mbias)
         else:
             raise RecipeError("Bias required but not available")
-
-        _logger.info('stacking %d images using median', len(cdata))
        
         cdata = []
         try:
@@ -267,6 +262,7 @@ class TestBiasCorrectRecipe(BaseRecipe):
                 hdulist = bias_corrector(hdulist)
                 cdata.append(hdulist)
 
+            _logger.info('combining images using median')
             data = median([d['primary'].data for d in cdata], dtype='float32')
             hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
 
@@ -274,10 +270,12 @@ class TestBiasCorrectRecipe(BaseRecipe):
             for hdulist in cdata:
                 hdulist.close()
             
+        _logger.info('stacking %d images using median', len(cdata))
         # Setup final header
         hdr = hdu.header
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
 
         result = TestBiasCorrectRecipeResult(frame=hdulist)
@@ -344,6 +342,7 @@ class TestDarkCorrectRecipe(BaseRecipe):
                 hdulist = flow(hdulist)
                 cdata.append(hdulist)
 
+            _logger.info('stacking %d images using median', len(cdata))
             data = median([d['primary'].data for d in cdata], dtype='float32')
             hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
 
@@ -354,6 +353,7 @@ class TestDarkCorrectRecipe(BaseRecipe):
         hdr = hdu.header
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
         result = TestDarkCorrectRecipeResult(frame=hdulist)
         return result
@@ -406,6 +406,7 @@ class TestFlatCorrectRecipe(BaseRecipe):
                 final = flow(hdulist)
                 cdata.append(final)
 
+            _logger.info('stacking %d images using median', len(cdata))
             data = median([d['primary'].data for d in cdata], dtype='float32')
             hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
 
@@ -463,7 +464,12 @@ class TestSkyCorrectRecipe(BaseRecipe):
             mflat = mflat_hdul[0].data
             flat_corrector = FlatFieldCorrector(mflat)
 
-        flow = SerialFlow([bias_corrector, dark_corrector, flat_corrector])
+        with rinput.master_sky.open() as msky_hdul:
+            _logger.info('loading sky')
+            msky = msky_hdul[0].data
+            sky_corrector = SkyCorrector(msky)
+
+        flow = SerialFlow([bias_corrector, dark_corrector, flat_corrector, sky_corrector])
 
         cdata = []
         try:
@@ -472,13 +478,17 @@ class TestSkyCorrectRecipe(BaseRecipe):
                 final = flow(hdulist)
                 cdata.append(final)
 
+            _logger.info('stacking %d images using median', len(cdata))
             data = median([d['primary'].data for d in cdata], dtype='float32')
+            _logger.debug('create result Primary HDU')
             hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
 
         finally:
+            _logger.debug('closing images')
             for hdulist in cdata:
                 hdulist.close()
             
+        _logger.debug('update result header')
         hdr = hdu.header
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')

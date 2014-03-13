@@ -31,7 +31,6 @@ from numina.core import Requirement, Product, FrameDataProduct, RecipeRequiremen
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
-from emir.dataproducts import NonLinearityCalibration
 from emir.dataproducts import SourcesCatalog
 from emir.requirements import Offsets_Requirement
 from emir.requirements import SkyImageSepTime_Requirement
@@ -44,9 +43,7 @@ class MicroditheredImageRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
-              'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+    master_flat = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
     extinction = Parameter(0.0, 'Mean atmospheric extinction') 
     sources = Parameter([], 

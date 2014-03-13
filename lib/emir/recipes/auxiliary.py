@@ -485,7 +485,7 @@ class WavelengthCalibrationRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 'Master spectral flatfield')
         
 class WavelengthCalibrationRecipeResult(RecipeResult):
