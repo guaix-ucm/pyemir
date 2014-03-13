@@ -34,6 +34,7 @@ from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector
 from numina.flow.processing import DarkCorrector
+from numina.flow.processing import DivideByExposure
 # from numina.flow.processing import BadPixelCorrector
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
@@ -142,6 +143,7 @@ class BiasRecipe(BaseRecipe):
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['CCDMEAN'] = data[0].mean()
 
         exhdr = fits.Header()
         exhdr['extver'] = 1
@@ -193,7 +195,6 @@ class DarkRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting dark reduction')
 
-        output_in_adu_s = True
         expt_in_ms = True
         if expt_in_ms:
             factor = 1e-3
@@ -207,11 +208,24 @@ class DarkRecipe(BaseRecipe):
         cdata = []
         expdata = []
 
+        # Basic processing
+        if rinput.master_bias:
+            _logger.info('loading bias')
+            with rinput.master_bias.open() as hdul:
+                mbias = hdul[0].data
+                bias_corrector = BiasCorrector(mbias)
+        else:
+            bias_corrector = IdNode()
+            
+        exposure_corrector = DivideByExposure(factor=factor)
+
+        basicflow = SerialFlow([bias_corrector, exposure_corrector])
         try:
                         
             for frame in rinput.obresult.frames:
                 hdulist = frame.open()
                 exposure = hdulist[0].header['EXPTIME'] * factor
+                hdulist = basicflow(hdulist)
                 cdata.append(hdulist)
                 expdata.append(exposure)
 
@@ -227,21 +241,6 @@ class DarkRecipe(BaseRecipe):
         finally:
             for hdulist in cdata:
                 hdulist.close()
-
-        if rinput.master_bias is not None:
-            # load bias
-            
-            master_bias = rinput.master_bias.open()
-            _logger.info('subtracting bias %r', rinput.master_bias)
-            # subtract bias
-            data[0] -= master_bias[0].data
-            
-            idx = master_bias.index_of(('variance', 1))
-            data[1] += master_bias[idx].data
-            
-        if output_in_adu_s:
-            data[0] /= expdata[0]
-            data[1] /= expdata[0]**2
 
         var2 = numpy.zeros_like(data[0])
 
@@ -271,14 +270,15 @@ class DarkRecipe(BaseRecipe):
         
         hdr['IMGTYP'] = ('DARK', 'Image type')
         hdr['NUMTYP'] = ('MASTER_DARK', 'Data product type')
-        if output_in_adu_s:
-            hdr['BUNIT'] = 'ADU/s'
+        hdr['CCDMEAN'] = data[0].mean()
         
         exhdr = fits.Header()
         exhdr['extver'] = 1
+        exhdr['BUNIT'] = 'ADU/s'
         varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
         exhdr = fits.Header()
         exhdr['extver'] = 2
+        exhdr['BUNIT'] = 'ADU/s'
         var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
         num = fits.ImageHDU(data[2], name='MAP')
 
@@ -334,6 +334,12 @@ class IntensityFlatRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting flat reduction')
                 
+        expt_in_ms = True
+        if expt_in_ms:
+            factor = 1e-3
+        else:
+            factor = 1.0
+
         # Basic processing
         if rinput.master_bias:
             _logger.info('loading bias')
@@ -343,24 +349,16 @@ class IntensityFlatRecipe(BaseRecipe):
         else:
             bias_corrector = IdNode()
             
+        exposure_corrector = DivideByExposure(factor=factor)
+
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
-            dark_bunit = mdark_hdul[0].header.get('BUNIT')
-            dark_adu_s = False
-            if dark_bunit:
-                if dark_bunit.lower() == 'adu':
-                    dark_adu_s = False
-                elif dark_bunit.lower() == 'adu/s':
-                    dark_adu_s = True
-                else:
-                    _logger.warning('Unrecognized value for BUNIT %s', dark_bunit)
-            else:
-                _logger.warning('BUNIT is not defined in master_dark')
 
             mdark = mdark_hdul[0].data
-            dark_corrector = DarkCorrector(mdark, scale=dark_adu_s)
+            dark_corrector = DarkCorrector(mdark)
 
-        basicflow = SerialFlow([bias_corrector, dark_corrector])
+        basicflow = SerialFlow([bias_corrector, exposure_corrector, 
+                dark_corrector])
        
         cdata = []
         try:
