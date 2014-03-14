@@ -32,6 +32,8 @@ from numina.core import RecipeError,RecipeRequirements
 from numina.core import Product, define_requirements, define_result
 from numina.core import FrameDataProduct
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
+from numina.core.requirements import ObservationResultRequirement
+from numina.core.requirements import InstrumentConfigurationRequirement
 
 from emir.core import RecipeResult
 
