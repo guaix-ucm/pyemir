@@ -57,6 +57,7 @@ from numina import __version__
 from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.processing import FlatFieldCorrector, SkyCorrector
 from numina.flow import SerialFlow
+from numina.flow.processing import DivideByExposure
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
