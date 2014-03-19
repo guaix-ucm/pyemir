@@ -36,10 +36,13 @@ class EMIRConfigurationType(InstrumentConfigurationType):
     def validate(self, value):
         super(EMIRConfigurationType, self).validate(value)
 
-class MasterBadPixelMask(FrameDataProduct):
+class EMIRFrame(FrameDataProduct):
     pass
 
-class MasterBias(FrameDataProduct):
+class MasterBadPixelMask(EMIRFrame):
+    pass
+
+class MasterBias(EMIRFrame):
     '''Master bias product
     
     This image has 4 extensions: primary, two variance extensions
@@ -53,7 +56,7 @@ class MasterBias(FrameDataProduct):
     '''
     pass
 
-class MasterDark(FrameDataProduct):
+class MasterDark(EMIRFrame):
     '''Master dark product
     
     This image has 4 extensions: primary, two variance extensions
@@ -67,13 +70,13 @@ class MasterDark(FrameDataProduct):
     '''
     pass
 
-class DarkCurrentValue(FrameDataProduct):
+class DarkCurrentValue(EMIRFrame):
     pass
 
-class MasterIntensityFlat(FrameDataProduct):
+class MasterIntensityFlat(EMIRFrame):
     pass
         
-class MasterSpectralFlat(FrameDataProduct):
+class MasterSpectralFlat(EMIRFrame):
     pass
 
 class Spectra(FrameDataProduct):
