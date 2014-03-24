@@ -134,12 +134,13 @@ class CosmeticsRecipe(BaseRecipe):
 
         flow = SerialFlow([bias_corrector, exposure_corrector, dark_corrector])
         
-                    
-        with fits.open(rinput.obresult.frames[0]) as hdul:
+        _logger.info('processing flat #1')                    
+        with rinput.obresult.frames[0].open() as hdul:
             other = flow(hdul)
             f1 = other[0].data.copy() * iinfo[0]['texp'] * 1e-3
 
-        with fits.open(rinput.obresult.frames[1]) as hdul:
+        _logger.info('processing flat #2')
+        with rinput.obresult.frames[1].open() as hdul:
             other = flow(hdul)
             f2 = other[0].data.copy() * iinfo[1]['texp'] * 1e-3
 
