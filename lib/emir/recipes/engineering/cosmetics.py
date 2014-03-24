@@ -27,21 +27,52 @@ import warnings
 import numpy
 from astropy.io import fits
 
-from numina.core import BaseRecipe, Parameter, DataFrame
+from numina import __version__
+from numina.core import BaseRecipe, Parameter, DataProductRequirement
 from numina.core import RecipeError,RecipeRequirements
 from numina.core import Product, define_requirements, define_result
 from numina.core import FrameDataProduct
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
+from numina.flow.processing import BiasCorrector, DarkCorrector
+from numina.flow.processing import DivideByExposure
+from numina.flow.node import IdNode
+from numina.flow import SerialFlow
 
 from emir.core import RecipeResult
+from emir.dataproducts import MasterBias, MasterDark
 
 _logger = logging.getLogger('numina.recipes.emir')
+
+
+def gather_info(hdulist):
+    n_ext = len(hdulist)
+
+    # READMODE is STRING
+    readmode = hdulist[0].header.get('READMODE', 'undefined')
+    bunit = hdulist[0].header.get('BUNIT', 'undefined')
+    texp = hdulist[0].header.get('EXPTIME')
+    adu_s = True
+    if bunit:
+        if bunit.lower() == 'adu':
+            adu_s = False
+        elif bunit.lower() == 'adu/s':
+            adu_s = True
+        else:
+            _logger.warning('Unrecognized value for BUNIT %s', bunit)
+
+    return {'n_ext': n_ext, 
+            'readmode': readmode,
+            'texp': texp,
+            'adu_s': adu_s}
+
 
 class CosmeticsRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     insconf = InstrumentConfigurationRequirement()
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
     lowercut = Parameter(4.0, 'Values bellow this sigma level are flagged as dead pixels')
     uppercut = Parameter(4.0, 'Values above this sigma level are flagged as hot pixels')
     maxiter = Parameter(30, 'Maximum number of iterations')
@@ -72,14 +103,48 @@ class CosmeticsRecipe(BaseRecipe):
         #
         # And their calibrations
         #
+        
         if len(rinput.obresult.frames) < 2:
             raise RecipeError('The recipe requires 2 flat frames')
+              
+        iinfo = []
+        for frame in rinput.obresult.frames:
+            with frame.open() as hdulist:
+                iinfo.append(gather_info(hdulist))
+              
+        print(iinfo)
+         
+        # Loading calibrations
+        with rinput.master_bias.open() as hdul:
+            readmode = hdul[0].header.get('READMODE', 'undefined')
+            if readmode.lower() in ['simple', 'bias']:
+                _logger.info('loading bias')
+                mbias = hdul[0].data
+                bias_corrector = BiasCorrector(mbias)
+            else:
+                _logger.info('ignoring bias')
+                bias_corrector = IdNode()
+            
+        exposure_corrector = DivideByExposure(factor=1e-3)
+
+        with rinput.master_dark.open() as mdark_hdul:
+            _logger.info('loading dark')
+            mdark = mdark_hdul[0].data
+            dark_corrector = DarkCorrector(mdark)
+
+        flow = SerialFlow([bias_corrector, exposure_corrector, dark_corrector])
         
+                    
         with fits.open(rinput.obresult.frames[0]) as hdul:
-            f1 = hdul[0].data.copy()
+            other = flow(hdul)
+            f1 = other[0].data.copy() * iinfo[0]['texp'] * 1e-3
 
         with fits.open(rinput.obresult.frames[1]) as hdul:
-            f2 = hdul[0].data.copy()
+            other = flow(hdul)
+            f2 = other[0].data.copy() * iinfo[1]['texp'] * 1e-3
+
+        # Preprocess...
+
 
         maxiter = rinput.maxiter
         lowercut = rinput.lowercut
