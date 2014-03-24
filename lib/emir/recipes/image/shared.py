@@ -32,7 +32,7 @@ from astropy.io import fits
 from astropy import wcs
 from scipy.spatial import KDTree as KDTree
 import matplotlib as mpl
-#mpl.use('Agg')
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
