@@ -195,7 +195,8 @@ def gather_info(hdulist):
             _logger.warning('Unrecognized value for BUNIT %s', bunit)
 
     return {'n_ext': n_ext, 
-            'readmode': readmode, 
+            'readmode': readmode,
+            'texp': texp,
             'adu_s': adu_s}
 
 
