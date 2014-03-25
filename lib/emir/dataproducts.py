@@ -144,6 +144,16 @@ class MasterRONMap(DataProduct):
 class TelescopeOffset(DataProduct):
     pass
 
+
+class ArrayType(DataProduct):
+    def __init__(self, default=None):
+        super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
+
+    def store(self, obj):
+        result = numpy.array(obj)
+        return result
+
+
 class CoordinateListNType(DataProduct):
     def __init__(self, dimensions, default=None):
         super(CoordinateListNType, self).__init__(ptype=numpy.ndarray, default=default)
@@ -164,9 +174,6 @@ class CoordinateListNType(DataProduct):
 class CoordinateList2DType(CoordinateListNType):
     def __init__(self, default=None):
         super(CoordinateList2DType, self).__init__(2, default=default)
-
-class TelescopeOffset(DataProduct):
-    pass
 
 class MSMPositions(DataProduct):
     pass

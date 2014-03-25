@@ -25,11 +25,14 @@ import logging
 import math
 
 import numpy
-import scipy
+
 from astropy.io import fits
-from scipy.stats import linregress
-import matplotlib.pyplot as plt
-from scipy.spatial import cKDTree as KDTree
+import photutils
+from astropy.modeling import models, fitting
+from scipy.spatial import distance
+import scipy.interpolate as itpl
+import scipy.optimize as opz
+
 import scipy.ndimage.filters as filters
 import scipy.ndimage as ndimage
 import matplotlib.pyplot as plt
@@ -40,15 +43,13 @@ import scipy.spatial.distance
 import scipy.ndimage.measurements
 from scipy.ndimage.interpolation import map_coordinates
 from scipy.interpolate import UnivariateSpline
-# Channels are rotated!
-#from emirextras.channels import CHANNELS_REG_ROT
 import scipy.interpolate as itpl
 import scipy.optimize as opz
 
 
 from numina.core import RecipeError
 from numina.core import BaseRecipe, RecipeRequirements, DataFrame
-from numina.core import Requirement, Product, DataProductRequirement
+from numina.core import Requirement, Product, DataProductRequirement, Parameter
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 
@@ -63,7 +64,7 @@ from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
 from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
-from emir.dataproducts import CentroidsTableType
+from emir.dataproducts import CentroidsTableType, ArrayType
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -71,167 +72,8 @@ _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
             
 GAUSS_FWHM_FACTOR = 2.354800
 
-class TestPinholeRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
-    master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
-    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
-    master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
-    pinhole_nominal_positions = Requirement(CoordinateList2DType, 'Nominal positions of the pinholes')
-
-class TestPinholeRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
-    centroids = Product(CentroidsTableType)
-
-@define_requirements(TestPinholeRecipeRequirements)
-@define_result(TestPinholeRecipeResult)
-class TestPinholeRecipe(BaseRecipe):
-
-    def __init__(self):
-        super(TestPinholeRecipe, self).__init__(author=_s_author, 
-            version="0.1.0")
-
-    def run(self, rinput):
-        _logger.info('starting simple sky reduction')
-
-        pepe = rinput.pinhole_nominal_positions
-        print(type(pepe), pepe.dtype, pepe.shape)
-
-        # Loading calibrations
-        with rinput.master_bias.open() as hdul:
-            _logger.info('loading bias')
-            mbias = hdul[0].data
-            bias_corrector = BiasCorrector(mbias)
-            #bias_corrector = IdNode()
-            
-        exposure_corrector = DivideByExposure(factor=1e-3)
-
-        with rinput.master_dark.open() as mdark_hdul:
-            _logger.info('loading dark')
-            mdark = mdark_hdul[0].data
-            dark_corrector = DarkCorrector(mdark)
-
-        with rinput.master_flat.open() as mflat_hdul:
-            _logger.info('loading intensity flat')
-            mflat = mflat_hdul[0].data
-            flat_corrector = FlatFieldCorrector(mflat)
-
-        with rinput.master_sky.open() as msky_hdul:
-            _logger.info('loading sky')
-            msky = msky_hdul[0].data
-            sky_corrector = SkyCorrector(msky)
-
-        flow = SerialFlow([bias_corrector, exposure_corrector, 
-                dark_corrector, flat_corrector, sky_corrector])
-
-        cdata = []
-        try:
-            for frame in rinput.obresult.frames:
-                hdulist = frame.open()
-                final = flow(hdulist)
-                cdata.append(final)
-
-            _logger.info('stacking %d images using median', len(cdata))
-            data = median([d['primary'].data for d in cdata], dtype='float32')
-            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
-
-        finally:
-            _logger.debug('closing images')
-            for hdulist in cdata:
-                hdulist.close()
-            
-        _logger.debug('update result header')
-        hdr = hdu.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdulist = fits.HDUList([hdu])
-
-
-        _logger.debug('finding pinholes')
-        data = hdu.data
-
-        # To convert to scipy coordinates we have to subtract 1 and flip x<->y
-        ref_centers = numpy.fliplr(rinput.pinhole_nominal_positions) - 1.0
-        nl_pinholes = len(ref_centers)
-
-        # 
-        centroids = numpy.zeros((nl_pinholes, 6))
-
-        # Compute and remove a background level
-        m, sigma = background_and_sigma(data)
-        _logger.info('Mean background is %7.0f', m)
-
-        data -= m
-
-        n_size = 5
-        th = 1000
-        # Search box
-        boxsize = 15
-        boxsize_full = 2 * boxsize
-
-        result = find_pinholes_center_via_max(ref_centers, data, boxsize, n_size=n_size)
-
-        for val in result:
-            print val
-
-
-        for idx, n_c in enumerate(ref_centers):
-            n_c_i = n_c.astype('int')
-            sl = (slice(n_c_i[0] - boxsize, n_c_i[0] + boxsize, None)), (slice(n_c_i[1] - boxsize, n_c_i[1] + boxsize, None))
-
-            region = data[sl]
-
-            data_max = filters.maximum_filter(region, n_size)
-            maxima = (region == data_max)
-            #data_min = filters.minimum_filter(region, neighborhood_size)
-            #diff = ((data_max - data_min) > th)
-            #maxima[diff == 0] = 0
-            #fits.writeto('mask.fits', maxima * 1, clobber=True)
-
-            sombra = region * maxima
-            maxindex = numpy.unravel_index(sombra.argmax(), sombra.shape)
-            maxvalue = sombra[maxindex]
-
-            # Fittinh Gaussian model
-            p_init = models.Gaussian2D(amplitude=maxvalue, 
-             x_mean=maxindex[1], y_mean=maxindex[0], x_stddev=1.0,
-             y_stddev=1.0, theta=1.0)
-            f = fitting.NonLinearLSQFitter()
-            x, y = numpy.mgrid[:boxsize_full, :boxsize_full]
-            p = f(p_init, x, y, region)
-            print 'fit center', p.x_mean, p.y_mean
-            print 'fit sigma', p.x_stddev, p.y_stddev
-
-            abs_centroid = n_c_i + [p.x_mean[0], p.y_mean[0]] - boxsize
-            crow = n_c[1], n_c[0], abs_centroid[1], abs_centroid[0], p.y_stddev[0], p.x_stddev[0]
-            centroids[idx, :] = crow
-
-        # In FITS coordinates, we have to add one
-        # To the first 4 columns
-        centroids[:,:4] += 1
-
-        result = find_pinholes_center_via_segmentation(ref_centers, data, boxsize, threshold=th)
-
-        for val in result:
-            print val[1]
-
-        m = find_pinholes_via_segmentation(ref_centers, data, boxsize, threshold=th)
-        print m
-
-        result = TestPinholeRecipeResult(frame=hdulist, centroids=centroids)
-
-        return result
-
-def segmentation(data, threshold):
-    mask = numpy.where(data > threshold, 1, 0)
-    labelmask, nobj = scipy.ndimage.label(mask)
-    objects = scipy.ndimage.measurements.find_objects(labelmask)
-    centers = scipy.ndimage.measurements.center_of_mass(data, labels=labelmask, index=range(1, nobj+1))
-
-    return objects, centers, labelmask
-
 def img_box(center, shape, box):
+
     def slice_create(c, s, b):
         cc = int(math.floor(c + 0.5))
         l = max(0, cc - b)
@@ -240,95 +82,42 @@ def img_box(center, shape, box):
 
     return tuple(slice_create(*args) for args in zip(center, shape, box))
 
-def find_pinholes_center_via_segmentation(ref_centers, data, boxsize, threshold):
-    result = []
-    for idx, n_c in enumerate(ref_centers):
-        sl = img_box(n_c, data.shape, box=(boxsize,boxsize))
-        region = data[sl]
-        seginfo = segmentation(region, threshold)
-        result.append(seginfo)
-    return result
+# returns y,x
+def _centering_centroid_loop(data, center, box):
+    sl = img_box(center, data.shape, box)
+    raster = data[sl]
+    mm = raster.mean()
+    
+    threshold = mm
+    _logger.debug('Threshold is %s', threshold)
+    
+    rr = numpy.where(raster > threshold, raster, 0)
+    
+    fi, ci = numpy.indices(raster.shape)
+    
+    norm = rr.sum()
+    print norm
+    fm = (rr * fi).sum() / norm
+    cm = (rr * ci).sum() / norm
+    
+    return fm + sl[0].start, cm + sl[1].start
+    
+# returns y,x
+def centering_centroid(data, center, box, nloop=10):
+    toldist = 1e-3
+    ncenter = center
+    for i in range(nloop):
+        center = _centering_centroid_loop(data, ncenter, box)
+        # check convergence
+        dst = distance.euclidean(ncenter, center)
+        if dst < toldist:
+            return ncenter, 'converged in iteration %i' % i
+        else:
+            ncenter = center
+    
+    return ncenter, 'not converged in %i iterations' % nloop
 
-def find_pinholes_via_segmentation(ref_centers, data, boxsize, threshold):
-    pinhole_fits = {}
-    for idx, n_c in enumerate(ref_centers):
-        sl = img_box(n_c, data.shape, box=(boxsize,boxsize))
-        region = data[sl]
-        seginfo = segmentation(region, threshold)
-        # FIXME: choose the object with the centroinf closests to the center
-        # For now, I choose the first
-        n_center = seginfo[1][0]
-        abs_n_center = [i + s.start for i, s in zip(n_center, sl)]
-        print 'new center',n_center, abs_n_center
-
-        # Taking a new box around the centroid
-        sl = img_box(abs_n_center, data.shape, box=(15,15))
-        img = data[sl]
-        c = abs_n_center
-        c_ff = [i - s.start for i, s in zip(c, sl)]
-        try:
-            params = compute_fwhm(img, c_ff)
-            pinhole_fits[idx] = [params, sl, 0]
-        except StandardError as error:
-            # FIXME, error during fitting
-            print(error)
-    return pinhole_fits
-
-def find_pinholes_center_via_max(ref_centers, data, boxsize, n_size=5):
-    result = []
-    for idx, n_c in enumerate(ref_centers):
-        n_c_i = n_c.astype('int')
-        sl = (slice(n_c_i[0] - boxsize, n_c_i[0] + boxsize, None)), (slice(n_c_i[1] - boxsize, n_c_i[1] + boxsize, None))
-
-        region = data[sl]
-
-        data_max = filters.maximum_filter(region, n_size)
-        maxima = (region == data_max)
-        #data_min = filters.minimum_filter(region, neighborhood_size)
-        #diff = ((data_max - data_min) > th)
-        #maxima[diff == 0] = 0
-        #fits.writeto('mask.fits', maxima * 1, clobber=True)
-
-        sombra = region * maxima
-        maxindex = numpy.unravel_index(sombra.argmax(), sombra.shape)
-        maxvalue = sombra[maxindex]
-        result.append([maxindex, maxvalue])
-    return result
-
-
-def background_and_sigma(data):
-    # Operations...
-
-    # thresholding
-    # Given the mask, around 91% of the image is background
-    # So we can compute the value at, say 90%
-    # everything below that value is background
-
-    limit = scipy.stats.scoreatpercentile(data.ravel(), per=90)
-
-    # Background pixels
-    back = data[data < limit]
-    mu = numpy.median(back)
-    _logger.info('mean estimation is %f ', mu)
-
-    back -= mu
-    _logger.info('subtract mean')
-
-    siglev = 2.0
-
-    # Computing background Gaussian noise
-    qns = 100 * scipy.stats.norm.cdf(siglev)
-    pns = 100 - qns
-
-    ls = scipy.stats.scoreatpercentile(back.flat, pns)
-    hs = scipy.stats.scoreatpercentile(back.flat, qns)
-    # sigma estimation
-    sig = (hs - ls) / (2 * siglev)
-    _logger.info('sigma estimation is %f ', sig)
-
-    return mu, sig
-
-
+# returns y,x
 def compute_fwhm(img, center):
     X = numpy.arange(img.shape[0])
     Y = numpy.arange(img.shape[1])
@@ -369,26 +158,205 @@ def compute_fwhm(img, center):
             pass
 
         sol_l = opz.brentq(fun, u_l, center)
-
-#        plt.plot(U, V, 'r*-')
-#        plt.plot([sol_l, sol_r], [0.5 * peak, 0.5 * peak])
-#        plt.show()
         fwhm = sol_r - sol_l
         return fwhm
 
     U = X
-    V = bb.ev(U, [center[1] for i in U])
-
+    V = bb.ev(U, [center[1] for _ in U])
     fwhm_x = compute_fwhm_1(U, V, f1, center[0])
 
     U = Y
-    V = bb.ev([center[0] for i in U], U)
+    V = bb.ev([center[0] for _ in U], U)
 
     fwhm_y = compute_fwhm_1(U, V, f2, center[1])
 
-    return peak, center[0], center[1], fwhm_x, fwhm_y
+    return peak, center[0], center[1], peak, fwhm_x, fwhm_y
 
-if __name__ == '__main__':
+# returns x,y
+def compute_fwhm_global(data, center, box):
+    sl = img_box(center, data.shape, box)
+    raster = data[sl]
+    newc = center[0] - sl[0].start, center[1] - sl[1].start
+    res = compute_fwhm(raster, newc)
+    return res[1]+sl[1].start, res[0]+sl[0].start, res[2], res[3], res[4]
+    #return res[0]+sl[0].start, res[1]+sl[1].start, res[2], res[3], res[4]
 
-    main()
+# returns x,y
+def gauss_model(data, center_r):
+    sl = img_box(center_r, data.shape, box=(4,4))
+    raster = data[sl]
+    
+    new_c = center_r[0] - sl[0].start, center_r[1] - sl[1].start
 
+    # background
+    mm = raster - raster.min()
+
+    yi, xi = numpy.indices(raster.shape)
+
+    g = models.Gaussian2D(amplitude=1.2, x_mean=new_c[1], y_mean=new_c[0], x_stddev=1.0, y_stddev=1.0)
+    f1 = fitting.NonLinearLSQFitter()
+    t = f1(g, xi, yi, mm)
+    mm = t.x_mean.value + sl[1].start, t.y_mean.value+ sl[0].start, t.amplitude.value, t.x_stddev.value, t.y_stddev.value
+    return mm
+
+def pinhole_char(data, ncenters, box=4):
+
+    ibox = (box, box)
+    
+    # convert FITS x, y coordinates (pixel center 1)
+    # to python/scipy/astropy (pixel center 0 and x,y -> y,x)
+    
+    centers_py = numpy.fliplr(ncenters[:,0:2]) - 1
+    
+    # recentered values
+    centers_r = numpy.empty_like(centers_py)
+    
+    for idx, c in enumerate(centers_py):
+        center, _msg = centering_centroid(data, c, box=ibox)
+        centers_r[idx] = center
+        
+    mm1 = numpy.empty((centers_r.shape[0], 5))
+    
+    # compute the FWHM without fitting
+    for idx, center in enumerate(centers_r):
+        res = compute_fwhm_global(data, center, box=ibox)
+        mm1[idx] = res
+    
+    mm2 = numpy.empty((centers_r.shape[0], 5))
+    # compute the FWHM fitting a Gaussian
+    for idx, center in enumerate(centers_r):
+        mm2[idx] = gauss_model(data, center)
+    
+    # Photometry in coordinates
+    # x=centers_r[:,1]
+    # y=centers_r[:,0]
+    # with radius 2.0 pixels and 4.0 pixels
+    mm3 = photutils.aperture_circular(data, centers_r[:,1], centers_r[:,0], [2., 4])
+    
+    # Convert coordinates to FITS
+    mm1[:,0:2] += 1
+    mm2[:,0:2] += 1
+    
+    return mm1, mm2, mm3
+
+class TestPinholeRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+    master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
+    master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
+    pinhole_nominal_positions = Requirement(CoordinateList2DType, 'Nominal positions of the pinholes')
+    shift_coordinates = Parameter(True, 'Use header information to shift the pinhole positions from (0,0) to X_DTU, Y_DTU')
+    box_half_size = Parameter(4, 'Half of the search box size in pixels')
+
+class TestPinholeRecipeResult(RecipeResult):
+    frame = Product(FrameDataProduct)
+    fwhm = Product(ArrayType)
+    gauss = Product(ArrayType)
+    phot = Product(ArrayType)
+    
+
+@define_requirements(TestPinholeRecipeRequirements)
+@define_result(TestPinholeRecipeResult)
+class TestPinholeRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(TestPinholeRecipe, self).__init__(author=_s_author, 
+            version="0.1.0")
+
+    def run(self, rinput):
+        _logger.info('starting pinhole processing')
+
+        # Loading calibrations
+        with rinput.master_bias.open() as hdul:
+            _logger.info('loading bias')
+            mbias = hdul[0].data
+            bias_corrector = BiasCorrector(mbias)
+            #bias_corrector = IdNode()
+            
+        exposure_corrector = DivideByExposure(factor=1.0)
+
+        with rinput.master_dark.open() as mdark_hdul:
+            _logger.info('loading dark')
+            mdark = mdark_hdul[0].data
+            dark_corrector = DarkCorrector(mdark)
+
+        with rinput.master_flat.open() as mflat_hdul:
+            _logger.info('loading intensity flat')
+            mflat = mflat_hdul[0].data
+            flat_corrector = FlatFieldCorrector(mflat)
+
+        with rinput.master_sky.open() as msky_hdul:
+            _logger.info('loading sky')
+            msky = msky_hdul[0].data
+            sky_corrector = SkyCorrector(msky)
+
+        flow = SerialFlow([bias_corrector, exposure_corrector, 
+                dark_corrector, flat_corrector, sky_corrector])
+
+        odata = []
+        cdata = []        
+        try:
+            _logger.info('processing input frames')
+            for frame in rinput.obresult.frames:                
+                hdulist = frame.open()
+                final = flow(hdulist)
+                cdata.append(final)
+                odata.append(hdulist)
+
+            if len(cdata) > 1:
+                _logger.info('stacking %d images using median', len(cdata))
+                data = median([d['primary'].data for d in cdata], dtype='float32')
+                hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header.copy())
+            else:
+                _logger.info('skip stacking 1 image')
+                img = cdata[0]
+                hdu = img[0].copy()
+
+        finally:
+            _logger.debug('closing images')
+            for hdulist in odata:
+                hdulist.close()
+                
+            del cdata
+        
+            
+        _logger.debug('update result header')
+        hdr = hdu.header
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdulist = fits.HDUList([hdu])
+
+        _logger.debug('finding pinholes')
+        
+        if rinput.shift_coordinates:
+            #get things from header
+            _logger.info('getting DTU position from header')
+            try:
+                xdtu = hdr.get('X_DTU')
+                ydtu = hdr.get('Y_DTU')
+                zdtu = hdr.get('Z_DTU')
+            except KeyError as error:
+                _logger.error(error)
+                raise RecipeError
+            _logger.info('X_DTU=%6.2f Y_DTU=%6.2f Z_DTU=%6.2f', xdtu, ydtu, zdtu)
+            # transform coordinates
+            _logger.info('transform pinhole coordinates from reference (0,0)')
+            xfac = xdtu * 0.055
+            yfac = -ydtu * 0.055
+        
+            vec = numpy.array([yfac, xfac])
+            _logger.info('shift is %s', vec)
+            ncenters = rinput.pinhole_nominal_positions + vec
+        else:
+            _logger.info('using pinhole coordinates as they are')
+            ncenters = rinput.pinhole_nominal_positions        
+        
+        
+        fwhm, gauss, phot = pinhole_char(hdul[0].data, ncenters, box=rinput.box_half_size)
+        
+        result = TestPinholeRecipeResult(frame=hdul, fwhm=fwhm, gauss=gauss, phot=phot)
+        return result
+        
+        
