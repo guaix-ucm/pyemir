@@ -193,12 +193,6 @@ class DarkRecipe(BaseRecipe):
     # @log_to_history(_logger)
     def run(self, rinput):
         _logger.info('starting dark reduction')
-
-        expt_in_ms = True
-        if expt_in_ms:
-            factor = 1e-3
-        else:
-            factor = 1.0
         
         insconf = rinput.insconf.values
         channels_name = insconf['detector']['channels']
@@ -222,7 +216,7 @@ class DarkRecipe(BaseRecipe):
                 _logger.info('ignoring bias')
                 bias_corrector = IdNode()
 
-        exposure_corrector = DivideByExposure(factor=factor)
+        exposure_corrector = DivideByExposure()
 
         basicflow = SerialFlow([bias_corrector, exposure_corrector])
 
@@ -230,7 +224,7 @@ class DarkRecipe(BaseRecipe):
                         
             for frame in rinput.obresult.frames:
                 hdulist = frame.open()
-                exposure = hdulist[0].header['EXPTIME'] * factor
+                exposure = hdulist[0].header['EXPTIME']
                 hdulist = basicflow(hdulist)
                 cdata.append(hdulist)
                 expdata.append(exposure)
@@ -338,12 +332,6 @@ class IntensityFlatRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting flat reduction')
                 
-        expt_in_ms = True
-        if expt_in_ms:
-            factor = 1e-3
-        else:
-            factor = 1.0
-
         # Loading calibrations
         with rinput.master_bias.open() as hdul:
             bunit = hdul[0].header.get('BUNIT')
@@ -360,7 +348,7 @@ class IntensityFlatRecipe(BaseRecipe):
                 bias_corrector = IdNode()
 
 
-        exposure_corrector = DivideByExposure(factor=factor)
+        exposure_corrector = DivideByExposure()
 
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
@@ -516,7 +504,7 @@ class WavelengthCalibrationRecipe(BaseRecipe):
     **Inputs:**
 
      * List of line positions
-     * Calibrations upto spectral flatfielding
+     * Calibrations up to spectral flatfielding
 
     **Outputs:**
 
