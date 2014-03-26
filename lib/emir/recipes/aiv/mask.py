@@ -91,7 +91,18 @@ def _centering_centroid_loop(data, center, box):
     threshold = mm
     _logger.debug('Threshold is %s', threshold)
     
-    rr = numpy.where(raster > threshold, raster, 0)
+    mask = raster >= threshold
+    if not numpy.any(mask):
+        _logger.warning('No points to compute centroid, threshold too high')
+        return center
+        
+    rr = numpy.where(mask, raster, 0)
+
+    r_std = rr.std()
+    r_mean = rr.mean
+    if r_st > 0:
+        snr = r_mean / r_std
+        _logger.debug('SNR is %f', snr)
     
     fi, ci = numpy.indices(raster.shape)
     
