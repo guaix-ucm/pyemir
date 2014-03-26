@@ -25,52 +25,35 @@ import logging
 import math
 
 import numpy
-
-from astropy.io import fits
-import photutils
-from astropy.modeling import models, fitting
 from scipy.spatial import distance
 import scipy.interpolate as itpl
 import scipy.optimize as opz
-
-import scipy.ndimage.filters as filters
-import scipy.ndimage as ndimage
-import matplotlib.pyplot as plt
 from astropy.modeling import models, fitting
-import scipy.stats
-from scipy.spatial import cKDTree as KDTree
-import scipy.spatial.distance
-import scipy.ndimage.measurements
-from scipy.ndimage.interpolation import map_coordinates
-from scipy.interpolate import UnivariateSpline
-import scipy.interpolate as itpl
-import scipy.optimize as opz
+from astropy.io import fits
+import photutils
 
-
-from numina.core import RecipeError
-from numina.core import BaseRecipe, RecipeRequirements, DataFrame
+from numina import __version__
+from numina.core import BaseRecipe, RecipeRequirements, RecipeError
 from numina.core import Requirement, Product, DataProductRequirement, Parameter
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
-
-from numina.array.combine import median, mean
-from numina import __version__
 from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.processing import FlatFieldCorrector, SkyCorrector
 from numina.flow import SerialFlow
 from numina.flow.processing import DivideByExposure
+from numina.array import combine
 
 from emir.core import RecipeResult
-from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from emir.dataproducts import MasterBias, MasterDark
 from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
-from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
-from emir.dataproducts import CentroidsTableType, ArrayType
+from emir.dataproducts import CoordinateList2DType
+from emir.dataproducts import ArrayType
 
 _logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
             
-GAUSS_FWHM_FACTOR = 2.354800
+#GAUSS_FWHM_FACTOR = 2.354800
 
 def img_box(center, shape, box):
 
@@ -107,10 +90,10 @@ def _centering_centroid_loop(data, center, box):
         
     rr = numpy.where(mask, braster, 0)
 
-    r_std = rr.std()
-    r_mean = rr.mean()
-    if r_std > 0:
-        snr = r_mean / r_std
+    #r_std = rr.std()
+    #r_mean = rr.mean()
+    #if r_std > 0:
+    #    snr = r_mean / r_std
         #_logger.debug('SNR is %f', snr)
     
     fi, ci = numpy.indices(braster.shape)
@@ -383,7 +366,7 @@ class TestPinholeRecipe(BaseRecipe):
                     odata.append(final)
                                  
             _logger.info('stacking %d images using median', len(cdata))
-            data = median([d[0].data for d in cdata], dtype='float32')
+            data = combine.median([d[0].data for d in cdata], dtype='float32')
             hdu = fits.PrimaryHDU(data[0], header=cdata[0][0].header.copy())
 
         finally:
@@ -403,12 +386,12 @@ class TestPinholeRecipe(BaseRecipe):
             #get things from header
             _logger.info('getting DTU position from header')
             try:
-                xdtu = hdr.get('X_DTU')
-                ydtu = hdr.get('Y_DTU')
-                zdtu = hdr.get('Z_DTU')
+                xdtu = hdr['X_DTU']
+                ydtu = hdr['Y_DTU']
+                zdtu = hdr['Z_DTU']
             except KeyError as error:
                 _logger.error(error)
-                raise RecipeError
+                raise RecipeError(error)
             _logger.info('X_DTU=%6.2f Y_DTU=%6.2f Z_DTU=%6.2f', xdtu, ydtu, zdtu)
             # transform coordinates
             _logger.info('transform pinhole coordinates from reference (0,0)')
