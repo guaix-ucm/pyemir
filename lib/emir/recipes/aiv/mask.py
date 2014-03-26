@@ -281,14 +281,20 @@ def pinhole_char(data, ncenters, box=4):
     # with radius 2.0 pixels and 4.0 pixels
     
     apertures = [2.0, 4.0]
+    mm3 = numpy.empty((centers_r.shape[0], len(apertures)+2))
+    mm3[:,0] = centers_r[:,1]
+    mm3[:,1] = centers_r[:,0]
     _logger.info('compute photometry with apertures %s', apertures)
-    mm3 = photutils.aperture_circular(data, centers_r[:,1], centers_r[:,0], apertures)
+    # FIXME: aperture_circular returns values along rows, we transpose it
+    mm3[:,2:] = numpy.transpose(photutils.aperture_circular(data, mm3[:,0], mm3[:,1], apertures))
     
     # Convert coordinates to FITS
     mm1[:,0:2] += 1
     mm2[:,0:2] += 1
+    mm3[:,0] = centers_r[:,1] + 1
+    mm3[:,1] = centers_r[:,0] + 1
     
-    return mm1, mm2, mm3.T
+    return mm1, mm2, mm3
 
 class TestPinholeRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
