@@ -222,15 +222,16 @@ def gauss_model(data, center_r):
     # background
     background = raster.min()
     
-    braster = raster - background
+    b_raster = raster - background
     
     new_c = center_r[0] - sl[0].start, center_r[1] - sl[1].start
 
-    yi, xi = numpy.indices(braster.shape)
+    yi, xi = numpy.indices(b_raster.shape)
 
-    g = models.Gaussian2D(amplitude=1.2, x_mean=new_c[1], y_mean=new_c[0], x_stddev=1.0, y_stddev=1.0)
+    g = models.Gaussian2D(amplitude=b_raster.max(), x_mean=new_c[1], y_mean=new_c[0], x_stddev=1.0, y_stddev=1.0)
     f1 = fitting.NonLinearLSQFitter()
-    t = f1(g, xi, yi, braster)
+    t = f1(g, xi, yi, b_raster)
+    
     mm = t.x_mean.value + sl[1].start, t.y_mean.value+ sl[0].start, t.amplitude.value, t.x_stddev.value, t.y_stddev.value
     return mm
 
