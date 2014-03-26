@@ -85,47 +85,66 @@ def img_box(center, shape, box):
 # returns y,x
 def _centering_centroid_loop(data, center, box):
     sl = img_box(center, data.shape, box)
+    #_logger.debug('raster center %s', center)
+    #_logger.debug('raster slice %s', sl)
+
+    
     raster = data[sl]
-    mm = raster.mean()
     
-    threshold = mm
-    _logger.debug('Threshold is %s', threshold)
+    background = raster.min()
+    #_logger.debug('Background estimation is %s', background)
     
-    mask = raster >= threshold
+    braster = raster - background
+    
+
+    threshold = braster.mean()
+    #_logger.debug('Threshold is %s', threshold)
+    
+    mask = braster >= threshold
     if not numpy.any(mask):
-        _logger.warning('No points to compute centroid, threshold too high')
+        #_logger.warning('No points to compute centroid, threshold too high')
         return center
         
-    rr = numpy.where(mask, raster, 0)
+    rr = numpy.where(mask, braster, 0)
 
     r_std = rr.std()
-    r_mean = rr.mean
-    if r_st > 0:
+    r_mean = rr.mean()
+    if r_std > 0:
         snr = r_mean / r_std
-        _logger.debug('SNR is %f', snr)
+        #_logger.debug('SNR is %f', snr)
     
-    fi, ci = numpy.indices(raster.shape)
+    fi, ci = numpy.indices(braster.shape)
     
     norm = rr.sum()
-    print norm
+    if norm <= 0.0:
+        #_logger.warning('all points in thresholded raster are 0.0')
+        return center
+        
     fm = (rr * fi).sum() / norm
     cm = (rr * ci).sum() / norm
     
     return fm + sl[0].start, cm + sl[1].start
     
 # returns y,x
-def centering_centroid(data, center, box, nloop=10):
-    toldist = 1e-3
-    ncenter = center
+def centering_centroid(data, center, box, nloop=10, toldist=1e-3, maxdist=10):
+    icenter = center.copy()
+    
     for i in range(nloop):
-        center = _centering_centroid_loop(data, ncenter, box)
+        
+        ncenter = _centering_centroid_loop(data, center, box)
+        #_logger.debug('new center is %s', ncenter)
+        # if we are to far away from the initial point, break
+        dst = distance.euclidean(icenter, ncenter)
+        if dst > maxdist:
+            return icenter, 'maximum distance (%i) from origin reached' % maxdist 
+        
         # check convergence
         dst = distance.euclidean(ncenter, center)
         if dst < toldist:
             return ncenter, 'converged in iteration %i' % i
         else:
-            ncenter = center
-    
+            center = ncenter
+        
     return ncenter, 'not converged in %i iterations' % nloop
 
 # returns y,x
@@ -181,14 +200,17 @@ def compute_fwhm(img, center):
 
     fwhm_y = compute_fwhm_1(U, V, f2, center[1])
 
-    return peak, center[0], center[1], peak, fwhm_x, fwhm_y
+    return center[0], center[1], peak, fwhm_x, fwhm_y
 
-# returns x,y
+# returns x,y, peak, fwhm_x, fwhm_y
 def compute_fwhm_global(data, center, box):
     sl = img_box(center, data.shape, box)
     raster = data[sl]
+    background = raster.min()
+    braster = raster - background
+    
     newc = center[0] - sl[0].start, center[1] - sl[1].start
-    res = compute_fwhm(raster, newc)
+    res = compute_fwhm(braster, newc)
     return res[1]+sl[1].start, res[0]+sl[0].start, res[2], res[3], res[4]
     #return res[0]+sl[0].start, res[1]+sl[1].start, res[2], res[3], res[4]
 
@@ -197,16 +219,18 @@ def gauss_model(data, center_r):
     sl = img_box(center_r, data.shape, box=(4,4))
     raster = data[sl]
     
+    # background
+    background = raster.min()
+    
+    braster = raster - background
+    
     new_c = center_r[0] - sl[0].start, center_r[1] - sl[1].start
 
-    # background
-    mm = raster - raster.min()
-
-    yi, xi = numpy.indices(raster.shape)
+    yi, xi = numpy.indices(braster.shape)
 
     g = models.Gaussian2D(amplitude=1.2, x_mean=new_c[1], y_mean=new_c[0], x_stddev=1.0, y_stddev=1.0)
     f1 = fitting.NonLinearLSQFitter()
-    t = f1(g, xi, yi, mm)
+    t = f1(g, xi, yi, braster)
     mm = t.x_mean.value + sl[1].start, t.y_mean.value+ sl[0].start, t.amplitude.value, t.x_stddev.value, t.y_stddev.value
     return mm
 
@@ -222,33 +246,48 @@ def pinhole_char(data, ncenters, box=4):
     # recentered values
     centers_r = numpy.empty_like(centers_py)
     
+    _logger.info('recenter pinhole coordinates')
     for idx, c in enumerate(centers_py):
         center, _msg = centering_centroid(data, c, box=ibox)
+        _logger.info('For pinhole %i', idx)
+        _logger.info('old center is %s', c)
+        _logger.info('new center is %s', center)
         centers_r[idx] = center
         
     mm1 = numpy.empty((centers_r.shape[0], 5))
     
     # compute the FWHM without fitting
+    _logger.info('compute model-free FWHM')
     for idx, center in enumerate(centers_r):
+        _logger.info('For pinhole %i', idx)
         res = compute_fwhm_global(data, center, box=ibox)
+        fmt = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
+        _logger.info(fmt, *res)
         mm1[idx] = res
     
     mm2 = numpy.empty((centers_r.shape[0], 5))
+    _logger.info('compute Gaussian fitting')
     # compute the FWHM fitting a Gaussian
     for idx, center in enumerate(centers_r):
-        mm2[idx] = gauss_model(data, center)
-    
+        _logger.info('For pinhole %i', idx)
+        res = gauss_model(data, center)
+        fmt = 'x=%7.2f y=%7.2f peak=%6.3f stdev_x=%6.3f stdev_y=%6.3f'
+        _logger.info(fmt, *res)
+        mm2[idx] = res
     # Photometry in coordinates
     # x=centers_r[:,1]
     # y=centers_r[:,0]
     # with radius 2.0 pixels and 4.0 pixels
-    mm3 = photutils.aperture_circular(data, centers_r[:,1], centers_r[:,0], [2., 4])
+    
+    apertures = [2.0, 4.0]
+    _logger.info('compute photometry with apertures %s', apertures)
+    mm3 = photutils.aperture_circular(data, centers_r[:,1], centers_r[:,0], apertures)
     
     # Convert coordinates to FITS
     mm1[:,0:2] += 1
     mm2[:,0:2] += 1
     
-    return mm1, mm2, mm3
+    return mm1, mm2, mm3.T
 
 class TestPinholeRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
@@ -282,6 +321,8 @@ class TestPinholeRecipe(BaseRecipe):
         with rinput.master_bias.open() as hdul:
             _logger.info('loading bias')
             mbias = hdul[0].data
+            ccdmean = mbias.mean()
+            _logger.info('mean is %s', ccdmean)
             bias_corrector = BiasCorrector(mbias)
             #bias_corrector = IdNode()
             
@@ -290,16 +331,22 @@ class TestPinholeRecipe(BaseRecipe):
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
             mdark = mdark_hdul[0].data
+            ccdmean = mdark.mean()
+            _logger.info('mean is %s', ccdmean)
             dark_corrector = DarkCorrector(mdark)
 
         with rinput.master_flat.open() as mflat_hdul:
             _logger.info('loading intensity flat')
             mflat = mflat_hdul[0].data
+            ccdmean = mflat.mean()
+            _logger.info('mean is %s', ccdmean)
             flat_corrector = FlatFieldCorrector(mflat)
 
         with rinput.master_sky.open() as msky_hdul:
             _logger.info('loading sky')
             msky = msky_hdul[0].data
+            ccdmean = msky.mean()
+            _logger.info('mean is %s', ccdmean)
             sky_corrector = SkyCorrector(msky)
 
         flow = SerialFlow([bias_corrector, exposure_corrector, 
@@ -311,34 +358,38 @@ class TestPinholeRecipe(BaseRecipe):
             _logger.info('processing input frames')
             for frame in rinput.obresult.frames:                
                 hdulist = frame.open()
+                fname = hdulist.filename()
+                if fname:
+                    _logger.info('input is %s', fname)
+                else:
+                    _logger.info('input is %s', hdulist)
+                
                 final = flow(hdulist)
-                cdata.append(final)
-                odata.append(hdulist)
+                _logger.debug('output is input: %s', final is hdulist)
 
-            if len(cdata) > 1:
-                _logger.info('stacking %d images using median', len(cdata))
-                data = median([d['primary'].data for d in cdata], dtype='float32')
-                hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header.copy())
-            else:
-                _logger.info('skip stacking 1 image')
-                img = cdata[0]
-                hdu = img[0].copy()
+                
+                cdata.append(final)
+                
+                # Files to be closed at the end
+                odata.append(hdulist)
+                if final is not hdulist:
+                    odata.append(final)
+                                 
+            _logger.info('stacking %d images using median', len(cdata))
+            data = median([d[0].data for d in cdata], dtype='float32')
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0][0].header.copy())
 
         finally:
             _logger.debug('closing images')
             for hdulist in odata:
                 hdulist.close()
-                
-            del cdata
-        
-            
+    
         _logger.debug('update result header')
         hdr = hdu.header
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdulist = fits.HDUList([hdu])
-
+        
         _logger.debug('finding pinholes')
         
         if rinput.shift_coordinates:
@@ -364,10 +415,12 @@ class TestPinholeRecipe(BaseRecipe):
             _logger.info('using pinhole coordinates as they are')
             ncenters = rinput.pinhole_nominal_positions        
         
+        _logger.info('pinhole characterization')
+        fwhm, gauss, phot = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size)
         
-        fwhm, gauss, phot = pinhole_char(hdul[0].data, ncenters, box=rinput.box_half_size)
+        hdulist = fits.HDUList([hdu])
         
-        result = TestPinholeRecipeResult(frame=hdul, fwhm=fwhm, gauss=gauss, phot=phot)
+        result = TestPinholeRecipeResult(frame=hdulist, fwhm=fwhm, gauss=gauss, phot=phot)
         return result
         
         
