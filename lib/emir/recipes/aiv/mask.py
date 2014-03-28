@@ -386,9 +386,9 @@ class TestPinholeRecipe(BaseRecipe):
             #get things from header
             _logger.info('getting DTU position from header')
             try:
-                xdtu = hdr['X_DTU']
-                ydtu = hdr['Y_DTU']
-                zdtu = hdr['Z_DTU']
+                xdtu = hdr['XDTU']
+                ydtu = hdr['YDTU']
+                zdtu = hdr['ZDTU']
             except KeyError as error:
                 _logger.error(error)
                 raise RecipeError(error)
