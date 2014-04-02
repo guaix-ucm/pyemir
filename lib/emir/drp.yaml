@@ -36,7 +36,7 @@ modes:
   uuid: a7cf7b82-e527-4d53-ad7a-3dae009a1b4e
 - date: 2012-05-21
   description: Recipe to process bias images
-  key: bias_image
+  key: BIAS_IMAGE
   name: Bias Image
   reference: IPUREMI_323
   status: DRAFT
@@ -45,7 +45,7 @@ modes:
   uuid: a7ea9c0c-76a6-4609-8413-0157102ec284
 - date: 2012-05-21
   description: Lines and mode lines
-  key: dark_image
+  key: DARK_CURRENT_IMAGE
   name: Dark current Image
   reference: IPUREMI_323
   status: DRAFT
@@ -54,7 +54,7 @@ modes:
   uuid: 5b15db30-7774-4823-9645-e8ca27a866af
 - date: 2012-05-21
   description: Lines and mode lines
-  key: intensity_flatfield
+  key: INTENSITY_FLAT_FIELD
   name: Intensity Flat-Field
   reference: IPUREMI_323
   status: DRAFT
@@ -63,7 +63,7 @@ modes:
   uuid: bd22b260-38f9-427f-bbfd-c7767dc51e33
 - date: 2012-05-21
   description: Lines and mode lines
-  key: stare_image
+  key: STARE_IMAGE
   name: Stare Image
   reference: IPUREMI_323
   status: DRAFT
@@ -72,7 +72,7 @@ modes:
   uuid: 0325bcf1-ab5c-4946-a797-e341d8f82e0d
 - date: 2012-05-21
   description: Lines and mode lines
-  key: nb_image
+  key: NODDED_BEAM_SWITCHED_IMAGE
   name: Nodded/Beam-switched images
   reference: IPUREMI_323
   status: DRAFT
@@ -81,7 +81,7 @@ modes:
   uuid: 2e9bf628-962d-4c12-b203-1a488325ac5c
 - date: 2012-05-21
   description: Lines and mode lines
-  key: dithered_image
+  key: DITHERED_IMAGE
   name: Dithered images
   reference: IPUREMI_323
   status: DRAFT
@@ -90,7 +90,7 @@ modes:
   uuid: 3675a7b5-7455-492e-947a-2e607c388d1c
 - date: 2012-05-21
   description: Lines and mode lines
-  key: microdithered_image
+  key: MICRODITHERED_IMAGE
   name: Micro-dithered images
   reference: IPUREMI_323
   status: DRAFT
@@ -99,7 +99,7 @@ modes:
   uuid: 8553b9cc-7564-469d-b230-be44051eeb90
 - date: 2012-05-21
   description: Lines and mode lines
-  key: mosaiced_image
+  key: MOSAICED_IMAGE
   name: Mosaiced images
   reference: IPUREMI_323
   status: DRAFT
@@ -142,35 +142,96 @@ modes:
   status: DRAFT
   summary: Summary of Simple Bias
   url: http://somegtc_url.es/emir/obsmode4.html
+- date: 2014-03-20
+  description: Does nothing
+  key: TEST0
+  name: Test success
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: a251e55a-ab05-4109-8717-1018b6c9dbbd
+- date: 2014-03-11
+  description: Bias correct
+  key: TEST1
+  name: Test Bias Correct
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 3847286a-e39e-419b-89bd-d53555a9043c
+- date: 2014-03-11
+  description: Dark correct
+  key: TEST2
+  name: Test Dark Correct
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 4d92f7cd-3127-4fb4-a40c-758d565d9ca9 
+- date: 2014-03-12
+  description: Flat correct
+  key: TEST3
+  name: Test Flat Correct
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: bd30730a-29ca-4b3c-a494-f95b4ce668b6
+- date: 2014-03-12
+  description: Sky subtracction
+  key: TEST5
+  name: Test sky subtraction
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: ac94be00-92ed-43d1-94f8-0bd8a6b3deef
+- date: 2014-03-12
+  description: Flat correct
+  key: TEST6
+  name: Test pinhole extraction
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 8dfef954-d3f8-4f7f-9a5a-87609ddbfb41
 pipelines:
   alt:
     recipes:
-      bias_image: emir.recipes.BiasRecipe
+      BIAS_IMAGE: emir.recipes.BiasRecipe
       cosmetics: emir.recipes.CosmeticsRecipe
       dark_current: emir.recipes.aiv.DarkCurrentRecipe
-      dark_image: emir.recipes.DarkRecipe
-      dithered_image: emir.recipes.DitheredImageRecipe
+      DARK_CURRENT_IMAGE: emir.recipes.DarkRecipe
+      DITHERED_IMAGE: emir.recipes.DitheredImageRecipe
       gain_mode1: emir.recipes.GainRecipe1
-      intensity_flatfield: emir.recipes.IntensityFlatRecipe
-      microdithered_image: emir.recipes.MicroditheredImageRecipe
-      mosaiced_image: emir.recipes.MosaicRecipe
-      nb_image: emir.recipes.NBImageRecipe
-      stare_image: emir.recipes.StareImageRecipe
+      INTENSITY_FLAT_FIELD: emir.recipes.IntensityFlatRecipe
+      MICRODITHERED_IMAGE: emir.recipes.MicroditheredImageRecipe
+      MOSAICED_IMAGE: emir.recipes.MosaicRecipe
+      NODDED_BEAM_SWITCHED_IMAGE: emir.recipes.NBImageRecipe
+      STARE_IMAGE: emir.recipes.StareImageRecipe
       fail: numina.core.utils.AlwaysFailRecipe
     version: 1
   default:
     recipes:
-      bias_image: emir.recipes.BiasRecipe
+      BIAS_IMAGE: emir.recipes.BiasRecipe
+      DARK_CURRENT_IMAGE: emir.recipes.DarkRecipe
+      DITHERED_IMAGE: emir.recipes.DitheredImageRecipe
+      INTENSITY_FLAT_FIELD: emir.recipes.IntensityFlatRecipe
+      MICRODITHERED_IMAGE: emir.recipes.MicroditheredImageRecipe
+      MOSAICED_IMAGE: emir.recipes.MosaicRecipe
+      NODDED_BEAM_SWITCHED_IMAGE: emir.recipes.NBImageRecipe
+      STARE_IMAGE: emir.recipes.StareImageRecipe
+      fail: numina.core.utils.AlwaysFailRecipe
+      gain_mode1: emir.recipes.GainRecipe1
       cosmetics: emir.recipes.CosmeticsRecipe
       dark_current: emir.recipes.aiv.DarkCurrentRecipe
-      dark_image: emir.recipes.DarkRecipe
-      dithered_image: emir.recipes.DitheredImageRecipe
-      gain_mode1: emir.recipes.GainRecipe1
-      intensity_flatfield: emir.recipes.IntensityFlatRecipe
-      microdithered_image: emir.recipes.MicroditheredImageRecipe
-      mosaiced_image: emir.recipes.MosaicRecipe
-      nb_image: emir.recipes.NBImageRecipe
-      stare_image: emir.recipes.StareImageRecipe
-      fail: numina.core.utils.AlwaysFailRecipe
       simple_bias: emir.recipes.aiv.SimpleBiasRecipe
+      TEST0: numina.core.utils.AlwaysSuccessRecipe
+      TEST1: emir.recipes.aiv.TestBiasCorrectRecipe
+      TEST2: emir.recipes.aiv.TestDarkCorrectRecipe
+      TEST3: emir.recipes.aiv.TestFlatCorrectRecipe
+      TEST4: emir.recipes.aiv.TestFlatCorrectRecipe
+      TEST5: emir.recipes.aiv.TestSkyCorrectRecipe
+      TEST6: emir.recipes.aiv.mask.TestPinholeRecipe
     version: 1

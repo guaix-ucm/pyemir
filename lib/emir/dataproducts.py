@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -19,12 +19,30 @@
 
 '''Data products produced by the EMIR pipeline.'''
 
-from numina.core import FrameDataProduct, DataProduct
+import numpy
 
-class MasterBadPixelMask(FrameDataProduct):
+from numina.core import FrameDataProduct, DataProduct
+from numina.core.requirements import InstrumentConfigurationType
+
+# FIXME
+try:
+    import ext.gtc
+except ImportError:
+    # We are not in GTC
+    pass
+    
+class EMIRConfigurationType(InstrumentConfigurationType):
+    
+    def validate(self, value):
+        super(EMIRConfigurationType, self).validate(value)
+
+class EMIRFrame(FrameDataProduct):
     pass
 
-class MasterBias(FrameDataProduct):
+class MasterBadPixelMask(EMIRFrame):
+    pass
+
+class MasterBias(EMIRFrame):
     '''Master bias product
     
     This image has 4 extensions: primary, two variance extensions
@@ -38,7 +56,7 @@ class MasterBias(FrameDataProduct):
     '''
     pass
 
-class MasterDark(FrameDataProduct):
+class MasterDark(EMIRFrame):
     '''Master dark product
     
     This image has 4 extensions: primary, two variance extensions
@@ -52,13 +70,13 @@ class MasterDark(FrameDataProduct):
     '''
     pass
 
-class DarkCurrentValue(DataProduct):
+class DarkCurrentValue(EMIRFrame):
     pass
 
-class MasterIntensityFlat(FrameDataProduct):
+class MasterIntensityFlat(EMIRFrame):
     pass
         
-class MasterSpectralFlat(FrameDataProduct):
+class MasterSpectralFlat(EMIRFrame):
     pass
 
 class Spectra(FrameDataProduct):
@@ -73,31 +91,33 @@ class TelescopeFocus(DataProduct):
 class DTUFocus(DataProduct):
     pass
 
-class DTU_XY_Calibration(DataProduct):
+class DTU_XY_Calibration(FrameDataProduct):
     pass
 
-class DTU_Z_Calibration(DataProduct):
+class DTU_Z_Calibration(FrameDataProduct):
     pass
 
-class DTUFlexureCalibration(DataProduct):
+class DTUFlexureCalibration(FrameDataProduct):
     pass
 
-class SlitTransmissionCalibration(DataProduct):
+# FIXME:
+class SlitTransmissionCalibration(FrameDataProduct):
     pass
 
-class WavelengthCalibration(DataProduct):
+# FIXME:
+class WavelengthCalibration(FrameDataProduct):
     pass
 
-class CSU2DetectorCalibration(DataProduct):
+class CSU2DetectorCalibration(FrameDataProduct):
     pass
 
-class PointingOriginCalibration(DataProduct):
+class PointingOriginCalibration(FrameDataProduct):
     pass
 
-class SpectroPhotometricCalibration(DataProduct):
+class SpectroPhotometricCalibration(FrameDataProduct):
     pass
 
-class PhotometricCalibration(DataProduct):
+class PhotometricCalibration(FrameDataProduct):
     pass
 
 class MasterGainMap(DataProduct):
@@ -121,48 +141,64 @@ class MasterRONMap(DataProduct):
         gvar = map(float, self.var.flat)
         return {'mean': gmean, 'var': gvar}
 
-    pass
-
-class NonLinearityCalibration(DataProduct):
-    def __init__(self, poly):
-        super(NonLinearityCalibration, self).__init__(default=poly)
-        self.poly = poly
-
 class TelescopeOffset(DataProduct):
     pass
+
+
+class ArrayType(DataProduct):
+    def __init__(self, default=None):
+        super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
+
+    def store(self, obj):
+        result = numpy.array(obj)
+        return result
+
+
+class CoordinateListNType(DataProduct):
+    def __init__(self, dimensions, default=None):
+        super(CoordinateListNType, self).__init__(ptype=numpy.ndarray, default=default)
+        self.N = dimensions
+
+    def validate(self, obj):
+        ndims = len(obj.shape)
+        if ndims != 2:
+            raise TypeError('%r is not a valid %r' % (obj, self.__class__.__name__))
+        if obj.shape[1] != self.N:
+            raise TypeError('%r is not a valid %r' % (obj, self.__class__.__name__))
+            
+
+    def store(self, obj):
+        result = numpy.array(obj)
+        return result
+
+class CoordinateList2DType(CoordinateListNType):
+    def __init__(self, default=None):
+        super(CoordinateList2DType, self).__init__(2, default=default)
 
 class MSMPositions(DataProduct):
     pass
 
 class SourcesCatalog(DataProduct):
-    pass
+    def __init__(self):
+        super(SourcesCatalog, self).__init__(ptype=list)
+
 
 class LinesCatalog(DataProduct):
     pass
 
-def _s_to_f(myslice):
-    b = myslice.start
-    e = myslice.stop
-    return slice(b+1, e)
+class CentroidsTableType(DataProduct):
+    '''Table with information about focus centroids.'''
+    def __init__(self):
+        super(CentroidsTableType, self).__init__(ptype=numpy.ndarray)
 
 class ChannelLevelStatistics(DataProduct):
     ''' A list of exposure time, mean, std dev and median per channel'''
-    def __init__(self, exposure=None):
+    def __init__(self, exposure, statistics):
         self.exposure = exposure
-        self.statistics = []
+        self.statistics = statistics
 
-    def __getstate__(self):
-        fname = 'statistics.txt'
-        fs = '{1.start:5} {1.stop:5} {0.start:5} {0.stop:5} {2[0]} {2[1]} {2[2]}\n'
-        with open(fname, 'w') as fd:
-            fd.write('# Channel Level Statistics\n')
-            fd.write('# comment 2\n')
-            fd.write('# pixels start in 1\n')
-            fd.write('# pixels end in 2048\n')
-            fd.write('## exposure=%s\n' % self.exposure)
-            fd.write('# xbegin xend ybegin yend mean median var\n')
-            fd.write('#\n')
-            for (regy, regx), vals in self.statistics:
-                fd.write(fs.format(_s_to_f(regy), _s_to_f(regx), vals))
-        return dict(filename=fname)
+class ChannelLevelStatisticsType(DataProduct):
+    ''' A list of exposure time, mean, std dev and median per channel'''
+    def __init__(self):
+        super(ChannelLevelStatisticsType, self).__init__(ptype=ChannelLevelStatistics)
 

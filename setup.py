@@ -31,10 +31,10 @@ setup(name='pyemir',
                      'emir': ['drp.yaml'],
                    },
       test_suite="emir.tests",
-      install_requires=['setuptools', 'numpy', 'pyfits', 
-                        'scipy', 'sphinx', 'pywcs',
+      install_requires=['setuptools', 'numpy', 
+                        'scipy', 'sphinx', 'astropy',
                         'matplotlib', 'numdisplay', 
-                        'numina>=0.10.0'],
+                        'numina>=0.11.0'],
       use_2to3=True,
       # numdisplay lives here
       dependency_links = [

@@ -1,5 +1,5 @@
 
-# Copyright 2008-2013 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -43,8 +43,8 @@ from .detectorgain import GainRecipe1
 from .cosmetics import CosmeticsRecipe
 
 class DTU_XY_CalibrationRecipeRequirements(RecipeRequirements):
-    slit_pattern = Parameter(None, 'Slit pattern'),
-    dtu_range = Parameter(None, 'DTU range: begin, end and step')
+    slit_pattern = Parameter([], 'Slit pattern'),
+    dtu_range = Parameter([], 'DTU range: begin, end and step')
 
 class DTU_XY_CalibrationRecipeResult(RecipeResult):
     calibration = Product(DTU_XY_Calibration)
@@ -69,7 +69,7 @@ class DTU_XY_CalibrationRecipe(BaseRecipe):
         return DTU_XY_CalibrationRecipeResult(calibration=DTU_XY_Calibration())
 
 class DTU_Z_CalibrationRecipeRequirements(RecipeRequirements):
-    dtu_range = Parameter(None, 'DTU range: begin, end and step')
+    dtu_range = Parameter([], 'DTU range: begin, end and step')
 
 class DTU_Z_CalibrationRecipeResult(RecipeResult):
     calibration = Product(DTU_Z_Calibration)
@@ -119,7 +119,7 @@ class DTUFlexureRecipe(BaseRecipe):
         return DTU_FlexureRecipeResult(calibration=DTUFlexureCalibration())
 
 class CSU2DetectorRecipeRequirements(RecipeRequirements):
-    dtu_range = Parameter(None, 'DTU range: begin, end and step')
+    dtu_range = Parameter([], 'DTU range: begin, end and step')
 
 class CSU2DetectorRecipeResult(RecipeResult):
     calibration = Product(DTU_XY_Calibration)
@@ -244,7 +244,7 @@ class AstrometricCalibrationRecipe(BaseRecipe):
         return AstrometricCalibrationRecipeResult(calibration=None)
 
 class PhotometricCalibrationRecipeRequirements(RecipeRequirements):
-    phot = Parameter(None, 'Information about standard stars')
+    phot = Parameter([], 'Information about standard stars')
     
 class PhotometricCalibrationRecipeResult(RecipeResult):
     calibration = Product(PhotometricCalibration)
@@ -269,7 +269,7 @@ class PhotometricCalibrationRecipe(BaseRecipe):
         return AstrometricCalibrationRecipeResult(calibration=PhotometricCalibration())
 
 class SpectroPhotometricCalibrationRecipeRequirements(RecipeRequirements):
-    sphot = Parameter(None, 'Information about standard stars')
+    sphot = Parameter([], 'Information about standard stars')
     
 class SpectroPhotometricCalibrationRecipeResult(RecipeResult):
     calibration = Product(SpectroPhotometricCalibration)

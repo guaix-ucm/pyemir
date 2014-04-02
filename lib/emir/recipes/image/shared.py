@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -28,11 +28,11 @@ import shutil
 import math
 
 import numpy
-import pyfits
-import pywcs
+from astropy.io import fits
+from astropy import wcs
 from scipy.spatial import KDTree as KDTree
 import matplotlib as mpl
-#mpl.use('Agg')
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
@@ -41,7 +41,8 @@ from numina.core import DataFrame, BaseRecipe, RecipeError
 from numina.flow import SerialFlow 
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, FlatFieldCorrector
-from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
+from numina.flow.processing import DarkCorrector
+#from numina.flow.processing import BadPixelCorrector
 from numina.array import fixpix2
 from numina.frame import resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield
@@ -82,13 +83,13 @@ def offsets_from_wcs(frames, pixref):
     
     result = numpy.zeros((len(frames), pixref.shape[1]))
 
-    with pyfits.open(frames[0]) as hdulist:
-        wcs = pywcs.WCS(hdulist[0].header)
+    with fits.open(frames[0]) as hdulist:
+        wcs = wcs.WCS(hdulist[0].header)
         skyref = wcs.wcs_pix2sky(pixref, 1)
 
     for idx, frame in enumerate(frames[1:]):
-        with pyfits.open(frame) as hdulist:
-            wcs = pywcs.WCS(hdulist[0].header)
+        with fits.open(frame) as hdulist:
+            wcs = wcs.WCS(hdulist[0].header)
             pixval = wcs.wcs_sky2pix(skyref, 1)
             result[idx + 1] = pixval[0] - pixref[0]
 
@@ -190,31 +191,29 @@ class DirectImageCommon(BaseRecipe):
                 # Basic processing
                 
                 # FIXME: add this
-                #bpm = pyfits.getdata(reqs.master_bpm)
+                #bpm = fits.getdata(reqs.master_bpm)
                 #bpm_corrector = BadPixelCorrector(bpm)
                 
                 if reqs.master_bias:
-                    mbias = pyfits.getdata(reqs.master_bias)
+                    mbias = fits.getdata(reqs.master_bias)
                     bias_corrector = BiasCorrector(mbias)
                 else:
                     bias_corrector = IdNode()
             
-                mdark = pyfits.getdata(reqs.master_dark.label)
+                mdark = fits.getdata(reqs.master_dark.label)
                 dark_corrector = DarkCorrector(mdark)
-                nl_corrector = NonLinearityCorrector(reqs.nonlinearity)
 
-                mflat = pyfits.getdata(reqs.master_intensity_ff.label)
+                mflat = fits.getdata(reqs.master_flat.label)
                 ff_corrector = FlatFieldCorrector(mflat)  
                   
                 basicflow = SerialFlow([#bpm_corrector,
                                         bias_corrector, 
                                         dark_corrector, 
-                                        nl_corrector,
                                         ff_corrector
                                         ])
 
                 for frame in obresult.frames:
-                    with pyfits.open(frame.label, mode='update') as hdulist:
+                    with fits.open(frame.label, mode='update') as hdulist:
                             hdulist = basicflow(hdulist)
                   
                 if stop_after == state:
@@ -245,7 +244,7 @@ class DirectImageCommon(BaseRecipe):
                 for frame in obresult.frames:
                     
                     # Getting some metadata from FITS header
-                    hdr = pyfits.getheader(frame.label)
+                    hdr = fits.getheader(frame.label)
                     try:
                         frame.exposure = hdr[str(keywords['exposure'])]
                         #frame.baseshape = get_image_shape(hdr)
@@ -373,7 +372,7 @@ class DirectImageCommon(BaseRecipe):
                     frame.objmask = name_object_mask(frame.baselabel, step)
                     _logger.info('Step %d, create object mask %s', step,  frame.objmask)                 
                     frame.objmask_data = objmask[frame.valid_region]
-                    pyfits.writeto(frame.objmask, frame.objmask_data, clobber=True)
+                    fits.writeto(frame.objmask, frame.objmask_data, clobber=True)
                     
                 if not target_is_sky:
                     # Empty object mask for sky frames
@@ -416,7 +415,7 @@ class DirectImageCommon(BaseRecipe):
         if sf_data is None:
             raise RecipeError('no combined image has been generated at step %d', state)
 
-        hdu = pyfits.PrimaryHDU(sf_data[0])                
+        hdu = fits.PrimaryHDU(sf_data[0])                
         hdr = hdu.header
         hdr.update('NUMXVER', __version__, 'Numina package version')
         hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
@@ -426,10 +425,10 @@ class DirectImageCommon(BaseRecipe):
         hdr.update('IMGTYP', 'TARGET', 'Image type')
         hdr.update('NUMTYP', 'TARGET', 'Data product type')
         
-        varhdu = pyfits.ImageHDU(sf_data[1], name='VARIANCE')
-        num = pyfits.ImageHDU(sf_data[2], name='MAP')
+        varhdu = fits.ImageHDU(sf_data[1], name='VARIANCE')
+        num = fits.ImageHDU(sf_data[2], name='MAP')
 
-        result = pyfits.HDUList([hdu, varhdu, num])        
+        result = fits.HDUList([hdu, varhdu, num])        
         
         _logger.info("Final frame created")        
         
@@ -473,7 +472,7 @@ class DirectImageCommon(BaseRecipe):
                 sky = skyframe.median_sky
         else:
         
-            with pyfits.open(skyframe.lastname, mode='readonly') as hdulist:
+            with fits.open(skyframe.lastname, mode='readonly') as hdulist:
                 data = hdulist['primary'].data
                 valid = data[frame.valid_region]
 
@@ -499,7 +498,7 @@ class DirectImageCommon(BaseRecipe):
         
         frame.lastname = dst
         
-        with pyfits.open(frame.lastname, mode='update') as hdulist:
+        with fits.open(frame.lastname, mode='update') as hdulist:
             data = hdulist['primary'].data
             valid = data[frame.valid_region]
             valid -= sky
@@ -569,7 +568,7 @@ class DirectImageCommon(BaseRecipe):
         try:
             for i in skyframes:
                 filename = i.flat_corrected
-                hdulist = pyfits.open(filename, mode='readonly', memmap=True)
+                hdulist = fits.open(filename, mode='readonly', memmap=True)
                 
                 data.append(hdulist['primary'].data[i.valid_region])
                 desc.append(hdulist)
@@ -578,7 +577,7 @@ class DirectImageCommon(BaseRecipe):
                     masks.append(i.objmask_data)
                     _logger.debug('object mask is shared')
                 elif i.objmask is not None: 
-                    hdulistmask = pyfits.open(i.objmask, mode='readonly', memmap=True)
+                    hdulistmask = fits.open(i.objmask, mode='readonly', memmap=True)
                     masks.append(hdulistmask['primary'].data)
                     desc.append(hdulistmask)
                     _logger.debug('object mask is particular')
@@ -604,16 +603,16 @@ class DirectImageCommon(BaseRecipe):
             # To continue we interpolate over the patches
             fixpix2(sky, binmask, out=sky, iterations=1)
             name = name_skybackground(frame.baselabel, step)
-            pyfits.writeto(name, sky, clobber=True)
+            fits.writeto(name, sky, clobber=True)
             name = name_skybackgroundmask(frame.baselabel, step)
-            pyfits.writeto(name, binmask.astype('int16'), clobber=True)        
+            fits.writeto(name, binmask.astype('int16'), clobber=True)        
                 
         dst = name_skysub_proc(frame.baselabel, step)
         prev = frame.lastname        
         shutil.copyfile(prev, dst)        
         frame.lastname = dst
         
-        with pyfits.open(frame.lastname, mode='update') as hdulist:
+        with fits.open(frame.lastname, mode='update') as hdulist:
             data = hdulist['primary'].data
             valid = data[frame.valid_region]
             valid -= sky
@@ -625,7 +624,7 @@ class DirectImageCommon(BaseRecipe):
 
         def fits_open(name):
             '''Open FITS with memmap in readonly mode'''
-            return pyfits.open(name, mode='readonly', memmap=True)
+            return fits.open(name, mode='readonly', memmap=True)
 
         frameslll = [fits_open(frame.lastname) for frame in frames if frame.valid_target]
         _logger.debug('Step %d, opening mask frames', step)
@@ -639,9 +638,9 @@ class DirectImageCommon(BaseRecipe):
             out = quantileclip(data, masks, scales=extinc, dtype='float32', out=out, fclip=0.1)
             
             # saving the three extensions
-            pyfits.writeto('result_i%0d.fits' % step, out[0], clobber=True)
-            pyfits.writeto('result_var_i%0d.fits' % step, out[1], clobber=True)
-            pyfits.writeto('result_npix_i%0d.fits' % step, out[2], clobber=True)
+            fits.writeto('result_i%0d.fits' % step, out[0], clobber=True)
+            fits.writeto('result_var_i%0d.fits' % step, out[1], clobber=True)
+            fits.writeto('result_npix_i%0d.fits' % step, out[2], clobber=True)
                 
             return out
             
@@ -670,7 +669,7 @@ class DirectImageCommon(BaseRecipe):
             os.rename(frame.resized_base, frame.flat_corrected)
         
         _logger.info("Step %d, SF: apply superflat to frame %s", step, frame.flat_corrected)
-        with pyfits.open(frame.flat_corrected, mode='update') as hdulist:
+        with fits.open(frame.flat_corrected, mode='update') as hdulist:
             data = hdulist['primary'].data
             datar = data[frame.valid_region]
             data[frame.valid_region] = correct_flatfield(datar, fitted)
@@ -691,7 +690,7 @@ class DirectImageCommon(BaseRecipe):
             masks = []
             for frame in frames:
                 _logger.debug('Step %d, opening resized frame %s', step, frame.resized_base)
-                hdulist = pyfits.open(frame.resized_base, memmap=True, mode='readonly')
+                hdulist = fits.open(frame.resized_base, memmap=True, mode='readonly')
                 filelist.append(hdulist)
                 data.append(hdulist['primary'].data[frame.valid_region])
 
@@ -705,7 +704,7 @@ class DirectImageCommon(BaseRecipe):
             else:
                 for frame in frames:
                     _logger.debug('Step %d, opening resized mask %s', step, frame.resized_mask)
-                    hdulist = pyfits.open(frame.resized_mask, memmap=True, mode='readonly')
+                    hdulist = fits.open(frame.resized_mask, memmap=True, mode='readonly')
                     filelist.append(hdulist)
                     masks.append(hdulist['primary'].data[frame.valid_region])
             
@@ -729,7 +728,7 @@ class DirectImageCommon(BaseRecipe):
         sf_data /= sf_data.mean()
         
         # Auxiliary data
-        sfhdu = pyfits.PrimaryHDU(sf_data)            
+        sfhdu = fits.PrimaryHDU(sf_data)            
         sfhdu.writeto(name_skyflat('comb', step), clobber=True)
         return sf_data
         
@@ -738,8 +737,8 @@ class DirectImageCommon(BaseRecipe):
         # FIXME: not sure
         for frame in frames:
             region = frame.valid_region
-            data = pyfits.getdata(frame.resized_base)[region]
-            mask = pyfits.getdata(frame.resized_mask)[region]
+            data = fits.getdata(frame.resized_base)[region]
+            mask = fits.getdata(frame.resized_mask)[region]
             # FIXME: while developing this ::10 is faster, remove later            
             frame.median_scale = numpy.median(data[mask == 0][::10])
             _logger.debug('median value of %s is %f', frame.resized_base, frame.median_scale)
@@ -826,7 +825,7 @@ class DirectImageCommon(BaseRecipe):
         ndata[mask] = 0
         self.figure_simple_image(fake, title='Fake sky error image')
         # store fake image
-        pyfits.writeto('fake_sky_rms_i%0d.fits' % step, fake, clobber=True)
+        fits.writeto('fake_sky_rms_i%0d.fits' % step, fake, clobber=True)
         
     def figure_check_combination(self, rnimage, rmean, rstd, step=0):            
         self._figure.clf()
@@ -1025,7 +1024,7 @@ class DirectImageCommon(BaseRecipe):
             # than 10% of the images
             lower = sf_data[2].max() / 10
             wm[wm < lower] = 0
-            pyfits.writeto(weigthmap, wm, clobber=True)
+            fits.writeto(weigthmap, wm, clobber=True)
                                 
             sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             # FIXME: this is a magic number
@@ -1082,7 +1081,7 @@ class DirectImageCommon(BaseRecipe):
             seeing_fwhm = None
         else:
             _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
-        objmask = pyfits.getdata(name_segmask(step))
+        objmask = fits.getdata(name_segmask(step))
         return objmask, seeing_fwhm
     
     def figure_final_before_s(self, data):

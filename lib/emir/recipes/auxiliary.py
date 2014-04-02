@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -22,10 +22,10 @@
 import logging
 
 import numpy
-import pyfits
+from astropy.io import fits
 from numina.core import RecipeError
 from numina.core import BaseRecipe, RecipeRequirements, DataFrame
-from numina.core import Requirement, Product, DataProductRequirement
+from numina.core import Product, DataProductRequirement
 from numina.core import define_requirements, define_result
 from numina.logger import log_to_history
 from numina.array.combine import median
@@ -33,12 +33,18 @@ from numina import __version__
 from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector
-from numina.flow.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
+from numina.flow.processing import DarkCorrector
+from numina.flow.processing import DivideByExposure
+# from numina.flow.processing import BadPixelCorrector
+from numina.core.requirements import ObservationResultRequirement
+from numina.core.requirements import InstrumentConfigurationRequirement
 
+import emir.instrument.channels as allchannels
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emir.dataproducts import NonLinearityCalibration, MasterIntensityFlat
+from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import WavelengthCalibration, MasterSpectralFlat
+from emir.dataproducts import ChannelLevelStatisticsType
 from emir.dataproducts import SlitTransmissionCalibration, ChannelLevelStatistics
 
 __all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
@@ -50,11 +56,13 @@ _logger = logging.getLogger('numina.recipes.emir')
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 class BiasRecipeRequirements(RecipeRequirements):
-    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask', optional=True)
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
 
 class BiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
-    stats = Product(ChannelLevelStatistics)
+    stats = Product(ChannelLevelStatisticsType)
 
 @define_requirements(BiasRecipeRequirements)
 @define_result(BiasRecipeResult)
@@ -86,67 +94,78 @@ class BiasRecipe(BaseRecipe):
 
     # FIXME find a better way of doing this automatically
     # @log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         _logger.info('starting bias reduction')
 
+        
+        insconf = rinput.insconf.values
+        channels_name = insconf['detector']['channels']
+        channels = getattr(allchannels, channels_name)
+        
         cdata = []
-
         try:
-            for frame in obresult.frames:
-                hdulist = pyfits.open(frame.label, memmap=True, mode='readonly')
-                cdata.append(hdulist)
+            for frame in rinput.obresult.frames:
+                cdata.append(frame.open())
 
             _logger.info('stacking %d images using median', len(cdata))
             
             data = median([d['primary'].data for d in cdata], dtype='float32')
-
-            var2 = numpy.zeros_like(data[0])
-            cls = ChannelLevelStatistics(exposure=0.0)
-            for region in self.instrument.detector['channels']:
-                mean = numpy.mean(data[0][region])
-                med = numpy.median(data[0][region])
-                var = numpy.var(data[0][region])
-                stts = mean, med, var
-                cls.statistics.append([region, stts])
-                var2[region] = var
-
-            hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['PRIMARY'].header)
-    
-            # update hdu header with
-            # reduction keywords
-            hdr = hdu.header
-            #hdr.update('FILENAME', 'master_bias-%(block_id)d.fits' % self.environ)
-            hdr.update('IMGTYP', 'BIAS', 'Image type')
-            hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
-            hdr.update('NUMXVER', __version__, 'Numina package version')
-            hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
-            hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
-
-            exhdr = pyfits.Header()
-            exhdr.update('extver', 1)
-            varhdu = pyfits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
-            exhdr = pyfits.Header()
-            exhdr.update('extver', 2)
-            var2hdu = pyfits.ImageHDU(var2, name='VARIANCE', header=exhdr)
-            num = pyfits.ImageHDU(data[2], name='MAP')
-
-            hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
-
-            _logger.info('bias reduction ended')
-            
-            result = BiasRecipeResult(biasframe=DataFrame(hdulist),
-                                      stats=cls)
-            return result
+            template_header = cdata[0]['PRIMARY'].header
+            hdu = fits.PrimaryHDU(data[0], header=template_header)
         finally:
             for hdulist in cdata:
                 hdulist.close()
+
+        var2 = numpy.zeros_like(data[0])
+        
+        def _s_to_f(myslice):
+            b = myslice.start
+            e = myslice.stop
+            return b+1, e
+        
+        statistics = numpy.empty((len(channels), 7))
+        for idx, region in enumerate(channels):
+            mean = numpy.mean(data[0][region])
+            med = numpy.median(data[0][region])
+            var = numpy.var(data[0][region])
+            regy, regx = region
+            stats = _s_to_f(regy) + _s_to_f(regx) + (mean, med, var)
+            statistics[idx, :] = stats 
+            var2[region] = var
+    
+        cls = ChannelLevelStatistics(exposure=0.0, statistics=statistics)
+        # update hdu header with
+        # reduction keywords
+        hdr = hdu.header
+        hdr['IMGTYP'] = ('BIAS', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['CCDMEAN'] = data[0].mean()
+
+        exhdr = fits.Header()
+        exhdr['extver'] = 1
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
+        exhdr = fits.Header()
+        exhdr['extver'] = 2
+        var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
+        num = fits.ImageHDU(data[2], name='MAP')
+
+        hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
+
+        _logger.info('bias reduction ended')
+            
+        result = BiasRecipeResult(biasframe=DataFrame(hdulist),
+                                      stats=cls)
+        return result
             
 class DarkRecipeRequirements(BiasRecipeRequirements):
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
 
 class DarkRecipeResult(RecipeResult):
     darkframe = Product(MasterDark)
-    stats = Product(ChannelLevelStatistics)
+    stats = Product(ChannelLevelStatisticsType)
 
 @define_requirements(DarkRecipeRequirements)
 @define_result(DarkRecipeResult)
@@ -172,17 +191,41 @@ class DarkRecipe(BaseRecipe):
         super(DarkRecipe, self).__init__(author=_s_author, version="0.1.0")
         
     # @log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         _logger.info('starting dark reduction')
-
+        
+        insconf = rinput.insconf.values
+        channels_name = insconf['detector']['channels']
+        channels = getattr(allchannels, channels_name)
+        
         cdata = []
         expdata = []
 
+        # Basic processing
+        with rinput.master_bias.open() as hdul:
+            bunit = hdul[0].header.get('BUNIT')
+            if bunit and bunit.lower() == 'adu':
+                _logger.info('loading bias')
+                mbias = hdul[0].data
+                # FIXME
+                # check the READMODE of BIAS
+                # to see if its in an
+                # impossible mode
+                bias_corrector = BiasCorrector(mbias)
+            else:
+                _logger.info('ignoring bias')
+                bias_corrector = IdNode()
+
+        exposure_corrector = DivideByExposure()
+
+        basicflow = SerialFlow([bias_corrector, exposure_corrector])
+
         try:
                         
-            for frame in obresult.frames:
-                hdulist = pyfits.open(frame.label, memmap=True, mode='readonly')
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open()
                 exposure = hdulist[0].header['EXPTIME']
+                hdulist = basicflow(hdulist)
                 cdata.append(hdulist)
                 expdata.append(exposure)
 
@@ -193,67 +236,60 @@ class DarkRecipe(BaseRecipe):
             _logger.info('stacking %d images using median', len(cdata))
             
             data = median([d['primary'].data for d in cdata], dtype='float32')
-            hdu = pyfits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
             
         finally:
             for hdulist in cdata:
                 hdulist.close()
 
-        if reqs.master_bias is not None:
-            # load bias
-            
-            master_bias = pyfits.open(reqs.master_bias, mode='readonly')
-            _logger.info('subtracting bias %s', str(reqs.master_bias))
-            # subtrac bias
-            data[0] -= master_bias[0].data
-            
-            idx = master_bias.index_of(('variance', 1))
-            data[1] += master_bias[idx].data
-            
-
         var2 = numpy.zeros_like(data[0])
 
-        cls = ChannelLevelStatistics(exposure=exposure)
-        for region in self.instrument.detector['channels']:
+        def _s_to_f(myslice):
+            b = myslice.start
+            e = myslice.stop
+            return b+1, e
+        
+        statistics = numpy.empty((len(channels), 7))
+        for idx, region in enumerate(channels):
             mean = numpy.mean(data[0][region])
             med = numpy.median(data[0][region])
             var = numpy.var(data[0][region])
-            stts = mean, med, var
-            cls.statistics.append([region, stts])
+            regy, regx = region
+            stats = _s_to_f(regy) + _s_to_f(regx) + (mean, med, var)
+            statistics[idx, :] = stats 
             var2[region] = var
-
+    
+        cls = ChannelLevelStatistics(exposure=expdata[0], statistics=statistics)
         # update hdu header with
         # reduction keywords
         hdr = hdu.header
-        hdr.update('NUMXVER', __version__, 'Numina package version')
-        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
-        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        hdr['NUMXVER'] = ( __version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['BUNIT'] = 'ADU/s'
         
-        #hdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
-        hdr.update('IMGTYP', 'DARK', 'Image type')
-        hdr.update('NUMTYP', 'MASTER_DARK', 'Data product type')
+        hdr['IMGTYP'] = ('DARK', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_DARK', 'Data product type')
+        hdr['CCDMEAN'] = data[0].mean()
         
-        exhdr = pyfits.Header()
-        exhdr.update('extver', 1)
-        varhdu = pyfits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
-        exhdr = pyfits.Header()
-        exhdr.update('extver', 2)
-        var2hdu = pyfits.ImageHDU(var2, name='VARIANCE', header=exhdr)
-        num = pyfits.ImageHDU(data[2], name='MAP')
+        exhdr = fits.Header()
+        exhdr['extver'] = 1
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
+        exhdr = fits.Header()
+        exhdr['extver'] = 2
+        var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
+        num = fits.ImageHDU(data[2], name='MAP')
 
-        hdulist = pyfits.HDUList([hdu, varhdu, var2hdu, num])
-
-        md = DataFrame(hdulist)
+        hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
 
         _logger.info('dark reduction ended')
-        result = DarkRecipeResult(darkframe=md,
+        result = DarkRecipeResult(darkframe=hdulist,
                                       stats=cls)
         return result
 
 
 class IntensityFlatRecipeRequirements(DarkRecipeRequirements):
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
 
 class IntensityFlatRecipeResult(RecipeResult):
     flatframe = Product(MasterIntensityFlat)
@@ -293,100 +329,73 @@ class IntensityFlatRecipe(BaseRecipe):
                         version="0.1.0"
                 )
         
-    #@log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         _logger.info('starting flat reduction')
                 
-        # Basic processing
-        if reqs.master_bias:
-            mbias = pyfits.getdata(reqs.master_bias)
-            bias_corrector = BiasCorrector(mbias)
-        else:
-            bias_corrector = IdNode()
-            
-        mdark = pyfits.getdata(reqs.master_dark.label)
-        dark_corrector = DarkCorrector(mdark)
-        nl_corrector = NonLinearityCorrector(reqs.nonlinearity)
-        
-        
-        basicflow = SerialFlow([bias_corrector, dark_corrector, nl_corrector])
-        
-        _logger.info('basic frame reduction')
-        for frame in obresult.frames:
+        # Loading calibrations
+        with rinput.master_bias.open() as hdul:
+            bunit = hdul[0].header.get('BUNIT')
+            if bunit and bunit.lower() == 'adu':
+                _logger.info('loading bias')
+                mbias = hdul[0].data
+                # FIXME
+                # check the READMODE of BIAS
+                # to see if its in an
+                # impossible mode
+                bias_corrector = BiasCorrector(mbias)
+            else:
+                _logger.info('ignoring bias')
+                bias_corrector = IdNode()
 
-            with pyfits.open(frame.label, mode='update') as hdulist:
-                hdulist = basicflow(hdulist)
 
-        # combine LAMP-ON
-        _logger.info('gathering LAMPON frames')
-        lampon = [img.label for img in obresult.frames if img.itype == 'LAMPON']
-        if not lampon:
-            _logger.error('no LAMPON images in the ObservationResult')
-            raise RecipeError('no LAMPON images in the ObservationResult')
-        
-        dataon = self.stack_images(lampon)
-                
-        # combine LAMP-OFF
-        _logger.info('gathering LAMPOFF frames')
-        lampoff = [img.label for img in obresult.frames if img.itype == 'LAMPOFF']
-        if not lampoff:
-            _logger.error('no LAMPOFF images in the ObservationResult')
-            raise RecipeError('no LAMPOFF images in the ObservationResult')
-        
-        dataoff = self.stack_images(lampoff)
-        
-        # Subtract
-        datafin = dataon[0] - dataoff[0]
-        varfin = dataon[1] + dataoff[1]
-        mapfin = dataon[2] + dataoff[2]
+        exposure_corrector = DivideByExposure()
 
-        meanval = datafin.mean()
-        
-        datafin /= meanval
-        varfin /= (meanval * meanval)
+        with rinput.master_dark.open() as mdark_hdul:
+            _logger.info('loading dark')
+            mdark = mdark_hdul[0].data
+            dark_corrector = DarkCorrector(mdark)
 
-        hdu = pyfits.PrimaryHDU(datafin)
-
-        # update hdu header with
-        # reduction keywords
-        hdr = hdu.header
-        hdr.update('NUMXVER', __version__, 'Numina package version')
-        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
-        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
-        
-        #hdr.update('FILENAME', 'master_intensity_flat-%(block_id)d.fits' % self.environ)
-        hdr.update('IMGTYP', 'FLAT', 'Image type')
-        hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
-        
-        varhdu = pyfits.ImageHDU(varfin, name='VARIANCE')
-        num = pyfits.ImageHDU(mapfin, name='MAP')
-
-        hdulist = pyfits.HDUList([hdu, varhdu, num])
-
-        md = DataFrame(hdulist)
-
-        result = IntensityFlatRecipeResult(flatframe=md)
-
-        return result
-        
-        
-    def stack_images(self, images):
-        
+        basicflow = SerialFlow([bias_corrector, exposure_corrector, 
+                dark_corrector])
+       
         cdata = []
-
         try:
-            for name in images:
-                hdulist = pyfits.open(name, memmap=True, mode='readonly')
+            _logger.info('basic frame reduction')
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open()
+                hdulist = basicflow(hdulist)
                 cdata.append(hdulist)
 
             _logger.info('stacking %d images using median', len(cdata))
             
             data = median([d['primary'].data for d in cdata], dtype='float32')
-            return data
-            
+            # divide data by its own mean
+            # FIXME, check that the mean is not zero or negative...
+            mm = data[0].mean()
+            hdu = fits.PrimaryHDU(data[0] / mm, header=cdata[0]['primary'].header)
         finally:
             for hdulist in cdata:
                 hdulist.close()
+
+        # update hdu header with
+        # reduction keywords
+        hdr = hdu.header
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        
+        hdr['IMGTYP'] = ('FLAT', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_FLAT', 'Data product type')
+        hdr['BUNIT'] = 'ADU/s'
+        
+        varhdu = fits.ImageHDU(data[1] / (mm*mm), name='VARIANCE')
+        num = fits.ImageHDU(data[2], name='MAP')
+
+        hdulist = fits.HDUList([hdu, varhdu, num])
+
+        result = IntensityFlatRecipeResult(flatframe=hdulist)
+
+        return result
         
         
 class SpectralFlatRecipeRequirements(IntensityFlatRecipeRequirements):
@@ -429,14 +438,13 @@ class SpectralFlatRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, obresult, reqs):
+    def run(self, obresult, rinput):
         return SpectralFlatRecipeResult(flatframe=MasterSpectralFlat(None))
 
 class SlitTransmissionRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
 
 class SlitTransmissionRecipeResult(RecipeResult):
     slit = Product(SlitTransmissionCalibration)
@@ -471,15 +479,14 @@ class SlitTransmissionRecipe(BaseRecipe):
         )
 
     @log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, obresult, rinput):
         return SlitTransmissionRecipeResult(slit=SlitTransmissionCalibration())
 
 class WavelengthCalibrationRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     master_spectral_ff = DataProductRequirement(MasterSpectralFlat, 'Master spectral flatfield')
         
 class WavelengthCalibrationRecipeResult(RecipeResult):
@@ -497,7 +504,7 @@ class WavelengthCalibrationRecipe(BaseRecipe):
     **Inputs:**
 
      * List of line positions
-     * Calibrations upto spectral flatfielding
+     * Calibrations up to spectral flatfielding
 
     **Outputs:**
 
@@ -515,7 +522,7 @@ class WavelengthCalibrationRecipe(BaseRecipe):
         )
 
     @log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, obresult, rinput):
         return WavelengthCalibrationRecipeResult(cal=WavelengthCalibration())
 
 

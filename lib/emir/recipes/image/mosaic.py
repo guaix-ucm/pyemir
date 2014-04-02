@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -35,7 +35,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 class MosaicRecipeRequirements(RecipeRequirements):
     # FIXME: this parameter is optional 
-    sources = Parameter(None, 'List of x, y coordinates to measure FWHM')
+    sources = Parameter([], 'List of x, y coordinates to measure FWHM')
 
 class MosaicRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)

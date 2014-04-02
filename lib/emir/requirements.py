@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -23,8 +23,20 @@ from numina.core import Parameter, DataProductRequirement, Requirement
 
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
-from emir.dataproducts import NonLinearityCalibration
-from emir.dataproducts import SourcesCatalog
+#from emir.dataproducts import SourcesCatalog
+from emir.dataproducts import EMIRConfigurationType
+
+class EMIRConfigurationRequirement(Requirement):
+    '''The Recipe requires the configuration of EMIR.'''
+    def __init__(self):
+        
+        super(EMIRConfigurationRequirement, self).__init__("EMIR Configuration", 
+            type=EMIRConfigurationType, validate=True)
+
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
+
 
 class MasterBadPixelMask_Requirement(DataProductRequirement):
     def __init__(self):
@@ -40,16 +52,10 @@ class MasterDark_Requirement(DataProductRequirement):
     def __init__(self):
         super(MasterDark_Requirement, self).__init__(MasterDark, 'Master DARK image')
         
-class NonLinearityCalibration_Requirement(DataProductRequirement):
-    def __init__(self):
-        super(NonLinearityCalibration_Requirement, self).__init__(NonLinearityCalibration([1.0, 0.0]), 
-            'Polynomial for non-linearity correction')
-        
 class MasterIntensityFlatField_Requirement(DataProductRequirement):
     def __init__(self):
         super(MasterIntensityFlatField_Requirement, 
               self).__init__(MasterIntensityFlat, 'Master intensity flatfield')
-              
               
 class Extinction_Requirement(Parameter):
     def __init__(self):
@@ -62,11 +68,11 @@ class SkyImageSepTime_Requirement(Parameter):
         
 class Catalog_Requirement(Parameter):
     def __init__(self, optional=True):
-        super(Catalog_Requirement, self).__init__(None, 
+        super(Catalog_Requirement, self).__init__([], 
               'List of x, y coordinates to measure FWHM',
               optional=optional)
         
 class Offsets_Requirement(Parameter):
     def __init__(self, optional=True):
-        super(Offsets_Requirement, self).__init__(None, 'List of pairs of offsets',
+        super(Offsets_Requirement, self).__init__([], 'List of pairs of offsets',
                                                   optional=optional)

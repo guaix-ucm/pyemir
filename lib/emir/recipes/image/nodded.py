@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -30,7 +30,6 @@ from numina.core import Product, FrameDataProduct
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
-from emir.dataproducts import NonLinearityCalibration
 from emir.dataproducts import SourcesCatalog
 from emir.requirements import Offsets_Requirement
 from emir.requirements import SkyImageSepTime_Requirement
@@ -41,12 +40,10 @@ class NBImageRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
-              'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+    master_flat = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
     extinction = Parameter(0.0, 'Mean atmospheric extinction') 
-    sources = Parameter(None, 'List of x, y coordinates to measure FWHM', optional=True)
+    sources = Parameter([], 'List of x, y coordinates to measure FWHM', optional=True)
     offsets = Offsets_Requirement()
     sky_images = Parameter(5, 'Images used to estimate the background before and after current image')
     sky_images_sep_time = SkyImageSepTime_Requirement()

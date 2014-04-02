@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -21,7 +21,7 @@
 
 import logging
 
-__version__ = '0.7.4'
+__version__ = '0.8.0dev'
 
 
 # Top level NullHandler

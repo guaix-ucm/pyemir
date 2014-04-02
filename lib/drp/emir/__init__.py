@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2013 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -22,3 +22,5 @@
 from numina.core import drp_load
 
 __numina_drp__ = drp_load('emir', 'drp.yaml')
+
+__numina_store__ = {'default': 'emir.store'}

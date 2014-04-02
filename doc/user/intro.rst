@@ -15,8 +15,7 @@ be able to be installed and work properly:
  - `setuptools <http://peak.telecommunity.com/DevCenter/setuptools>`_
  - `numpy <http://numpy.scipy.org/>`_
  - `scipy <http://www.scipy.org>`_
- - `pyfits <http://www.stsci.edu/resources/software_hardware/pyfits>`_
- - `pywcs <http://stsdas.stsci.edu/astrolib/pywcs/>`_
+ - `astropy <http://www.astropy.org>`_
  - `matplotlib <http://matplotlib.sourceforge.net/>`_
  - `numdisplay <http://stsdas.stsci.edu/numdisplay/>`_
 

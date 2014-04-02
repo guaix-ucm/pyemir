@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2013 Universidad Complutense de Madrid
+# Copyright 2010-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -24,9 +24,8 @@ import math
 
 import numpy
 import scipy.stats
-import pyfits
+from astropy.io import fits
 
-import numina.qa
 from numina.core import BaseRecipe, Parameter, DataFrame
 from numina.core import RecipeError,RecipeRequirements
 from numina.core import Product, define_requirements, define_result
@@ -94,10 +93,10 @@ class GainRecipe1(BaseRecipe):
 
         last_reset = resets[-1]
         _logger.debug('opening last reset image %s', last_reset)
-        last_reset_data = pyfits.getdata(last_reset)
+        last_reset_data = fits.getdata(last_reset)
 
         for i, di in enumerate(ramps):
-            with pyfits.open(di, mode='readonly') as fd:
+            with fits.open(di, mode='readonly') as fd:
                 restdata = fd[0].data - last_reset_data
                 for j, channel in enumerate(channels):    
                     c = restdata[channel].mean()
@@ -118,9 +117,9 @@ class GainRecipe1(BaseRecipe):
             cube[0][channel] = gain
             cube[1][channel] = var
         
-        hdu = pyfits.PrimaryHDU(cube[0])
-        hduvar = pyfits.ImageHDU(cube[1])
-        hdulist = pyfits.HDUList([hdu, hduvar])
+        hdu = fits.PrimaryHDU(cube[0])
+        hduvar = fits.ImageHDU(cube[1])
+        hdulist = fits.HDUList([hdu, hduvar])
 
         gain = MasterGainMap(mean=result_gain, var=numpy.array([]), 
                     frame=DataFrame(hdulist))

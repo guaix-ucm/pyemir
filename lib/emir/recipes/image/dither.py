@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -28,7 +28,7 @@ from numina.core import define_requirements, define_result
 
 from emir.core import RecipeResult
 from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
-from emir.requirements import MasterDark_Requirement, NonLinearityCalibration_Requirement
+from emir.requirements import MasterDark_Requirement
 from emir.requirements import MasterIntensityFlatField_Requirement
 from emir.requirements import Extinction_Requirement
 from emir.requirements import Offsets_Requirement
@@ -48,8 +48,7 @@ class DitheredImageRecipeRequirements(RecipeRequirements):
     master_bpm = MasterBadPixelMask_Requirement()
     master_bias = MasterBias_Requirement()
     master_dark = MasterDark_Requirement()
-    nonlinearity = NonLinearityCalibration_Requirement()
-    master_intensity_ff = MasterIntensityFlatField_Requirement()    
+    master_flat = MasterIntensityFlatField_Requirement()    
     extinction = Extinction_Requirement() 
     sources = Catalog_Requirement()
     offsets = Offsets_Requirement()

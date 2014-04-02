@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2012 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -17,4 +17,27 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Recipe for the reordering of frames.'''
+'''Data products produced by the EMIR pipeline.'''
+
+import numpy
+
+from numina.user.store import store
+    
+from .dataproducts import ChannelLevelStatistics
+    
+@store.register(ChannelLevelStatistics)
+def store_cl(obj, where):
+    fname = 'statistics.txt'
+    
+    header = '''Channel Level Statistics
+comment 2
+pixels start in 1 
+pixels end in 2048 
+exposure=%s
+xbegin xend ybegin yend mean median var
+
+'''
+    inter = header % obj.exposure
+    numpy.savetxt(fname, obj.statistics, header=inter)
+    return fname
+

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -34,7 +34,6 @@ from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import TelescopeFocus
 from emir.dataproducts import DTUFocus
 from emir.dataproducts import MasterIntensityFlat
-from emir.dataproducts import NonLinearityCalibration
 
 __all__ = ['TelescopeRoughFocusRecipe', 
            'TelescopeFineFocusRecipe',
@@ -47,8 +46,7 @@ class TelescopeRoughFocusRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     objects = Parameter(None, 'List of x-y pair of object coordinates'),
     focus_range = Parameter(None, 'Focus range: begin, end and step')   
 
@@ -91,8 +89,7 @@ class TelescopeFineFocusRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     objects = Parameter(None, 'List of x-y pair of object coordinates'),   
 
 class TelescopeFineFocusRecipeResult(RecipeResult):
@@ -134,8 +131,7 @@ class DTUFocusRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     objects = Parameter(None, 'List of x-y pair of object coordinates'),   
     msm_pattern = Parameter(None, 'List of x-y pair of slit coordinates'),
     dtu_focus_range = Parameter('dtu_focus_range', None, 'Focus range of the DTU: begin, end and step')

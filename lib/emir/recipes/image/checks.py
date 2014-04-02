@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -27,7 +27,7 @@ import logging
 import operator
 
 import numpy
-import pyfits
+from astropy.io import fits
 from numina.util.sextractor import SExtractor
 
 from .naming import name_skysub_proc
@@ -61,7 +61,7 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0, border=300, extinctio
     
     # Center of the image
     wmap[border:-border, border:-border] = 1                    
-    pyfits.writeto(weigthmap, wmap, clobber=True)
+    fits.writeto(weigthmap, wmap, clobber=True)
     
     basename = 'result_i%0d.fits' % (step)
     sex = SExtractor()
@@ -208,7 +208,7 @@ def check_position(images_info, sf_data, seeing_fwhm, step=0):
         # Center of the image
         border = 300
         wmap[border:-border, border:-border] = 1                    
-        pyfits.writeto(weigthmap, wmap, clobber=True)
+        fits.writeto(weigthmap, wmap, clobber=True)
         
         basename = 'result_i%0d.fits' % (step)
         sex = SExtractor()

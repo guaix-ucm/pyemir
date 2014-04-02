@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2012 Universidad Complutense de Madrid
+# Copyright 2010-2014 Universidad Complutense de Madrid
 # 
 # This file is part of PyEmir
 # 
@@ -25,19 +25,54 @@ import logging
 import warnings
 
 import numpy
-import pyfits
+from astropy.io import fits
 
-from numina.core import BaseRecipe, Parameter, DataFrame
+from numina import __version__
+from numina.core import BaseRecipe, Parameter, DataProductRequirement
 from numina.core import RecipeError,RecipeRequirements
 from numina.core import Product, define_requirements, define_result
 from numina.core import FrameDataProduct
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
+from numina.core.requirements import ObservationResultRequirement
+from numina.core.requirements import InstrumentConfigurationRequirement
+from numina.flow.processing import BiasCorrector, DarkCorrector
+from numina.flow.processing import DivideByExposure
+from numina.flow.node import IdNode
+from numina.flow import SerialFlow
 
 from emir.core import RecipeResult
+from emir.dataproducts import MasterBias, MasterDark
 
 _logger = logging.getLogger('numina.recipes.emir')
 
+
+def gather_info(hdulist):
+    n_ext = len(hdulist)
+
+    # READMODE is STRING
+    readmode = hdulist[0].header.get('READMODE', 'undefined')
+    bunit = hdulist[0].header.get('BUNIT', 'undefined')
+    texp = hdulist[0].header.get('EXPTIME')
+    adu_s = True
+    if bunit:
+        if bunit.lower() == 'adu':
+            adu_s = False
+        elif bunit.lower() == 'adu/s':
+            adu_s = True
+        else:
+            _logger.warning('Unrecognized value for BUNIT %s', bunit)
+
+    return {'n_ext': n_ext, 
+            'readmode': readmode,
+            'texp': texp,
+            'adu_s': adu_s}
+
+
 class CosmeticsRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
     lowercut = Parameter(4.0, 'Values bellow this sigma level are flagged as dead pixels')
     uppercut = Parameter(4.0, 'Values above this sigma level are flagged as hot pixels')
     maxiter = Parameter(30, 'Maximum number of iterations')
@@ -60,49 +95,70 @@ class CosmeticsRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    # FIXME: this function is useless
-    def update_header(self, hdr):
-        return hdr
-
-    def run(self, obresult, reqs):
-
-        resets = []
-        flats = []
-
-        for frame in obresult.frames:
-            if frame.itype == 'RESET':
-                resets.append(frame.label)
-                _logger.debug('%s is RESET', frame.label)
-            elif frame.itype == 'FLAT':
-                flats.append(frame.label)
-                _logger.debug('%s is FLAT', frame.label)
+    def run(self, rinput):
+        
+        # FIXME:
+        # We need 2 flats
+        # Of different exposure times
+        #
+        # And their calibrations
+        #
+        
+        if len(rinput.obresult.frames) < 2:
+            raise RecipeError('The recipe requires 2 flat frames')
+              
+        iinfo = []
+        for frame in rinput.obresult.frames:
+            with frame.open() as hdulist:
+                iinfo.append(gather_info(hdulist))
+              
+        print(iinfo)
+         
+        # Loading calibrations
+        with rinput.master_bias.open() as hdul:
+            readmode = hdul[0].header.get('READMODE', 'undefined')
+            if readmode.lower() in ['simple', 'bias']:
+                _logger.info('loading bias')
+                mbias = hdul[0].data
+                bias_corrector = BiasCorrector(mbias)
             else:
-                raise RecipeError('frame is neither a FLAT nor a RESET')
+                _logger.info('ignoring bias')
+                bias_corrector = IdNode()
+            
+        exposure_corrector = DivideByExposure(factor=1e-3)
+
+        with rinput.master_dark.open() as mdark_hdul:
+            _logger.info('loading dark')
+            mdark = mdark_hdul[0].data
+            dark_corrector = DarkCorrector(mdark)
+
+        flow = SerialFlow([bias_corrector, exposure_corrector, dark_corrector])
+        
+        _logger.info('processing flat #1')                    
+        with rinput.obresult.frames[0].open() as hdul:
+            other = flow(hdul)
+            f1 = other[0].data.copy() * iinfo[0]['texp'] * 1e-3
+
+        _logger.info('processing flat #2')
+        with rinput.obresult.frames[1].open() as hdul:
+            other = flow(hdul)
+            f2 = other[0].data.copy() * iinfo[1]['texp'] * 1e-3
+
+        # Preprocess...
 
 
-        # we need 2 flats and 1 reset
-        if len(flats) < 2:
-            raise ValueError('The recipe requires 2 flat frames')
-        
-        if len(resets) < 1:
-            raise ValueError('The recipe requires 1 reset frame')
-        
-        reset = pyfits.getdata(resets[-1])
-        f1 = pyfits.getdata(flats[0]) - reset
-        f2 = pyfits.getdata(flats[1]) - reset
-        
-        maxiter = reqs['maxiter']
-        lowercut = reqs['lowercut']
-        uppercut = reqs['uppercut']
+        maxiter = rinput.maxiter
+        lowercut = rinput.lowercut
+        uppercut = rinput.uppercut
         
         ninvalid = 0
         mask = None
         
         if mask:
-            m = pyfits.getdata(mask)
+            m = fits.getdata(mask)
             ninvalid = numpy.count_nonzero(m)
         else:
-            m = numpy.zeros_like(reset, dtype='int')
+            m = numpy.zeros_like(f1, dtype='int')
     
         for niter in range(1, maxiter + 1):
             _logger.info('iter %d', niter)
@@ -112,9 +168,9 @@ class CosmeticsRecipe(BaseRecipe):
             # can be removed later
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
-                pyfits.writeto('numina-cosmetics-i%02d.fits' % niter, ratio, clobber=True)
-                pyfits.writeto('numina-mask-i%02d.fits' % niter, m, clobber=True)
-                pyfits.writeto('numina-sigma-i%02d.fits' % niter, m * 0.0 + sigma, clobber=True)
+                fits.writeto('numina-cosmetics-i%02d.fits' % niter, ratio, clobber=True)
+                fits.writeto('numina-mask-i%02d.fits' % niter, m, clobber=True)
+                fits.writeto('numina-sigma-i%02d.fits' % niter, m * 0.0 + sigma, clobber=True)
             _logger.info('iter %d, invalid points in input mask: %d', niter, ninvalid)
             _logger.info('iter %d, estimated sigma is %f', niter, sigma)
             n_ninvalid = numpy.count_nonzero(m)
@@ -144,25 +200,24 @@ class CosmeticsRecipe(BaseRecipe):
         # caN be removed later
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            pyfits.writeto('numina-cosmetics.fits', ratio, clobber=True)
-            pyfits.writeto('numina-mask.fits', m, clobber=True)
-            pyfits.writeto('numina-sigma.fits', sigma * numpy.ones_like(m), clobber=True)
+            fits.writeto('numina-cosmetics.fits', ratio, clobber=True)
+            fits.writeto('numina-mask.fits', m, clobber=True)
+            fits.writeto('numina-sigma.fits', sigma * numpy.ones_like(m), clobber=True)
             
-        ratiohdu = pyfits.PrimaryHDU(ratio)
-        hdr = ratiohdu.header
-        hdr.update('FILENAME', 'ratio.fits')
-        hdr = self.update_header(hdr)        
-        # hdr.update('IMGTYP', 'TARGET', 'Image type')
-        # hdr.update('NUMTYP', 'TARGET', 'Data product type')
-        ratiohdl = pyfits.HDUList([ratiohdu])    
+        hdu = fits.PrimaryHDU(ratio)
+        hdr = hdu.header
+        hdr['NUMXVER'] = ( __version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        ratiohdl = fits.HDUList([hdu])    
         
-        maskhdu = pyfits.PrimaryHDU(m)
+        maskhdu = fits.PrimaryHDU(m)
         hdr = maskhdu.header
-        hdr.update('filename', 'mask.fits')
-        hdr = self.update_header(hdr)
-        maskhdl = pyfits.HDUList([maskhdu])
-        
+        hdr['NUMXVER'] = ( __version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        maskhdl = fits.HDUList([maskhdu])
 
-        res = CosmeticsRecipeResult(ratio=DataFrame(ratiohdl), 
-                                        mask=DataFrame(maskhdl))        
+        res = CosmeticsRecipeResult(ratio=ratiohdl, mask=maskhdl)
         return res
+

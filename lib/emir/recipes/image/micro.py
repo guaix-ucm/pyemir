@@ -31,7 +31,6 @@ from numina.core import Requirement, Product, FrameDataProduct, RecipeRequiremen
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
-from emir.dataproducts import NonLinearityCalibration
 from emir.dataproducts import SourcesCatalog
 from emir.requirements import Offsets_Requirement
 from emir.requirements import SkyImageSepTime_Requirement
@@ -44,12 +43,10 @@ class MicroditheredImageRecipeRequirements(RecipeRequirements):
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    nonlinearity = DataProductRequirement(NonLinearityCalibration([1.0, 0.0]), 
-              'Polynomial for non-linearity correction')
-    master_intensity_ff = DataProductRequirement(MasterIntensityFlat, 
+    master_flat = DataProductRequirement(MasterIntensityFlat, 
               'Master intensity flatfield')
     extinction = Parameter(0.0, 'Mean atmospheric extinction') 
-    sources = Parameter(None, 
+    sources = Parameter([], 
               'List of x, y coordinates to measure FWHM',
               optional=True)
     offsets = Offsets_Requirement()
@@ -59,7 +56,7 @@ class MicroditheredImageRecipeRequirements(RecipeRequirements):
     check_photometry_levels = Parameter([0.5, 0.8], 'Levels to check the flux of the objects')
     check_photometry_actions = Parameter(['warn', 'warn', 'default'], 'Actions to take on images')
     subpixelization = Parameter(4, 'Number of subdivisions in each pixel side')
-    window = Parameter(None, 'Region of interesting data', optional=True)
+    window = Parameter([], 'Region of interesting data', optional=True)
 
 class MicroditheredImageRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
