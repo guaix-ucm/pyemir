@@ -41,11 +41,10 @@ __all__ = ['TargetAcquisitionRecipe', 'MaskImagingRecipe', 'MaskCheckRecipe']
 _logger = logging.getLogger('emir.recipes')
 
 class TargetAcquisitionRecipeRequirements(RecipeRequirements):
-    master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
-    master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
-    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
-                  'Polynomial for non-linearity correction'),
-    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     
 
 class TargetAcquisitionRecipeResult(RecipeResult):
@@ -76,11 +75,10 @@ class TargetAcquisitionRecipe(BaseRecipe):
         return TargetAcquisitionRecipeResult(telescope_offset=TelescopeOffset())
     
 class MaskImagingRecipeRequirements(RecipeRequirements):
-    master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
-    master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
-    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
-                  'Polynomial for non-linearity correction'),
-    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     
 
 class MaskImagingRecipeResult(RecipeResult):
@@ -110,10 +108,10 @@ class MaskImagingRecipe(BaseRecipe):
         return MaskImagingRecipeResult(msm_positions=MSMPositions())
     
 class MaskCheckRecipeRequirements(RecipeRequirements):
-    master_bias = DataProductRequirement(MasterBias, 'Master bias image'),
-    master_dark = DataProductRequirement(MasterDark, 'Master dark image'),
-    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask'),
-    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield'),
+    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
+    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flatfield')
     
 
 class MaskCheckRecipeResult(RecipeResult):
