@@ -23,6 +23,7 @@ import numpy
 
 from numina.core import FrameDataProduct, DataProduct
 from numina.core.requirements import InstrumentConfigurationType
+from numina.frame.schema import Schema
 
 # FIXME
 try:
@@ -31,13 +32,39 @@ except ImportError:
     # We are not in GTC
     pass
     
+base_schema_description = {
+    'keywords': {
+ #       'INSTRUME': {'mandatory': True, 'value': 'EMIR'},
+ #       'XDTU': {'mandatory': True, 'value': float},
+ #       'YDTU': {'mandatory': True, 'value': float},
+ #       'ZDTU': {'mandatory': True, 'value': float}, 
+        }
+    }
+        
+
 class EMIRConfigurationType(InstrumentConfigurationType):
     
     def validate(self, value):
         super(EMIRConfigurationType, self).validate(value)
 
 class EMIRFrame(FrameDataProduct):
-    pass
+    
+    def __init__(self):
+        super(EMIRFrame, self).__init__()
+        self.headerschema = Schema(base_schema_description)
+    
+    def validate_hdu(self, hdu):
+        self.headerschema.validate(hdu)
+    
+    def validate(self, value):
+        if value:
+            with value.open() as hdulist:
+                self.validate_hdu(hdulist[0].header)
+        else:
+            # FIXME: then this is None
+            pass
+                
+        return True
 
 class MasterBadPixelMask(EMIRFrame):
     pass
