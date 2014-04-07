@@ -244,8 +244,6 @@ def pinhole_char(data, ncenters, box=4):
         
     
     mm0 = numpy.empty((centers_r.shape[0], 10))    
-    mm1 = numpy.empty((centers_r.shape[0], 5))
-    
     
     # compute the FWHM without fitting
     _logger.info('compute model-free FWHM')
@@ -253,11 +251,9 @@ def pinhole_char(data, ncenters, box=4):
     for idx, center in enumerate(centers_r):
         _logger.info('For pinhole %i', idx)
         res = compute_fwhm_global(data, center, box=ibox)
-        _logger.info(fmt, *res)        
-        mm1[idx] = res
+        _logger.info(fmt, *res)
         mm0[idx,0:5] = res
     
-    mm2 = numpy.empty((centers_r.shape[0], 5))
     _logger.info('compute Gaussian fitting')
     # compute the FWHM fitting a Gaussian
     for idx, center in enumerate(centers_r):
@@ -265,7 +261,6 @@ def pinhole_char(data, ncenters, box=4):
         res = gauss_model(data, center)
         fmt = 'x=%7.2f y=%7.2f peak=%6.3f stdev_x=%6.3f stdev_y=%6.3f'
         _logger.info(fmt, *res)
-        mm2[idx] = res
         mm0[idx, 5:8] = res[2:] 
     # Photometry in coordinates
     # x=centers_r[:,1]
@@ -273,22 +268,14 @@ def pinhole_char(data, ncenters, box=4):
     # with radius 2.0 pixels and 4.0 pixels
     
     apertures = [2.0, 4.0]
-    mm3 = numpy.empty((centers_r.shape[0], len(apertures)+2))
-    mm3[:,0] = centers_r[:,1]
-    mm3[:,1] = centers_r[:,0]
-    _logger.info('compute photometry with apertures %s', apertures)
+    _logger.info('compute photometry with aperture radii %s', apertures)
     # FIXME: aperture_circular returns values along rows, we transpose it
-    mm3[:,2:] = numpy.transpose(photutils.aperture_circular(data, mm3[:,0], mm3[:,1], apertures))
-    mm0[:, 8:10] = mm3[:, 2:]
+    mm0[:, 8:10] = photutils.aperture_circular(data, centers_r[:,1], centers_r[:,0], apertures).T
     
     # Convert coordinates to FITS
     mm0[:,0:2] += 1
-    mm1[:,0:2] += 1
-    mm2[:,0:2] += 1
-    mm3[:,0] = centers_r[:,1] + 1
-    mm3[:,1] = centers_r[:,0] + 1
     
-    return mm0, mm1, mm2, mm3
+    return mm0
 
 class TestPinholeRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
@@ -303,9 +290,6 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
 class TestPinholeRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     total = Product(ArrayType)
-    fwhm = Product(ArrayType)
-    gauss = Product(ArrayType)
-    phot = Product(ArrayType)
     
 
 @define_requirements(TestPinholeRecipeRequirements)
@@ -418,11 +402,11 @@ class TestPinholeRecipe(BaseRecipe):
             ncenters = rinput.pinhole_nominal_positions        
         
         _logger.info('pinhole characterization')
-        total, fwhm, gauss, phot = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size)
+        total = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size)
         
         hdulist = fits.HDUList([hdu])
         
-        result = TestPinholeRecipeResult(frame=hdulist, total=total, fwhm=fwhm, gauss=gauss, phot=phot)
+        result = TestPinholeRecipeResult(frame=hdulist, total=total)
         return result
         
         
