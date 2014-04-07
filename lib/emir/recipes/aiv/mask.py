@@ -289,7 +289,7 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
 
 class TestPinholeRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
-    total = Product(ArrayType)
+    positions = Product(ArrayType)
     
 
 @define_requirements(TestPinholeRecipeRequirements)
@@ -402,11 +402,11 @@ class TestPinholeRecipe(BaseRecipe):
             ncenters = rinput.pinhole_nominal_positions        
         
         _logger.info('pinhole characterization')
-        total = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size)
+        positions = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size)
         
         hdulist = fits.HDUList([hdu])
         
-        result = TestPinholeRecipeResult(frame=hdulist, total=total)
+        result = TestPinholeRecipeResult(frame=hdulist, positions=positions)
         return result
         
         
