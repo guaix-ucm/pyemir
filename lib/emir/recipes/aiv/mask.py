@@ -193,9 +193,13 @@ def compute_fwhm_global(data, center, box):
     braster = raster - background
     
     newc = center[0] - sl[0].start, center[1] - sl[1].start
-    res = compute_fwhm(braster, newc)
-    return res[1]+sl[1].start, res[0]+sl[0].start, res[2], res[3], res[4]
-    #return res[0]+sl[0].start, res[1]+sl[1].start, res[2], res[3], res[4]
+    try:
+        res = compute_fwhm(braster, newc)
+        return res[1]+sl[1].start, res[0]+sl[0].start, res[2], res[3], res[4]
+    except ValueError as error:
+        _logger.warning("%s", error)
+        return center[1], center[0], -99.0, -99.0, -99.0
+
 
 # returns x,y
 def gauss_model(data, center_r):
@@ -242,11 +246,11 @@ def pinhole_char(data, ncenters, box=4):
     
     # compute the FWHM without fitting
     _logger.info('compute model-free FWHM')
+    fmt = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
     for idx, center in enumerate(centers_r):
         _logger.info('For pinhole %i', idx)
         res = compute_fwhm_global(data, center, box=ibox)
-        fmt = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
-        _logger.info(fmt, *res)
+        _logger.info(fmt, *res)        
         mm1[idx] = res
     
     mm2 = numpy.empty((centers_r.shape[0], 5))
