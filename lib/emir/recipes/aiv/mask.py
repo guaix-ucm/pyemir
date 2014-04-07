@@ -290,7 +290,10 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
 class TestPinholeRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     positions = Product(ArrayType)
-    
+    DTU = Product(ArrayType)
+    filter = Product(str)
+    readmode = Product(str)
+    IPA = Product(float)
 
 @define_requirements(TestPinholeRecipeRequirements)
 @define_result(TestPinholeRecipeResult)
@@ -378,17 +381,22 @@ class TestPinholeRecipe(BaseRecipe):
         
         _logger.debug('finding pinholes')
         
+        try:
+            filtername = hdr['FILTER']
+            readmode = hdr['READMODE']
+            ipa = hdr['IPA']
+            xdtu = hdr['XDTU']
+            ydtu = hdr['YDTU']
+            zdtu = hdr['ZDTU']
+        except KeyError as error:
+            _logger.error(error)
+            raise RecipeError(error)
+        
+        
         if rinput.shift_coordinates:
             #get things from header
             _logger.info('getting DTU position from header')
-            try:
-                xdtu = hdr['XDTU']
-                ydtu = hdr['YDTU']
-                zdtu = hdr['ZDTU']
-            except KeyError as error:
-                _logger.error(error)
-                raise RecipeError(error)
-            _logger.info('X_DTU=%6.2f Y_DTU=%6.2f Z_DTU=%6.2f', xdtu, ydtu, zdtu)
+            _logger.info('XDTU=%6.2f YDTU=%6.2f ZDTU=%6.2f', xdtu, ydtu, zdtu)
             # transform coordinates
             _logger.info('transform pinhole coordinates from reference (0,0)')
             xfac = xdtu * 0.055
@@ -406,7 +414,8 @@ class TestPinholeRecipe(BaseRecipe):
         
         hdulist = fits.HDUList([hdu])
         
-        result = TestPinholeRecipeResult(frame=hdulist, positions=positions)
+        result = TestPinholeRecipeResult(frame=hdulist, positions=positions, 
+                    filter=filtername, DTU=[xdtu, ydtu, zdtu], readmode=readmode, IPA=ipa)
         return result
         
         
