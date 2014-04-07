@@ -242,7 +242,10 @@ def pinhole_char(data, ncenters, box=4):
         _logger.info('new center is %s', center)
         centers_r[idx] = center
         
+    
+    mm0 = numpy.empty((centers_r.shape[0], 10))    
     mm1 = numpy.empty((centers_r.shape[0], 5))
+    
     
     # compute the FWHM without fitting
     _logger.info('compute model-free FWHM')
@@ -252,6 +255,7 @@ def pinhole_char(data, ncenters, box=4):
         res = compute_fwhm_global(data, center, box=ibox)
         _logger.info(fmt, *res)        
         mm1[idx] = res
+        mm0[idx,0:5] = res
     
     mm2 = numpy.empty((centers_r.shape[0], 5))
     _logger.info('compute Gaussian fitting')
@@ -262,6 +266,7 @@ def pinhole_char(data, ncenters, box=4):
         fmt = 'x=%7.2f y=%7.2f peak=%6.3f stdev_x=%6.3f stdev_y=%6.3f'
         _logger.info(fmt, *res)
         mm2[idx] = res
+        mm0[idx, 5:8] = res[2:] 
     # Photometry in coordinates
     # x=centers_r[:,1]
     # y=centers_r[:,0]
@@ -274,14 +279,16 @@ def pinhole_char(data, ncenters, box=4):
     _logger.info('compute photometry with apertures %s', apertures)
     # FIXME: aperture_circular returns values along rows, we transpose it
     mm3[:,2:] = numpy.transpose(photutils.aperture_circular(data, mm3[:,0], mm3[:,1], apertures))
+    mm0[:, 8:10] = mm3[:, 2:]
     
     # Convert coordinates to FITS
+    mm0[:,0:2] += 1
     mm1[:,0:2] += 1
     mm2[:,0:2] += 1
     mm3[:,0] = centers_r[:,1] + 1
     mm3[:,1] = centers_r[:,0] + 1
     
-    return mm1, mm2, mm3
+    return mm0, mm1, mm2, mm3
 
 class TestPinholeRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
@@ -295,6 +302,7 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
 
 class TestPinholeRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
+    total = Product(ArrayType)
     fwhm = Product(ArrayType)
     gauss = Product(ArrayType)
     phot = Product(ArrayType)
@@ -410,11 +418,11 @@ class TestPinholeRecipe(BaseRecipe):
             ncenters = rinput.pinhole_nominal_positions        
         
         _logger.info('pinhole characterization')
-        fwhm, gauss, phot = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size)
+        total, fwhm, gauss, phot = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size)
         
         hdulist = fits.HDUList([hdu])
         
-        result = TestPinholeRecipeResult(frame=hdulist, fwhm=fwhm, gauss=gauss, phot=phot)
+        result = TestPinholeRecipeResult(frame=hdulist, total=total, fwhm=fwhm, gauss=gauss, phot=phot)
         return result
         
         
