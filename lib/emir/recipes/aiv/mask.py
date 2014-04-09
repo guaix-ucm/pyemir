@@ -315,7 +315,7 @@ class TestPinholeRecipe(BaseRecipe):
             bias_corrector = BiasCorrector(mbias)
             #bias_corrector = IdNode()
             
-        exposure_corrector = DivideByExposure(factor=1.0)
+        exposure_corrector = DivideByExposure()
 
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
@@ -364,8 +364,8 @@ class TestPinholeRecipe(BaseRecipe):
                 if final is not hdulist:
                     odata.append(final)
                                  
-            _logger.info('stacking %d images using median', len(cdata))
-            data = combine.median([d[0].data for d in cdata], dtype='float32')
+            _logger.info("stacking %d images using 'mean'", len(cdata))
+            data = combine.mean([d[0].data for d in cdata], dtype='float32')
             hdu = fits.PrimaryHDU(data[0], header=cdata[0][0].header.copy())
 
         finally:
