@@ -222,7 +222,7 @@ def gauss_model(data, center_r):
     mm = t.x_mean.value + sl[1].start, t.y_mean.value+ sl[0].start, t.amplitude.value, t.x_stddev.value, t.y_stddev.value
     return mm
 
-def pinhole_char(data, ncenters, box=4):
+def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
 
     ibox = (box, box)
     
@@ -236,12 +236,19 @@ def pinhole_char(data, ncenters, box=4):
     
     _logger.info('recenter pinhole coordinates')
     for idx, c in enumerate(centers_py):
-        center, _msg = centering_centroid(data, c, box=ibox)
-        _logger.info('For pinhole %i', idx)
-        _logger.info('old center is %s', c)
-        _logger.info('new center is %s', center)
-        centers_r[idx] = center
-        
+        # A failsafe
+        if recenter and maxdist > 0.0:
+            center, msg = centering_centroid(data, c, box=ibox, maxdist=maxdist)
+            _logger.info('For pinhole %i', idx)
+            _logger.info('old center is %s', c)
+            _logger.info('new center is %s', center)
+            _logger.debug('recenter message: %s', msg)
+            centers_r[idx] = center
+        else:
+            _logger.info('For pinhole %i', idx)            
+            _logger.info('center is %s', c)
+            _logger.debug('recenter message: %s', 'no recenter')
+            centers_r[idx] = c
     
     mm0 = numpy.empty((centers_r.shape[0], 10))    
     
@@ -277,6 +284,35 @@ def pinhole_char(data, ncenters, box=4):
     
     return mm0
 
+
+def gather_info_hdu(hdulist):
+    n_ext = len(hdulist)
+
+    # READMODE is STRING
+    readmode = hdulist[0].header.get('READMODE', 'undefined')
+    bunit = hdulist[0].header.get('BUNIT', 'undefined')
+    texp = hdulist[0].header.get('EXPTIME')
+    adu_s = True
+    if bunit:
+        if bunit.lower() == 'adu':
+            adu_s = False
+        elif bunit.lower() == 'adu/s':
+            adu_s = True
+        else:
+            _logger.warning('Unrecognized value for BUNIT %s', bunit)
+
+    return {'n_ext': n_ext, 
+            'readmode': readmode,
+            'texp': texp,
+            'adu_s': adu_s}
+    
+def gather_info_frames(framelist):
+    iinfo = []
+    for frame in framelist:
+        with frame.open() as hdulist:
+            iinfo.append(gather_info_hdu(hdulist))
+    return iinfo
+    
 class TestPinholeRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
@@ -285,7 +321,10 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
     master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
     pinhole_nominal_positions = Requirement(CoordinateList2DType, 'Nominal positions of the pinholes')
     shift_coordinates = Parameter(True, 'Use header information to shift the pinhole positions from (0,0) to X_DTU, Y_DTU')
-    box_half_size = Parameter(4, 'Half of the search box size in pixels')
+    box_half_size = Parameter(4, 'Half of the computation box size in pixels')
+    recenter = Parameter(True, 'Recenter the pinhole coordinates')
+    max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
+    
 
 class TestPinholeRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
@@ -305,6 +344,10 @@ class TestPinholeRecipe(BaseRecipe):
 
     def run(self, rinput):
         _logger.info('starting pinhole processing')
+
+
+        # iinfo = gather_info_frames(rinput.obresult.frames)
+        
 
         # Loading calibrations
         with rinput.master_bias.open() as hdul:
@@ -410,7 +453,9 @@ class TestPinholeRecipe(BaseRecipe):
             ncenters = rinput.pinhole_nominal_positions        
         
         _logger.info('pinhole characterization')
-        positions = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size)
+        positions = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size, 
+                                 recenter=rinput.recenter,
+                                 maxdist=rinput.max_recenter_radius)
         
         hdulist = fits.HDUList([hdu])
         
