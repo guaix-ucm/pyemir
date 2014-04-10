@@ -110,16 +110,18 @@ def _centering_centroid_loop(data, center, box):
     
 # returns y,x
 def centering_centroid(data, center, box, nloop=10, toldist=1e-3, maxdist=10):
-    icenter = center.copy()
+    
+    # Store original center
+    ocenter = center.copy()
     
     for i in range(nloop):
         
         ncenter = _centering_centroid_loop(data, center, box)
         #_logger.debug('new center is %s', ncenter)
         # if we are to far away from the initial point, break
-        dst = distance.euclidean(icenter, ncenter)
+        dst = distance.euclidean(ocenter, ncenter)
         if dst > maxdist:
-            return icenter, 'maximum distance (%i) from origin reached' % maxdist 
+            return center, 'maximum distance (%i) from origin reached' % maxdist 
         
         # check convergence
         dst = distance.euclidean(ncenter, center)
