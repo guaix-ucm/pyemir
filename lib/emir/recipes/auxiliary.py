@@ -397,6 +397,90 @@ class IntensityFlatRecipe(BaseRecipe):
 
         return result
         
+class SimpleSkyRecipeRequirements(IntensityFlatFieldRecipeRequirements):
+    master_flat = DataProductRequirement(MasterFlat, 'Master flat image')
+
+class SimpleSkyRecipeResult(RecipeResult):
+    skyframe = Product(MasterIntensityFlat)
+
+@define_requirements(SimpleSkyRecipeRequirements)
+@define_result(SimpleSkyRecipeResult)
+class SimpleSkyRecipe(BaseRecipe):
+    '''Recipe to process data taken in intensity flat-field mode.
+        
+    '''
+    def __init__(self):
+        super(SimpleSkyRecipe, self).__init__(author=_s_author, version="0.1.0")
+        
+    def run(self, rinput):
+        _logger.info('starting sky reduction')
+                
+        # Loading calibrations
+        with rinput.master_bias.open() as hdul:
+            bunit = hdul[0].header.get('BUNIT')
+            if bunit and bunit.lower() == 'adu':
+                _logger.info('loading bias')
+                mbias = hdul[0].data
+                # FIXME
+                # check the READMODE of BIAS
+                # to see if its in an
+                # impossible mode
+                bias_corrector = BiasCorrector(mbias)
+            else:
+                _logger.info('ignoring bias')
+                bias_corrector = IdNode()
+
+
+        exposure_corrector = DivideByExposure()
+
+        with rinput.master_dark.open() as mdark_hdul:
+            _logger.info('loading dark')
+            mdark = mdark_hdul[0].data
+            dark_corrector = DarkCorrector(mdark)
+
+        with rinput.master_flat.open() as mflat_hdul:
+            _logger.info('loading flat')
+            mflat = mflat_hdul[0].data
+            flat_corrector = FlatCorrector(mflat)
+
+        basicflow = SerialFlow([bias_corrector, exposure_corrector, 
+                dark_corrector, flat_corrector])
+       
+        cdata = []
+        try:
+            _logger.info('basic frame reduction')
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open()
+                hdulist = basicflow(hdulist)
+                cdata.append(hdulist)
+
+            _logger.info('stacking %d images using median', len(cdata))
+            
+            data = median([d['primary'].data for d in cdata], dtype='float32')
+            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
+
+        # update hdu header with
+        # reduction keywords
+        hdr = hdu.header
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        
+        hdr['IMGTYP'] = ('SKY', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_SKY', 'Data product type')
+        hdr['BUNIT'] = 'ADU/s'
+        
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE')
+        num = fits.ImageHDU(data[2], name='MAP')
+
+        hdulist = fits.HDUList([hdu, varhdu, num])
+
+        result = SimpleSkyRecipeResult(skyframe=hdulist)
+
+        return result
         
 class SpectralFlatRecipeRequirements(IntensityFlatRecipeRequirements):
     pass
@@ -524,5 +608,4 @@ class WavelengthCalibrationRecipe(BaseRecipe):
     @log_to_history(_logger)
     def run(self, obresult, rinput):
         return WavelengthCalibrationRecipeResult(cal=WavelengthCalibration())
-
 
