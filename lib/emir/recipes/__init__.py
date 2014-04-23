@@ -20,6 +20,7 @@
 '''Recipes for EMIR Observing Modes.'''
 
 from .auxiliary import BiasRecipe, DarkRecipe, IntensityFlatRecipe
+from .auxiliary import SimpleSkyRecipe
 from .image import StareImageRecipe, DitheredImageRecipe, MicroditheredImageRecipe
 from .image import NBImageRecipe, MosaicRecipe
 from .engineering import GainRecipe1, CosmeticsRecipe
