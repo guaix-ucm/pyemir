@@ -34,7 +34,7 @@ from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector
 from numina.flow.processing import DarkCorrector
-from numina.flow.processing import DivideByExposure
+from numina.flow.processing import DivideByExposure, FlatFieldCorrector
 # from numina.flow.processing import BadPixelCorrector
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
@@ -397,8 +397,8 @@ class IntensityFlatRecipe(BaseRecipe):
 
         return result
         
-class SimpleSkyRecipeRequirements(IntensityFlatFieldRecipeRequirements):
-    master_flat = DataProductRequirement(MasterFlat, 'Master flat image')
+class SimpleSkyRecipeRequirements(IntensityFlatRecipeRequirements):
+    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master flat image')
 
 class SimpleSkyRecipeResult(RecipeResult):
     skyframe = Product(MasterIntensityFlat)
@@ -441,7 +441,7 @@ class SimpleSkyRecipe(BaseRecipe):
         with rinput.master_flat.open() as mflat_hdul:
             _logger.info('loading flat')
             mflat = mflat_hdul[0].data
-            flat_corrector = FlatCorrector(mflat)
+            flat_corrector = FlatFieldCorrector(mflat)
 
         basicflow = SerialFlow([bias_corrector, exposure_corrector, 
                 dark_corrector, flat_corrector])
