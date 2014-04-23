@@ -201,6 +201,9 @@ def compute_fwhm_global(data, center, box):
     except ValueError as error:
         _logger.warning("%s", error)
         return center[1], center[0], -99.0, -99.0, -99.0
+    except Exception as error:
+        _logger.warning("%s", error)
+        return center[1], center[0], -199.0, -199.0, -199.0
 
 
 # returns x,y
