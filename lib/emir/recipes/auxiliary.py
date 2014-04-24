@@ -145,14 +145,15 @@ class BiasRecipe(BaseRecipe):
         hdr['CCDMEAN'] = data[0].mean()
 
         exhdr = fits.Header()
-        exhdr['extver'] = 1
+        #exhdr['extver'] = 1
         varhdu = fits.ImageHDU(data[1], name='VARIANCE', header=exhdr)
-        exhdr = fits.Header()
-        exhdr['extver'] = 2
-        var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
+        #exhdr = fits.Header()
+        #exhdr['extver'] = 2
+        #var2hdu = fits.ImageHDU(var2, name='VARIANCE', header=exhdr)
         num = fits.ImageHDU(data[2], name='MAP')
 
-        hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
+        #hdulist = fits.HDUList([hdu, varhdu, var2hdu, num])
+        hdulist = fits.HDUList([hdu, varhdu, num])
 
         _logger.info('bias reduction ended')
             
