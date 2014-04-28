@@ -216,7 +216,7 @@ pipelines:
       MICRODITHERED_IMAGE: emir.recipes.MicroditheredImageRecipe
       MOSAICED_IMAGE: emir.recipes.MosaicRecipe
       NODDED_BEAM_SWITCHED_IMAGE: emir.recipes.NBImageRecipe
-      STARE_IMAGE: emir.recipes.StareImageRecipe
+      STARE_IMAGE: emir.recipes.aiv.TestSkyCorrectRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       gain_mode1: emir.recipes.GainRecipe1
       cosmetics: emir.recipes.CosmeticsRecipe
