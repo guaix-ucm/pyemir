@@ -43,3 +43,5 @@ def gather_info_frames(framelist):
         with frame.open() as hdulist:
             iinfo.append(gather_info_hdu(hdulist))
     return iinfo
+
+EMIR_BIAS_MODES = ['simple']

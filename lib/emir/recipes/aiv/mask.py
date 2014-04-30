@@ -41,13 +41,16 @@ from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.processing import FlatFieldCorrector, SkyCorrector
 from numina.flow import SerialFlow
 from numina.flow.processing import DivideByExposure
+from numina.flow.node import IdNode
 from numina.array import combine
 
 from emir.core import RecipeResult
+from emir.core import EMIR_BIAS_MODES
 from emir.dataproducts import MasterBias, MasterDark
 from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
 from emir.dataproducts import CoordinateList2DType
 from emir.dataproducts import ArrayType
+from emir.core import gather_info_frames, gather_info_hdu
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -288,35 +291,6 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     mm0[:,0:2] += 1
     
     return mm0
-
-
-def gather_info_hdu(hdulist):
-    n_ext = len(hdulist)
-
-    # READMODE is STRING
-    readmode = hdulist[0].header.get('READMODE', 'undefined')
-    bunit = hdulist[0].header.get('BUNIT', 'undefined')
-    texp = hdulist[0].header.get('EXPTIME')
-    adu_s = True
-    if bunit:
-        if bunit.lower() == 'adu':
-            adu_s = False
-        elif bunit.lower() == 'adu/s':
-            adu_s = True
-        else:
-            _logger.warning('Unrecognized value for BUNIT %s', bunit)
-
-    return {'n_ext': n_ext, 
-            'readmode': readmode,
-            'texp': texp,
-            'adu_s': adu_s}
-    
-def gather_info_frames(framelist):
-    iinfo = []
-    for frame in framelist:
-        with frame.open() as hdulist:
-            iinfo.append(gather_info_hdu(hdulist))
-    return iinfo
     
 class TestPinholeRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
@@ -350,40 +324,54 @@ class TestPinholeRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting pinhole processing')
 
-
-        # iinfo = gather_info_frames(rinput.obresult.frames)
+        iinfo = gather_info_frames(rinput.obresult.frames)
         
+        if iinfo:
+            mode = iinfo[0].readmode
+            if mode.lower() in EMIR_BIAS_MODES:
+                use_bias = True
+                _logger.info('readmode is %s, bias required', mode)
+                
+            else:
+                use_bias = False
+                _logger.info('readmode is %s, no bias required', mode)
+                
+        bias_info = gather_info_hdu(rinput.master_bias)
+        dark_info = gather_info_hdu(rinput.master_dark)
+        flat_info = gather_info_hdu(rinput.master_flat)
+        sky_info = gather_info_hdu(rinput.master_sky)
+
+        print('images info:', iinfo)
+        print('bias info:', bias_info)
+        print('dark info:', dark_info)
+        print('flat info:', flat_info)
+        print('sky info:', sky_info)
 
         # Loading calibrations
-        with rinput.master_bias.open() as hdul:
-            _logger.info('loading bias')
-            mbias = hdul[0].data
-            ccdmean = mbias.mean()
-            _logger.info('mean is %s', ccdmean)
-            bias_corrector = BiasCorrector(mbias)
-            #bias_corrector = IdNode()
+        if use_bias:
+            with rinput.master_bias.open() as hdul:
+                _logger.info('loading bias')
+                mbias = hdul[0].data
+                bias_corrector = BiasCorrector(mbias)
+        else:
+            _logger.info('ignoring bias')
+            bias_corrector = IdNode()
             
-        exposure_corrector = DivideByExposure()
-
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
             mdark = mdark_hdul[0].data
-            ccdmean = mdark.mean()
-            _logger.info('mean is %s', ccdmean)
             dark_corrector = DarkCorrector(mdark)
+
+        exposure_corrector = DivideByExposure()
 
         with rinput.master_flat.open() as mflat_hdul:
             _logger.info('loading intensity flat')
             mflat = mflat_hdul[0].data
-            ccdmean = mflat.mean()
-            _logger.info('mean is %s', ccdmean)
             flat_corrector = FlatFieldCorrector(mflat)
 
         with rinput.master_sky.open() as msky_hdul:
             _logger.info('loading sky')
             msky = msky_hdul[0].data
-            ccdmean = msky.mean()
-            _logger.info('mean is %s', ccdmean)
             sky_corrector = SkyCorrector(msky)
 
         flow = SerialFlow([bias_corrector, exposure_corrector, 
@@ -463,6 +451,8 @@ class TestPinholeRecipe(BaseRecipe):
                                  maxdist=rinput.max_recenter_radius)
         
         hdulist = fits.HDUList([hdu])
+        
+        assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
         
         result = TestPinholeRecipeResult(frame=hdulist, positions=positions, 
                     filter=filtername, DTU=[xdtu, ydtu, zdtu], readmode=readmode, IPA=ipa)
