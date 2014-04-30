@@ -45,13 +45,12 @@ from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
 from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
 from emir.core import gather_info_frames, gather_info_hdu
+from emir.core import EMIR_BIAS_MODES
 
 _logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
             
-            
-EMIR_BIAS_MODES = ['simple']
 
 class DarkCurrentRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
