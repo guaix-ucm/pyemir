@@ -327,7 +327,7 @@ class TestPinholeRecipe(BaseRecipe):
         iinfo = gather_info_frames(rinput.obresult.frames)
         
         if iinfo:
-            mode = iinfo[0].readmode
+            mode = iinfo[0]['readmode']
             if mode.lower() in EMIR_BIAS_MODES:
                 use_bias = True
                 _logger.info('readmode is %s, bias required', mode)
@@ -336,13 +336,15 @@ class TestPinholeRecipe(BaseRecipe):
                 use_bias = False
                 _logger.info('readmode is %s, no bias required', mode)
                 
-        bias_info = gather_info_hdu(rinput.master_bias)
+        
         dark_info = gather_info_hdu(rinput.master_dark)
         flat_info = gather_info_hdu(rinput.master_flat)
         sky_info = gather_info_hdu(rinput.master_sky)
 
         print('images info:', iinfo)
-        print('bias info:', bias_info)
+        if use_bias:
+            bias_info = gather_info_hdu(rinput.master_bias)
+            print('bias info:', bias_info)
         print('dark info:', dark_info)
         print('flat info:', flat_info)
         print('sky info:', sky_info)

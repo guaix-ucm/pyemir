@@ -207,7 +207,7 @@ class TestBiasCorrectRecipe(BaseRecipe):
         use_bias = False
         
         if iinfo:
-            mode = iinfo[0].readmode
+            mode = iinfo[0]['readmode']
             if mode.lower() in EMIR_BIAS_MODES:
                 _logger.info('readmode is %s, bias required', mode)
                 use_bias = True
@@ -238,7 +238,7 @@ class TestBiasCorrectRecipe(BaseRecipe):
         cdata = []
         try:
             for frame in rinput.obresult.frames:
-                hdulist = frame.open() # Check if I can return the same HDUList
+                hdulist = frame.open()
                 hdulist = flow(hdulist)
                 cdata.append(hdulist)
 
@@ -285,7 +285,7 @@ class TestDarkCorrectRecipe(BaseRecipe):
         iinfo = gather_info_frames(rinput.obresult.frames)
         
         if iinfo:
-            mode = iinfo[0].readmode
+            mode = iinfo[0]['readmode']
             if mode.lower() in EMIR_BIAS_MODES:
                 use_bias = True
                 _logger.info('readmode is %s, bias required', mode)
@@ -298,7 +298,8 @@ class TestDarkCorrectRecipe(BaseRecipe):
         dark_info = gather_info_hdu(rinput.master_dark)
 
         print('images info:', iinfo)
-        print('bias info:', bias_info)
+        if use_bias:
+            print('bias info:', bias_info)
         print('dark info:', dark_info)
 
         # Loading calibrations
@@ -323,7 +324,7 @@ class TestDarkCorrectRecipe(BaseRecipe):
         cdata = []
         try:
             for frame in rinput.obresult.frames:
-                hdulist = frame.open() # Check if I can return the same HDUList
+                hdulist = frame.open()
                 hdulist = flow(hdulist)
                 cdata.append(hdulist)
 
@@ -369,7 +370,7 @@ class TestFlatCorrectRecipe(BaseRecipe):
         iinfo = gather_info_frames(rinput.obresult.frames)
         
         if iinfo:
-            mode = iinfo[0].readmode
+            mode = iinfo[0]['readmode']
             if mode.lower() in EMIR_BIAS_MODES:
                 use_bias = True
                 _logger.info('readmode is %s, bias required', mode)
@@ -383,7 +384,8 @@ class TestFlatCorrectRecipe(BaseRecipe):
         flat_info = gather_info_hdu(rinput.master_flat)
 
         print('images info:', iinfo)
-        print('bias info:', bias_info)
+        if use_bias:
+            print('bias info:', bias_info)
         print('dark info:', dark_info)
         print('flat info:', flat_info)
 
@@ -463,7 +465,7 @@ class TestSkyCorrectRecipe(BaseRecipe):
         iinfo = gather_info_frames(rinput.obresult.frames)
         
         if iinfo:
-            mode = iinfo[0].readmode
+            mode = iinfo[0]['readmode']
             if mode.lower() in EMIR_BIAS_MODES:
                 use_bias = True
                 _logger.info('readmode is %s, bias required', mode)
@@ -472,13 +474,16 @@ class TestSkyCorrectRecipe(BaseRecipe):
                 use_bias = False
                 _logger.info('readmode is %s, no bias required', mode)
                 
-        bias_info = gather_info_hdu(rinput.master_bias)
+        
         dark_info = gather_info_hdu(rinput.master_dark)
         flat_info = gather_info_hdu(rinput.master_flat)
         sky_info = gather_info_hdu(rinput.master_sky)
 
         print('images info:', iinfo)
-        print('bias info:', bias_info)
+        if use_bias:
+            bias_info = gather_info_hdu(rinput.master_bias)
+            print('bias info:', bias_info)
+            
         print('dark info:', dark_info)
         print('flat info:', flat_info)
         print('sky info:', sky_info)
@@ -541,4 +546,3 @@ class TestSkyCorrectRecipe(BaseRecipe):
         assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
 
         return result
-
