@@ -18,3 +18,28 @@
 # 
 
 from numina.core.reciperesult import RecipeResultAutoQC as RecipeResult
+
+def gather_info_hdu(hdulist):
+    n_ext = len(hdulist)
+
+    # READMODE is STRING
+    readmode = hdulist[0].header.get('READMODE', 'undefined')
+    bunit = hdulist[0].header.get('BUNIT', 'ADU')
+    texp = hdulist[0].header.get('EXPTIME')
+    adu_s = False
+
+    if bunit.lower() == 'adu/s':
+        adu_s = True
+    
+
+    return {'n_ext': n_ext, 
+            'readmode': readmode,
+            'texp': texp,
+            'adu_s': adu_s}
+    
+def gather_info_frames(framelist):
+    iinfo = []
+    for frame in framelist:
+        with frame.open() as hdulist:
+            iinfo.append(gather_info_hdu(hdulist))
+    return iinfo
