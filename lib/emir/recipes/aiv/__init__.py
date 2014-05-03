@@ -44,7 +44,7 @@ from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
 from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
-from emir.core import gather_info_frames, gather_info_hdu
+from emir.core import gather_info_frames, gather_info_dframe
 from emir.core import EMIR_BIAS_MODES
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -216,7 +216,7 @@ class TestBiasCorrectRecipe(BaseRecipe):
                 _logger.error('readmode is %s, no bias required', mode)
                 raise RecipeError('readmode is %s, no bias required', mode)
              
-        bias_info = gather_info_hdu(rinput.master_bias)
+        bias_info = gather_info_dframe(rinput.master_bias)
            
         print('images info:', iinfo)
         print('bias info:', bias_info)
@@ -294,8 +294,8 @@ class TestDarkCorrectRecipe(BaseRecipe):
                 use_bias = False
                 _logger.info('readmode is %s, no bias required', mode)
                 
-        bias_info = gather_info_hdu(rinput.master_bias)
-        dark_info = gather_info_hdu(rinput.master_dark)
+        bias_info = gather_info_dframe(rinput.master_bias)
+        dark_info = gather_info_dframe(rinput.master_dark)
 
         print('images info:', iinfo)
         if use_bias:
@@ -379,9 +379,9 @@ class TestFlatCorrectRecipe(BaseRecipe):
                 use_bias = False
                 _logger.info('readmode is %s, no bias required', mode)
                 
-        bias_info = gather_info_hdu(rinput.master_bias)
-        dark_info = gather_info_hdu(rinput.master_dark)
-        flat_info = gather_info_hdu(rinput.master_flat)
+        bias_info = gather_info_dframe(rinput.master_bias)
+        dark_info = gather_info_dframe(rinput.master_dark)
+        flat_info = gather_info_dframe(rinput.master_flat)
 
         print('images info:', iinfo)
         if use_bias:
@@ -475,13 +475,13 @@ class TestSkyCorrectRecipe(BaseRecipe):
                 _logger.info('readmode is %s, no bias required', mode)
                 
         
-        dark_info = gather_info_hdu(rinput.master_dark)
-        flat_info = gather_info_hdu(rinput.master_flat)
-        sky_info = gather_info_hdu(rinput.master_sky)
+        dark_info = gather_info_dframe(rinput.master_dark)
+        flat_info = gather_info_dframe(rinput.master_flat)
+        sky_info = gather_info_dframe(rinput.master_sky)
 
         print('images info:', iinfo)
         if use_bias:
-            bias_info = gather_info_hdu(rinput.master_bias)
+            bias_info = gather_info_dframe(rinput.master_bias)
             print('bias info:', bias_info)
             
         print('dark info:', dark_info)

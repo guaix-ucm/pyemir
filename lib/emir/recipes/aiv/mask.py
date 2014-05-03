@@ -50,7 +50,7 @@ from emir.dataproducts import MasterBias, MasterDark
 from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
 from emir.dataproducts import CoordinateList2DType
 from emir.dataproducts import ArrayType
-from emir.core import gather_info_frames, gather_info_hdu
+from emir.core import gather_info_frames, gather_info_dframe
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -337,13 +337,13 @@ class TestPinholeRecipe(BaseRecipe):
                 _logger.info('readmode is %s, no bias required', mode)
                 
         
-        dark_info = gather_info_hdu(rinput.master_dark)
-        flat_info = gather_info_hdu(rinput.master_flat)
-        sky_info = gather_info_hdu(rinput.master_sky)
+        dark_info = gather_info_dframe(rinput.master_dark)
+        flat_info = gather_info_dframe(rinput.master_flat)
+        sky_info = gather_info_dframe(rinput.master_sky)
 
         print('images info:', iinfo)
         if use_bias:
-            bias_info = gather_info_hdu(rinput.master_bias)
+            bias_info = gather_info_dframe(rinput.master_bias)
             print('bias info:', bias_info)
         print('dark info:', dark_info)
         print('flat info:', flat_info)

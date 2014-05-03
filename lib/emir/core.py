@@ -19,6 +19,11 @@
 
 from numina.core.reciperesult import RecipeResultAutoQC as RecipeResult
 
+def gather_info_dframe(dataframe):
+    with dataframe.open() as hdulist:
+        info = gather_info_hdu(hdulist)
+    return info
+
 def gather_info_hdu(hdulist):
     n_ext = len(hdulist)
 

@@ -43,7 +43,7 @@ from numina.core.requirements import InstrumentConfigurationRequirement
 import emir.instrument.channels as allchannels
 from emir.core import RecipeResult
 from emir.core import EMIR_BIAS_MODES
-from emir.core import gather_info_frames, gather_info_hdu
+from emir.core import gather_info_frames, gather_info_dframe
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import WavelengthCalibration, MasterSpectralFlat
@@ -229,7 +229,7 @@ class DarkRecipe(BaseRecipe):
                     _logger.error('image with wrong exposure time')
                     raise RecipeError('image with wrong exposure time')
                 
-        bias_info = gather_info_hdu(rinput.master_bias)
+        bias_info = gather_info_dframe(rinput.master_bias)
 
         print('images info:', iinfo)
         print('bias info:', bias_info)
@@ -369,8 +369,8 @@ class IntensityFlatRecipe(BaseRecipe):
                 _logger.info('readmode is %s, no bias required', mode)
                 
                 
-        bias_info = gather_info_hdu(rinput.master_bias)
-        dark_info = gather_info_hdu(rinput.master_dark)
+        bias_info = gather_info_dframe(rinput.master_bias)
+        dark_info = gather_info_dframe(rinput.master_dark)
         
         print('images info:', iinfo)
         print('bias info:', bias_info)
@@ -459,7 +459,7 @@ class SimpleSkyRecipe(BaseRecipe):
             mode = iinfo[0]['readmode']
             if mode.lower() in EMIR_BIAS_MODES:
                 use_bias = True
-                bias_info = gather_info_hdu(rinput.master_bias)
+                bias_info = gather_info_dframe(rinput.master_bias)
                 _logger.info('readmode is %s, bias required', mode)
                 
             else:
@@ -468,8 +468,8 @@ class SimpleSkyRecipe(BaseRecipe):
                 _logger.info('readmode is %s, no bias required', mode)
                 
         
-        dark_info = gather_info_hdu(rinput.master_dark)
-        flat_info = gather_info_hdu(rinput.master_flat)
+        dark_info = gather_info_dframe(rinput.master_dark)
+        flat_info = gather_info_dframe(rinput.master_flat)
 
         print('images info:', iinfo)
         if use_bias:
