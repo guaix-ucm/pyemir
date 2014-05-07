@@ -245,17 +245,15 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     _logger.info('recenter pinhole coordinates')
     for idx, c in enumerate(centers_py):
         # A failsafe
-        if recenter and maxdist > 0.0:
+        _logger.info('for pinhole %i', idx)
+        _logger.info('center is x=%7.2f y=%7.2f', c[1], c[0])
+        if recenter and maxdist > 0.0:                        
             center, msg = centering_centroid(data, c, box=ibox, maxdist=maxdist)
-            _logger.info('For pinhole %i', idx)
-            _logger.info('old center is %s', c)
-            _logger.info('new center is %s', center)
+            _logger.info('new center is x=%7.2f y=%7.2f', center[1], center[0])
+            # Log in X,Y format                        
             _logger.debug('recenter message: %s', msg)
             centers_r[idx] = center
         else:
-            _logger.info('For pinhole %i', idx)            
-            _logger.info('center is %s', c)
-            _logger.debug('recenter message: %s', 'no recenter')
             centers_r[idx] = c
     
     mm0 = numpy.empty((centers_r.shape[0], 10))    
@@ -286,7 +284,7 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     _logger.info('compute photometry with aperture radii %s', apertures)
     # FIXME: aperture_circular returns values along rows, we transpose it
     mm0[:, 8:10] = photutils.aperture_circular(data, centers_r[:,1], centers_r[:,0], apertures).T
-    
+    _logger.info('done')
     # Convert coordinates to FITS
     mm0[:,0:2] += 1
     
