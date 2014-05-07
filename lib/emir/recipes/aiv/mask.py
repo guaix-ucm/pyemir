@@ -237,24 +237,33 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     # convert FITS x, y coordinates (pixel center 1)
     # to python/scipy/astropy (pixel center 0 and x,y -> y,x)
     
+    npinholes = ncenters.shape[0]
     centers_py = numpy.fliplr(ncenters[:,0:2]) - 1
     
     # recentered values
     centers_r = numpy.empty_like(centers_py)
+    
+    # Ignore certain pinholes
+    compute_mask = numpy.ones((npinholes,), dtype='bool')
     
     _logger.info('recenter pinhole coordinates')
     for idx, c in enumerate(centers_py):
         # A failsafe
         _logger.info('for pinhole %i', idx)
         _logger.info('center is x=%7.2f y=%7.2f', c[1], c[0])
-        if recenter and maxdist > 0.0:                        
-            center, msg = centering_centroid(data, c, box=ibox, maxdist=maxdist)
-            _logger.info('new center is x=%7.2f y=%7.2f', center[1], center[0])
-            # Log in X,Y format                        
-            _logger.debug('recenter message: %s', msg)
-            centers_r[idx] = center
+        if ((c[1] > data.shape[1] - 5) or (c[1] < 5) or
+            (c[0] > data.shape[0] - 5) or (c[0] < 5)):
+            _logger.info('pinhole too near to the border')
+            compute_mask[idx] = False
         else:
-            centers_r[idx] = c
+            if recenter and maxdist > 0.0:                        
+                center, msg = centering_centroid(data, c, box=ibox, maxdist=maxdist)
+                _logger.info('new center is x=%7.2f y=%7.2f', center[1], center[0])
+                # Log in X,Y format                        
+                _logger.debug('recenter message: %s', msg)
+                centers_r[idx] = center
+            else:
+                centers_r[idx] = c
     
     mm0 = numpy.empty((centers_r.shape[0], 10))    
     
@@ -263,17 +272,26 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     fmt = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
     for idx, center in enumerate(centers_r):
         _logger.info('For pinhole %i', idx)
-        res = compute_fwhm_global(data, center, box=ibox)
-        _logger.info(fmt, *res)
+        if compute_mask[idx]:
+            res = compute_fwhm_global(data, center, box=ibox)
+            _logger.info(fmt, *res)
+            mm0[idx,0:5] = res
+        else:
+            _logger.info('skipping')
+            res = center[1], center[0], -99.0, -99.0, -99.0
         mm0[idx,0:5] = res
-    
+        
     _logger.info('compute Gaussian fitting')
     # compute the FWHM fitting a Gaussian
     for idx, center in enumerate(centers_r):
         _logger.info('For pinhole %i', idx)
-        res = gauss_model(data, center)
-        fmt = 'x=%7.2f y=%7.2f peak=%6.3f stdev_x=%6.3f stdev_y=%6.3f'
-        _logger.info(fmt, *res)
+        if compute_mask[idx]:
+            res = gauss_model(data, center)
+            fmt = 'x=%7.2f y=%7.2f peak=%6.3f stdev_x=%6.3f stdev_y=%6.3f'
+            _logger.info(fmt, *res)
+        else:
+            _logger.info('skipping')
+            res = center[1], center[0], -99.0, -99.0, -99.0
         mm0[idx, 5:8] = res[2:] 
     # Photometry in coordinates
     # x=centers_r[:,1]
