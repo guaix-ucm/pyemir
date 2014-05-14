@@ -49,4 +49,4 @@ def gather_info_frames(framelist):
             iinfo.append(gather_info_hdu(hdulist))
     return iinfo
 
-EMIR_BIAS_MODES = ['simple', 'bias']
+EMIR_BIAS_MODES = ['simple', 'bias', 'single']
