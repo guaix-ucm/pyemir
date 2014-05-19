@@ -25,12 +25,15 @@ import logging
 import math
 
 import numpy
-from scipy.spatial import distance
 import scipy.interpolate as itpl
 import scipy.optimize as opz
 from astropy.modeling import models, fitting
 from astropy.io import fits
 import photutils
+
+from scipy.interpolate import splrep, splev, sproot
+from numina.array.mode import mode_half_sample
+from numina.array.recenter import wcs_to_pix_np, img_box, centering_centroid_xy
 
 from numina import __version__
 from numina.core import BaseRecipe, RecipeRequirements, RecipeError
@@ -57,83 +60,6 @@ _logger = logging.getLogger('numina.recipes.emir')
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
             
 #GAUSS_FWHM_FACTOR = 2.354800
-
-def img_box(center, shape, box):
-
-    def slice_create(c, s, b):
-        cc = int(math.floor(c + 0.5))
-        l = max(0, cc - b)
-        h = min(s, cc + b +1)
-        return slice(l, h, None)
-
-    return tuple(slice_create(*args) for args in zip(center, shape, box))
-
-# returns y,x
-def _centering_centroid_loop(data, center, box):
-    sl = img_box(center, data.shape, box)
-    #_logger.debug('raster center %s', center)
-    #_logger.debug('raster slice %s', sl)
-
-    
-    raster = data[sl]
-    
-    background = raster.min()
-    #_logger.debug('Background estimation is %s', background)
-    
-    braster = raster - background
-    
-
-    threshold = braster.mean()
-    #_logger.debug('Threshold is %s', threshold)
-    
-    mask = braster >= threshold
-    if not numpy.any(mask):
-        #_logger.warning('No points to compute centroid, threshold too high')
-        return center
-        
-    rr = numpy.where(mask, braster, 0)
-
-    #r_std = rr.std()
-    #r_mean = rr.mean()
-    #if r_std > 0:
-    #    snr = r_mean / r_std
-        #_logger.debug('SNR is %f', snr)
-    
-    fi, ci = numpy.indices(braster.shape)
-    
-    norm = rr.sum()
-    if norm <= 0.0:
-        #_logger.warning('all points in thresholded raster are 0.0')
-        return center
-        
-    fm = (rr * fi).sum() / norm
-    cm = (rr * ci).sum() / norm
-    
-    return fm + sl[0].start, cm + sl[1].start
-    
-# returns y,x
-def centering_centroid(data, center, box, nloop=10, toldist=1e-3, maxdist=10):
-    
-    # Store original center
-    ocenter = center.copy()
-    
-    for i in range(nloop):
-        
-        ncenter = _centering_centroid_loop(data, center, box)
-        #_logger.debug('new center is %s', ncenter)
-        # if we are to far away from the initial point, break
-        dst = distance.euclidean(ocenter, ncenter)
-        if dst > maxdist:
-            return center, 'maximum distance (%i) from origin reached' % maxdist 
-        
-        # check convergence
-        dst = distance.euclidean(ncenter, center)
-        if dst < toldist:
-            return ncenter, 'converged in iteration %i' % i
-        else:
-            center = ncenter
-        
-    return ncenter, 'not converged in %i iterations' % nloop
 
 # returns y,x
 def compute_fwhm(img, center):
@@ -190,10 +116,107 @@ def compute_fwhm(img, center):
 
     return center[0], center[1], peak, fwhm_x, fwhm_y
 
-# returns x,y, peak, fwhm_x, fwhm_y
+
+# Background in an annulus, mode is HSM
+
+from photutils import CircularAnnulus
+
+def comp_back_with_annulus(img, xc, yc, rad1, rad2, frac=0.1):
+    '''
+    center: [x,y], center of first pixel is [0,0]
+    '''
+    
+    ca = CircularAnnulus(rad1, rad2)
+    mm = ca.encloses(-0.5 - xc, img.shape[1] - 0.5 - xc, 
+                 -0.5 - yc, img.shape[0] - 0.5 - yc, 
+                  img.shape[0], img.shape[1])
+    
+    valid = mm > frac
+    rr = img[valid]
+    
+    if rr.size == 0:
+        raise ValueError # Bad
+    
+    # mode?
+    bck = mode_half_sample(rr)
+    
+    return bck, mm
+
+def compute_fwhm_enclosed(data, x0, y0, back, extra=False):
+    
+    res = data - back
+    #print 'center is', x0, y0
+    peak_pix = wcs_to_pix_np((x0, y0))
+    #print 'peak pixel is',peak_pix
+
+    peak = res[tuple(peak_pix)]
+    
+    
+    minrad = 0.01
+    maxrad = 15.0
+    rad = numpy.logspace(-2, numpy.log10(maxrad), num=100)
+    flux = photutils.aperture_circular(res, [x0], [y0], rad, method='exact')[:,0]
+
+    # We use splines to interpolate and derivate
+    spl = splrep(rad, flux)
+    # Evaluate the spline representation
+    val = splev(rad, spl)
+    # Evaluate the derivative
+    vald1 = splev(rad, spl, der=1)
+
+    spl = splrep(rad, flux)
+    val = splev(rad, spl)
+    vald1 = splev(rad, spl, der=1)
+    splinter = splrep(rad, vald1 - math.pi * peak * rad)
+    valdiff = splev(rad, splinter)
+    # Evaluate the spline representation
+    roots = sproot(splinter)
+    nroots = len(roots)
+    if peak < 0:
+        msg = "The method doesn't converge, peak is negative"
+        fwhm = -99
+    else:
+        if nroots == 0:
+            msg = "The method doesn't converge, no roots"
+            fwhm = -99
+        elif nroots == 1:
+            r12 = roots[0]
+            fwhm = 2 * r12
+            msg = "The method converges"
+        else:
+            msg = "The method doesn't converge, multiple roots"
+            r12 = roots[0]
+            fwhm = 2 * r12
+
+    if extra:
+        return peak, fwhm, msg, {'rad': rad, 'flux': flux, 'deriv': vald1}
+    else:
+        return peak, fwhm, msg
+
+def compute_fwhm_global_no(data, center, box):
+    sl = img_box(center, data.shape, box)
+    
+    raster = data[sl]
+    
+    bck_estim = AnnulusBackgroundEstimator(r1=5.0, r2=13.0)
+    
+    y0 = center[0] - sl[0].start 
+    x0 = center[1] - sl[1].start
+    
+    x, y, peak, bck, fwhm_x, fwhm_y = compute_fwhm_no(raster, x0, y0, bck_estim)
+    
+    res0 = x+sl[1].start, y+sl[0].start, peak, bck, fwhm_x, fwhm_y
+    
+    x, y, peak, bck, fwhm, _msg  = enclosed_fwhm(data, x0, y0, bck_estim)
+    
+    res1 = x+sl[1].start, y+sl[0].start, peak, bck, fwhm
+        
+    return res0, res1  
+    
 def compute_fwhm_global(data, center, box):
     sl = img_box(center, data.shape, box)
     raster = data[sl]
+    
     background = raster.min()
     braster = raster - background
     
@@ -208,7 +231,98 @@ def compute_fwhm_global(data, center, box):
         _logger.warning("%s", error)
         return center[1], center[0], -199.0, -199.0, -199.0
 
+class ConstantBackgroundEstimator(object):
+    def __init__(self, const):
+        self.const = const
+        
+    def __call__(self, a, x, y):
+        return self.const
 
+class AnnulusBackgroundEstimator(object):
+    def __init__(self, r1, r2):
+        self.r1 = r1
+        self.r2 = r2
+    
+    def __call__(self, a, x, y):
+        print 'compute background in annulus r1=', self.r1, 'r2=',self.r2
+        bck, _ = comp_back_with_annulus(a, x, y, self.r1, self.r2)
+        return bck
+
+def enclosed_fwhm(data, x0, y0, bckestim):
+    
+    bck = bckestim(data, x0, y0)
+    
+    peak, fwhm, msg = compute_fwhm_enclosed(data, x0, y0, bck, extra=False)
+    
+    return x0, y0, peak, bck, fwhm, msg
+
+def _fwhm_side_lineal(uu, vv):
+    '''Compute r12 using linear interpolation.'''
+    res1, = numpy.nonzero(vv < 0)
+    if len(res1) == 0:
+        return 0, 1 # error, no negative value
+    else:
+        # first value
+        i2 = res1[0]
+        i1 = i2 -1
+        dx = uu[i2] - uu[i1]
+        dy = vv[i2] - vv[i1]
+        r12 = uu[i1] - vv[i1] * dx / dy
+        return r12, 0
+
+def compute_fwhm_1d(uu, vv, uc, upix):
+
+    _fwhm_side = _fwhm_side_lineal
+    
+    # Find half peak radius on the rigth
+    r12p, errorp = _fwhm_side(uu[upix:], vv[upix:])
+    
+    # Find half peak radius on the left
+    r12m, errorm = _fwhm_side(uu[upix::-1], vv[upix::-1])
+    
+    if errorm == 1:
+        if errorp == 1:
+            fwhm = -99 # No way
+            msg = 'Failed to compute FWHM'
+            code = 2
+        else:
+            fwhm = 2 * (r12p - uc)
+            code = 1
+            msg = 'FWHM computed from rigth zero'
+    else:
+        if errorp == 1:
+            fwhm = 2 * (uc - r12m)
+            msg = 'FWHM computed from left zero'
+            code = 1
+        else:
+            msg = 'FWHM computed from left and rigth zero'
+            code = 0
+            fwhm = r12p - r12m
+
+    
+    return fwhm, code, msg
+
+def compute_fwhm_no(img, xc, yc, bckestim):
+    # background estimation
+    bck = bckestim(img, xc, yc)
+    
+    img_b = img - bck
+    
+    ypix, xpix  = wcs_to_pix_np([xc, yc])
+    
+    peak = img_b[ypix, xpix]
+    
+    xitp1 = range(img.shape[1])
+    res11 = img_b[ypix, :]
+    
+    yitp1 = range(img.shape[0])
+    res22 = img_b[:, xpix]
+
+    fwhm_x, codex, msgx = compute_fwhm_1d(xitp1, res11-0.5 * peak, xc, xpix)
+    fwhm_y, codey, msgy = compute_fwhm_1d(yitp1, res22-0.5 * peak, yc, ypix)
+    
+    return xc, yc, peak, bck, fwhm_x, fwhm_y
+    
 # returns x,y
 def gauss_model(data, center_r):
     sl = img_box(center_r, data.shape, box=(4,4))
@@ -257,11 +371,11 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
             compute_mask[idx] = False
         else:
             if recenter and maxdist > 0.0:                        
-                center, msg = centering_centroid(data, c, box=ibox, maxdist=maxdist)
-                _logger.info('new center is x=%7.2f y=%7.2f', center[1], center[0])
+                x, y, _back, msg = centering_centroid_xy(data, c[1], c[0], box=ibox, maxdist=maxdist)
+                _logger.info('new center is x=%7.2f y=%7.2f', x, y)
                 # Log in X,Y format                        
                 _logger.debug('recenter message: %s', msg)
-                centers_r[idx] = center
+                centers_r[idx] = (y,x)
             else:
                 centers_r[idx] = c
     
@@ -306,7 +420,25 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     # Convert coordinates to FITS
     mm0[:,0:2] += 1
     
-    return mm0
+    mm1 = numpy.empty((centers_r.shape[0], 11))
+    
+        # compute the FWHM without fitting
+    _logger.info('compute model-free FWHM with linear fitting')
+    _logger.info('compute FWHM from enclosed flux')
+    fmt = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
+    for idx, center in enumerate(centers_r):
+        _logger.info('For pinhole %i', idx)
+        if compute_mask[idx]:
+            res0, res1 = compute_fwhm_global_no(data, center, box=ibox)
+            #_logger.info(fmt, *res)
+            mm1[idx,0:6] = res0
+            mm1[idx,6:] = res1
+        else:
+            _logger.info('skipping')
+            mm1[idx,0:2] = center[1], center[0]
+            mm1[idx,2:] = -99
+            
+    return mm0, mm1
     
 class TestPinholeRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
@@ -324,6 +456,7 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
 class TestPinholeRecipeResult(RecipeResult):
     frame = Product(FrameDataProduct)
     positions = Product(ArrayType)
+    positions_alt = Product(ArrayType)
     DTU = Product(ArrayType)
     filter = Product(str)
     readmode = Product(str)
@@ -464,7 +597,7 @@ class TestPinholeRecipe(BaseRecipe):
             ncenters = rinput.pinhole_nominal_positions        
         
         _logger.info('pinhole characterization')
-        positions = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size, 
+        positions, positions_alt = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size, 
                                  recenter=rinput.recenter,
                                  maxdist=rinput.max_recenter_radius)
         
@@ -473,6 +606,7 @@ class TestPinholeRecipe(BaseRecipe):
         assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
         
         result = TestPinholeRecipeResult(frame=hdulist, positions=positions, 
+                    positions_alt=positions_alt,
                     filter=filtername, DTU=[xdtu, ydtu, zdtu], readmode=readmode, IPA=ipa)
         return result
         
