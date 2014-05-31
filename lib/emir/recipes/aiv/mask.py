@@ -52,12 +52,21 @@ from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
 from emir.dataproducts import CoordinateList2DType
 from emir.dataproducts import ArrayType
 from emir.core import gather_info_frames, gather_info_dframe
+from photutils import aperture_circular
+
+from .procedures import compute_fwhm_spline2d_fit
+from .procedures import compute_fwhm_enclosed_direct
+from .procedures import compute_fwhm_enclosed_grow
+from .procedures import compute_fwhm_simple
+from .procedures import moments
+from .procedures import AnnulusBackgroundEstimator
+from .procedures import img_box2d
 
 _logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
             
-#GAUSS_FWHM_FACTOR = 2.354800
+GAUSS_FWHM_FACTOR = 2.354800
 
 # returns y,x
 def compute_fwhm(img, center):
@@ -125,10 +134,7 @@ def compute_fwhm_global(data, center, box):
     
     newc = center[0] - sl[0].start, center[1] - sl[1].start
     try:
-        res = compute_fwhm_spline2d_fit(braster, newc[0], newc[1])
-        print res
         res = compute_fwhm(braster, newc)
-        print res
         return res[1]+sl[1].start, res[0]+sl[0].start, res[2], res[3], res[4]
     except ValueError as error:
         _logger.warning("%s", error)
@@ -205,8 +211,6 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
         if compute_mask[idx]:
             _logger.info('compute model-free FWHM')
             res1 = compute_fwhm_global(data, (yc, xc), box=ibox)
-            lpeak, fwhm_x, fwhm_y = compute_fwhm_2dspline(part_s, xx0, yy0)
-    print 'Spline, peak:', lpeak, 'fwhm x', fwhm_x, 'fwhm y', fwhm_y
             fmt1 = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
             _logger.info(fmt1, *res1)
             
@@ -236,27 +240,8 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     mm0[:, 8:10] = photutils.aperture_circular(data, centers_r[:,1], centers_r[:,0], apertures).T
     _logger.info('done')
     # Convert coordinates to FITS
-    mm0[:,0:2] += 1
-    
-    mm1 = numpy.empty((centers_r.shape[0], 11))
-    
-    # compute the FWHM without fitting
-    #_logger.info('compute model-free FWHM with linear fitting')
-    #_logger.info('compute FWHM from enclosed flux')
-    #fmt = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
-    #for idx, center in enumerate(centers_r):
-    #    _logger.info('For pinhole %i', idx)
-    #    if compute_mask[idx]:
-    #        res0, res1 = compute_fwhm_global_no(data, center, box=ibox)
-    #        #_logger.info(fmt, *res)
-    #        mm1[idx,0:6] = res0
-    #        mm1[idx,6:] = res1
-    #    else:
-    #        _logger.info('skipping')
-    #        mm1[idx,0:2] = center[1], center[0]
-    #        mm1[idx,2:] = -99
-            
-    return mm0, mm1
+    mm0[:,0:2] += 1            
+    return mm0
 
 def pinhole_char2(data, ncenters,
         recenter=True, 
@@ -265,12 +250,11 @@ def pinhole_char2(data, ncenters,
         recenter_maxdist=10.0,
         back_buff=3,
         back_width=5,
-        phot_niter=10
+        phot_niter=10,
         phot_rad=8):
 
-
     sigma0 = 1.0
-    rad =  3 * sigma0 * FWHM_G
+    rad =  3 * sigma0 * GAUSS_FWHM_FACTOR
     box = recenter_half_box
     recenter_half_box = (box, box)
     
@@ -278,11 +262,11 @@ def pinhole_char2(data, ncenters,
     # to python/scipy/astropy (pixel center 0 and x,y -> y,x)
     
     npinholes = ncenters.shape[0]
-    centers_i = ncenters[:,0:2]) - 1
+    centers_i = ncenters[:,0:2] - 1
     
     # recentered values
-    centers_r = numpy.empty_like(centers_py)
-    
+    centers_r = numpy.empty_like(centers_i)
+
     # Ignore certain pinholes
     compute_mask = numpy.ones((npinholes,), dtype='bool')
     
@@ -296,7 +280,7 @@ def pinhole_char2(data, ncenters,
             _logger.info('pinhole too near to the border')
             compute_mask[idx] = False
         else:
-            if recenter and maxdist > 0.0:                        
+            if recenter and (recenter_maxdist > 0.0):                        
                 xc, yc, _back, msg = centering_centroid(data, xi, yi, 
                         box=recenter_half_box, 
                         maxdist=recenter_maxdist, nloop=recenter_nloop)
@@ -306,12 +290,17 @@ def pinhole_char2(data, ncenters,
                 centers_r[idx] = xc, yc
             else:
                 centers_r[idx] = xi, yi
-    # Result 0
-    #mm0 = numpy.empty((centers_r.shape[0], 10))    
+    
+    # Number of results
+    nresults = 32
+    mm0 = numpy.empty((centers_r.shape[0], nresults))    
+    mm0[:] = -99
+    mm0[:,0:2] = centers_i
+    mm0[:,2:4] = centers_r 
 
     # Fitter
     fitter = fitting.NonLinearLSQFitter()
-    rplot = 8
+    rplot = phot_rad
     
     for idx, (x0, y0) in enumerate(centers_r):
         _logger.info('For pinhole %i', idx)
@@ -324,12 +313,12 @@ def pinhole_char2(data, ncenters,
         rad = 3.0        
         # Loop to find better photometry radius and background annulus 
         irad = rad
-        for i in range(niter):
+        for i in range(phot_niter):
             
             phot_rad = rad
             # Sky background annulus
-            rs1 = rad + buff
-            rs2 = rs1 + width
+            rs1 = rad + back_buff
+            rs2 = rs1 + back_width
             bckestim = AnnulusBackgroundEstimator(r1=rs1, r2=rs2)
             
             # Crop the image to obtain the background
@@ -352,10 +341,10 @@ def pinhole_char2(data, ncenters,
             xx0 = x0 - sl[1].start
             yy0 = y0 - sl[0].start
     
-            Y, X = np.mgrid[sl]
+            Y, X = numpy.mgrid[sl]
     
             # Photometry
-            D = np.sqrt((X-x0)**2 + (Y-y0)**2)
+            D = numpy.sqrt((X-x0)**2 + (Y-y0)**2)
             phot_mask = D < fit_rad
             r1 = D[phot_mask]
             part_s = part - bck
@@ -370,7 +359,7 @@ def pinhole_char2(data, ncenters,
             # sometimes the fit is negative
             rsigma = abs(g1d_f.stddev.value)
             
-            rfwhm = rsigma * FWHM_G
+            rfwhm = rsigma * GAUSS_FWHM_FACTOR
 
             rad = 2.5 * rfwhm
             if abs(rad-irad) < 1e-3:
@@ -382,23 +371,28 @@ def pinhole_char2(data, ncenters,
         else:
             _logger.debug('no convergence in photometric radius determination')
         
+        _logger.info('background %6.2f, r1 %7.2f r2 %7.2f', bck, rs1, rs2)
+        mm0[idx,4:4+3] = bck, rs1, rs2
         aper_rad = rad
         flux_aper = aperture_circular(part_s, [xx0], [yy0], aper_rad)
         _logger.info('aper rad %f, aper flux %f', aper_rad, flux_aper)
-        
+        mm0[idx,7:7+2] = aper_rad, flux_aper         
+
         dpeak, dfwhm, smsg = compute_fwhm_enclosed_direct(part_s, xx0, yy0, maxrad=fit_rad)
         eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(part_s, xx0, yy0, maxrad=fit_rad)
         
         _logger.info('Enclosed fit, peak: %f fwhm %f', epeak, efwhm)
         _logger.info('Enclosed direct, peak: %f fwhm %f', dpeak, dfwhm)
         _logger.info('Radial fit, peak: %f fwhm %f', rpeak, rfwhm)
+        mm0[idx,9:9+6] = epeak, efwhm, dpeak, dfwhm, rpeak, rfwhm
     
-    
-        lpeak, fwhm_x, fwhm_y = compute_fwhm_simple(part_s, xx0, yy0)
-        _logger.info('Simple, peak: %f fwhm x %f fwhm %f', lpeak, fwhm_x, fwhm_y)
-        
-        lpeak, fwhm_x, fwhm_y = compute_fwhm_2dspline(part_s, xx0, yy0)
-        _logger.info('Spline, peak: %f fwhm x %f fwhm %f', lpeak, fwhm_x, fwhm_y)
+        res_simple = compute_fwhm_simple(part_s, xx0, yy0)
+        _logger.info('Simple, peak: %f fwhm x %f fwhm %f', *res_simple)
+        mm0[idx,15:15+3] = res_simple
+
+        res_spline = compute_fwhm_spline2d_fit(part_s, xx0, yy0)
+        _logger.info('Spline, peak: %f fwhm x %f fwhm %f', *res_spline)
+        mm0[idx,18:18+3] = res_spline
         
         # Bidimensional fit
         # Fit in a smaller box
@@ -408,14 +402,32 @@ def pinhole_char2(data, ncenters,
         sl1 = img_box2d(x0, y0, data.shape, fit2d_half_box)
         
         part1 = data[sl1]
-        Y1, X1 = np.mgrid[sl1]
+        Y1, X1 = numpy.mgrid[sl1]
         
-        g2d = models.Gaussian2D(amplitude=rpeak, x_mean=x0, y_mean=y0, x_stddev=1.0, y_stddev=1.0)
+        g2d = models.Gaussian2D(amplitude=rpeak, x_mean=x0, y_mean=y0, 
+                                x_stddev=1.0, y_stddev=1.0)
         g2d_f = fitter(g2d, X1, Y1, part1 - bck)
         
+        res_gauss2d = (g2d_f.amplitude.value, 
+                        g2d_f.x_mean.value + 1, # FITS coordinates 
+                        g2d_f.y_mean.value + 1, # FITS coordinates
+                        g2d_f.x_stddev.value * GAUSS_FWHM_FACTOR,
+                        g2d_f.y_stddev.value * GAUSS_FWHM_FACTOR,
+                        g2d_f.theta.value)
+
+        _logger.info('Gauss2d, %s', res_gauss2d)
+        mm0[idx,21:21+6] = res_gauss2d
         # Moments
         moments_half_box = fit2d_half_box
-        Mxx, Myy, Mxy, e, pa = moments(data, x0, y0, moments_half_box)
+        res_moments = moments(data, x0, y0, moments_half_box)
+        _logger.info('Mxx %f Myy %f Mxy %f e %f pa %f', *res_moments)
+        
+        mm0[idx,27:27+5] = res_moments
+
+    # FITS coordinates
+    mm0[:,4] += 1
+
+    return mm0
     
 class TestPinholeRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
@@ -574,13 +586,15 @@ class TestPinholeRecipe(BaseRecipe):
             ncenters = rinput.pinhole_nominal_positions        
         
         _logger.info('pinhole characterization')
-        positions, positions_alt = pinhole_char(hdu.data, ncenters, box=rinput.box_half_size, 
-                                 recenter=rinput.recenter,
-                                 maxdist=rinput.max_recenter_radius)
+        positions = pinhole_char(hdu.data, 
+                 ncenters, box=rinput.box_half_size, 
+                 recenter=rinput.recenter,
+                 maxdist=rinput.max_recenter_radius)
         
-        pinhole_char2(hdu.data, ncenters, box=rinput.box_half_size, 
-                                 recenter=rinput.recenter,
-                                 maxdist=rinput.max_recenter_radius)
+        positions_alt = pinhole_char2(hdu.data, ncenters, 
+            recenter=rinput.recenter,
+            recenter_half_box=rinput.box_half_size, 
+            recenter_maxdist=rinput.max_recenter_radius)
         
         hdulist = fits.HDUList([hdu])
         
