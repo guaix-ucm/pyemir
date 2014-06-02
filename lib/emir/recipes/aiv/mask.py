@@ -425,7 +425,7 @@ def pinhole_char2(data, ncenters,
         mm0[idx,27:27+5] = res_moments
 
     # FITS coordinates
-    mm0[:,4] += 1
+    mm0[:,:4] += 1
 
     return mm0
     
