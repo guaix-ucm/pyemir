@@ -177,7 +177,8 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     
     # recentered values
     centers_r = numpy.empty_like(centers_py)
-    
+    mm0 = numpy.empty((centers_r.shape[0], 10))
+    return mm0    
     # Ignore certain pinholes
     compute_mask = numpy.ones((npinholes,), dtype='bool')
     
@@ -309,16 +310,16 @@ def pinhole_char2(data, ncenters,
             # Fill result with -99
             continue
         
-        # Photometric radius
+        # Initial photometric radius
         rad = 3.0        
         # Loop to find better photometry radius and background annulus 
         irad = rad
         for i in range(phot_niter):
-            
             phot_rad = rad
             # Sky background annulus
             rs1 = rad + back_buff
             rs2 = rs1 + back_width
+            _logger.debug('Iter %d, annulus r1=%5.2f r2=%5.2f', i, rs1, rs2)
             bckestim = AnnulusBackgroundEstimator(r1=rs1, r2=rs2)
             
             # Crop the image to obtain the background
@@ -342,7 +343,8 @@ def pinhole_char2(data, ncenters,
             yy0 = y0 - sl[0].start
     
             Y, X = numpy.mgrid[sl]
-    
+            _logger.debug('Iter %d, radial fit', i)
+
             # Photometry
             D = numpy.sqrt((X-x0)**2 + (Y-y0)**2)
             phot_mask = D < fit_rad
@@ -350,7 +352,7 @@ def pinhole_char2(data, ncenters,
             part_s = part - bck
             f1 = part_s[phot_mask]
             # Fit radial profile
-            model = models.Gaussian1D(amplitude=1.0, mean=0, stddev=1.0)
+            model = models.Gaussian1D(amplitude=f1.max(), mean=0, stddev=1.0)
             model.mean.fixed = True # Mean is always 0.0
             
             g1d_f = fitter(model, r1, f1, weights=(r1+1e-12)**-1)
@@ -362,6 +364,7 @@ def pinhole_char2(data, ncenters,
             rfwhm = rsigma * GAUSS_FWHM_FACTOR
 
             rad = 2.5 * rfwhm
+            _logger.debug('Iter %d, new rad is %f', i, rad)
             if abs(rad-irad) < 1e-3:
                 # reached convergence
                 _logger.debug('Convergence in iter %d', i)
@@ -591,6 +594,7 @@ class TestPinholeRecipe(BaseRecipe):
                  recenter=rinput.recenter,
                  maxdist=rinput.max_recenter_radius)
         
+        _logger.info('alternate pinhole characterization')
         positions_alt = pinhole_char2(hdu.data, ncenters, 
             recenter=rinput.recenter,
             recenter_half_box=rinput.box_half_size, 
