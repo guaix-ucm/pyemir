@@ -177,8 +177,6 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     
     # recentered values
     centers_r = numpy.empty_like(centers_py)
-    mm0 = numpy.empty((centers_r.shape[0], 10))
-    return mm0    
     # Ignore certain pinholes
     compute_mask = numpy.ones((npinholes,), dtype='bool')
     
@@ -202,33 +200,32 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
                 centers_r[idx] = (yi, xi)
     # Result 0
     mm0 = numpy.empty((centers_r.shape[0], 10))    
-    
+    mm0.fill(-99) 
     # compute the FWHM without fitting
-
     
     for idx, (yc, xc) in enumerate(centers_r):
         _logger.info('For pinhole %i', idx)
         mm0[idx,0:2] = xc, yc
         if compute_mask[idx]:
             _logger.info('compute model-free FWHM')
-            res1 = compute_fwhm_global(data, (yc, xc), box=ibox)
-            fmt1 = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
-            _logger.info(fmt1, *res1)
+            try:
+                res1 = compute_fwhm_global(data, (yc, xc), box=ibox)
+                fmt1 = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
+                _logger.info(fmt1, *res1)
+                mm0[idx, 2:5] = res1[2:]
+            except StandardError as error:
+                _logger.exception("unable to obtain FWHM, %s", error)
             
             _logger.info('compute Gaussian 2Dfitting')        
-            res2 = gauss_model(data, (yc, xc))
-            fmt2 = 'x=%7.2f y=%7.2f peak=%6.3f stdev_x=%6.3f stdev_y=%6.3f'
-            _logger.info(fmt2, *res2)
-            
-            
+            try:
+                res2 = gauss_model(data, (yc, xc))
+                fmt2 = 'x=%7.2f y=%7.2f peak=%6.3f stdev_x=%6.3f stdev_y=%6.3f'
+                _logger.info(fmt2, *res2)
+                mm0[idx, 5:8] = res2
+            except StandardError as error:
+                _logger.exception("unable to obtain FWHM, %s", error)
         else:
             _logger.info('skipping')
-            res1 = -99.0, -99.0, -99.0
-            res2 = -99.0, -99.0, -99.0
-            
-        mm0[idx, 2:5] = res1
-        mm0[idx, 5:8] = res2
-    
          
     # Photometry in coordinates
     # x=centers_r[:,1]
