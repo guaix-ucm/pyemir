@@ -381,12 +381,19 @@ def pinhole_char2(data, ncenters,
         _logger.info('aper rad %f, aper flux %f', aper_rad, flux_aper)
         mm0[idx,7:7+2] = aper_rad, flux_aper         
 
-        dpeak, dfwhm, smsg = compute_fwhm_enclosed_direct(part_s, xx0, yy0, maxrad=fit_rad)
-        eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(part_s, xx0, yy0, maxrad=fit_rad)
-        
-        _logger.info('Enclosed fit, peak: %f fwhm %f', epeak, efwhm)
-        _logger.info('Enclosed direct, peak: %f fwhm %f', dpeak, dfwhm)
         _logger.info('Radial fit, peak: %f fwhm %f', rpeak, rfwhm)
+        
+        dpeak, dfwhm, smsg = compute_fwhm_enclosed_direct(part_s, xx0, yy0, maxrad=fit_rad)
+        _logger.info('Enclosed direct, peak: %f fwhm %f', dpeak, dfwhm)
+        
+        try:
+            eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(part_s, xx0, yy0, maxrad=fit_rad)
+            _logger.info('Enclosed fit, peak: %f fwhm %f', epeak, efwhm)
+        except StandardError as error:
+            _logger.warning('Error in compute_fwhm_enclosed_grow %s', error)
+            eamp, efwhm, epeak, emsg = [-99.0] * 4 
+        
+        
         mm0[idx,9:9+6] = epeak, efwhm, dpeak, dfwhm, rpeak, rfwhm
     
         res_simple = compute_fwhm_simple(part_s, xx0, yy0)
