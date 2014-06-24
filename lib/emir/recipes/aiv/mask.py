@@ -384,8 +384,12 @@ def pinhole_char2(data, ncenters,
 
         _logger.info('Radial fit, peak: %f fwhm %f', rpeak, rfwhm)
         
-        dpeak, dfwhm, smsg = compute_fwhm_enclosed_direct(part_s, xx0, yy0, maxrad=fit_rad)
-        _logger.info('Enclosed direct, peak: %f fwhm %f', dpeak, dfwhm)
+        try:
+            dpeak, dfwhm, smsg = compute_fwhm_enclosed_direct(part_s, xx0, yy0, maxrad=fit_rad)
+            _logger.info('Enclosed direct, peak: %f fwhm %f', dpeak, dfwhm)
+        except StandardError as error:
+            _logger.warning('Error in compute_fwhm_enclosed_direct %s', error)
+            dpeak, dfwhm = -99.0, -99.0
         
         try:
             eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(part_s, xx0, yy0, maxrad=fit_rad)
