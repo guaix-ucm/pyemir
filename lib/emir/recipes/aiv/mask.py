@@ -221,7 +221,7 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
                 res2 = gauss_model(data, (yc, xc))
                 fmt2 = 'x=%7.2f y=%7.2f peak=%6.3f stdev_x=%6.3f stdev_y=%6.3f'
                 _logger.info(fmt2, *res2)
-                mm0[idx, 5:8] = res2
+                mm0[idx, 5:8] = res2[2:]
             except StandardError as error:
                 _logger.exception("unable to obtain FWHM, %s", error)
         else:
