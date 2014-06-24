@@ -326,9 +326,13 @@ def pinhole_char2(data, ncenters,
             xx0 = x0 - sl_sky[1].start
             yy0 = y0 - sl_sky[0].start
             # FIXME, perhaps we dont need to crop the image
-            bck = bckestim(raster_sky, xx0, yy0)
-            _logger.debug('Iter %d, background %f in annulus r1=%5.2f r2=%5.2f', 
-                          i, bck, rs1, rs2)
+            try:
+                bck = bckestim(raster_sky, xx0, yy0)
+                _logger.debug('Iter %d, background %f in annulus r1=%5.2f r2=%5.2f', 
+                              i, bck, rs1, rs2)
+            except StandardError as error:
+                _logger.warning('Error in background estimation %s', error)
+                break
         
             # Radius of the fit
             fit_rad = max(rplot, rad)

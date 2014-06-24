@@ -53,7 +53,7 @@ def comp_back_with_annulus(img, xc, yc, rad1, rad2, frac=0.1):
     rr = img[valid]
     
     if rr.size == 0:
-        raise ValueError # Bad
+        raise ValueError("Not enough points to compute background")
     
     # mode?
     bck = mode_half_sample(rr)
