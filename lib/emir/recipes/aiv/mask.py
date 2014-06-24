@@ -393,13 +393,21 @@ def pinhole_char2(data, ncenters,
         
         mm0[idx,9:9+6] = epeak, efwhm, dpeak, dfwhm, rpeak, rfwhm
     
-        res_simple = compute_fwhm_simple(part_s, xx0, yy0)
-        _logger.info('Simple, peak: %f fwhm x %f fwhm %f', *res_simple)
-        mm0[idx,15:15+3] = res_simple
+        try:
+            res_simple = compute_fwhm_simple(part_s, xx0, yy0)
+            _logger.info('Simple, peak: %f fwhm x %f fwhm %f', *res_simple)
+            mm0[idx,15:15+3] = res_simple
+        except StandardError as error:
+            _logger.warning('Error in compute_fwhm_simple %s', error)
+            mm0[idx,15:15+3] = -99.0
 
-        res_spline = compute_fwhm_spline2d_fit(part_s, xx0, yy0)
-        _logger.info('Spline, peak: %f fwhm x %f fwhm %f', *res_spline)
-        mm0[idx,18:18+3] = res_spline
+        try:
+            res_spline = compute_fwhm_spline2d_fit(part_s, xx0, yy0)
+            _logger.info('Spline, peak: %f fwhm x %f fwhm %f', *res_spline)
+            mm0[idx,18:18+3] = res_spline
+        except StandardError as error:
+            _logger.warning('Error in compute_fwhm_spline2d_fit %s', error)
+            mm0[idx,18:18+3] = -99.0
         
         # Bidimensional fit
         # Fit in a smaller box
