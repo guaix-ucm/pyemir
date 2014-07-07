@@ -23,6 +23,7 @@ import numpy
 
 from numina.core import FrameDataProduct, DataProduct
 from numina.core.requirements import InstrumentConfigurationType
+from numina.core.products import ValidationError
 from numina.frame.schema import Schema
 
 # FIXME
@@ -31,7 +32,7 @@ try:
 except ImportError:
     # We are not in GTC
     pass
-    
+
 base_schema_description = {
     'keywords': {
  #       'INSTRUME': {'mandatory': True, 'value': 'EMIR'},
@@ -58,8 +59,11 @@ class EMIRFrame(FrameDataProduct):
     
     def validate(self, value):
         if value:
-            with value.open() as hdulist:
-                self.validate_hdu(hdulist[0].header)
+            try:
+                with value.open() as hdulist:
+                    self.validate_hdu(hdulist[0].header)
+            except StandardError as err:
+                raise ValidationError(err)
         else:
             # FIXME: then this is None
             pass
