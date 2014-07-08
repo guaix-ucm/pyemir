@@ -35,7 +35,22 @@ except ImportError:
 
 base_schema_description = {
     'keywords': {
- #       'INSTRUME': {'mandatory': True, 'value': 'EMIR'},
+        'INSTRUME': {'mandatory': True},
+        'READMODE': {'mandatory': True, 
+            'value': ['SIMPLE', 'BIAS', 'SINGLE', 'CDS', 'FOWLER', 'RAMP']},
+        'EXPTIME': {'value': float},
+ #       'XDTU': {'mandatory': True, 'value': float},
+ #       'YDTU': {'mandatory': True, 'value': float},
+ #       'ZDTU': {'mandatory': True, 'value': float}, 
+        }
+    }
+
+emir_schema_description = {
+    'keywords': {
+        'INSTRUME': {'mandatory': True, 'value': 'EMIR'},
+        'READMODE': {'mandatory': True, 
+            'value': ['SIMPLE', 'BIAS', 'SINGLE', 'CDS', 'FOWLER', 'RAMP']},
+        'BUNIT': {'value': ['ADU', 'ADU/s']},
  #       'XDTU': {'mandatory': True, 'value': float},
  #       'YDTU': {'mandatory': True, 'value': float},
  #       'ZDTU': {'mandatory': True, 'value': float}, 
@@ -53,22 +68,15 @@ class EMIRFrame(FrameDataProduct):
     def __init__(self):
         super(EMIRFrame, self).__init__()
         self.headerschema = Schema(base_schema_description)
-    
+        self.headerschema.extend(emir_schema_description)
+            
     def validate_hdu(self, hdu):
         self.headerschema.validate(hdu)
-    
-    def validate(self, value):
-        if value:
-            try:
-                with value.open() as hdulist:
-                    self.validate_hdu(hdulist[0].header)
-            except StandardError as err:
-                raise ValidationError(err)
-        else:
-            # FIXME: then this is None
-            pass
-                
-        return True
+        
+    def validate_hdulist(self, hdulist):
+        super(EMIRFrame, self).validate_hdulist(hdulist)
+        self.validate_hdu(hdulist[0].header)
+
 
 class MasterBadPixelMask(EMIRFrame):
     pass
@@ -85,7 +93,14 @@ class MasterBias(EMIRFrame):
     
     
     '''
-    pass
+
+    def validate_hdu(self, hdu):
+        super(MasterBias, self).validate_hdu(hdu)
+        # Check READMODE is valid
+        if hdu['READMODE'] not in ['SIMPLE', 'BIAS', 'SINGLE']:
+            raise ValidationError('not a bias')
+        
+        print 'additional validation'
 
 class MasterDark(EMIRFrame):
     '''Master dark product
@@ -99,7 +114,14 @@ class MasterDark(EMIRFrame):
     
     
     '''
-    pass
+    def validate_hdu(self, hdu):
+        super(MasterDark, self).validate_hdu(hdu)
+        # Check READMODE is valid
+        if hdu['READMODE'] not in ['SIMPLE', 'BIAS', 'SINGLE']:
+            pass
+            #raise ValidationError('not a dark')
+        
+        print 'additional validation'
 
 class DarkCurrentValue(EMIRFrame):
     pass
