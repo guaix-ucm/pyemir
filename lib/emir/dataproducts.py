@@ -100,7 +100,7 @@ class MasterBias(EMIRFrame):
         if hdu['READMODE'] not in ['SIMPLE', 'BIAS', 'SINGLE']:
             raise ValidationError('not a bias')
         
-        print 'additional validation'
+        print 'EMIR bias validation'
 
 class MasterDark(EMIRFrame):
     '''Master dark product
@@ -121,13 +121,15 @@ class MasterDark(EMIRFrame):
             pass
             #raise ValidationError('not a dark')
         
-        print 'additional validation'
+        print 'EMIR dark validation'
 
 class DarkCurrentValue(EMIRFrame):
     pass
 
 class MasterIntensityFlat(EMIRFrame):
-    pass
+    def validate_hdu(self, hdu):
+        super(MasterIntensityFlat, self).validate_hdu(hdu)
+        print 'EMIR flat validation'
         
 class MasterSpectralFlat(EMIRFrame):
     pass
