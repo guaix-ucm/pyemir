@@ -24,7 +24,6 @@ import numpy
 from numina.core import FrameDataProduct, DataProduct
 from numina.core.requirements import InstrumentConfigurationType
 from numina.core.products import ValidationError
-from numina.frame.schema import Schema
 
 # FIXME
 try:
@@ -41,7 +40,14 @@ base_schema_description = {
         'EXPTIME': {'value': float},
  #       'XDTU': {'mandatory': True, 'value': float},
  #       'YDTU': {'mandatory': True, 'value': float},
- #       'ZDTU': {'mandatory': True, 'value': float}, 
+ #       'ZDTU': {'mandatory': True, 'value': float},
+        'NUMINAID': {'value': int}
+        }
+    }
+
+gtc_proc_schema_description = {
+    'keywords': {
+        'NUMINAID': {'mandatory': True, 'value': int}
         }
     }
 
@@ -51,11 +57,18 @@ emir_schema_description = {
         'READMODE': {'mandatory': True, 
             'value': ['SIMPLE', 'BIAS', 'SINGLE', 'CDS', 'FOWLER', 'RAMP']},
         'BUNIT': {'value': ['ADU', 'ADU/s']},
+        'IMGTYPE': {'mandatory': True, 'type': 'string'},
  #       'XDTU': {'mandatory': True, 'value': float},
  #       'YDTU': {'mandatory': True, 'value': float},
  #       'ZDTU': {'mandatory': True, 'value': float}, 
         }
     }
+
+class MasterFrameProduct(FrameDataProduct):
+    
+    def __init__(self):
+        super(MasterFrameProduct, self).__init__()
+        self.headerschema.extend(gtc_proc_schema_description)
         
 
 class EMIRConfigurationType(InstrumentConfigurationType):
@@ -67,21 +80,49 @@ class EMIRFrame(FrameDataProduct):
     
     def __init__(self):
         super(EMIRFrame, self).__init__()
-        self.headerschema = Schema(base_schema_description)
+        self.headerschema.extend(base_schema_description)
         self.headerschema.extend(emir_schema_description)
             
     def validate_hdu(self, hdu):
-        self.headerschema.validate(hdu)
+        self.headerschema.validate(hdu.header)
         
     def validate_hdulist(self, hdulist):
         super(EMIRFrame, self).validate_hdulist(hdulist)
-        self.validate_hdu(hdulist[0].header)
+        self.validate_hdu(hdulist[0])
 
 
 class MasterBadPixelMask(EMIRFrame):
     pass
 
-class MasterBias(EMIRFrame):
+class RawBias(EMIRFrame):
+    '''Raw bias frame'''
+
+    def validate_hdu(self, hdu):
+        super(RawBias, self).validate_hdu(hdu)
+        # Check READMODE is valid
+        header = hdu.header
+        if header['READMODE'] not in ['SIMPLE', 'BIAS', 'SINGLE']:
+            raise ValidationError('not a bias')
+        
+        return True
+
+class RawDark(EMIRFrame):
+    '''Raw dark frame'''
+    def validate_hdu(self, hdu):
+        super(RawDark, self).validate_hdu(hdu)
+
+        header = hdu.header
+        if header['IMGTYPE'] != 'DARK':
+            raise ValidationError('not a dark')
+        
+        return True
+
+class RawIntensityFlat(EMIRFrame):
+    def validate_hdu(self, hdu):
+        super(RawIntensityFlat, self).validate_hdu(hdu)
+        return True
+
+class MasterBias(RawBias, MasterFrameProduct):
     '''Master bias product
     
     This image has 4 extensions: primary, two variance extensions
@@ -90,19 +131,11 @@ class MasterBias(EMIRFrame):
     The variance extensions are computed using two different methods. 
     The first one is the variance of the same pixels in different images.
     The second extension is the variance of each channel in the final image.
-    
-    
     '''
+    pass
 
-    def validate_hdu(self, hdu):
-        super(MasterBias, self).validate_hdu(hdu)
-        # Check READMODE is valid
-        if hdu['READMODE'] not in ['SIMPLE', 'BIAS', 'SINGLE']:
-            raise ValidationError('not a bias')
-        
-        print 'EMIR bias validation'
 
-class MasterDark(EMIRFrame):
+class MasterDark(RawDark, MasterFrameProduct):
     '''Master dark product
     
     This image has 4 extensions: primary, two variance extensions
@@ -111,25 +144,14 @@ class MasterDark(EMIRFrame):
     The variance extensions are computed using two different methods. 
     The first one is the variance of the same pixels in different images.
     The second extension is the variance of each channel in the final image.
-    
-    
     '''
-    def validate_hdu(self, hdu):
-        super(MasterDark, self).validate_hdu(hdu)
-        # Check READMODE is valid
-        if hdu['READMODE'] not in ['SIMPLE', 'BIAS', 'SINGLE']:
-            pass
-            #raise ValidationError('not a dark')
-        
-        print 'EMIR dark validation'
+    pass
 
 class DarkCurrentValue(EMIRFrame):
     pass
 
-class MasterIntensityFlat(EMIRFrame):
-    def validate_hdu(self, hdu):
-        super(MasterIntensityFlat, self).validate_hdu(hdu)
-        print 'EMIR flat validation'
+class MasterIntensityFlat(RawIntensityFlat, MasterFrameProduct):
+    pass
         
 class MasterSpectralFlat(EMIRFrame):
     pass
@@ -217,9 +239,9 @@ class CoordinateListNType(DataProduct):
     def validate(self, obj):
         ndims = len(obj.shape)
         if ndims != 2:
-            raise TypeError('%r is not a valid %r' % (obj, self.__class__.__name__))
+            raise ValidationError('%r is not a valid %r' % (obj, self.__class__.__name__))
         if obj.shape[1] != self.N:
-            raise TypeError('%r is not a valid %r' % (obj, self.__class__.__name__))
+            raise ValidationError('%r is not a valid %r' % (obj, self.__class__.__name__))
             
 
     def store(self, obj):
