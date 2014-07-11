@@ -23,7 +23,7 @@ import numpy
 
 from numina.core import FrameDataProduct, DataProduct
 from numina.core.requirements import InstrumentConfigurationType
-from numina.core.products import ValidationError
+from numina.core import ValidationError
 
 # FIXME
 try:
