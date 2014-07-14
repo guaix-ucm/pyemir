@@ -21,7 +21,7 @@
 
 import numpy
 
-from numina.core import FrameDataProduct, DataProduct
+from numina.core import DataFrameType, DataProductType
 from numina.core.requirements import InstrumentConfigurationType
 from numina.core import ValidationError
 
@@ -64,7 +64,7 @@ emir_schema_description = {
         }
     }
 
-class MasterFrameProduct(FrameDataProduct):
+class MasterFrameProduct(DataFrameType):
     
     def __init__(self):
         super(MasterFrameProduct, self).__init__()
@@ -76,7 +76,7 @@ class EMIRConfigurationType(InstrumentConfigurationType):
     def validate(self, value):
         super(EMIRConfigurationType, self).validate(value)
 
-class EMIRFrame(FrameDataProduct):
+class EMIRFrame(DataFrameType):
     
     def __init__(self):
         super(EMIRFrame, self).__init__()
@@ -156,48 +156,48 @@ class MasterIntensityFlat(RawIntensityFlat, MasterFrameProduct):
 class MasterSpectralFlat(EMIRFrame):
     pass
 
-class Spectra(FrameDataProduct):
+class Spectra(DataFrameType):
     pass
  
-class DataCube(FrameDataProduct):
+class DataCube(DataFrameType):
     pass
 
-class TelescopeFocus(DataProduct):
+class TelescopeFocus(DataProductType):
     pass
 
-class DTUFocus(DataProduct):
+class DTUFocus(DataProductType):
     pass
 
-class DTU_XY_Calibration(FrameDataProduct):
+class DTU_XY_Calibration(DataFrameType):
     pass
 
-class DTU_Z_Calibration(FrameDataProduct):
+class DTU_Z_Calibration(DataFrameType):
     pass
 
-class DTUFlexureCalibration(FrameDataProduct):
-    pass
-
-# FIXME:
-class SlitTransmissionCalibration(FrameDataProduct):
+class DTUFlexureCalibration(DataFrameType):
     pass
 
 # FIXME:
-class WavelengthCalibration(FrameDataProduct):
+class SlitTransmissionCalibration(DataFrameType):
     pass
 
-class CSU2DetectorCalibration(FrameDataProduct):
+# FIXME:
+class WavelengthCalibration(DataFrameType):
     pass
 
-class PointingOriginCalibration(FrameDataProduct):
+class CSU2DetectorCalibration(DataFrameType):
     pass
 
-class SpectroPhotometricCalibration(FrameDataProduct):
+class PointingOriginCalibration(DataFrameType):
     pass
 
-class PhotometricCalibration(FrameDataProduct):
+class SpectroPhotometricCalibration(DataFrameType):
     pass
 
-class MasterGainMap(DataProduct):
+class PhotometricCalibration(DataFrameType):
+    pass
+
+class MasterGainMap(DataProductType):
     def __init__(self, mean, var, frame):
         self.mean = mean
         self.var = var
@@ -208,7 +208,7 @@ class MasterGainMap(DataProduct):
         gvar = map(float, self.var.flat)
         return {'frame': self.frame, 'mean': gmean, 'var': gvar}
 
-class MasterRONMap(DataProduct):
+class MasterRONMap(DataProductType):
     def __init__(self, mean, var):
         self.mean = mean
         self.var = var
@@ -218,11 +218,11 @@ class MasterRONMap(DataProduct):
         gvar = map(float, self.var.flat)
         return {'mean': gmean, 'var': gvar}
 
-class TelescopeOffset(DataProduct):
+class TelescopeOffset(DataProductType):
     pass
 
 
-class ArrayType(DataProduct):
+class ArrayType(DataProductType):
     def __init__(self, default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
 
@@ -231,7 +231,7 @@ class ArrayType(DataProduct):
         return result
 
 
-class CoordinateListNType(DataProduct):
+class CoordinateListNType(DataProductType):
     def __init__(self, dimensions, default=None):
         super(CoordinateListNType, self).__init__(ptype=numpy.ndarray, default=default)
         self.N = dimensions
@@ -252,29 +252,29 @@ class CoordinateList2DType(CoordinateListNType):
     def __init__(self, default=None):
         super(CoordinateList2DType, self).__init__(2, default=default)
 
-class MSMPositions(DataProduct):
+class MSMPositions(DataProductType):
     pass
 
-class SourcesCatalog(DataProduct):
+class SourcesCatalog(DataProductType):
     def __init__(self):
         super(SourcesCatalog, self).__init__(ptype=list)
 
 
-class LinesCatalog(DataProduct):
+class LinesCatalog(DataProductType):
     pass
 
-class CentroidsTableType(DataProduct):
+class CentroidsTableType(DataProductType):
     '''Table with information about focus centroids.'''
     def __init__(self):
         super(CentroidsTableType, self).__init__(ptype=numpy.ndarray)
 
-class ChannelLevelStatistics(DataProduct):
+class ChannelLevelStatistics(DataProductType):
     ''' A list of exposure time, mean, std dev and median per channel'''
     def __init__(self, exposure, statistics):
         self.exposure = exposure
         self.statistics = statistics
 
-class ChannelLevelStatisticsType(DataProduct):
+class ChannelLevelStatisticsType(DataProductType):
     ''' A list of exposure time, mean, std dev and median per channel'''
     def __init__(self):
         super(ChannelLevelStatisticsType, self).__init__(ptype=ChannelLevelStatistics)

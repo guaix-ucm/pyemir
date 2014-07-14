@@ -22,10 +22,10 @@ Beam switched-nodded image mode recipe of EMIR
 
 '''
 
-from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import Requirement, RecipeRequirements
-from numina.core import DataFrame, define_requirements, define_result
-from numina.core import Product, FrameDataProduct 
+from numina.core import Parameter, DataProductRequirement
+from numina.core import RecipeRequirements
+from numina.core import define_requirements, define_result
+from numina.core import Product, DataFrameType 
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -51,7 +51,7 @@ class NBImageRecipeRequirements(RecipeRequirements):
     check_photometry_actions = Parameter(['warn', 'warn', 'default'], 'Actions to take on images')
 
 class NBImageRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
     catalog = Product(SourcesCatalog)
 
 @define_requirements(NBImageRecipeRequirements)

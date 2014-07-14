@@ -21,9 +21,9 @@
 
 import logging
 
-from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import Requirement, RecipeRequirements, FrameDataProduct
-from numina.core import DataFrame, Product, RecipeRequirements
+from numina.core import Parameter
+from numina.core import DataFrameType
+from numina.core import Product, RecipeRequirements
 from numina.core import define_requirements, define_result
 
 from emir.core import RecipeResult
@@ -61,7 +61,7 @@ class DitheredImageRecipeRequirements(RecipeRequirements):
                     
 
 class DitheredImageRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
     catalog = Product(SourcesCatalog)
 
 @define_requirements(DitheredImageRecipeRequirements)

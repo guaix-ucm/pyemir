@@ -48,7 +48,7 @@ from numina.array import combine
 from emir.core import RecipeResult
 from emir.core import EMIR_BIAS_MODES
 from emir.dataproducts import MasterBias, MasterDark
-from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
+from emir.dataproducts import DataFrameType, MasterIntensityFlat
 from emir.dataproducts import CoordinateList2DType
 from emir.dataproducts import ArrayType
 from emir.core import gather_info_frames, gather_info_dframe
@@ -466,7 +466,7 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
     
 
 class TestPinholeRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
     positions = Product(ArrayType)
     positions_alt = Product(ArrayType)
     DTU = Product(ArrayType)

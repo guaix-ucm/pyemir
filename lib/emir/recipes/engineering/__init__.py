@@ -24,7 +24,7 @@
 import logging
 
 from numina.core import BaseRecipe, Parameter, define_result, define_requirements
-from numina.core import FrameDataProduct, Product, RecipeRequirements 
+from numina.core import DataFrameType, Product, RecipeRequirements 
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -222,7 +222,7 @@ class AstrometricCalibrationRecipeRequirements(RecipeRequirements):
     pass
 
 class AstrometricCalibrationRecipeResult(RecipeResult):
-    calibration = Product(FrameDataProduct)
+    calibration = Product(DataFrameType)
 
 @define_requirements(AstrometricCalibrationRecipeRequirements)
 @define_result(AstrometricCalibrationRecipeResult)

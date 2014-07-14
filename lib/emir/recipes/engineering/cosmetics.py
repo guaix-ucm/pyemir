@@ -31,7 +31,7 @@ from numina import __version__
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
 from numina.core import RecipeError,RecipeRequirements
 from numina.core import Product, define_requirements, define_result
-from numina.core import FrameDataProduct
+from numina.core import DataFrameType
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
@@ -78,8 +78,8 @@ class CosmeticsRecipeRequirements(RecipeRequirements):
     maxiter = Parameter(30, 'Maximum number of iterations')
     
 class CosmeticsRecipeResult(RecipeResult):
-    ratio = Product(FrameDataProduct)
-    mask = Product(FrameDataProduct)
+    ratio = Product(DataFrameType)
+    mask = Product(DataFrameType)
     
 @define_requirements(CosmeticsRecipeRequirements)
 @define_result(CosmeticsRecipeResult)

@@ -42,7 +42,7 @@ from numina.flow import SerialFlow
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
+from emir.dataproducts import DataFrameType, MasterIntensityFlat
 from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
 from emir.core import gather_info_frames, gather_info_dframe
 from emir.core import EMIR_BIAS_MODES
@@ -189,7 +189,7 @@ class TestBiasCorrectRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
 
 class TestBiasCorrectRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
 
 @define_requirements(TestBiasCorrectRecipeRequirements)
 @define_result(TestBiasCorrectRecipeResult)
@@ -269,7 +269,7 @@ class TestDarkCorrectRecipeRequirements(RecipeRequirements):
     master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
 
 class TestDarkCorrectRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
 
 @define_requirements(TestDarkCorrectRecipeRequirements)
 @define_result(TestDarkCorrectRecipeResult)
@@ -354,7 +354,7 @@ class TestFlatCorrectRecipeRequirements(RecipeRequirements):
     master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
 
 class TestFlatCorrectRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
 
 @define_requirements(TestFlatCorrectRecipeRequirements)
 @define_result(TestFlatCorrectRecipeResult)
@@ -449,7 +449,7 @@ class TestSkyCorrectRecipeRequirements(RecipeRequirements):
     master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
 
 class TestSkyCorrectRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
 
 @define_requirements(TestSkyCorrectRecipeRequirements)
 @define_result(TestSkyCorrectRecipeResult)

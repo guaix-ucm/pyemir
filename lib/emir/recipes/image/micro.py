@@ -24,9 +24,9 @@ Micro-dithering Recipe of EMIR
 
 import logging
 
-from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import define_requirements, define_result, DataFrame
-from numina.core import Requirement, Product, FrameDataProduct, RecipeRequirements
+from numina.core import Parameter, DataProductRequirement
+from numina.core import define_requirements, define_result
+from numina.core import Product, DataFrameType, RecipeRequirements
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -59,7 +59,7 @@ class MicroditheredImageRecipeRequirements(RecipeRequirements):
     window = Parameter([], 'Region of interesting data', optional=True)
 
 class MicroditheredImageRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
     catalog = Product(SourcesCatalog)
 
 @define_requirements(MicroditheredImageRecipeRequirements)

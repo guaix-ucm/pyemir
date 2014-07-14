@@ -24,9 +24,9 @@ Image mode recipes of EMIR
 
 import logging
 
-from numina.core import BaseRecipe, Parameter
+from numina.core import Parameter
 from numina.core import RecipeRequirements, Product
-from numina.core import FrameDataProduct, define_requirements, define_result
+from numina.core import DataFrameType, define_requirements, define_result
 
 from emir.core import RecipeResult
 from emir.dataproducts import SourcesCatalog
@@ -53,7 +53,7 @@ class StareImageRecipeRequirements(RecipeRequirements):
     iterations = Parameter(4, 'Iterations of the recipe')
 
 class StareImageRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
     catalog = Product(SourcesCatalog)
 
 @define_requirements(StareImageRecipeRequirements)
