@@ -27,6 +27,7 @@ import logging
 from numina.core import Parameter
 from numina.core import RecipeRequirements, Product
 from numina.core import DataFrameType, define_requirements, define_result
+from numina.core.requirements import ObservationResultRequirement
 
 from emir.core import RecipeResult
 from emir.dataproducts import SourcesCatalog
@@ -43,6 +44,7 @@ from .shared import DirectImageCommon
 _logger = logging.getLogger('numina.recipes.emir')
 
 class StareImageRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMask_Requirement()
     master_bias = MasterBias_Requirement()
     master_dark = MasterDark_Requirement()
@@ -76,9 +78,9 @@ class StareImageRecipe(DirectImageCommon):
             version="0.1.0"
         )
         
-    def run(self, obresult, reqs):
+    def run(self, ri):
                 
-        frame, catalog = self.process(obresult, reqs,
+        frame, catalog = self.process(ri,
                             window=None, subpix=1,
                             stop_after=DirectImageCommon.PRERED)
         
