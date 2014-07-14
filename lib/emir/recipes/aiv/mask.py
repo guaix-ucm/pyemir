@@ -51,7 +51,7 @@ from emir.dataproducts import MasterBias, MasterDark
 from emir.dataproducts import DataFrameType, MasterIntensityFlat
 from emir.dataproducts import CoordinateList2DType
 from emir.dataproducts import ArrayType
-from emir.core import gather_info_frames, gather_info_dframe
+from emir.core import gather_info
 from photutils import aperture_circular
 
 from .procedures import compute_fwhm_spline2d_fit
@@ -484,8 +484,9 @@ class TestPinholeRecipe(BaseRecipe):
 
     def run(self, rinput):
         _logger.info('starting pinhole processing')
-
-        iinfo = gather_info_frames(rinput.obresult.frames)
+        
+        meta = gather_info(rinput)
+        iinfo = meta['obresult']
         
         if iinfo:
             mode = iinfo[0]['readmode']
@@ -497,14 +498,13 @@ class TestPinholeRecipe(BaseRecipe):
                 use_bias = False
                 _logger.info('readmode is %s, no bias required', mode)
                 
-        
-        dark_info = gather_info_dframe(rinput.master_dark)
-        flat_info = gather_info_dframe(rinput.master_flat)
-        sky_info = gather_info_dframe(rinput.master_sky)
+        dark_info = meta['master_dark']
+        flat_info = meta['master_flat']
+        sky_info = meta['master_sky']
 
         print('images info:', iinfo)
         if use_bias:
-            bias_info = gather_info_dframe(rinput.master_bias)
+            bias_info = meta['master_bias']
             print('bias info:', bias_info)
         print('dark info:', dark_info)
         print('flat info:', flat_info)

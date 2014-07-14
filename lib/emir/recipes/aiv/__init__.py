@@ -44,7 +44,7 @@ from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import DataFrameType, MasterIntensityFlat
 from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
-from emir.core import gather_info_frames, gather_info_dframe
+from emir.core import gather_info
 from emir.core import EMIR_BIAS_MODES
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -201,22 +201,23 @@ class TestBiasCorrectRecipe(BaseRecipe):
 
     def run(self, rinput):
         _logger.info('starting simple bias reduction')
-
-        iinfo = gather_info_frames(rinput.obresult.frames)
+        
+        meta = gather_info(rinput)
+        iinfo = meta['obresult']
         
         use_bias = False
         
-        if iinfo:
-            mode = iinfo[0]['readmode']
-            if mode.lower() in EMIR_BIAS_MODES:
-                _logger.info('readmode is %s, bias required', mode)
-                use_bias = True
+
+        mode = iinfo[0]['readmode']
+        if mode.lower() in EMIR_BIAS_MODES:
+            _logger.info('readmode is %s, bias required', mode)
+            use_bias = True
                 
-            else:
-                _logger.error('readmode is %s, no bias required', mode)
-                raise RecipeError('readmode is %s, no bias required', mode)
+        else:
+            _logger.error('readmode is %s, no bias required', mode)
+            raise RecipeError('readmode is %s, no bias required', mode)
              
-        bias_info = gather_info_dframe(rinput.master_bias)
+        bias_info = meta['master_bias']
            
         print('images info:', iinfo)
         print('bias info:', bias_info)
@@ -282,7 +283,8 @@ class TestDarkCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple dark reduction')
 
-        iinfo = gather_info_frames(rinput.obresult.frames)
+        meta = gather_info(rinput)
+        iinfo = meta['obresult']
         
         if iinfo:
             mode = iinfo[0]['readmode']
@@ -294,8 +296,8 @@ class TestDarkCorrectRecipe(BaseRecipe):
                 use_bias = False
                 _logger.info('readmode is %s, no bias required', mode)
                 
-        bias_info = gather_info_dframe(rinput.master_bias)
-        dark_info = gather_info_dframe(rinput.master_dark)
+        bias_info = meta['master_bias']
+        dark_info = meta['master_dark']
 
         print('images info:', iinfo)
         if use_bias:
@@ -367,7 +369,8 @@ class TestFlatCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple flat reduction')
 
-        iinfo = gather_info_frames(rinput.obresult.frames)
+        meta = gather_info(rinput)
+        iinfo = meta['obresult']
         
         if iinfo:
             mode = iinfo[0]['readmode']
@@ -378,10 +381,11 @@ class TestFlatCorrectRecipe(BaseRecipe):
             else:
                 use_bias = False
                 _logger.info('readmode is %s, no bias required', mode)
-                
-        bias_info = gather_info_dframe(rinput.master_bias)
-        dark_info = gather_info_dframe(rinput.master_dark)
-        flat_info = gather_info_dframe(rinput.master_flat)
+        
+        bias_info = meta['master_bias']
+        dark_info = meta['master_dark']
+        flat_info = meta['master_flat']
+
 
         print('images info:', iinfo)
         if use_bias:
@@ -462,7 +466,8 @@ class TestSkyCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple sky reduction')
 
-        iinfo = gather_info_frames(rinput.obresult.frames)
+        meta = gather_info(rinput)
+        iinfo = meta['obresult']
         
         if iinfo:
             mode = iinfo[0]['readmode']
@@ -475,13 +480,14 @@ class TestSkyCorrectRecipe(BaseRecipe):
                 _logger.info('readmode is %s, no bias required', mode)
                 
         
-        dark_info = gather_info_dframe(rinput.master_dark)
-        flat_info = gather_info_dframe(rinput.master_flat)
-        sky_info = gather_info_dframe(rinput.master_sky)
+        
+        dark_info = meta['master_dark']
+        flat_info = meta['master_flat']
+        sky_info = meta['master_sky']
 
         print('images info:', iinfo)
         if use_bias:
-            bias_info = gather_info_dframe(rinput.master_bias)
+            bias_info = meta['master_bias']
             print('bias info:', bias_info)
             
         print('dark info:', dark_info)
