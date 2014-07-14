@@ -618,7 +618,7 @@ class SlitTransmissionRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    @log_to_history(_logger)
+    @log_to_history(_logger, 'slit')
     def run(self, obresult, rinput):
         return SlitTransmissionRecipeResult(slit=SlitTransmissionCalibration())
 
@@ -661,7 +661,7 @@ class WavelengthCalibrationRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    @log_to_history(_logger)
+    @log_to_history(_logger, 'cal')
     def run(self, obresult, rinput):
         return WavelengthCalibrationRecipeResult(cal=WavelengthCalibration())
 
