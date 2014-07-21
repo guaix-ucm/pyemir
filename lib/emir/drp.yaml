@@ -212,7 +212,7 @@ pipelines:
       IMAGE_DARK: emir.recipes.DarkRecipe
       IMAGE_FLAT: emir.recipes.IntensityFlatRecipe
       IMAGE_SKY: emir.recipes.SimpleSkyRecipe
-      DITHERED_IMAGE: emir.recipes.DitheredImageRecipe
+      DITHERED_IMAGE: emir.recipes.aiv.DitheredImageRecipeA
       MICRODITHERED_IMAGE: emir.recipes.MicroditheredImageRecipe
       MOSAICED_IMAGE: emir.recipes.MosaicRecipe
       NODDED_BEAM_SWITCHED_IMAGE: emir.recipes.NBImageRecipe
