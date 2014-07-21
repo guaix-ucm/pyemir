@@ -22,29 +22,19 @@
 from __future__ import division
 
 import logging
-import math
 
 import numpy
-import scipy.interpolate as itpl
-import scipy.optimize as opz
-from astropy.modeling import models, fitting
 from astropy.io import fits
-import photutils
 
-from numina.array.recenter import img_box, centering_centroid
 
 from numina import __version__
-from numina.core import BaseRecipe, RecipeRequirements, RecipeError
-from numina.core import Requirement, Product, DataProductRequirement, Parameter
+from numina.core import BaseRecipe, RecipeRequirements
+from numina.core import Product
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
-from numina.flow.processing import BiasCorrector, DarkCorrector
-from numina.flow.processing import FlatFieldCorrector, SkyCorrector
-from numina.flow import SerialFlow
-from numina.flow.processing import DivideByExposure
-from numina.flow.node import IdNode
 from numina.array import combine
 
+from emir.core import offsets_from_wcs
 from emir.core import RecipeResult
 from emir.core import EMIR_BIAS_MODES
 from emir.dataproducts import MasterBias, MasterDark
@@ -65,14 +55,19 @@ class DitheredImageARecipeResult(RecipeResult):
 
 @define_requirements(DitheredImageARecipeRequirements)
 @define_result(DitheredImageARecipeResult)
-class DitheredImageARecipeResult(BaseRecipe):
+class DitheredImageARecipe(BaseRecipe):
 
     def __init__(self):
-        super(DitheredImageARecipeResult, self).__init__(author=_s_author, 
+        super(DitheredImageARecipe, self).__init__(author=_s_author, 
             version="0.1.0")
 
     def run(self, rinput):
                 
+        _logger.info('Computing offsets from WCS information')
+        baseshape = self.rinput.instrument.detector['shape']
+        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
+        list_of_offsets = offsets_from_wcs(rinput.obresult.frames, refpix)
+        print list_of_offsets
         data = numpy.zeros((100, 100))
         hdu = fits.PrimaryHDU(data)
 
@@ -82,6 +77,8 @@ class DitheredImageARecipeResult(BaseRecipe):
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdr['IMGOBBL'] = 0
+        
+        hdulist = fits.HDUList([hdu])
         
         result = DitheredImageARecipeResult(frame=hdulist)
         return result
