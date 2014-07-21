@@ -546,7 +546,10 @@ class TestSkyCorrectRecipe(BaseRecipe):
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        # Update SEC to 0
+        hdr['SEC'] = 0
         hdulist = fits.HDUList([hdu])
+
         result = TestSkyCorrectRecipeResult(frame=hdulist)
 
         assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
