@@ -34,7 +34,6 @@ from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector
 from numina.flow.processing import DarkCorrector
-from numina.flow.processing import DivideByExposure
 from numina.flow.processing import FlatFieldCorrector
 # from numina.flow.processing import BadPixelCorrector
 from numina.core.requirements import ObservationResultRequirement
@@ -244,9 +243,7 @@ class DarkRecipe(BaseRecipe):
             _logger.info('ignoring bias')
             bias_corrector = IdNode()
             
-        exposure_corrector = DivideByExposure()
-
-        flow = SerialFlow([bias_corrector, exposure_corrector])
+        flow = SerialFlow([bias_corrector])
         
         cdata = []
         try:
@@ -386,14 +383,12 @@ class IntensityFlatRecipe(BaseRecipe):
             _logger.info('ignoring bias')
             bias_corrector = IdNode()
             
-        exposure_corrector = DivideByExposure()
-        
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
         
-        flow = SerialFlow([bias_corrector, exposure_corrector, dark_corrector])
+        flow = SerialFlow([bias_corrector, dark_corrector])
        
         cdata = []
         try:
@@ -492,14 +487,12 @@ class SimpleSkyRecipe(BaseRecipe):
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
-        exposure_corrector = DivideByExposure()
-
         with rinput.master_flat.open() as mflat_hdul:
             _logger.info('loading intensity flat')
             mflat = mflat_hdul[0].data
             flat_corrector = FlatFieldCorrector(mflat)
 
-        flow = SerialFlow([bias_corrector, exposure_corrector, 
+        flow = SerialFlow([bias_corrector, 
                 dark_corrector, flat_corrector])
        
         cdata = []

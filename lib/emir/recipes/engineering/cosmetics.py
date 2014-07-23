@@ -36,7 +36,6 @@ from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
 from numina.flow.processing import BiasCorrector, DarkCorrector
-from numina.flow.processing import DivideByExposure
 from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
@@ -125,14 +124,12 @@ class CosmeticsRecipe(BaseRecipe):
                 _logger.info('ignoring bias')
                 bias_corrector = IdNode()
             
-        exposure_corrector = DivideByExposure(factor=1e-3)
-
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
-        flow = SerialFlow([bias_corrector, exposure_corrector, dark_corrector])
+        flow = SerialFlow([bias_corrector, dark_corrector])
         
         _logger.info('processing flat #1')                    
         with rinput.obresult.frames[0].open() as hdul:
