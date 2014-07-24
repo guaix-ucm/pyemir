@@ -256,8 +256,6 @@ class TestBiasCorrectRecipe(BaseRecipe):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
 
-        assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
-
         result = TestBiasCorrectRecipeResult(frame=hdulist)
         return result
 
@@ -339,7 +337,6 @@ class TestDarkCorrectRecipe(BaseRecipe):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
         
-        assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
         result = TestDarkCorrectRecipeResult(frame=hdulist)
         
         return result
@@ -431,8 +428,6 @@ class TestFlatCorrectRecipe(BaseRecipe):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
         result = TestFlatCorrectRecipeResult(frame=hdulist)
-
-        assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
 
         return result
 
@@ -541,7 +536,5 @@ class TestSkyCorrectRecipe(BaseRecipe):
         hdulist = fits.HDUList([hdu])
 
         result = TestSkyCorrectRecipeResult(frame=hdulist)
-
-        assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
 
         return result

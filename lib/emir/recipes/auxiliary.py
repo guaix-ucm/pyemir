@@ -286,7 +286,6 @@ class DarkRecipe(BaseRecipe):
         hdr['NUMXVER'] = ( __version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdr['BUNIT'] = 'ADU/s'
         
         hdr['IMGTYP'] = ('DARK', 'Image type')
         hdr['NUMTYP'] = ('MASTER_DARK', 'Data product type')
@@ -419,7 +418,6 @@ class IntensityFlatRecipe(BaseRecipe):
         
         hdr['IMGTYP'] = ('FLAT', 'Image type')
         hdr['NUMTYP'] = ('MASTER_FLAT', 'Data product type')
-        hdr['BUNIT'] = 'ADU/s'
         
         varhdu = fits.ImageHDU(data[1] / (mm*mm), name='VARIANCE')
         num = fits.ImageHDU(data[2], name='MAP')
@@ -520,7 +518,6 @@ class SimpleSkyRecipe(BaseRecipe):
         
         hdr['IMGTYP'] = ('SKY', 'Image type')
         hdr['NUMTYP'] = ('MASTER_SKY', 'Data product type')
-        hdr['BUNIT'] = 'ADU/s'
         
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
         num = fits.ImageHDU(data[2], name='MAP')
