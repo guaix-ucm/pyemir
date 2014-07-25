@@ -105,6 +105,6 @@ def offsets_from_wcs(frames, pixref):
         with frame.open() as hdulist:
             wcsh = wcs.WCS(hdulist[0].header)
             pixval = wcsh.wcs_sky2pix(skyref, 1)
-            result[idx + 1] = pixval[0] - pixref[0]
+            result[idx + 1] = -(pixval[0] - pixref[0])
 
     return result
