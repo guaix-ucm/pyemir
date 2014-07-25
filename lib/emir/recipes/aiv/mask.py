@@ -41,7 +41,6 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.processing import FlatFieldCorrector, SkyCorrector
 from numina.flow import SerialFlow
-from numina.flow.processing import DivideByExposure
 from numina.flow.node import IdNode
 from numina.array import combine
 
@@ -525,7 +524,6 @@ class TestPinholeRecipe(BaseRecipe):
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
-        exposure_corrector = DivideByExposure()
 
         with rinput.master_flat.open() as mflat_hdul:
             _logger.info('loading intensity flat')
@@ -537,7 +535,7 @@ class TestPinholeRecipe(BaseRecipe):
             msky = msky_hdul[0].data
             sky_corrector = SkyCorrector(msky)
 
-        flow = SerialFlow([bias_corrector, exposure_corrector, 
+        flow = SerialFlow([bias_corrector,
                 dark_corrector, flat_corrector, sky_corrector])
 
         odata = []

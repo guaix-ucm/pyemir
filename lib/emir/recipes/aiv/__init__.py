@@ -36,7 +36,6 @@ from numina.array.combine import median, mean
 from numina import __version__
 from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.processing import FlatFieldCorrector, SkyCorrector
-from numina.flow.processing import DivideByExposure
 from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
@@ -232,9 +231,7 @@ class TestBiasCorrectRecipe(BaseRecipe):
             _logger.info('ignoring bias')
             bias_corrector = IdNode()
 
-        exposure_corrector = DivideByExposure()
-
-        flow = SerialFlow([bias_corrector, exposure_corrector])
+        flow = SerialFlow([bias_corrector])
        
         cdata = []
         try:
@@ -258,8 +255,6 @@ class TestBiasCorrectRecipe(BaseRecipe):
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
-
-        assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
 
         result = TestBiasCorrectRecipeResult(frame=hdulist)
         return result
@@ -319,9 +314,7 @@ class TestDarkCorrectRecipe(BaseRecipe):
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
-        exposure_corrector = DivideByExposure()
-
-        flow = SerialFlow([bias_corrector, exposure_corrector, dark_corrector])
+        flow = SerialFlow([bias_corrector, dark_corrector])
 
         cdata = []
         try:
@@ -344,7 +337,6 @@ class TestDarkCorrectRecipe(BaseRecipe):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
         
-        assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
         result = TestDarkCorrectRecipeResult(frame=hdulist)
         
         return result
@@ -408,15 +400,12 @@ class TestFlatCorrectRecipe(BaseRecipe):
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
-        exposure_corrector = DivideByExposure()
-
         with rinput.master_flat.open() as mflat_hdul:
             _logger.info('loading intensity flat')
             mflat = mflat_hdul[0].data
             flat_corrector = FlatFieldCorrector(mflat)
 
-        flow = SerialFlow([bias_corrector, exposure_corrector, 
-                dark_corrector, flat_corrector])
+        flow = SerialFlow([bias_corrector, dark_corrector, flat_corrector])
 
         cdata = []
         try:
@@ -439,8 +428,6 @@ class TestFlatCorrectRecipe(BaseRecipe):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
         result = TestFlatCorrectRecipeResult(frame=hdulist)
-
-        assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
 
         return result
 
@@ -509,8 +496,6 @@ class TestSkyCorrectRecipe(BaseRecipe):
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
-        exposure_corrector = DivideByExposure()
-
         with rinput.master_flat.open() as mflat_hdul:
             _logger.info('loading intensity flat')
             mflat = mflat_hdul[0].data
@@ -521,8 +506,8 @@ class TestSkyCorrectRecipe(BaseRecipe):
             msky = msky_hdul[0].data
             sky_corrector = SkyCorrector(msky)
 
-        flow = SerialFlow([bias_corrector, exposure_corrector, 
-                dark_corrector, flat_corrector, sky_corrector])
+        flow = SerialFlow([bias_corrector, dark_corrector, 
+                flat_corrector, sky_corrector])
 
         cdata = []
         try:
@@ -551,7 +536,5 @@ class TestSkyCorrectRecipe(BaseRecipe):
         hdulist = fits.HDUList([hdu])
 
         result = TestSkyCorrectRecipeResult(frame=hdulist)
-
-        assert hdulist[0].header['BUNIT'].lower() == 'adu/s'
 
         return result

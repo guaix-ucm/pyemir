@@ -34,7 +34,6 @@ from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector
 from numina.flow.processing import DarkCorrector
-from numina.flow.processing import DivideByExposure
 from numina.flow.processing import FlatFieldCorrector
 # from numina.flow.processing import BadPixelCorrector
 from numina.core.requirements import ObservationResultRequirement
@@ -244,9 +243,7 @@ class DarkRecipe(BaseRecipe):
             _logger.info('ignoring bias')
             bias_corrector = IdNode()
             
-        exposure_corrector = DivideByExposure()
-
-        flow = SerialFlow([bias_corrector, exposure_corrector])
+        flow = SerialFlow([bias_corrector])
         
         cdata = []
         try:
@@ -289,7 +286,6 @@ class DarkRecipe(BaseRecipe):
         hdr['NUMXVER'] = ( __version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdr['BUNIT'] = 'ADU/s'
         
         hdr['IMGTYP'] = ('DARK', 'Image type')
         hdr['NUMTYP'] = ('MASTER_DARK', 'Data product type')
@@ -386,14 +382,12 @@ class IntensityFlatRecipe(BaseRecipe):
             _logger.info('ignoring bias')
             bias_corrector = IdNode()
             
-        exposure_corrector = DivideByExposure()
-        
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
         
-        flow = SerialFlow([bias_corrector, exposure_corrector, dark_corrector])
+        flow = SerialFlow([bias_corrector, dark_corrector])
        
         cdata = []
         try:
@@ -424,7 +418,6 @@ class IntensityFlatRecipe(BaseRecipe):
         
         hdr['IMGTYP'] = ('FLAT', 'Image type')
         hdr['NUMTYP'] = ('MASTER_FLAT', 'Data product type')
-        hdr['BUNIT'] = 'ADU/s'
         
         varhdu = fits.ImageHDU(data[1] / (mm*mm), name='VARIANCE')
         num = fits.ImageHDU(data[2], name='MAP')
@@ -492,14 +485,12 @@ class SimpleSkyRecipe(BaseRecipe):
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
-        exposure_corrector = DivideByExposure()
-
         with rinput.master_flat.open() as mflat_hdul:
             _logger.info('loading intensity flat')
             mflat = mflat_hdul[0].data
             flat_corrector = FlatFieldCorrector(mflat)
 
-        flow = SerialFlow([bias_corrector, exposure_corrector, 
+        flow = SerialFlow([bias_corrector, 
                 dark_corrector, flat_corrector])
        
         cdata = []
@@ -527,7 +518,6 @@ class SimpleSkyRecipe(BaseRecipe):
         
         hdr['IMGTYP'] = ('SKY', 'Image type')
         hdr['NUMTYP'] = ('MASTER_SKY', 'Data product type')
-        hdr['BUNIT'] = 'ADU/s'
         
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
         num = fits.ImageHDU(data[2], name='MAP')
