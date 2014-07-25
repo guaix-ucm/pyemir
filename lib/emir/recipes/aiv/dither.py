@@ -103,16 +103,19 @@ class DitheredImageARecipe(BaseRecipe):
         _logger.info('Computing offsets from WCS information')
         baseshape = (2048, 2048)
         refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
-        list_of_offsets = offsets_from_wcs(rinput.obresult.frames, refpix)
-        
+        offsets_xy = offsets_from_wcs(rinput.obresult.frames, refpix)
+        print offsets_xy
+        # Offsets in numpy order, swaping
+        offsets_fc = offsets_xy[:,::-1]
+        offsets_fc_t = numpy.round(offsets_fc).astype('int')
+
         _logger.info('Computing relative offsets')
-        offsets = [off for off in list_of_offsets]
-        offsets = numpy.round(offsets).astype('int')
         subpixshape = (2048, 2048)
-        finalshape, offsetsp = combine_shape(subpixshape, offsets)
+        finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
+        print offsetsp
         _logger.info('Shape of resized array is %s', finalshape)
                 
-        # Resizing target frames        
+        # Resizing target frames 
         rframes = resize(rinput.obresult.frames, subpixshape, offsetsp, finalshape)
         out = combine_frames(rframes)
         hdu = fits.PrimaryHDU(out[0])
