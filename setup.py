@@ -3,9 +3,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-BASE_PKGS=find_packages('lib', exclude=['drp', 'drp.*'])
-NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.emir']
-ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
+ALL_PKGS = BASE_PKGS
 
 # There is a problem installing/uninstalling with pip
 # pip will uninstall pyemir AND numina 
@@ -24,8 +22,8 @@ setup(name='pyemir',
       url='http://guaix.fis.ucm.es/projects/emir',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
-      packages=ALL_PKGS,
-      package_dir={'emir': 'lib/emir', 'numina.pipelines': 'lib/drp'},
+      packages=find_packages('lib')
+      package_dir={'emir': 'lib/emir'},
       package_data={'emir.simulation': ['*.dat'],
                      'emir.instrument': ['image_*.txt', 'spectrum_*.txt'],
                      'emir': ['drp.yaml'],
