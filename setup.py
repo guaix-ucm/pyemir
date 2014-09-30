@@ -41,8 +41,11 @@ setup(name='pyemir',
         'http://stsdas.stsci.edu/numdisplay'
         ],
       entry_points = {
-        'numina.pipeline': [
+        'numina.pipeline.1': [
             'emir = emir.loader:emir_drp_load',
+            ],
+        'numina.storage.1': [
+            'emir_default = emir.store',
             ]
         },
       classifiers=[
