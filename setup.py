@@ -40,6 +40,11 @@ setup(name='pyemir',
       dependency_links = [
         'http://stsdas.stsci.edu/numdisplay'
         ],
+      entry_points = {
+        'numina.pipeline': [
+            'emir = emir.loader:emir_drp_load',
+            ]
+        },
       classifiers=[
                    "Programming Language :: Python :: 2.7",
                    'Development Status :: 3 - Alpha',
