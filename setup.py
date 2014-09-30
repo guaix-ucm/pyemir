@@ -3,8 +3,6 @@
 from setuptools import setup, find_packages
 import sys, os
 
-ALL_PKGS = BASE_PKGS
-
 # There is a problem installing/uninstalling with pip
 # pip will uninstall pyemir AND numina 
 # this is the bug https://github.com/pypa/pip/issues/355
@@ -22,7 +20,7 @@ setup(name='pyemir',
       url='http://guaix.fis.ucm.es/projects/emir',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
-      packages=find_packages('lib')
+      packages=find_packages('lib'),
       package_dir={'emir': 'lib/emir'},
       package_data={'emir.simulation': ['*.dat'],
                      'emir.instrument': ['image_*.txt', 'spectrum_*.txt'],
