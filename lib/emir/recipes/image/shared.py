@@ -156,7 +156,7 @@ class DirectImageCommon(BaseRecipe):
         self._figure.canvas.set_window_title('Recipe Plots')
         self._figure.canvas.draw()
     
-    def process(self, obresult, reqs,
+    def process(self, ri,
                 window=None, subpix=1, 
                 store_intermediate=True,
                 target_is_sky=True, stop_after=PRERED):
@@ -179,7 +179,7 @@ class DirectImageCommon(BaseRecipe):
         step = 0
         
         try:
-            niteration = reqs.iterations
+            niteration = ri.iterations
         except KeyError:
             niteration = 1
         
@@ -191,19 +191,19 @@ class DirectImageCommon(BaseRecipe):
                 # Basic processing
                 
                 # FIXME: add this
-                #bpm = fits.getdata(reqs.master_bpm)
+                #bpm = fits.getdata(ri.master_bpm)
                 #bpm_corrector = BadPixelCorrector(bpm)
                 
-                if reqs.master_bias:
-                    mbias = fits.getdata(reqs.master_bias)
+                if ri.master_bias:
+                    mbias = fits.getdata(ri.master_bias)
                     bias_corrector = BiasCorrector(mbias)
                 else:
                     bias_corrector = IdNode()
             
-                mdark = fits.getdata(reqs.master_dark.label)
+                mdark = fits.getdata(ri.master_dark.label)
                 dark_corrector = DarkCorrector(mdark)
 
-                mflat = fits.getdata(reqs.master_flat.label)
+                mflat = fits.getdata(ri.master_flat.label)
                 ff_corrector = FlatFieldCorrector(mflat)  
                   
                 basicflow = SerialFlow([#bpm_corrector,
@@ -212,7 +212,7 @@ class DirectImageCommon(BaseRecipe):
                                         ff_corrector
                                         ])
 
-                for frame in obresult.frames:
+                for frame in ri.obresult.frames:
                     with fits.open(frame.label, mode='update') as hdulist:
                             hdulist = basicflow(hdulist)
                   
@@ -241,7 +241,7 @@ class DirectImageCommon(BaseRecipe):
                 targetframes = []
                 skyframes = []
                 
-                for frame in obresult.frames:
+                for frame in ri.obresult.frames:
                     
                     # Getting some metadata from FITS header
                     hdr = fits.getheader(frame.label)
@@ -255,7 +255,7 @@ class DirectImageCommon(BaseRecipe):
                     
                     
                     frame.baselabel = os.path.splitext(frame.label)[0]
-                    frame.mask = reqs.master_bpm
+                    frame.mask = ri.master_bpm
                     # Insert pixel offsets between frames    
                     frame.objmask_data = None
                     frame.valid_target = False
@@ -273,13 +273,13 @@ class DirectImageCommon(BaseRecipe):
         
                 labels = [frame.label for frame in targetframes]
         
-                if reqs.offsets is None:
+                if ri.offsets is None:
                     _logger.info('Computing offsets from WCS information')
                     
                     list_of_offsets = offsets_from_wcs(labels, refpix)
                 else:
                     _logger.info('Using offsets from parameters')
-                    list_of_offsets = numpy.asarray(reqs.offsets)
+                    list_of_offsets = numpy.asarray(ri.offsets)
 
                 # Insert pixel offsets between frames
                 for frame, off in zip(targetframes, list_of_offsets):
@@ -309,7 +309,7 @@ class DirectImageCommon(BaseRecipe):
                 # superflat
                 _logger.info('Step %d, superflat correction (SF)', step)
                 # Compute scale factors (median)           
-                self.update_scale_factors(obresult.frames)
+                self.update_scale_factors(ri.obresult.frames)
 
                 # Create superflat                
                 superflat = self.compute_superflat(skyframes, channels=scaled_chan,
@@ -317,13 +317,13 @@ class DirectImageCommon(BaseRecipe):
             
                 # Apply superflat
                 self.figure_init(subpixshape)
-                self.apply_superflat(obresult.frames, superflat)
+                self.apply_superflat(ri.obresult.frames, superflat)
 
                 _logger.info('Simple sky correction')
                 if target_is_sky:
                     # Each frame is the closest sky frame available
                     
-                    for frame in obresult.frames:            
+                    for frame in ri.obresult.frames:            
                         self.compute_simple_sky_for_frame(frame, frame)
                 else:
                     self.compute_simple_sky(targetframes, skyframes)
@@ -331,7 +331,7 @@ class DirectImageCommon(BaseRecipe):
                 # Combining the frames
                 _logger.info("Step %d, Combining target frames", step)
                 
-                sf_data = self.combine_frames(targetframes, extinction=reqs.extinction)
+                sf_data = self.combine_frames(targetframes, extinction=ri.extinction)
                     
                 self.figures_after_combine(sf_data)
                       
@@ -384,7 +384,7 @@ class DirectImageCommon(BaseRecipe):
                 _logger.info('Step %d, superflat correction (SF)', step)
                 
                 # Compute scale factors (median)           
-                self.update_scale_factors(obresult.frames, step)
+                self.update_scale_factors(ri.obresult.frames, step)
 
                 # Create superflat
                 superflat = self.compute_superflat(skyframes, scaled_chan,
@@ -393,7 +393,7 @@ class DirectImageCommon(BaseRecipe):
                 # Apply superflat
                 self.figure_init(subpixshape)
                 
-                self.apply_superflat(obresult.frames, superflat, step=step, save=True)
+                self.apply_superflat(ri.obresult.frames, superflat, step=step, save=True)
 
                 _logger.info('Step %d, advanced sky correction (SC)', step)                
                 self.compute_advanced_sky(targetframes, objmask, 
@@ -404,7 +404,7 @@ class DirectImageCommon(BaseRecipe):
                 # Combining the images
                 _logger.info("Step %d, Combining the images", step)
                 # FIXME: only for science
-                sf_data = self.combine_frames(targetframes, reqs.extinction, step=step)
+                sf_data = self.combine_frames(targetframes, ri.extinction, step=step)
                 self.figures_after_combine(sf_data)
 
                 if step >= niteration:
@@ -530,7 +530,7 @@ class DirectImageCommon(BaseRecipe):
         
         # 1 / minutes in a Julian day 
         MIN_TO_DAY = 0.000694444
-        #max_time_sep = reqs.sky_images_sep_time / 1440.0
+        #max_time_sep = ri.sky_images_sep_time / 1440.0
         _dis, idxs = kdtree.query(tarray, k=nframes, 
                                  distance_upper_bound=maxsep * MIN_TO_DAY)
         

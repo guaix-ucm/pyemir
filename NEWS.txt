@@ -1,3 +1,10 @@
+Version 0.8.1 (17 Oct 2014)
+----------------------------
+Changes:
+  * New dither recipe DitheredImageARecipeRequirements
+  * Recipes use one argument in 'run'
+  * Added capabilities for FITS validation
+  * IMprovements in FWHM computation
 
 Version 0.8.0 (02 Apr 2014)
 ----------------------------

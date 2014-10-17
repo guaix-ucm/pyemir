@@ -36,7 +36,7 @@ modes:
   uuid: a7cf7b82-e527-4d53-ad7a-3dae009a1b4e
 - date: 2012-05-21
   description: Recipe to process bias images
-  key: BIAS_IMAGE
+  key: IMAGE_BIAS
   name: Bias Image
   reference: IPUREMI_323
   status: DRAFT
@@ -45,7 +45,7 @@ modes:
   uuid: a7ea9c0c-76a6-4609-8413-0157102ec284
 - date: 2012-05-21
   description: Lines and mode lines
-  key: DARK_CURRENT_IMAGE
+  key: IMAGE_DARK
   name: Dark current Image
   reference: IPUREMI_323
   status: DRAFT
@@ -196,32 +196,27 @@ modes:
   summary: Summary
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: 8dfef954-d3f8-4f7f-9a5a-87609ddbfb41
+- date: 2014-04-23
+  description: Simple sky background
+  key: IMAGE_SKY
+  name: Test pinhole extraction
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 449d0f1f-2122-4cfd-8bc2-14e073ac1551
 pipelines:
-  alt:
-    recipes:
-      BIAS_IMAGE: emir.recipes.BiasRecipe
-      cosmetics: emir.recipes.CosmeticsRecipe
-      dark_current: emir.recipes.aiv.DarkCurrentRecipe
-      DARK_CURRENT_IMAGE: emir.recipes.DarkRecipe
-      DITHERED_IMAGE: emir.recipes.DitheredImageRecipe
-      gain_mode1: emir.recipes.GainRecipe1
-      INTENSITY_FLAT_FIELD: emir.recipes.IntensityFlatRecipe
-      MICRODITHERED_IMAGE: emir.recipes.MicroditheredImageRecipe
-      MOSAICED_IMAGE: emir.recipes.MosaicRecipe
-      NODDED_BEAM_SWITCHED_IMAGE: emir.recipes.NBImageRecipe
-      STARE_IMAGE: emir.recipes.StareImageRecipe
-      fail: numina.core.utils.AlwaysFailRecipe
-    version: 1
   default:
     recipes:
-      BIAS_IMAGE: emir.recipes.BiasRecipe
-      DARK_CURRENT_IMAGE: emir.recipes.DarkRecipe
-      DITHERED_IMAGE: emir.recipes.DitheredImageRecipe
-      INTENSITY_FLAT_FIELD: emir.recipes.IntensityFlatRecipe
+      IMAGE_BIAS: emir.recipes.BiasRecipe
+      IMAGE_DARK: emir.recipes.DarkRecipe
+      IMAGE_FLAT: emir.recipes.IntensityFlatRecipe
+      IMAGE_SKY: emir.recipes.SimpleSkyRecipe
+      DITHERED_IMAGE: emir.recipes.aiv.dither.DitheredImageARecipe
       MICRODITHERED_IMAGE: emir.recipes.MicroditheredImageRecipe
       MOSAICED_IMAGE: emir.recipes.MosaicRecipe
       NODDED_BEAM_SWITCHED_IMAGE: emir.recipes.NBImageRecipe
-      STARE_IMAGE: emir.recipes.StareImageRecipe
+      STARE_IMAGE: emir.recipes.aiv.TestSkyCorrectRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       gain_mode1: emir.recipes.GainRecipe1
       cosmetics: emir.recipes.CosmeticsRecipe

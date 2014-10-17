@@ -21,8 +21,9 @@
 
 import numpy
 
-from numina.core import FrameDataProduct, DataProduct
+from numina.core import DataFrameType, DataProductType
 from numina.core.requirements import InstrumentConfigurationType
+from numina.core import ValidationError
 
 # FIXME
 try:
@@ -30,19 +31,98 @@ try:
 except ImportError:
     # We are not in GTC
     pass
+
+base_schema_description = {
+    'keywords': {
+        'INSTRUME': {'mandatory': True},
+        'READMODE': {'mandatory': True, 
+            'value': ['SIMPLE', 'BIAS', 'SINGLE', 'CDS', 'FOWLER', 'RAMP']},
+        'EXPTIME': {'value': float},
+ #       'XDTU': {'mandatory': True, 'value': float},
+ #       'YDTU': {'mandatory': True, 'value': float},
+ #       'ZDTU': {'mandatory': True, 'value': float},
+        'NUMINAID': {'value': int}
+        }
+    }
+
+gtc_proc_schema_description = {
+    'keywords': {
+        'NUMINAID': {'mandatory': True, 'value': int}
+        }
+    }
+
+emir_schema_description = {
+    'keywords': {
+        'INSTRUME': {'mandatory': True, 'value': 'EMIR'},
+        'READMODE': {'mandatory': True, 
+            'value': ['SIMPLE', 'BIAS', 'SINGLE', 'CDS', 'FOWLER', 'RAMP']},
+        'BUNIT': {'value': ['ADU', 'ADU/s']},
+        'IMGTYPE': {'mandatory': True, 'type': 'string'},
+ #       'XDTU': {'mandatory': True, 'value': float},
+ #       'YDTU': {'mandatory': True, 'value': float},
+ #       'ZDTU': {'mandatory': True, 'value': float}, 
+        }
+    }
+
+class MasterFrameProduct(DataFrameType):
     
+    def __init__(self):
+        super(MasterFrameProduct, self).__init__()
+        self.headerschema.extend(gtc_proc_schema_description)
+        
+
 class EMIRConfigurationType(InstrumentConfigurationType):
     
     def validate(self, value):
         super(EMIRConfigurationType, self).validate(value)
 
-class EMIRFrame(FrameDataProduct):
-    pass
+class EMIRFrame(DataFrameType):
+    
+    def __init__(self):
+        super(EMIRFrame, self).__init__()
+        self.headerschema.extend(base_schema_description)
+        self.headerschema.extend(emir_schema_description)
+            
+    def validate_hdu(self, hdu):
+        self.headerschema.validate(hdu.header)
+        
+    def validate_hdulist(self, hdulist):
+        super(EMIRFrame, self).validate_hdulist(hdulist)
+        self.validate_hdu(hdulist[0])
+
 
 class MasterBadPixelMask(EMIRFrame):
     pass
 
-class MasterBias(EMIRFrame):
+class RawBias(EMIRFrame):
+    '''Raw bias frame'''
+
+    def validate_hdu(self, hdu):
+        super(RawBias, self).validate_hdu(hdu)
+        # Check READMODE is valid
+        header = hdu.header
+        if header['READMODE'] not in ['SIMPLE', 'BIAS', 'SINGLE']:
+            raise ValidationError('not a bias')
+        
+        return True
+
+class RawDark(EMIRFrame):
+    '''Raw dark frame'''
+    def validate_hdu(self, hdu):
+        super(RawDark, self).validate_hdu(hdu)
+
+        header = hdu.header
+        if header['IMGTYPE'] != 'DARK':
+            raise ValidationError('not a dark')
+        
+        return True
+
+class RawIntensityFlat(EMIRFrame):
+    def validate_hdu(self, hdu):
+        super(RawIntensityFlat, self).validate_hdu(hdu)
+        return True
+
+class MasterBias(RawBias, MasterFrameProduct):
     '''Master bias product
     
     This image has 4 extensions: primary, two variance extensions
@@ -51,12 +131,11 @@ class MasterBias(EMIRFrame):
     The variance extensions are computed using two different methods. 
     The first one is the variance of the same pixels in different images.
     The second extension is the variance of each channel in the final image.
-    
-    
     '''
     pass
 
-class MasterDark(EMIRFrame):
+
+class MasterDark(RawDark, MasterFrameProduct):
     '''Master dark product
     
     This image has 4 extensions: primary, two variance extensions
@@ -65,62 +144,60 @@ class MasterDark(EMIRFrame):
     The variance extensions are computed using two different methods. 
     The first one is the variance of the same pixels in different images.
     The second extension is the variance of each channel in the final image.
-    
-    
     '''
     pass
 
 class DarkCurrentValue(EMIRFrame):
     pass
 
-class MasterIntensityFlat(EMIRFrame):
+class MasterIntensityFlat(RawIntensityFlat, MasterFrameProduct):
     pass
         
 class MasterSpectralFlat(EMIRFrame):
     pass
 
-class Spectra(FrameDataProduct):
+class Spectra(DataFrameType):
     pass
  
-class DataCube(FrameDataProduct):
+class DataCube(DataFrameType):
     pass
 
-class TelescopeFocus(DataProduct):
+class TelescopeFocus(DataProductType):
     pass
 
-class DTUFocus(DataProduct):
+class DTUFocus(DataProductType):
     pass
 
-class DTU_XY_Calibration(FrameDataProduct):
+class DTU_XY_Calibration(DataFrameType):
     pass
 
-class DTU_Z_Calibration(FrameDataProduct):
+class DTU_Z_Calibration(DataFrameType):
     pass
 
-class DTUFlexureCalibration(FrameDataProduct):
-    pass
-
-# FIXME:
-class SlitTransmissionCalibration(FrameDataProduct):
+class DTUFlexureCalibration(DataFrameType):
     pass
 
 # FIXME:
-class WavelengthCalibration(FrameDataProduct):
+class SlitTransmissionCalibration(DataFrameType):
     pass
 
-class CSU2DetectorCalibration(FrameDataProduct):
+# FIXME:
+class WavelengthCalibration(DataFrameType):
     pass
 
-class PointingOriginCalibration(FrameDataProduct):
+class CSU2DetectorCalibration(DataFrameType):
     pass
 
-class SpectroPhotometricCalibration(FrameDataProduct):
+class PointingOriginCalibration(DataFrameType):
     pass
 
-class PhotometricCalibration(FrameDataProduct):
+class SpectroPhotometricCalibration(DataFrameType):
     pass
 
-class MasterGainMap(DataProduct):
+class PhotometricCalibration(DataFrameType):
+    pass
+
+class MasterGainMap(DataProductType):
     def __init__(self, mean, var, frame):
         self.mean = mean
         self.var = var
@@ -131,7 +208,7 @@ class MasterGainMap(DataProduct):
         gvar = map(float, self.var.flat)
         return {'frame': self.frame, 'mean': gmean, 'var': gvar}
 
-class MasterRONMap(DataProduct):
+class MasterRONMap(DataProductType):
     def __init__(self, mean, var):
         self.mean = mean
         self.var = var
@@ -141,11 +218,11 @@ class MasterRONMap(DataProduct):
         gvar = map(float, self.var.flat)
         return {'mean': gmean, 'var': gvar}
 
-class TelescopeOffset(DataProduct):
+class TelescopeOffset(DataProductType):
     pass
 
 
-class ArrayType(DataProduct):
+class ArrayType(DataProductType):
     def __init__(self, default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
 
@@ -154,7 +231,7 @@ class ArrayType(DataProduct):
         return result
 
 
-class CoordinateListNType(DataProduct):
+class CoordinateListNType(DataProductType):
     def __init__(self, dimensions, default=None):
         super(CoordinateListNType, self).__init__(ptype=numpy.ndarray, default=default)
         self.N = dimensions
@@ -162,9 +239,9 @@ class CoordinateListNType(DataProduct):
     def validate(self, obj):
         ndims = len(obj.shape)
         if ndims != 2:
-            raise TypeError('%r is not a valid %r' % (obj, self.__class__.__name__))
+            raise ValidationError('%r is not a valid %r' % (obj, self.__class__.__name__))
         if obj.shape[1] != self.N:
-            raise TypeError('%r is not a valid %r' % (obj, self.__class__.__name__))
+            raise ValidationError('%r is not a valid %r' % (obj, self.__class__.__name__))
             
 
     def store(self, obj):
@@ -175,29 +252,29 @@ class CoordinateList2DType(CoordinateListNType):
     def __init__(self, default=None):
         super(CoordinateList2DType, self).__init__(2, default=default)
 
-class MSMPositions(DataProduct):
+class MSMPositions(DataProductType):
     pass
 
-class SourcesCatalog(DataProduct):
+class SourcesCatalog(DataProductType):
     def __init__(self):
         super(SourcesCatalog, self).__init__(ptype=list)
 
 
-class LinesCatalog(DataProduct):
+class LinesCatalog(DataProductType):
     pass
 
-class CentroidsTableType(DataProduct):
+class CentroidsTableType(DataProductType):
     '''Table with information about focus centroids.'''
     def __init__(self):
         super(CentroidsTableType, self).__init__(ptype=numpy.ndarray)
 
-class ChannelLevelStatistics(DataProduct):
+class ChannelLevelStatistics(DataProductType):
     ''' A list of exposure time, mean, std dev and median per channel'''
     def __init__(self, exposure, statistics):
         self.exposure = exposure
         self.statistics = statistics
 
-class ChannelLevelStatisticsType(DataProduct):
+class ChannelLevelStatisticsType(DataProductType):
     ''' A list of exposure time, mean, std dev and median per channel'''
     def __init__(self):
         super(ChannelLevelStatisticsType, self).__init__(ptype=ChannelLevelStatistics)

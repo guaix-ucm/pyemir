@@ -31,12 +31,11 @@ from numina import __version__
 from numina.core import BaseRecipe, Parameter, DataProductRequirement
 from numina.core import RecipeError,RecipeRequirements
 from numina.core import Product, define_requirements, define_result
-from numina.core import FrameDataProduct
+from numina.core import DataFrameType
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
 from numina.flow.processing import BiasCorrector, DarkCorrector
-from numina.flow.processing import DivideByExposure
 from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
@@ -78,8 +77,8 @@ class CosmeticsRecipeRequirements(RecipeRequirements):
     maxiter = Parameter(30, 'Maximum number of iterations')
     
 class CosmeticsRecipeResult(RecipeResult):
-    ratio = Product(FrameDataProduct)
-    mask = Product(FrameDataProduct)
+    ratio = Product(DataFrameType)
+    mask = Product(DataFrameType)
     
 @define_requirements(CosmeticsRecipeRequirements)
 @define_result(CosmeticsRecipeResult)
@@ -125,14 +124,12 @@ class CosmeticsRecipe(BaseRecipe):
                 _logger.info('ignoring bias')
                 bias_corrector = IdNode()
             
-        exposure_corrector = DivideByExposure(factor=1e-3)
-
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
-        flow = SerialFlow([bias_corrector, exposure_corrector, dark_corrector])
+        flow = SerialFlow([bias_corrector, dark_corrector])
         
         _logger.info('processing flat #1')                    
         with rinput.obresult.frames[0].open() as hdul:

@@ -22,10 +22,11 @@ Beam switched-nodded image mode recipe of EMIR
 
 '''
 
-from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import Requirement, RecipeRequirements
-from numina.core import DataFrame, define_requirements, define_result
-from numina.core import Product, FrameDataProduct 
+from numina.core import Parameter, DataProductRequirement
+from numina.core import RecipeRequirements
+from numina.core import define_requirements, define_result
+from numina.core import Product, DataFrameType 
+from numina.core.requirements import ObservationResultRequirement
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -37,6 +38,7 @@ from emir.requirements import SkyImageSepTime_Requirement
 from .shared import DirectImageCommon
 
 class NBImageRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -51,7 +53,7 @@ class NBImageRecipeRequirements(RecipeRequirements):
     check_photometry_actions = Parameter(['warn', 'warn', 'default'], 'Actions to take on images')
 
 class NBImageRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
     catalog = Product(SourcesCatalog)
 
 @define_requirements(NBImageRecipeRequirements)
@@ -78,9 +80,9 @@ class NBImageRecipe(DirectImageCommon):
             version="0.1.0"
         )
 
-    def run(self, obresult, reqs):
+    def run(self, ri):
         
-        frame, catalog = self.process(obresult, reqs, 
+        frame, catalog = self.process(ri, 
                             window=None, subpix=1,
                             target_is_sky=False,
                             stop_after=DirectImageCommon.FULLRED)

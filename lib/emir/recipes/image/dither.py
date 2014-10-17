@@ -21,10 +21,11 @@
 
 import logging
 
-from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import Requirement, RecipeRequirements, FrameDataProduct
-from numina.core import DataFrame, Product, RecipeRequirements
+from numina.core import Parameter
+from numina.core import DataFrameType
+from numina.core import Product, RecipeRequirements
 from numina.core import define_requirements, define_result
+from numina.core.requirements import ObservationResultRequirement
 
 from emir.core import RecipeResult
 from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
@@ -45,6 +46,7 @@ _logger = logging.getLogger("numina.recipes.emir")
 
 
 class DitheredImageRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMask_Requirement()
     master_bias = MasterBias_Requirement()
     master_dark = MasterDark_Requirement()
@@ -61,7 +63,7 @@ class DitheredImageRecipeRequirements(RecipeRequirements):
                     
 
 class DitheredImageRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
     catalog = Product(SourcesCatalog)
 
 @define_requirements(DitheredImageRecipeRequirements)
@@ -145,9 +147,8 @@ class DitheredImageRecipe(DirectImageCommon):
             version="0.1.0"
         )
         
-    def run(self, obresult, reqs):        
-        frame, catalog = self.process(obresult, reqs, 
-                            window=None, subpix=1, 
+    def run(self, ri):        
+        frame, catalog = self.process(ri, window=None, subpix=1, 
                             stop_after=DirectImageCommon.FULLRED)
         
         result = DitheredImageRecipeResult(frame=frame, catalog=catalog)

@@ -36,19 +36,21 @@ from numina.array.combine import median, mean
 from numina import __version__
 from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.processing import FlatFieldCorrector, SkyCorrector
-from numina.flow.processing import DivideByExposure
 from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emir.dataproducts import FrameDataProduct, MasterIntensityFlat
+from emir.dataproducts import DataFrameType, MasterIntensityFlat
 from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
+from emir.core import gather_info
+from emir.core import EMIR_BIAS_MODES
 
 _logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
             
+
 class DarkCurrentRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
 
@@ -178,26 +180,7 @@ class SimpleBiasRecipe(BaseRecipe):
         result = SimpleBiasRecipeResult(biasframe=DataFrame(hdulist))
         return result
 
-def gather_info(hdulist):
-    n_ext = len(hdulist)
 
-    # READMODE is STRING
-    readmode = hdulist[0].header.get('READMODE', 'undefined')
-    bunit = hdulist[0].header.get('BUNIT', 'undefined')
-    texp = hdulist[0].header.get('EXPTIME')
-    adu_s = True
-    if bunit:
-        if bunit.lower() == 'adu':
-            adu_s = False
-        elif bunit.lower() == 'adu/s':
-            adu_s = True
-        else:
-            _logger.warning('Unrecognized value for BUNIT %s', bunit)
-
-    return {'n_ext': n_ext, 
-            'readmode': readmode,
-            'texp': texp,
-            'adu_s': adu_s}
 
 
 class TestBiasCorrectRecipeRequirements(RecipeRequirements):
@@ -205,7 +188,7 @@ class TestBiasCorrectRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
 
 class TestBiasCorrectRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
 
 @define_requirements(TestBiasCorrectRecipeRequirements)
 @define_result(TestBiasCorrectRecipeResult)
@@ -217,50 +200,44 @@ class TestBiasCorrectRecipe(BaseRecipe):
 
     def run(self, rinput):
         _logger.info('starting simple bias reduction')
+        
+        meta = gather_info(rinput)
+        iinfo = meta['obresult']
+        
+        use_bias = False
+        
 
-        iinfo = []
-        for frame in rinput.obresult.frames:
-            with frame.open() as hdulist:
-                iinfo.append(gather_info(hdulist))
-
-        bias_info = {}
-
-        if rinput.master_bias:
-            with rinput.master_bias.open() as hdul:
-                bias_info = gather_info(hdul)
-
-        print(iinfo)
-        print(bias_info)
-
-        # SINGLE 0
-        # CDS 1
-        # FOWLER 2
-        # RAMP 3
-        # HDR_noseque 4
-        # BIAS 5
-
-        for idx, ii in enumerate(iinfo):
-            if not ii['readmode'].lower() in ['simple', 'bias']:
-                # We have images in mode other than simple or bias BAD
-                raise RecipeError('Image %d in inputs has READMODE %s' % (idx, ii['readmode']))
+        mode = iinfo[0]['readmode']
+        if mode.lower() in EMIR_BIAS_MODES:
+            _logger.info('readmode is %s, bias required', mode)
+            use_bias = True
+                
+        else:
+            _logger.error('readmode is %s, no bias required', mode)
+            raise RecipeError('readmode is %s, no bias required', mode)
+             
+        bias_info = meta['master_bias']
+           
+        print('images info:', iinfo)
+        print('bias info:', bias_info)
 
         # Loading calibrations
-        has_bias = False
-        bias_corrector = None
-        if rinput.master_bias:
-            _logger.info('loading bias')
-            has_bias = True
+        if use_bias:
             with rinput.master_bias.open() as hdul:
-                mbias = hdul[0].data.copy()
+                _logger.info('loading bias')
+                mbias = hdul[0].data
                 bias_corrector = BiasCorrector(mbias)
         else:
-            raise RecipeError("Bias required but not available")
+            _logger.info('ignoring bias')
+            bias_corrector = IdNode()
+
+        flow = SerialFlow([bias_corrector])
        
         cdata = []
         try:
             for frame in rinput.obresult.frames:
-                hdulist = frame.open() # Check if I can return the same HDUList
-                hdulist = bias_corrector(hdulist)
+                hdulist = frame.open()
+                hdulist = flow(hdulist)
                 cdata.append(hdulist)
 
             _logger.info('combining images using median')
@@ -288,7 +265,7 @@ class TestDarkCorrectRecipeRequirements(RecipeRequirements):
     master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
 
 class TestDarkCorrectRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
 
 @define_requirements(TestDarkCorrectRecipeRequirements)
 @define_result(TestDarkCorrectRecipeResult)
@@ -301,52 +278,48 @@ class TestDarkCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple dark reduction')
 
-        iinfo = []
-        for frame in rinput.obresult.frames:
-            with frame.open() as hdulist:
-                iinfo.append(gather_info(hdulist))
+        meta = gather_info(rinput)
+        iinfo = meta['obresult']
+        
+        if iinfo:
+            mode = iinfo[0]['readmode']
+            if mode.lower() in EMIR_BIAS_MODES:
+                use_bias = True
+                _logger.info('readmode is %s, bias required', mode)
+                
+            else:
+                use_bias = False
+                _logger.info('readmode is %s, no bias required', mode)
+                
+        bias_info = meta['master_bias']
+        dark_info = meta['master_dark']
 
-        bias_info = {}
-        dark_info = {}
-
-        with rinput.master_bias.open() as hdul:
-            bias_info = gather_info(hdul)
-
-        with rinput.master_dark.open() as hdul:
-            dark_info = gather_info(hdul)
-
-        print('images:', iinfo)
-        print('bias:', bias_info)
-        print('dark:', dark_info)
+        print('images info:', iinfo)
+        if use_bias:
+            print('bias info:', bias_info)
+        print('dark info:', dark_info)
 
         # Loading calibrations
-        with rinput.master_bias.open() as hdul:
-            bunit = hdul[0].header.get('BUNIT')
-            if bunit and bunit.lower() == 'adu':
+        if use_bias:
+            with rinput.master_bias.open() as hdul:
                 _logger.info('loading bias')
                 mbias = hdul[0].data
-                # FIXME
-                # check the READMODE of BIAS
-                # to see if its in an
-                # impossible mode
                 bias_corrector = BiasCorrector(mbias)
-            else:
-                _logger.info('ignoring bias')
-                bias_corrector = IdNode()
+        else:
+            _logger.info('ignoring bias')
+            bias_corrector = IdNode()
             
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
             mdark = mdark_hdul[0].data
             dark_corrector = DarkCorrector(mdark)
 
-        exposure_corrector = DivideByExposure(factor=1e-3)
-
-        flow = SerialFlow([bias_corrector, exposure_corrector, dark_corrector])
+        flow = SerialFlow([bias_corrector, dark_corrector])
 
         cdata = []
         try:
             for frame in rinput.obresult.frames:
-                hdulist = frame.open() # Check if I can return the same HDUList
+                hdulist = frame.open()
                 hdulist = flow(hdulist)
                 cdata.append(hdulist)
 
@@ -363,7 +336,9 @@ class TestDarkCorrectRecipe(BaseRecipe):
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
+        
         result = TestDarkCorrectRecipeResult(frame=hdulist)
+        
         return result
 
 class TestFlatCorrectRecipeRequirements(RecipeRequirements):
@@ -373,7 +348,7 @@ class TestFlatCorrectRecipeRequirements(RecipeRequirements):
     master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
 
 class TestFlatCorrectRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
 
 @define_requirements(TestFlatCorrectRecipeRequirements)
 @define_result(TestFlatCorrectRecipeResult)
@@ -386,42 +361,40 @@ class TestFlatCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple flat reduction')
 
-        iinfo = []
-        for frame in rinput.obresult.frames:
-            with frame.open() as hdulist:
-                iinfo.append(gather_info(hdulist))
+        meta = gather_info(rinput)
+        iinfo = meta['obresult']
+        
+        if iinfo:
+            mode = iinfo[0]['readmode']
+            if mode.lower() in EMIR_BIAS_MODES:
+                use_bias = True
+                _logger.info('readmode is %s, bias required', mode)
+                
+            else:
+                use_bias = False
+                _logger.info('readmode is %s, no bias required', mode)
+        
+        bias_info = meta['master_bias']
+        dark_info = meta['master_dark']
+        flat_info = meta['master_flat']
 
-        bias_info = {}
-        dark_info = {}
-        flat_info = {}
 
-        with rinput.master_bias.open() as hdul:
-            bias_info = gather_info(hdul)
-
-        with rinput.master_dark.open() as hdul:
-            dark_info = gather_info(hdul)
-
-        with rinput.master_flat.open() as hdul:
-            flat_info = gather_info(hdul)
-
-        print('images:', iinfo)
-        print('bias:', bias_info)
-        print('dark:', dark_info)
-        print('flat:', flat_info)
+        print('images info:', iinfo)
+        if use_bias:
+            print('bias info:', bias_info)
+        print('dark info:', dark_info)
+        print('flat info:', flat_info)
 
         # Loading calibrations
-        with rinput.master_bias.open() as hdul:
-            bunit = hdul[0].header.get('BUNIT')
-            if bunit and bunit.lower() == 'adu':
+        if use_bias:
+            with rinput.master_bias.open() as hdul:
                 _logger.info('loading bias')
                 mbias = hdul[0].data
                 bias_corrector = BiasCorrector(mbias)
-            else:
-                _logger.info('ignoring bias')
-                bias_corrector = IdNode()
+        else:
+            _logger.info('ignoring bias')
+            bias_corrector = IdNode()
             
-        exposure_corrector = DivideByExposure(factor=1e-3)
-
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
             mdark = mdark_hdul[0].data
@@ -432,8 +405,7 @@ class TestFlatCorrectRecipe(BaseRecipe):
             mflat = mflat_hdul[0].data
             flat_corrector = FlatFieldCorrector(mflat)
 
-        flow = SerialFlow([bias_corrector, exposure_corrector, 
-                dark_corrector, flat_corrector])
+        flow = SerialFlow([bias_corrector, dark_corrector, flat_corrector])
 
         cdata = []
         try:
@@ -468,7 +440,7 @@ class TestSkyCorrectRecipeRequirements(RecipeRequirements):
     master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
 
 class TestSkyCorrectRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
 
 @define_requirements(TestSkyCorrectRecipeRequirements)
 @define_result(TestSkyCorrectRecipeResult)
@@ -481,19 +453,44 @@ class TestSkyCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple sky reduction')
 
+        meta = gather_info(rinput)
+        iinfo = meta['obresult']
+        
+        if iinfo:
+            mode = iinfo[0]['readmode']
+            if mode.lower() in EMIR_BIAS_MODES:
+                use_bias = True
+                _logger.info('readmode is %s, bias required', mode)
+                
+            else:
+                use_bias = False
+                _logger.info('readmode is %s, no bias required', mode)
+                
+        
+        
+        dark_info = meta['master_dark']
+        flat_info = meta['master_flat']
+        sky_info = meta['master_sky']
+
+        print('images info:', iinfo)
+        if use_bias:
+            bias_info = meta['master_bias']
+            print('bias info:', bias_info)
+            
+        print('dark info:', dark_info)
+        print('flat info:', flat_info)
+        print('sky info:', sky_info)
+
         # Loading calibrations
-        with rinput.master_bias.open() as hdul:
-            bunit = hdul[0].header.get('BUNIT')
-            if bunit and bunit.lower() == 'adu':
+        if use_bias:
+            with rinput.master_bias.open() as hdul:
                 _logger.info('loading bias')
                 mbias = hdul[0].data
                 bias_corrector = BiasCorrector(mbias)
-            else:
-                _logger.info('ignoring bias')
-                bias_corrector = IdNode()
+        else:
+            _logger.info('ignoring bias')
+            bias_corrector = IdNode()
             
-        exposure_corrector = DivideByExposure(factor=1e-3)
-
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
             mdark = mdark_hdul[0].data
@@ -509,8 +506,8 @@ class TestSkyCorrectRecipe(BaseRecipe):
             msky = msky_hdul[0].data
             sky_corrector = SkyCorrector(msky)
 
-        flow = SerialFlow([bias_corrector, exposure_corrector, 
-                dark_corrector, flat_corrector, sky_corrector])
+        flow = SerialFlow([bias_corrector, dark_corrector, 
+                flat_corrector, sky_corrector])
 
         cdata = []
         try:
@@ -534,8 +531,10 @@ class TestSkyCorrectRecipe(BaseRecipe):
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        # Update SEC to 0
+        hdr['SEC'] = 0
         hdulist = fits.HDUList([hdu])
+
         result = TestSkyCorrectRecipeResult(frame=hdulist)
 
         return result
-

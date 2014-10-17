@@ -24,9 +24,10 @@ Micro-dithering Recipe of EMIR
 
 import logging
 
-from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import define_requirements, define_result, DataFrame
-from numina.core import Requirement, Product, FrameDataProduct, RecipeRequirements
+from numina.core import Parameter, DataProductRequirement
+from numina.core import define_requirements, define_result
+from numina.core import Product, DataFrameType, RecipeRequirements
+from numina.core.requirements import ObservationResultRequirement
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -40,6 +41,7 @@ from .shared import DirectImageCommon
 _logger = logging.getLogger('numina.recipes.emir')
 
 class MicroditheredImageRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
     master_bpm = DataProductRequirement(MasterBadPixelMask, 'Master bad pixel mask')       
     master_bias = DataProductRequirement(MasterBias, 'Master bias image', optional=True)
     master_dark = DataProductRequirement(MasterDark, 'Master dark image')
@@ -59,7 +61,7 @@ class MicroditheredImageRecipeRequirements(RecipeRequirements):
     window = Parameter([], 'Region of interesting data', optional=True)
 
 class MicroditheredImageRecipeResult(RecipeResult):
-    frame = Product(FrameDataProduct)
+    frame = Product(DataFrameType)
     catalog = Product(SourcesCatalog)
 
 @define_requirements(MicroditheredImageRecipeRequirements)
@@ -155,12 +157,12 @@ class MicroditheredImageRecipe(DirectImageCommon):
             version="0.1.0"
         )
         
-    def run(self, obresult, reqs):
+    def run(self, ri):
         
-        subpix = reqs.subpixelization
-        window = reqs.window
+        subpix = ri.subpixelization
+        window = ri.window
         
-        frame, catalog = self.process(obresult, reqs, 
+        frame, catalog = self.process(ri, 
                             window=window, subpix=subpix, 
                             target_is_sky=True,
                             stop_after=DirectImageCommon.FULLRED)
