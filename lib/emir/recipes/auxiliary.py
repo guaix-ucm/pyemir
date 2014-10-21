@@ -49,6 +49,8 @@ from emir.dataproducts import WavelengthCalibration, MasterSpectralFlat
 from emir.dataproducts import ChannelLevelStatisticsType
 from emir.dataproducts import SlitTransmissionCalibration, ChannelLevelStatistics
 
+from .aiv.flows import init_filters_bdf
+
 __all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
            'SpectralFlatRecipe', 'SlitTransmissionRecipe',
            'WavelengthCalibrationRecipe']
@@ -227,6 +229,8 @@ class DarkRecipe(BaseRecipe):
                 if abs(el['texp'] - ref_exptime) > 1e-4:             
                     _logger.error('image with wrong exposure time')
                     raise RecipeError('image with wrong exposure time')
+        else:
+            raise RecipeError('cannot gather frames info')
                 
         bias_info = gather_info_dframe(rinput.master_bias)
 
@@ -446,53 +450,8 @@ class SimpleSkyRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting sky reduction')
     
-        iinfo = gather_info_frames(rinput.obresult.frames)
-        
-        if iinfo:
-            mode = iinfo[0]['readmode']
-            if mode.lower() in EMIR_BIAS_MODES:
-                use_bias = True
-                bias_info = gather_info_dframe(rinput.master_bias)
-                _logger.info('readmode is %s, bias required', mode)
-                
-            else:
-                use_bias = False
-                bias_info = None
-                _logger.info('readmode is %s, no bias required', mode)
-                
-        
-        dark_info = gather_info_dframe(rinput.master_dark)
-        flat_info = gather_info_dframe(rinput.master_flat)
+        flow = init_filters_bdf(rinput)
 
-        print('images info:', iinfo)
-        if use_bias:
-            print('bias info:', bias_info)
-        print('dark info:', dark_info)
-        print('flat info:', flat_info)
-
-        # Loading calibrations
-        if use_bias:
-            with rinput.master_bias.open() as hdul:
-                _logger.info('loading bias')
-                mbias = hdul[0].data
-                bias_corrector = BiasCorrector(mbias)
-        else:
-            _logger.info('ignoring bias')
-            bias_corrector = IdNode()
-            
-        with rinput.master_dark.open() as mdark_hdul:
-            _logger.info('loading dark')
-            mdark = mdark_hdul[0].data
-            dark_corrector = DarkCorrector(mdark)
-
-        with rinput.master_flat.open() as mflat_hdul:
-            _logger.info('loading intensity flat')
-            mflat = mflat_hdul[0].data
-            flat_corrector = FlatFieldCorrector(mflat)
-
-        flow = SerialFlow([bias_corrector, 
-                dark_corrector, flat_corrector])
-       
         cdata = []
         try:
             _logger.info('basic frame reduction')

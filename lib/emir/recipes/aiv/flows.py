@@ -60,6 +60,8 @@ def init_filters_bdfs(rinput):
         else:
             use_bias = False
             _logger.info('readmode is %s, bias not required', mode)
+    else:
+        raise ValueError('cannot gather frames info')
 
     dark_info = meta['master_dark']
     flat_info = meta['master_flat']
@@ -125,6 +127,8 @@ def init_filters_bdf(rinput):
         else:
             use_bias = False
             _logger.info('readmode is %s, bias not required', mode)
+    else:
+        raise ValueError('cannot gather frames info')
 
     dark_info = meta['master_dark']
     flat_info = meta['master_flat']
@@ -182,6 +186,8 @@ def init_filters_bd(rinput):
         else:
             use_bias = False
             _logger.info('readmode is %s, bias not required', mode)
+    else:
+        raise ValueError('cannot gather frames info')
 
     dark_info = meta['master_dark']
 
@@ -230,6 +236,8 @@ def init_filters_b(rinput):
         else:
             use_bias = False
             _logger.info('readmode is %s, bias not required', mode)
+    else:
+        raise ValueError('cannot gather frames info')
 
     print('images info:', iinfo)
     if use_bias:
