@@ -46,6 +46,13 @@ from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
 from emir.core import gather_info
 from emir.core import EMIR_BIAS_MODES
 
+from .flows import basic_processing_with_combination
+from .flows import init_filters_bdfs
+from .flows import init_filters_bdf
+from .flows import init_filters_bd
+from .flows import init_filters_b
+
+
 _logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
@@ -54,8 +61,10 @@ _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 class DarkCurrentRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
 
+
 class DarkCurrentRecipeResult(RecipeResult):
     darkcurrent = Product(DarkCurrentValue)
+
 
 @define_requirements(DarkCurrentRecipeRequirements)
 @define_result(DarkCurrentRecipeResult)
@@ -108,11 +117,14 @@ class DarkCurrentRecipe(BaseRecipe):
         result = DarkCurrentRecipeResult(darkcurrent=DarkCurrentValue())
         return result
 
+
 class SimpleBiasRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
 
+
 class SimpleBiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
+
 
 @define_requirements(SimpleBiasRecipeRequirements)
 @define_result(SimpleBiasRecipeResult)
@@ -181,14 +193,14 @@ class SimpleBiasRecipe(BaseRecipe):
         return result
 
 
-
-
 class TestBiasCorrectRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
 
+
 class TestBiasCorrectRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
+
 
 @define_requirements(TestBiasCorrectRecipeRequirements)
 @define_result(TestBiasCorrectRecipeResult)
@@ -201,57 +213,9 @@ class TestBiasCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple bias reduction')
         
-        meta = gather_info(rinput)
-        iinfo = meta['obresult']
-        
-        use_bias = False
-        
-
-        mode = iinfo[0]['readmode']
-        if mode.lower() in EMIR_BIAS_MODES:
-            _logger.info('readmode is %s, bias required', mode)
-            use_bias = True
-                
-        else:
-            _logger.error('readmode is %s, no bias required', mode)
-            raise RecipeError('readmode is %s, no bias required', mode)
-             
-        bias_info = meta['master_bias']
-           
-        print('images info:', iinfo)
-        print('bias info:', bias_info)
-
-        # Loading calibrations
-        if use_bias:
-            with rinput.master_bias.open() as hdul:
-                _logger.info('loading bias')
-                mbias = hdul[0].data
-                bias_corrector = BiasCorrector(mbias)
-        else:
-            _logger.info('ignoring bias')
-            bias_corrector = IdNode()
-
-        flow = SerialFlow([bias_corrector])
-       
-        cdata = []
-        try:
-            for frame in rinput.obresult.frames:
-                hdulist = frame.open()
-                hdulist = flow(hdulist)
-                cdata.append(hdulist)
-
-            _logger.info('combining images using median')
-            data = median([d['primary'].data for d in cdata], dtype='float32')
-            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
-
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
-            
-        _logger.info('stacking %d images using median', len(cdata))
-        # Setup final header
+        flow = init_filters_b(rinput)
+        hdu = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdu.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
@@ -259,13 +223,16 @@ class TestBiasCorrectRecipe(BaseRecipe):
         result = TestBiasCorrectRecipeResult(frame=hdulist)
         return result
 
+
 class TestDarkCorrectRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
 
+
 class TestDarkCorrectRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
+
 
 @define_requirements(TestDarkCorrectRecipeRequirements)
 @define_result(TestDarkCorrectRecipeResult)
@@ -278,61 +245,9 @@ class TestDarkCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple dark reduction')
 
-        meta = gather_info(rinput)
-        iinfo = meta['obresult']
-        
-        if iinfo:
-            mode = iinfo[0]['readmode']
-            if mode.lower() in EMIR_BIAS_MODES:
-                use_bias = True
-                _logger.info('readmode is %s, bias required', mode)
-                
-            else:
-                use_bias = False
-                _logger.info('readmode is %s, no bias required', mode)
-                
-        bias_info = meta['master_bias']
-        dark_info = meta['master_dark']
-
-        print('images info:', iinfo)
-        if use_bias:
-            print('bias info:', bias_info)
-        print('dark info:', dark_info)
-
-        # Loading calibrations
-        if use_bias:
-            with rinput.master_bias.open() as hdul:
-                _logger.info('loading bias')
-                mbias = hdul[0].data
-                bias_corrector = BiasCorrector(mbias)
-        else:
-            _logger.info('ignoring bias')
-            bias_corrector = IdNode()
-            
-        with rinput.master_dark.open() as mdark_hdul:
-            _logger.info('loading dark')
-            mdark = mdark_hdul[0].data
-            dark_corrector = DarkCorrector(mdark)
-
-        flow = SerialFlow([bias_corrector, dark_corrector])
-
-        cdata = []
-        try:
-            for frame in rinput.obresult.frames:
-                hdulist = frame.open()
-                hdulist = flow(hdulist)
-                cdata.append(hdulist)
-
-            _logger.info('stacking %d images using median', len(cdata))
-            data = median([d['primary'].data for d in cdata], dtype='float32')
-            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
-
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
-            
+        flow = init_filters_bd(rinput)
+        hdu = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdu.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
@@ -341,14 +256,17 @@ class TestDarkCorrectRecipe(BaseRecipe):
         
         return result
 
+
 class TestFlatCorrectRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
     master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
 
+
 class TestFlatCorrectRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
+
 
 @define_requirements(TestFlatCorrectRecipeRequirements)
 @define_result(TestFlatCorrectRecipeResult)
@@ -361,69 +279,9 @@ class TestFlatCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple flat reduction')
 
-        meta = gather_info(rinput)
-        iinfo = meta['obresult']
-        
-        if iinfo:
-            mode = iinfo[0]['readmode']
-            if mode.lower() in EMIR_BIAS_MODES:
-                use_bias = True
-                _logger.info('readmode is %s, bias required', mode)
-                
-            else:
-                use_bias = False
-                _logger.info('readmode is %s, no bias required', mode)
-        
-        bias_info = meta['master_bias']
-        dark_info = meta['master_dark']
-        flat_info = meta['master_flat']
-
-
-        print('images info:', iinfo)
-        if use_bias:
-            print('bias info:', bias_info)
-        print('dark info:', dark_info)
-        print('flat info:', flat_info)
-
-        # Loading calibrations
-        if use_bias:
-            with rinput.master_bias.open() as hdul:
-                _logger.info('loading bias')
-                mbias = hdul[0].data
-                bias_corrector = BiasCorrector(mbias)
-        else:
-            _logger.info('ignoring bias')
-            bias_corrector = IdNode()
-            
-        with rinput.master_dark.open() as mdark_hdul:
-            _logger.info('loading dark')
-            mdark = mdark_hdul[0].data
-            dark_corrector = DarkCorrector(mdark)
-
-        with rinput.master_flat.open() as mflat_hdul:
-            _logger.info('loading intensity flat')
-            mflat = mflat_hdul[0].data
-            flat_corrector = FlatFieldCorrector(mflat)
-
-        flow = SerialFlow([bias_corrector, dark_corrector, flat_corrector])
-
-        cdata = []
-        try:
-            for frame in rinput.obresult.frames:
-                hdulist = frame.open()
-                final = flow(hdulist)
-                cdata.append(final)
-
-            _logger.info('stacking %d images using median', len(cdata))
-            data = median([d['primary'].data for d in cdata], dtype='float32')
-            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
-
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
-            
+        flow = init_filters_bdf(rinput)
+        hdu = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdu.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
@@ -439,8 +297,10 @@ class TestSkyCorrectRecipeRequirements(RecipeRequirements):
     master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
     master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
 
+
 class TestSkyCorrectRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
+
 
 @define_requirements(TestSkyCorrectRecipeRequirements)
 @define_result(TestSkyCorrectRecipeResult)
@@ -453,82 +313,10 @@ class TestSkyCorrectRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting simple sky reduction')
 
-        meta = gather_info(rinput)
-        iinfo = meta['obresult']
-        
-        if iinfo:
-            mode = iinfo[0]['readmode']
-            if mode.lower() in EMIR_BIAS_MODES:
-                use_bias = True
-                _logger.info('readmode is %s, bias required', mode)
-                
-            else:
-                use_bias = False
-                _logger.info('readmode is %s, no bias required', mode)
-                
-        
-        
-        dark_info = meta['master_dark']
-        flat_info = meta['master_flat']
-        sky_info = meta['master_sky']
+        flow = init_filters_bdfs(rinput)
 
-        print('images info:', iinfo)
-        if use_bias:
-            bias_info = meta['master_bias']
-            print('bias info:', bias_info)
-            
-        print('dark info:', dark_info)
-        print('flat info:', flat_info)
-        print('sky info:', sky_info)
-
-        # Loading calibrations
-        if use_bias:
-            with rinput.master_bias.open() as hdul:
-                _logger.info('loading bias')
-                mbias = hdul[0].data
-                bias_corrector = BiasCorrector(mbias)
-        else:
-            _logger.info('ignoring bias')
-            bias_corrector = IdNode()
-            
-        with rinput.master_dark.open() as mdark_hdul:
-            _logger.info('loading dark')
-            mdark = mdark_hdul[0].data
-            dark_corrector = DarkCorrector(mdark)
-
-        with rinput.master_flat.open() as mflat_hdul:
-            _logger.info('loading intensity flat')
-            mflat = mflat_hdul[0].data
-            flat_corrector = FlatFieldCorrector(mflat)
-
-        with rinput.master_sky.open() as msky_hdul:
-            _logger.info('loading sky')
-            msky = msky_hdul[0].data
-            sky_corrector = SkyCorrector(msky)
-
-        flow = SerialFlow([bias_corrector, dark_corrector, 
-                flat_corrector, sky_corrector])
-
-        cdata = []
-        try:
-            for frame in rinput.obresult.frames:
-                hdulist = frame.open()
-                final = flow(hdulist)
-                cdata.append(final)
-
-            _logger.info('stacking %d images using median', len(cdata))
-            data = median([d['primary'].data for d in cdata], dtype='float32')
-            _logger.debug('create result Primary HDU')
-            hdu = fits.PrimaryHDU(data[0], header=cdata[0]['primary'].header)
-
-        finally:
-            _logger.debug('closing images')
-            for hdulist in cdata:
-                hdulist.close()
-            
-        _logger.debug('update result header')
+        hdu = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdu.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         # Update SEC to 0

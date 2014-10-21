@@ -54,7 +54,7 @@ from emir.dataproducts import DataFrameType, MasterIntensityFlat
 # from .procedures import AnnulusBackgroundEstimator
 # from .procedures import img_box2d
 from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs 
+from .flows import init_filters_bdfs
 
 _logger = logging.getLogger('numina.recipes.emir')
 

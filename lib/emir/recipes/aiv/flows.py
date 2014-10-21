@@ -112,7 +112,147 @@ def init_filters_bdfs(rinput):
     return flow
 
 
-def basic_processing_with_combination(rinput, flow):
+def init_filters_bdf(rinput):
+    # with bias, dark, flat and sky
+    meta = gather_info(rinput)
+    iinfo = meta['obresult']
+
+    if iinfo:
+        mode = iinfo[0]['readmode']
+        if mode.lower() in EMIR_BIAS_MODES:
+            use_bias = True
+            _logger.info('readmode is %s, bias required', mode)
+        else:
+            use_bias = False
+            _logger.info('readmode is %s, bias not required', mode)
+
+    dark_info = meta['master_dark']
+    flat_info = meta['master_flat']
+
+    print('images info:', iinfo)
+    if use_bias:
+        bias_info = meta['master_bias']
+        print('bias info:', bias_info)
+        _logger.debug('bias info: %s', bias_info)
+
+    print('dark info:', dark_info)
+    _logger.debug('dark info: %s', dark_info)
+    print('flat info:', flat_info)
+    _logger.debug('flat info: %s', flat_info)
+
+    # Loading calibrations
+    if use_bias:
+        with rinput.master_bias.open() as hdul:
+            _logger.info('loading bias')
+            mbias = hdul[0].data
+            bias_corrector = BiasCorrector(mbias)
+    else:
+        _logger.info('ignoring bias')
+        bias_corrector = IdNode()
+
+    with rinput.master_dark.open() as mdark_hdul:
+        _logger.info('loading dark')
+        mdark = mdark_hdul[0].data
+        dark_corrector = DarkCorrector(mdark)
+
+    with rinput.master_flat.open() as mflat_hdul:
+        _logger.info('loading intensity flat')
+        mflat = mflat_hdul[0].data
+        flat_corrector = FlatFieldCorrector(mflat)
+
+    flow = SerialFlow([bias_corrector,
+                       dark_corrector,
+                       flat_corrector
+                       ]
+                      )
+
+    return flow
+
+
+def init_filters_bd(rinput):
+    # with bias, dark, flat and sky
+    meta = gather_info(rinput)
+    iinfo = meta['obresult']
+
+    if iinfo:
+        mode = iinfo[0]['readmode']
+        if mode.lower() in EMIR_BIAS_MODES:
+            use_bias = True
+            _logger.info('readmode is %s, bias required', mode)
+        else:
+            use_bias = False
+            _logger.info('readmode is %s, bias not required', mode)
+
+    dark_info = meta['master_dark']
+
+    print('images info:', iinfo)
+    if use_bias:
+        bias_info = meta['master_bias']
+        print('bias info:', bias_info)
+        _logger.debug('bias info: %s', bias_info)
+
+    print('dark info:', dark_info)
+    _logger.debug('dark info: %s', dark_info)
+
+    # Loading calibrations
+    if use_bias:
+        with rinput.master_bias.open() as hdul:
+            _logger.info('loading bias')
+            mbias = hdul[0].data
+            bias_corrector = BiasCorrector(mbias)
+    else:
+        _logger.info('ignoring bias')
+        bias_corrector = IdNode()
+
+    with rinput.master_dark.open() as mdark_hdul:
+        _logger.info('loading dark')
+        mdark = mdark_hdul[0].data
+        dark_corrector = DarkCorrector(mdark)
+
+    flow = SerialFlow([bias_corrector,
+                       dark_corrector
+                       ]
+                      )
+
+    return flow
+
+
+def init_filters_b(rinput):
+    # with bias, dark, flat and sky
+    meta = gather_info(rinput)
+    iinfo = meta['obresult']
+
+    if iinfo:
+        mode = iinfo[0]['readmode']
+        if mode.lower() in EMIR_BIAS_MODES:
+            use_bias = True
+            _logger.info('readmode is %s, bias required', mode)
+        else:
+            use_bias = False
+            _logger.info('readmode is %s, bias not required', mode)
+
+    print('images info:', iinfo)
+    if use_bias:
+        bias_info = meta['master_bias']
+        print('bias info:', bias_info)
+        _logger.debug('bias info: %s', bias_info)
+
+    # Loading calibrations
+    if use_bias:
+        with rinput.master_bias.open() as hdul:
+            _logger.info('loading bias')
+            mbias = hdul[0].data
+            bias_corrector = BiasCorrector(mbias)
+    else:
+        _logger.info('ignoring bias')
+        bias_corrector = IdNode()
+
+    flow = SerialFlow([bias_corrector])
+
+    return flow
+
+
+def basic_processing_with_combination(rinput, flow, method=combine.mean):
 
     odata = []
     cdata = []
@@ -137,7 +277,7 @@ def basic_processing_with_combination(rinput, flow):
                 odata.append(final)
 
         _logger.info("stacking %d images using 'mean'", len(cdata))
-        data = combine.mean([d[0].data for d in cdata], dtype='float32')
+        data = method([d[0].data for d in cdata], dtype='float32')
         hdu = fits.PrimaryHDU(data[0], header=cdata[0][0].header.copy())
 
     finally:
