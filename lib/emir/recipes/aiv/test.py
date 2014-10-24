@@ -1,18 +1,18 @@
 #
 # Copyright 2013-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of PyEmir
-# 
+#
 # PyEmir is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # PyEmir is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -31,6 +31,7 @@ from numina.core.dataframe import DataFrame
 
 from . import SimpleBiasRecipe
 
+
 class MMTestCase(unittest.TestCase):
 
     def test1(self):
@@ -39,7 +40,7 @@ class MMTestCase(unittest.TestCase):
         somefits = []
         nimg = 10
         for i in range(nimg):
-            hdu = fits.PrimaryHDU(data=np.zeros((10,10), dtype='int16'))
+            hdu = fits.PrimaryHDU(data=np.zeros((10, 10), dtype='int16'))
             hdul = fits.HDUList([hdu])
             somefits.append(hdul)
 
@@ -54,13 +55,13 @@ class MMTestCase(unittest.TestCase):
         result = recipe(reqs)
 
         self.verify_result(result)
-        
+
     def verify_result(self, result):
 
         self.assertIsInstance(result, SimpleBiasRecipe.RecipeResult)
         self.assertTrue(hasattr(result, "biasframe"))
         self.assertIsInstance(result.biasframe, DataFrame)
-        
+
         frame = result.biasframe.frame
 
         self.assertIsInstance(frame, fits.HDUList)
@@ -78,7 +79,7 @@ class MMTestCase(unittest.TestCase):
         somefits = []
         nimg = 10
         for i in range(nimg):
-            hdu = fits.PrimaryHDU(data=np.zeros((10,10), dtype='int16'))
+            hdu = fits.PrimaryHDU(data=np.zeros((10, 10), dtype='int16'))
             hdul = fits.HDUList([hdu])
             fd, filename = mkstemp()
             hdul.writeto(filename, clobber=True)
@@ -96,6 +97,5 @@ class MMTestCase(unittest.TestCase):
 
         for fname in somefits:
             os.remove(fname)
-        
+
         self.verify_result(result)
-        

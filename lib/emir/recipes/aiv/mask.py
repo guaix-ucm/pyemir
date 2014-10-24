@@ -30,20 +30,21 @@ import scipy.optimize as opz
 from astropy.modeling import models, fitting
 from astropy.io import fits
 import photutils
+from photutils import aperture_circular
 
 from numina.array.recenter import img_box, centering_centroid
-
 from numina.core import BaseRecipe, RecipeRequirements, RecipeError
 from numina.core import Requirement, Product, DataProductRequirement, Parameter
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 
 from emir.core import RecipeResult
-from emir.dataproducts import MasterBias, MasterDark
 from emir.dataproducts import DataFrameType, MasterIntensityFlat
 from emir.dataproducts import CoordinateList2DType
 from emir.dataproducts import ArrayType
-from photutils import aperture_circular
+from emir.requirements import MasterBiasRequirement
+from emir.requirements import MasterDarkRequirement
+from emir.requirements import MasterIntensityFlatFieldRequirement
 
 from .procedures import compute_fwhm_spline2d_fit
 from .procedures import compute_fwhm_enclosed_direct
@@ -145,7 +146,7 @@ def gauss_model(data, center_r):
 
     # background
     background = raster.min()
-    
+
     b_raster = raster - background
 
     new_c = center_r[0] - sl[0].start, center_r[1] - sl[1].start
@@ -221,7 +222,7 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
                 _logger.exception("unable to obtain FWHM, %s", error)
         else:
             _logger.info('skipping')
-         
+
     # Photometry in coordinates
     # x=centers_r[:,1]
     # y=centers_r[:,0]
@@ -239,8 +240,8 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
 
 def pinhole_char2(
                   data, ncenters,
-                  recenter=True, 
-                  recenter_half_box=5, 
+                  recenter=True,
+                  recenter_half_box=5,
                   recenter_nloop=10,
                   recenter_maxdist=10.0,
                   back_buff=3,
@@ -454,12 +455,18 @@ def pinhole_char2(
 
 class TestPinholeRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
-    master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
-    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
-    master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
-    pinhole_nominal_positions = Requirement(CoordinateList2DType, 'Nominal positions of the pinholes')
-    shift_coordinates = Parameter(True, 'Use header information to shift the pinhole positions from (0,0) to X_DTU, Y_DTU')
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    master_sky = DataProductRequirement(MasterIntensityFlat,
+                                        'Master Sky calibration'
+                                        )
+    pinhole_nominal_positions = Requirement(CoordinateList2DType,
+                                            'Nominal positions of the pinholes'
+                                            )
+    shift_coordinates = Parameter(True, 'Use header information to'
+                                  ' shift the pinhole positions from (0,0) '
+                                  'to X_DTU, Y_DTU')
     box_half_size = Parameter(4, 'Half of the computation box size in pixels')
     recenter = Parameter(True, 'Recenter the pinhole coordinates')
     max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')

@@ -260,7 +260,9 @@ def init_filters_b(rinput):
     return flow
 
 
-def basic_processing_with_combination(rinput, flow, method=combine.mean, errors=True):
+def basic_processing_with_combination(rinput, flow,
+                                      method=combine.mean,
+                                      errors=True):
 
     odata = []
     cdata = []

@@ -28,7 +28,6 @@ import logging
 # import scipy.interpolate as itpl
 # import scipy.optimize as opz
 # from astropy.modeling import models, fitting
-from astropy.io import fits
 # import photutils
 #
 # from numina.array.recenter import img_box, centering_centroid
@@ -39,8 +38,10 @@ from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 #
 from emir.core import RecipeResult
-from emir.dataproducts import MasterBias, MasterDark
 from emir.dataproducts import DataFrameType, MasterIntensityFlat
+from emir.requirements import MasterBiasRequirement
+from emir.requirements import MasterDarkRequirement
+from emir.requirements import MasterIntensityFlatFieldRequirement
 # from emir.dataproducts import CoordinateList2DType
 # from emir.dataproducts import ArrayType
 
@@ -65,25 +66,15 @@ GAUSS_FWHM_FACTOR = 2.354800
 
 class TestSlitDetectionRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
-    master_dark = DataProductRequirement(MasterDark, 'Master dark calibration')
-    master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
-    master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
-#    pinhole_nominal_positions = Requirement(CoordinateList2DType, 'Nominal positions of the pinholes')
-#    shift_coordinates = Parameter(True, 'Use header information to shift the pinhole positions from (0,0) to X_DTU, Y_DTU')
-#    box_half_size = Parameter(4, 'Half of the computation box size in pixels')
-#    recenter = Parameter(True, 'Recenter the pinhole coordinates')
-#    max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    master_sky = DataProductRequirement(MasterIntensityFlat,
+                                        'Master Sky calibration')
 
 
 class TestSlitDetectionRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
-#    positions = Product(ArrayType)
-#    positions_alt = Product(ArrayType)
-#    DTU = Product(ArrayType)
-#    filter = Product(str)
-#    readmode = Product(str)
-#    IPA = Product(float)
 
 
 @define_requirements(TestSlitDetectionRecipeRequirements)
@@ -99,11 +90,10 @@ class TestSlitDetectionRecipe(BaseRecipe):
     def run(self, rinput):
         _logger.info('starting pinhole processing')
 
-
         flow = init_filters_bdfs(rinput)
-        
+
         hdu = basic_processing_with_combination(rinput, flow=flow)
-        
+
         hdr = hdu.header
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
