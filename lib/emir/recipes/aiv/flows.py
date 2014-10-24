@@ -260,7 +260,7 @@ def init_filters_b(rinput):
     return flow
 
 
-def basic_processing_with_combination(rinput, flow, method=combine.mean):
+def basic_processing_with_combination(rinput, flow, method=combine.mean, errors=True):
 
     odata = []
     cdata = []
@@ -287,14 +287,18 @@ def basic_processing_with_combination(rinput, flow, method=combine.mean):
         _logger.info("stacking %d images using 'mean'", len(cdata))
         data = method([d[0].data for d in cdata], dtype='float32')
         hdu = fits.PrimaryHDU(data[0], header=cdata[0][0].header.copy())
-
+        hdu.header['NUMXVER'] = (__version__, 'Numina package version')
+        if errors:
+            varhdu = fits.ImageHDU(data[1], name='VARIANCE')
+            num = fits.ImageHDU(data[2], name='MAP')
+            result = fits.HDUList([hdu, varhdu, num])
+        else:
+            result = fits.HDUList([hdu])
     finally:
         _logger.debug('closing images')
         for hdulist in odata:
             hdulist.close()
 
     _logger.debug('update result header')
-    hdr = hdu.header
-    hdr['NUMXVER'] = (__version__, 'Numina package version')
 
-    return hdu
+    return result
