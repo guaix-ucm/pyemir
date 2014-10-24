@@ -32,9 +32,9 @@ from numina.core.requirements import ObservationResultRequirement
 from emir.core import RecipeResult
 from emir.dataproducts import SourcesCatalog
 
-from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
-from emir.requirements import MasterDark_Requirement
-from emir.requirements import MasterIntensityFlatField_Requirement
+from emir.requirements import MasterBadPixelMaskRequirement, MasterBiasRequirement
+from emir.requirements import MasterDarkRequirement
+from emir.requirements import MasterIntensityFlatFieldRequirement
 from emir.requirements import Extinction_Requirement
 from emir.requirements import Offsets_Requirement
 from emir.requirements import Catalog_Requirement
@@ -45,10 +45,10 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 class StareImageRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMask_Requirement()
-    master_bias = MasterBias_Requirement()
-    master_dark = MasterDark_Requirement()
-    master_flat = MasterIntensityFlatField_Requirement()    
+    master_bpm = MasterBadPixelMaskRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()    
     extinction = Extinction_Requirement() 
     sources = Catalog_Requirement()
     offsets = Offsets_Requirement()
