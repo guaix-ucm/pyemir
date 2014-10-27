@@ -31,7 +31,8 @@ from numina.core import RecipeError,RecipeRequirements
 from numina.core import Product, define_requirements, define_result
 
 from emir.core import RecipeResult
-from emir.instrument.detector import CHANNELS, QUADRANTS
+from emir.instrument.detector import QUADRANTS
+from emir.instrument.channels import CHANNELS
 from emir.dataproducts import MasterGainMap, MasterRONMap
 
 _logger = logging.getLogger('numina.recipes.emir')
