@@ -292,7 +292,8 @@ class SourcesCatalog(DataProductType):
 
 
 class LinesCatalog(DataProductType):
-    pass
+    def __init__(self):
+        super(LinesCatalog, self).__init__(ptype=list)
 
 
 class CentroidsTableType(DataProductType):
