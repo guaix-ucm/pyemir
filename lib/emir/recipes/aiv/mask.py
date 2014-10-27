@@ -94,8 +94,8 @@ def compute_fwhm(img, center):
         sol_r = opz.brentq(fun, center, u_r)
 
         # Min in the left
-        rV = V[cp-1::-1]
-        rU = U[cp-1::-1]
+        rV = V[cp - 1::-1]
+        rU = U[cp - 1::-1]
         l_idx = rV.argmin()
         u_l = rU[l_idx]
         if rV[l_idx] > 0.5 * peak:
@@ -130,7 +130,8 @@ def compute_fwhm_global(data, center, box):
     newc = center[0] - sl[0].start, center[1] - sl[1].start
     try:
         res = compute_fwhm(braster, newc)
-        return res[1]+sl[1].start, res[0]+sl[0].start, res[2], res[3], res[4]
+        return (res[1] + sl[1].start, res[0] + sl[0].start,
+                res[2], res[3], res[4])
     except ValueError as error:
         _logger.warning("%s", error)
         return center[1], center[0], -99.0, -99.0, -99.0
@@ -153,11 +154,13 @@ def gauss_model(data, center_r):
 
     yi, xi = numpy.indices(b_raster.shape)
 
-    g = models.Gaussian2D(amplitude=b_raster.max(), x_mean=new_c[1], y_mean=new_c[0], x_stddev=1.0, y_stddev=1.0)
+    g = models.Gaussian2D(amplitude=b_raster.max(), x_mean=new_c[
+                          1], y_mean=new_c[0], x_stddev=1.0, y_stddev=1.0)
     f1 = fitting.NonLinearLSQFitter()
     t = f1(g, xi, yi, b_raster)
 
-    mm = t.x_mean.value + sl[1].start, t.y_mean.value + sl[0].start, t.amplitude.value, t.x_stddev.value, t.y_stddev.value
+    mm = t.x_mean.value + sl[1].start, t.y_mean.value + \
+        sl[0].start, t.amplitude.value, t.x_stddev.value, t.y_stddev.value
     return mm
 
 
@@ -182,12 +185,13 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
         _logger.info('for pinhole %i', idx)
         _logger.info('center is x=%7.2f y=%7.2f', xi, yi)
         if ((xi > data.shape[1] - 5) or (xi < 5) or
-            (yi > data.shape[0] - 5) or (yi < 5)):
+                (yi > data.shape[0] - 5) or (yi < 5)):
             _logger.info('pinhole too near to the border')
             compute_mask[idx] = False
         else:
             if recenter and maxdist > 0.0:
-                xc, yc, _back, msg = centering_centroid(data, xi, yi, box=ibox, maxdist=maxdist)
+                xc, yc, _back, msg = centering_centroid(
+                    data, xi, yi, box=ibox, maxdist=maxdist)
                 _logger.info('new center is x=%7.2f y=%7.2f', xc, yc)
                 # Log in X,Y format
                 _logger.debug('recenter message: %s', msg)
@@ -231,7 +235,8 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     apertures = [2.0, 4.0]
     _logger.info('compute photometry with aperture radii %s', apertures)
     # FIXME: aperture_circular returns values along rows, we transpose it
-    mm0[:, 8:10] = photutils.aperture_circular(data, centers_r[:, 1], centers_r[:, 0], apertures).T
+    mm0[:, 8:10] = photutils.aperture_circular(
+        data, centers_r[:, 1], centers_r[:, 0], apertures).T
     _logger.info('done')
     # Convert coordinates to FITS
     mm0[:, 0:2] += 1
@@ -239,16 +244,16 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
 
 
 def pinhole_char2(
-                  data, ncenters,
-                  recenter=True,
-                  recenter_half_box=5,
-                  recenter_nloop=10,
-                  recenter_maxdist=10.0,
-                  back_buff=3,
-                  back_width=5,
-                  phot_niter=10,
-                  phot_rad=8
-                  ):
+    data, ncenters,
+    recenter=True,
+    recenter_half_box=5,
+    recenter_nloop=10,
+    recenter_maxdist=10.0,
+    back_buff=3,
+    back_width=5,
+    phot_niter=10,
+    phot_rad=8
+):
 
     sigma0 = 1.0
     rad = 3 * sigma0 * GAUSS_FWHM_FACTOR
@@ -272,7 +277,8 @@ def pinhole_char2(
         # A failsafe
         _logger.info('for pinhole %i', idx)
         _logger.info('center is x=%7.2f y=%7.2f', xi, yi)
-        if ((xi > data.shape[1] - 5) or (xi < 5) or (yi > data.shape[0] - 5) or (yi < 5)):
+        if (xi > data.shape[1] - 5 or xi < 5 or
+                yi > data.shape[0] - 5 or yi < 5):
             _logger.info('pinhole too near to the border')
             compute_mask[idx] = False
         else:
@@ -281,7 +287,7 @@ def pinhole_char2(
                     data, xi, yi,
                     box=recenter_half_box,
                     maxdist=recenter_maxdist, nloop=recenter_nloop
-                    )
+                )
                 _logger.info('new center is x=%7.2f y=%7.2f', xc, yc)
                 # Log in X,Y format
                 _logger.debug('recenter message: %s', msg)
@@ -328,7 +334,8 @@ def pinhole_char2(
             # FIXME, perhaps we dont need to crop the image
             try:
                 bck = bckestim(raster_sky, xx0, yy0)
-                _logger.debug('Iter %d, background %f in annulus r1=%5.2f r2=%5.2f',
+                _logger.debug('Iter %d, background %f in '
+                              'annulus r1=%5.2f r2=%5.2f',
                               i, bck, rs1, rs2)
             except StandardError as error:
                 _logger.warning('Error in background estimation %s', error)
@@ -347,7 +354,7 @@ def pinhole_char2(
             _logger.debug('Iter %d, radial fit', i)
 
             # Photometry
-            D = numpy.sqrt((X-x0)**2 + (Y-y0)**2)
+            D = numpy.sqrt((X - x0) ** 2 + (Y - y0) ** 2)
             phot_mask = D < fit_rad
             r1 = D[phot_mask]
             part_s = part - bck
@@ -356,7 +363,7 @@ def pinhole_char2(
             model = models.Gaussian1D(amplitude=f1.max(), mean=0, stddev=1.0)
             model.mean.fixed = True  # Mean is always 0.0
 
-            g1d_f = fitter(model, r1, f1, weights=(r1+1e-12)**-1)
+            g1d_f = fitter(model, r1, f1, weights=(r1 + 1e-12) ** -1)
 
             rpeak = g1d_f.amplitude.value
             # sometimes the fit is negative
@@ -366,7 +373,7 @@ def pinhole_char2(
 
             rad = 2.5 * rfwhm
             _logger.debug('Iter %d, new rad is %f', i, rad)
-            if abs(rad-irad) < 1e-3:
+            if abs(rad - irad) < 1e-3:
                 # reached convergence
                 _logger.debug('Convergence in iter %d', i)
                 break
@@ -376,45 +383,47 @@ def pinhole_char2(
             _logger.debug('no convergence in photometric radius determination')
 
         _logger.info('background %6.2f, r1 %7.2f r2 %7.2f', bck, rs1, rs2)
-        mm0[idx, 4:4+3] = bck, rs1, rs2
+        mm0[idx, 4:4 + 3] = bck, rs1, rs2
         aper_rad = rad
         flux_aper = aperture_circular(part_s, [xx0], [yy0], aper_rad)
         _logger.info('aper rad %f, aper flux %f', aper_rad, flux_aper)
-        mm0[idx, 7:7+2] = aper_rad, flux_aper
+        mm0[idx, 7:7 + 2] = aper_rad, flux_aper
 
         _logger.info('Radial fit, peak: %f fwhm %f', rpeak, rfwhm)
 
         try:
-            dpeak, dfwhm, smsg = compute_fwhm_enclosed_direct(part_s, xx0, yy0, maxrad=fit_rad)
+            dpeak, dfwhm, smsg = compute_fwhm_enclosed_direct(
+                part_s, xx0, yy0, maxrad=fit_rad)
             _logger.info('Enclosed direct, peak: %f fwhm %f', dpeak, dfwhm)
         except StandardError as error:
             _logger.warning('Error in compute_fwhm_enclosed_direct %s', error)
             dpeak, dfwhm = -99.0, -99.0
 
         try:
-            eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(part_s, xx0, yy0, maxrad=fit_rad)
+            eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(
+                part_s, xx0, yy0, maxrad=fit_rad)
             _logger.info('Enclosed fit, peak: %f fwhm %f', epeak, efwhm)
         except StandardError as error:
             _logger.warning('Error in compute_fwhm_enclosed_grow %s', error)
             eamp, efwhm, epeak, emsg = [-99.0] * 4
 
-        mm0[idx, 9:9+6] = epeak, efwhm, dpeak, dfwhm, rpeak, rfwhm
+        mm0[idx, 9:9 + 6] = epeak, efwhm, dpeak, dfwhm, rpeak, rfwhm
 
         try:
             res_simple = compute_fwhm_simple(part_s, xx0, yy0)
             _logger.info('Simple, peak: %f fwhm x %f fwhm %f', *res_simple)
-            mm0[idx, 15:15+3] = res_simple
+            mm0[idx, 15:15 + 3] = res_simple
         except StandardError as error:
             _logger.warning('Error in compute_fwhm_simple %s', error)
-            mm0[idx, 15:15+3] = -99.0
+            mm0[idx, 15:15 + 3] = -99.0
 
         try:
             res_spline = compute_fwhm_spline2d_fit(part_s, xx0, yy0)
             _logger.info('Spline, peak: %f fwhm x %f fwhm %f', *res_spline)
-            mm0[idx, 18:18+3] = res_spline
+            mm0[idx, 18:18 + 3] = res_spline
         except StandardError as error:
             _logger.warning('Error in compute_fwhm_spline2d_fit %s', error)
-            mm0[idx, 18:18+3] = -99.0
+            mm0[idx, 18:18 + 3] = -99.0
 
         # Bidimensional fit
         # Fit in a smaller box
@@ -439,13 +448,13 @@ def pinhole_char2(
                        )
 
         _logger.info('Gauss2d, %s', res_gauss2d)
-        mm0[idx, 21:21+6] = res_gauss2d
+        mm0[idx, 21:21 + 6] = res_gauss2d
         # Moments
         moments_half_box = fit2d_half_box
         res_moments = moments(data, x0, y0, moments_half_box)
         _logger.info('Mxx %f Myy %f Mxy %f e %f pa %f', *res_moments)
 
-        mm0[idx, 27:27+5] = res_moments
+        mm0[idx, 27:27 + 5] = res_moments
 
     # FITS coordinates
     mm0[:, :4] += 1
@@ -490,7 +499,7 @@ class TestPinholeRecipe(BaseRecipe):
         super(TestPinholeRecipe, self).__init__(
             author=_s_author,
             version="0.1.0"
-            )
+        )
 
     def run(self, rinput):
         _logger.info('starting processing for slit detection')
@@ -539,7 +548,7 @@ class TestPinholeRecipe(BaseRecipe):
             box=rinput.box_half_size,
             recenter=rinput.recenter,
             maxdist=rinput.max_recenter_radius
-            )
+        )
 
         _logger.info('alternate pinhole characterization')
         positions_alt = pinhole_char2(
@@ -547,7 +556,7 @@ class TestPinholeRecipe(BaseRecipe):
             recenter=rinput.recenter,
             recenter_half_box=rinput.box_half_size,
             recenter_maxdist=rinput.max_recenter_radius
-            )
+        )
 
         hdulist = fits.HDUList([hdu])
 

@@ -173,11 +173,13 @@ class DataCube(DataFrameType):
 
 
 class TelescopeFocus(DataProductType):
-    pass
+    def __init__(self, default=None):
+        super(TelescopeFocus, self).__init__(ptype=float)
 
 
 class DTUFocus(DataProductType):
-    pass
+    def __init__(self, default=None):
+        super(DTUFocus, self).__init__(ptype=float)
 
 
 class DTU_XY_Calibration(DataFrameType):
@@ -242,7 +244,8 @@ class MasterRONMap(DataProductType):
 
 
 class TelescopeOffset(DataProductType):
-    pass
+    def __init__(self, default=None):
+        super(TelescopeOffset, self).__init__(ptype=float)
 
 
 class ArrayType(DataProductType):
@@ -283,7 +286,8 @@ class CoordinateList2DType(CoordinateListNType):
 
 
 class MSMPositions(DataProductType):
-    pass
+    def __init__(self):
+        super(MSMPositions, self).__init__(ptype=list)
 
 
 class SourcesCatalog(DataProductType):
