@@ -1,21 +1,21 @@
 
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of PyEmir
-# 
+#
 # PyEmir is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # PyEmir is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 ''' Recipes for engineering modes.
 
@@ -23,8 +23,9 @@
 
 import logging
 
-from numina.core import BaseRecipe, Parameter, define_result, define_requirements
-from numina.core import DataFrameType, Product, RecipeRequirements 
+from numina.core import (BaseRecipe, Parameter, define_result,
+                         define_requirements)
+from numina.core import DataFrameType, Product, RecipeRequirements
 
 from emir.core import RecipeResult
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
@@ -33,8 +34,8 @@ from emir.dataproducts import MasterIntensityFlat
 
 from emir.dataproducts import DTU_XY_Calibration, DTU_Z_Calibration
 from emir.dataproducts import CSU2DetectorCalibration, DTUFlexureCalibration
-from emir.dataproducts import (PointingOriginCalibration, 
-                             SpectroPhotometricCalibration)
+from emir.dataproducts import (PointingOriginCalibration,
+                               SpectroPhotometricCalibration)
 from emir.dataproducts import PhotometricCalibration, WavelengthCalibration
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -42,16 +43,20 @@ _logger = logging.getLogger('numina.recipes.emir')
 from .detectorgain import GainRecipe1
 from .cosmetics import CosmeticsRecipe
 
+
 class DTU_XY_CalibrationRecipeRequirements(RecipeRequirements):
     slit_pattern = Parameter([], 'Slit pattern'),
     dtu_range = Parameter([], 'DTU range: begin, end and step')
 
+
 class DTU_XY_CalibrationRecipeResult(RecipeResult):
     calibration = Product(DTU_XY_Calibration)
+
 
 @define_requirements(DTU_XY_CalibrationRecipeRequirements)
 @define_result(DTU_XY_CalibrationRecipeResult)
 class DTU_XY_CalibrationRecipe(BaseRecipe):
+
     '''
 
     **Observing modes:**
@@ -68,15 +73,19 @@ class DTU_XY_CalibrationRecipe(BaseRecipe):
     def run(self, obresult, reqs):
         return DTU_XY_CalibrationRecipeResult(calibration=DTU_XY_Calibration())
 
+
 class DTU_Z_CalibrationRecipeRequirements(RecipeRequirements):
     dtu_range = Parameter([], 'DTU range: begin, end and step')
+
 
 class DTU_Z_CalibrationRecipeResult(RecipeResult):
     calibration = Product(DTU_Z_Calibration)
 
+
 @define_requirements(DTU_Z_CalibrationRecipeRequirements)
-@define_result(DTU_Z_CalibrationRecipeResult) 
+@define_result(DTU_Z_CalibrationRecipeResult)
 class DTU_Z_CalibrationRecipe(BaseRecipe):
+
     '''
 
     **Observing modes:**
@@ -93,15 +102,19 @@ class DTU_Z_CalibrationRecipe(BaseRecipe):
     def run(self, obresult, reqs):
         return DTU_Z_CalibrationRecipeResult(calibration=DTU_Z_Calibration())
 
+
 class DTU_FlexureRecipeRequirements(RecipeRequirements):
     pass
+
 
 class DTU_FlexureRecipeResult(RecipeResult):
     calibration = Product(DTUFlexureCalibration)
 
+
 @define_requirements(DTU_FlexureRecipeRequirements)
 @define_result(DTU_FlexureRecipeResult)
 class DTUFlexureRecipe(BaseRecipe):
+
     '''
 
     **Observing modes:**
@@ -118,15 +131,19 @@ class DTUFlexureRecipe(BaseRecipe):
     def run(self, obresult, reqs):
         return DTU_FlexureRecipeResult(calibration=DTUFlexureCalibration())
 
+
 class CSU2DetectorRecipeRequirements(RecipeRequirements):
     dtu_range = Parameter([], 'DTU range: begin, end and step')
+
 
 class CSU2DetectorRecipeResult(RecipeResult):
     calibration = Product(DTU_XY_Calibration)
 
+
 @define_requirements(CSU2DetectorRecipeRequirements)
 @define_result(CSU2DetectorRecipeResult)
 class CSU2DetectorRecipe(BaseRecipe):
+
     '''
 
     **Observing modes:**
@@ -143,15 +160,19 @@ class CSU2DetectorRecipe(BaseRecipe):
     def run(self, obresult, reqs):
         return CSU2DetectorRecipeResult(calibration=DTU_XY_Calibration())
 
+
 class FocalPlaneCalibrationRecipeRequirements(RecipeRequirements):
     pass
+
 
 class FocalPlaneCalibrationRecipeResult(RecipeResult):
     calibration = Product(PointingOriginCalibration)
 
+
 @define_requirements(FocalPlaneCalibrationRecipeRequirements)
 @define_result(FocalPlaneCalibrationRecipeResult)
 class FocalPlaneCalibrationRecipe(BaseRecipe):
+
     '''
 
     **Observing modes:**
@@ -166,17 +187,21 @@ class FocalPlaneCalibrationRecipe(BaseRecipe):
         )
 
     def run(self, obresult, reqs):
-        return FocalPlaneCalibrationRecipeResult(calibration=PointingOriginCalibration())
+        return self.create_result(calibration=PointingOriginCalibration())
+
 
 class SpectralCharacterizationRecipeRequirements(RecipeRequirements):
     pass
 
+
 class SpectralCharacterizationRecipeResult(RecipeResult):
     calibration = Product(WavelengthCalibration)
+
 
 @define_requirements(SpectralCharacterizationRecipeRequirements)
 @define_result(SpectralCharacterizationRecipeResult)
 class SpectralCharacterizationRecipe(BaseRecipe):
+
     '''
 
     **Observing modes:**
@@ -191,17 +216,21 @@ class SpectralCharacterizationRecipe(BaseRecipe):
         )
 
     def run(self, obresult, reqs):
-        return SpectralCharacterizationRecipeResult(calibration=WavelengthCalibration())
+        return self.create_result(calibration=WavelengthCalibration())
+
 
 class RotationCenterRecipeRequirements(RecipeRequirements):
     pass
 
+
 class RotationCenterRecipeResult(RecipeResult):
     calibration = Product(PointingOriginCalibration)
+
 
 @define_requirements(RotationCenterRecipeRequirements)
 @define_result(RotationCenterRecipeResult)
 class RotationCenterRecipe(BaseRecipe):
+
     '''
 
     **Observing modes:**
@@ -216,17 +245,21 @@ class RotationCenterRecipe(BaseRecipe):
         )
 
     def run(self, obresult, reqs):
-        return RotationCenterRecipeResult(calibration=PointingOriginCalibration())
+        return self.create_result(calibration=PointingOriginCalibration())
+
 
 class AstrometricCalibrationRecipeRequirements(RecipeRequirements):
     pass
 
+
 class AstrometricCalibrationRecipeResult(RecipeResult):
     calibration = Product(DataFrameType)
+
 
 @define_requirements(AstrometricCalibrationRecipeRequirements)
 @define_result(AstrometricCalibrationRecipeResult)
 class AstrometricCalibrationRecipe(BaseRecipe):
+
     '''
 
     **Observing modes:**
@@ -243,15 +276,19 @@ class AstrometricCalibrationRecipe(BaseRecipe):
     def run(self, obresult, reqs):
         return AstrometricCalibrationRecipeResult(calibration=None)
 
+
 class PhotometricCalibrationRecipeRequirements(RecipeRequirements):
     phot = Parameter([], 'Information about standard stars')
-    
+
+
 class PhotometricCalibrationRecipeResult(RecipeResult):
     calibration = Product(PhotometricCalibration)
-    
+
+
 @define_requirements(PhotometricCalibrationRecipeRequirements)
 @define_result(PhotometricCalibrationRecipeResult)
 class PhotometricCalibrationRecipe(BaseRecipe):
+
     '''
 
     **Observing modes:**
@@ -266,17 +303,21 @@ class PhotometricCalibrationRecipe(BaseRecipe):
         )
 
     def run(self, obresult, reqs):
-        return AstrometricCalibrationRecipeResult(calibration=PhotometricCalibration())
+        return self.create_result(calibration=PhotometricCalibration())
+
 
 class SpectroPhotometricCalibrationRecipeRequirements(RecipeRequirements):
     sphot = Parameter([], 'Information about standard stars')
-    
+
+
 class SpectroPhotometricCalibrationRecipeResult(RecipeResult):
     calibration = Product(SpectroPhotometricCalibration)
-    
+
+
 @define_requirements(SpectroPhotometricCalibrationRecipeRequirements)
 @define_result(SpectroPhotometricCalibrationRecipeResult)
 class SpectroPhotometricCalibrationRecipe(BaseRecipe):
+
     '''
 
     **Observing modes:**
@@ -291,4 +332,4 @@ class SpectroPhotometricCalibrationRecipe(BaseRecipe):
         )
 
     def run(self, obresult, reqs):
-        return SpectroPhotometricCalibrationRecipeResult(calibration=SpectroPhotometricCalibration())
+        return self.create_result(calibration=SpectroPhotometricCalibration())
