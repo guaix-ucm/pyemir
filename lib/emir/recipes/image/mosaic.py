@@ -1,18 +1,18 @@
 #
 # Copyright 2011-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of PyEmir
-# 
+#
 # PyEmir is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # PyEmir is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -34,18 +34,22 @@ from emir.dataproducts import SourcesCatalog
 
 _logger = logging.getLogger('numina.recipes.emir')
 
+
 class MosaicRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
-    # FIXME: this parameter is optional 
+    # FIXME: this parameter is optional
     sources = Parameter([], 'List of x, y coordinates to measure FWHM')
+
 
 class MosaicRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
     catalog = Product(SourcesCatalog)
 
+
 @define_requirements(MosaicRecipeRequirements)
 @define_result(MosaicRecipeResult)
 class MosaicRecipe(BaseRecipe):
+
     '''
     The effect of recording a series of stare images, with the same
     acquisition parameters, and taken by pointing to a number of
@@ -58,7 +62,7 @@ class MosaicRecipe(BaseRecipe):
     **Observing modes:**
 
         * Mosaic images
-    
+
     '''
 
     def __init__(self):
@@ -68,6 +72,7 @@ class MosaicRecipe(BaseRecipe):
         )
 
     def run(self, ri):
-        return MosaicRecipeResult(frame=DataFrame(None), catalog=SourcesCatalog())
+        return self.create_result(frame=DataFrame(None),
+                                  catalog=SourcesCatalog())
 
 #
