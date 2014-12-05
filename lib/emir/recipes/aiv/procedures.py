@@ -26,12 +26,14 @@ import math
 import numpy as np
 import scipy.interpolate as itpl
 from scipy.interpolate import splrep, splev, sproot
-from astropy.modeling import models, fitting
-from astropy.modeling import *
 from photutils import CircularAnnulus, aperture_circular
+
+from astropy.modeling import (fitting, models)
+
 from numina.array.mode import mode_half_sample
 from numina.array.recenter import (wcs_to_pix_np, img_box, centering_centroid,
                                    wc_to_pix_1d)
+from numina.modeling import EnclosedGaussian
 
 FWHM_G = 2.35482004503
 
@@ -78,33 +80,6 @@ class AnnulusBackgroundEstimator(object):
     def __call__(self, a, x, y):
         bck, _ = comp_back_with_annulus(a, x, y, self.r1, self.r2)
         return bck
-
-
-class EnclosedGaussian(ParametricModel):
-    '''Enclosed gaussian model'''
-    amplitude = Parameter('amplitude')
-    stddev = Parameter('stddev')
-
-    def __init__(self, amplitude, stddev, param_dim=1, **constraints):
-        super(EnclosedGaussian, self).__init__(
-            amplitude=amplitude, stddev=stddev, param_dim=param_dim,
-            **constraints)
-
-    @staticmethod
-    def eval(x, amplitude, stddev):
-        return amplitude * (1 - np.exp(-0.5 * (x / stddev)**2))
-
-    @staticmethod
-    def deriv(x, amplitude, stddev):
-        z = (x / stddev)**2
-        t = np.exp(-0.5 * z)
-        d_amplitude = -t + 1.0
-        d_stddev = -amplitude * t * z / stddev
-        return [d_amplitude, d_stddev]
-
-    @format_input
-    def __call__(self, x):
-        return self.eval(x, *self.param_sets)
 
 
 def compute_fwhm_enclosed(imgs, xc, yc, minrad=0.01, maxrad=15.0):
@@ -183,7 +158,7 @@ def compute_fwhm_enclosed_grow(imgs, xc, yc, minrad=0.01, maxrad=15.0):
 
 def fit_fwhm_enclosed_grow(fmax, rad, flux):
 
-    fitter = fitting.NonLinearLSQFitter()
+    fitter = fitting.LevMarLSQFitter()
     model1 = EnclosedGaussian(amplitude=fmax, stddev=1.0)
     result = fitter(model1, rad, flux)
 
@@ -355,7 +330,7 @@ def rim(data, xinit, yinit,
     m = D < rplot
     r1 = D[m]
 
-    fitter = fitting.NonLinearLSQFitter()
+    fitter = fitting.LevMarLSQFitter()
     model = models.Gaussian1D(amplitude=1.0, mean=0, stddev=1.0)
     model.mean.fixed = True  # Mean is always 0.0
 
