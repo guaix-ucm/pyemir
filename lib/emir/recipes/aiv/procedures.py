@@ -31,15 +31,15 @@ from photutils import CircularAnnulus, aperture_circular
 from astropy.modeling import (fitting, models)
 
 from numina.array.mode import mode_half_sample
-from numina.array.recenter import (wcs_to_pix_np, img_box, centering_centroid,
-                                   wc_to_pix_1d)
+from numina.array.recenter import centering_centroid
+from numina.array.utils import (wcs_to_pix_np, image_box, wc_to_pix_1d)
 from numina.modeling import EnclosedGaussian
 
 FWHM_G = 2.35482004503
 
 
-def img_box2d(x, y, shape, box):
-    return img_box((y, x), shape, box)
+def image_box2d(x, y, shape, box):
+    return image_box((y, x), shape, box)
 
 
 def comp_back_with_annulus(img, xc, yc, rad1, rad2, frac=0.1):
@@ -265,7 +265,7 @@ def extent(sl):
 
 def moments(data, x0, y0, half_box):
 
-    sl1 = img_box2d(x0, y0, data.shape, half_box)
+    sl1 = image_box2d(x0, y0, data.shape, half_box)
 
     part1 = data[sl1]
     norm = part1.sum()
@@ -317,7 +317,7 @@ def rim(data, xinit, yinit,
             )
         print 'C final', x1, y1
 
-    sl = img_box2d(x0, y0, data.shape, plot_half_box)
+    sl = image_box2d(x0, y0, data.shape, plot_half_box)
     part = data[sl]
 
     xx0 = x0 - sl[1].start
@@ -383,7 +383,7 @@ def rim(data, xinit, yinit,
     fit2d_rad = int(math.ceil(0.5 * rad))
 
     fit2d_half_box = (fit2d_rad, fit2d_rad)
-    sl1 = img_box2d(x0, y0, data.shape, fit2d_half_box)
+    sl1 = image_box2d(x0, y0, data.shape, fit2d_half_box)
     part1 = data[sl1]
     Y1, X1 = np.mgrid[sl1]
     g2d = models.Gaussian2D(amplitude=rpeak, x_mean=x0, y_mean=y0,
