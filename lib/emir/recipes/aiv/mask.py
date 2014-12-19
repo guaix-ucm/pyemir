@@ -32,7 +32,8 @@ from astropy.io import fits
 import photutils
 from photutils import aperture_circular
 
-from numina.array.recenter import img_box, centering_centroid
+from numina.array.recenter import centering_centroid
+from numina.array.utils import image_box
 from numina.core import BaseRecipe, RecipeRequirements, RecipeError
 from numina.core import Requirement, Product, DataProductRequirement, Parameter
 from numina.core import define_requirements, define_result
@@ -52,7 +53,7 @@ from .procedures import compute_fwhm_enclosed_grow
 from .procedures import compute_fwhm_simple
 from .procedures import moments
 from .procedures import AnnulusBackgroundEstimator
-from .procedures import img_box2d
+from .procedures import image_box2d
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 
@@ -121,7 +122,7 @@ def compute_fwhm(img, center):
 
 # Background in an annulus, mode is HSM
 def compute_fwhm_global(data, center, box):
-    sl = img_box(center, data.shape, box)
+    sl = image_box(center, data.shape, box)
     raster = data[sl]
 
     background = raster.min()
@@ -142,7 +143,7 @@ def compute_fwhm_global(data, center, box):
 
 # returns x,y
 def gauss_model(data, center_r):
-    sl = img_box(center_r, data.shape, box=(4, 4))
+    sl = image_box(center_r, data.shape, box=(4, 4))
     raster = data[sl]
 
     # background
@@ -326,7 +327,7 @@ def pinhole_char2(
             bckestim = AnnulusBackgroundEstimator(r1=rs1, r2=rs2)
 
             # Crop the image to obtain the background
-            sl_sky = img_box2d(x0, y0, data.shape, (rs2, rs2))
+            sl_sky = image_box2d(x0, y0, data.shape, (rs2, rs2))
             raster_sky = data[sl_sky]
             # Logical coordinates
             xx0 = x0 - sl_sky[1].start
@@ -344,7 +345,7 @@ def pinhole_char2(
             # Radius of the fit
             fit_rad = max(rplot, rad)
 
-            sl = img_box2d(x0, y0, data.shape, (fit_rad, fit_rad))
+            sl = image_box2d(x0, y0, data.shape, (fit_rad, fit_rad))
             part = data[sl]
             # Logical coordinates
             xx0 = x0 - sl[1].start
@@ -430,7 +431,7 @@ def pinhole_char2(
         fit2d_rad = int(math.ceil(fit_rad))
 
         fit2d_half_box = (fit2d_rad, fit2d_rad)
-        sl1 = img_box2d(x0, y0, data.shape, fit2d_half_box)
+        sl1 = image_box2d(x0, y0, data.shape, fit2d_half_box)
 
         part1 = data[sl1]
         Y1, X1 = numpy.mgrid[sl1]
