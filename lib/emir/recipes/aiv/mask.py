@@ -34,11 +34,13 @@ from photutils import aperture_circular
 
 from numina.array.recenter import centering_centroid
 from numina.array.utils import image_box
+from numina.array.fwhm import compute_fwhm_2d_spline
+from numina.array.fwhm import compute_fwhm_1d_simple
 from numina.core import BaseRecipe, RecipeRequirements, RecipeError
 from numina.core import Requirement, Product, DataProductRequirement, Parameter
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
-
+from numina.constants import FWHM_G
 from emir.core import RecipeResult
 from emir.dataproducts import DataFrameType, MasterIntensityFlat
 from emir.dataproducts import CoordinateList2DType
@@ -47,10 +49,8 @@ from emir.requirements import MasterBiasRequirement
 from emir.requirements import MasterDarkRequirement
 from emir.requirements import MasterIntensityFlatFieldRequirement
 
-from .procedures import compute_fwhm_spline2d_fit
 from .procedures import compute_fwhm_enclosed_direct
 from .procedures import compute_fwhm_enclosed_grow
-from .procedures import compute_fwhm_simple
 from .procedures import moments
 from .procedures import AnnulusBackgroundEstimator
 from .procedures import image_box2d
@@ -61,7 +61,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
-GAUSS_FWHM_FACTOR = 2.354800
+GAUSS_FWHM_FACTOR = FWHM_G
 
 
 # returns y,x
@@ -411,19 +411,19 @@ def pinhole_char2(
         mm0[idx, 9:9 + 6] = epeak, efwhm, dpeak, dfwhm, rpeak, rfwhm
 
         try:
-            res_simple = compute_fwhm_simple(part_s, xx0, yy0)
+            res_simple = compute_fwhm_1d_simple(part_s, xx0, yy0)
             _logger.info('Simple, peak: %f fwhm x %f fwhm %f', *res_simple)
             mm0[idx, 15:15 + 3] = res_simple
         except StandardError as error:
-            _logger.warning('Error in compute_fwhm_simple %s', error)
+            _logger.warning('Error in compute_fwhm_1d_simple %s', error)
             mm0[idx, 15:15 + 3] = -99.0
 
         try:
-            res_spline = compute_fwhm_spline2d_fit(part_s, xx0, yy0)
+            res_spline = compute_fwhm_2d_spline(part_s, xx0, yy0)
             _logger.info('Spline, peak: %f fwhm x %f fwhm %f', *res_spline)
             mm0[idx, 18:18 + 3] = res_spline
         except StandardError as error:
-            _logger.warning('Error in compute_fwhm_spline2d_fit %s', error)
+            _logger.warning('Error in compute_fwhm_2d_spline %s', error)
             mm0[idx, 18:18 + 3] = -99.0
 
         # Bidimensional fit

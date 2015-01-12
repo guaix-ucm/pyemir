@@ -24,7 +24,6 @@ from __future__ import division
 import math
 
 import numpy as np
-import scipy.interpolate as itpl
 from scipy.interpolate import splrep, splev, sproot
 from photutils import CircularAnnulus, aperture_circular
 
@@ -32,14 +31,11 @@ from astropy.modeling import (fitting, models)
 
 from numina.array.mode import mode_half_sample
 from numina.array.recenter import centering_centroid
-from numina.array.utils import (wcs_to_pix_np, image_box, wc_to_pix_1d)
+from numina.array.utils import wcs_to_pix_np
+from numina.array.fwhm import compute_fwhm_1d_simple
+from numina.array.utils import image_box2d
 from numina.modeling import EnclosedGaussian
-
-FWHM_G = 2.35482004503
-
-
-def image_box2d(x, y, shape, box):
-    return image_box((y, x), shape, box)
+from numina.constants import FWHM_G
 
 
 def comp_back_with_annulus(img, xc, yc, rad1, rad2, frac=0.1):
@@ -170,99 +166,6 @@ def fit_fwhm_enclosed_grow(fmax, rad, flux):
     return amplitude, fwhm, peak, "done"
 
 
-def compute_fwhm_simple(img, xc, yc):
-
-    xpix = wc_to_pix_1d(xc)
-    ypix = wc_to_pix_1d(yc)
-
-    peak = img[ypix, xpix]
-
-    X = range(img.shape[1])
-    Y = range(img.shape[0])
-
-    res11 = img[ypix, :]
-    res22 = img[:, xpix]
-
-    fwhm_x, _codex, _msgx = compute_fwhm_1d(X, res11-0.5 * peak, xc, xpix)
-    fwhm_y, _codey, _msgy = compute_fwhm_1d(Y, res22-0.5 * peak, yc, ypix)
-
-    return peak, fwhm_x, fwhm_y
-
-
-def compute_fwhm_spline2d_fit(img, xc, yc):
-
-    xpix = wc_to_pix_1d(xc)
-    ypix = wc_to_pix_1d(yc)
-    # The image is already cropped
-    Y = np.arange(img.shape[1])
-    X = np.arange(img.shape[0])
-    bb = itpl.RectBivariateSpline(X, Y, img)
-    # We assume that the peak is in the center...
-    peak = bb(xc, yc)[0, 0]
-
-    U = X
-    V = bb.ev(U, [yc for _ in U]) - 0.5 * peak
-    fwhm_x, codex, msgx = compute_fwhm_1d(U, V, yc, ypix)
-
-    U = Y
-    V = bb.ev([xc for _ in U], U) - 0.5 * peak
-    fwhm_y, codey, msgy = compute_fwhm_1d(U, V, xc, xpix)
-
-    return peak, fwhm_x, fwhm_y
-
-
-def _fwhm_side_lineal(uu, vv):
-    '''Compute r12 using linear interpolation.'''
-    res1, = np.nonzero(vv < 0)
-    if len(res1) == 0:
-        return 0, 1  # error, no negative value
-    else:
-        # first value
-        i2 = res1[0]
-        i1 = i2 - 1
-        dx = uu[i2] - uu[i1]
-        dy = vv[i2] - vv[i1]
-        r12 = uu[i1] - vv[i1] * dx / dy
-        return r12, 0
-
-
-def compute_fwhm_1d(uu, vv, uc, upix):
-
-    _fwhm_side = _fwhm_side_lineal
-
-    # Find half peak radius on the rigth
-    r12p, errorp = _fwhm_side(uu[upix:], vv[upix:])
-
-    # Find half peak radius on the left
-    r12m, errorm = _fwhm_side(uu[upix::-1], vv[upix::-1])
-
-    if errorm == 1:
-        if errorp == 1:
-            fwhm = -99  # No way
-            msg = 'Failed to compute FWHM'
-            code = 2
-        else:
-            fwhm = 2 * (r12p - uc)
-            code = 1
-            msg = 'FWHM computed from rigth zero'
-    else:
-        if errorp == 1:
-            fwhm = 2 * (uc - r12m)
-            msg = 'FWHM computed from left zero'
-            code = 1
-        else:
-            msg = 'FWHM computed from left and rigth zero'
-            code = 0
-            fwhm = r12p - r12m
-
-    return fwhm, code, msg
-
-
-def extent(sl):
-    result = [sl[1].start-0.5, sl[1].stop-0.5, sl[0].start-0.5, sl[0].stop-0.5]
-    return result
-
-
 def moments(data, x0, y0, half_box):
 
     sl1 = image_box2d(x0, y0, data.shape, half_box)
@@ -376,7 +279,7 @@ def rim(data, xinit, yinit,
     print 'Radial fit, peak:', rpeak, 'fwhm', rfwhm
     print 'Direct enclosed, peak:', dpeak, 'dfwhm', dfwhm
 
-    lpeak, fwhm_x, fwhm_y = compute_fwhm_simple(part_s, xx0, yy0)
+    lpeak, fwhm_x, fwhm_y = compute_fwhm_1d_simple(part_s, xx0, yy0)
     print 'Simple, peak:', lpeak, 'fwhm x', fwhm_x, 'fwhm y', fwhm_y
 
     # Fit in a smaller box
