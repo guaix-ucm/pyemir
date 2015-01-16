@@ -157,13 +157,44 @@ def gauss_model(data, center_r):
 
     g = models.Gaussian2D(amplitude=b_raster.max(), x_mean=new_c[
                           1], y_mean=new_c[0], x_stddev=1.0, y_stddev=1.0)
-    f1 = fitting.NonLinearLSQFitter()
+    f1 = fitting.NonLinearLSQFitter()  # @UndefinedVariable
     t = f1(g, xi, yi, b_raster)
 
     mm = t.x_mean.value + sl[1].start, t.y_mean.value + \
         sl[0].start, t.amplitude.value, t.x_stddev.value, t.y_stddev.value
     return mm
 
+ 
+def recenter(data, centers_i, recenter_maxdist, recenter_nloop, recenter_half_box):
+    
+    # recentered values
+    centers_r = numpy.empty_like(centers_i)
+    # Ignore certain pinholes
+    compute_mask = numpy.ones((centers_i.shape[0],), dtype='bool')
+    
+    for idx, (xi, yi) in enumerate(centers_i):
+        # A failsafe
+        _logger.info('for pinhole %i', idx)
+        _logger.info('center is x=%7.2f y=%7.2f', xi, yi)
+        if (xi > data.shape[1] - 5 or xi < 5 or
+                yi > data.shape[0] - 5 or yi < 5):
+            _logger.info('pinhole too near to the border')
+            compute_mask[idx] = False
+        else:
+            if recenter and (recenter_maxdist > 0.0):
+                xc, yc, _back, msg = centering_centroid(
+                    data, xi, yi,
+                    box=recenter_half_box,
+                    maxdist=recenter_maxdist, nloop=recenter_nloop
+                )
+                _logger.info('new center is x=%7.2f y=%7.2f', xc, yc)
+                # Log in X,Y format
+                _logger.debug('recenter message: %s', msg)
+                centers_r[idx] = xc, yc
+            else:
+                centers_r[idx] = xi, yi
+
+    return centers_r, compute_mask
 
 def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
 
@@ -172,41 +203,19 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     # convert FITS x, y coordinates (pixel center 1)
     # to python/scipy/astropy (pixel center 0 and x,y -> y,x)
 
-    npinholes = ncenters.shape[0]
-    centers_py = numpy.fliplr(ncenters[:, 0:2]) - 1
+    centers_i = ncenters[:, 0:2] - 1
+    centers_r, compute_mask = recenter(data, centers_i, recenter_maxdist=maxdist,
+                                       recenter_nloop=10, recenter_half_box=ibox)
 
-    # recentered values
-    centers_r = numpy.empty_like(centers_py)
-    # Ignore certain pinholes
-    compute_mask = numpy.ones((npinholes,), dtype='bool')
-
-    _logger.info('recenter pinhole coordinates')
-    for idx, (yi, xi) in enumerate(centers_py):
-        # A failsafe
-        _logger.info('for pinhole %i', idx)
-        _logger.info('center is x=%7.2f y=%7.2f', xi, yi)
-        if ((xi > data.shape[1] - 5) or (xi < 5) or
-                (yi > data.shape[0] - 5) or (yi < 5)):
-            _logger.info('pinhole too near to the border')
-            compute_mask[idx] = False
-        else:
-            if recenter and maxdist > 0.0:
-                xc, yc, _back, msg = centering_centroid(
-                    data, xi, yi, box=ibox, maxdist=maxdist)
-                _logger.info('new center is x=%7.2f y=%7.2f', xc, yc)
-                # Log in X,Y format
-                _logger.debug('recenter message: %s', msg)
-                centers_r[idx] = (yc, xc)
-            else:
-                centers_r[idx] = (yi, xi)
     # Result 0
-    mm0 = numpy.empty((centers_r.shape[0], 10))
-    mm0.fill(-99)
-    # compute the FWHM without fitting
+    nresults = 10
+    mm0 = numpy.empty((centers_r.shape[0], nresults))
+    mm0[:, 0:2] = centers_r
+    mm0[:, 2:] = -99
 
-    for idx, (yc, xc) in enumerate(centers_r):
+    # compute the FWHM without fitting
+    for idx, (xc, yc) in enumerate(centers_r):
         _logger.info('For pinhole %i', idx)
-        mm0[idx, 0:2] = xc, yc
         if compute_mask[idx]:
             _logger.info('compute model-free FWHM')
             try:
@@ -229,15 +238,15 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
             _logger.info('skipping')
 
     # Photometry in coordinates
-    # x=centers_r[:,1]
-    # y=centers_r[:,0]
+    # x=centers_r[:,0]
+    # y=centers_r[:,1]
     # with radius 2.0 pixels and 4.0 pixels
 
     apertures = [2.0, 4.0]
     _logger.info('compute photometry with aperture radii %s', apertures)
     # FIXME: aperture_circular returns values along rows, we transpose it
     mm0[:, 8:10] = photutils.aperture_circular(
-        data, centers_r[:, 1], centers_r[:, 0], apertures).T
+        data, centers_r[:, 0], centers_r[:, 1], apertures).T
     _logger.info('done')
     # Convert coordinates to FITS
     mm0[:, 0:2] += 1
@@ -264,47 +273,20 @@ def pinhole_char2(
     # convert FITS x, y coordinates (pixel center 1)
     # to python/scipy/astropy (pixel center 0 and x,y -> y,x)
 
-    npinholes = ncenters.shape[0]
     centers_i = ncenters[:, 0:2] - 1
-
-    # recentered values
-    centers_r = numpy.empty_like(centers_i)
-
-    # Ignore certain pinholes
-    compute_mask = numpy.ones((npinholes,), dtype='bool')
-
-    _logger.info('recenter pinhole coordinates')
-    for idx, (xi, yi) in enumerate(centers_i):
-        # A failsafe
-        _logger.info('for pinhole %i', idx)
-        _logger.info('center is x=%7.2f y=%7.2f', xi, yi)
-        if (xi > data.shape[1] - 5 or xi < 5 or
-                yi > data.shape[0] - 5 or yi < 5):
-            _logger.info('pinhole too near to the border')
-            compute_mask[idx] = False
-        else:
-            if recenter and (recenter_maxdist > 0.0):
-                xc, yc, _back, msg = centering_centroid(
-                    data, xi, yi,
-                    box=recenter_half_box,
-                    maxdist=recenter_maxdist, nloop=recenter_nloop
-                )
-                _logger.info('new center is x=%7.2f y=%7.2f', xc, yc)
-                # Log in X,Y format
-                _logger.debug('recenter message: %s', msg)
-                centers_r[idx] = xc, yc
-            else:
-                centers_r[idx] = xi, yi
+    
+    centers_r, compute_mask = recenter(data, centers_i, recenter_maxdist,
+                                       recenter_nloop, recenter_half_box)
 
     # Number of results
-    nresults = 32
+    nresults = 34
     mm0 = numpy.empty((centers_r.shape[0], nresults))
-    mm0[:] = -99
     mm0[:, 0:2] = centers_i
     mm0[:, 2:4] = centers_r
+    mm0[:, 4:] = -99
 
     # Fitter
-    fitter = fitting.NonLinearLSQFitter()
+    fitter = fitting.NonLinearLSQFitter()  # @UndefinedVariable
     rplot = phot_rad
 
     for idx, (x0, y0) in enumerate(centers_r):
@@ -457,6 +439,17 @@ def pinhole_char2(
 
         mm0[idx, 27:27 + 5] = res_moments
 
+    # Photometry in coordinates
+    # x=centers_r[:,1]
+    # y=centers_r[:,0]
+    # with radius 2.0 pixels and 4.0 pixels
+    apertures = [2.0, 4.0]
+    _logger.info('compute photometry with aperture radii %s', apertures)
+    # FIXME: aperture_circular returns values along rows, we transpose it
+    mm0[:, 32:34] = photutils.aperture_circular(
+        data, centers_r[:, 1], centers_r[:, 0], apertures).T
+    _logger.info('done')
+
     # FITS coordinates
     mm0[:, :4] += 1
 
@@ -569,4 +562,63 @@ class TestPinholeRecipe(BaseRecipe):
                                          readmode=readmode,
                                          IPA=ipa
                                          )
+        return result
+
+
+class TestSlitRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    master_sky = DataProductRequirement(MasterIntensityFlat,
+                                        'Master Sky calibration'
+                                        )
+#    pinhole_nominal_positions = Requirement(CoordinateList2DType,
+#                                            'Nominal positions of the pinholes'
+#                                            )
+#    shift_coordinates = Parameter(True, 'Use header information to'
+#                                  ' shift the pinhole positions from (0,0) '
+#                                  'to X_DTU, Y_DTU')
+#    box_half_size = Parameter(4, 'Half of the computation box size in pixels')
+#    recenter = Parameter(True, 'Recenter the pinhole coordinates')
+#    max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
+
+
+class TestSlitRecipeResult(RecipeResult):
+    frame = Product(DataFrameType)
+#    positions = Product(ArrayType)
+#    positions_alt = Product(ArrayType)
+#    DTU = Product(ArrayType)
+#    filter = Product(str)
+#    readmode = Product(str)
+#    IPA = Product(float)
+
+
+@define_requirements(TestSlitRecipeRequirements)
+@define_result(TestSlitRecipeResult)
+class TestSlitRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(TestSlitRecipe, self).__init__(
+            author=_s_author,
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        _logger.info('starting processing for slit detection')
+
+        flow = init_filters_bdfs(rinput)
+
+        hdu = basic_processing_with_combination(rinput, flow=flow)
+
+        hdr = hdu.header
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+
+        _logger.debug('finding slits')
+
+        hdulist = fits.HDUList([hdu])
+
+        result = self.create_result(frame=hdulist)
+        
         return result
