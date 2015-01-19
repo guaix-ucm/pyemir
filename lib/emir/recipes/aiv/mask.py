@@ -35,7 +35,7 @@ from photutils import aperture_circular
 from numina.array.recenter import centering_centroid
 from numina.array.utils import image_box
 from numina.array.fwhm import compute_fwhm_2d_spline
-from numina.array.fwhm import compute_fwhm_1d_simple
+from numina.array.fwhm import compute_fwhm_2d_simple
 from numina.core import BaseRecipe, RecipeRequirements, RecipeError
 from numina.core import Requirement, Product, DataProductRequirement, Parameter
 from numina.core import define_requirements, define_result
@@ -157,7 +157,7 @@ def gauss_model(data, center_r):
 
     g = models.Gaussian2D(amplitude=b_raster.max(), x_mean=new_c[
                           1], y_mean=new_c[0], x_stddev=1.0, y_stddev=1.0)
-    f1 = fitting.NonLinearLSQFitter()  # @UndefinedVariable
+    f1 = fitting.LevMarLSQFitter()  # @UndefinedVariable
     t = f1(g, xi, yi, b_raster)
 
     mm = t.x_mean.value + sl[1].start, t.y_mean.value + \
@@ -165,7 +165,7 @@ def gauss_model(data, center_r):
     return mm
 
  
-def recenter(data, centers_i, recenter_maxdist, recenter_nloop, recenter_half_box):
+def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_half_box, do_recenter):
     
     # recentered values
     centers_r = numpy.empty_like(centers_i)
@@ -181,7 +181,7 @@ def recenter(data, centers_i, recenter_maxdist, recenter_nloop, recenter_half_bo
             _logger.info('pinhole too near to the border')
             compute_mask[idx] = False
         else:
-            if recenter and (recenter_maxdist > 0.0):
+            if do_recenter and (recenter_maxdist > 0.0):
                 xc, yc, _back, msg = centering_centroid(
                     data, xi, yi,
                     box=recenter_half_box,
@@ -196,7 +196,7 @@ def recenter(data, centers_i, recenter_maxdist, recenter_nloop, recenter_half_bo
 
     return centers_r, compute_mask
 
-def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
+def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
 
     ibox = (box, box)
 
@@ -204,8 +204,9 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     # to python/scipy/astropy (pixel center 0 and x,y -> y,x)
 
     centers_i = ncenters[:, 0:2] - 1
-    centers_r, compute_mask = recenter(data, centers_i, recenter_maxdist=maxdist,
-                                       recenter_nloop=10, recenter_half_box=ibox)
+    centers_r, compute_mask = recenter_char(data, centers_i, recenter_maxdist=maxdist,
+                                       recenter_nloop=10, recenter_half_box=ibox,
+                                       do_recenter=recenter_pinhole)
 
     # Result 0
     nresults = 10
@@ -255,7 +256,7 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
 
 def pinhole_char2(
     data, ncenters,
-    recenter=True,
+    recenter_pinhole=True,
     recenter_half_box=5,
     recenter_nloop=10,
     recenter_maxdist=10.0,
@@ -275,8 +276,9 @@ def pinhole_char2(
 
     centers_i = ncenters[:, 0:2] - 1
     
-    centers_r, compute_mask = recenter(data, centers_i, recenter_maxdist,
-                                       recenter_nloop, recenter_half_box)
+    centers_r, compute_mask = recenter_char(data, centers_i, recenter_maxdist,
+                                       recenter_nloop, recenter_half_box,
+                                       do_recenter=recenter_pinhole)
 
     # Number of results
     nresults = 34
@@ -286,7 +288,7 @@ def pinhole_char2(
     mm0[:, 4:] = -99
 
     # Fitter
-    fitter = fitting.NonLinearLSQFitter()  # @UndefinedVariable
+    fitter = fitting.LevMarLSQFitter()  # @UndefinedVariable
     rplot = phot_rad
 
     for idx, (x0, y0) in enumerate(centers_r):
@@ -393,11 +395,11 @@ def pinhole_char2(
         mm0[idx, 9:9 + 6] = epeak, efwhm, dpeak, dfwhm, rpeak, rfwhm
 
         try:
-            res_simple = compute_fwhm_1d_simple(part_s, xx0, yy0)
+            res_simple = compute_fwhm_2d_simple(part_s, xx0, yy0)
             _logger.info('Simple, peak: %f fwhm x %f fwhm %f', *res_simple)
             mm0[idx, 15:15 + 3] = res_simple
         except StandardError as error:
-            _logger.warning('Error in compute_fwhm_1d_simple %s', error)
+            _logger.warning('Error in compute_fwhm_2d_simple %s', error)
             mm0[idx, 15:15 + 3] = -99.0
 
         try:
@@ -483,6 +485,9 @@ class TestPinholeRecipeResult(RecipeResult):
     filter = Product(str)
     readmode = Product(str)
     IPA = Product(float)
+    param_recenter = Product(bool)
+    param_max_recenter_radius = Product(float)
+    param_box_half_size = Product(float)
 
 
 @define_requirements(TestPinholeRecipeRequirements)
@@ -500,9 +505,9 @@ class TestPinholeRecipe(BaseRecipe):
 
         flow = init_filters_bdfs(rinput)
 
-        hdu = basic_processing_with_combination(rinput, flow=flow)
+        hdulist = basic_processing_with_combination(rinput, flow=flow)
 
-        hdr = hdu.header
+        hdr = hdulist[0].header
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
 
@@ -537,31 +542,33 @@ class TestPinholeRecipe(BaseRecipe):
 
         _logger.info('pinhole characterization')
         positions = pinhole_char(
-            hdu.data,
+            hdulist[0].data,
             ncenters,
             box=rinput.box_half_size,
-            recenter=rinput.recenter,
+            recenter_pinhole=rinput.recenter,
             maxdist=rinput.max_recenter_radius
         )
 
         _logger.info('alternate pinhole characterization')
         positions_alt = pinhole_char2(
-            hdu.data, ncenters,
-            recenter=rinput.recenter,
+            hdulist[0].data, ncenters,
+            recenter_pinhole=rinput.recenter,
             recenter_half_box=rinput.box_half_size,
             recenter_maxdist=rinput.max_recenter_radius
         )
 
-        hdulist = fits.HDUList([hdu])
 
-        result = TestPinholeRecipeResult(frame=hdulist,
-                                         positions=positions,
-                                         positions_alt=positions_alt,
-                                         filter=filtername,
-                                         DTU=[xdtu, ydtu, zdtu],
-                                         readmode=readmode,
-                                         IPA=ipa
-                                         )
+        result = self.create_result(frame=hdulist,
+                                    positions=positions,
+                                    positions_alt=positions_alt,
+                                    filter=filtername,
+                                    DTU=[xdtu, ydtu, zdtu],
+                                    readmode=readmode,
+                                    IPA=ipa,
+                                    param_recenter=rinput.recenter,
+                                    param_max_recenter_radius=rinput.max_recenter_radius,
+                                    param_box_half_size=rinput.box_half_size
+                                    )
         return result
 
 
