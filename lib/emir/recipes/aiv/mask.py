@@ -440,14 +440,14 @@ def pinhole_char2(
         mm0[idx, 27:27 + 5] = res_moments
 
     # Photometry in coordinates
-    # x=centers_r[:,1]
-    # y=centers_r[:,0]
+    # x=centers_r[:,0]
+    # y=centers_r[:,1]
     # with radius 2.0 pixels and 4.0 pixels
     apertures = [2.0, 4.0]
     _logger.info('compute photometry with aperture radii %s', apertures)
     # FIXME: aperture_circular returns values along rows, we transpose it
     mm0[:, 32:34] = photutils.aperture_circular(
-        data, centers_r[:, 1], centers_r[:, 0], apertures).T
+        data, centers_r[:, 0], centers_r[:, 1], apertures).T
     _logger.info('done')
 
     # FITS coordinates
