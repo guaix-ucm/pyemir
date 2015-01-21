@@ -211,7 +211,7 @@ def pinhole_char(data, ncenters, box=4, recenter=True, maxdist=10.0):
     for idx, (yc, xc) in enumerate(centers_r):
         _logger.info('For pinhole %i', idx)
         mm0[idx,0:2] = xc, yc
-        mm0[idx,2] = status[idx]
+        mm0[idx,2] = status_array[idx]
         if compute_mask[idx]:
             _logger.info('compute model-free FWHM')
             try:
