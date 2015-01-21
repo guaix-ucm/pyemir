@@ -431,6 +431,34 @@ class TestFlatCorrectRecipe(BaseRecipe):
 
         return result
 
+from numina.core import ObservationResult
+class StareImageRecipeInputBuilder:
+    '''Class to build StareImageRecipe inputs from the Observation
+Results.
+
+       Fetches SKY calibration image from the archive
+
+
+    '''
+
+    def __init__(self, dal):
+       self.dal = dal
+       self.sky_image = None
+
+    def buildRecipeInput (self, obsres):
+
+       if self.sky_image is None:
+          print 'obtaining SKY image'
+          sky_cal_result = self.dal.getLastRecipeResult ("EMIR", "EMIR", "IMAGE_SKY")
+          self.sky_image = sky_cal_result['elements']['skyframe']
+
+       obsres['master_sky'] = self.sky_image
+       newOR = ObservationResult()
+       newOR.frames = obsres['frames']
+       obsres['obresult'] = newOR
+       newRI = StareImageRecipeRequirements(**obsres)
+
+       return newRI
 
 class TestSkyCorrectRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
@@ -439,12 +467,16 @@ class TestSkyCorrectRecipeRequirements(RecipeRequirements):
     master_flat = DataProductRequirement(MasterIntensityFlat, 'Master intensity flat calibration')
     master_sky = DataProductRequirement(MasterIntensityFlat, 'Master Sky calibration')
 
+StareImageRecipeRequirements = TestSkyCorrectRecipeRequirements
+
 class TestSkyCorrectRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
 
 @define_requirements(TestSkyCorrectRecipeRequirements)
 @define_result(TestSkyCorrectRecipeResult)
 class TestSkyCorrectRecipe(BaseRecipe):
+
+    InputBuilder = StareImageRecipeInputBuilder
 
     def __init__(self):
         super(TestSkyCorrectRecipe, self).__init__(author=_s_author, 
