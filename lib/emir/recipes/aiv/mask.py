@@ -289,7 +289,7 @@ def pinhole_char2(data, ncenters,
                 centers_r[idx] = xi, yi
     
     # Number of results
-    nresults = 32
+    nresults = 34
     mm0 = numpy.empty((centers_r.shape[0], nresults))    
     mm0[:] = -99
     mm0[:,0:2] = centers_i
@@ -446,6 +446,17 @@ def pinhole_char2(data, ncenters,
         
         mm0[idx,27:27+5] = res_moments
 
+    # Photometry in coordinates
+    # x=centers_r[:,0]
+    # y=centers_r[:,1]
+    # with radius 2.0 pixels and 4.0 pixels
+    
+    apertures = [2.0, 4.0]
+    _logger.info('compute photometry with aperture radii %s', apertures)
+    # FIXME: aperture_circular returns values along rows, we transpose it
+    mm0[:, 32:34] = photutils.aperture_circular(data, centers_r[:,0], centers_r[:,1], apertures).T
+    _logger.info('done')
+
     # FITS coordinates
     mm0[:,:4] += 1
 
@@ -472,11 +483,48 @@ class TestPinholeRecipeResult(RecipeResult):
     filter = Product(str)
     readmode = Product(str)
     IPA = Product(float)
+    param_all = Product(ArrayType)
+    param_recenter = Product(bool)
+    param_max_recenter_radius = Product(float)
+    param_box_half_size = Product(float)
+
+from numina.core import ObservationResult
+class TestPinholeRecipeInputBuilder:
+    '''Class to build TestPinholeRecipe inputs from the Observation
+Results.
+
+       Fetches SKY calibration image from the archive
+
+
+    '''
+
+    def __init__(self, dal):
+       self.dal = dal
+       self.sky_image = None
+
+    def buildRecipeInput (self, obsres):
+
+       if self.sky_image is None:
+          print 'obtaining SKY image'
+          sky_cal_result = self.dal.getLastRecipeResult ("EMIR", "EMIR", "IMAGE_SKY")
+          self.sky_image = sky_cal_result['elements']['skyframe']
+
+       obsres['master_sky'] = self.sky_image
+       newOR = ObservationResult()
+       newOR.frames = obsres['frames']
+       obsres['obresult'] = newOR
+       newRI = TestPinholeRecipeRequirements(**obsres)
+
+       return newRI
+
 
 @define_requirements(TestPinholeRecipeRequirements)
 @define_result(TestPinholeRecipeResult)
 class TestPinholeRecipe(BaseRecipe):
 
+
+    InputBuilder = TestPinholeRecipeInputBuilder
+    
     def __init__(self):
         super(TestPinholeRecipe, self).__init__(author=_s_author, 
             version="0.1.0")
@@ -619,10 +667,16 @@ class TestPinholeRecipe(BaseRecipe):
             recenter_maxdist=rinput.max_recenter_radius)
         
         hdulist = fits.HDUList([hdu])
+
+        # Workaround to some CORBA exception
+        param_recenter = 0.0
+        if rinput.recenter:
+            param_recenter = 1.0
         
         result = TestPinholeRecipeResult(frame=hdulist, positions=positions, 
                     positions_alt=positions_alt,
-                    filter=filtername, DTU=[xdtu, ydtu, zdtu], readmode=readmode, IPA=ipa)
+                    filter=filtername, DTU=[xdtu, ydtu, zdtu], readmode=readmode, IPA=ipa, param_recenter=rinput.recenter, param_max_recenter_radius=rinput.max_recenter_radius, param_box_half_size=rinput.box_half_size,
+			param_all=[param_recenter, rinput.max_recenter_radius])
         return result
         
         
