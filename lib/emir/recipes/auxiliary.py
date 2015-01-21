@@ -211,6 +211,7 @@ class DarkRecipe(BaseRecipe):
         channels = getattr(allchannels, channels_name)
         
         iinfo = gather_info_frames(rinput.obresult.frames)
+        use_bias = False
         
         if iinfo:
             mode = iinfo[0]['readmode']
@@ -219,7 +220,6 @@ class DarkRecipe(BaseRecipe):
                 _logger.info('readmode is %s, bias required', mode)
                 
             else:
-                use_bias = False
                 _logger.info('readmode is %s, no bias required', mode)
                 
             ref_exptime = iinfo[0]['texp']
