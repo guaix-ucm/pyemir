@@ -171,6 +171,7 @@ def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_ha
     centers_r = numpy.empty_like(centers_i)
     # Ignore certain pinholes
     compute_mask = numpy.ones((centers_i.shape[0],), dtype='bool')
+    status_array = numpy.ones((centers_i.shape[0],), dtype='int')
     
     for idx, (xi, yi) in enumerate(centers_i):
         # A failsafe
@@ -180,9 +181,17 @@ def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_ha
                 yi > data.shape[0] - 5 or yi < 5):
             _logger.info('pinhole too near to the border')
             compute_mask[idx] = False
+            centers_r[idx] = xi, yi
+            status_array[idx] = 0
         else:
             if do_recenter and (recenter_maxdist > 0.0):
-                xc, yc, _back, msg = centering_centroid(
+                kk = centering_centroid(
+                    data, xi, yi,
+                    box=recenter_half_box,
+                    maxdist=recenter_maxdist, nloop=recenter_nloop
+                )
+                print kk
+                xc, yc, _back, status, msg = centering_centroid(
                     data, xi, yi,
                     box=recenter_half_box,
                     maxdist=recenter_maxdist, nloop=recenter_nloop
@@ -191,10 +200,12 @@ def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_ha
                 # Log in X,Y format
                 _logger.debug('recenter message: %s', msg)
                 centers_r[idx] = xc, yc
+                status_array[idx] = status
             else:
                 centers_r[idx] = xi, yi
+                status_array[idx] = 0
 
-    return centers_r, compute_mask
+    return centers_r, compute_mask, status_array
 
 def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
 
@@ -204,26 +215,30 @@ def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
     # to python/scipy/astropy (pixel center 0 and x,y -> y,x)
 
     centers_i = ncenters[:, 0:2] - 1
-    centers_r, compute_mask = recenter_char(data, centers_i, recenter_maxdist=maxdist,
-                                       recenter_nloop=10, recenter_half_box=ibox,
-                                       do_recenter=recenter_pinhole)
+    centers_r, cmask, starr = recenter_char(data, centers_i,
+                                            recenter_maxdist=maxdist,
+                                            recenter_nloop=10,
+                                            recenter_half_box=ibox,
+                                            do_recenter=recenter_pinhole
+                                            )
 
     # Result 0
-    nresults = 10
+    nresults = 11
     mm0 = numpy.empty((centers_r.shape[0], nresults))
     mm0[:, 0:2] = centers_r
-    mm0[:, 2:] = -99
+    mm0[:, 2] = starr
+    mm0[:, 3:] = -99
 
     # compute the FWHM without fitting
     for idx, (xc, yc) in enumerate(centers_r):
         _logger.info('For pinhole %i', idx)
-        if compute_mask[idx]:
+        if cmask[idx]:
             _logger.info('compute model-free FWHM')
             try:
                 res1 = compute_fwhm_global(data, (yc, xc), box=ibox)
                 fmt1 = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
                 _logger.info(fmt1, *res1)
-                mm0[idx, 2:5] = res1[2:]
+                mm0[idx, 3:6] = res1[2:]
             except StandardError as error:
                 _logger.exception("unable to obtain FWHM, %s", error)
 
@@ -232,7 +247,7 @@ def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
                 res2 = gauss_model(data, (yc, xc))
                 fmt2 = 'x=%7.2f y=%7.2f peak=%6.3f stdev_x=%6.3f stdev_y=%6.3f'
                 _logger.info(fmt2, *res2)
-                mm0[idx, 5:8] = res2[2:]
+                mm0[idx, 6:9] = res2[2:]
             except StandardError as error:
                 _logger.exception("unable to obtain FWHM, %s", error)
         else:
@@ -246,7 +261,7 @@ def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
     apertures = [2.0, 4.0]
     _logger.info('compute photometry with aperture radii %s', apertures)
     # FIXME: aperture_circular returns values along rows, we transpose it
-    mm0[:, 8:10] = photutils.aperture_circular(
+    mm0[:, 9:11] = photutils.aperture_circular(
         data, centers_r[:, 0], centers_r[:, 1], apertures).T
     _logger.info('done')
     # Convert coordinates to FITS
@@ -275,17 +290,19 @@ def pinhole_char2(
     # to python/scipy/astropy (pixel center 0 and x,y -> y,x)
 
     centers_i = ncenters[:, 0:2] - 1
-    
-    centers_r, compute_mask = recenter_char(data, centers_i, recenter_maxdist,
-                                       recenter_nloop, recenter_half_box,
-                                       do_recenter=recenter_pinhole)
+
+    centers_r, cmask, starr = recenter_char(data, centers_i, recenter_maxdist,
+                                            recenter_nloop, recenter_half_box,
+                                            do_recenter=recenter_pinhole
+                                            )
 
     # Number of results
-    nresults = 34
+    nresults = 35
     mm0 = numpy.empty((centers_r.shape[0], nresults))
     mm0[:, 0:2] = centers_i
     mm0[:, 2:4] = centers_r
-    mm0[:, 4:] = -99
+    mm0[:, 4] = starr
+    mm0[:, 5:] = -99
 
     # Fitter
     fitter = fitting.LevMarLSQFitter()  # @UndefinedVariable
@@ -293,7 +310,7 @@ def pinhole_char2(
 
     for idx, (x0, y0) in enumerate(centers_r):
         _logger.info('For pinhole %i', idx)
-        if not compute_mask[idx]:
+        if not cmask[idx]:
             _logger.info('skipping')
             # Fill result with -99
             continue
@@ -368,11 +385,11 @@ def pinhole_char2(
             _logger.debug('no convergence in photometric radius determination')
 
         _logger.info('background %6.2f, r1 %7.2f r2 %7.2f', bck, rs1, rs2)
-        mm0[idx, 4:4 + 3] = bck, rs1, rs2
+        mm0[idx, 5:5 + 3] = bck, rs1, rs2
         aper_rad = rad
         flux_aper = aperture_circular(part_s, [xx0], [yy0], aper_rad)
         _logger.info('aper rad %f, aper flux %f', aper_rad, flux_aper)
-        mm0[idx, 7:7 + 2] = aper_rad, flux_aper
+        mm0[idx, 8:8 + 2] = aper_rad, flux_aper
 
         _logger.info('Radial fit, peak: %f fwhm %f', rpeak, rfwhm)
 
@@ -392,23 +409,23 @@ def pinhole_char2(
             _logger.warning('Error in compute_fwhm_enclosed_grow %s', error)
             eamp, efwhm, epeak, emsg = [-99.0] * 4
 
-        mm0[idx, 9:9 + 6] = epeak, efwhm, dpeak, dfwhm, rpeak, rfwhm
+        mm0[idx, 10:10 + 6] = epeak, efwhm, dpeak, dfwhm, rpeak, rfwhm
 
         try:
             res_simple = compute_fwhm_2d_simple(part_s, xx0, yy0)
             _logger.info('Simple, peak: %f fwhm x %f fwhm %f', *res_simple)
-            mm0[idx, 15:15 + 3] = res_simple
+            mm0[idx, 16:16 + 3] = res_simple
         except StandardError as error:
             _logger.warning('Error in compute_fwhm_2d_simple %s', error)
-            mm0[idx, 15:15 + 3] = -99.0
+            mm0[idx, 16:16 + 3] = -99.0
 
         try:
             res_spline = compute_fwhm_2d_spline(part_s, xx0, yy0)
             _logger.info('Spline, peak: %f fwhm x %f fwhm %f', *res_spline)
-            mm0[idx, 18:18 + 3] = res_spline
+            mm0[idx, 19:19 + 3] = res_spline
         except StandardError as error:
             _logger.warning('Error in compute_fwhm_2d_spline %s', error)
-            mm0[idx, 18:18 + 3] = -99.0
+            mm0[idx, 19:19 + 3] = -99.0
 
         # Bidimensional fit
         # Fit in a smaller box
@@ -433,13 +450,13 @@ def pinhole_char2(
                        )
 
         _logger.info('Gauss2d, %s', res_gauss2d)
-        mm0[idx, 21:21 + 6] = res_gauss2d
+        mm0[idx, 22:22 + 6] = res_gauss2d
         # Moments
         moments_half_box = fit2d_half_box
         res_moments = moments(data, x0, y0, moments_half_box)
         _logger.info('Mxx %f Myy %f Mxy %f e %f pa %f', *res_moments)
 
-        mm0[idx, 27:27 + 5] = res_moments
+        mm0[idx, 28:28 + 5] = res_moments
 
     # Photometry in coordinates
     # x=centers_r[:,0]
@@ -448,7 +465,7 @@ def pinhole_char2(
     apertures = [2.0, 4.0]
     _logger.info('compute photometry with aperture radii %s', apertures)
     # FIXME: aperture_circular returns values along rows, we transpose it
-    mm0[:, 32:34] = photutils.aperture_circular(
+    mm0[:, 33:35] = photutils.aperture_circular(
         data, centers_r[:, 0], centers_r[:, 1], apertures).T
     _logger.info('done')
 
