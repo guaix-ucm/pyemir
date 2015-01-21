@@ -32,6 +32,7 @@ from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Product
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
+from numina.core.oresult import ObservationResult
 from numina.array import combine
 from numina.array import combine_shape
 from numina.array import subarray_match
@@ -83,8 +84,42 @@ def combine_frames(rframes):
     data = [i[0].data for i in frameslll]
     out = combine.mean(data, dtype='float32')
     return out
+
+class DitheredImageRecipeInputBuilder:
+    '''Class to build DitheredImageRecipe inputs from the Observation
+Results
+   
+    RecipeInputBuilder which fetches the pre-reduced images that will be
+combined
+   
+    '''
+   
+    
+   
+    def __init__(self, dal):
+       self.dal = dal
+   
+    def buildRecipeInput (self, obsres):
+       
+       stareImages = []
+
+       stareImagesIds = obsres['stareImagesIds']._v 
+       for subresId in stareImagesIds:
+                subres = self.dal.getRecipeResult (subresId)
+                stareImages.append(subres['elements']['frame'])
+        
+       newOR = ObservationResult()
+       newOR.frames = stareImages
+       obsres['obresult'] = newOR
+       print 'Adding RI parameters ', obsres
+       newRI = DitheredImageARecipeRequirements(**obsres)
+
+       
+       return newRI
+
             
 class DitheredImageARecipeRequirements(RecipeRequirements):
+    #stareImagesIds = DataProductRequirement(DataProduct, 'Stare images identifiers', optional=True)
     obresult = ObservationResultRequirement()
 
 class DitheredImageARecipeResult(RecipeResult):
@@ -93,7 +128,9 @@ class DitheredImageARecipeResult(RecipeResult):
 @define_requirements(DitheredImageARecipeRequirements)
 @define_result(DitheredImageARecipeResult)
 class DitheredImageARecipe(BaseRecipe):
-
+    
+    InputBuilder = DitheredImageRecipeInputBuilder
+    
     def __init__(self):
         super(DitheredImageARecipe, self).__init__(author=_s_author, 
             version="0.1.0")
