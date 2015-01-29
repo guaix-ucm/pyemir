@@ -694,15 +694,10 @@ class TestPinholeRecipe(BaseRecipe):
         
         hdulist = fits.HDUList([hdu])
 
-        # Workaround to some CORBA exception
-        param_recenter = 0.0
-        if rinput.recenter:
-            param_recenter = 1.0
-        
         result = TestPinholeRecipeResult(frame=hdulist, positions=positions, 
                     positions_alt=positions_alt,
                     filter=filtername, DTU=[xdtur, ydtur, zdtu], readmode=readmode, IPA=ipa, param_recenter=rinput.recenter, param_max_recenter_radius=rinput.max_recenter_radius, param_box_half_size=rinput.box_half_size,
-			param_all=[recenter, rinput.max_recenter_radius])
+			param_all=[rinput.recenter, rinput.max_recenter_radius])
         return result
         
         
