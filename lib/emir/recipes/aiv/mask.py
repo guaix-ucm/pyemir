@@ -646,25 +646,38 @@ class TestPinholeRecipe(BaseRecipe):
             xdtu = hdr['XDTU']
             ydtu = hdr['YDTU']
             zdtu = hdr['ZDTU']
+            # Defined even if not in the header
+            xdtuf = hdr.get('XDTU_F', 1.0)
+            ydtuf = hdr.get('YDTU_F', 1.0)
+            xdtu0 = hdr.get('XDTU_0', 0.0)
+            ydtu0 = hdr.get('YDTU_0', 0.0)
         except KeyError as error:
             _logger.error(error)
             raise RecipeError(error)
         
         
         if rinput.shift_coordinates:
+            PIXSCALE = 18.0
             #get things from header
             _logger.info('getting DTU position from header')
             _logger.info('XDTU=%6.2f YDTU=%6.2f ZDTU=%6.2f', xdtu, ydtu, zdtu)
+            _logger.info('XDTU_F=%6.2f YDTU_F=%6.2f', xdtuf, ydtuf)
+            _logger.info('XDTU_0=%6.2f YDTU_0=%6.2f', xdtu0, ydtu0)
             # transform coordinates
             _logger.info('transform pinhole coordinates from reference (0,0)')
-            xfac = xdtu * 0.055
-            yfac = -ydtu * 0.055
+            xdtur = (xdtu / xdtuf - xdtu0)
+            ydtur = (ydtu / ydtuf - ydtu0)
+            _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f', xdtur, ydtur)
+            xfac = xdtur / PIXSCALE
+            yfac = -ydtur / PIXSCALE
         
             vec = numpy.array([yfac, xfac])
             _logger.info('shift is %s', vec)
             ncenters = rinput.pinhole_nominal_positions + vec
         else:
             _logger.info('using pinhole coordinates as they are')
+            # Defined because we output them
+            xdtur, ydtur = xdtu, ydtu
             ncenters = rinput.pinhole_nominal_positions        
         
         _logger.info('pinhole characterization')
@@ -688,8 +701,8 @@ class TestPinholeRecipe(BaseRecipe):
         
         result = TestPinholeRecipeResult(frame=hdulist, positions=positions, 
                     positions_alt=positions_alt,
-                    filter=filtername, DTU=[xdtu, ydtu, zdtu], readmode=readmode, IPA=ipa, param_recenter=rinput.recenter, param_max_recenter_radius=rinput.max_recenter_radius, param_box_half_size=rinput.box_half_size,
-			param_all=[param_recenter, rinput.max_recenter_radius])
+                    filter=filtername, DTU=[xdtur, ydtur, zdtu], readmode=readmode, IPA=ipa, param_recenter=rinput.recenter, param_max_recenter_radius=rinput.max_recenter_radius, param_box_half_size=rinput.box_half_size,
+			param_all=[recenter, rinput.max_recenter_radius])
         return result
         
         
