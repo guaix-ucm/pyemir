@@ -633,15 +633,14 @@ class TestSlitRecipe(BaseRecipe):
 
         flow = init_filters_bdfs(rinput)
 
-        hdu = basic_processing_with_combination(rinput, flow=flow)
+        hdulist = basic_processing_with_combination(rinput, flow=flow)
 
-        hdr = hdu.header
+        hdr = hdulist[0].header
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
 
         _logger.debug('finding slits')
 
-        hdulist = fits.HDUList([hdu])
 
         result = self.create_result(frame=hdulist)
         
