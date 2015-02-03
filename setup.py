@@ -32,6 +32,7 @@ setup(name='pyemir',
                         'matplotlib', 'numdisplay', 
                         'numina>=0.11.0'],
       use_2to3=True,
+      zip_safe=False,
       # numdisplay lives here
       dependency_links = [
         'http://stsdas.stsci.edu/numdisplay'
