@@ -81,6 +81,12 @@ class MasterSpectralFlatFieldRequirement(DataProductRequirement):
               self).__init__(MasterSpectralFlat, 'Master spectral flatfield')
 
 
+class MasterSkyRequirement(DataProductRequirement):
+    def __init__(self):
+        super(MasterSkyRequirement,
+              self).__init__(MasterIntensityFlat, 'Master Sky calibration')
+
+
 class Extinction_Requirement(Parameter):
     def __init__(self):
         super(Extinction_Requirement, self).__init__(
