@@ -28,7 +28,6 @@ import numpy
 import scipy.interpolate as itpl
 import scipy.optimize as opz
 from astropy.modeling import models, fitting
-from astropy.io import fits
 import photutils
 from photutils import aperture_circular
 
@@ -37,17 +36,18 @@ from numina.array.utils import image_box
 from numina.array.fwhm import compute_fwhm_2d_spline
 from numina.array.fwhm import compute_fwhm_2d_simple
 from numina.core import BaseRecipe, RecipeRequirements, RecipeError
-from numina.core import Requirement, Product, DataProductRequirement, Parameter
+from numina.core import Requirement, Product, Parameter
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 from numina.constants import FWHM_G
 from emir.core import RecipeResult
-from emir.dataproducts import DataFrameType, MasterIntensityFlat
+from emir.dataproducts import DataFrameType
 from emir.dataproducts import CoordinateList2DType
 from emir.dataproducts import ArrayType
 from emir.requirements import MasterBiasRequirement
 from emir.requirements import MasterDarkRequirement
 from emir.requirements import MasterIntensityFlatFieldRequirement
+from emir.requirements import MasterSkyRequirement
 
 from .procedures import compute_fwhm_enclosed_direct
 from .procedures import compute_fwhm_enclosed_grow
@@ -62,7 +62,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 GAUSS_FWHM_FACTOR = FWHM_G
-
+PIXSCALE = 18.0
 
 # returns y,x
 def compute_fwhm(img, center):
@@ -480,9 +480,8 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = DataProductRequirement(MasterIntensityFlat,
-                                        'Master Sky calibration'
-                                        )
+    master_sky = MasterSkyRequirement()
+
     pinhole_nominal_positions = Requirement(CoordinateList2DType,
                                             'Nominal positions of the pinholes'
                                             )
@@ -537,6 +536,11 @@ class TestPinholeRecipe(BaseRecipe):
             xdtu = hdr['XDTU']
             ydtu = hdr['YDTU']
             zdtu = hdr['ZDTU']
+            # Defined even if not in the header
+            xdtuf = hdr.get('XDTU_F', 1.0)
+            ydtuf = hdr.get('YDTU_F', 1.0)
+            xdtu0 = hdr.get('XDTU_0', 0.0)
+            ydtu0 = hdr.get('YDTU_0', 0.0)
         except KeyError as error:
             _logger.error(error)
             raise RecipeError(error)
@@ -545,17 +549,25 @@ class TestPinholeRecipe(BaseRecipe):
             # get things from header
             _logger.info('getting DTU position from header')
             _logger.info('XDTU=%6.2f YDTU=%6.2f ZDTU=%6.2f', xdtu, ydtu, zdtu)
+            _logger.info('XDTU_F=%6.2f YDTU_F=%6.2f', xdtuf, ydtuf)
+            _logger.info('XDTU_0=%6.2f YDTU_0=%6.2f', xdtu0, ydtu0)
             # transform coordinates
             _logger.info('transform pinhole coordinates from reference (0,0)')
-            xfac = xdtu * 0.055
-            yfac = -ydtu * 0.055
+            xdtur = (xdtu / xdtuf - xdtu0)
+            ydtur = (ydtu / ydtuf - ydtu0)
+            _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f', xdtur, ydtur)
+            xfac = xdtur / PIXSCALE
+            yfac = -ydtur / PIXSCALE
 
             vec = numpy.array([yfac, xfac])
             _logger.info('shift is %s', vec)
             ncenters = rinput.pinhole_nominal_positions + vec
         else:
             _logger.info('using pinhole coordinates as they are')
+            # Defined because we output them
+            xdtur, ydtur = xdtu, ydtu
             ncenters = rinput.pinhole_nominal_positions
+
 
         _logger.info('pinhole characterization')
         positions = pinhole_char(
@@ -579,69 +591,11 @@ class TestPinholeRecipe(BaseRecipe):
                                     positions=positions,
                                     positions_alt=positions_alt,
                                     filter=filtername,
-                                    DTU=[xdtu, ydtu, zdtu],
+                                    DTU=[xdtur, ydtur, zdtu],
                                     readmode=readmode,
                                     IPA=ipa,
                                     param_recenter=rinput.recenter,
                                     param_max_recenter_radius=rinput.max_recenter_radius,
                                     param_box_half_size=rinput.box_half_size
                                     )
-        return result
-
-
-class TestSlitRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = DataProductRequirement(MasterIntensityFlat,
-                                        'Master Sky calibration'
-                                        )
-#    pinhole_nominal_positions = Requirement(CoordinateList2DType,
-#                                            'Nominal positions of the pinholes'
-#                                            )
-#    shift_coordinates = Parameter(True, 'Use header information to'
-#                                  ' shift the pinhole positions from (0,0) '
-#                                  'to X_DTU, Y_DTU')
-#    box_half_size = Parameter(4, 'Half of the computation box size in pixels')
-#    recenter = Parameter(True, 'Recenter the pinhole coordinates')
-#    max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
-
-
-class TestSlitRecipeResult(RecipeResult):
-    frame = Product(DataFrameType)
-#    positions = Product(ArrayType)
-#    positions_alt = Product(ArrayType)
-#    DTU = Product(ArrayType)
-#    filter = Product(str)
-#    readmode = Product(str)
-#    IPA = Product(float)
-
-
-@define_requirements(TestSlitRecipeRequirements)
-@define_result(TestSlitRecipeResult)
-class TestSlitRecipe(BaseRecipe):
-
-    def __init__(self):
-        super(TestSlitRecipe, self).__init__(
-            author=_s_author,
-            version="0.1.0"
-        )
-
-    def run(self, rinput):
-        _logger.info('starting processing for slit detection')
-
-        flow = init_filters_bdfs(rinput)
-
-        hdulist = basic_processing_with_combination(rinput, flow=flow)
-
-        hdr = hdulist[0].header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-
-        _logger.debug('finding slits')
-
-
-        result = self.create_result(frame=hdulist)
-        
         return result
