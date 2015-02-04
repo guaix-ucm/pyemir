@@ -34,6 +34,9 @@ from numina.array.fwhm import compute_fwhm_2d_simple
 from numina.array.utils import expand_region
 
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+import matplotlib.patches
+from emir.dataproducts import ArrayType
 
 # import math
 #
@@ -101,6 +104,7 @@ class TestSlitDetectionRecipeRequirements(RecipeRequirements):
 
 class TestSlitDetectionRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
+    slitstable = Product(ArrayType)
 
 
 @define_requirements(TestSlitDetectionRecipeRequirements)
@@ -193,66 +197,76 @@ class TestSlitDetectionRecipe(BaseRecipe):
         regions = ndimage.find_objects(relabel_objects)
         centers = ndimage.center_of_mass(data2, labels=relabel_objects, index=ids)
 
-        char_slit(data2, regions, centers)
+        table = char_slit(data2, regions, centers)
 
-        result = self.create_result(frame=hdulist)
+        result = self.create_result(frame=hdulist, slitstable=table)
 
         return result
 
 def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
 
-    for r, c_alt in zip(regions, centers):
-        print 'initial region', r
+    result = []
+
+    for r in regions:
+        _logger.debug('initial region %s', r)
         oshape = shape_of_slices(r)
 
         ratio = oshape[0] / oshape[1]
         if ratio < slit_size_ratio:
-            print "this is not a slit, ratio=", ratio
+            _logger.debug("this is not a slit, ratio=%f", ratio)
             continue
 
-        print 'initial shape', oshape
-        print 'ratio', ratio
+        _logger.debug('initial shape %s', oshape)
+        _logger.debug('ratio %f', ratio)
         rp = expand_region(r, box_increase, box_increase,
                            start=0, stop=2048)
-        print 'expanded region', rp
+        _logger.debug('expanded region %r', rp)
         ref = rp[0].start, rp[1].start
-        print 'reference point', ref
+        _logger.debug('reference point %r', ref)
     
         datas = data[rp]
-        shape = datas.shape
-    
-        print 'data, shape', shape
-        print 'orig shape', 
-        print 'data, shape', shape_of_slices(rp)
-
 
         c = ndimage.center_of_mass(datas)
     
         fc = datas.shape[0] // 2
         cc = datas.shape[1] // 2
-        print fc, cc, c[0], c[1]
+        _logger.debug("%d %d %d %d", fc, cc, c[0], c[1])
 
         peak, fwhm_x, fwhm_y = compute_fwhm_2d_simple(datas, c[1], c[0])
 
-        print 'center', 'y=',c[0] + ref[0], 'x=',c[1] +  ref[1]
-        print 'center', 'y=',c_alt[0], 'x=',c_alt[1]
-        print 'fwhm_x', fwhm_x    
-        print 'fwhm_y', fwhm_y
+        _logger.debug('x=%f y=%f', c[1] +  ref[1], c[0] +  ref[0])
+        _logger.debug('fwhm_x %f fwhm_y %f', fwhm_x, fwhm_y)
+
+        colrow = ref[1] + cc + 1, ref[0] + fc + 1
+
+        _logger.debug('Save figures slit-%d-%d', *colrow)
     
         fig = plt.figure()
         ax = fig.add_subplot(111)  
         ax.imshow(datas)
-        circle1 = plt.Circle(c[::-1], 0.6, color='r', fill=False)
+        circle1 = matplotlib.patches.Circle(c[::-1], 0.6, color='r', fill=False)
         ax.add_artist(circle1)
-        plt.show()
-    
-        plt.title('left-rigth')
-        plt.plot(datas[fc,:], 'r*-', label='%s' % (ref[0] + fc + 1))
-        plt.legend()
-        plt.show()
+        fig.savefig('slit-%d-%d-2d.png' % colrow)
+        plt.close()
 
-        plt.title('top-bottom')
-        plt.plot(datas[:,cc], 'r*-', label='%s' % (ref[1] + cc + 1))
-        plt.legend()
-        plt.show()
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('left-rigth')
+        ax.plot(datas[fc,:], 'r*-', label='%s' % colrow[0])
+        ax.legend()
+        fig.savefig('slit-%d-%d-lr.png' % colrow)
+        plt.close()
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('top-bottom')
+        ax.plot(datas[:,cc], 'r*-', label='%s' % colrow[1])
+        ax.legend()
+        fig.savefig('slit-%d-%d-tb.png'% colrow)
+        plt.close()
+
         _logger.debug('Label filtered objects')
+        
+        result.append([c[1] +  ref[1] + 1, c[0] +  ref[0] + 1, fwhm_x, fwhm_y])
+        
+    return result
