@@ -28,7 +28,6 @@ import numpy
 import scipy.interpolate as itpl
 import scipy.optimize as opz
 from astropy.modeling import models, fitting
-from astropy.io import fits
 import photutils
 from photutils import aperture_circular
 
@@ -37,17 +36,18 @@ from numina.array.utils import image_box
 from numina.array.fwhm import compute_fwhm_2d_spline
 from numina.array.fwhm import compute_fwhm_2d_simple
 from numina.core import BaseRecipe, RecipeRequirements, RecipeError
-from numina.core import Requirement, Product, DataProductRequirement, Parameter
+from numina.core import Requirement, Product, Parameter
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 from numina.constants import FWHM_G
 from emir.core import RecipeResult
-from emir.dataproducts import DataFrameType, MasterIntensityFlat
+from emir.dataproducts import DataFrameType
 from emir.dataproducts import CoordinateList2DType
 from emir.dataproducts import ArrayType
 from emir.requirements import MasterBiasRequirement
 from emir.requirements import MasterDarkRequirement
 from emir.requirements import MasterIntensityFlatFieldRequirement
+from emir.requirements import MasterSkyRequirement
 
 from .procedures import compute_fwhm_enclosed_direct
 from .procedures import compute_fwhm_enclosed_grow
@@ -62,7 +62,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 GAUSS_FWHM_FACTOR = FWHM_G
-
+PIXSCALE = 18.0
 
 # returns y,x
 def compute_fwhm(img, center):
@@ -480,9 +480,8 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = DataProductRequirement(MasterIntensityFlat,
-                                        'Master Sky calibration'
-                                        )
+    master_sky = MasterSkyRequirement()
+
     pinhole_nominal_positions = Requirement(CoordinateList2DType,
                                             'Nominal positions of the pinholes'
                                             )
@@ -591,7 +590,7 @@ class TestPinholeRecipe(BaseRecipe):
             _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f', xdtur, ydtur)
             xfac = xdtur / PIXSCALE
             yfac = -ydtur / PIXSCALE
-        
+
             vec = numpy.array([yfac, xfac])
             _logger.info('shift is %s', vec)
             ncenters = rinput.pinhole_nominal_positions + vec
@@ -599,8 +598,9 @@ class TestPinholeRecipe(BaseRecipe):
             _logger.info('using pinhole coordinates as they are')
             # Defined because we output them
             xdtur, ydtur = xdtu, ydtu
-            ncenters = rinput.pinhole_nominal_positions        
-        
+            ncenters = rinput.pinhole_nominal_positions
+
+
         _logger.info('pinhole characterization')
         positions = pinhole_char(
             hdulist[0].data,
@@ -630,6 +630,4 @@ class TestPinholeRecipe(BaseRecipe):
                                     param_max_recenter_radius=rinput.max_recenter_radius,
                                     param_box_half_size=rinput.box_half_size
                                     )
-        return result
-        
-        
+        return result      
