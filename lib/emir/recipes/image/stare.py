@@ -1,18 +1,18 @@
 #
 # Copyright 2011-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of PyEmir
-# 
+#
 # PyEmir is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # PyEmir is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -32,9 +32,10 @@ from numina.core.requirements import ObservationResultRequirement
 from emir.core import RecipeResult
 from emir.dataproducts import SourcesCatalog
 
-from emir.requirements import MasterBadPixelMask_Requirement, MasterBias_Requirement
-from emir.requirements import MasterDark_Requirement
-from emir.requirements import MasterIntensityFlatField_Requirement
+from emir.requirements import MasterBadPixelMaskRequirement
+from emir.requirements import MasterBiasRequirement
+from emir.requirements import MasterDarkRequirement
+from emir.requirements import MasterIntensityFlatFieldRequirement
 from emir.requirements import Extinction_Requirement
 from emir.requirements import Offsets_Requirement
 from emir.requirements import Catalog_Requirement
@@ -43,24 +44,28 @@ from .shared import DirectImageCommon
 
 _logger = logging.getLogger('numina.recipes.emir')
 
+
 class StareImageRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMask_Requirement()
-    master_bias = MasterBias_Requirement()
-    master_dark = MasterDark_Requirement()
-    master_flat = MasterIntensityFlatField_Requirement()    
-    extinction = Extinction_Requirement() 
+    master_bpm = MasterBadPixelMaskRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    extinction = Extinction_Requirement()
     sources = Catalog_Requirement()
     offsets = Offsets_Requirement()
     iterations = Parameter(4, 'Iterations of the recipe')
+
 
 class StareImageRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
     catalog = Product(SourcesCatalog)
 
+
 @define_requirements(StareImageRecipeRequirements)
-@define_result(StareImageRecipeResult)    
+@define_result(StareImageRecipeResult)
 class StareImageRecipe(DirectImageCommon):
+
     '''
     The effect of recording images of the sky in a given pointing
     position of the TS
@@ -69,7 +74,7 @@ class StareImageRecipe(DirectImageCommon):
     **Observing modes:**
 
         * Stare image
-    
+
     '''
 
     def __init__(self):
@@ -77,11 +82,11 @@ class StareImageRecipe(DirectImageCommon):
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
-        
+
     def run(self, ri):
-                
+
         frame, catalog = self.process(ri,
-                            window=None, subpix=1,
-                            stop_after=DirectImageCommon.PRERED)
-        
+                                      window=None, subpix=1,
+                                      stop_after=DirectImageCommon.PRERED)
+
         return StareImageRecipeResult(frame=frame, catalog=catalog)

@@ -1,21 +1,21 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of PyEmir
-# 
+#
 # PyEmir is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # PyEmir is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 '''EMIR simulator.'''
 
@@ -26,9 +26,9 @@ import logging
 from astropy.io import fits
 
 try:
-    my_fromtextfile = getattr(fits.Header, 'fromtextfile') # pyfits 3.1
-except AttributeError: # pyfits 3.0.9
-    my_fromtextfile = lambda fileobj: fits.Header(txtfile=fileobj) 
+    my_fromtextfile = getattr(fits.Header, 'fromtextfile')  # pyfits 3.1
+except AttributeError:  # pyfits 3.0.9
+    my_fromtextfile = lambda fileobj: fits.Header(txtfile=fileobj)
 
 from numina.instrument.template import interpolate
 
@@ -37,15 +37,16 @@ _logger = logging.getLogger('emir.simulator')
 _result_types = ['image', 'spectrum']
 _extensions = ['primary', 'variance', 'map', 'wcs']
 
-_table = {('image','primary'): 'image_primary.txt',
+_table = {('image', 'primary'): 'image_primary.txt',
           ('image', 'map'): 'image_map.txt',
           ('image', 'wcs'): 'image_wcs.txt',
           ('image', 'variance'): 'image_variance.txt',
-          ('spectrum','primary'): 'spectrum_primary.txt',
+          ('spectrum', 'primary'): 'spectrum_primary.txt',
           ('spectrum', 'map'): 'image_map.txt',
           ('spectrum', 'wcs'): 'image_wcs.txt',
           ('spectrum', 'variance'): 'image_variance.txt',
           }
+
 
 def _load_header(res, ext):
     try:
@@ -56,18 +57,20 @@ def _load_header(res, ext):
     hh = my_fromtextfile(sfile)
     return hh
 
+
 def _load_all_headers():
     result = {}
     for res in _result_types:
         result[res] = {}
         for ext in _extensions:
             result[res][ext] = _load_header(res, ext)
-    
+
     return result
-    
+
+
 class EmirImageFactory(object):
-    
-    default = _load_all_headers() 
+
+    default = _load_all_headers()
 
     # FIXME: workaround
     def __init__(self):
@@ -77,7 +80,7 @@ class EmirImageFactory(object):
 
     def create(self, meta, data):
         hh = self.p_templ.copy()
-        
+
         for rr in hh.ascardlist():
             rr.value = interpolate(meta, rr.value)
 
