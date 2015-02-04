@@ -20,56 +20,31 @@
 '''Recipe to detect slits in the AIV mask'''
 
 from __future__ import division
-#
+
 import logging
 
 import numpy
-
 from scipy import ndimage
 from scipy.ndimage.filters import median_filter
-
 from skimage.filter import canny
+import matplotlib.pyplot as plt
+import matplotlib.patches
 
 from numina.array.fwhm import compute_fwhm_2d_simple
 from numina.array.utils import expand_region
-
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-import matplotlib.patches
-from emir.dataproducts import ArrayType
-
-# import math
-#
-# import numpy
-# import scipy.interpolate as itpl
-# import scipy.optimize as opz
-# from astropy.modeling import models, fitting
-# import photutils
-#
-# from numina.array.recenter import img_box, centering_centroid
-#
-from numina.core import BaseRecipe, RecipeRequirements, RecipeError
-from numina.core import Requirement, Product, DataProductRequirement, Parameter
+from numina.core import BaseRecipe, RecipeRequirements
+from numina.core import Product, Parameter
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 #
 from emir.core import RecipeResult
-from emir.dataproducts import DataFrameType, MasterIntensityFlat
+from emir.dataproducts import DataFrameType
+from emir.dataproducts import ArrayType
 from emir.requirements import MasterBiasRequirement
 from emir.requirements import MasterDarkRequirement
 from emir.requirements import MasterIntensityFlatFieldRequirement
-# from emir.dataproducts import CoordinateList2DType
-# from emir.dataproducts import ArrayType
+from emir.requirements import MasterSkyRequirement
 
-# from photutils import aperture_circular
-#
-# from .procedures import compute_fwhm_spline2d_fit
-# from .procedures import compute_fwhm_enclosed_direct
-# from .procedures import compute_fwhm_enclosed_grow
-# from .procedures import compute_fwhm_simple
-# from .procedures import moments
-# from .procedures import AnnulusBackgroundEstimator
-# from .procedures import img_box2d
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 
@@ -98,8 +73,13 @@ class TestSlitDetectionRecipeRequirements(RecipeRequirements):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = DataProductRequirement(MasterIntensityFlat,
-                                        'Master Sky calibration')
+    master_sky = MasterSkyRequirement()
+
+    median_filter_size = Parameter(4, 'Size of the median box')
+    canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
+    obj_min_size = Parameter(200, 'Minimum size of the slit')
+    obj_max_size = Parameter(3000, 'Maximum size of the slit')
+    slit_size_ratio = Parameter(4.0, 'Minimum ratio between height and width for slits')
 
 
 class TestSlitDetectionRecipeResult(RecipeResult):
@@ -118,7 +98,9 @@ class TestSlitDetectionRecipe(BaseRecipe):
             )
 
     def run(self, rinput):
-        _logger.info('starting pinhole processing')
+        _logger.info('starting slit processing')
+
+        _logger.info('basic image reduction')
 
         flow = init_filters_bdfs(rinput)
 
@@ -127,25 +109,13 @@ class TestSlitDetectionRecipe(BaseRecipe):
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
 
-
-        try:
-            filtername = hdr['FILTER']
-            readmode = hdr['READMODE']
-            ipa = hdr['IPA']
-            xdtu = hdr['XDTU']
-            ydtu = hdr['YDTU']
-            zdtu = hdr['ZDTU']
-        except KeyError as error:
-            _logger.error(error)
-            raise RecipeError(error)
-
-        _logger.debug('finding pinholes')
+        _logger.debug('finding slits')
 
         # First, prefilter with median
-        median_filter_size = 4
-        canny_sigma = 3
-        obj_min_size = 200
-        obj_max_size = 3000
+        median_filter_size = rinput.median_filter_size
+        canny_sigma = rinput.canny_sigma
+        obj_min_size = rinput.obj_min_size
+        obj_max_size = rinput.obj_max_size
         
         
         data1 = hdulist[0].data
@@ -197,7 +167,9 @@ class TestSlitDetectionRecipe(BaseRecipe):
         regions = ndimage.find_objects(relabel_objects)
         centers = ndimage.center_of_mass(data2, labels=relabel_objects, index=ids)
 
-        table = char_slit(data2, regions, centers)
+        table = char_slit(data2, regions, centers,
+                          slit_size_ratio=rinput.slit_size_ratio
+                          )
 
         result = self.create_result(frame=hdulist, slitstable=table)
 
@@ -232,12 +204,14 @@ def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
         cc = datas.shape[1] // 2
         _logger.debug("%d %d %d %d", fc, cc, c[0], c[1])
 
-        peak, fwhm_x, fwhm_y = compute_fwhm_2d_simple(datas, c[1], c[0])
+        _peak, fwhm_x, fwhm_y = compute_fwhm_2d_simple(datas, c[1], c[0])
 
         _logger.debug('x=%f y=%f', c[1] +  ref[1], c[0] +  ref[0])
         _logger.debug('fwhm_x %f fwhm_y %f', fwhm_x, fwhm_y)
 
         colrow = ref[1] + cc + 1, ref[0] + fc + 1
+
+        result.append([c[1] +  ref[1] + 1, c[0] +  ref[0] + 1, fwhm_x, fwhm_y])
 
         _logger.debug('Save figures slit-%d-%d', *colrow)
     
@@ -264,9 +238,5 @@ def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
         ax.legend()
         fig.savefig('slit-%d-%d-tb.png'% colrow)
         plt.close()
-
-        _logger.debug('Label filtered objects')
-        
-        result.append([c[1] +  ref[1] + 1, c[0] +  ref[0] + 1, fwhm_x, fwhm_y])
         
     return result
