@@ -27,9 +27,7 @@ import numpy
 from astropy.io import fits
 
 from numina import __version__
-from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Product
-from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
 from numina.array import combine_shape
@@ -37,7 +35,7 @@ from numina.array import subarray_match
 from numina.frame import resize_hdu
 
 from emir.core import offsets_from_wcs
-from emir.core import RecipeResult
+from emir.core import EmirRecipe
 from emir.dataproducts import DataFrameType
 
 
@@ -85,21 +83,10 @@ def combine_frames(rframes):
     return out
 
 
-class DitheredImageARecipeRequirements(RecipeRequirements):
+class DitheredImageARecipe(EmirRecipe):
+
     obresult = ObservationResultRequirement()
-
-
-class DitheredImageARecipeResult(RecipeResult):
     frame = Product(DataFrameType)
-
-
-@define_requirements(DitheredImageARecipeRequirements)
-@define_result(DitheredImageARecipeResult)
-class DitheredImageARecipe(BaseRecipe):
-
-    def __init__(self):
-        super(DitheredImageARecipe, self).__init__(author=_s_author,
-                                                   version="0.1.0")
 
     def run(self, rinput):
 

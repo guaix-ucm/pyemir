@@ -21,11 +21,11 @@
 
 import logging
 
-from numina.core import BaseRecipe, Parameter, RecipeRequirements
-from numina.core import DataProductRequirement, define_requirements
-from numina.core import define_result, Product
+from numina.core import Parameter
+from numina.core import DataProductRequirement
+from numina.core import Product
 
-from emir.core import RecipeResult
+from emir.core import EmirRecipe
 from numina.core.requirements import ObservationResultRequirement
 from emir.requirements import MasterBadPixelMaskRequirement
 from emir.requirements import MasterBiasRequirement
@@ -40,30 +40,7 @@ __all__ = []
 _logger = logging.getLogger('numina.recipes.emir')
 
 
-class StareSpectraRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_spectral_ff = DataProductRequirement(MasterSpectralFlat,
-                                                'Master spectral flatfield')
-    st_calibration = DataProductRequirement(SlitTransmissionCalibration,
-                                            'Slit tranmision calibration')
-    w_calibration = DataProductRequirement(WavelengthCalibration,
-                                           'Wavelength calibration')
-    lines = Parameter('lines', None,
-                      'List of x-lambda pairs of line coordinates')
-
-
-class StareSpectraRecipeResult(RecipeResult):
-    spectra = Product(Spectra)
-    catalog = Product(LinesCatalog)
-
-
-@define_requirements(StareSpectraRecipeRequirements)
-@define_result(StareSpectraRecipeResult)
-class StareSpectraRecipe(BaseRecipe):
+class StareSpectraRecipe(EmirRecipe):
     '''Recipe for the reduction of multiobject spectroscopy.
 
     Recipe to reduce observations obtained in multiobject spectroscopy,
@@ -202,17 +179,6 @@ class StareSpectraRecipe(BaseRecipe):
 
     '''
 
-    def __init__(self):
-        super(StareSpectraRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
-
-    def run(self, obresult, reqs):
-        return self.create_result(spectra=Spectra(), catalog=LinesCatalog())
-
-
-class DNSSpectraRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
@@ -227,30 +193,19 @@ class DNSSpectraRecipeRequirements(RecipeRequirements):
     lines = Parameter('lines', None,
                       'List of x-lambda pairs of line coordinates')
 
-
-class DNSSpectraRecipeResult(RecipeResult):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
 
+    def run(self, obresult, reqs):
+        return self.create_result(spectra=Spectra(), catalog=LinesCatalog())
 
-@define_requirements(DNSSpectraRecipeRequirements)
-@define_result(DNSSpectraRecipeResult)
-class DNSpectraRecipe(BaseRecipe):
+
+class DNSpectraRecipe(EmirRecipe):
     '''
     Observing mode:
         Dithered/Nodded spectra along the slit
     '''
-    def __init__(self):
-        super(DNSpectraRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
 
-    def run(self, obresult, reqs):
-        return self.create_result(spectra=Spectra(), catalog=LinesCatalog())
-
-
-class OffsetSpectraRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
@@ -265,30 +220,19 @@ class OffsetSpectraRecipeRequirements(RecipeRequirements):
     lines = Parameter('lines', None,
                       'List of x-lambda pairs of line coordinates')
 
-
-class OffsetSpectraRecipeResult(RecipeResult):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
-
-
-@define_requirements(OffsetSpectraRecipeRequirements)
-@define_result(OffsetSpectraRecipeResult)
-class OffsetSpectraRecipe(BaseRecipe):
-    '''
-    Observing mode:
-        Offset spectra beyond the slit
-    '''
-    def __init__(self):
-        super(OffsetSpectraRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
 
     def run(self, obresult, reqs):
         return self.create_result(spectra=Spectra(), catalog=LinesCatalog())
 
 
-class RasterSpectraRecipeRequirements(RecipeRequirements):
+class OffsetSpectraRecipe(EmirRecipe):
+    '''
+    Observing mode:
+        Offset spectra beyond the slit
+    '''
+
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
@@ -300,25 +244,35 @@ class RasterSpectraRecipeRequirements(RecipeRequirements):
                                             'Slit tranmision calibration')
     w_calibration = DataProductRequirement(WavelengthCalibration,
                                            'Wavelength calibration')
+    lines = Parameter('lines', None,
+                      'List of x-lambda pairs of line coordinates')
+
+    spectra = Product(Spectra)
+    catalog = Product(LinesCatalog)
+
+    def run(self, obresult, reqs):
+        return self.create_result(spectra=Spectra(), catalog=LinesCatalog())
 
 
-class RasterSpectraRecipeResult(RecipeResult):
-    cube = Product(DataCube)
-
-
-@define_requirements(RasterSpectraRecipeRequirements)
-@define_result(RasterSpectraRecipeResult)
-class RasterSpectraRecipe(BaseRecipe):
+class RasterSpectraRecipe(EmirRecipe):
     '''
     Observing mode:
         Raster spectra
     '''
 
-    def __init__(self):
-        super(RasterSpectraRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
+    obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    master_spectral_ff = DataProductRequirement(MasterSpectralFlat,
+                                                'Master spectral flatfield')
+    st_calibration = DataProductRequirement(SlitTransmissionCalibration,
+                                            'Slit tranmision calibration')
+    w_calibration = DataProductRequirement(WavelengthCalibration,
+                                           'Wavelength calibration')
+
+    cube = Product(DataCube)
 
     def run(self, obresult, reqs):
-        return RasterSpectraRecipeResult(cube=DataCube())
+        return self.create_result(cube=DataCube())

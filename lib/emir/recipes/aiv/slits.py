@@ -32,12 +32,10 @@ import matplotlib.patches
 
 from numina.array.fwhm import compute_fwhm_2d_simple
 from numina.array.utils import expand_region
-from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Product, Parameter
-from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 #
-from emir.core import RecipeResult
+from emir.core import EmirRecipe
 from emir.dataproducts import DataFrameType
 from emir.dataproducts import ArrayType
 from emir.requirements import MasterBiasRequirement
@@ -68,7 +66,9 @@ def normalize(data):
     return data_22
 
 
-class TestSlitDetectionRecipeRequirements(RecipeRequirements):
+class TestSlitDetectionRecipe(EmirRecipe):
+
+    # Recipe Requirements
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
@@ -81,21 +81,10 @@ class TestSlitDetectionRecipeRequirements(RecipeRequirements):
     obj_max_size = Parameter(3000, 'Maximum size of the slit')
     slit_size_ratio = Parameter(4.0, 'Minimum ratio between height and width for slits')
 
-
-class TestSlitDetectionRecipeResult(RecipeResult):
+    # Recipe Results
     frame = Product(DataFrameType)
     slitstable = Product(ArrayType)
 
-
-@define_requirements(TestSlitDetectionRecipeRequirements)
-@define_result(TestSlitDetectionRecipeResult)
-class TestSlitDetectionRecipe(BaseRecipe):
-
-    def __init__(self):
-        super(TestSlitDetectionRecipe, self).__init__(
-            author=_s_author,
-            version="0.1.0"
-            )
 
     def run(self, rinput):
         _logger.info('starting slit processing')

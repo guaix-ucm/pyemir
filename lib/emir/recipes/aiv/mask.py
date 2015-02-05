@@ -35,12 +35,11 @@ from numina.array.recenter import centering_centroid
 from numina.array.utils import image_box
 from numina.array.fwhm import compute_fwhm_2d_spline
 from numina.array.fwhm import compute_fwhm_2d_simple
-from numina.core import BaseRecipe, RecipeRequirements, RecipeError
+from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
-from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 from numina.constants import FWHM_G
-from emir.core import RecipeResult
+from emir.core import EmirRecipe
 from emir.dataproducts import DataFrameType
 from emir.dataproducts import CoordinateList2DType
 from emir.dataproducts import ArrayType
@@ -475,7 +474,10 @@ def pinhole_char2(
     return mm0
 
 
-class TestPinholeRecipeRequirements(RecipeRequirements):
+class TestPinholeRecipe(EmirRecipe):
+
+    # Recipe Requirements
+    #
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
@@ -492,8 +494,7 @@ class TestPinholeRecipeRequirements(RecipeRequirements):
     recenter = Parameter(True, 'Recenter the pinhole coordinates')
     max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
 
-
-class TestPinholeRecipeResult(RecipeResult):
+    # Recipe Products
     frame = Product(DataFrameType)
     positions = Product(ArrayType)
     positions_alt = Product(ArrayType)
@@ -504,17 +505,6 @@ class TestPinholeRecipeResult(RecipeResult):
     param_recenter = Product(bool)
     param_max_recenter_radius = Product(float)
     param_box_half_size = Product(float)
-
-
-@define_requirements(TestPinholeRecipeRequirements)
-@define_result(TestPinholeRecipeResult)
-class TestPinholeRecipe(BaseRecipe):
-
-    def __init__(self):
-        super(TestPinholeRecipe, self).__init__(
-            author=_s_author,
-            version="0.1.0"
-        )
 
     def run(self, rinput):
         _logger.info('starting processing for slit detection')

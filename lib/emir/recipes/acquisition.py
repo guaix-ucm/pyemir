@@ -27,12 +27,12 @@ Recipe for the processing of target acquisition images.
 
 import logging
 
-from numina.core import BaseRecipe
-from numina.core import RecipeRequirements, Product
-from numina.core import define_requirements, define_result
+
+from numina.core import Product
+
 from numina.core.requirements import ObservationResultRequirement
 
-from emir.core import RecipeResult
+from emir.core import EmirRecipe
 from emir.dataproducts import TelescopeOffset, MSMPositions
 from emir.requirements import MasterBiasRequirement
 from emir.requirements import MasterDarkRequirement
@@ -45,21 +45,7 @@ __all__ = ['TargetAcquisitionRecipe', 'MaskImagingRecipe', 'MaskCheckRecipe']
 _logger = logging.getLogger('emir.recipes')
 
 
-class TargetAcquisitionRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-
-
-class TargetAcquisitionRecipeResult(RecipeResult):
-    telescope_offset = Product(TelescopeOffset)
-
-
-@define_requirements(TargetAcquisitionRecipeRequirements)
-@define_result(TargetAcquisitionRecipeResult)
-class TargetAcquisitionRecipe(BaseRecipe):
+class TargetAcquisitionRecipe(EmirRecipe):
 
     '''
     Acquire a target.
@@ -73,31 +59,21 @@ class TargetAcquisitionRecipe(BaseRecipe):
 
     '''
 
-    def __init__(self):
-        super(TargetAcquisitionRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
-
-    def run(self, obresult, reqs):
-        return self.create_result(telescope_offset=TelescopeOffset())
-
-
-class MaskImagingRecipeRequirements(RecipeRequirements):
+    # Requirements
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
+    
+    # Products
+    telescope_offset = Product(TelescopeOffset)
+
+    def run(self, obresult, reqs):
+        return self.create_result(telescope_offset=TelescopeOffset())
 
 
-class MaskImagingRecipeResult(RecipeResult):
-    msm_positions = Product(MSMPositions)
-
-
-@define_requirements(MaskImagingRecipeRequirements)
-@define_result(MaskImagingRecipeResult)
-class MaskImagingRecipe(BaseRecipe):
+class MaskImagingRecipe(EmirRecipe):
 
     '''Acquire a target.
 
@@ -110,32 +86,19 @@ class MaskImagingRecipe(BaseRecipe):
       *  Mask imaging
     '''
 
-    def __init__(self):
-        super(MaskImagingRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
-
-    def run(self, obresult, reqs):
-        return self.create_result(msm_positions=MSMPositions())
-
-
-class MaskCheckRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
 
-
-class MaskCheckRecipeResult(RecipeResult):
     msm_positions = Product(MSMPositions)
-    telescope_offset = Product(TelescopeOffset)
+
+    def run(self, obresult, reqs):
+        return self.create_result(msm_positions=MSMPositions())
 
 
-@define_requirements(MaskCheckRecipeRequirements)
-@define_result(MaskCheckRecipeResult)
-class MaskCheckRecipe(BaseRecipe):
+class MaskCheckRecipe(EmirRecipe):
 
     '''
     Acquire a target.
@@ -148,11 +111,15 @@ class MaskCheckRecipe(BaseRecipe):
 
     '''
 
-    def __init__(self):
-        super(MaskCheckRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
+    obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+
+    msm_positions = Product(MSMPositions)
+    telescope_offset = Product(TelescopeOffset)
+
 
     def run(self, obresult, reqs):
         return self.create_result(msm_positions=MSMPositions(),
