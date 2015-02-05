@@ -231,20 +231,17 @@ class TestSkyCorrectRecipe(EmirRecipe):
 
     frame = Product(DataFrameType)
 
-
     def run(self, rinput):
         _logger.info('starting simple sky reduction')
 
         flow = init_filters_bdfs(rinput)
 
-        hdu = basic_processing_with_combination(rinput, flow, method=median)
-        hdr = hdu.header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
         # Update SEC to 0
         hdr['SEC'] = 0
-        hdulist = fits.HDUList([hdu])
-
+        
         result = self.create_result(frame=hdulist)
 
         return result
