@@ -198,7 +198,6 @@ class TestDarkCorrectRecipe(EmirRecipe):
         return result
 
 
-
 class TestFlatCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
@@ -212,17 +211,12 @@ class TestFlatCorrectRecipe(EmirRecipe):
         _logger.info('starting simple flat reduction')
 
         flow = init_filters_bdf(rinput)
-        hdu = basic_processing_with_combination(rinput, flow, method=median)
-        hdr = hdu.header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdulist = fits.HDUList([hdu])
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
         result = self.create_result(frame=hdulist)
 
         return result
-
-
-
 
 
 class TestSkyCorrectRecipe(EmirRecipe):

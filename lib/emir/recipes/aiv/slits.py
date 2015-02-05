@@ -95,8 +95,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
         hdr = hdulist[0].header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        self.set_base_headers(hdr)
 
         _logger.debug('finding slits')
 
