@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2015 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -22,10 +22,11 @@
 import logging
 
 import numpy
+
+#from numina.core import BaseRecipeAutoQC
 from numina.core import RecipeError
-from numina.core import BaseRecipe, RecipeRequirements, DataFrame
+from numina.core import DataFrame#from numina.core import BaseRecipeAutoQC
 from numina.core import Product
-from numina.core import define_requirements, define_result
 from numina.logger import log_to_history
 from numina.array.combine import median
 # from numina.flow.processing import BadPixelCorrector
@@ -33,9 +34,9 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
 
 import emir.instrument.channels as allchannels
-from emir.core import RecipeResult
 from emir.core import EMIR_BIAS_MODES
 from emir.core import gather_info_frames
+from emir.core import EmirRecipe
 from emir.dataproducts import MasterBias, MasterDark
 from emir.dataproducts import MasterIntensityFlat
 from emir.dataproducts import WavelengthCalibration, MasterSpectralFlat
@@ -58,8 +59,6 @@ __all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-_s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
-
 
 def _s_to_f(myslice):
     b = myslice.start
@@ -67,20 +66,7 @@ def _s_to_f(myslice):
     return b+1, e
 
 
-class BiasRecipeRequirements(RecipeRequirements):
-    master_bpm = MasterBadPixelMaskRequirement()
-    obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
-
-
-class BiasRecipeResult(RecipeResult):
-    biasframe = Product(MasterBias)
-    stats = Product(ChannelLevelStatisticsType)
-
-
-@define_requirements(BiasRecipeRequirements)
-@define_result(BiasRecipeResult)
-class BiasRecipe(BaseRecipe):
+class BiasRecipe(EmirRecipe):
     '''
     Recipe to process data taken in Bias image Mode.
 
@@ -103,9 +89,15 @@ class BiasRecipe(BaseRecipe):
     combining them with a median algorithm.
 
     '''
+    
+    master_bpm = MasterBadPixelMaskRequirement()
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
 
-    def __init__(self):
-        super(BiasRecipe, self).__init__(author=_s_author, version="0.1.0")
+    biasframe = Product(MasterBias)
+    stats = Product(ChannelLevelStatisticsType)
+
+    
 
     # FIXME find a better way of doing this automatically
     # @log_to_history(_logger)
@@ -157,18 +149,7 @@ class BiasRecipe(BaseRecipe):
         return result
 
 
-class DarkRecipeRequirements(BiasRecipeRequirements):
-    master_bias = MasterBiasRequirement()
-
-
-class DarkRecipeResult(RecipeResult):
-    darkframe = Product(MasterDark)
-    stats = Product(ChannelLevelStatisticsType)
-
-
-@define_requirements(DarkRecipeRequirements)
-@define_result(DarkRecipeResult)
-class DarkRecipe(BaseRecipe):
+class DarkRecipe(EmirRecipe):
     '''Recipe to process data taken in Dark current image Mode.
 
     Recipe to process dark images. The dark images will be combined
@@ -186,8 +167,14 @@ class DarkRecipe(BaseRecipe):
      * A combined dark frame, with variance extension.
     '''
 
-    def __init__(self):
-        super(DarkRecipe, self).__init__(author=_s_author, version="0.1.0")
+    master_bpm = MasterBadPixelMaskRequirement()
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
+    master_bias = MasterBiasRequirement()
+
+    darkframe = Product(MasterDark)
+    stats = Product(ChannelLevelStatisticsType)
+
 
     # @log_to_history(_logger)
     def run(self, rinput):
@@ -240,17 +227,7 @@ class DarkRecipe(BaseRecipe):
         return result
 
 
-class IntensityFlatRecipeRequirements(DarkRecipeRequirements):
-    master_dark = MasterDarkRequirement()
-
-
-class IntensityFlatRecipeResult(RecipeResult):
-    flatframe = Product(MasterIntensityFlat)
-
-
-@define_requirements(IntensityFlatRecipeRequirements)
-@define_result(IntensityFlatRecipeResult)
-class IntensityFlatRecipe(BaseRecipe):
+class IntensityFlatRecipe(EmirRecipe):
     '''Recipe to process data taken in intensity flat-field mode.
 
     Recipe to process intensity flat-fields. The flat-on and
@@ -277,9 +254,15 @@ class IntensityFlatRecipe(BaseRecipe):
        with with variance extension and quality flag.
 
     '''
-    def __init__(self):
-        super(IntensityFlatRecipe, self).__init__(author=_s_author,
-                                                  version="0.1.0")
+
+    master_bpm = MasterBadPixelMaskRequirement()
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+
+    flatframe = Product(MasterIntensityFlat)    
+
 
     def run(self, rinput):
         _logger.info('starting flat reduction')
@@ -309,23 +292,20 @@ class IntensityFlatRecipe(BaseRecipe):
         return result
 
 
-class SimpleSkyRecipeRequirements(IntensityFlatRecipeRequirements):
-    master_flat = MasterIntensityFlatFieldRequirement()
-
-
-class SimpleSkyRecipeResult(RecipeResult):
-    skyframe = Product(MasterIntensityFlat)
-
-
-@define_requirements(SimpleSkyRecipeRequirements)
-@define_result(SimpleSkyRecipeResult)
-class SimpleSkyRecipe(BaseRecipe):
+class SimpleSkyRecipe(EmirRecipe):
     '''Recipe to process data taken in intensity flat-field mode.
 
     '''
-    def __init__(self):
-        super(SimpleSkyRecipe, self).__init__(author=_s_author,
-                                              version="0.1.0")
+
+    master_bpm = MasterBadPixelMaskRequirement()
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+
+    skyframe = Product(MasterIntensityFlat)
+
 
     def run(self, rinput):
         _logger.info('starting sky reduction')
@@ -348,64 +328,23 @@ class SimpleSkyRecipe(BaseRecipe):
         return result
 
 
-class SpectralFlatRecipeRequirements(IntensityFlatRecipeRequirements):
-    pass
+class SpectralFlatRecipe(EmirRecipe):
+   
 
-
-class SpectralFlatRecipeResult(RecipeResult):
-    flatframe = Product(MasterSpectralFlat)
-
-
-@define_requirements(SpectralFlatRecipeRequirements)
-@define_result(SpectralFlatRecipeResult)
-class SpectralFlatRecipe(BaseRecipe):
-    '''Spectral Flatfield Recipe.
-
-    Recipe to process spectral flat-fields.
-
-    **Observing modes:**
-
-        * Multislit mask Flat-Field
-
-    **Inputs:**
-
-     * A list of lamp-on flats
-     * A model of the detector
-
-    **Outputs:**
-
-     * A combined spectral flat field with with variance extension
-     and quality flag.
-
-    **Procedure:**
-
-     * TBD
-
-    '''
-
-    def __init__(self):
-        super(SpectralFlatRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
-
-    def run(self, obresult, rinput):
-        return SpectralFlatRecipeResult(flatframe=MasterSpectralFlat(None))
-
-
-class SlitTransmissionRecipeRequirements(RecipeRequirements):
     master_bpm = MasterBadPixelMaskRequirement()
+    obresult = ObservationResultRequirement()
+    insconf = InstrumentConfigurationRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    
+    flatframe = Product(MasterSpectralFlat)
+
+    def run(self, obresult, rinput):
+        return self.create_result(flatframe=MasterSpectralFlat(None))
 
 
-class SlitTransmissionRecipeResult(RecipeResult):
-    slit = Product(SlitTransmissionCalibration)
-
-
-@define_requirements(SlitTransmissionRecipeRequirements)
-@define_result(SlitTransmissionRecipeResult)
-class SlitTransmissionRecipe(BaseRecipe):
+class SlitTransmissionRecipe(EmirRecipe):
     '''Recipe to calibrate the slit transmission.
 
     **Observing modes:**
@@ -426,32 +365,20 @@ class SlitTransmissionRecipe(BaseRecipe):
 
     '''
 
-    def __init__(self):
-        super(SlitTransmissionRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
-
-    @log_to_history(_logger, 'slit')
-    def run(self, obresult, rinput):
-        return SlitTransmissionRecipeResult(slit=SlitTransmissionCalibration())
-
-
-class WavelengthCalibrationRecipeRequirements(RecipeRequirements):
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_spectral_ff = MasterSpectralFlatFieldRequirement()
+
+    slit = Product(SlitTransmissionCalibration)
 
 
-class WavelengthCalibrationRecipeResult(RecipeResult):
-    cal = Product(WavelengthCalibration)
+    @log_to_history(_logger, 'slit')
+    def run(self, obresult, rinput):
+        return self.create_result(slit=SlitTransmissionCalibration())
 
 
-@define_requirements(WavelengthCalibrationRecipeRequirements)
-@define_result(WavelengthCalibrationRecipeResult)
-class WavelengthCalibrationRecipe(BaseRecipe):
+
+class WavelengthCalibrationRecipe():
     '''Recipe to calibrate the spectral response.
 
     **Observing modes:**
@@ -472,12 +399,15 @@ class WavelengthCalibrationRecipe(BaseRecipe):
      * TBD
     '''
 
-    def __init__(self):
-        super(WavelengthCalibrationRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
+    master_bpm = MasterBadPixelMaskRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    master_spectral_ff = MasterSpectralFlatFieldRequirement()
+
+    cal = Product(WavelengthCalibration)
+
 
     @log_to_history(_logger, 'cal')
     def run(self, obresult, rinput):
-        return WavelengthCalibrationRecipeResult(cal=WavelengthCalibration())
+        return self.create_result(cal=WavelengthCalibration())
