@@ -64,6 +64,7 @@ _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 GAUSS_FWHM_FACTOR = FWHM_G
 PIXSCALE = 18.0
 
+
 # returns y,x
 def compute_fwhm(img, center):
     X = numpy.arange(img.shape[0])
@@ -164,15 +165,15 @@ def gauss_model(data, center_r):
         sl[0].start, t.amplitude.value, t.x_stddev.value, t.y_stddev.value
     return mm
 
- 
+
 def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_half_box, do_recenter):
-    
+
     # recentered values
     centers_r = numpy.empty_like(centers_i)
     # Ignore certain pinholes
     compute_mask = numpy.ones((centers_i.shape[0],), dtype='bool')
     status_array = numpy.ones((centers_i.shape[0],), dtype='int')
-    
+
     for idx, (xi, yi) in enumerate(centers_i):
         # A failsafe
         _logger.info('for pinhole %i', idx)
@@ -206,6 +207,7 @@ def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_ha
                 status_array[idx] = 0
 
     return centers_r, compute_mask, status_array
+
 
 def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
 
@@ -507,24 +509,26 @@ class TestPinholeRecipeResult(RecipeResult):
 
 
 from numina.core import ObservationResult
+
+
 class TestPinholeRecipeInputBuilder(object):
-'''Class to build TestPinholeRecipe inputs from the Observation
-Results.
+    '''Class to build TestPinholeRecipe inputs from the Observation
+        Results.
 
        Fetches SKY calibration image from the archive
 
 
-'''
+    '''
 
     def __init__(self, dal):
         self.dal = dal
         self.sky_image = None
 
-    def buildRecipeInput (self, obsres):
+    def buildRecipeInput(self, obsres):
 
         if self.sky_image is None:
             print 'obtaining SKY image'
-            sky_cal_result = self.dal.getLastRecipeResult ("EMIR", "EMIR", "IMAGE_SKY")
+            sky_cal_result = self.dal.getLastRecipeResult("EMIR", "EMIR", "IMAGE_SKY")
             self.sky_image = sky_cal_result['elements']['skyframe']
 
         obsres['master_sky'] = self.sky_image
@@ -541,7 +545,7 @@ Results.
 class TestPinholeRecipe(BaseRecipe):
 
     InputBuilder = TestPinholeRecipeInputBuilder
-    
+
     def __init__(self):
         super(TestPinholeRecipe, self).__init__(
             author=_s_author,
@@ -600,7 +604,6 @@ class TestPinholeRecipe(BaseRecipe):
             xdtur, ydtur = xdtu, ydtu
             ncenters = rinput.pinhole_nominal_positions
 
-
         _logger.info('pinhole characterization')
         positions = pinhole_char(
             hdulist[0].data,
@@ -618,7 +621,6 @@ class TestPinholeRecipe(BaseRecipe):
             recenter_maxdist=rinput.max_recenter_radius
         )
 
-
         result = self.create_result(frame=hdulist,
                                     positions=positions,
                                     positions_alt=positions_alt,
@@ -630,4 +632,4 @@ class TestPinholeRecipe(BaseRecipe):
                                     param_max_recenter_radius=rinput.max_recenter_radius,
                                     param_box_half_size=rinput.box_half_size
                                     )
-        return result      
+        return result

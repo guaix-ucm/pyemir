@@ -271,34 +271,36 @@ class TestFlatCorrectRecipe(BaseRecipe):
 
         return result
 
+
 from numina.core import ObservationResult
-class StareImageRecipeInputBuilder:
-    '''Class to build StareImageRecipe inputs from the Observation
-Results.
+
+
+class StareImageRecipeInputBuilder(object):
+    '''Class to build StareImageRecipe inputs from the Observation Results.
 
        Fetches SKY calibration image from the archive
-
 
     '''
 
     def __init__(self, dal):
-       self.dal = dal
-       self.sky_image = None
+        self.dal = dal
+        self.sky_image = None
 
-    def buildRecipeInput (self, obsres):
+    def buildRecipeInput(self, obsres):
 
-       if self.sky_image is None:
-          print 'obtaining SKY image'
-          sky_cal_result = self.dal.getLastRecipeResult ("EMIR", "EMIR", "IMAGE_SKY")
-          self.sky_image = sky_cal_result['elements']['skyframe']
+        if self.sky_image is None:
+            print 'obtaining SKY image'
+            sky_cal_result = self.dal.getLastRecipeResult("EMIR", "EMIR", "IMAGE_SKY")
+            self.sky_image = sky_cal_result['elements']['skyframe']
 
-       obsres['master_sky'] = self.sky_image
-       newOR = ObservationResult()
-       newOR.frames = obsres['frames']
-       obsres['obresult'] = newOR
-       newRI = StareImageRecipeRequirements(**obsres)
+        obsres['master_sky'] = self.sky_image
+        newOR = ObservationResult()
+        newOR.frames = obsres['frames']
+        obsres['obresult'] = newOR
+        newRI = StareImageRecipeRequirements(**obsres)
 
-       return newRI
+        return newRI
+
 
 class TestSkyCorrectRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
@@ -311,6 +313,7 @@ class TestSkyCorrectRecipeRequirements(RecipeRequirements):
 
 
 StareImageRecipeRequirements = TestSkyCorrectRecipeRequirements
+
 
 class TestSkyCorrectRecipeResult(RecipeResult):
     frame = Product(DataFrameType)

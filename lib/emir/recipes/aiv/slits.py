@@ -116,8 +116,7 @@ class TestSlitDetectionRecipe(BaseRecipe):
         canny_sigma = rinput.canny_sigma
         obj_min_size = rinput.obj_min_size
         obj_max_size = rinput.obj_max_size
-        
-        
+
         data1 = hdulist[0].data
         _logger.debug('Median filter with box %d', median_filter_size)
         data2 = median_filter(data1, size=median_filter_size)
@@ -128,10 +127,10 @@ class TestSlitDetectionRecipe(BaseRecipe):
         # Find edges with canny
         _logger.debug('Find edges with canny, sigma %d', canny_sigma)
         edges = canny(img_grey, sigma=canny_sigma)
-        
+
         # Fill edges
         _logger.debug('Fill holes')
-        fill_slits =  ndimage.binary_fill_holes(edges)
+        fill_slits = ndimage.binary_fill_holes(edges)
 
         _logger.debug('Label objects')
         label_objects, nb_labels = ndimage.label(fill_slits)
@@ -155,7 +154,7 @@ class TestSlitDetectionRecipe(BaseRecipe):
         mm.shape = label_objects.shape
 
         fill_slits_clean = numpy.where(mm, 1, 0)
-        #plt.imshow(fill_slits_clean)
+        # plt.imshow(fill_slits_clean)
 
         # and relabel
         _logger.debug('Label filtered objects')
@@ -174,6 +173,7 @@ class TestSlitDetectionRecipe(BaseRecipe):
         result = self.create_result(frame=hdulist, slitstable=table)
 
         return result
+
 
 def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
 
@@ -195,28 +195,28 @@ def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
         _logger.debug('expanded region %r', rp)
         ref = rp[0].start, rp[1].start
         _logger.debug('reference point %r', ref)
-    
+
         datas = data[rp]
 
         c = ndimage.center_of_mass(datas)
-    
+
         fc = datas.shape[0] // 2
         cc = datas.shape[1] // 2
         _logger.debug("%d %d %d %d", fc, cc, c[0], c[1])
 
         _peak, fwhm_x, fwhm_y = compute_fwhm_2d_simple(datas, c[1], c[0])
 
-        _logger.debug('x=%f y=%f', c[1] +  ref[1], c[0] +  ref[0])
+        _logger.debug('x=%f y=%f', c[1] + ref[1], c[0] + ref[0])
         _logger.debug('fwhm_x %f fwhm_y %f', fwhm_x, fwhm_y)
 
         colrow = ref[1] + cc + 1, ref[0] + fc + 1
 
-        result.append([c[1] +  ref[1] + 1, c[0] +  ref[0] + 1, fwhm_x, fwhm_y])
+        result.append([c[1] + ref[1] + 1, c[0] + ref[0] + 1, fwhm_x, fwhm_y])
 
         _logger.debug('Save figures slit-%d-%d', *colrow)
-    
+
         fig = plt.figure()
-        ax = fig.add_subplot(111)  
+        ax = fig.add_subplot(111)
         ax.imshow(datas)
         circle1 = matplotlib.patches.Circle(c[::-1], 0.6, color='r', fill=False)
         ax.add_artist(circle1)
@@ -226,7 +226,7 @@ def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title('left-rigth')
-        ax.plot(datas[fc,:], 'r*-', label='%s' % colrow[0])
+        ax.plot(datas[fc, :], 'r*-', label='%s' % colrow[0])
         ax.legend()
         fig.savefig('slit-%d-%d-lr.png' % colrow)
         plt.close()
@@ -234,9 +234,9 @@ def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title('top-bottom')
-        ax.plot(datas[:,cc], 'r*-', label='%s' % colrow[1])
+        ax.plot(datas[:, cc], 'r*-', label='%s' % colrow[1])
         ax.legend()
-        fig.savefig('slit-%d-%d-tb.png'% colrow)
+        fig.savefig('slit-%d-%d-tb.png' % colrow)
         plt.close()
-        
+
     return result

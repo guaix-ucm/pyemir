@@ -25,8 +25,10 @@ from numina.user import main
 
 BASE_URL = 'http://guaix.fis.ucm.es/~spr/emir_test/'
 
+
 def run_recipe():
     main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
+
 
 @pytest.mark.remote
 def test_mode_TEST6_set0(numinatpldir):
