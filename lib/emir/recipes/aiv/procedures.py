@@ -200,7 +200,7 @@ def rim(data, xinit, yinit,
     plot_half_box = (3*box, 3*box)
 
     print 'C initial', xinit, yinit
-    x0, y0, back_, msg = centering_centroid(data, xinit, yinit,
+    x0, y0, _1, _2, _3 = centering_centroid(data, xinit, yinit,
                                             box=recenter_half_box,
                                             maxdist=recenter_maxdist,
                                             nloop=recenter_nloop
@@ -210,7 +210,7 @@ def rim(data, xinit, yinit,
     if fine_recentering:
         print 'Fine recentering'
         print 'C initial', x0, y0
-        x1, y1, back_, msg = centering_centroid(
+        x1, y1, _back, _status, _msg = centering_centroid(
             data,
             x0,
             y0,
