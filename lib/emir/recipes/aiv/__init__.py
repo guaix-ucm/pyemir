@@ -243,7 +243,7 @@ class StareImageRecipeInputBuilder(object):
         obsres['obresult'] = newOR
         newRI = StareImageRecipeRequirements(**obsres)
 
-       return newRI
+        return newRI
 
 
 class TestSkyCorrectRecipe(EmirRecipe):
