@@ -35,12 +35,11 @@ from numina.array.recenter import centering_centroid
 from numina.array.utils import image_box
 from numina.array.fwhm import compute_fwhm_2d_spline
 from numina.array.fwhm import compute_fwhm_2d_simple
-from numina.core import BaseRecipe, RecipeRequirements, RecipeError
+from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
-from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 from numina.constants import FWHM_G
-from emir.core import RecipeResult
+from emir.core import EmirRecipe
 from emir.dataproducts import DataFrameType
 from emir.dataproducts import CoordinateList2DType
 from emir.dataproducts import ArrayType
@@ -63,7 +62,6 @@ _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 GAUSS_FWHM_FACTOR = FWHM_G
 PIXSCALE = 18.0
-
 
 # returns y,x
 def compute_fwhm(img, center):
@@ -207,7 +205,6 @@ def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_ha
                 status_array[idx] = 0
 
     return centers_r, compute_mask, status_array
-
 
 def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
 
@@ -477,37 +474,6 @@ def pinhole_char2(
     return mm0
 
 
-class TestPinholeRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = MasterSkyRequirement()
-
-    pinhole_nominal_positions = Requirement(CoordinateList2DType,
-                                            'Nominal positions of the pinholes'
-                                            )
-    shift_coordinates = Parameter(True, 'Use header information to'
-                                  ' shift the pinhole positions from (0,0) '
-                                  'to X_DTU, Y_DTU')
-    box_half_size = Parameter(4, 'Half of the computation box size in pixels')
-    recenter = Parameter(True, 'Recenter the pinhole coordinates')
-    max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
-
-
-class TestPinholeRecipeResult(RecipeResult):
-    frame = Product(DataFrameType)
-    positions = Product(ArrayType)
-    positions_alt = Product(ArrayType)
-    DTU = Product(ArrayType)
-    filter = Product(str)
-    readmode = Product(str)
-    IPA = Product(float)
-    param_recenter = Product(bool)
-    param_max_recenter_radius = Product(float)
-    param_box_half_size = Product(float)
-
-
 from numina.core import ObservationResult
 
 
@@ -540,17 +506,40 @@ class TestPinholeRecipeInputBuilder(object):
         return newRI
 
 
-@define_requirements(TestPinholeRecipeRequirements)
-@define_result(TestPinholeRecipeResult)
-class TestPinholeRecipe(BaseRecipe):
+class TestPinholeRecipe(EmirRecipe):
+
+    # Recipe Requirements
+    #
+    obresult = ObservationResultRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    master_sky = MasterSkyRequirement()
+
+    pinhole_nominal_positions = Requirement(CoordinateList2DType,
+                                            'Nominal positions of the pinholes'
+                                            )
+    shift_coordinates = Parameter(True, 'Use header information to'
+                                  ' shift the pinhole positions from (0,0) '
+                                  'to X_DTU, Y_DTU')
+    box_half_size = Parameter(4, 'Half of the computation box size in pixels')
+    recenter = Parameter(True, 'Recenter the pinhole coordinates')
+    max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
+
+    # Recipe Products
+    frame = Product(DataFrameType)
+    positions = Product(ArrayType)
+    positions_alt = Product(ArrayType)
+    DTU = Product(ArrayType)
+    filter = Product(str)
+    readmode = Product(str)
+    IPA = Product(float)
+    param_recenter = Product(bool)
+    param_max_recenter_radius = Product(float)
+    param_box_half_size = Product(float)
 
     InputBuilder = TestPinholeRecipeInputBuilder
 
-    def __init__(self):
-        super(TestPinholeRecipe, self).__init__(
-            author=_s_author,
-            version="0.1.0"
-        )
 
     def run(self, rinput):
         _logger.info('starting processing for slit detection')
@@ -560,8 +549,7 @@ class TestPinholeRecipe(BaseRecipe):
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 
         hdr = hdulist[0].header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        self.set_base_headers(hdr)
 
         _logger.debug('finding pinholes')
 
@@ -625,7 +613,7 @@ class TestPinholeRecipe(BaseRecipe):
                                     positions=positions,
                                     positions_alt=positions_alt,
                                     filter=filtername,
-                                    DTU=[xdtu, ydtu, zdtu],
+                                    DTU=[xdtur, ydtur, zdtu],
                                     readmode=readmode,
                                     IPA=ipa,
                                     param_recenter=rinput.recenter,

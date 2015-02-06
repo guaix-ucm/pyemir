@@ -1,18 +1,18 @@
 #
 # Copyright 2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of PyEmir
-# 
+#
 # PyEmir is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # PyEmir is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -27,18 +27,15 @@ import numpy
 from astropy.io import fits
 
 from numina import __version__
-from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Product
-from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.oresult import ObservationResult
 from numina.array import combine
 from numina.array import combine_shape
 from numina.array import subarray_match
 from numina.frame import resize_hdu
 
 from emir.core import offsets_from_wcs
-from emir.core import RecipeResult
+from emir.core import EmirRecipe
 from emir.dataproducts import DataFrameType
 
 
@@ -46,36 +43,6 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
-
-class DitheredImageRecipeInputBuilder(object):
-    '''Class to build DitheredImageRecipe inputs from the Observation
-Results
-   
-    RecipeInputBuilder which fetches the pre-reduced images that will be
-combined
-   
-    '''
-
-    def __init__(self, dal):
-       self.dal = dal
-   
-    def buildRecipeInput (self, obsres):
-       
-       stareImages = []
-
-       stareImagesIds = obsres['stareImagesIds']._v 
-       for subresId in stareImagesIds:
-                subres = self.dal.getRecipeResult (subresId)
-                stareImages.append(subres['elements']['frame'])
-        
-       newOR = ObservationResult()
-       newOR.frames = stareImages
-       obsres['obresult'] = newOR
-       print 'Adding RI parameters ', obsres
-       newRI = DitheredImageARecipeRequirements(**obsres)
-
-       
-       return newRI
 
 def resize_hdul(hdul, newshape, region, extensions=None, window=None,
                 scale=1, fill=0.0, clobber=True, conserve=True):
@@ -116,23 +83,10 @@ def combine_frames(rframes):
     return out
 
 
-class DitheredImageARecipeRequirements(RecipeRequirements):
+class DitheredImageARecipe(EmirRecipe):
+
     obresult = ObservationResultRequirement()
-
-
-class DitheredImageARecipeResult(RecipeResult):
     frame = Product(DataFrameType)
-
-
-@define_requirements(DitheredImageARecipeRequirements)
-@define_result(DitheredImageARecipeResult)
-class DitheredImageARecipe(BaseRecipe):
-
-    InputBuilder = DitheredImageRecipeInputBuilder
-
-    def __init__(self):
-        super(DitheredImageARecipe, self).__init__(author=_s_author,
-                                                   version="0.1.0")
 
     def run(self, rinput):
 
@@ -170,4 +124,3 @@ class DitheredImageARecipe(BaseRecipe):
         result = self.create_result(frame=hdulist)
 
         return result
-

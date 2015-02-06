@@ -26,11 +26,12 @@ import numpy
 import scipy.stats
 from astropy.io import fits
 
-from numina.core import BaseRecipe, Parameter, DataFrame
-from numina.core import RecipeError, RecipeRequirements
-from numina.core import Product, define_requirements, define_result
+from numina.core.requirements import ObservationResultRequirement
+from numina.core import Parameter, DataFrame
+from numina.core import RecipeError
+from numina.core import Product
 
-from emir.core import RecipeResult
+from emir.core import EmirRecipe
 from emir.instrument.detector import QUADRANTS
 from emir.instrument.channels import CHANNELS
 from emir.dataproducts import MasterGainMap, MasterRONMap
@@ -38,32 +39,22 @@ from emir.dataproducts import MasterGainMap, MasterRONMap
 _logger = logging.getLogger('numina.recipes.emir')
 
 
-class GainRecipe1Input(RecipeRequirements):
-    region = Parameter('channel', 'Region used to compute: '
-                       '(full|quadrant|channel)',
-                       choices=['full', 'quadrant', 'channel']
-                       )
-
-
-class GainRecipe1InputResult(RecipeResult):
-    gain = Product(MasterGainMap(None, None, None))
-    ron = Product(MasterRONMap(None, None))
-
-
-@define_requirements(GainRecipe1Input)
-@define_result(GainRecipe1InputResult)
-class GainRecipe1(BaseRecipe):
+class GainRecipe1(EmirRecipe):
 
     '''Detector Gain Recipe.
 
     Recipe to calibrate the detector gain.
     '''
+    
+    obresult = ObservationResultRequirement()
+    region = Parameter('channel', 'Region used to compute: '
+                       '(full|quadrant|channel)',
+                       choices=['full', 'quadrant', 'channel']
+                       )
 
-    def __init__(self):
-        super(GainRecipe1, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
+    gain = Product(MasterGainMap(None, None, None))
+    ron = Product(MasterRONMap(None, None))
+
 
     def region(self, reqs):
         mm = reqs['region'].tolower()
@@ -76,12 +67,12 @@ class GainRecipe1(BaseRecipe):
         else:
             raise ValueError
 
-    def run(self, obresult, reqs):
+    def run(self, rinput):
 
         resets = []
         ramps = []
 
-        for frame in obresult.frames:
+        for frame in rinput.obresult.frames:
             if frame.itype == 'RESET':
                 resets.append(frame.label)
                 _logger.debug('%s is RESET', frame.label)
@@ -91,7 +82,7 @@ class GainRecipe1(BaseRecipe):
             else:
                 raise RecipeError('frame is neither a RAMP nor a RESET')
 
-        channels = self.region(reqs)
+        channels = self.region(rinput)
         result_gain = numpy.zeros((len(channels), ))
         result_ron = numpy.zeros_like(result_gain)
 
@@ -132,4 +123,4 @@ class GainRecipe1(BaseRecipe):
         gain = MasterGainMap(mean=result_gain, var=numpy.array([]),
                              frame=DataFrame(hdulist))
         ron = MasterRONMap(mean=result_ron, var=numpy.array([]))
-        return GainRecipe1InputResult(gain=gain, ron=ron)
+        return self.create_result(gain=gain, ron=ron)

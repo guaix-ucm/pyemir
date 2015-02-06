@@ -27,9 +27,8 @@ from scipy.stats import linregress
 import matplotlib.pyplot as plt
 
 from numina.core import RecipeError
-from numina.core import BaseRecipe, RecipeRequirements, DataFrame
+from numina.core import DataFrame
 from numina.core import Requirement, Product, DataProductRequirement
-from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 
 from numina.array.combine import median, mean
@@ -39,7 +38,7 @@ from numina.flow.processing import FlatFieldCorrector, SkyCorrector
 from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
-from emir.core import RecipeResult
+from emir.core import EmirRecipe
 from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emir.dataproducts import DataFrameType, MasterIntensityFlat
 from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
@@ -60,39 +59,30 @@ _logger = logging.getLogger('numina.recipes.emir')
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 
-class DarkCurrentRecipeRequirements(RecipeRequirements):
-    master_bias = MasterBiasRequirement()
-
-
-class DarkCurrentRecipeResult(RecipeResult):
-    darkcurrent = Product(DarkCurrentValue)
-
-
-@define_requirements(DarkCurrentRecipeRequirements)
-@define_result(DarkCurrentRecipeResult)
-class DarkCurrentRecipe(BaseRecipe):
+class DarkCurrentRecipe(EmirRecipe):
     '''Recipe to process data taken in Dark Current image Mode.'''
 
     taskidx = '2.1.03'
     taskname = 'Dark current (+contribution from instrument)'
 
-    def __init__(self):
-        super(DarkCurrentRecipe, self).__init__(author=_s_author,
-                                                version="0.1.0")
+    obresult = ObservationResultRequirement()
+    master_bias = MasterBiasRequirement()
 
-    def run(self, obresult, reqs):
+    darkcurrent = Product(DarkCurrentValue)
+
+    def run(self, rinput):
         _logger.info('starting dark current reduction')
 
-        if reqs.master_bias is not None:
-            _logger.debug("master bias=%s", reqs.master_bias)
-            master_bias = fits.getdata(reqs.master_bias.filename)
+        if rinput.master_bias is not None:
+            _logger.debug("master bias=%s", rinput.master_bias)
+            master_bias = fits.getdata(rinput.master_bias.filename)
             master_bias_base = master_bias
         else:
             master_bias_base = 0
 
         values_t = []
         values_d = []
-        for frame in obresult.frames:
+        for frame in rinput.obresult.frames:
             with fits.open(frame.label) as hdulist:
                 # FIXME: single images must be corrected to have an uniform
                 # exposure time
@@ -122,17 +112,7 @@ class DarkCurrentRecipe(BaseRecipe):
         return result
 
 
-class SimpleBiasRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-
-
-class SimpleBiasRecipeResult(RecipeResult):
-    biasframe = Product(MasterBias)
-
-
-@define_requirements(SimpleBiasRecipeRequirements)
-@define_result(SimpleBiasRecipeResult)
-class SimpleBiasRecipe(BaseRecipe):
+class SimpleBiasRecipe(EmirRecipe):
     '''
     Recipe to process data taken in SimpleBias image Mode.
 
@@ -148,9 +128,8 @@ class SimpleBiasRecipe(BaseRecipe):
     with a median algorithm.
     '''
 
-    def __init__(self):
-        super(SimpleBiasRecipe, self).__init__(author=_s_author,
-                                               version="0.1.0")
+    obresult = ObservationResultRequirement()
+    biasframe = Product(MasterBias)
 
     def run(self, rinput):
         _logger.info('starting simple bias reduction')
@@ -175,22 +154,11 @@ class SimpleBiasRecipe(BaseRecipe):
         return result
 
 
-class TestBiasCorrectRecipeRequirements(RecipeRequirements):
+class TestBiasCorrectRecipe(EmirRecipe):
+
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
-
-
-class TestBiasCorrectRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
-
-
-@define_requirements(TestBiasCorrectRecipeRequirements)
-@define_result(TestBiasCorrectRecipeResult)
-class TestBiasCorrectRecipe(BaseRecipe):
-
-    def __init__(self):
-        super(TestBiasCorrectRecipe, self).__init__(author=_s_author,
-                                                    version="0.1.0")
 
     def run(self, rinput):
         _logger.info('starting simple bias reduction')
@@ -206,23 +174,14 @@ class TestBiasCorrectRecipe(BaseRecipe):
         return result
 
 
-class TestDarkCorrectRecipeRequirements(RecipeRequirements):
+
+class TestDarkCorrectRecipe(EmirRecipe):
+
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
 
-
-class TestDarkCorrectRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
-
-
-@define_requirements(TestDarkCorrectRecipeRequirements)
-@define_result(TestDarkCorrectRecipeResult)
-class TestDarkCorrectRecipe(BaseRecipe):
-
-    def __init__(self):
-        super(TestDarkCorrectRecipe, self).__init__(author=_s_author,
-                                                    version="0.1.0")
 
     def run(self, rinput):
         _logger.info('starting simple dark reduction')
@@ -239,70 +198,29 @@ class TestDarkCorrectRecipe(BaseRecipe):
         return result
 
 
-class TestFlatCorrectRecipeRequirements(RecipeRequirements):
+class TestFlatCorrectRecipe(EmirRecipe):
+
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
 
-
-class TestFlatCorrectRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
-
-
-@define_requirements(TestFlatCorrectRecipeRequirements)
-@define_result(TestFlatCorrectRecipeResult)
-class TestFlatCorrectRecipe(BaseRecipe):
-
-    def __init__(self):
-        super(TestFlatCorrectRecipe, self).__init__(author=_s_author,
-                                                    version="0.1.0")
 
     def run(self, rinput):
         _logger.info('starting simple flat reduction')
 
         flow = init_filters_bdf(rinput)
-        hdu = basic_processing_with_combination(rinput, flow, method=median)
-        hdr = hdu.header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdulist = fits.HDUList([hdu])
-        result = TestFlatCorrectRecipeResult(frame=hdulist)
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
+        result = self.create_result(frame=hdulist)
 
         return result
 
 
-from numina.core import ObservationResult
+class TestSkyCorrectRecipe(EmirRecipe):
 
-
-class StareImageRecipeInputBuilder(object):
-    '''Class to build StareImageRecipe inputs from the Observation Results.
-
-       Fetches SKY calibration image from the archive
-
-    '''
-
-    def __init__(self, dal):
-        self.dal = dal
-        self.sky_image = None
-
-    def buildRecipeInput(self, obsres):
-
-        if self.sky_image is None:
-            print 'obtaining SKY image'
-            sky_cal_result = self.dal.getLastRecipeResult("EMIR", "EMIR", "IMAGE_SKY")
-            self.sky_image = sky_cal_result['elements']['skyframe']
-
-        obsres['master_sky'] = self.sky_image
-        newOR = ObservationResult()
-        newOR.frames = obsres['frames']
-        obsres['obresult'] = newOR
-        newRI = StareImageRecipeRequirements(**obsres)
-
-        return newRI
-
-
-class TestSkyCorrectRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
@@ -311,37 +229,19 @@ class TestSkyCorrectRecipeRequirements(RecipeRequirements):
                                         'Master Sky calibration'
                                         )
 
-
-StareImageRecipeRequirements = TestSkyCorrectRecipeRequirements
-
-
-class TestSkyCorrectRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
-
-
-@define_requirements(TestSkyCorrectRecipeRequirements)
-@define_result(TestSkyCorrectRecipeResult)
-class TestSkyCorrectRecipe(BaseRecipe):
-
-    InputBuilder = StareImageRecipeInputBuilder
-
-    def __init__(self):
-        super(TestSkyCorrectRecipe, self).__init__(author=_s_author,
-                                                   version="0.1.0")
 
     def run(self, rinput):
         _logger.info('starting simple sky reduction')
 
         flow = init_filters_bdfs(rinput)
 
-        hdu = basic_processing_with_combination(rinput, flow, method=median)
-        hdr = hdu.header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
         # Update SEC to 0
         hdr['SEC'] = 0
-        hdulist = fits.HDUList([hdu])
-
-        result = TestSkyCorrectRecipeResult(frame=hdulist)
+        
+        result = self.create_result(frame=hdulist)
 
         return result

@@ -28,9 +28,9 @@ import numpy
 from astropy.io import fits
 
 from numina import __version__
-from numina.core import BaseRecipe, Parameter, DataProductRequirement
-from numina.core import RecipeError, RecipeRequirements
-from numina.core import Product, define_requirements, define_result
+from numina.core import Parameter, DataProductRequirement
+from numina.core import RecipeError
+from numina.core import Product
 from numina.core import DataFrameType
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 from numina.core.requirements import ObservationResultRequirement
@@ -39,7 +39,7 @@ from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
-from emir.core import RecipeResult
+from emir.core import EmirRecipe
 from emir.dataproducts import MasterBias, MasterDark
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -67,7 +67,13 @@ def gather_info(hdulist):
             'adu_s': adu_s}
 
 
-class CosmeticsRecipeRequirements(RecipeRequirements):
+class CosmeticsRecipe(EmirRecipe):
+
+    '''Detector Cosmetics.
+
+    Recipe to find and tag bad pixels in the detector.
+    '''
+
     obresult = ObservationResultRequirement()
     insconf = InstrumentConfigurationRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias image')
@@ -78,26 +84,8 @@ class CosmeticsRecipeRequirements(RecipeRequirements):
         4.0, 'Values above this sigma level are flagged as hot pixels')
     maxiter = Parameter(30, 'Maximum number of iterations')
 
-
-class CosmeticsRecipeResult(RecipeResult):
     ratio = Product(DataFrameType)
     mask = Product(DataFrameType)
-
-
-@define_requirements(CosmeticsRecipeRequirements)
-@define_result(CosmeticsRecipeResult)
-class CosmeticsRecipe(BaseRecipe):
-
-    '''Detector Cosmetics.
-
-    Recipe to find and tag bad pixels in the detector.
-    '''
-
-    def __init__(self):
-        super(CosmeticsRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
 
     def run(self, rinput):
 
@@ -226,5 +214,5 @@ class CosmeticsRecipe(BaseRecipe):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         maskhdl = fits.HDUList([maskhdu])
 
-        res = CosmeticsRecipeResult(ratio=ratiohdl, mask=maskhdl)
+        res = self.create_result(ratio=ratiohdl, mask=maskhdl)
         return res
