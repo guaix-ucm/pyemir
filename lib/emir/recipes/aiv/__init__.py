@@ -144,8 +144,7 @@ class SimpleBiasRecipe(EmirRecipe):
         hdr = hdulist[0].header
         hdr['IMGTYP'] = ('BIAS', 'Image type')
         hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        self.set_base_headers(hdr)
 
         _logger.info('simple bias reduction ended')
 
@@ -164,11 +163,9 @@ class TestBiasCorrectRecipe(EmirRecipe):
         _logger.info('starting simple bias reduction')
 
         flow = init_filters_b(rinput)
-        hdu = basic_processing_with_combination(rinput, flow, method=median)
-        hdr = hdu.header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdulist = fits.HDUList([hdu])
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
 
         result = self.create_result(frame=hdulist)
         return result
@@ -190,8 +187,7 @@ class TestDarkCorrectRecipe(EmirRecipe):
         hdulist = basic_processing_with_combination(rinput, flow,
                                                     method=median)
         hdr = hdulist[0].header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        self.set_base_headers(hdr)
 
         result = self.create_result(frame=hdulist)
 
@@ -217,6 +213,37 @@ class TestFlatCorrectRecipe(EmirRecipe):
         result = self.create_result(frame=hdulist)
 
         return result
+
+
+from numina.core import ObservationResult
+
+
+class StareImageRecipeInputBuilder(object):
+    '''Class to build StareImageRecipe inputs from the Observation Results.
+
+       Fetches SKY calibration image from the archive
+
+
+    '''
+
+    def __init__(self, dal):
+        self.dal = dal
+        self.sky_image = None
+
+    def buildRecipeInput(self, obsres):
+
+        if self.sky_image is None:
+            print 'obtaining SKY image'
+            sky_cal_result = self.dal.getLastRecipeResult("EMIR", "EMIR", "IMAGE_SKY")
+            self.sky_image = sky_cal_result['elements']['skyframe']
+
+        obsres['master_sky'] = self.sky_image
+        newOR = ObservationResult()
+        newOR.frames = obsres['frames']
+        obsres['obresult'] = newOR
+        newRI = StareImageRecipeRequirements(**obsres)
+
+       return newRI
 
 
 class TestSkyCorrectRecipe(EmirRecipe):
@@ -245,3 +272,7 @@ class TestSkyCorrectRecipe(EmirRecipe):
         result = self.create_result(frame=hdulist)
 
         return result
+
+# 
+StareImageRecipeRequirements = TestSkyCorrectRecipe.RecipeRequirements
+TestSkyCorrectRecipe.InputBuilder = StareImageRecipeInputBuilder

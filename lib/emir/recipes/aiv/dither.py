@@ -41,8 +41,6 @@ from emir.dataproducts import DataFrameType
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-_s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
-
 
 def resize_hdul(hdul, newshape, region, extensions=None, window=None,
                 scale=1, fill=0.0, clobber=True, conserve=True):
@@ -83,6 +81,37 @@ def combine_frames(rframes):
     return out
 
 
+from numina.core import ObservationResult
+
+
+class DitheredImageRecipeInputBuilder(object):
+    '''Class to build DitheredImageRecipe inputs from the Observation Results
+   
+    RecipeInputBuilder which fetches the pre-reduced images that will be combined
+   
+    '''
+
+    def __init__(self, dal):
+        self.dal = dal
+   
+    def buildRecipeInput(self, obsres):
+       
+        stareImages = []
+
+        stareImagesIds = obsres['stareImagesIds']._v 
+        for subresId in stareImagesIds:
+            subres = self.dal.getRecipeResult(subresId)
+            stareImages.append(subres['elements']['frame'])
+        
+        newOR = ObservationResult()
+        newOR.frames = stareImages
+        obsres['obresult'] = newOR
+        print 'Adding RI parameters ', obsres
+        newRI = DitheredImageARecipeRequirements(**obsres)
+
+        return newRI
+
+
 class DitheredImageARecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
@@ -114,9 +143,7 @@ class DitheredImageARecipe(EmirRecipe):
 
         _logger.debug('update result header')
         hdr = hdu.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        self.set_base_headers(hdr)
         hdr['IMGOBBL'] = 0
 
         hdulist = fits.HDUList([hdu])
@@ -124,3 +151,7 @@ class DitheredImageARecipe(EmirRecipe):
         result = self.create_result(frame=hdulist)
 
         return result
+
+
+DitheredImageARecipeRequirements = DitheredImageARecipe.RecipeRequirements
+DitheredImageARecipe.InputBuilder = DitheredImageRecipeInputBuilder

@@ -538,7 +538,6 @@ class TestPinholeRecipe(EmirRecipe):
     param_max_recenter_radius = Product(float)
     param_box_half_size = Product(float)
 
-    InputBuilder = TestPinholeRecipeInputBuilder
 
 
     def run(self, rinput):
@@ -621,3 +620,8 @@ class TestPinholeRecipe(EmirRecipe):
                                     param_box_half_size=rinput.box_half_size
                                     )
         return result
+
+# We cannot insert the InputBuilder inside the class because
+# it requires the Recipe to be fully constructed
+TestPinholeRecipeRequirements = TestPinholeRecipe.RecipeRequirements
+TestPinholeRecipe.InputBuilder = TestPinholeRecipeInputBuilder
