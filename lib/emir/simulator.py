@@ -81,8 +81,8 @@ class EmirImageFactory(object):
     def create(self, meta, data):
         hh = self.p_templ.copy()
 
-        for rr in hh.ascardlist():
-            rr.value = interpolate(meta, rr.value)
+        for rr in hh:
+            hh[rr] = interpolate(meta, hh[rr])
 
         prim = fits.PrimaryHDU(data=data, header=hh)
         hl = [prim]

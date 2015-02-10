@@ -26,6 +26,8 @@ from astropy.io import fits
 
 from numina.array import ramp_array, fowler_array
 
+from .core import EMIR_READ_MODES
+
 PREPROC_KEY = 'READPROC'
 PREPROC_VAL = True
 
@@ -40,7 +42,7 @@ def image_readmode(hdulist, default=None):
     header = hdulist[0].header
     if 'READMODE' in header:
         p_readmode = header['READMODE'].lower()
-        if p_readmode in ['single', 'cds', 'fowler', 'ramp']:
+        if p_readmode in EMIR_READ_MODES:
             return ReadModeGuessing(mode=p_readmode,
                                     info={'source': 'keyword'}
                                     )

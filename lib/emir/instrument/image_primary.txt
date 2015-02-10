@@ -47,7 +47,6 @@ EXPTIME =                    0 / [s] Time between correlated reads
 ELAPSED =                    0 / [s] Time from end of CLR to shutter close
 READNOIS= '%(emir.detector.readnoise)' / Readout noise in ADU per pixel
 GAIN    = '%(emir.detector.gain)' / Electrons per ADU
-COMMENT WCS starts here
 WCSNAME = 'RA-DEC'
 CRPIX1  = 1024.0 / Pixel coordinate at reference point
 CRPIX2  = 1024.0 / Pixel coordinate at reference point
@@ -62,4 +61,3 @@ CUNIT2  = 'deg'
 LONPOLE = 180
 RADESYS = 'FK5'
 EQUINOX = 2000.0 / [yr] Equinox of equatorial coordinates
-COMMENT WCS ends here                                                           
