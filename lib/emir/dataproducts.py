@@ -252,7 +252,7 @@ class ArrayType(DataProductType):
     def __init__(self, default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
 
-    def store(self, obj):
+    def convert(self, obj):
         result = numpy.array(obj)
         return result
 
@@ -275,7 +275,7 @@ class CoordinateListNType(DataProductType):
                                   (obj, self.__class__.__name__)
                                   )
 
-    def store(self, obj):
+    def convert(self, obj):
         result = numpy.array(obj)
         return result
 
