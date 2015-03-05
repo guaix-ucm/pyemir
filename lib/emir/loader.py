@@ -22,3 +22,7 @@ from numina.core import drp_load
 
 def emir_drp_load():
     return drp_load('emir', 'drp.yaml')
+
+def emir_cli_storage_load():
+    import emir.store
+    return 0

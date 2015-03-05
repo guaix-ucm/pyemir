@@ -21,13 +21,14 @@
 
 import numpy
 
-from numina.user.store import store
+from numina.user.dump import dump
 
 from .dataproducts import ChannelLevelStatistics
+from .dataproducts import ArrayType
 
 
-@store.register(ChannelLevelStatistics)
-def store_cl(obj, where):
+@dump.register(ChannelLevelStatistics)
+def _(tag, obj, where):
     fname = 'statistics.txt'
 
     header = '''Channel Level Statistics
@@ -41,3 +42,8 @@ xbegin xend ybegin yend mean median var
     inter = header % obj.exposure
     numpy.savetxt(fname, obj.statistics, header=inter)
     return fname
+
+@dump.register(ArrayType)
+def _(tag, obj, where):
+    return dump.registry[numpy.ndarray](tag, obj, where)
+
