@@ -21,7 +21,7 @@
 
 import numpy
 
-from numina.user.dump import dump
+from numina.store import dump
 
 from .dataproducts import ChannelLevelStatistics
 from .dataproducts import ArrayType

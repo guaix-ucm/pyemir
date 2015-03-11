@@ -24,5 +24,6 @@ def emir_drp_load():
     return drp_load('emir', 'drp.yaml')
 
 def emir_cli_storage_load():
+    'Entry point to load storage functions for the CLI.'
     import emir.store
     return 0
