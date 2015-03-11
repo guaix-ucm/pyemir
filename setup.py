@@ -42,7 +42,7 @@ setup(name='pyemir',
             'emir = emir.loader:emir_drp_load',
             ],
         'numina.storage.1': [
-            'emir_default = emir.store',
+            'emir_default = emir.loader:load_cli_storage',
             ]
         },
       classifiers=[
