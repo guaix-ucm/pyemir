@@ -21,13 +21,13 @@
 
 import numpy
 
-from numina.user.store import store
+from numina.store import dump
 
 from .dataproducts import ChannelLevelStatistics
 
 
-@store.register(ChannelLevelStatistics)
-def store_cl(obj, where):
+@dump.register(ChannelLevelStatistics)
+def store_cl(tag, obj, where):
     fname = 'statistics.txt'
 
     header = '''Channel Level Statistics
