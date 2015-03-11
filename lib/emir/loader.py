@@ -26,5 +26,5 @@ def emir_drp_load():
 
 def load_cli_storage():
     '''Entry point to load storage functions for the CLI.'''
-    import store.store
+    import emir.store
     return 0
