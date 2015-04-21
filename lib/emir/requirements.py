@@ -47,10 +47,11 @@ class EMIRConfigurationRequirement(Requirement):
 
 
 class MasterBadPixelMaskRequirement(DataProductRequirement):
-    def __init__(self):
+    def __init__(self, optional=True):
         super(MasterBadPixelMaskRequirement,
               self).__init__(MasterBadPixelMask,
-                             'Master bad pixel mask'
+                             'Master bad pixel mask',
+                             optional=optional
                              )
 
 
