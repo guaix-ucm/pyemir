@@ -66,6 +66,30 @@ def normalize(data):
     return data_22
 
 
+def get_dtur_from_header(hdr):
+
+    # get DTU things from header
+    _logger.info('getting DTU position from header')
+    xdtu = hdr['XDTU']
+    ydtu = hdr['YDTU']
+    zdtu = hdr['ZDTU']
+
+    # Defined even if not in the header
+    xdtuf = hdr.get('XDTU_F', 1.0)
+    ydtuf = hdr.get('YDTU_F', 1.0)
+    xdtu0 = hdr.get('XDTU_0', 0.0)
+    ydtu0 = hdr.get('YDTU_0', 0.0)
+    _logger.info('XDTU=%6.2f YDTU=%6.2f ZDTU=%6.2f', xdtu, ydtu, zdtu)
+    _logger.info('XDTU_F=%6.2f YDTU_F=%6.2f', xdtuf, ydtuf)
+    _logger.info('XDTU_0=%6.2f YDTU_0=%6.2f', xdtu0, ydtu0)
+
+    xdtur = (xdtu / xdtuf - xdtu0)
+    ydtur = (ydtu / ydtuf - ydtu0)
+    _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f', xdtur, ydtur)
+    dtur = [xdtur, ydtur, zdtu]
+    return dtur
+
+
 class TestSlitDetectionRecipe(EmirRecipe):
 
     # Recipe Requirements
@@ -84,7 +108,8 @@ class TestSlitDetectionRecipe(EmirRecipe):
     # Recipe Results
     frame = Product(DataFrameType)
     slitstable = Product(ArrayType)
-
+    DTU = Product(ArrayType)
+    IPA = Product(float)
 
     def run(self, rinput):
         _logger.info('starting slit processing')
@@ -96,6 +121,15 @@ class TestSlitDetectionRecipe(EmirRecipe):
         hdulist = basic_processing_with_combination(rinput, flow=flow)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
+
+        try:
+            ipa = hdr['IPA']
+
+            dtur = get_dtur_from_header(hdr)
+
+        except KeyError as error:
+            _logger.error(error)
+            raise RecipeError(error)
 
         _logger.debug('finding slits')
 
@@ -152,13 +186,17 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         _logger.debug('Find regions and centers')
         regions = ndimage.find_objects(relabel_objects)
-        centers = ndimage.center_of_mass(data2, labels=relabel_objects, index=ids)
+        centers = ndimage.center_of_mass(data2, labels=relabel_objects,
+                                         index=ids
+                                         )
 
         table = char_slit(data2, regions, centers,
                           slit_size_ratio=rinput.slit_size_ratio
                           )
 
-        result = self.create_result(frame=hdulist, slitstable=table)
+        result = self.create_result(frame=hdulist, slitstable=table,
+                                    DTU=dtur,
+                                    IPA=ipa)
 
         return result
 
