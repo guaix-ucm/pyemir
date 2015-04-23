@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2014 Universidad Complutense de Madrid
+# Copyright 2013-2015 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -51,7 +51,7 @@ GAUSS_FWHM_FACTOR = FWHM_G
 PIXSCALE = 18.0
 
 
-class TestPinholeRecipe(EmirRecipe):
+class TestMaskRecipe(EmirRecipe):
 
     # Recipe Requirements
     #
