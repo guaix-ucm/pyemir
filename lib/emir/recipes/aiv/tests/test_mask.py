@@ -21,7 +21,7 @@
 
 import pytest
 
-from numina.user import main
+from numina.user.cli import main
 
 BASE_URL = 'http://guaix.fis.ucm.es/~spr/emir_test/'
 
