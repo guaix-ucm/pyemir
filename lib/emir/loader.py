@@ -17,13 +17,14 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numina.core import drp_load
+import numina.core
 
 
-def emir_drp_load():
-    return drp_load('emir', 'drp.yaml')
+def load_drp():
+    return numina.core.drp_load('emir', 'drp.yaml')
 
-def emir_cli_storage_load():
+
+def load_cli_storage():
     'Entry point to load storage functions for the CLI.'
     import emir.store
     return 0

@@ -39,10 +39,10 @@ setup(name='pyemir',
         ],
       entry_points = {
         'numina.pipeline.1': [
-            'emir = emir.loader:emir_drp_load',
+            'emir = emir.loader:load_drp',
             ],
         'numina.storage.1': [
-            'emir_default = emir.loader:emir_cli_storage_load',
+            'emir_default = emir.loader:load_cli_storage',
             ]
         },
       classifiers=[
