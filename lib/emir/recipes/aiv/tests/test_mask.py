@@ -32,3 +32,15 @@ def run_recipe():
 def test_mode_TEST6_set0(numinatpldir):
 
     run_recipe()
+
+
+@pytest.mark.remote
+def test_mode_TEST7_set0(numinatpldir):
+
+    run_recipe()
+
+
+@pytest.mark.remote
+def test_mode_TEST8_set0(numinatpldir):
+
+    run_recipe()
