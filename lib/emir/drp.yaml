@@ -214,6 +214,16 @@ modes:
   summary: Summary
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: d7854cf4-0379-4e7d-9b1f-e045784ce90e
+- date: 2015-04-24
+  description: Wavelength calibration from arc
+  key: ARC_CALIBRATION
+  name: Wavelength calibration
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: F8AE2344-A242-4695-AFD9-DB5EDCBF0DD6
+
 pipelines:
   default:
     recipes:
@@ -240,4 +250,5 @@ pipelines:
       TEST6: emir.recipes.aiv.mask.TestPinholeRecipe
       TEST7: emir.recipes.aiv.slits.TestSlitDetectionRecipe
       TEST8: emir.recipes.aiv.maskn.TestMaskRecipe
+      ARC_CALIBRATION: emir.recipes.arccalibration.ArcCalibrationRecipe
     version: 1

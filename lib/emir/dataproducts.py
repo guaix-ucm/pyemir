@@ -280,6 +280,11 @@ class CoordinateListNType(DataProductType):
         return result
 
 
+class CoordinateList1DType(CoordinateListNType):
+    def __init__(self, default=None):
+        super(CoordinateList1DType, self).__init__(1, default=default)
+
+
 class CoordinateList2DType(CoordinateListNType):
     def __init__(self, default=None):
         super(CoordinateList2DType, self).__init__(2, default=default)
