@@ -27,13 +27,10 @@ import numpy
 from scipy import ndimage
 from scipy.ndimage.filters import median_filter
 from skimage.filter import canny
-import matplotlib.pyplot as plt
-import matplotlib.patches
 
-from numina.array.fwhm import compute_fwhm_2d_simple
-from numina.array.utils import expand_region
 from numina.core import Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
+from numina.core import RecipeError
 #
 from emir.core import EmirRecipe
 from emir.dataproducts import DataFrameType
@@ -45,49 +42,12 @@ from emir.requirements import MasterSkyRequirement
 
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
+from .common import normalize, char_slit
+from .common import get_dtur_from_header
 
 _logger = logging.getLogger('numina.recipes.emir')
 
 _s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
-
-
-def shape_of_slices(tup_of_s):
-    return tuple(m.stop - m.start for m in tup_of_s)
-
-
-def normalize(data):
-    b = data.max()
-    a = data.min()
-
-    if b != a:
-        data_22 = (2 * data - b - a) / (b - a)
-    else:
-        data_22 = data - b
-    return data_22
-
-
-def get_dtur_from_header(hdr):
-
-    # get DTU things from header
-    _logger.info('getting DTU position from header')
-    xdtu = hdr['XDTU']
-    ydtu = hdr['YDTU']
-    zdtu = hdr['ZDTU']
-
-    # Defined even if not in the header
-    xdtuf = hdr.get('XDTU_F', 1.0)
-    ydtuf = hdr.get('YDTU_F', 1.0)
-    xdtu0 = hdr.get('XDTU_0', 0.0)
-    ydtu0 = hdr.get('YDTU_0', 0.0)
-    _logger.info('XDTU=%6.2f YDTU=%6.2f ZDTU=%6.2f', xdtu, ydtu, zdtu)
-    _logger.info('XDTU_F=%6.2f YDTU_F=%6.2f', xdtuf, ydtuf)
-    _logger.info('XDTU_0=%6.2f YDTU_0=%6.2f', xdtu0, ydtu0)
-
-    xdtur = (xdtu / xdtuf - xdtu0)
-    ydtur = (ydtu / ydtuf - ydtu0)
-    _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f', xdtur, ydtur)
-    dtur = [xdtur, ydtur, zdtu]
-    return dtur
 
 
 class TestSlitDetectionRecipe(EmirRecipe):
@@ -138,7 +98,8 @@ class TestSlitDetectionRecipe(EmirRecipe):
         canny_sigma = rinput.canny_sigma
         obj_min_size = rinput.obj_min_size
         obj_max_size = rinput.obj_max_size
-
+        
+        
         data1 = hdulist[0].data
         _logger.debug('Median filter with box %d', median_filter_size)
         data2 = median_filter(data1, size=median_filter_size)
@@ -149,10 +110,10 @@ class TestSlitDetectionRecipe(EmirRecipe):
         # Find edges with canny
         _logger.debug('Find edges with canny, sigma %d', canny_sigma)
         edges = canny(img_grey, sigma=canny_sigma)
-
+        
         # Fill edges
         _logger.debug('Fill holes')
-        fill_slits = ndimage.binary_fill_holes(edges)
+        fill_slits =  ndimage.binary_fill_holes(edges)
 
         _logger.debug('Label objects')
         label_objects, nb_labels = ndimage.label(fill_slits)
@@ -176,7 +137,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
         mm.shape = label_objects.shape
 
         fill_slits_clean = numpy.where(mm, 1, 0)
-        # plt.imshow(fill_slits_clean)
+        #plt.imshow(fill_slits_clean)
 
         # and relabel
         _logger.debug('Label filtered objects')
@@ -200,69 +161,3 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         return result
 
-
-def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
-
-    result = []
-
-    for r in regions:
-        _logger.debug('initial region %s', r)
-        oshape = shape_of_slices(r)
-
-        ratio = oshape[0] / oshape[1]
-        if ratio < slit_size_ratio:
-            _logger.debug("this is not a slit, ratio=%f", ratio)
-            continue
-
-        _logger.debug('initial shape %s', oshape)
-        _logger.debug('ratio %f', ratio)
-        rp = expand_region(r, box_increase, box_increase,
-                           start=0, stop=2048)
-        _logger.debug('expanded region %r', rp)
-        ref = rp[0].start, rp[1].start
-        _logger.debug('reference point %r', ref)
-
-        datas = data[rp]
-
-        c = ndimage.center_of_mass(datas)
-
-        fc = datas.shape[0] // 2
-        cc = datas.shape[1] // 2
-        _logger.debug("%d %d %d %d", fc, cc, c[0], c[1])
-
-        _peak, fwhm_x, fwhm_y = compute_fwhm_2d_simple(datas, c[1], c[0])
-
-        _logger.debug('x=%f y=%f', c[1] + ref[1], c[0] + ref[0])
-        _logger.debug('fwhm_x %f fwhm_y %f', fwhm_x, fwhm_y)
-
-        colrow = ref[1] + cc + 1, ref[0] + fc + 1
-
-        result.append([c[1] + ref[1] + 1, c[0] + ref[0] + 1, fwhm_x, fwhm_y])
-
-        _logger.debug('Save figures slit-%d-%d', *colrow)
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.imshow(datas)
-        circle1 = matplotlib.patches.Circle(c[::-1], 0.6, color='r', fill=False)
-        ax.add_artist(circle1)
-        fig.savefig('slit-%d-%d-2d.png' % colrow)
-        plt.close()
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('left-rigth')
-        ax.plot(datas[fc, :], 'r*-', label='%s' % colrow[0])
-        ax.legend()
-        fig.savefig('slit-%d-%d-lr.png' % colrow)
-        plt.close()
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('top-bottom')
-        ax.plot(datas[:, cc], 'r*-', label='%s' % colrow[1])
-        ax.legend()
-        fig.savefig('slit-%d-%d-tb.png' % colrow)
-        plt.close()
-
-    return result

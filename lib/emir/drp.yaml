@@ -239,4 +239,5 @@ pipelines:
       TEST5: emir.recipes.aiv.TestSkyCorrectRecipe
       TEST6: emir.recipes.aiv.mask.TestPinholeRecipe
       TEST7: emir.recipes.aiv.slits.TestSlitDetectionRecipe
+      TEST8: emir.recipes.aiv.maskn.TestMaskRecipe
     version: 1
