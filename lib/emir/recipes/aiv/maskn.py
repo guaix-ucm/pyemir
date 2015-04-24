@@ -24,6 +24,9 @@ from __future__ import division
 import logging
 
 import numpy
+from scipy import ndimage
+from scipy.ndimage.filters import median_filter
+from skimage.filter import canny
 
 from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
@@ -41,11 +44,11 @@ from emir.requirements import MasterSkyRequirement
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 from .common import pinhole_char, pinhole_char2
-
+from .common import normalize, char_slit
+from .common import get_dtur_from_header
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-_s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 GAUSS_FWHM_FACTOR = FWHM_G
 PIXSCALE = 18.0
@@ -71,10 +74,17 @@ class TestMaskRecipe(EmirRecipe):
     recenter = Parameter(True, 'Recenter the pinhole coordinates')
     max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
 
+    median_filter_size = Parameter(4, 'Size of the median box')
+    canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
+    obj_min_size = Parameter(200, 'Minimum size of the slit')
+    obj_max_size = Parameter(3000, 'Maximum size of the slit')
+    slit_size_ratio = Parameter(4.0, 'Minimum ratio between height and width for slits')
+
     # Recipe Products
     frame = Product(DataFrameType)
     positions = Product(ArrayType)
     positions_alt = Product(ArrayType)
+    slitstable = Product(ArrayType)
     DTU = Product(ArrayType)
     filter = Product(str)
     readmode = Product(str)
@@ -96,29 +106,12 @@ class TestMaskRecipe(EmirRecipe):
             filtername = hdr['FILTER']
             readmode = hdr['READMODE']
             ipa = hdr['IPA']
-            xdtu = hdr['XDTU']
-            ydtu = hdr['YDTU']
-            zdtu = hdr['ZDTU']
-            # Defined even if not in the header
-            xdtuf = hdr.get('XDTU_F', 1.0)
-            ydtuf = hdr.get('YDTU_F', 1.0)
-            xdtu0 = hdr.get('XDTU_0', 0.0)
-            ydtu0 = hdr.get('YDTU_0', 0.0)
+            xdtur, ydtur, zdtur = get_dtur_from_header(hdr)
         except KeyError as error:
             _logger.error(error)
             raise RecipeError(error)
 
         if rinput.shift_coordinates:
-            # get things from header
-            _logger.info('getting DTU position from header')
-            _logger.info('XDTU=%6.2f YDTU=%6.2f ZDTU=%6.2f', xdtu, ydtu, zdtu)
-            _logger.info('XDTU_F=%6.2f YDTU_F=%6.2f', xdtuf, ydtuf)
-            _logger.info('XDTU_0=%6.2f YDTU_0=%6.2f', xdtu0, ydtu0)
-            # transform coordinates
-            _logger.info('transform pinhole coordinates from reference (0,0)')
-            xdtur = (xdtu / xdtuf - xdtu0)
-            ydtur = (ydtu / ydtuf - ydtu0)
-            _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f', xdtur, ydtur)
             xfac = xdtur / PIXSCALE
             yfac = -ydtur / PIXSCALE
 
@@ -127,8 +120,6 @@ class TestMaskRecipe(EmirRecipe):
             ncenters = rinput.pinhole_nominal_positions + vec
         else:
             _logger.info('using pinhole coordinates as they are')
-            # Defined because we output them
-            xdtur, ydtur = xdtu, ydtu
             ncenters = rinput.pinhole_nominal_positions
 
 
@@ -149,12 +140,76 @@ class TestMaskRecipe(EmirRecipe):
             recenter_maxdist=rinput.max_recenter_radius
         )
 
+        _logger.debug('finding slits')
+
+        # First, prefilter with median
+        median_filter_size = rinput.median_filter_size
+        canny_sigma = rinput.canny_sigma
+        obj_min_size = rinput.obj_min_size
+        obj_max_size = rinput.obj_max_size
+
+
+        data1 = hdulist[0].data
+        _logger.debug('Median filter with box %d', median_filter_size)
+        data2 = median_filter(data1, size=median_filter_size)
+
+        # Grey level image
+        img_grey = normalize(data2)
+
+        # Find edges with canny
+        _logger.debug('Find edges with canny, sigma %d', canny_sigma)
+        edges = canny(img_grey, sigma=canny_sigma)
+
+        # Fill edges
+        _logger.debug('Fill holes')
+        fill_slits =  ndimage.binary_fill_holes(edges)
+
+        _logger.debug('Label objects')
+        label_objects, nb_labels = ndimage.label(fill_slits)
+        _logger.debug('%d objects found', nb_labels)
+        # Filter on the area of the labeled region
+        # Perhaps we could ignore this filtering and
+        # do it later?
+        _logger.debug('Filter objects by size')
+        # Sizes of regions
+        sizes = numpy.bincount(label_objects.ravel())
+
+        _logger.debug('Min size is %d', obj_min_size)
+        _logger.debug('Max size is %d', obj_max_size)
+
+        mask_sizes = (sizes > obj_min_size) & (sizes < obj_max_size)
+
+        # Filter out regions
+        nids, = numpy.where(mask_sizes)
+
+        mm = numpy.in1d(label_objects, nids)
+        mm.shape = label_objects.shape
+
+        fill_slits_clean = numpy.where(mm, 1, 0)
+        #plt.imshow(fill_slits_clean)
+
+        # and relabel
+        _logger.debug('Label filtered objects')
+        relabel_objects, nb_labels = ndimage.label(fill_slits_clean)
+        _logger.debug('%d objects found after filtering', nb_labels)
+        ids = range(1, nb_labels + 1)
+
+        _logger.debug('Find regions and centers')
+        regions = ndimage.find_objects(relabel_objects)
+        centers = ndimage.center_of_mass(data2, labels=relabel_objects,
+                                         index=ids
+                                         )
+
+        table = char_slit(data2, regions, centers,
+                          slit_size_ratio=rinput.slit_size_ratio
+                          )
 
         result = self.create_result(frame=hdulist,
                                     positions=positions,
                                     positions_alt=positions_alt,
+                                    slitstable=table,
                                     filter=filtername,
-                                    DTU=[xdtur, ydtur, zdtu],
+                                    DTU=[xdtur, ydtur, zdtur],
                                     readmode=readmode,
                                     IPA=ipa,
                                     )

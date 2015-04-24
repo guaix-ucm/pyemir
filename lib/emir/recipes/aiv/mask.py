@@ -41,7 +41,7 @@ from emir.requirements import MasterSkyRequirement
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 from .common import pinhole_char, pinhole_char2
-
+from .common import get_dtur_from_header
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -96,29 +96,12 @@ class TestPinholeRecipe(EmirRecipe):
             filtername = hdr['FILTER']
             readmode = hdr['READMODE']
             ipa = hdr['IPA']
-            xdtu = hdr['XDTU']
-            ydtu = hdr['YDTU']
-            zdtu = hdr['ZDTU']
-            # Defined even if not in the header
-            xdtuf = hdr.get('XDTU_F', 1.0)
-            ydtuf = hdr.get('YDTU_F', 1.0)
-            xdtu0 = hdr.get('XDTU_0', 0.0)
-            ydtu0 = hdr.get('YDTU_0', 0.0)
+            xdtur, ydtur, zdtur = get_dtur_from_header(hdr)
         except KeyError as error:
             _logger.error(error)
             raise RecipeError(error)
 
         if rinput.shift_coordinates:
-            # get things from header
-            _logger.info('getting DTU position from header')
-            _logger.info('XDTU=%6.2f YDTU=%6.2f ZDTU=%6.2f', xdtu, ydtu, zdtu)
-            _logger.info('XDTU_F=%6.2f YDTU_F=%6.2f', xdtuf, ydtuf)
-            _logger.info('XDTU_0=%6.2f YDTU_0=%6.2f', xdtu0, ydtu0)
-            # transform coordinates
-            _logger.info('transform pinhole coordinates from reference (0,0)')
-            xdtur = (xdtu / xdtuf - xdtu0)
-            ydtur = (ydtu / ydtuf - ydtu0)
-            _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f', xdtur, ydtur)
             xfac = xdtur / PIXSCALE
             yfac = -ydtur / PIXSCALE
 
@@ -127,10 +110,7 @@ class TestPinholeRecipe(EmirRecipe):
             ncenters = rinput.pinhole_nominal_positions + vec
         else:
             _logger.info('using pinhole coordinates as they are')
-            # Defined because we output them
-            xdtur, ydtur = xdtu, ydtu
             ncenters = rinput.pinhole_nominal_positions
-
 
         _logger.info('pinhole characterization')
         positions = pinhole_char(
@@ -154,7 +134,7 @@ class TestPinholeRecipe(EmirRecipe):
                                     positions=positions,
                                     positions_alt=positions_alt,
                                     filter=filtername,
-                                    DTU=[xdtur, ydtur, zdtu],
+                                    DTU=[xdtur, ydtur, zdtur],
                                     readmode=readmode,
                                     IPA=ipa,
                                     )
