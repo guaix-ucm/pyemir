@@ -89,6 +89,9 @@ class TestMaskRecipe(EmirRecipe):
     filter = Product(str)
     readmode = Product(str)
     IPA = Product(float)
+    param_recenter = Product(bool)
+    param_max_recenter_radius = Product(float)
+    param_box_half_size = Product(float)
 
     def run(self, rinput):
         _logger.info('starting processing for slit detection')
@@ -212,5 +215,8 @@ class TestMaskRecipe(EmirRecipe):
                                     DTU=[xdtur, ydtur, zdtur],
                                     readmode=readmode,
                                     IPA=ipa,
+                                    param_recenter=rinput.recenter,
+                                    param_max_recenter_radius=rinput.max_recenter_radius,
+                                    param_box_half_size=rinput.box_half_size
                                     )
         return result
