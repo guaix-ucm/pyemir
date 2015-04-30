@@ -70,6 +70,8 @@ class TestSlitDetectionRecipe(EmirRecipe):
     slitstable = Product(ArrayType)
     DTU = Product(ArrayType)
     IPA = Product(float)
+    DETPA = Product(float)
+    DTUPA = Product(float)
 
     def run(self, rinput):
         _logger.info('starting slit processing')
@@ -84,7 +86,8 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         try:
             ipa = hdr['IPA']
-
+            detpa = hdr['DETPA']
+            dtupa = hdr['DTUPA']
             dtur = get_dtur_from_header(hdr)
 
         except KeyError as error:
@@ -157,7 +160,10 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         result = self.create_result(frame=hdulist, slitstable=table,
                                     DTU=dtur,
-                                    IPA=ipa)
+                                    IPA=ipa,
+                                    DETPA=detpa,
+                                    DTUPA=dtupa
+                                    )
 
         return result
 
