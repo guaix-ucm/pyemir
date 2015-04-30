@@ -89,6 +89,8 @@ class TestMaskRecipe(EmirRecipe):
     filter = Product(str)
     readmode = Product(str)
     IPA = Product(float)
+    DETPA = Product(float)
+    DTUPA = Product(float)
     param_recenter = Product(bool)
     param_max_recenter_radius = Product(float)
     param_box_half_size = Product(float)
@@ -109,6 +111,8 @@ class TestMaskRecipe(EmirRecipe):
             filtername = hdr['FILTER']
             readmode = hdr['READMODE']
             ipa = hdr['IPA']
+            detpa = hdr['DETPA']
+            dtupa = hdr['DTUPA']
             xdtur, ydtur, zdtur = get_dtur_from_header(hdr)
         except KeyError as error:
             _logger.error(error)
@@ -215,6 +219,8 @@ class TestMaskRecipe(EmirRecipe):
                                     DTU=[xdtur, ydtur, zdtur],
                                     readmode=readmode,
                                     IPA=ipa,
+                                    DETPA=detpa,
+                                    DTUPA=dtupa,
                                     param_recenter=rinput.recenter,
                                     param_max_recenter_radius=rinput.max_recenter_radius,
                                     param_box_half_size=rinput.box_half_size
