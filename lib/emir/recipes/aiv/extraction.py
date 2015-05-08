@@ -265,6 +265,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
 
     frame = Product(DataFrameType)
     rss = Product(DataFrameType)
+    regions = Product(ArrayType)
     #slitstable = Product(ArrayType)
     #DTU = Product(ArrayType)
     #IPA = Product(float)
@@ -299,12 +300,13 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
         hs = 15
         tol = 2
         doplot = False
+        npol = 5
 
         rssdata = numpy.zeros((rinput.slitstable.shape[0], data3.shape[1]),
                               dtype='float32')
         
         # FIXME, number of columns depends on polynomial degree
-        regiontable = numpy.zeros((rinput.slitstable.shape[0], 4 + 2 * 5),
+        regiontable = numpy.zeros((rinput.slitstable.shape[0], 4 + 2 * (npol + 1)),
                                   dtype='float32')
         
 
@@ -319,13 +321,14 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
                                                              doplot=doplot)
     
             region = data1[ymin:ymax+1,xmin:xmax+1]
-            rssdata[count,xmin:] = region.mean(axis=1)
+            rssdata[count,xmin:xmax+1] = region.mean(axis=0)
+            regiontable[count, 0:4] = xmin, xmax, ymin, ymax
+            regiontable[count, 4:4 + npol + 1] = pfit1
+            regiontable[count, 4 + npol + 1:4 + 2 * npol + 2] = pfit2
             count += 1
-    
-        
-        
+
         hdurss = fits.PrimaryHDU(rssdata)
         
-        result = self.create_result(frame=hdulist, rss=hdurss)
+        result = self.create_result(frame=hdulist, rss=hdurss, regions=regiontable)
 
         return result
