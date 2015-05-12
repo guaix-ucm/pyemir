@@ -313,7 +313,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
         count = 0
         # Loop over slits
         for slit_coords in rinput.slits_positions:
-            col, y1, y2 = convert_to_(slit_coords)
+            col, y1, y2 = convert_to_(*slit_coords)
             xmin, xmax, ymin, ymax, pfit1, pfit2 = ex_region(data3,
                                                              col, y1, y2,
                                                              step, hs, ws,
