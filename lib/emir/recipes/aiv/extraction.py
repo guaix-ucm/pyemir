@@ -302,6 +302,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
         doplot = False
         npol = 5
 
+        _logger.info('Create output images')
         rssdata = numpy.zeros((rinput.slits_positions.shape[0], data3.shape[1]),
                               dtype='float32')
         
@@ -314,18 +315,24 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
         # Loop over slits
         for slit_coords in rinput.slits_positions:
             col, y1, y2 = convert_to_(*slit_coords)
+            _logger.info('Processing slit in coords %i, %i, %i', col, y1, y2)
             xmin, xmax, ymin, ymax, pfit1, pfit2 = ex_region(data3,
                                                              col, y1, y2,
                                                              step, hs, ws,
                                                              tol=tol,
                                                              doplot=doplot)
     
-            region = data1[ymin:ymax+1,xmin:xmax+1]
-            rssdata[count,xmin:xmax+1] = region.mean(axis=0)
+            _logger.info('Spectrum region is %i, %i, %i, %i', xmin, xmax, ymin, ymax)
+            try:
+                region = data1[ymin:ymax+1,xmin:xmax+1]
+                rssdata[count,xmin:xmax+1] = region.mean(axis=0)
+            except ValueError as err:
+                _logger.error("Error collapsing spectrum: %s", err)
             # IN FITS convention
-            regiontable[count, 0:4] = xmin + 1, xmax + 1, ymin +1, ymax +1
-            regiontable[count, 4:4 + npol + 1] = pfit1
-            regiontable[count, 4 + npol + 1:4 + 2 * npol + 2] = pfit2
+            _logger.info('Create regions table')
+            regiontable[count, :4] = xmin + 1, xmax + 1, ymin +1, ymax +1
+            #regiontable[count, 4:4 + npol + 1] = pfit1
+            #regiontable[count, 4 + npol + 1:] = pfit2
             count += 1
 
         hdurss = fits.PrimaryHDU(rssdata)
