@@ -270,11 +270,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
     frame = Product(DataFrameType)
     rss = Product(DataFrameType)
     regions = Product(ArrayType)
-    #slitstable = Product(ArrayType)
-    #DTU = Product(ArrayType)
-    #IPA = Product(float)
-    #DETPA = Product(float)
-    #DTUPA = Product(float)
+    testframe = Product(DataFrameType)
 
 
     def run(self, rinput):
@@ -352,7 +348,9 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
             count += 1
 
         hdurss = fits.HDUList([fits.PrimaryHDU(rssdata)])
+        testframe = fits.PrimaryHDU(np.zeros((100, 200), dtype='float32'))
         
-        result = self.create_result(frame=hdulist, rss=hdurss, regions=regiontable)
+        result = self.create_result(frame=hdulist, rss=hdurss, regions=regiontable,
+                                    testframe=testframe)
 
         return result
