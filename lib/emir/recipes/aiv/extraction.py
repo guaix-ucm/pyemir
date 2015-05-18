@@ -339,11 +339,13 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
             _logger.info('Spectrum region is %i, %i, %i, %i', xmin, xmax, ymin, ymax)
             try:
                 region = data1[ymin:ymax+1,xmin:xmax+1]
-                rssdata[count,xmin:xmax+1] = region.mean(axis=0)
+                rmean = region.mean(axis=0)
+                _logger.debug('region mean shape is %s', rmean.shape)
+                rssdata[count,xmin:xmax+1] = rmean
             except ValueError as err:
                 _logger.error("Error collapsing spectrum: %s", err)
             # IN FITS convention
-            _logger.info('Create regions table')
+            _logger.debug('Update regions table in col %i', count)
             regiontable[count, :4] = xmin + 1, xmax + 1, ymin +1, ymax +1
             #regiontable[count, 4:4 + npol + 1] = pfit1
             #regiontable[count, 4 + npol + 1:] = pfit2
