@@ -241,10 +241,14 @@ def ex_region(img, x, y1, y2, step, hs, ws, tol=2, doplot=False):
             pfit2
            )
 
-def convert_to_(x, y, ax, ay):
+def convert_to_1(x, y, ax, ay):
     col = wc_to_pix(x - 1)
     y1 = y - 1 - 0.5 * ay
     y2 = y - 1 + 0.5 * ay
+    return col, y1, y2
+
+def convert_to_2(x, y1, y2):
+    col = wc_to_pix(x - 1)
     return col, y1, y2
 
 class MaskSpectraExtractionRecipe(EmirRecipe):
@@ -302,14 +306,24 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
         doplot = False
         npol = 5
 
+        sshape = rinput.slits_positions.shape
+
         _logger.info('Create output images')
-        rssdata = numpy.zeros((rinput.slits_positions.shape[0], data3.shape[1]),
-                              dtype='float32')
+        rssdata = numpy.zeros((sshape[0], data3.shape[1]), dtype='float32')
+        _logger.debug('Output RSS shape is %i %i', rssdata.shape[0], rssdata.shape[1])
         
         # FIXME, number of columns depends on polynomial degree
-        regiontable = numpy.zeros((rinput.slits_positions.shape[0], 4 + 2 * (npol + 1)),
-                                  dtype='float32')
+        regiontable = numpy.zeros((sshape[0], 4 + 2 * (npol + 1)), dtype='float32')
         
+
+        if sshape[1] == 4:
+            convert_to_ = convert_to_1
+            _logger.debug('Assuming slit table format is x y Delt_x Delt_y')
+        elif sshape[1] == 3:
+            _logger.debug('Assuming slit table format is x y1 y2')
+            convert_to_ = convert_to_2
+        else:
+            raise ValueError('slits table has shape %s, unknown format', sshape)
 
         count = 0
         # Loop over slits
@@ -335,7 +349,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
             #regiontable[count, 4 + npol + 1:] = pfit2
             count += 1
 
-        hdurss = fits.PrimaryHDU(rssdata)
+        hdurss = fits.HDUList([fits.PrimaryHDU(rssdata)])
         
         result = self.create_result(frame=hdulist, rss=hdurss, regions=regiontable)
 
