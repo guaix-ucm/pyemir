@@ -7,7 +7,8 @@ PyEmir
 This is PyEmir, the data reduction pipeline for EMIR. 
 
 PyEmir is distributed under GNU GPL, either version 3 of the License, 
-or (at your option) any later version. See the file COPYING for details.
+or (at your option) any later version. See the file LICENSE.txt 
+for details.
 
 PyEmir requires the following packages installed in order to
 be able to be installed and work properly:
@@ -35,4 +36,5 @@ Maintainer: sergiopr@fis.ucm.es
    :target: https://readthedocs.org/projects/pyemir/?badge=latest
    :alt: Documentation Status
 
-.. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.18040.svg   :target: http://dx.doi.org/10.5281/zenodo.18040
+.. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.18040.svg
+   :target: http://dx.doi.org/10.5281/zenodo.18040
