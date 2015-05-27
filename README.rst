@@ -2,9 +2,7 @@
 PyEmir
 =======
 
-.. image:: https://readthedocs.org/projects/pyemir/badge/?version=latest
-   :target: https://readthedocs.org/projects/pyemir/?badge=latest
-   :alt: Documentation Status
+|docs|
 
 This is PyEmir, the data reduction pipeline for EMIR. 
 
@@ -32,4 +30,8 @@ Webpage: https://guaix.fis.ucm.es/projects/emir
 Maintainer: sergiopr@fis.ucm.es            
       
 [1] This particular branch of photutils is required due a bug in the main package
+
+.. |docs| image:: https://readthedocs.org/projects/pyemir/badge/?version=latest
+   :target: https://readthedocs.org/projects/pyemir/?badge=latest
+   :alt: Documentation Status
 
