@@ -2,7 +2,7 @@
 PyEmir
 =======
 
-|docs|
+|docs| |zenodo|
 
 This is PyEmir, the data reduction pipeline for EMIR. 
 
@@ -35,3 +35,4 @@ Maintainer: sergiopr@fis.ucm.es
    :target: https://readthedocs.org/projects/pyemir/?badge=latest
    :alt: Documentation Status
 
+.. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.18040.svg   :target: http://dx.doi.org/10.5281/zenodo.18040
