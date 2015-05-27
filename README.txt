@@ -11,7 +11,7 @@ be able to be installed and work properly:
  - numpy (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
  - astropy (http://www.astropy.org/)
- - numina (http://guaix.fis.ucm.es/hg/numina)
+ - numina (https://github.com/guaix-ucm/numina)
  - photutils (https://github.com/sergiopasra/photutils/tree/numpy18) [1]
 
 EMIR is a wide-field, near-infrared, multi-object spectrograph proposed 

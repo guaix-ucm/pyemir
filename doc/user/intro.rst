@@ -31,7 +31,7 @@ Stable version
 --------------
 
 The latest stable version of PyEmir can be downloaded from  
-ftp://astrax.fis.ucm.es/pub/software/emir/
+https://pypi.python.org/pypi/pyemir
 
 To install PyEmir, use the standard installation procedure:::
 
@@ -50,7 +50,7 @@ Development version
 
 The development version can be checked out with:::
 
-    $ hg clone https://guaix.fis.ucm.es/hg/pyemir
+    $ git clone https://github.com/guaix-ucm/pyemir.git
 
 And then installed following the standard procedure:::
 
