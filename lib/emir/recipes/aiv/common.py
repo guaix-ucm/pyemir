@@ -31,7 +31,7 @@ from scipy import ndimage
 
 from astropy.modeling import models, fitting
 import photutils
-from photutils import aperture_circular
+from photutils import CircularAperture
 import matplotlib.pyplot as plt
 import matplotlib.patches
 
@@ -249,11 +249,13 @@ def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
     # with radius 2.0 pixels and 4.0 pixels
 
     apertures = [2.0, 4.0]
-    _logger.info('compute photometry with aperture radii %s', apertures)
-    # FIXME: aperture_circular returns values along rows, we transpose it
-    mm0[:, 9:11] = photutils.aperture_circular(
-        data, centers_r[:, 0], centers_r[:, 1], apertures).T
-    _logger.info('done')
+    for idx, rad in enumerate(apertures):
+        _logger.info('compute photometry with aperture radii %s', rad)
+        apertures = CircularAperture(centers_r[:,:2], r=rad)
+        faper = photutils.aperture_photometry(data, apertures)
+        mm0[:, 9+idx] = faper['aperture_sum']
+        _logger.info('done')
+
     # Convert coordinates to FITS
     mm0[:, 0:2] += 1
     return mm0
@@ -452,12 +454,14 @@ def pinhole_char2(
     # x=centers_r[:,0]
     # y=centers_r[:,1]
     # with radius 2.0 pixels and 4.0 pixels
+
     apertures = [2.0, 4.0]
-    _logger.info('compute photometry with aperture radii %s', apertures)
-    # FIXME: aperture_circular returns values along rows, we transpose it
-    mm0[:, 33:35] = photutils.aperture_circular(
-        data, centers_r[:, 0], centers_r[:, 1], apertures).T
-    _logger.info('done')
+    for idx, rad in enumerate(apertures):
+        _logger.info('compute photometry with aperture radii %s', rad)
+        apertures = CircularAperture(centers_r[:,:2], r=rad)
+        faper = photutils.aperture_photometry(data, apertures)
+        mm0[:, 33+idx] = faper['aperture_sum']
+        _logger.info('done')
 
     # FITS coordinates
     mm0[:, :4] += 1
