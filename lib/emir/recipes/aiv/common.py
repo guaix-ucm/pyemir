@@ -31,7 +31,7 @@ from scipy import ndimage
 
 from astropy.modeling import models, fitting
 import photutils
-from photutils import aperture_circular
+from photutils import CircularAperture
 import matplotlib.pyplot as plt
 import matplotlib.patches
 
@@ -249,11 +249,13 @@ def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
     # with radius 2.0 pixels and 4.0 pixels
 
     apertures = [2.0, 4.0]
-    _logger.info('compute photometry with aperture radii %s', apertures)
-    # FIXME: aperture_circular returns values along rows, we transpose it
-    mm0[:, 9:11] = photutils.aperture_circular(
-        data, centers_r[:, 0], centers_r[:, 1], apertures).T
-    _logger.info('done')
+    for idx, rad in enumerate(apertures):
+        _logger.info('compute photometry with aperture radii %s', rad)
+        apertures = CircularAperture(centers_r[:,:2], r=rad)
+        faper = photutils.aperture_photometry(data, apertures)
+        mm0[:, 9+idx] = faper['aperture_sum']
+        _logger.info('done')
+
     # Convert coordinates to FITS
     mm0[:, 0:2] += 1
     return mm0
@@ -309,6 +311,7 @@ def pinhole_char2(
         rad = 3.0
         # Loop to find better photometry radius and background annulus
         irad = rad
+        bck = 0.0
         for i in range(phot_niter):
             phot_rad = rad
             # Sky background annulus
@@ -377,7 +380,9 @@ def pinhole_char2(
         _logger.info('background %6.2f, r1 %7.2f r2 %7.2f', bck, rs1, rs2)
         mm0[idx, 5:5 + 3] = bck, rs1, rs2
         aper_rad = rad
-        flux_aper = aperture_circular(part_s, [xx0], [yy0], aper_rad)
+        ca = CircularAperture([(xx0, yy0)], aper_rad)
+        m = photutils.aperture_photometry(part_s, ca)
+        flux_aper = m['aperture_sum'][0]
         _logger.info('aper rad %f, aper flux %f', aper_rad, flux_aper)
         mm0[idx, 8:8 + 2] = aper_rad, flux_aper
 
@@ -452,12 +457,14 @@ def pinhole_char2(
     # x=centers_r[:,0]
     # y=centers_r[:,1]
     # with radius 2.0 pixels and 4.0 pixels
+
     apertures = [2.0, 4.0]
-    _logger.info('compute photometry with aperture radii %s', apertures)
-    # FIXME: aperture_circular returns values along rows, we transpose it
-    mm0[:, 33:35] = photutils.aperture_circular(
-        data, centers_r[:, 0], centers_r[:, 1], apertures).T
-    _logger.info('done')
+    for idx, rad in enumerate(apertures):
+        _logger.info('compute photometry with aperture radii %s', rad)
+        apertures = CircularAperture(centers_r[:,:2], r=rad)
+        faper = photutils.aperture_photometry(data, apertures)
+        mm0[:, 33+idx] = faper['aperture_sum']
+        _logger.info('done')
 
     # FITS coordinates
     mm0[:, :4] += 1

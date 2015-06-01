@@ -1,5 +1,5 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2015 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -25,7 +25,9 @@ import math
 
 import numpy as np
 from scipy.interpolate import splrep, splev, sproot
-from photutils import CircularAnnulus, aperture_circular
+from photutils import CircularAperture
+from photutils import aperture_photometry
+from photutils.geometry.circular_overlap import circular_overlap_grid
 
 from astropy.modeling import (fitting, models)
 
@@ -37,16 +39,25 @@ from numina.array.utils import image_box2d
 from numina.modeling import EnclosedGaussian
 from numina.constants import FWHM_G
 
+def encloses_annulus(x_min, x_max, y_min, y_max, nx, ny, r_in, r_out):
+    '''Encloses function backported from old photutils'''
 
-def comp_back_with_annulus(img, xc, yc, rad1, rad2, frac=0.1):
+    gout = circular_overlap_grid(x_min, x_max, y_min, y_max, nx, ny, r_out, 1, 1)
+    gin = circular_overlap_grid(x_min, x_max, y_min, y_max, nx, ny, r_in, 1, 1)
+    return gout - gin
+
+def comp_back_with_annulus(img, xc, yc, r_in, r_out, frac=0.1):
     '''
     center: [x,y], center of first pixel is [0,0]
     '''
 
-    ca = CircularAnnulus(rad1, rad2)
-    mm = ca.encloses(-0.5 - xc, img.shape[1] - 0.5 - xc,
-                     -0.5 - yc, img.shape[0] - 0.5 - yc,
-                     img.shape[1], img.shape[0])
+    x_min = -0.5 - xc
+    x_max = img.shape[1] - 0.5 - xc
+    y_min = -0.5 - yc
+    y_max = img.shape[1] - 0.5 - yc
+    mm = encloses_annulus(x_min, x_max, y_min, y_max,
+                          img.shape[1], img.shape[0],
+                          r_in, r_out)
 
     valid = mm > frac
     rr = img[valid]
@@ -84,7 +95,12 @@ def compute_fwhm_enclosed(imgs, xc, yc, minrad=0.01, maxrad=15.0):
     peak = imgs[tuple(peak_pix)]
 
     rad = np.logspace(np.log10(minrad), np.log10(maxrad), num=100)
-    flux = aperture_circular(imgs, [xc], [yc], rad, method='exact')[:, 0]
+    flux = np.zeros_like(rad)
+    positions = [(xc, yx)]
+    for idr, r in enumerate(rad):
+        ca = CircularAperture(positions, r)
+        m = aperture_photometry(imgs, ca)
+        flux[idr] = m['aperture_sum'][0]
 
     idx = flux.argmax()
 
@@ -105,7 +121,12 @@ def compute_fwhm_enclosed_direct(imgs, xc, yc, minrad=0.01, maxrad=15.0):
     peak = imgs[tuple(peak_pix)]
 
     rad = np.logspace(np.log10(minrad), np.log10(maxrad), num=100)
-    flux = aperture_circular(imgs, [xc], [yc], rad, method='exact')[:, 0]
+    flux = np.zeros_like(rad)
+    positions = [(xc, yc)]
+    for idr, r in enumerate(rad):
+        ca = CircularAperture(positions, r)
+        m = aperture_photometry(imgs, ca)
+        flux[idr] = m['aperture_sum'][0]
 
     return fit_fwhm_enclosed_direct(peak, rad, flux)
 
@@ -143,7 +164,12 @@ def fit_fwhm_enclosed_direct(peak, rad, flux):
 def compute_fwhm_enclosed_grow(imgs, xc, yc, minrad=0.01, maxrad=15.0):
 
     rad = np.logspace(np.log10(minrad), np.log10(maxrad), num=100)
-    flux = aperture_circular(imgs, [xc], [yc], rad, method='exact')[:, 0]
+    flux = np.zeros_like(rad)
+    positions = [(xc, yc)]
+    for idr, r in enumerate(rad):
+        ca = CircularAperture(positions, r)
+        m = aperture_photometry(imgs, ca)
+        flux[idr] = m['aperture_sum'][0]
     idx = flux.argmax()
     rmodel = rad[:idx+1]
     fmodel = flux[:idx+1]
@@ -246,8 +272,9 @@ def rim(data, xinit, yinit,
         bck = bckestim(part, xx0, yy0)
         part_s = part - bck
 
-        flux_aper = aperture_circular(part_s, [xx0], [yy0],
-                                      rad, method='exact')
+        ca = CircularAperture([(xx0, yy0)], rad)
+        m = aperture_photometry(part_s, ca)
+        flux_aper = m['aperture_sum'][0]
 
         f1 = part_s[m]
         g1d_f = fitter(model, r1, f1, weights=(r1+1e-12)**-1)
