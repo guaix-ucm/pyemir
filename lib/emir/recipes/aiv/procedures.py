@@ -52,9 +52,9 @@ def comp_back_with_annulus(img, xc, yc, r_in, r_out, frac=0.1):
     '''
 
     x_min = -0.5 - xc
-    x_max = a.shape[1] - 0.5 - xc
+    x_max = img.shape[1] - 0.5 - xc
     y_min = -0.5 - yc
-    y_max = a.shape[1] - 0.5 - yc
+    y_max = img.shape[1] - 0.5 - yc
     mm = encloses_annulus(x_min, x_max, y_min, y_max,
                           img.shape[1], img.shape[0],
                           r_in, r_out)
