@@ -20,37 +20,40 @@
 import itertools as ito
 import logging
 
+from six.moves import zip
+from six.moves import map as imap
+
 from numina.extraiter import braid
 
 _logger = logging.getLogger('emir.instrument.channels')
 
 
 def _channel_gen1(beg, end, step):
-    return ito.imap(lambda x: (x, x + step), xrange(beg, end, step))
+    return imap(lambda x: (x, x + step), range(beg, end, step))
 
 
 def _channel_gen2(beg, end, step):
-    return ito.imap(lambda x: (x - step, x), xrange(beg, end, -step))
+    return imap(lambda x: (x - step, x), range(beg, end, -step))
 
 
 def _ch1():
-    return ito.izip(ito.repeat(slice(1024, 2048)),
-                    ito.starmap(slice, _channel_gen2(1024, 0, 128)))
+    return zip(ito.repeat(slice(1024, 2048)),
+               ito.starmap(slice, _channel_gen2(1024, 0, 128)))
 
 
 def _ch2():
-    return ito.izip(ito.starmap(slice, _channel_gen2(1024, 0, 128)),
-                    ito.repeat(slice(0, 1024)))
+    return zip(ito.starmap(slice, _channel_gen2(1024, 0, 128)),
+               ito.repeat(slice(0, 1024)))
 
 
 def _ch3():
-    return ito.izip(ito.repeat(slice(0, 1024)),
-                    ito.starmap(slice, _channel_gen1(1024, 2048, 128)))
+    return zip(ito.repeat(slice(0, 1024)),
+               ito.starmap(slice, _channel_gen1(1024, 2048, 128)))
 
 
 def _ch4():
-    return ito.izip(ito.starmap(slice, _channel_gen1(1024, 2048, 128)),
-                    ito.repeat(slice(1024, 2048)))
+    return zip(ito.starmap(slice, _channel_gen1(1024, 2048, 128)),
+               ito.repeat(slice(1024, 2048)))
 
 # Channels are listed per quadrant and then in fast readout order
 CHANNELS = list(ito.chain(_ch1(), _ch2(), _ch3(), _ch4()))
@@ -78,26 +81,26 @@ QUADRANTS = [(slice(1024, 2048), slice(0, 1024)),
 
 # This is the current configuration of the detector
 def _sh1():
-    return ito.izip(ito.repeat(slice(0, 1024)),
-                    (slice(a * 128, (a + 1) * 128) for a in range(8)))
+    return zip(ito.repeat(slice(0, 1024)),
+               (slice(a * 128, (a + 1) * 128) for a in range(8)))
 
 
 def _sh2():
-    return ito.izip(ito.repeat(slice(1024, 2048)),
+    return zip(ito.repeat(slice(1024, 2048)),
                     (slice(1024 + a * 128,
                            1024 + (a + 1) * 128)
                      for a in range(8)))
 
 
 def _sh3():
-    return ito.izip((slice(1024 + a * 128,
+    return zip((slice(1024 + a * 128,
                            1024 + (a + 1) * 128)
                      for a in range(8)),
                     ito.repeat(slice(0, 1024)))
 
 
 def _sh4():
-    return ito.izip((slice(a * 128, (a + 1) * 128) for a in range(8)),
+    return zip((slice(a * 128, (a + 1) * 128) for a in range(8)),
                     ito.repeat(slice(1024, 2048)))
 
 RCHANNELS_1 = list(ito.chain(_sh1(), _sh2(), _sh3(), _sh4()))
