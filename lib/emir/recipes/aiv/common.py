@@ -311,6 +311,7 @@ def pinhole_char2(
         rad = 3.0
         # Loop to find better photometry radius and background annulus
         irad = rad
+        bck = 0.0
         for i in range(phot_niter):
             phot_rad = rad
             # Sky background annulus
