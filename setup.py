@@ -29,14 +29,10 @@ setup(name='pyemir',
       test_suite="emir.tests",
       install_requires=['setuptools', 'numpy', 'scipy',
                         'numina>=0.13.0', 'astropy>=0.4',
-                        'matplotlib', 'numdisplay',
+                        'matplotlib',
                         'scikit-image>=0.10'],
       use_2to3=True,
       zip_safe=False,
-      # numdisplay lives here
-      dependency_links = [
-        'http://stsdas.stsci.edu/numdisplay'
-        ],
       entry_points = {
         'numina.pipeline.1': [
             'emir = emir.loader:load_drp',
