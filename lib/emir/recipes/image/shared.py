@@ -30,6 +30,8 @@ import math
 import numpy
 from astropy.io import fits
 from astropy import wcs
+from astropy.visualization import SqrtStretch
+from astropy.visualization.mpl_normalize import ImageNormalize
 from scipy.spatial import KDTree as KDTree
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -916,13 +918,16 @@ class DirectImageCommon(BaseRecipe):
         self._figure.savefig('figure-median-sky-background_i%01d.png' % step)
 
     def figure_image(self, thedata, image):
-        # FIXME: remove this dependency
-        import numdisplay
         ax = self._figure.gca()
         image_axes, = ax.get_images()
         image_axes.set_data(thedata)
-        z1, z2 = numdisplay.zscale.zscale(thedata)
+
+        # Create normalizer object
+        interval = PercentileInterval(50.)
+        z1, z2 = interval.get_limits(thedata)
+        norm = ImageNormalize(vmin=z1, vmax=z2, stretch=SqrtStretch())
         image_axes.set_clim(z1, z2)
+        image_axes.set_norm(norm)
         clim = image_axes.get_clim()
         ax.set_title('%s, bg=%g fg=%g, linscale' %
                      (image.lastname, clim[0], clim[1]))
@@ -1126,7 +1131,6 @@ class DirectImageCommon(BaseRecipe):
         return objmask, seeing_fwhm
 
     def figure_final_before_s(self, data):
-        import numdisplay
         self._figure.clf()
         ax = self._figure.add_subplot(111)
         cmap = mpl.cm.get_cmap('gray')
@@ -1134,8 +1138,11 @@ class DirectImageCommon(BaseRecipe):
         ax.set_title('Result image')
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        z1, z2 = numdisplay.zscale.zscale(data)
-        ax.imshow(data, cmap=cmap, clim=(z1, z2))
+        
+        interval = PercentileInterval(50.)
+        z1, z2 = interval.get_limits(thedata)
+        norm = ImageNormalize(vmin=z1, vmax=z2, stretch=SqrtStretch())
+        ax.imshow(data, cmap=cmap, clim=(z1, z2), norm=norm)
         self._figure.canvas.draw()
 
     def figure_fwhm_histogram(self, fwhms, step=0):

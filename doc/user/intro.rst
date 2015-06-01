@@ -17,7 +17,6 @@ be able to be installed and work properly:
  - `scipy <http://www.scipy.org>`_
  - `astropy <http://www.astropy.org>`_
  - `matplotlib <http://matplotlib.sourceforge.net/>`_
- - `numdisplay <http://stsdas.stsci.edu/numdisplay/>`_
 
 Additional packages are optionally required:
  - `nose <http://somethingaboutorange.com/mrl/projects/nose>`_ to run the tests
