@@ -25,7 +25,8 @@ import math
 
 import numpy as np
 from scipy.interpolate import splrep, splev, sproot
-from photutils import CircularAnnulus, aperture_circular
+from photutils import CircularAperture, CircularAnnulus
+from photutils import aperture_photometry
 
 from astropy.modeling import (fitting, models)
 
@@ -84,7 +85,12 @@ def compute_fwhm_enclosed(imgs, xc, yc, minrad=0.01, maxrad=15.0):
     peak = imgs[tuple(peak_pix)]
 
     rad = np.logspace(np.log10(minrad), np.log10(maxrad), num=100)
-    flux = aperture_circular(imgs, [xc], [yc], rad, method='exact')[:, 0]
+    flux = np.zeros_like(rad)
+    positions = [(xc, yx)]
+    for idr, r in enumerate(rad):
+        ca = CircularAperture(positions, r)
+        m = aperture_photometry(imgs, ca)
+        flux[idr] = m['aperture_sum'][0]
 
     idx = flux.argmax()
 
@@ -105,7 +111,12 @@ def compute_fwhm_enclosed_direct(imgs, xc, yc, minrad=0.01, maxrad=15.0):
     peak = imgs[tuple(peak_pix)]
 
     rad = np.logspace(np.log10(minrad), np.log10(maxrad), num=100)
-    flux = aperture_circular(imgs, [xc], [yc], rad, method='exact')[:, 0]
+    flux = np.zeros_like(rad)
+    positions = [(xc, yx)]
+    for idr, r in enumerate(rad):
+        ca = CircularAperture(positions, r)
+        m = aperture_photometry(imgs, ca)
+        flux[idr] = m['aperture_sum'][0]
 
     return fit_fwhm_enclosed_direct(peak, rad, flux)
 
@@ -143,7 +154,12 @@ def fit_fwhm_enclosed_direct(peak, rad, flux):
 def compute_fwhm_enclosed_grow(imgs, xc, yc, minrad=0.01, maxrad=15.0):
 
     rad = np.logspace(np.log10(minrad), np.log10(maxrad), num=100)
-    flux = aperture_circular(imgs, [xc], [yc], rad, method='exact')[:, 0]
+    flux = np.zeros_like(rad)
+    positions = [(xc, yx)]
+    for idr, r in enumerate(rad):
+        ca = CircularAperture(positions, r)
+        m = aperture_photometry(imgs, ca)
+        flux[idr] = m['aperture_sum'][0]
     idx = flux.argmax()
     rmodel = rad[:idx+1]
     fmodel = flux[:idx+1]
@@ -246,8 +262,9 @@ def rim(data, xinit, yinit,
         bck = bckestim(part, xx0, yy0)
         part_s = part - bck
 
-        flux_aper = aperture_circular(part_s, [xx0], [yy0],
-                                      rad, method='exact')
+        ca = CircularAperture([(xx0, yy0)], rad)
+        m = aperture_photometry(part_s, ca)
+        flux_aper = m['aperture_sum'][0]
 
         f1 = part_s[m]
         g1d_f = fitter(model, r1, f1, weights=(r1+1e-12)**-1)

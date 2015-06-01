@@ -379,7 +379,9 @@ def pinhole_char2(
         _logger.info('background %6.2f, r1 %7.2f r2 %7.2f', bck, rs1, rs2)
         mm0[idx, 5:5 + 3] = bck, rs1, rs2
         aper_rad = rad
-        flux_aper = aperture_circular(part_s, [xx0], [yy0], aper_rad)
+        ca = CircularAperture([(xx0, yy0)], aper_rad)
+        m = photutils.aperture_photometry(part_s, ca)
+        flux_aper = m['aperture_sum'][0]
         _logger.info('aper rad %f, aper flux %f', aper_rad, flux_aper)
         mm0[idx, 8:8 + 2] = aper_rad, flux_aper
 
