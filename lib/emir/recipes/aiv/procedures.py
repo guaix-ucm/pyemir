@@ -122,7 +122,7 @@ def compute_fwhm_enclosed_direct(imgs, xc, yc, minrad=0.01, maxrad=15.0):
 
     rad = np.logspace(np.log10(minrad), np.log10(maxrad), num=100)
     flux = np.zeros_like(rad)
-    positions = [(xc, yx)]
+    positions = [(xc, yc)]
     for idr, r in enumerate(rad):
         ca = CircularAperture(positions, r)
         m = aperture_photometry(imgs, ca)
@@ -165,7 +165,7 @@ def compute_fwhm_enclosed_grow(imgs, xc, yc, minrad=0.01, maxrad=15.0):
 
     rad = np.logspace(np.log10(minrad), np.log10(maxrad), num=100)
     flux = np.zeros_like(rad)
-    positions = [(xc, yx)]
+    positions = [(xc, yc)]
     for idr, r in enumerate(rad):
         ca = CircularAperture(positions, r)
         m = aperture_photometry(imgs, ca)
