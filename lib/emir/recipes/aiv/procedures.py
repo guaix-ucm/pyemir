@@ -25,8 +25,9 @@ import math
 
 import numpy as np
 from scipy.interpolate import splrep, splev, sproot
-from photutils import CircularAperture, CircularAnnulus
+from photutils import CircularAperture
 from photutils import aperture_photometry
+from photutils.geometry.circular_overlap import circular_overlap_grid
 
 from astropy.modeling import (fitting, models)
 
@@ -38,16 +39,25 @@ from numina.array.utils import image_box2d
 from numina.modeling import EnclosedGaussian
 from numina.constants import FWHM_G
 
+def encloses_annulus(x_min, x_max, y_min, y_max, nx, ny, r_in, r_out):
+    '''Encloses function backported from old photutils'''
 
-def comp_back_with_annulus(img, xc, yc, rad1, rad2, frac=0.1):
+    gout = circular_overlap_grid(x_min, x_max, y_min, y_max, nx, ny, r_out, 1, 1)
+    gin = circular_overlap_grid(x_min, x_max, y_min, y_max, nx, ny, r_in, 1, 1)
+    return gout - gin
+
+def comp_back_with_annulus(img, xc, yc, r_in, r_out, frac=0.1):
     '''
     center: [x,y], center of first pixel is [0,0]
     '''
 
-    ca = CircularAnnulus(rad1, rad2)
-    mm = ca.encloses(-0.5 - xc, img.shape[1] - 0.5 - xc,
-                     -0.5 - yc, img.shape[0] - 0.5 - yc,
-                     img.shape[1], img.shape[0])
+    x_min = -0.5 - xc
+    x_max = a.shape[1] - 0.5 - xc
+    y_min = -0.5 - yc
+    y_max = a.shape[1] - 0.5 - yc
+    mm = encloses_annulus(x_min, x_max, y_min, y_max,
+                          img.shape[1], img.shape[0],
+                          r_in, r_out)
 
     valid = mm > frac
     rr = img[valid]
