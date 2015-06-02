@@ -180,7 +180,6 @@ def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_ha
                     box=recenter_half_box,
                     maxdist=recenter_maxdist, nloop=recenter_nloop
                 )
-                print kk
                 xc, yc, _back, status, msg = centering_centroid(
                     data, xi, yi,
                     box=recenter_half_box,

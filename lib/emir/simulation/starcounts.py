@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+from __future__ import print_function
 
 from math import sin, cos, tan, pi
 import pkgutil
@@ -289,7 +291,7 @@ if __name__ == '__main__':
 
     nstars = int(round(detector_area * (scmodel.integral_counts(magmax) -
                                         scmodel.integral_counts(magmin))))
-    print nstars
+    print('nstars', nstars)
 
     seeing = 1.0
 
