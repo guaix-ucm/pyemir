@@ -31,6 +31,7 @@ import numpy
 from astropy.io import fits
 from astropy import wcs
 from astropy.visualization import SqrtStretch
+from astropy.visualization import PercentileInterval
 from astropy.visualization.mpl_normalize import ImageNormalize
 from scipy.spatial import KDTree as KDTree
 import matplotlib as mpl
@@ -1138,9 +1139,9 @@ class DirectImageCommon(BaseRecipe):
         ax.set_title('Result image')
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        
+
         interval = PercentileInterval(50.)
-        z1, z2 = interval.get_limits(thedata)
+        z1, z2 = interval.get_limits(data)
         norm = ImageNormalize(vmin=z1, vmax=z2, stretch=SqrtStretch())
         ax.imshow(data, cmap=cmap, clim=(z1, z2), norm=norm)
         self._figure.canvas.draw()
