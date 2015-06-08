@@ -4,6 +4,9 @@
 from __future__ import division
 from __future__ import print_function
 
+import six
+from six.moves import input
+
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
@@ -258,7 +261,7 @@ def fit_solution(wv_master,
                         label='removed line ('+val[0]+')')
         ax.legend(loc="lower right")
         plt.show(block=False)
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     return coeff, crval1_approx, cdelt1_approx
 
@@ -342,7 +345,7 @@ def gen_triplets_master(wv_master, LDEBUG = False, LPLOT = False):
         ax.set_xlabel('distance ratio in each triplet')
         ax.set_ylabel('Number of triplets')
         plt.show(block=False)
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     return ntriplets_master, ratios_master_sorted, triplets_master_sorted_list
 
@@ -634,7 +637,7 @@ def arccalibration_direct_doublets(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
         print('Number of points in last plot:', len(cdelt1_search))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         fig = plt.figure()
@@ -653,7 +656,7 @@ def arccalibration_direct_doublets(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
         print('Number of points in last plot:', len(cdelt1_search))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with color depending on deltaw_search
@@ -674,7 +677,7 @@ def arccalibration_direct_doublets(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
         print('Number of points in last plot:', len(cdelt1_search))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with different color for each arc doublet and overplotting 
@@ -692,7 +695,7 @@ def arccalibration_direct_doublets(wv_master,
         ax.set_ylim([ymin,ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # including doublet numbers
@@ -709,7 +712,7 @@ def arccalibration_direct_doublets(wv_master,
         ax.set_ylim([ymin,ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with error bars (note that errors in this plot are highly
@@ -726,7 +729,7 @@ def arccalibration_direct_doublets(wv_master,
         ax.set_ylim([ymin,ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
 
     #---
@@ -765,7 +768,7 @@ def arccalibration_direct_doublets(wv_master,
               ndoublets_layered_list)
         print('>>> Total number of potential solutions..:',
               sum(ndoublets_layered_list))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     #---
     # Computation of the cost function.
@@ -804,7 +807,7 @@ def arccalibration_direct_doublets(wv_master,
                 else:
                     dist_to_layers = np.append(dist_to_layers, np.inf)
         dist_to_layers.sort() # in-place sort
-        funcost_search[k] = dist_to_layers[range(ndoublets_for_sum)].sum()
+        funcost_search[k] = dist_to_layers[list(six.moves.range(ndoublets_for_sum))].sum()
 
     # Normalize the cost function
     funcost_min = funcost_search.min()
@@ -825,7 +828,7 @@ def arccalibration_direct_doublets(wv_master,
                   clabel_layered_list[i][jdum],
                   cdelt1_layered_list[i][jdum], 
                   crval1_layered_list[i][jdum])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     # Intermediate plots
     if LPLOT:
@@ -842,7 +845,7 @@ def arccalibration_direct_doublets(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
         print('Number of points in last plot:', len(cdelt1_search))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with symbol size proportional to the inverse of the cost function
@@ -861,7 +864,7 @@ def arccalibration_direct_doublets(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
         print('Number of points in last plot:', len(cdelt1_search))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         for i in range(ndoublets_arc):
@@ -879,7 +882,7 @@ def arccalibration_direct_doublets(wv_master,
             ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
             plt.show(block=False)
             print('Number of points in last plot:', xdum.size)
-            raw_input('press <RETURN> to continue...')
+            input('press <RETURN> to continue...')
 
     return None
 
@@ -1074,7 +1077,7 @@ def arccalibration_direct(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
         print('Number of points in last plot:', len(cdelt1_search))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         fig = plt.figure()
@@ -1093,7 +1096,7 @@ def arccalibration_direct(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
         print('Number of points in last plot:', len(cdelt1_search))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with different color for each arc triplet and overplotting 
@@ -1111,7 +1114,7 @@ def arccalibration_direct(wv_master,
         ax.set_ylim([ymin,ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # including triplet numbers
@@ -1128,7 +1131,7 @@ def arccalibration_direct(wv_master,
         ax.set_ylim([ymin,ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with error bars (note that errors in this plot are highly
@@ -1145,7 +1148,7 @@ def arccalibration_direct(wv_master,
         ax.set_ylim([ymin,ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
 
     #---
@@ -1184,7 +1187,7 @@ def arccalibration_direct(wv_master,
               ntriplets_layered_list)
         print('>>> Total number of potential solutions..:',
               sum(ntriplets_layered_list))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     #---
     # Computation of the cost function.
@@ -1223,7 +1226,7 @@ def arccalibration_direct(wv_master,
                 else:
                     dist_to_layers = np.append(dist_to_layers, np.inf)
         dist_to_layers.sort() # in-place sort
-        funcost_search[k] = dist_to_layers[range(ntriplets_for_sum)].sum()
+        funcost_search[k] = dist_to_layers[list(six.moves.range(ntriplets_for_sum))].sum()
 
     # Normalize the cost function
     funcost_min = funcost_search.min()
@@ -1244,7 +1247,7 @@ def arccalibration_direct(wv_master,
                   clabel_layered_list[i][jdum],
                   cdelt1_layered_list[i][jdum], 
                   crval1_layered_list[i][jdum])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     # Intermediate plots
     if LPLOT:
@@ -1261,7 +1264,7 @@ def arccalibration_direct(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
         print('Number of points in last plot:', len(cdelt1_search))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with symbol size proportional to the inverse of the cost function
@@ -1280,7 +1283,7 @@ def arccalibration_direct(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         plt.show(block=False)
         print('Number of points in last plot:', len(cdelt1_search))
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         for i in range(ntriplets_arc):
@@ -1298,7 +1301,7 @@ def arccalibration_direct(wv_master,
             ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
             plt.show(block=False)
             print('Number of points in last plot:', xdum.size)
-            raw_input('press <RETURN> to continue...')
+            input('press <RETURN> to continue...')
 
     #---
     # Line identification: several scenarios are considered.
@@ -1345,7 +1348,7 @@ def arccalibration_direct(wv_master,
     if LDEBUG:
         for i in range(nlines_arc):
             print(i, diagonal_ids[i],diagonal_funcost[i])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     # The solutions are stored in a list of dictionaries. The dictionaries
     # contain the following elements:
@@ -1372,7 +1375,7 @@ def arccalibration_direct(wv_master,
     if LDEBUG:
         for i in range(nlines_arc):
             print(i, solution[i])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     # Type B lines.
     for i in range(2,nlines_arc-2):
@@ -1401,7 +1404,7 @@ def arccalibration_direct(wv_master,
     if LDEBUG:
         for i in range(nlines_arc):
             print(i, solution[i])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     # Type C lines.
     for i in range(2,nlines_arc-2):
@@ -1424,7 +1427,7 @@ def arccalibration_direct(wv_master,
     if LDEBUG:
         for i in range(nlines_arc):
             print(i, solution[i])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     # Type D lines.
     for i in [1,nlines_arc-2]:
@@ -1439,7 +1442,7 @@ def arccalibration_direct(wv_master,
     if LDEBUG:
         for i in range(nlines_arc):
             print(i, solution[i])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     # Type E lines.
     i = 0
@@ -1458,7 +1461,7 @@ def arccalibration_direct(wv_master,
     if LDEBUG:
         for i in range(nlines_arc):
             print(i, solution[i])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     #---
     # Check that the solutions do not contain duplicated values. If they are
@@ -1490,7 +1493,7 @@ def arccalibration_direct(wv_master,
     if LDEBUG:
         for i in range(nlines_arc):
             print(i, solution[i])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     #---
     # Filter out points with a large deviation from a robust linear fit. The
@@ -1514,7 +1517,7 @@ def arccalibration_direct(wv_master,
     if LDEBUG:
         for i in range(nlines_arc):
             print(i, solution[i])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     #---
     # Filter out points that deviates from a polynomial fit. The filtered lines
@@ -1539,7 +1542,7 @@ def arccalibration_direct(wv_master,
     if LDEBUG:
         for i in range(nlines_arc):
             print(i, solution[i])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     #---
     # Include unidentified lines by using the prediction of the polynomial fit
@@ -1594,12 +1597,12 @@ def arccalibration_direct(wv_master,
                     solution[i]['id'] = ifound
                     solution[i]['funcost'] = max(list_funcost_already_found)
     if LDEBUG:
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     if LDEBUG:
         for i in range(nlines_arc):
             print(i, solution[i])
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     return solution
 

@@ -21,7 +21,8 @@ from __future__ import print_function
 
 from math import sin, cos, tan, pi
 import pkgutil
-from StringIO import StringIO
+
+from six import StringIO
 
 from scipy import array
 import scipy.interpolate as sil
@@ -255,7 +256,7 @@ if __name__ == '__main__':
             self.inversecdf = np.zeros(Nrl)
             self.inversecdf[0] = self.x[0]
             cdf_idx = 0
-            for n in xrange(1, self.inversecdfbins):
+            for n in range(1, self.inversecdfbins):
                 while self.cdf[cdf_idx] < y[n] and cdf_idx < Nrl:
                     cdf_idx += 1
                 # Seems a linear interpolation

@@ -27,6 +27,7 @@ import logging
 import shutil
 import math
 
+import six
 import numpy
 from astropy.io import fits
 from astropy import wcs
@@ -151,7 +152,7 @@ def clip_slices(r, region, scale=1):
 class DirectImageCommon(BaseRecipe):
 
     logger = _logger
-    BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
+    BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = [0, 1, 2, 3, 4]
     __version__ = '0.1.0'
 
     def __init__(self, *args, **kwds):
@@ -670,9 +671,11 @@ class DirectImageCommon(BaseRecipe):
 
         finally:
             _logger.debug('Step %d, closing sky-subtracted frames', step)
-            map(lambda x: x.close(), frameslll)
+            for f in frameslll:
+                f.close()
             _logger.debug('Step %d, closing mask frames', step)
-            map(lambda x: x.close(), mskslll)
+            for f in mskslll:
+                f.close()
 
     def apply_superflat(self, frames, flatdata, step=0, save=True):
         _logger.info("Step %d, SF: apply superflat", step)
@@ -842,7 +845,7 @@ class DirectImageCommon(BaseRecipe):
 
         nimages = ndata.max()
 
-        rnimage = range(1, nimages + 1)
+        rnimage = list(six.moves.range(1, nimages + 1))
         rmean = rnimage[:]
         rstd = rnimage[:]
 

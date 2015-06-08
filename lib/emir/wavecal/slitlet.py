@@ -5,10 +5,14 @@ from __future__ import division
 from __future__ import print_function
 
 import sys
+
+import six
+from six.moves import input
 import numpy as np
 from numpy.polynomial import polynomial
 import matplotlib.pyplot as plt
-from zscale import zscale
+
+from .zscale import zscale
 
 #------------------------------------------------------------------------------
 
@@ -180,7 +184,7 @@ class Slitlet:
             ax.plot(xsp,yspmax,'c-')
             # show plot
             plt.show(block=False)
-            raw_input('press <RETURN> to continue...')
+            input('press <RETURN> to continue...')
 
             # plot extracted spectrum
             fig = plt.figure()
@@ -188,7 +192,7 @@ class Slitlet:
             ax.set_xlim([1,naxis1])
             ax.plot(xsp,fluxsp,'k-')
             plt.show(block=False)
-            raw_input('press <RETURN> to continue...')
+            input('press <RETURN> to continue...')
 
         # return result
         xsp_float = xsp.astype(np.float)

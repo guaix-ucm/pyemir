@@ -3,6 +3,10 @@
 
 from __future__ import division
 from __future__ import print_function
+
+import six
+from six.moves import input
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -93,12 +97,12 @@ def findPeaks_spectrum(sx, nwinwidth, data_threshold = 0,
     if LPLOT:
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.plot(range(sx_shape[0]), sx, 'k-')
+        ax.plot(list(six.moves.range(sx_shape[0])), sx, 'k-')
         ax.set_xlabel('array index')
         ax.set_ylabel('spectrum intensity')
         ax.set_title('function findPeaks_spectrum')
         plt.show(block=False)
-        raw_input('press <RETURN> to continue...')
+        input('press <RETURN> to continue...')
 
     return np.array(ipeaks, dtype=np.int)
 
@@ -178,7 +182,7 @@ def refinePeaks_spectrum(sx, ipeaks, nwinwidth, method=2, LDEBUG=False):
             plt.plot(x_plot,y_plot,color="red")
             plt.show(block=False)
             print('refined_peak:',refined_peak)
-            answer = raw_input('Press <CR> to continue...')
+            answer = input('Press <CR> to continue...')
             plt.close()
 
     return xfpeaks

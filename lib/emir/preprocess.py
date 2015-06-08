@@ -19,8 +19,9 @@
 
 '''Preprocessing EMIR readout modes'''
 
-from __future__ import print_function
 from __future__ import division
+
+import six
 
 from astropy.io import fits
 
@@ -130,7 +131,7 @@ def preprocess_ramp(hdulist):
 
 
 def fits_wrapper(frame):
-    if isinstance(frame, basestring):
+    if isinstance(frame, six.string_types):
         return fits.open(frame)
     elif isinstance(frame, fits.HDUList):
         return frame

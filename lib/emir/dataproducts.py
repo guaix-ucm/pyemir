@@ -227,8 +227,8 @@ class MasterGainMap(DataProductType):
         self.frame = frame
 
     def __getstate__(self):
-        gmean = map(float, self.mean.flat)
-        gvar = map(float, self.var.flat)
+        gmean = list(map(float, self.mean.flat))
+        gvar = list(map(float, self.var.flat))
         return {'frame': self.frame, 'mean': gmean, 'var': gvar}
 
 
