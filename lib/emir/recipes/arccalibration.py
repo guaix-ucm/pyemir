@@ -17,14 +17,15 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import division
-from __future__ import print_function
+from __future__ import division, print_function
 
 '''Auxiliary Recipes for EMIR'''
 
 import logging
 
 import numpy
+
+from six.moves import input
 
 #from numina.core import BaseRecipeAutoQC
 from numina.core import RecipeError
@@ -159,7 +160,7 @@ class ArcCalibrationRecipe(EmirRecipe):
                 for xdum in zip(xpeaks_refined,xpeaks_refined):
                     ax.plot(xdum, ylim, linestyle='dotted', color='magenta')
                 plt.show(block=False)
-                raw_input('press <RETURN> to continue...')
+                input('press <RETURN> to continue...')
 
             # wavelength calibration
             solution = arccalibration_direct(wv_master,
@@ -192,7 +193,7 @@ class ArcCalibrationRecipe(EmirRecipe):
 
             print('>>> approximate crval1, cdelt1:',crval1_approx,cdelt1_approx)
             print('>>> fitted coefficients.......:\n',numpy_array_with_coeff)
-            raw_input('press <RETURN> to continue...')
+            input('press <RETURN> to continue...')
 
         result = self.create_result(polynomial_coeffs = numpy_array_with_coeff)
 

@@ -22,6 +22,7 @@
 from __future__ import division
 
 import logging
+import six
 
 import numpy
 from scipy import ndimage
@@ -146,7 +147,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
         _logger.debug('Label filtered objects')
         relabel_objects, nb_labels = ndimage.label(fill_slits_clean)
         _logger.debug('%d objects found after filtering', nb_labels)
-        ids = range(1, nb_labels + 1)
+        ids = list(six.moves.range(1, nb_labels + 1))
 
         _logger.debug('Find regions and centers')
         regions = ndimage.find_objects(relabel_objects)

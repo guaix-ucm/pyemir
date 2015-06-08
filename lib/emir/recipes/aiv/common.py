@@ -180,7 +180,6 @@ def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_ha
                     box=recenter_half_box,
                     maxdist=recenter_maxdist, nloop=recenter_nloop
                 )
-                print kk
                 xc, yc, _back, status, msg = centering_centroid(
                     data, xi, yi,
                     box=recenter_half_box,
@@ -229,7 +228,7 @@ def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
                 fmt1 = 'x=%7.2f y=%7.2f peak=%6.3f fwhm_x=%6.3f fwhm_y=%6.3f'
                 _logger.info(fmt1, *res1)
                 mm0[idx, 3:6] = res1[2:]
-            except StandardError as error:
+            except Exception as error:
                 _logger.exception("unable to obtain FWHM, %s", error)
 
             _logger.info('compute Gaussian 2Dfitting')
@@ -238,7 +237,7 @@ def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
                 fmt2 = 'x=%7.2f y=%7.2f peak=%6.3f stdev_x=%6.3f stdev_y=%6.3f'
                 _logger.info(fmt2, *res2)
                 mm0[idx, 6:9] = res2[2:]
-            except StandardError as error:
+            except Exception as error:
                 _logger.exception("unable to obtain FWHM, %s", error)
         else:
             _logger.info('skipping')
@@ -332,7 +331,7 @@ def pinhole_char2(
                 _logger.debug('Iter %d, background %f in '
                               'annulus r1=%5.2f r2=%5.2f',
                               i, bck, rs1, rs2)
-            except StandardError as error:
+            except Exception as error:
                 _logger.warning('Error in background estimation %s', error)
                 break
 
@@ -392,7 +391,7 @@ def pinhole_char2(
             dpeak, dfwhm, smsg = compute_fwhm_enclosed_direct(
                 part_s, xx0, yy0, maxrad=fit_rad)
             _logger.info('Enclosed direct, peak: %f fwhm %f', dpeak, dfwhm)
-        except StandardError as error:
+        except Exception as error:
             _logger.warning('Error in compute_fwhm_enclosed_direct %s', error)
             dpeak, dfwhm = -99.0, -99.0
 
@@ -400,7 +399,7 @@ def pinhole_char2(
             eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(
                 part_s, xx0, yy0, maxrad=fit_rad)
             _logger.info('Enclosed fit, peak: %f fwhm %f', epeak, efwhm)
-        except StandardError as error:
+        except Exception as error:
             _logger.warning('Error in compute_fwhm_enclosed_grow %s', error)
             eamp, efwhm, epeak, emsg = [-99.0] * 4
 
@@ -410,7 +409,7 @@ def pinhole_char2(
             res_simple = compute_fwhm_2d_simple(part_s, xx0, yy0)
             _logger.info('Simple, peak: %f fwhm x %f fwhm %f', *res_simple)
             mm0[idx, 16:16 + 3] = res_simple
-        except StandardError as error:
+        except Exception as error:
             _logger.warning('Error in compute_fwhm_2d_simple %s', error)
             mm0[idx, 16:16 + 3] = -99.0
 
@@ -418,7 +417,7 @@ def pinhole_char2(
             res_spline = compute_fwhm_2d_spline(part_s, xx0, yy0)
             _logger.info('Spline, peak: %f fwhm x %f fwhm %f', *res_spline)
             mm0[idx, 19:19 + 3] = res_spline
-        except StandardError as error:
+        except Exception as error:
             _logger.warning('Error in compute_fwhm_2d_spline %s', error)
             mm0[idx, 19:19 + 3] = -99.0
 

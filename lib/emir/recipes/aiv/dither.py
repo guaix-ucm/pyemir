@@ -1,5 +1,5 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2015 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -68,7 +68,6 @@ def resize(frames, shape, offsetsp, finalshape, window=None, scale=1, step=0):
     rframes = []
     for frame, rel_offset in zip(frames, offsetsp):
         region, _ = subarray_match(finalshape, rel_offset, shape)
-        print frame, region
         rframe = resize_hdul(frame.open(), finalshape, region)
         rframes.append(rframe)
 
@@ -95,7 +94,7 @@ class DitheredImageARecipe(EmirRecipe):
         refpix = numpy.divide(numpy.array([baseshape],
                                           dtype='int'), 2).astype('float')
         offsets_xy = offsets_from_wcs(rinput.obresult.frames, refpix)
-        print offsets_xy
+        _logger.debug("offsets_xy %s", offsets_xy)
         # Offsets in numpy order, swaping
         offsets_fc = offsets_xy[:, ::-1]
         offsets_fc_t = numpy.round(offsets_fc).astype('int')
@@ -103,7 +102,7 @@ class DitheredImageARecipe(EmirRecipe):
         _logger.info('Computing relative offsets')
         subpixshape = (2048, 2048)
         finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
-        print offsetsp
+        _logger.debug("offsetsp %s", offsetsp)
         _logger.info('Shape of resized array is %s', finalshape)
 
         # Resizing target frames

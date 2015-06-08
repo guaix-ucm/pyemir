@@ -19,7 +19,7 @@
 
 '''AIV Recipes for EMIR'''
 
-from __future__ import division
+from __future__ import division, print_function
 
 import math
 
@@ -225,17 +225,17 @@ def rim(data, xinit, yinit,
     recenter_half_box = (box, box)
     plot_half_box = (3*box, 3*box)
 
-    print 'C initial', xinit, yinit
+    print('C initial', xinit, yinit)
     x0, y0, _1, _2, _3 = centering_centroid(data, xinit, yinit,
                                             box=recenter_half_box,
                                             maxdist=recenter_maxdist,
                                             nloop=recenter_nloop
                                             )
-    print 'C final', x0, y0
+    print('C final', x0, y0)
 
     if fine_recentering:
-        print 'Fine recentering'
-        print 'C initial', x0, y0
+        print('Fine recentering')
+        print('C initial', x0, y0)
         x1, y1, _back, _status, _msg = centering_centroid(
             data,
             x0,
@@ -244,7 +244,7 @@ def rim(data, xinit, yinit,
             maxdist=2*math.sqrt(2),
             nloop=1
             )
-        print 'C final', x1, y1
+        print('C final', x1, y1)
 
     sl = image_box2d(x0, y0, data.shape, plot_half_box)
     part = data[sl]
@@ -290,24 +290,24 @@ def rim(data, xinit, yinit,
         rad = 3 * dfwhm
         if abs(rad-irad) < 1e-3:
             # reached convergence
-            print 'convergence in iter %d' % (i+1)
+            print('convergence in iter %d' % (i+1))
             break
         else:
             irad = rad
     else:
-        print 'no convergence in photometric radius determination'
+        print('no convergence in photometric radius determination')
 
-    print 'P, aper rad', rad, 'flux_aper', flux_aper[0]
-    print 'P, annulus background:', bck, 'radii', rs1, rs2
+    print('P, aper rad', rad, 'flux_aper', flux_aper[0])
+    print('P, annulus background:', bck, 'radii', rs1, rs2)
     eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(
         part_s, xx0, yy0, maxrad=rs1
         )
-    print 'Enclosed fit, peak:', epeak, 'fwhm', efwhm
-    print 'Radial fit, peak:', rpeak, 'fwhm', rfwhm
-    print 'Direct enclosed, peak:', dpeak, 'dfwhm', dfwhm
+    print('Enclosed fit, peak:', epeak, 'fwhm', efwhm)
+    print('Radial fit, peak:', rpeak, 'fwhm', rfwhm)
+    print('Direct enclosed, peak:', dpeak, 'dfwhm', dfwhm)
 
     lpeak, fwhm_x, fwhm_y = compute_fwhm_1d_simple(part_s, xx0, yy0)
-    print 'Simple, peak:', lpeak, 'fwhm x', fwhm_x, 'fwhm y', fwhm_y
+    print('Simple, peak:', lpeak, 'fwhm x', fwhm_x, 'fwhm y', fwhm_y)
 
     # Fit in a smaller box
     fit2d_rad = int(math.ceil(0.5 * rad))
@@ -319,10 +319,10 @@ def rim(data, xinit, yinit,
     g2d = models.Gaussian2D(amplitude=rpeak, x_mean=x0, y_mean=y0,
                             x_stddev=1.0, y_stddev=1.0)
     g2d_f = fitter(g2d, X1, Y1, part1 - bck)
-    print 'Gauss2D fit'
-    print g2d_f
+    print('Gauss2D fit')
+    print(g2d_f)
 
     moments_half_box = fit2d_half_box
     Mxx, Myy, Mxy, e, pa = moments(data, x0, y0, moments_half_box)
 
-    print Mxx, Myy, Mxy, e, pa
+    print(Mxx, Myy, Mxy, e, pa)

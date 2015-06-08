@@ -20,7 +20,7 @@
 '''EMIR simulator.'''
 
 from pkgutil import get_data
-from StringIO import StringIO
+from six import StringIO
 import logging
 
 from astropy.io import fits

@@ -26,6 +26,7 @@ Routines shared by image mode recipes
 import logging
 import operator
 
+import six
 import numpy
 from astropy.io import fits
 from numina.util.sextractor import SExtractor
@@ -142,7 +143,7 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
     levels = check_photometry_levels
     actions = check_photometry_actions
 
-    x = range(len(frames))
+    x = list(six.moves.range(len(frames)))
     vals, (_, sigma) = check_photometry_categorize(
         x, wdata, levels, tags=actions)
     # n sigma level to plt
@@ -177,7 +178,7 @@ def check_photometry_categorize(x, y, levels, tags=None):
     result = []
 
     if tags is None:
-        tags = range(len(levels) + 1)
+        tags = list(six.moves.range(len(levels) + 1))
 
     for l, t in zip(levels, tags):
         indc = y < l
@@ -195,7 +196,7 @@ def check_photometry_categorize(x, y, levels, tags=None):
 
 
 def check_photometry_plot(figure, vals, errors, levels, nsigma, step=0):
-    x = range(len(errors))
+    x = list(six.moves.range(len(errors)))
     figure.clf()
     ax = figure.add_subplot(111)
     ax.set_title('Relative flux of brightest object')
