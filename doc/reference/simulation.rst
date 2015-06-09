@@ -1,7 +1,7 @@
 
-:mod:`emir.simulation` --- 
+:mod:`emirdrp.simulation` --- 
 =======================================================
 
-.. automodule:: emir.simulation
+.. automodule:: emirdrp.simulation
    :members:
 

@@ -6,9 +6,9 @@ Bias Image
 ----------
 
 :Mode: Bias Image
-:Recipe class: :class:`~emir.recipes.BiasRecipe`
-:Input class: :class:`~emir.recipes.BiasRecipeInput`
-:Result class: :class:`~emir.recipes.BiasRecipeResult`
+:Recipe class: :class:`~emirdrp.recipes.BiasRecipe`
+:Input class: :class:`~emirdrp.recipes.BiasRecipeInput`
+:Result class: :class:`~emirdrp.recipes.BiasRecipeResult`
 
 The actions to calibrate the zero (pedestal) level of the detector
 plus associated control electronic by taken images with null
@@ -36,18 +36,18 @@ Products
 +-------------------+-------------------------------------------------------+
 | Name              | Type                                                  |
 +===================+=======================================================+
-| ``'biasframe'``   | :class:`~emir.dataproducts.MasterBias`                | 
+| ``'biasframe'``   | :class:`~emirdrp.dataproducts.MasterBias`             | 
 +-------------------+-------------------------------------------------------+
-| ``'stats'``       | :class:`~emir.dataproducts.ChannelLevelStatistics`    |
+| ``'stats'``       | :class:`~emirdrp.dataproducts.ChannelLevelStatistics` |
 +-------------------+-------------------------------------------------------+
 
 Dark Current Image
 ------------------
 
 :Mode: Dark Current Image
-:Recipe class: :class:`~emir.recipes.DarkRecipe`
-:Input class: :class:`~emir.recipes.DarkRecipeInput`
-:Result class: :class:`~emir.recipes.DarkRecipeResult`
+:Recipe class: :class:`~emirdrp.recipes.DarkRecipe`
+:Input class: :class:`~emirdrp.recipes.DarkRecipeInput`
+:Result class: :class:`~emirdrp.recipes.DarkRecipeResult`
 
 The actions to measure the variation of the intrinsic signal of the
 system by taken images under zero illumination condition and
@@ -77,9 +77,9 @@ Products
 +-------------------+-------------------------------------------------------+
 | Name              | Type                                                  |
 +===================+=======================================================+
-| ``'darkframe'``   | :class:`~emir.dataproducts.MasterDark`                | 
+| ``'darkframe'``   | :class:`~emirdrp.dataproducts.MasterDark`             | 
 +-------------------+-------------------------------------------------------+
-| ``'stats'``       | :class:`~emir.dataproducts.ChannelLevelStatistics`    |
+| ``'stats'``       | :class:`~emirdrp.dataproducts.ChannelLevelStatistics` |
 +-------------------+-------------------------------------------------------+
 
 .. _ff-recipe-label:
@@ -88,9 +88,9 @@ Intensity Flat-Field
 --------------------
 
 :Mode: Intensity Flat-Field
-:Recipe class: :class:`~emir.recipes.IntensityFlatRecipe`
-:Input class: :class:`~emir.recipes.IntensityFlatRecipeInput`
-:Result class: :class:`~emir.recipes.IntensityFlatRecipeResult`
+:Recipe class: :class:`~emirdrp.recipes.IntensityFlatRecipe`
+:Input class: :class:`~emirdrp.recipes.IntensityFlatRecipeInput`
+:Result class: :class:`~emirdrp.recipes.IntensityFlatRecipeResult`
 
 The required actions to set the TS and EMIR at the
 configuration from which sky and/or artificial illumination flat
@@ -128,7 +128,7 @@ Products
 +-------------------+-------------------------------------------------------+
 | Name              | Type                                                  |
 +===================+=======================================================+
-| ``'flatframe'``   | :class:`~emir.dataproducts.MasterIntensityFlat`       | 
+| ``'flatframe'``   | :class:`~emirdrp.dataproducts.MasterIntensityFlat`    | 
 +-------------------+-------------------------------------------------------+
 
 

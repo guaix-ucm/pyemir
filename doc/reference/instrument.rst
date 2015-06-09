@@ -1,7 +1,7 @@
 
-:mod:`emir.instrument` --- 
+:mod:`emirdrp.instrument` --- 
 =======================================================
 
-.. automodule:: emir.instrument
+.. automodule:: emirdrp.instrument
    :members:
 

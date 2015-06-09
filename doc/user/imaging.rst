@@ -6,9 +6,9 @@ Stare Image
 -----------
 
 :Mode: Stare Image
-:Recipe class: :class:`~emir.recipes.StareImageRecipe`
-:Input class: :class:`~emir.recipes.StareImageRecipeInput`
-:Result class: :class:`~emir.recipes.StareImageRecipeResult`
+:Recipe class: :class:`~emirdrp.recipes.StareImageRecipe`
+:Input class: :class:`~emirdrp.recipes.StareImageRecipeInput`
+:Result class: :class:`~emirdrp.recipes.StareImageRecipeResult`
 
 The effect of recording images of the sky in a given pointing 
 position of the TS.
@@ -67,17 +67,17 @@ with 10% points rejected at both ends of the distribution.
 
 Results
 +++++++
-The result of the Recipe is an object of type :class:`~emir.recipes.StareImageRecipeResult`. 
-It contains two objects, a :class:`~emir.dataproducts.FrameDataProduct` containing the result frame
-and a :class:`~emir.dataproducts.SourcesCatalog` containing a catalog of sources.
+The result of the Recipe is an object of type :class:`~emirdrp.recipes.StareImageRecipeResult`. 
+It contains two objects, a :class:`~emirdrp.dataproducts.FrameDataProduct` containing the result frame
+and a :class:`~emirdrp.dataproducts.SourcesCatalog` containing a catalog of sources.
 
 Nodded/Beam-switched images
 ---------------------------
 
 :Mode: Nodded/Beam-switched images
-:Recipe class: :class:`~emir.recipes.NBImageRecipe`
-:Input class: :class:`~emir.recipes.NBImageRecipeInput`
-:Result class: :class:`~emir.recipes.NBImageRecipeResult`
+:Recipe class: :class:`~emirdrp.recipes.NBImageRecipe`
+:Input class: :class:`~emirdrp.recipes.NBImageRecipeInput`
+:Result class: :class:`~emirdrp.recipes.NBImageRecipeResult`
 
 The effect of recording a series of stare images, with the same
 acquisition parameters, and taken by pointing the TS in cycles
@@ -201,17 +201,17 @@ from the result of the previous step.
 
 Results
 +++++++
-The result of the Recipe is an object of type :class:`~emir.recipes.NBImageRecipeResult`. 
-It contains two objects, a :class:`~emir.dataproducts.FrameDataProduct` containing the result frame
-and a :class:`~emir.dataproducts.SourcesCatalog` containing a catalog of sources.
+The result of the Recipe is an object of type :class:`~emirdrp.recipes.NBImageRecipeResult`. 
+It contains two objects, a :class:`~emirdrp.dataproducts.FrameDataProduct` containing the result frame
+and a :class:`~emirdrp.dataproducts.SourcesCatalog` containing a catalog of sources.
 
 Dithered images
 ---------------
 
 :Mode: Dithered images
-:Recipe class: :class:`~emir.recipes.DitheredImageRecipe`
-:Input class: :class:`~emir.recipes.DitheredImageRecipeInput`
-:Result class: :class:`~emir.recipes.DitheredImageRecipeResult`
+:Recipe class: :class:`~emirdrp.recipes.DitheredImageRecipe`
+:Input class: :class:`~emirdrp.recipes.DitheredImageRecipeInput`
+:Result class: :class:`~emirdrp.recipes.DitheredImageRecipeResult`
 
 The effect of recording a series of stare images, with the same
 acquisition parameters, and taken by pointing to a number of
@@ -345,17 +345,17 @@ from the result of the previous step.
 
 Results
 +++++++
-The result of the Recipe is an object of type :class:`~emir.recipes.DitheredImageRecipeResult`. 
-It contains two objects, a :class:`~emir.dataproducts.FrameDataProduct` containing the result frame
-and a :class:`~emir.dataproducts.SourcesCatalog` containing a catalog of sources.
+The result of the Recipe is an object of type :class:`~emirdrp.recipes.DitheredImageRecipeResult`. 
+It contains two objects, a :class:`~emirdrp.dataproducts.FrameDataProduct` containing the result frame
+and a :class:`~emirdrp.dataproducts.SourcesCatalog` containing a catalog of sources.
 
 Micro-dithered images
 ---------------------
 
 :Mode: Micro-dithered images
-:Recipe class: :class:`~emir.recipes.MicroDitheredImageRecipe`
-:Input class: :class:`~emir.recipes.MicroDitheredImageRecipeInput`
-:Result class: :class:`~emir.recipes.MicroDitheredImageRecipeResult`
+:Recipe class: :class:`~emirdrp.recipes.MicroDitheredImageRecipe`
+:Input class: :class:`~emirdrp.recipes.MicroDitheredImageRecipeInput`
+:Result class: :class:`~emirdrp.recipes.MicroDitheredImageRecipeResult`
 
 The effect of recording a series of stare images, with the same
 acquisition parameters, and taken by pointing to a number of
@@ -426,7 +426,7 @@ is subdivided in ``'subpixelization'`` x ``'subpixelization'`` pixels.
 
 Results
 +++++++
-The result of the Recipe is an object of type :class:`~emir.recipes.MicroDitheredImageRecipeResult`. 
-It contains two objects, a :class:`~emir.dataproducts.FrameDataProduct` containing the result frame
-and a :class:`~emir.dataproducts.SourcesCatalog` containing a catalog of sources.
+The result of the Recipe is an object of type :class:`~emirdrp.recipes.MicroDitheredImageRecipeResult`. 
+It contains two objects, a :class:`~emirdrp.dataproducts.FrameDataProduct` containing the result frame
+and a :class:`~emirdrp.dataproducts.SourcesCatalog` containing a catalog of sources.
 

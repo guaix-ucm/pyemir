@@ -73,13 +73,13 @@ by listing the installed recipes::
   (myenv) $ ./bin/numina show
   Bias Image: Recipe to process bias images
   Instrument: EMIR
-  Recipe: emir.recipes.BiasRecipe
+  Recipe: emirdrp.recipes.BiasRecipe
   Key: bias_image
   UUID: a7ea9c0c-76a6-4609-8413-0157102ec284
   --
   Dark current Image: Summary of Dark current Image
   Instrument: EMIR
-  Recipe: emir.recipes.DarkRecipe
+  Recipe: emirdrp.recipes.DarkRecipe
   Key: dark_image
   UUID: 5b15db30-7774-4823-9645-e8ca27a866af
   --

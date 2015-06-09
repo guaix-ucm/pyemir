@@ -9,9 +9,9 @@ Cosmetics
 +++++++++
 
 :Mode: Engineering
-:Recipe class: :class:`~emir.recipes.CosmeticsRecipe`
-:Input class: :class:`~emir.recipes.CosmeticsRecipeInput`
-:Result class: :class:`~emir.recipes.CosmeticsRecipeResult`
+:Recipe class: :class:`~emirdrp.recipes.CosmeticsRecipe`
+:Input class: :class:`~emirdrp.recipes.CosmeticsRecipeInput`
+:Result class: :class:`~emirdrp.recipes.CosmeticsRecipeResult`
 
 
 Detector cosmetics include: dead and hot pixels, 
@@ -77,8 +77,8 @@ Products
 ============ ============================================== 
  Name        Type       
 ============ ============================================== 
-``'ratio'``  :class:`~emir.dataproducts.EmirDataFrame`
-``'mask'``   :class:`~emir.dataproducts.EmirDataFrame`
+``'ratio'``  :class:`~emirdrp.dataproducts.EmirDataFrame`
+``'mask'``   :class:`~emirdrp.dataproducts.EmirDataFrame`
 ============ ============================================== 
 
 

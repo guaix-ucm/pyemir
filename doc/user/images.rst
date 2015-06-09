@@ -21,7 +21,7 @@ about the version of Numina and the name and version of the recipe used.
 Master Bias frames
 *******************
 
-Bias frames are produced by the recipe :class:`~emir.recipes.BiasRecipe`. Each bias frame is a 
+Bias frames are produced by the recipe :class:`~emirdrp.recipes.BiasRecipe`. Each bias frame is a 
 multiextension FITS file with the following extensions.
 
   ===============    =======   ========   =======================
@@ -33,12 +33,12 @@ multiextension FITS file with the following extensions.
   ``MAP``            Image                Number of pixels used to compute the bias level
   ===============    =======   ========   =======================
 
-Master bias frames are represented by :class:`~emir.dataproducts.MasterBias`.
+Master bias frames are represented by :class:`~emirdrp.dataproducts.MasterBias`.
 
 Master Dark frames
 ******************
 
-Master dark frames are produced by the recipe :class:`~emir.recipes.DarkRecipe`. Each dark frame is a 
+Master dark frames are produced by the recipe :class:`~emirdrp.recipes.DarkRecipe`. Each dark frame is a 
 multiextension FITS file with the following extensions.
 
   ===============    =======   ========   =======================
@@ -50,6 +50,6 @@ multiextension FITS file with the following extensions.
   ``MAP``            Image                Number of pixels used to compute the dark level
   ===============    =======   ========   =======================
 
-Master dark frames are represented by :class:`~emir.dataproducts.MasterDark`.
+Master dark frames are represented by :class:`~emirdrp.dataproducts.MasterDark`.
 
 
