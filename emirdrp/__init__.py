@@ -25,4 +25,4 @@ __version__ = '0.9.dev1'
 
 
 # Top level NullHandler
-logging.getLogger("emir").addHandler(logging.NullHandler())
+logging.getLogger("emirdrp").addHandler(logging.NullHandler())
