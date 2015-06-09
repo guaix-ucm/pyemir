@@ -16,7 +16,8 @@ are related to visualization, acquisition and focusing. The corresponding
 Recipes are integrated in the GTC environment. We call these recipes the **Data
 Factory Pipeline**, (DFP).
 
-Other group of recipes are devoted to scientific observing modes: imaging, spectroscopy and auxiliary calibrations. These Recipes constitute the
+Other group of recipes are devoted to scientific observing modes: imaging, spectroscopy and auxiliary calibrations.
+These Recipes constitute the
 **Data Reduction Pipeline**, (DRP). The software is meant to be standalone,
 users shall download the software and run it in their own computers, with
 reduction parameters and calibrations provided by the instrument team.
@@ -75,7 +76,7 @@ The Recipe announces the required parameters with the following syntax
 In the following two sections, we list the Reduction Recipes for the DRP and
 for the DFP. The format is: name of the Python class of the recipe, name of the
 observing mode, required parameters and data products provided. From the fully
-quallified name of the recipe we have removed the initial ``emir.recipes.``.
+quallified name of the recipe we have removed the initial ``emirdrp.recipes.``.
 
 The name of the parameters are prefixed with **Product** if the parameter is
 the result provided by another Recipe. If not, the value is a **Parameter**,

@@ -1,8 +1,8 @@
 
-:mod:`emir.recipes` --- Reduction Recipes for EMIR
-==================================================
+:mod:`emirdrp.recipes` --- Reduction Recipes for EMIR
+======================================================
 
-.. module:: emir.recipes
+.. module:: emirdrp.recipes
    :synopsis:  Reduction Recipes for EMIR
 
 Recipes for auxiliary modes

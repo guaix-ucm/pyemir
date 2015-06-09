@@ -19,7 +19,7 @@ import sys, os
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
-sys.path.append(os.path.abspath('../src/'))
+sys.path.append(os.path.abspath('../'))
 
 # General configuration
 # ---------------------
@@ -171,7 +171,7 @@ latex_paper_size = 'a4'
 latex_documents = [
   ('contents', 'numina.tex', ur'PyEmir Documentation',
    ur'Sergio Pascual, Nicolás Cardiel', 'manual'),
-  ('emir/recipes', 'recipes.tex', ur'EMIR recipes',
+  ('emirdrp/recipes', 'recipes.tex', ur'EMIR recipes',
    ur'Sergio Pascual, Nicolás Cardiel', 'manual'),
 ]
 
@@ -193,6 +193,6 @@ latex_documents = [
 #latex_use_modindex = True
 
 # A list of ignored prefixes for module index sorting.
-modindex_common_prefix = ['emir.']
+modindex_common_prefix = ['emirdrp.']
 
 intersphinx_mapping = {'numina': ('http://packages.python.org/numina/', None)}
