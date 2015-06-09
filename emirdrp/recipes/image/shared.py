@@ -55,7 +55,7 @@ from numina.util.sextractor import SExtractor
 from numina.util.sextractor import open as sopen
 import numina.util.sexcatalog as sexcatalog
 
-from emir.dataproducts import SourcesCatalog
+from emirdrp.dataproducts import SourcesCatalog
 
 from .checks import check_photometry
 from .naming import (name_redimensioned_frames, name_object_mask,

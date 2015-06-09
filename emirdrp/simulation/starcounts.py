@@ -110,7 +110,7 @@ class SpagnaModel:
     '''
 
     _J_counts_data = loadtxt(StringIO(
-        pkgutil.get_data('emir.simulation', 'spagna-J.dat')
+        pkgutil.get_data('emirdrp.simulation', 'spagna-J.dat')
         )
     )
     # Data in file is for square degree
@@ -120,7 +120,7 @@ class SpagnaModel:
     del _J_counts_data
 
     _K_counts_data = loadtxt(StringIO(
-        pkgutil.get_data('emir.simulation', 'spagna-K.dat')
+        pkgutil.get_data('emirdrp.simulation', 'spagna-K.dat')
         )
     )
 

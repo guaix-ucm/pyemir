@@ -33,21 +33,21 @@ from numina.array.combine import median
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
 
-import emir.instrument.channels as allchannels
-from emir.core import EMIR_BIAS_MODES
-from emir.core import gather_info_frames
-from emir.core import EmirRecipe
-from emir.dataproducts import MasterBias, MasterDark
-from emir.dataproducts import MasterIntensityFlat
-from emir.dataproducts import WavelengthCalibration, MasterSpectralFlat
-from emir.dataproducts import ChannelLevelStatisticsType
-from emir.dataproducts import ChannelLevelStatistics
-from emir.dataproducts import SlitTransmissionCalibration
-from emir.requirements import MasterBiasRequirement
-from emir.requirements import MasterDarkRequirement
-from emir.requirements import MasterBadPixelMaskRequirement
-from emir.requirements import MasterIntensityFlatFieldRequirement
-from emir.requirements import MasterSpectralFlatFieldRequirement
+import emirdrp.instrument.channels as allchannels
+from emirdrp.core import EMIR_BIAS_MODES
+from emirdrp.core import gather_info_frames
+from emirdrp.core import EmirRecipe
+from emirdrp.dataproducts import MasterBias, MasterDark
+from emirdrp.dataproducts import MasterIntensityFlat
+from emirdrp.dataproducts import WavelengthCalibration, MasterSpectralFlat
+from emirdrp.dataproducts import ChannelLevelStatisticsType
+from emirdrp.dataproducts import ChannelLevelStatistics
+from emirdrp.dataproducts import SlitTransmissionCalibration
+from emirdrp.requirements import MasterBiasRequirement
+from emirdrp.requirements import MasterDarkRequirement
+from emirdrp.requirements import MasterBadPixelMaskRequirement
+from emirdrp.requirements import MasterIntensityFlatFieldRequirement
+from emirdrp.requirements import MasterSpectralFlatFieldRequirement
 from .aiv.flows import init_filters_bdf
 from .aiv.flows import init_filters_bd
 from .aiv.flows import init_filters_b

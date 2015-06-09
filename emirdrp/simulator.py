@@ -32,7 +32,7 @@ except AttributeError:  # pyfits 3.0.9
 
 from numina.instrument.template import interpolate
 
-_logger = logging.getLogger('emir.simulator')
+_logger = logging.getLogger('emirdrp.simulator')
 
 _result_types = ['image', 'spectrum']
 _extensions = ['primary', 'variance', 'map', 'wcs']
@@ -53,7 +53,7 @@ def _load_header(res, ext):
         res = _table[(res, ext)]
     except KeyError:
         return fits.Header()
-    sfile = StringIO(get_data('emir.instrument', res))
+    sfile = StringIO(get_data('emirdrp.instrument', res))
     hh = my_fromtextfile(sfile)
     return hh
 
@@ -74,7 +74,7 @@ class EmirImageFactory(object):
 
     # FIXME: workaround
     def __init__(self):
-        sfile = StringIO(get_data('emir.instrument', 'image_primary.txt'))
+        sfile = StringIO(get_data('emirdrp.instrument', 'image_primary.txt'))
         self.p_templ = my_fromtextfile(sfile)
         del sfile
 

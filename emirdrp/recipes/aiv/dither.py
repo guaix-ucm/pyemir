@@ -34,9 +34,9 @@ from numina.array import combine_shape
 from numina.array import subarray_match
 from numina.frame import resize_hdu
 
-from emir.core import offsets_from_wcs
-from emir.core import EmirRecipe
-from emir.dataproducts import DataFrameType
+from emirdrp.core import offsets_from_wcs
+from emirdrp.core import EmirRecipe
+from emirdrp.dataproducts import DataFrameType
 
 
 _logger = logging.getLogger('numina.recipes.emir')

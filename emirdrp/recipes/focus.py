@@ -28,11 +28,11 @@ from numina.core import Parameter
 from numina.core import DataProductRequirement
 from numina.core import Product
 
-from emir.core import EmirRecipe
-from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emir.dataproducts import TelescopeFocus
-from emir.dataproducts import DTUFocus
-from emir.dataproducts import MasterIntensityFlat
+from emirdrp.core import EmirRecipe
+from emirdrp.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from emirdrp.dataproducts import TelescopeFocus
+from emirdrp.dataproducts import DTUFocus
+from emirdrp.dataproducts import MasterIntensityFlat
 
 __all__ = ['TelescopeRoughFocusRecipe',
            'TelescopeFineFocusRecipe',

@@ -25,12 +25,12 @@ from numina.core import Parameter
 from numina.core import DataProductRequirement
 from numina.core import Product
 
-from emir.core import EmirRecipe
+from emirdrp.core import EmirRecipe
 from numina.core.requirements import ObservationResultRequirement
-from emir.requirements import MasterBadPixelMaskRequirement
-from emir.requirements import MasterBiasRequirement
-from emir.requirements import MasterDarkRequirement
-from emir.requirements import MasterIntensityFlatFieldRequirement
+from emirdrp.requirements import MasterBadPixelMaskRequirement
+from emirdrp.requirements import MasterBiasRequirement
+from emirdrp.requirements import MasterDarkRequirement
+from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from ..dataproducts import MasterSpectralFlat
 from ..dataproducts import SlitTransmissionCalibration, WavelengthCalibration
 from ..dataproducts import Spectra, LinesCatalog, DataCube

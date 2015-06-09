@@ -38,15 +38,15 @@ from numina.flow.processing import FlatFieldCorrector, SkyCorrector
 from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
-from emir.core import EmirRecipe
-from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emir.dataproducts import DataFrameType, MasterIntensityFlat
-from emir.dataproducts import DarkCurrentValue, CoordinateList2DType
-from emir.core import gather_info
-from emir.core import EMIR_BIAS_MODES
-from emir.requirements import MasterBiasRequirement
-from emir.requirements import MasterDarkRequirement
-from emir.requirements import MasterIntensityFlatFieldRequirement
+from emirdrp.core import EmirRecipe
+from emirdrp.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from emirdrp.dataproducts import DataFrameType, MasterIntensityFlat
+from emirdrp.dataproducts import DarkCurrentValue, CoordinateList2DType
+from emirdrp.core import gather_info
+from emirdrp.core import EMIR_BIAS_MODES
+from emirdrp.requirements import MasterBiasRequirement
+from emirdrp.requirements import MasterDarkRequirement
+from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 from .flows import init_filters_bdf

@@ -31,10 +31,10 @@ from numina.core import Parameter, DataFrame
 from numina.core import RecipeError
 from numina.core import Product
 
-from emir.core import EmirRecipe
-from emir.instrument.detector import QUADRANTS
-from emir.instrument.channels import CHANNELS
-from emir.dataproducts import MasterGainMap, MasterRONMap
+from emirdrp.core import EmirRecipe
+from emirdrp.instrument.detector import QUADRANTS
+from emirdrp.instrument.channels import CHANNELS
+from emirdrp.dataproducts import MasterGainMap, MasterRONMap
 
 _logger = logging.getLogger('numina.recipes.emir')
 

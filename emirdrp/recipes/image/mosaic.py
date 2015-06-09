@@ -29,8 +29,8 @@ from numina.core import define_requirements, define_result, DataFrame
 from numina.core import Product, DataFrameType, RecipeRequirements
 from numina.core.requirements import ObservationResultRequirement
 
-from emir.core import RecipeResult
-from emir.dataproducts import SourcesCatalog
+from emirdrp.core import RecipeResult
+from emirdrp.dataproducts import SourcesCatalog
 
 _logger = logging.getLogger('numina.recipes.emir')
 

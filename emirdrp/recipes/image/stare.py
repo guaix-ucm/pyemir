@@ -29,16 +29,16 @@ from numina.core import RecipeRequirements, Product
 from numina.core import DataFrameType, define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 
-from emir.core import RecipeResult
-from emir.dataproducts import SourcesCatalog
+from emirdrp.core import RecipeResult
+from emirdrp.dataproducts import SourcesCatalog
 
-from emir.requirements import MasterBadPixelMaskRequirement
-from emir.requirements import MasterBiasRequirement
-from emir.requirements import MasterDarkRequirement
-from emir.requirements import MasterIntensityFlatFieldRequirement
-from emir.requirements import Extinction_Requirement
-from emir.requirements import Offsets_Requirement
-from emir.requirements import Catalog_Requirement
+from emirdrp.requirements import MasterBadPixelMaskRequirement
+from emirdrp.requirements import MasterBiasRequirement
+from emirdrp.requirements import MasterDarkRequirement
+from emirdrp.requirements import MasterIntensityFlatFieldRequirement
+from emirdrp.requirements import Extinction_Requirement
+from emirdrp.requirements import Offsets_Requirement
+from emirdrp.requirements import Catalog_Requirement
 
 from .shared import DirectImageCommon
 

@@ -27,16 +27,16 @@ from numina.core import Parameter
 from numina.core import DataFrameType, Product, RecipeRequirements
 from numina.core.requirements import ObservationResultRequirement
 
-from emir.core import EmirRecipe
-from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emir.dataproducts import TelescopeOffset, MSMPositions
-from emir.dataproducts import MasterIntensityFlat
+from emirdrp.core import EmirRecipe
+from emirdrp.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from emirdrp.dataproducts import TelescopeOffset, MSMPositions
+from emirdrp.dataproducts import MasterIntensityFlat
 
-from emir.dataproducts import DTU_XY_Calibration, DTU_Z_Calibration
-from emir.dataproducts import CSU2DetectorCalibration, DTUFlexureCalibration
-from emir.dataproducts import (PointingOriginCalibration,
+from emirdrp.dataproducts import DTU_XY_Calibration, DTU_Z_Calibration
+from emirdrp.dataproducts import CSU2DetectorCalibration, DTUFlexureCalibration
+from emirdrp.dataproducts import (PointingOriginCalibration,
                                SpectroPhotometricCalibration)
-from emir.dataproducts import PhotometricCalibration, WavelengthCalibration
+from emirdrp.dataproducts import PhotometricCalibration, WavelengthCalibration
 
 _logger = logging.getLogger('numina.recipes.emir')
 

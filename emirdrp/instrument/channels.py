@@ -25,7 +25,7 @@ from six.moves import map as imap
 
 from numina.extraiter import braid
 
-_logger = logging.getLogger('emir.instrument.channels')
+_logger = logging.getLogger('emirdrp.instrument.channels')
 
 
 def _channel_gen1(beg, end, step):

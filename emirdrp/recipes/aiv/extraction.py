@@ -34,15 +34,15 @@ from numina.core import Requirement, Product, Parameter
 # from numina.flow.processing import BadPixelCorrector
 from numina.core.requirements import ObservationResultRequirement
 
-from emir.core import gather_info_frames
-from emir.core import EmirRecipe
-from emir.dataproducts import ArrayType
-from emir.dataproducts import DataFrameType
+from emirdrp.core import gather_info_frames
+from emirdrp.core import EmirRecipe
+from emirdrp.dataproducts import ArrayType
+from emirdrp.dataproducts import DataFrameType
 
-from emir.requirements import MasterBiasRequirement
-from emir.requirements import MasterDarkRequirement
-from emir.requirements import MasterIntensityFlatFieldRequirement
-from emir.requirements import MasterSkyRequirement
+from emirdrp.requirements import MasterBiasRequirement
+from emirdrp.requirements import MasterDarkRequirement
+from emirdrp.requirements import MasterIntensityFlatFieldRequirement
+from emirdrp.requirements import MasterSkyRequirement
 from .flows import init_filters_bdfs
 from .flows import basic_processing_with_combination
 

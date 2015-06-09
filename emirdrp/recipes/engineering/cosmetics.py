@@ -39,8 +39,8 @@ from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
-from emir.core import EmirRecipe
-from emir.dataproducts import MasterBias, MasterDark
+from emirdrp.core import EmirRecipe
+from emirdrp.dataproducts import MasterBias, MasterDark
 
 _logger = logging.getLogger('numina.recipes.emir')
 

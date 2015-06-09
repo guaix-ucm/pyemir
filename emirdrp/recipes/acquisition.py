@@ -32,17 +32,17 @@ from numina.core import Product
 
 from numina.core.requirements import ObservationResultRequirement
 
-from emir.core import EmirRecipe
-from emir.dataproducts import TelescopeOffset, MSMPositions
-from emir.requirements import MasterBiasRequirement
-from emir.requirements import MasterDarkRequirement
-from emir.requirements import MasterBadPixelMaskRequirement
-from emir.requirements import MasterIntensityFlatFieldRequirement
+from emirdrp.core import EmirRecipe
+from emirdrp.dataproducts import TelescopeOffset, MSMPositions
+from emirdrp.requirements import MasterBiasRequirement
+from emirdrp.requirements import MasterDarkRequirement
+from emirdrp.requirements import MasterBadPixelMaskRequirement
+from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 
 
 __all__ = ['TargetAcquisitionRecipe', 'MaskImagingRecipe', 'MaskCheckRecipe']
 
-_logger = logging.getLogger('emir.recipes')
+_logger = logging.getLogger('emirdrp.recipes')
 
 
 class TargetAcquisitionRecipe(EmirRecipe):

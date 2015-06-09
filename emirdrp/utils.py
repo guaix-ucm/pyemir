@@ -24,7 +24,7 @@ from astropy.io import fits
 
 from .simulator import EmirImageFactory
 
-_logger = logging.getLogger('emir.utils')
+_logger = logging.getLogger('emirdrp.utils')
 
 _result_types = ['image', 'spectrum']
 _extensions = ['primary', 'variance', 'map', 'wcs']

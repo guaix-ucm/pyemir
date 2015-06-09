@@ -33,13 +33,13 @@ from numina.core import Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import RecipeError
 #
-from emir.core import EmirRecipe
-from emir.dataproducts import DataFrameType
-from emir.dataproducts import ArrayType
-from emir.requirements import MasterBiasRequirement
-from emir.requirements import MasterDarkRequirement
-from emir.requirements import MasterIntensityFlatFieldRequirement
-from emir.requirements import MasterSkyRequirement
+from emirdrp.core import EmirRecipe
+from emirdrp.dataproducts import DataFrameType
+from emirdrp.dataproducts import ArrayType
+from emirdrp.requirements import MasterBiasRequirement
+from emirdrp.requirements import MasterDarkRequirement
+from emirdrp.requirements import MasterIntensityFlatFieldRequirement
+from emirdrp.requirements import MasterSkyRequirement
 
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs

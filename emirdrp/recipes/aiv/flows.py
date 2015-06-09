@@ -40,8 +40,8 @@ from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.array import combine
 #
-from emir.core import EMIR_BIAS_MODES
-from emir.core import gather_info
+from emirdrp.core import EMIR_BIAS_MODES
+from emirdrp.core import gather_info
 
 
 _logger = logging.getLogger('numina.recipes.emir')

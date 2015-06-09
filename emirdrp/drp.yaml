@@ -128,7 +128,7 @@ modes:
   description: Lines and mode lines
   key: dark_current
   name: DarkCurrent
-  recipe: emir.recipes.aiv.DarkCurrentRecipe
+  recipe: emirdrp.recipes.aiv.DarkCurrentRecipe
   reference: TTL 2.1.03
   status: DRAFT
   summary: Summary of DarkCurrent
@@ -235,29 +235,29 @@ modes:
 pipelines:
   default:
     recipes:
-      IMAGE_BIAS: emir.recipes.BiasRecipe
-      IMAGE_DARK: emir.recipes.DarkRecipe
-      IMAGE_FLAT: emir.recipes.IntensityFlatRecipe
-      IMAGE_SKY: emir.recipes.SimpleSkyRecipe
-      DITHERED_IMAGE: emir.recipes.aiv.dither.DitheredImageARecipe
-      MICRODITHERED_IMAGE: emir.recipes.MicroditheredImageRecipe
-      MOSAICED_IMAGE: emir.recipes.MosaicRecipe
-      NODDED_BEAM_SWITCHED_IMAGE: emir.recipes.NBImageRecipe
-      STARE_IMAGE: emir.recipes.aiv.TestSkyCorrectRecipe
+      IMAGE_BIAS: emirdrp.recipes.BiasRecipe
+      IMAGE_DARK: emirdrp.recipes.DarkRecipe
+      IMAGE_FLAT: emirdrp.recipes.IntensityFlatRecipe
+      IMAGE_SKY: emirdrp.recipes.SimpleSkyRecipe
+      DITHERED_IMAGE: emirdrp.recipes.aiv.dither.DitheredImageARecipe
+      MICRODITHERED_IMAGE: emirdrp.recipes.MicroditheredImageRecipe
+      MOSAICED_IMAGE: emirdrp.recipes.MosaicRecipe
+      NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.NBImageRecipe
+      STARE_IMAGE: emirdrp.recipes.aiv.TestSkyCorrectRecipe
       fail: numina.core.utils.AlwaysFailRecipe
-      gain_mode1: emir.recipes.GainRecipe1
-      cosmetics: emir.recipes.CosmeticsRecipe
-      dark_current: emir.recipes.aiv.DarkCurrentRecipe
-      simple_bias: emir.recipes.aiv.SimpleBiasRecipe
+      gain_mode1: emirdrp.recipes.GainRecipe1
+      cosmetics: emirdrp.recipes.CosmeticsRecipe
+      dark_current: emirdrp.recipes.aiv.DarkCurrentRecipe
+      simple_bias: emirdrp.recipes.aiv.SimpleBiasRecipe
       TEST0: numina.core.utils.AlwaysSuccessRecipe
-      TEST1: emir.recipes.aiv.TestBiasCorrectRecipe
-      TEST2: emir.recipes.aiv.TestDarkCorrectRecipe
-      TEST3: emir.recipes.aiv.TestFlatCorrectRecipe
-      TEST4: emir.recipes.aiv.TestFlatCorrectRecipe
-      TEST5: emir.recipes.aiv.TestSkyCorrectRecipe
-      TEST6: emir.recipes.aiv.mask.TestPinholeRecipe
-      TEST7: emir.recipes.aiv.slits.TestSlitDetectionRecipe
-      TEST8: emir.recipes.aiv.maskn.TestMaskRecipe
-      TEST9: emir.recipes.aiv.extraction.MaskSpectraExtractionRecipe
-      ARC_CALIBRATION: emir.recipes.arccalibration.ArcCalibrationRecipe
+      TEST1: emirdrp.recipes.aiv.TestBiasCorrectRecipe
+      TEST2: emirdrp.recipes.aiv.TestDarkCorrectRecipe
+      TEST3: emirdrp.recipes.aiv.TestFlatCorrectRecipe
+      TEST4: emirdrp.recipes.aiv.TestFlatCorrectRecipe
+      TEST5: emirdrp.recipes.aiv.TestSkyCorrectRecipe
+      TEST6: emirdrp.recipes.aiv.mask.TestPinholeRecipe
+      TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
+      TEST8: emirdrp.recipes.aiv.maskn.TestMaskRecipe
+      TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
+      ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
     version: 1

@@ -21,11 +21,11 @@
 
 from numina.core import Parameter, DataProductRequirement, Requirement
 
-from emir.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emir.dataproducts import MasterIntensityFlat
-from emir.dataproducts import MasterSpectralFlat
-# from emir.dataproducts import SourcesCatalog
-from emir.dataproducts import EMIRConfigurationType
+from emirdrp.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
+from emirdrp.dataproducts import MasterIntensityFlat
+from emirdrp.dataproducts import MasterSpectralFlat
+# from emirdrp.dataproducts import SourcesCatalog
+from emirdrp.dataproducts import EMIRConfigurationType
 
 
 class EMIRConfigurationRequirement(Requirement):
