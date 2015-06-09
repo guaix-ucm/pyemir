@@ -7,8 +7,8 @@ from setuptools import setup, find_packages
 # this is the bug https://github.com/pypa/pip/issues/355
 
 
-import emir
-version = emir.__version__
+import emirdrp
+version = emirdrp.__version__
 
 setup(name='pyemir',
       version=version,
@@ -18,11 +18,11 @@ setup(name='pyemir',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       packages=find_packages(),
-      package_data={'emir.simulation': ['*.dat'],
-                     'emir.instrument': ['image_*.txt', 'spectrum_*.txt'],
-                     'emir': ['drp.yaml'],
+      package_data={'emirdrp.simulation': ['*.dat'],
+                     'emirdrp.instrument': ['image_*.txt', 'spectrum_*.txt'],
+                     'emirdrp': ['drp.yaml'],
                    },
-      test_suite="emir.tests",
+      test_suite="emirdrp.tests",
       install_requires=['setuptools', 'numpy', 'scipy',
                         'numina>=0.13.0', 'astropy>=0.4',
                         'matplotlib', 'six',
@@ -30,10 +30,10 @@ setup(name='pyemir',
       zip_safe=False,
       entry_points = {
         'numina.pipeline.1': [
-            'emir = emir.loader:load_drp',
+            'emir = emirdrp.loader:load_drp',
             ],
         'numina.storage.1': [
-            'emir_default = emir.loader:load_cli_storage',
+            'emir_default = emirdrp.loader:load_cli_storage',
             ]
         },
       classifiers=[
