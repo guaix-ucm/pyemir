@@ -22,6 +22,8 @@
 import numpy
 
 from numina.core import DataFrameType, DataProductType
+from numina.core.products import ArrayType
+from numina.core.products import ArrayNType
 from numina.core.requirements import InstrumentConfigurationType
 from numina.core import ValidationError
 
@@ -248,21 +250,11 @@ class TelescopeOffset(DataProductType):
         super(TelescopeOffset, self).__init__(ptype=float)
 
 
-class ArrayType(DataProductType):
-    def __init__(self, default=None):
-        super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
-
-    def convert(self, obj):
-        result = numpy.array(obj)
-        return result
-
-
-class CoordinateListNType(DataProductType):
+class CoordinateListNType(ArrayNType):
     def __init__(self, dimensions, default=None):
         super(CoordinateListNType,
-              self).__init__(ptype=numpy.ndarray,
+              self).__init__(dimensions,
                              default=default)
-        self.N = dimensions
 
     def validate(self, obj):
         ndims = len(obj.shape)
@@ -274,10 +266,6 @@ class CoordinateListNType(DataProductType):
             raise ValidationError('%r is not a valid %r' %
                                   (obj, self.__class__.__name__)
                                   )
-
-    def convert(self, obj):
-        result = numpy.array(obj)
-        return result
 
 
 class CoordinateList1DType(CoordinateListNType):
