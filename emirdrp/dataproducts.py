@@ -24,6 +24,7 @@ import numpy
 from numina.core import DataFrameType, DataProductType
 from numina.core.products import ArrayType
 from numina.core.products import ArrayNType
+from numina.core.products import DataProductTag
 from numina.core.requirements import InstrumentConfigurationType
 from numina.core import ValidationError
 
@@ -78,7 +79,7 @@ class EMIRConfigurationType(InstrumentConfigurationType):
         super(EMIRConfigurationType, self).validate(value)
 
 
-class EMIRFrame(DataFrameType):
+class EMIRFrame(DataFrameType, DataProductTag):
 
     def __init__(self):
         super(EMIRFrame, self).__init__()
