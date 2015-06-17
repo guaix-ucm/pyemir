@@ -24,6 +24,7 @@ from numina.core import Parameter, DataProductRequirement, Requirement
 from emirdrp.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
 from emirdrp.dataproducts import MasterIntensityFlat
 from emirdrp.dataproducts import MasterSpectralFlat
+from .dataproducts import MasterSky
 # from emirdrp.dataproducts import SourcesCatalog
 from emirdrp.dataproducts import EMIRConfigurationType
 
@@ -85,7 +86,7 @@ class MasterSpectralFlatFieldRequirement(DataProductRequirement):
 class MasterSkyRequirement(DataProductRequirement):
     def __init__(self):
         super(MasterSkyRequirement,
-              self).__init__(MasterIntensityFlat, 'Master Sky calibration')
+              self).__init__(MasterSky, 'Master Sky calibration')
 
 
 class Extinction_Requirement(Parameter):

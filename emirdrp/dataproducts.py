@@ -163,6 +163,10 @@ class MasterIntensityFlat(RawIntensityFlat, MasterFrameProduct):
     pass
 
 
+class MasterSky(EMIRFrame):
+    pass
+
+
 class MasterSpectralFlat(EMIRFrame):
     pass
 
