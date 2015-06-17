@@ -19,13 +19,17 @@
 
 '''Data products produced by the EMIR pipeline.'''
 
+import logging
+
 import numpy
 
-from numina.store import dump
+from numina.store import dump, load
 
 from .dataproducts import ChannelLevelStatistics
-from .dataproducts import ArrayType
 
+_logger = logging.getLogger('emirdrp.store')
+
+_logger.debug('register dump functions')
 
 @dump.register(ChannelLevelStatistics)
 def _(tag, obj, where):
@@ -43,7 +47,4 @@ xbegin xend ybegin yend mean median var
     numpy.savetxt(fname, obj.statistics, header=inter)
     return fname
 
-@dump.register(ArrayType)
-def _(tag, obj, where):
-    return dump.registry[numpy.ndarray](tag, obj, where)
-
+_logger.debug('register load functions')
