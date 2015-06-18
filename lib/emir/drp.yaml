@@ -223,6 +223,15 @@ modes:
   summary: Summary
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: 40f353e8-42ae-4187-9487-0fd81531d774
+- date: 2015-06-18
+  description: Checks the alignment of the CSU with 3 slits
+  key: TEST10
+  name: CSU alignment check with 3 slits
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode10.html
+  uuid: 208ef3b5-74de-41ed-97bf-f5344d56dec3
 pipelines:
   default:
     recipes:
@@ -250,4 +259,5 @@ pipelines:
       TEST7: emir.recipes.aiv.slits.TestSlitDetectionRecipe
       TEST8: emir.recipes.aiv.maskn.TestMaskRecipe
       TEST9: emir.recipes.aiv.extraction.MaskSpectraExtractionRecipe
+      TEST10: emir.recipes.aiv.csua.TestCSUAlignmentRecipe
     version: 1
