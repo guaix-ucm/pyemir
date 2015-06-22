@@ -31,9 +31,9 @@ from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-from ..dataproducts import MasterSpectralFlat
-from ..dataproducts import SlitTransmissionCalibration, WavelengthCalibration
-from ..dataproducts import Spectra, LinesCatalog, DataCube
+from ..products import MasterSpectralFlat
+from ..products import SlitTransmissionCalibration, WavelengthCalibration
+from ..products import Spectra, LinesCatalog, DataCube
 
 __all__ = []
 

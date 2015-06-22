@@ -30,7 +30,7 @@ from numina.core import Product, DataFrameType, RecipeRequirements
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import RecipeResult
-from emirdrp.dataproducts import SourcesCatalog
+from emirdrp.products import SourcesCatalog
 from emirdrp.requirements import Offsets_Requirement
 from emirdrp.requirements import SkyImageSepTime_Requirement
 from emirdrp.requirements import MasterBadPixelMaskRequirement

@@ -25,7 +25,7 @@ import numpy
 
 from numina.store import dump, load
 
-from .dataproducts import ChannelLevelStatistics
+from .products import ChannelLevelStatistics
 
 _logger = logging.getLogger('emirdrp.store')
 

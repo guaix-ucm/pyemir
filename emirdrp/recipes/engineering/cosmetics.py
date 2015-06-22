@@ -40,7 +40,7 @@ from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
 from emirdrp.core import EmirRecipe
-from emirdrp.dataproducts import MasterBias, MasterDark
+from emirdrp.products import MasterBias, MasterDark
 
 _logger = logging.getLogger('numina.recipes.emir')
 

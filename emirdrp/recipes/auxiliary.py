@@ -37,12 +37,12 @@ import emirdrp.instrument.channels as allchannels
 from emirdrp.core import EMIR_BIAS_MODES
 from emirdrp.core import gather_info_frames
 from emirdrp.core import EmirRecipe
-from emirdrp.dataproducts import MasterBias, MasterDark
-from emirdrp.dataproducts import MasterIntensityFlat
-from emirdrp.dataproducts import WavelengthCalibration, MasterSpectralFlat
-from emirdrp.dataproducts import ChannelLevelStatisticsType
-from emirdrp.dataproducts import ChannelLevelStatistics
-from emirdrp.dataproducts import SlitTransmissionCalibration
+from emirdrp.products import MasterBias, MasterDark
+from emirdrp.products import MasterIntensityFlat
+from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
+from emirdrp.products import ChannelLevelStatisticsType
+from emirdrp.products import ChannelLevelStatistics
+from emirdrp.products import SlitTransmissionCalibration
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterBadPixelMaskRequirement

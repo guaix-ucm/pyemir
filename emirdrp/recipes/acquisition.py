@@ -33,7 +33,7 @@ from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import EmirRecipe
-from emirdrp.dataproducts import TelescopeOffset, MSMPositions
+from emirdrp.products import TelescopeOffset, MSMPositions
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterBadPixelMaskRequirement

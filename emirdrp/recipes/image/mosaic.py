@@ -30,7 +30,7 @@ from numina.core import Product, DataFrameType, RecipeRequirements
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import RecipeResult
-from emirdrp.dataproducts import SourcesCatalog
+from emirdrp.products import SourcesCatalog
 
 _logger = logging.getLogger('numina.recipes.emir')
 
