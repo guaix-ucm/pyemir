@@ -30,7 +30,7 @@ from numina.core import DataFrameType, define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import RecipeResult
-from emirdrp.dataproducts import SourcesCatalog
+from emirdrp.products import SourcesCatalog
 
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement

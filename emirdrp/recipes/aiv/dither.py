@@ -36,7 +36,7 @@ from numina.frame import resize_hdu
 
 from emirdrp.core import offsets_from_wcs
 from emirdrp.core import EmirRecipe
-from emirdrp.dataproducts import DataFrameType
+from emirdrp.products import DataFrameType
 
 
 _logger = logging.getLogger('numina.recipes.emir')

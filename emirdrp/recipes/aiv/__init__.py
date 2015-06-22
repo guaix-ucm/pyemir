@@ -39,9 +39,9 @@ from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
 from emirdrp.core import EmirRecipe
-from emirdrp.dataproducts import MasterBias, MasterDark, MasterBadPixelMask
-from emirdrp.dataproducts import DataFrameType, MasterIntensityFlat
-from emirdrp.dataproducts import DarkCurrentValue, CoordinateList2DType
+from emirdrp.products import MasterBias, MasterDark, MasterBadPixelMask
+from emirdrp.products import DataFrameType, MasterIntensityFlat
+from emirdrp.products import DarkCurrentValue, CoordinateList2DType
 from emirdrp.core import gather_info
 from emirdrp.core import EMIR_BIAS_MODES
 from emirdrp.requirements import MasterBiasRequirement
