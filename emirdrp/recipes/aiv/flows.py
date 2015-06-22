@@ -61,7 +61,7 @@ def init_filters_bdfs(rinput):
             use_bias = False
             _logger.info('readmode is %s, bias not required', mode)
     else:
-        raise ValueError('cannot gather frames info')
+        raise ValueError('cannot gather images info')
 
     dark_info = meta['master_dark']
     flat_info = meta['master_flat']
@@ -128,7 +128,7 @@ def init_filters_bdf(rinput):
             use_bias = False
             _logger.info('readmode is %s, bias not required', mode)
     else:
-        raise ValueError('cannot gather frames info')
+        raise ValueError('cannot gather images info')
 
     dark_info = meta['master_dark']
     flat_info = meta['master_flat']
@@ -187,7 +187,7 @@ def init_filters_bd(rinput):
             use_bias = False
             _logger.info('readmode is %s, bias not required', mode)
     else:
-        raise ValueError('cannot gather frames info')
+        raise ValueError('cannot gather images info')
 
     dark_info = meta['master_dark']
 
@@ -237,7 +237,7 @@ def init_filters_b(rinput):
             use_bias = False
             _logger.info('readmode is %s, bias not required', mode)
     else:
-        raise ValueError('cannot gather frames info')
+        raise ValueError('cannot gather images info')
 
     print('images info:', iinfo)
     if use_bias:
@@ -267,8 +267,8 @@ def basic_processing_with_combination(rinput, flow,
     odata = []
     cdata = []
     try:
-        _logger.info('processing input frames')
-        for frame in rinput.obresult.frames:
+        _logger.info('processing input images')
+        for frame in rinput.obresult.images:
             hdulist = frame.open()
             fname = hdulist.filename()
             if fname:

@@ -78,7 +78,7 @@ def gather_info(recipeinput):
             metadata[key] = gather_info_dframe(val)
         elif isinstance(val, ObservationResult):
             metas = []
-            for f in val.frames:
+            for f in val.images:
                 metas.append(gather_info_dframe(f))
             metadata[key] = metas
         else:
