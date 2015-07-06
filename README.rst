@@ -18,7 +18,7 @@ be able to be installed and work properly:
  - scipy (http://www.scipy.org)
  - astropy (http://www.astropy.org/)
  - numina (https://github.com/guaix-ucm/numina)
- - photutils (https://github.com/sergiopasra/photutils/tree/numpy18) [1]
+ - photutils >=0.1 (https://github.com/astropy/photutils)
 
 EMIR is a wide-field, near-infrared, multi-object spectrograph proposed 
 for the Nasmyth focus of GTC. It will allow observers to obtain from tens to 
@@ -30,8 +30,6 @@ of the Spanish community at large.
 Webpage: https://guaix.fis.ucm.es/projects/emir
 Maintainer: sergiopr@fis.ucm.es            
       
-[1] This particular branch of photutils is required due a bug in the main package
-
 .. |docs| image:: https://readthedocs.org/projects/pyemir/badge/?version=latest
    :target: https://readthedocs.org/projects/pyemir/?badge=latest
    :alt: Documentation Status

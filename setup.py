@@ -25,7 +25,7 @@ setup(name='pyemir',
       test_suite="emirdrp.tests",
       install_requires=['setuptools', 'numpy', 'scipy',
                         'numina>=0.13.0', 'astropy>=0.4',
-                        'matplotlib', 'six',
+                        'matplotlib', 'six', 'photutils>=0.1',
                         'scikit-image>=0.10'],
       zip_safe=False,
       entry_points = {
