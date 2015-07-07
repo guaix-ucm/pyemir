@@ -517,7 +517,7 @@ def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
         oshape = shape_of_slices(r)
 
         ratio = oshape[0] / oshape[1]
-        if ratio < slit_size_ratio:
+        if (slit_size_ratio > 0)  and (ratio < slit_size_ratio):
             _logger.debug("this is not a slit, ratio=%f", ratio)
             continue
 
