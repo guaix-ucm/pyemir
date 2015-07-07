@@ -60,6 +60,104 @@ class TestSlitDetectionRecipe(EmirRecipe):
     master_flat = MasterIntensityFlatFieldRequirement()
     master_sky = MasterSkyRequirement()
 
+    median_filter_size = Parameter(5, 'Size of the median box')
+    canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
+
+    # Recipe Results
+    frame = Product(DataFrameType)
+    slitstable = Product(ArrayType)
+    DTU = Product(ArrayType)
+    IPA = Product(float)
+    DETPA = Product(float)
+    DTUPA = Product(float)
+
+    def run(self, rinput):
+        _logger.info('starting slit processing')
+
+        _logger.info('basic image reduction')
+
+        flow = init_filters_bdfs(rinput)
+
+        hdulist = basic_processing_with_combination(rinput, flow=flow)
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
+
+        try:
+            ipa = hdr['IPA']
+            detpa = hdr['DETPA']
+            dtupa = hdr['DTUPA']
+            dtur = get_dtur_from_header(hdr)
+
+        except KeyError as error:
+            _logger.error(error)
+            raise RecipeError(error)
+
+        _logger.debug('finding slits')
+
+
+        # Filter values below 0.0
+        _logger.debug('Filter values below 0')
+        data1 = hdulist[0].data[:]
+
+        data1[data1 < 0.0] = 0.0
+        # First, prefilter with median
+        median_filter_size = rinput.median_filter_size
+        canny_sigma = rinput.canny_sigma
+        
+        
+        _logger.debug('Median filter with box %d', median_filter_size)
+        data2 = median_filter(data1, size=median_filter_size)
+
+        # Grey level image
+        img_grey = normalize(data2)
+
+        # Find edges with canny
+        _logger.debug('Find edges with canny, sigma %d', canny_sigma)
+        edges = canny(img_grey, sigma=canny_sigma)
+        
+        # Fill edges
+        _logger.debug('Fill holes')
+        # I do a dilation and erosion to fill
+        # possible holes in 'edges'
+        fill = ndimage.binary_dilation(edges)
+        fill2 = ndimage.binary_fill_holes(fill)
+        fill_slits = ndimage.binary_erosion(fill2)
+
+        _logger.debug('Label objects')
+        label_objects, nb_labels = ndimage.label(fill_slits)
+        _logger.debug('%d objects found', nb_labels)
+        ids = list(six.moves.range(1, nb_labels + 1))
+
+        _logger.debug('Find regions and centers')
+        regions = ndimage.find_objects(label_objects)
+        centers = ndimage.center_of_mass(data2, labels=label_objects,
+                                         index=ids
+                                         )
+
+        table = char_slit(data2, regions, centers,
+                          slit_size_ratio=-1.0
+                          )
+
+        result = self.create_result(frame=hdulist,
+                                    slitstable=table,
+                                    DTU=dtur,
+                                    IPA=ipa,
+                                    DETPA=detpa,
+                                    DTUPA=dtupa
+                                    )
+
+        return result
+
+
+class TestSlitMaskDetectionRecipe(EmirRecipe):
+
+    # Recipe Requirements
+    obresult = ObservationResultRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    master_sky = MasterSkyRequirement()
+
     median_filter_size = Parameter(4, 'Size of the median box')
     canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
     obj_min_size = Parameter(200, 'Minimum size of the slit')
