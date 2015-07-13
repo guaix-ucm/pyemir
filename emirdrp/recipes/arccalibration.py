@@ -43,6 +43,8 @@ from emirdrp.core import gather_info_frames
 from emirdrp.core import EmirRecipe
 from emirdrp.products import MasterBias, MasterDark
 from emirdrp.products import MasterIntensityFlat
+from emirdrp.products import LinesCatalog
+from emirdrp.products import SlitsCatalog
 from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
 from emirdrp.products import ChannelLevelStatisticsType
 from emirdrp.products import ChannelLevelStatistics
@@ -59,7 +61,6 @@ from .aiv.flows import init_filters_bd
 from .aiv.flows import init_filters_b
 from .aiv.flows import basic_processing_with_combination
 
-from emirdrp.wavecal.slitlet import Slitlet
 from emirdrp.wavecal.zscale import zscale
 from emirdrp.wavecal.statsummary import sigmaG
 from emirdrp.wavecal.arccalibration import arccalibration_direct, fit_solution, \
@@ -88,7 +89,8 @@ class ArcCalibrationRecipe(EmirRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
-
+    lines_catalog = Requirement(LinesCatalog, "Catalog of lines")
+    slits_catalog= Requirement(SlitsCatalog, "Catalog of slits")
     polynomial_degree = Parameter(2, 'Polynomial degree of the arc calibration')
 
     polynomial_coeffs = Product(ArrayType)
@@ -108,19 +110,18 @@ class ArcCalibrationRecipe(EmirRecipe):
         # - read slitletdef.txt to read slitlet definition for current image
         # - loop in nslits to excecute the code in calibrate_arcframe.py
 
+        nslits = len(rinput.slits_catalog)
+        coeff_table = np.zeros((nslits, rinput.polynomial_degree + 1))
+
         image2d = hdulist[0].data
         naxis2, naxis1 = image2d.shape
         # read master table (TBM) and generate auxiliary parameters (valid for
         # all the slits) for the wavelength calibration
-        master_table = np.genfromtxt('../master_list.txt')
-        wv_master = master_table[:,0]
+        wv_master = rinput.lines_catalog[:,0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
           gen_triplets_master(wv_master, LDEBUG = True) 
         # loop in number of slitlets
-        nslitlets = 1
-        for islit in range(nslitlets):
-            # define slitlet
-            slitdum = Slitlet(100,2000,11,100)
+        for idx, slitdum in enumerate(rinput.slits_catalog):
             times_sigma = 3.0 # for minimum threshold level 
             nwinwidth=5 #number of pixels to detect and refine peaks (channels)
             # extract central spectrum
@@ -194,7 +195,8 @@ class ArcCalibrationRecipe(EmirRecipe):
             print('>>> approximate crval1, cdelt1:',crval1_approx,cdelt1_approx)
             print('>>> fitted coefficients.......:\n',numpy_array_with_coeff)
             input('press <RETURN> to continue...')
+            coeff_table[idx] = numpy_array_with_coeff
 
-        result = self.create_result(polynomial_coeffs = numpy_array_with_coeff)
+        result = self.create_result(polynomial_coeffs=coeff_table)
 
         return result

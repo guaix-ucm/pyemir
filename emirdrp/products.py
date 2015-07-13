@@ -295,7 +295,12 @@ class SourcesCatalog(DataProductType):
 
 class LinesCatalog(DataProductType):
     def __init__(self):
-        super(LinesCatalog, self).__init__(ptype=list)
+        super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
+
+
+class SlitsCatalog(DataProductType):
+    def __init__(self):
+        super(SlitsCatalog, self).__init__(ptype=list)
 
 
 class CentroidsTableType(DataProductType):

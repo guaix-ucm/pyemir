@@ -22,10 +22,14 @@
 import logging
 
 import numpy
+import yaml
 
 from numina.store import dump, load
 
 from .products import ChannelLevelStatistics
+from .products import LinesCatalog
+from .products import SlitsCatalog
+from emirdrp.wavecal.slitlet import Slitlet
 
 _logger = logging.getLogger('emirdrp.store')
 
@@ -48,3 +52,27 @@ xbegin xend ybegin yend mean median var
     return fname
 
 _logger.debug('register load functions')
+
+@load.register(LinesCatalog)
+def _l(tag, obj):
+
+    with open(obj, 'r') as fd:
+        linecat = numpy.genfromtxt(fd)
+    return linecat
+
+
+@load.register(SlitsCatalog)
+def _l(tag, obj):
+
+    with open(obj, 'r') as fd:
+        slits_cat = yaml.load(fd)
+
+    slits_list = []
+    for slit in slits_cat:
+        bbox = slit['bbox']
+        slitdum = Slitlet(*bbox)
+        borders = slit['borders']
+        slitdum.set_nc_coeff_lower_boundary_pix(borders[0])
+        slitdum.set_nc_coeff_upper_boundary_pix(borders[1])
+        slits_list.append(slitdum)
+    return slits_list
