@@ -44,6 +44,7 @@ from emirdrp.core import EmirRecipe
 from emirdrp.products import MasterBias, MasterDark
 from emirdrp.products import MasterIntensityFlat
 from emirdrp.products import LinesCatalog
+from emirdrp.products import SlitsCatalog
 from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
 from emirdrp.products import ChannelLevelStatisticsType
 from emirdrp.products import ChannelLevelStatistics
@@ -60,7 +61,6 @@ from .aiv.flows import init_filters_bd
 from .aiv.flows import init_filters_b
 from .aiv.flows import basic_processing_with_combination
 
-from emirdrp.wavecal.slitlet import Slitlet
 from emirdrp.wavecal.zscale import zscale
 from emirdrp.wavecal.statsummary import sigmaG
 from emirdrp.wavecal.arccalibration import arccalibration_direct, fit_solution, \
@@ -90,6 +90,7 @@ class ArcCalibrationRecipe(EmirRecipe):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     lines_catalog = Requirement(LinesCatalog, "Catalog of lines")
+    slits_catalog= Requirement(SlitsCatalog, "Catalog of slits")
     polynomial_degree = Parameter(2, 'Polynomial degree of the arc calibration')
 
     polynomial_coeffs = Product(ArrayType)
@@ -117,10 +118,7 @@ class ArcCalibrationRecipe(EmirRecipe):
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
           gen_triplets_master(wv_master, LDEBUG = True) 
         # loop in number of slitlets
-        nslitlets = 1
-        for islit in range(nslitlets):
-            # define slitlet
-            slitdum = Slitlet(100,2000,11,100)
+        for slitdum in rinput.slits_catalog:
             times_sigma = 3.0 # for minimum threshold level 
             nwinwidth=5 #number of pixels to detect and refine peaks (channels)
             # extract central spectrum

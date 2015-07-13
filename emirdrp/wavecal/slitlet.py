@@ -16,7 +16,7 @@ from .zscale import zscale
 
 #------------------------------------------------------------------------------
 
-class Slitlet:
+class Slitlet(object):
     """Slitlet definition."""
 
     def __init__(self,bb_nc1,bb_nc2,bb_ns1,bb_ns2):

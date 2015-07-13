@@ -298,6 +298,11 @@ class LinesCatalog(DataProductType):
         super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
 
 
+class SlitsCatalog(DataProductType):
+    def __init__(self):
+        super(SlitsCatalog, self).__init__(ptype=list)
+
+
 class CentroidsTableType(DataProductType):
     '''Table with information about focus centroids.'''
     def __init__(self):
