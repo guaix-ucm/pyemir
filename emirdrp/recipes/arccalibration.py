@@ -43,6 +43,7 @@ from emirdrp.core import gather_info_frames
 from emirdrp.core import EmirRecipe
 from emirdrp.products import MasterBias, MasterDark
 from emirdrp.products import MasterIntensityFlat
+from emirdrp.products import LinesCatalog
 from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
 from emirdrp.products import ChannelLevelStatisticsType
 from emirdrp.products import ChannelLevelStatistics
@@ -88,7 +89,7 @@ class ArcCalibrationRecipe(EmirRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
-
+    lines_catalog = Requirement(LinesCatalog, "Catalog of lines")
     polynomial_degree = Parameter(2, 'Polynomial degree of the arc calibration')
 
     polynomial_coeffs = Product(ArrayType)
@@ -112,8 +113,7 @@ class ArcCalibrationRecipe(EmirRecipe):
         naxis2, naxis1 = image2d.shape
         # read master table (TBM) and generate auxiliary parameters (valid for
         # all the slits) for the wavelength calibration
-        master_table = np.genfromtxt('../master_list.txt')
-        wv_master = master_table[:,0]
+        wv_master = rinput.lines_catalog[:,0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
           gen_triplets_master(wv_master, LDEBUG = True) 
         # loop in number of slitlets
