@@ -110,6 +110,9 @@ class ArcCalibrationRecipe(EmirRecipe):
         # - read slitletdef.txt to read slitlet definition for current image
         # - loop in nslits to excecute the code in calibrate_arcframe.py
 
+        nslits = len(rinput.slits_catalog)
+        coeff_table = np.zeros((nslits, rinput.polynomial_degree + 1))
+
         image2d = hdulist[0].data
         naxis2, naxis1 = image2d.shape
         # read master table (TBM) and generate auxiliary parameters (valid for
@@ -118,7 +121,7 @@ class ArcCalibrationRecipe(EmirRecipe):
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
           gen_triplets_master(wv_master, LDEBUG = True) 
         # loop in number of slitlets
-        for slitdum in rinput.slits_catalog:
+        for idx, slitdum in enumerate(rinput.slits_catalog):
             times_sigma = 3.0 # for minimum threshold level 
             nwinwidth=5 #number of pixels to detect and refine peaks (channels)
             # extract central spectrum
@@ -192,7 +195,8 @@ class ArcCalibrationRecipe(EmirRecipe):
             print('>>> approximate crval1, cdelt1:',crval1_approx,cdelt1_approx)
             print('>>> fitted coefficients.......:\n',numpy_array_with_coeff)
             input('press <RETURN> to continue...')
+            coeff_table[idx] = numpy_array_with_coeff
 
-        result = self.create_result(polynomial_coeffs = numpy_array_with_coeff)
+        result = self.create_result(polynomial_coeffs=coeff_table)
 
         return result
