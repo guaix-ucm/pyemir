@@ -26,6 +26,7 @@ import numpy
 from numina.store import dump, load
 
 from .products import ChannelLevelStatistics
+from .products import LinesCatalog
 
 _logger = logging.getLogger('emirdrp.store')
 
@@ -48,3 +49,11 @@ xbegin xend ybegin yend mean median var
     return fname
 
 _logger.debug('register load functions')
+
+@load.register(LinesCatalog)
+def _l(tag, obj):
+
+    _logger.debug('calling load lines catalog')
+    with open(obj, 'r') as fd:
+        linecat = numpy.genfromtxt(fd)
+    return linecat
