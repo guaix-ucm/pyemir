@@ -54,7 +54,7 @@ modes:
   uuid: 5b15db30-7774-4823-9645-e8ca27a866af
 - date: 2012-05-21
   description: Lines and mode lines
-  key: INTENSITY_FLAT_FIELD
+  key: IMAGE_FLAT
   name: Intensity Flat-Field
   reference: IPUREMI_323
   status: DRAFT
