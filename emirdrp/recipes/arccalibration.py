@@ -43,7 +43,7 @@ from emirdrp.core import gather_info_frames
 from emirdrp.core import EmirRecipe
 from emirdrp.products import MasterBias, MasterDark
 from emirdrp.products import MasterIntensityFlat
-from emirdrp.products import LinesCatalog
+from numina.core.products import LinesCatalog
 from emirdrp.products import SlitsCatalog
 from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
 from emirdrp.products import ChannelLevelStatisticsType
@@ -61,11 +61,11 @@ from .aiv.flows import init_filters_bd
 from .aiv.flows import init_filters_b
 from .aiv.flows import basic_processing_with_combination
 
-from emirdrp.wavecal.zscale import zscale
-from emirdrp.wavecal.statsummary import sigmaG
-from emirdrp.wavecal.arccalibration import arccalibration_direct, fit_solution, \
+from numina.array.wavecal.zscale import zscale
+from numina.array.wavecal.statsummary import sigmaG
+from numina.array.wavecal.arccalibration import arccalibration_direct, fit_solution, \
                                         gen_triplets_master
-from emirdrp.wavecal.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
+from numina.array.wavecal.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
 from scipy.interpolate import interp1d
 
 #------------------------------------------------------------------------------
