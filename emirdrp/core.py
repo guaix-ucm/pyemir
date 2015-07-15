@@ -24,12 +24,10 @@ from numina.core import DataFrame, ObservationResult
 from numina.core.recipeinout import RecipeResultAutoQC as RecipeResult
 from numina.core import BaseRecipeAutoQC
 
-_s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
-
 
 class EmirRecipe(BaseRecipeAutoQC):
     def __init__(self):
-        super(EmirRecipe, self).__init__(author=_s_author, version="0.1.0")
+        super(EmirRecipe, self).__init__(version="0.1.0")
 
 
 def gather_info_dframe(dataframe):
