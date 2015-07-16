@@ -29,7 +29,7 @@ from numina.store import dump, load
 from .products import ChannelLevelStatistics
 from .products import LinesCatalog
 from .products import SlitsCatalog
-from emirdrp.wavecal.slitlet import Slitlet
+from numina.array.wavecal.slitlet import Slitlet
 
 _logger = logging.getLogger('emirdrp.store')
 
