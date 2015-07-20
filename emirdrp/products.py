@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -17,18 +17,17 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Data products produced by the EMIR pipeline.'''
+"""Data products produced by the EMIR pipeline."""
 
 import numpy
 
 from numina.core import DataFrameType, DataProductType
-from numina.core.products import ArrayType
 from numina.core.products import ArrayNType
 from numina.core.products import DataProductTag
 from numina.core.requirements import InstrumentConfigurationType
 from numina.core import ValidationError
 
-# FIXME
+# FIXME:
 try:
     import ext.gtc
 except ImportError:
@@ -66,11 +65,8 @@ emir_schema_description = {
     }
 
 
-class MasterFrameProduct(DataFrameType):
-
-    def __init__(self):
-        super(MasterFrameProduct, self).__init__()
-        self.headerschema.extend(gtc_proc_schema_description)
+class EMIRImageProduct(DataFrameType, DataProductTag):
+    pass
 
 
 class EMIRConfigurationType(InstrumentConfigurationType):
@@ -79,58 +75,12 @@ class EMIRConfigurationType(InstrumentConfigurationType):
         super(EMIRConfigurationType, self).validate(value)
 
 
-class EMIRFrame(DataFrameType, DataProductTag):
-
-    def __init__(self):
-        super(EMIRFrame, self).__init__()
-        self.headerschema.extend(base_schema_description)
-        self.headerschema.extend(emir_schema_description)
-
-    def validate_hdu(self, hdu):
-        self.headerschema.validate(hdu.header)
-
-    def validate_hdulist(self, hdulist):
-        super(EMIRFrame, self).validate_hdulist(hdulist)
-        self.validate_hdu(hdulist[0])
-
-
-class MasterBadPixelMask(EMIRFrame):
+class MasterBadPixelMask(EMIRImageProduct):
     pass
 
 
-class RawBias(EMIRFrame):
-    '''Raw bias frame'''
-
-    def validate_hdu(self, hdu):
-        super(RawBias, self).validate_hdu(hdu)
-        # Check READMODE is valid
-        header = hdu.header
-        if header['READMODE'] not in ['SIMPLE', 'BIAS', 'SINGLE']:
-            raise ValidationError('not a bias')
-
-        return True
-
-
-class RawDark(EMIRFrame):
-    '''Raw dark frame'''
-    def validate_hdu(self, hdu):
-        super(RawDark, self).validate_hdu(hdu)
-
-        header = hdu.header
-        if header['IMGTYPE'] != 'DARK':
-            raise ValidationError('not a dark')
-
-        return True
-
-
-class RawIntensityFlat(EMIRFrame):
-    def validate_hdu(self, hdu):
-        super(RawIntensityFlat, self).validate_hdu(hdu)
-        return True
-
-
-class MasterBias(RawBias, MasterFrameProduct):
-    '''Master bias product
+class MasterBias(EMIRImageProduct):
+    """Master bias product
 
     This image has 4 extensions: primary, two variance extensions
     and number of pixels used in the combination.
@@ -138,12 +88,12 @@ class MasterBias(RawBias, MasterFrameProduct):
     The variance extensions are computed using two different methods.
     The first one is the variance of the same pixels in different images.
     The second extension is the variance of each channel in the final image.
-    '''
+    """
     pass
 
 
-class MasterDark(RawDark, MasterFrameProduct):
-    '''Master dark product
+class MasterDark(EMIRImageProduct):
+    """Master dark product
 
     This image has 4 extensions: primary, two variance extensions
     and number of pixels used in the combination.
@@ -151,23 +101,20 @@ class MasterDark(RawDark, MasterFrameProduct):
     The variance extensions are computed using two different methods.
     The first one is the variance of the same pixels in different images.
     The second extension is the variance of each channel in the final image.
-    '''
+    """
     pass
 
 
-class DarkCurrentValue(EMIRFrame):
+
+class MasterIntensityFlat(EMIRImageProduct):
     pass
 
 
-class MasterIntensityFlat(RawIntensityFlat, MasterFrameProduct):
+class MasterSky(EMIRImageProduct):
     pass
 
 
-class MasterSky(EMIRFrame):
-    pass
-
-
-class MasterSpectralFlat(EMIRFrame):
+class MasterSpectralFlat(EMIRImageProduct):
     pass
 
 
@@ -304,20 +251,20 @@ class SlitsCatalog(DataProductType):
 
 
 class CentroidsTableType(DataProductType):
-    '''Table with information about focus centroids.'''
+    """Table with information about focus centroids."""
     def __init__(self):
         super(CentroidsTableType, self).__init__(ptype=numpy.ndarray)
 
 
 class ChannelLevelStatistics(DataProductType):
-    ''' A list of exposure time, mean, std dev and median per channel'''
+    """A list of exposure time, mean, std dev and median per channel"""
     def __init__(self, exposure, statistics):
         self.exposure = exposure
         self.statistics = statistics
 
 
 class ChannelLevelStatisticsType(DataProductType):
-    ''' A list of exposure time, mean, std dev and median per channel'''
+    """A list of exposure time, mean, std dev and median per channel"""
     def __init__(self):
         super(ChannelLevelStatisticsType,
               self).__init__(ptype=ChannelLevelStatistics)
