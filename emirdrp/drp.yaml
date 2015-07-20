@@ -214,6 +214,15 @@ modes:
   summary: Summary
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: d7854cf4-0379-4e7d-9b1f-e045784ce90e
+- date: 2014-12-10
+  description: Slit extraction in pinhole mask
+  key: TEST8
+  name: Test mask recipe
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 649a0801-0bdd-4c9b-995d-4c86e2e3c302
 - date: 2015-04-24
   description: Wavelength calibration from arc
   key: ARC_CALIBRATION
