@@ -50,7 +50,7 @@ from emirdrp.products import ChannelLevelStatisticsType
 from emirdrp.products import ChannelLevelStatistics
 from emirdrp.products import SlitTransmissionCalibration
 from emirdrp.products import CoordinateList1DType
-from emirdrp.products import ArrayType
+from numina.core.products import ArrayType
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterBadPixelMaskRequirement

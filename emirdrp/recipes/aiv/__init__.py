@@ -17,36 +17,27 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''AIV Recipes for EMIR'''
+"""AIV Recipes for EMIR"""
 
 import logging
 
-import numpy
-from astropy.io import fits
-from scipy.stats import linregress
-import matplotlib.pyplot as plt
 
-from numina.core import RecipeError
+from astropy.io import fits
+
+
 from numina.core import DataFrame
 from numina.core import Requirement, Product, DataProductRequirement
 from numina.core.requirements import ObservationResultRequirement
 
-from numina.array.combine import median, mean
-from numina import __version__
-from numina.flow.processing import BiasCorrector, DarkCorrector
-from numina.flow.processing import FlatFieldCorrector, SkyCorrector
-from numina.flow.node import IdNode
-from numina.flow import SerialFlow
+from numina.array.combine import median
 
 from emirdrp.core import EmirRecipe
-from emirdrp.products import MasterBias, MasterDark, MasterBadPixelMask
+from emirdrp.products import MasterBias
 from emirdrp.products import DataFrameType, MasterIntensityFlat
-from emirdrp.products import DarkCurrentValue, CoordinateList2DType
-from emirdrp.core import gather_info
-from emirdrp.core import EMIR_BIAS_MODES
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
+
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 from .flows import init_filters_bdf
@@ -56,64 +47,9 @@ from .flows import init_filters_b
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-_s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
-
-
-class DarkCurrentRecipe(EmirRecipe):
-    '''Recipe to process data taken in Dark Current image Mode.'''
-
-    taskidx = '2.1.03'
-    taskname = 'Dark current (+contribution from instrument)'
-
-    obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-
-    darkcurrent = Product(DarkCurrentValue)
-
-    def run(self, rinput):
-        _logger.info('starting dark current reduction')
-
-        if rinput.master_bias is not None:
-            _logger.debug("master bias=%s", rinput.master_bias)
-            master_bias = fits.getdata(rinput.master_bias.filename)
-            master_bias_base = master_bias
-        else:
-            master_bias_base = 0
-
-        values_t = []
-        values_d = []
-        for frame in rinput.obresult.frames:
-            with fits.open(frame.label) as hdulist:
-                # FIXME: single images must be corrected to have an uniform
-                # exposure time
-                texp = hdulist[0].header['exposed']
-                corrected = hdulist[0].data - master_bias_base
-                corrected_mean = corrected.mean()
-                _logger.debug("%s mean=%f exposure=%8.2f", frame.label,
-                              corrected_mean, texp)
-                values_t.append(texp)
-                values_d.append(corrected_mean)
-
-        values_t = numpy.array(values_t)
-        values_d = numpy.array(values_d)
-        slope, intercept, _r_value, _p_value, _std_err = linregress(values_t,
-                                                                    values_d)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('Exposure time')
-        ax.set_ylabel('Dark current [ADU]')
-        ax.plot(values_t, values_d, '-*')
-        ax.plot(values_t, slope * values_t + intercept, 'r-')
-        fig.savefig('dark-current.png')
-        print('slope=', slope, 'intercept=', intercept)
-
-        _logger.info('dark current reduction ended')
-        result = self.create_result(darkcurrent=DarkCurrentValue())
-        return result
-
 
 class SimpleBiasRecipe(EmirRecipe):
-    '''
+    """
     Recipe to process data taken in SimpleBias image Mode.
 
     Bias images only appear in Simple Readout mode.
@@ -126,7 +62,7 @@ class SimpleBiasRecipe(EmirRecipe):
 
     The list of images can be readly processed by combining them
     with a median algorithm.
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     biasframe = Product(MasterBias)
@@ -172,7 +108,6 @@ class TestBiasCorrectRecipe(EmirRecipe):
 
         result = self.create_result(frame=hdulist)
         return result
-
 
 
 class TestDarkCorrectRecipe(EmirRecipe):

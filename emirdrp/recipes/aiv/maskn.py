@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''AIV Recipes for EMIR'''
+"""AIV Recipes for EMIR"""
 
 from __future__ import division
 
@@ -36,7 +36,7 @@ from numina.constants import FWHM_G
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.products import CoordinateList2DType
-from emirdrp.products import ArrayType
+from numina.core.products import ArrayType
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement

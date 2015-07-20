@@ -35,7 +35,7 @@ from numina.core import RecipeError
 #
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
-from emirdrp.products import ArrayType
+from numina.core.products import ArrayType
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement

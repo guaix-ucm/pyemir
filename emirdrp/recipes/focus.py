@@ -74,7 +74,7 @@ class TelescopeRoughFocusRecipe(EmirRecipe):
 
     focus = Product(TelescopeFocus)
 
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         return self.create_result(focus=TelescopeFocus())
 
 

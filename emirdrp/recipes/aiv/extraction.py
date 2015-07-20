@@ -36,7 +36,7 @@ from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import gather_info_frames
 from emirdrp.core import EmirRecipe
-from emirdrp.products import ArrayType
+from numina.core.products import ArrayType
 from emirdrp.products import DataFrameType
 
 from emirdrp.requirements import MasterBiasRequirement
