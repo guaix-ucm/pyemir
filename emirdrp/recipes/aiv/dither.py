@@ -123,3 +123,39 @@ class DitheredImageARecipe(EmirRecipe):
         result = self.create_result(frame=hdulist)
 
         return result
+
+
+from numina.core import ObservationResult
+
+
+class DitheredImageRecipeInputBuilder(object):
+    '''Class to build DitheredImageRecipe inputs from the Observation Results
+   
+    RecipeInputBuilder which fetches the pre-reduced images that will be combined
+   
+    '''
+
+    def __init__(self, dal):
+        self.dal = dal
+   
+    def buildRecipeInput(self, obsres):
+       
+        stareImages = []
+
+        stareImagesIds = obsres['stareImagesIds']._v 
+        for subresId in stareImagesIds:
+            subres = self.dal.getRecipeResult(subresId)
+            stareImages.append(subres['elements']['frame'])
+        
+        newOR = ObservationResult()
+        newOR.frames = stareImages
+        obsres['obresult'] = newOR
+        print 'Adding RI parameters ', obsres
+        newRI = DitheredImageARecipeRequirements(**obsres)
+
+        return newRI
+
+
+DitheredImageARecipeRequirements = DitheredImageARecipe.RecipeRequirements
+DitheredImageARecipe.InputBuilder = DitheredImageRecipeInputBuilder
+
