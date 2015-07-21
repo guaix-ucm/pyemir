@@ -244,26 +244,25 @@ modes:
 pipelines:
   default:
     recipes:
-      IMAGE_BIAS: emirdrp.recipes.BiasRecipe
-      IMAGE_DARK: emirdrp.recipes.DarkRecipe
-      IMAGE_FLAT: emirdrp.recipes.IntensityFlatRecipe
-      IMAGE_SKY: emirdrp.recipes.SimpleSkyRecipe
+      IMAGE_BIAS: emirdrp.recipes.auxiliary.BiasRecipe
+      IMAGE_DARK: emirdrp.recipes.auxiliary.DarkRecipe
+      IMAGE_FLAT: emirdrp.recipes.auxiliary.IntensityFlatRecipe
+      IMAGE_SKY: emirdrp.recipes.auxiliary.SimpleSkyRecipe
       DITHERED_IMAGE: emirdrp.recipes.aiv.dither.DitheredImageARecipe
-      MICRODITHERED_IMAGE: emirdrp.recipes.MicroditheredImageRecipe
-      MOSAICED_IMAGE: emirdrp.recipes.MosaicRecipe
-      NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.NBImageRecipe
+      MICRODITHERED_IMAGE: emirdrp.recipes.image.MicroditheredImageRecipe
+      MOSAICED_IMAGE: emirdrp.recipes.image.MosaicRecipe
+      NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.image.NBImageRecipe
       STARE_IMAGE: emirdrp.recipes.aiv.sky.TestSkyCorrectRecipe
       fail: numina.core.utils.AlwaysFailRecipe
-      gain_mode1: emirdrp.recipes.GainRecipe1
-      cosmetics: emirdrp.recipes.CosmeticsRecipe
-      dark_current: emirdrp.recipes.aiv.DarkCurrentRecipe
+      gain_mode1: emirdrp.recipes.engineering.GainRecipe1
+      cosmetics: emirdrp.recipes.engineering.CosmeticsRecipe
       simple_bias: emirdrp.recipes.aiv.SimpleBiasRecipe
       TEST0: numina.core.utils.AlwaysSuccessRecipe
       TEST1: emirdrp.recipes.aiv.TestBiasCorrectRecipe
       TEST2: emirdrp.recipes.aiv.TestDarkCorrectRecipe
       TEST3: emirdrp.recipes.aiv.TestFlatCorrectRecipe
       TEST4: emirdrp.recipes.aiv.TestFlatCorrectRecipe
-      TEST5: emirdrp.recipes.aiv.TestSkyCorrectRecipe
+      TEST5: emirdrp.recipes.aiv.sky.TestSkyCorrectRecipe
       TEST6: emirdrp.recipes.aiv.mask.TestPinholeRecipe
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
       TEST8: emirdrp.recipes.aiv.maskn.TestMaskRecipe
