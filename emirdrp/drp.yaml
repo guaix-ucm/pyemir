@@ -241,6 +241,16 @@ modes:
   summary: Summary
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: 40f353e8-42ae-4187-9487-0fd81531d774
+- date: 2015-05-21
+  description: Extracts spectra of the slits in the AIV mask
+  key: TEST9
+  name: Slit-mask spectra extraction
+  reference: test
+  status: DRAFT
+  summary: Summary
+  url: http://somegtc_url.es/emir/obsmode4.html
+  uuid: 40f353e8-42ae-4187-9487-0fd81531d774
+pipelines:
 pipelines:
   default:
     recipes:
@@ -267,5 +277,7 @@ pipelines:
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
       TEST8: emirdrp.recipes.aiv.maskn.TestMaskRecipe
       TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
+      TEST10: emirdrp.recipes.aiv.csu.CsuBarPositionsRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
+      trace_map: emirdrp.recipes.aiv.trace.TraceMapRecipe
     version: 1
