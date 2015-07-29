@@ -472,6 +472,7 @@ def pinhole_char2(
 def shape_of_slices(tup_of_s):
     return tuple(m.stop - m.start for m in tup_of_s)
 
+
 def normalize(data):
     b = data.max()
     a = data.min()
@@ -481,6 +482,17 @@ def normalize(data):
     else:
         data_22 = data - b
     return data_22
+
+
+def normalize_raw(arr):
+    """Rescale float image between -1, 1"""
+
+    # FIXME: use other limits acording to original arr.dtype
+    # This applies only to uint16 images
+    # As images where positive, the range is 0,1
+    b = 65535.0
+
+    return numpy.clip(data / b, 0.0, 1.0)
 
 
 def get_dtur_from_header(hdr):
