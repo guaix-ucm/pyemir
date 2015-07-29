@@ -43,7 +43,7 @@ from emirdrp.requirements import MasterSkyRequirement
 
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
-from .common import normalize, char_slit
+from .common import normalize_raw, char_slit
 from .common import get_dtur_from_header
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -109,7 +109,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
         data2 = median_filter(data1, size=median_filter_size)
 
         # Grey level image
-        img_grey = normalize(data2)
+        img_grey = normalize_raw(data2)
 
         # Find edges with canny
         _logger.debug('Find edges with canny, sigma %d', canny_sigma)
