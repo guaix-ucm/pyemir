@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2014 Universidad Complutense de Madrid
+# Copyright 2013-2015 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -32,8 +32,6 @@ from scipy import ndimage
 from astropy.modeling import models, fitting
 import photutils
 from photutils import CircularAperture
-import matplotlib.pyplot as plt
-import matplotlib.patches
 
 from numina.array.recenter import centering_centroid
 from numina.array.utils import image_box
@@ -52,7 +50,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 
 GAUSS_FWHM_FACTOR = FWHM_G
-PIXSCALE = 18.0
+
 
 # returns y,x
 def compute_fwhm(img, center):
@@ -546,30 +544,4 @@ def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
 
         result.append([c[1] +  ref[1] + 1, c[0] +  ref[0] + 1, fwhm_x, fwhm_y])
 
-        _logger.debug('Save figures slit-%d-%d', *colrow)
-    
-        fig = plt.figure()
-        ax = fig.add_subplot(111)  
-        ax.imshow(datas)
-        circle1 = matplotlib.patches.Circle(c[::-1], 0.6, color='r', fill=False)
-        ax.add_artist(circle1)
-        fig.savefig('slit-%d-%d-2d.png' % colrow)
-        plt.close()
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('left-rigth')
-        ax.plot(datas[fc,:], 'r*-', label='%s' % colrow[0])
-        ax.legend()
-        fig.savefig('slit-%d-%d-lr.png' % colrow)
-        plt.close()
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('top-bottom')
-        ax.plot(datas[:,cc], 'r*-', label='%s' % colrow[1])
-        ax.legend()
-        fig.savefig('slit-%d-%d-tb.png'% colrow)
-        plt.close()
-        
     return result
