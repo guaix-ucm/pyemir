@@ -17,6 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numina.extraiter import braid
 
 _P1 = slice(0, 1024)
 _P2 = slice(1024, 2048)
@@ -36,8 +37,10 @@ CHANNELS_1 = CHANNELS
 CHANNELS_2 = [chan for chans in [_CH3, _CH4, _CH1, _CH2] for chan in chans]
 # Channels as listed in Carlos Gonzalez Ph. D. Thesis
 CHANNELS_3 = [chan for chans in [_CH2, _CH3, _CH4, _CH1] for chan in reversed(chans)]
-RCHANNELS_1 = [chan for chans in [_CH3, _CH1, _CH2, _CH4] for chan in chans]
+# Channels in readout order
+CHANNELS_READOUT = list(braid(_CH3,_CH4, _CH1, _CH2))
 
+RCHANNELS_1 = [chan for chans in [_CH3, _CH1, _CH2, _CH4] for chan in chans]
 FULL = RCHANNELS_1
 
 
