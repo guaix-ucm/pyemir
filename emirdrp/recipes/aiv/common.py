@@ -492,7 +492,7 @@ def normalize_raw(arr):
     # As images where positive, the range is 0,1
     b = 65535.0
 
-    return numpy.clip(data / b, 0.0, 1.0)
+    return numpy.clip(arr / b, 0.0, 1.0)
 
 
 def get_dtur_from_header(hdr):
