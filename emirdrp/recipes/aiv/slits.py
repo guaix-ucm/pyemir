@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Recipe to detect slits in the AIV mask'''
+"""Recipe to detect slits in the AIV mask"""
 
 from __future__ import division
 
@@ -32,7 +32,7 @@ from skimage.filter import canny
 from numina.core import Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import RecipeError
-#
+
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from numina.core.products import ArrayType
@@ -103,8 +103,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
         # First, prefilter with median
         median_filter_size = rinput.median_filter_size
         canny_sigma = rinput.canny_sigma
-        
-        
+
         _logger.debug('Median filter with box %d', median_filter_size)
         data2 = median_filter(data1, size=median_filter_size)
 
@@ -113,7 +112,10 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         # Find edges with canny
         _logger.debug('Find edges with canny, sigma %d', canny_sigma)
-        edges = canny(img_grey, sigma=canny_sigma)
+        _logger.debug('Find edges with canny, high threshold %d', canny_sigma)
+        edges = canny(img_grey, sigma=canny_sigma,
+                      high_threshold=0.1, # approx 6500 counts
+                      low_threshold=0.05)
         
         # Fill edges
         _logger.debug('Fill holes')
@@ -200,14 +202,13 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
         canny_sigma = rinput.canny_sigma
         obj_min_size = rinput.obj_min_size
         obj_max_size = rinput.obj_max_size
-        
-        
+
         data1 = hdulist[0].data
         _logger.debug('Median filter with box %d', median_filter_size)
         data2 = median_filter(data1, size=median_filter_size)
 
         # Grey level image
-        img_grey = normalize(data2)
+        img_grey = normalize_raw(data2)
 
         # Find edges with canny
         _logger.debug('Find edges with canny, sigma %d', canny_sigma)
