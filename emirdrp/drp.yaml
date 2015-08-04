@@ -277,7 +277,6 @@ pipelines:
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
       TEST8: emirdrp.recipes.aiv.maskn.TestMaskRecipe
       TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
-      TEST10: emirdrp.recipes.aiv.csu.CsuBarPositionsRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
       trace_map: emirdrp.recipes.aiv.trace.TraceMapRecipe
     version: 1
