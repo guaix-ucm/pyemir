@@ -251,7 +251,6 @@ modes:
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: 40f353e8-42ae-4187-9487-0fd81531d774
 pipelines:
-pipelines:
   default:
     recipes:
       IMAGE_BIAS: emirdrp.recipes.auxiliary.BiasRecipe
