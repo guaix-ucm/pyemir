@@ -2,8 +2,8 @@ include LICENSE.txt
 include README.rst
 include NEWS.rst
 include AUTHORS.rst
-include lib/emir/instrument/*.txt
-include lib/emir/drp.yaml
-include lib/emir/simulation/*.dat
+include emirdrp/instrument/*.txt
+include emirdrp/drp.yaml
+include emirdrp/simulation/*.dat
 recursive-include doc *
 
