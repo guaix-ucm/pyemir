@@ -38,3 +38,15 @@ def test_normalize_raw():
     assert b.min() >=0
     assert b.max() <=1
 
+def test_normalize_raw_2():
+    tt = numpy.array([-1.0, 655.350, 6553.50, 1e5])
+    rtt = numpy.array([0.0, 0.01, 0.1, 1.0])
+
+    ntt = normalize_raw(tt)
+
+    # In this case, min is 0 and max is 1
+    assert ntt.min() == 0.0
+    assert ntt.max() == 1.0
+
+    assert_allclose(ntt, rtt)
+

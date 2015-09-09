@@ -489,7 +489,7 @@ def normalize_raw(arr):
 
     # FIXME: use other limits acording to original arr.dtype
     # This applies only to uint16 images
-    # As images where positive, the range is 0,1
+    # As images were positive, the range is 0,1
     b = 65535.0
 
     return numpy.clip(arr / b, 0.0, 1.0)
