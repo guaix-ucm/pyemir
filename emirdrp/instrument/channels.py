@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -17,104 +17,40 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import itertools as ito
-import logging
-
-from six.moves import zip
-from six.moves import map as imap
-
 from numina.extraiter import braid
 
-_logger = logging.getLogger('emirdrp.instrument.channels')
+_P1 = slice(0, 1024)
+_P2 = slice(1024, 2048)
+_O1 = [slice(i*128,(i+1)*128) for i in range(8)]
+_O2 = [slice(1024 + (7-i)*128, 1024+(8-i)*128) for i in range(8)]
 
 
-def _channel_gen1(beg, end, step):
-    return imap(lambda x: (x, x + step), range(beg, end, step))
-
-
-def _channel_gen2(beg, end, step):
-    return imap(lambda x: (x - step, x), range(beg, end, -step))
-
-
-def _ch1():
-    return zip(ito.repeat(slice(1024, 2048)),
-               ito.starmap(slice, _channel_gen2(1024, 0, 128)))
-
-
-def _ch2():
-    return zip(ito.starmap(slice, _channel_gen2(1024, 0, 128)),
-               ito.repeat(slice(0, 1024)))
-
-
-def _ch3():
-    return zip(ito.repeat(slice(0, 1024)),
-               ito.starmap(slice, _channel_gen1(1024, 2048, 128)))
-
-
-def _ch4():
-    return zip(ito.starmap(slice, _channel_gen1(1024, 2048, 128)),
-               ito.repeat(slice(1024, 2048)))
+_CH1 = [(_P2, s) for s in _O2]
+_CH2 = [(s, _P1) for s in _O2]
+_CH3 = [(_P1, s) for s in _O1]
+_CH4 = [(s, _P2) for s in _O1]
 
 # Channels are listed per quadrant and then in fast readout order
-CHANNELS = list(ito.chain(_ch1(), _ch2(), _ch3(), _ch4()))
+CHANNELS = [chan for chans in [_CH1, _CH2, _CH3, _CH4] for chan in chans]
+CHANNELS_1 = CHANNELS
 # Channels as they are populated during reconstruction
-CHANNELS_2 = list(ito.chain(_ch3(), _ch4(), _ch1(), _ch2()))
+CHANNELS_2 = [chan for chans in [_CH3, _CH4, _CH1, _CH2] for chan in chans]
 # Channels as listed in Carlos Gonzalez Ph. D. Thesis
-CHANNELS_3 = list(ito.chain(reversed(list(_ch2())),
-                            reversed(list(_ch3())),
-                            reversed(list(_ch4())),
-                            reversed(list(_ch1()))
-                            ))
+CHANNELS_3 = [chan for chans in [_CH2, _CH3, _CH4, _CH1] for chan in reversed(chans)]
+# Channels in readout order
+CHANNELS_READOUT = list(braid(_CH3,_CH4, _CH1, _CH2))
 
-# Channels in read out order
-CHANNELS_READOUT = list(braid(_ch1(), _ch2(), _ch3(), _ch4()))
-# Channels as they are populated during reconstruction
-CHANNELS_READOUT_2 = list(braid(_ch3(), _ch4(), _ch1(), _ch2()))
+RCHANNELS_1 = [chan for chans in [_CH3, _CH1, _CH2, _CH4] for chan in chans]
+FULL = RCHANNELS_1
+
 
 # Quadrants are listed starting at left-top and counter-clockwise then
-QUADRANTS = [(slice(1024, 2048), slice(0, 1024)),
-             (slice(0, 1024), slice(0, 1024)),
-             (slice(0, 1024), slice(1024, 2048)),
-             (slice(1024, 2048), slice(1024, 2048))
-             ]
-
-
-# This is the current configuration of the detector
-def _sh1():
-    return zip(ito.repeat(slice(0, 1024)),
-               (slice(a * 128, (a + 1) * 128) for a in range(8)))
-
-
-def _sh2():
-    return zip(ito.repeat(slice(1024, 2048)),
-                    (slice(1024 + a * 128,
-                           1024 + (a + 1) * 128)
-                     for a in range(8)))
-
-
-def _sh3():
-    return zip((slice(1024 + a * 128,
-                           1024 + (a + 1) * 128)
-                     for a in range(8)),
-                    ito.repeat(slice(0, 1024)))
-
-
-def _sh4():
-    return zip((slice(a * 128, (a + 1) * 128) for a in range(8)),
-                    ito.repeat(slice(1024, 2048)))
-
-RCHANNELS_1 = list(ito.chain(_sh1(), _sh2(), _sh3(), _sh4()))
-
-FULL = RCHANNELS_1
+QUADRANTS = [(_P2, _P1), (_P1, _P1), (_P1, _P2), (_P2, _P2)]
 
 
 # FIXME: this is a hack to convert channel name to a structure
 def convert_name_to_channels(conf):
     chname = conf.configuration['detector']['channels']
-    try:
-        allcha = globals()[chname]
-        conf.configuration['detector']['channels'] = allcha
-        return conf
-    except KeyError:
-        _logger.warning("incorrect %r name %s", 'channels', chname)
-        return None
+    allcha = globals()[chname]
+    conf.configuration['detector']['channels'] = allcha
+    return conf
