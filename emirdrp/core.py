@@ -21,7 +21,6 @@ import numpy
 from astropy import wcs
 
 from numina.core import DataFrame, ObservationResult
-from numina.core.recipeinout import RecipeResultAutoQC as RecipeResult
 from numina.core import BaseRecipeAutoQC
 
 
@@ -109,12 +108,12 @@ def offsets_from_wcs(frames, pixref):
 
     with frames[0].open() as hdulist:
         wcsh = wcs.WCS(hdulist[0].header)
-        skyref = wcsh.wcs_pix2sky(pixref, 1)
+        skyref = wcsh.wcs_pix2world(pixref, 1)
 
     for idx, frame in enumerate(frames[1:]):
         with frame.open() as hdulist:
             wcsh = wcs.WCS(hdulist[0].header)
-            pixval = wcsh.wcs_sky2pix(skyref, 1)
+            pixval = wcsh.wcs_world2pix(skyref, 1)
             result[idx + 1] = -(pixval[0] - pixref[0])
 
     return result
