@@ -250,6 +250,14 @@ modes:
   summary: Summary
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: 40f353e8-42ae-4187-9487-0fd81531d774
+- date: 2012-05-21
+  description: Lines and mode lines
+  key: FULL_DITHERED_IMAGE
+  name: Dithered images
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Dithered images
+  url: http://somegtc_url.es/emir/obsmode4.html
 pipelines:
   default:
     recipes:
@@ -258,6 +266,7 @@ pipelines:
       IMAGE_FLAT: emirdrp.recipes.auxiliary.IntensityFlatRecipe
       IMAGE_SKY: emirdrp.recipes.auxiliary.SimpleSkyRecipe
       DITHERED_IMAGE: emirdrp.recipes.aiv.dither.DitheredImageARecipe
+      FULL_DITHERED_IMAGE: emirdrp.recipes.image.dither.DitheredImageRecipe
       MICRODITHERED_IMAGE: emirdrp.recipes.image.MicroditheredImageRecipe
       MOSAICED_IMAGE: emirdrp.recipes.image.MosaicRecipe
       NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.image.NBImageRecipe
