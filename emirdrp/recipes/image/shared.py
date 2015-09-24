@@ -56,6 +56,7 @@ from numina.util.sextractor import open as sopen
 import numina.util.sexcatalog as sexcatalog
 
 from emirdrp.products import SourcesCatalog
+from emirdrp.instrument.channels import FULL
 
 from .checks import check_photometry
 from .naming import (name_redimensioned_frames, name_object_mask,
@@ -169,9 +170,14 @@ class DirectImageCommon(BaseRecipe):
 
         numpy.seterr(divide='raise')
 
-        keywords = self.instrument.keywords
-        baseshape = self.instrument.detector['shape']
-        channels = self.instrument.detector['channels']
+        # FIXME: hardcoded instrument information
+        keywords = {'airmass': 'AIRMASS',
+                    'exposure': 'EXPTIME',
+                    'imagetype': 'IMGTYP',
+                    'juliandate': 'MJD-OBS',
+                    }
+        baseshape = [2048, 2048]
+        channels = FULL
 
         if window is None:
             window = tuple((0, siz) for siz in baseshape)
@@ -268,6 +274,8 @@ class DirectImageCommon(BaseRecipe):
                     frame.valid_target = False
                     frame.valid_sky = False
                     frame.valid_region = scalewindow
+                    # FIXME: hardcode itype for the moment
+                    frame.itype = 'TARGET'
                     if frame.itype == 'TARGET':
                         frame.valid_target = True
                         targetframes.append(frame)

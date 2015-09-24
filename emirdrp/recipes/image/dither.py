@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -17,9 +17,8 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Recipe for the reduction of imaging mode observations.'''
+"""Recipe for the reduction of imaging mode observations."""
 
-import logging
 
 from numina.core import Parameter
 from numina.core import DataFrameType
@@ -40,10 +39,6 @@ from emirdrp.requirements import SkyImageSepTime_Requirement
 from emirdrp.products import SourcesCatalog
 
 from .shared import DirectImageCommon
-
-__author__ = "Sergio Pascual <sergiopr@fis.ucm.es>"
-
-_logger = logging.getLogger("numina.recipes.emir")
 
 
 class DitheredImageRecipeRequirements(RecipeRequirements):
@@ -76,7 +71,7 @@ class DitheredImageRecipeResult(RecipeResult):
 @define_result(DitheredImageRecipeResult)
 class DitheredImageRecipe(DirectImageCommon):
 
-    '''Recipe for the reduction of imaging mode observations.
+    """Recipe for the reduction of imaging mode observations.
 
     Recipe to reduce observations obtained in imaging mode, considering
     different possibilities depending on the size of the offsets
@@ -150,13 +145,7 @@ class DitheredImageRecipe(DirectImageCommon):
        in the detector).
        A better calibration might be computed using available stars (TBD).
 
-    '''
-
-    def __init__(self):
-        super(DitheredImageRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
+    """
 
     def run(self, ri):
         frame, catalog = self.process(ri, window=None, subpix=1,
