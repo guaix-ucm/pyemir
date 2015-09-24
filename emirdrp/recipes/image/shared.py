@@ -274,6 +274,8 @@ class DirectImageCommon(BaseRecipe):
                     frame.valid_target = False
                     frame.valid_sky = False
                     frame.valid_region = scalewindow
+                    # FIXME: hardcode itype for the moment
+                    frame.itype = 'TARGET'
                     if frame.itype == 'TARGET':
                         frame.valid_target = True
                         targetframes.append(frame)
