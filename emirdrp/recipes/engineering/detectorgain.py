@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Recipe for the reduction of gain calibration frames.'''
+"""Recipe for the reduction of gain calibration frames."""
 
 import logging
 import math
@@ -32,7 +32,7 @@ from numina.core import RecipeError
 from numina.core import Product
 
 from emirdrp.core import EmirRecipe
-from emirdrp.instrument.detector import QUADRANTS
+from emirdrp.instrument.channels import QUADRANTS
 from emirdrp.instrument.channels import CHANNELS
 from emirdrp.products import MasterGainMap, MasterRONMap
 
@@ -41,10 +41,10 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 class GainRecipe1(EmirRecipe):
 
-    '''Detector Gain Recipe.
+    """Detector Gain Recipe.
 
     Recipe to calibrate the detector gain.
-    '''
+    """
     
     obresult = ObservationResultRequirement()
     region = Parameter('channel', 'Region used to compute: '
@@ -54,7 +54,6 @@ class GainRecipe1(EmirRecipe):
 
     gain = Product(MasterGainMap(None, None, None))
     ron = Product(MasterRONMap(None, None))
-
 
     def region(self, reqs):
         mm = reqs['region'].tolower()

@@ -17,11 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
-
-Routines shared by image mode recipes
-
-'''
+"""Routines shared by image mode recipes"""
 
 import logging
 import operator

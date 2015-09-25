@@ -24,20 +24,19 @@ from __future__ import division
 import logging
 
 import numpy
-
 from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.constants import FWHM_G
+from numina.core.products import ArrayType
+
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.products import CoordinateList2DType
-from numina.core.products import ArrayType
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 from .common import pinhole_char, pinhole_char2
@@ -45,7 +44,6 @@ from .common import get_dtur_from_header
 
 _logger = logging.getLogger('numina.recipes.emir')
 
-_s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 GAUSS_FWHM_FACTOR = FWHM_G
 PIXSCALE = 18.0

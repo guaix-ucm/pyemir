@@ -26,14 +26,14 @@ from astropy.io import fits
 
 
 from numina.core import DataFrame
-from numina.core import Requirement, Product, DataProductRequirement
+from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
 from numina.array.combine import median
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import MasterBias
-from emirdrp.products import DataFrameType, MasterIntensityFlat
+from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement

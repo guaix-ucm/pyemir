@@ -17,12 +17,10 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 Image mode recipes of EMIR
+"""
 
-'''
-
-import logging
 
 from numina.core import Parameter
 from numina.core import RecipeRequirements, Product
@@ -41,8 +39,6 @@ from emirdrp.requirements import Offsets_Requirement
 from emirdrp.requirements import Catalog_Requirement
 
 from .shared import DirectImageCommon
-
-_logger = logging.getLogger('numina.recipes.emir')
 
 
 class StareImageRecipeRequirements(RecipeRequirements):
@@ -66,7 +62,7 @@ class StareImageRecipeResult(RecipeResult):
 @define_result(StareImageRecipeResult)
 class StareImageRecipe(DirectImageCommon):
 
-    '''
+    """
     The effect of recording images of the sky in a given pointing
     position of the TS
 
@@ -75,13 +71,7 @@ class StareImageRecipe(DirectImageCommon):
 
         * Stare image
 
-    '''
-
-    def __init__(self):
-        super(StareImageRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
+    """
 
     def run(self, ri):
 
