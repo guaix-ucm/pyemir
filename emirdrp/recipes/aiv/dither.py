@@ -19,13 +19,12 @@
 
 '''AIV Recipes for EMIR'''
 
-from __future__ import division
+from __future__ import division, print_function
 
 import logging
 
 import numpy
 from astropy.io import fits
-
 from numina import __version__
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
@@ -40,8 +39,6 @@ from emirdrp.products import DataFrameType
 
 
 _logger = logging.getLogger('numina.recipes.emir')
-
-_s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 
 def resize_hdul(hdul, newshape, region, extensions=None, window=None,
@@ -150,7 +147,7 @@ class DitheredImageRecipeInputBuilder(object):
         newOR = ObservationResult()
         newOR.frames = stareImages
         obsres['obresult'] = newOR
-        print 'Adding RI parameters ', obsres
+        print('Adding RI parameters ', obsres)
         newRI = DitheredImageARecipeRequirements(**obsres)
 
         return newRI

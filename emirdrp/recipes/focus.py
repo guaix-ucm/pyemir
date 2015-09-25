@@ -17,12 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
-    Recipes for finding the best focus.
-
-'''
-
-import logging
+"""Recipes for finding the best focus."""
 
 from numina.core import Parameter
 from numina.core import DataProductRequirement
@@ -34,17 +29,10 @@ from emirdrp.products import TelescopeFocus
 from emirdrp.products import DTUFocus
 from emirdrp.products import MasterIntensityFlat
 
-__all__ = ['TelescopeRoughFocusRecipe',
-           'TelescopeFineFocusRecipe',
-           'DTUFocusRecipe',
-           ]
-
-_logger = logging.getLogger('numina.recipes.emir')
 
 
 class TelescopeRoughFocusRecipe(EmirRecipe):
-
-    '''Recipe to compute the telescope focus.
+    """Recipe to compute the telescope focus.
 
     **Observing modes:**
 
@@ -61,7 +49,7 @@ class TelescopeRoughFocusRecipe(EmirRecipe):
 
     **Outputs:**
      * Best focus
-    '''
+    """
 
     master_bpm = DataProductRequirement(
         MasterBadPixelMask, 'Master bad pixel mask')
@@ -79,8 +67,7 @@ class TelescopeRoughFocusRecipe(EmirRecipe):
 
 
 class TelescopeFineFocusRecipe(EmirRecipe):
-
-    '''
+    """
     Recipe to compute the telescope focus.
 
     **Observing modes:**
@@ -98,7 +85,7 @@ class TelescopeFineFocusRecipe(EmirRecipe):
     **Outputs:**
      * Best focus
 
-    '''
+    """
 
     master_bpm = DataProductRequirement(
         MasterBadPixelMask, 'Master bad pixel mask')
@@ -110,13 +97,12 @@ class TelescopeFineFocusRecipe(EmirRecipe):
 
     focus = Product(TelescopeFocus)
 
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         return self.create_result(focus=TelescopeFocus())
 
 
 class DTUFocusRecipe(EmirRecipe):
-
-    '''
+    """
     Recipe to compute the DTU focus.
 
     **Observing modes:**
@@ -134,7 +120,7 @@ class DTUFocusRecipe(EmirRecipe):
     **Outputs:**
      * Best focus
 
-    '''
+    """
 
     master_bpm = DataProductRequirement(
         MasterBadPixelMask, 'Master bad pixel mask')
@@ -150,5 +136,5 @@ class DTUFocusRecipe(EmirRecipe):
     focus = Product(DTUFocus)
 
 
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         return self.create_result(focus=DTUFocus())

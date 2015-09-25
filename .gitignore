@@ -60,3 +60,6 @@ target/
 # Eclipse
 .project
 .pydevproject
+# PyCharm
+.idea
+.settings

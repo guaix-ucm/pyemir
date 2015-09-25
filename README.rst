@@ -4,6 +4,12 @@ PyEmir
 
 |docs| |zenodo|
 
+.. image:: https://travis-ci.org/guaix-ucm/pyemir.svg?branch=master
+    :target: https://travis-ci.org/guaix-ucm/pyemir
+
+.. image:: https://coveralls.io/repos/guaix-ucm/pyemir/badge.svg?branch=master&service=github 
+    :target: https://coveralls.io/github/guaix-ucm/pyemir?branch=master
+
 This is PyEmir, the data reduction pipeline for EMIR. 
 
 PyEmir is distributed under GNU GPL, either version 3 of the License, 

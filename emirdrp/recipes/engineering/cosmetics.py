@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Recipe for finding cosmetic defects.'''
+"""Recipe for finding cosmetic defects."""
 
 from __future__ import division
 
@@ -69,10 +69,10 @@ def gather_info(hdulist):
 
 class CosmeticsRecipe(EmirRecipe):
 
-    '''Detector Cosmetics.
+    """Detector Cosmetics.
 
     Recipe to find and tag bad pixels in the detector.
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     insconf = InstrumentConfigurationRequirement()

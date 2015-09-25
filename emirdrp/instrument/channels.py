@@ -18,7 +18,7 @@
 #
 
 def braid(*iterables):
-    '''Return the elements of each iterator in turn until some is exhausted.
+    """Return the elements of each iterator in turn until some is exhausted.
     This function is similar to the roundrobin example
     in itertools documentation.
     >>> a = iter([1,2,3,4])
@@ -27,7 +27,7 @@ def braid(*iterables):
     >>> d = iter([1,1,1,1,1,1])
     >>> list(braid(a, b, c, d))
     [1, 'a', 1, 1, 2, 'b', 1, 1]
-    '''
+    """
 
     for itbl in zip(*iterables):
         for it in itbl:

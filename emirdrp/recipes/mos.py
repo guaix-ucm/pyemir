@@ -4,7 +4,7 @@
 # This file is part of PyEmir
 #
 # PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# it under the terms of the GNU General Public License as published byXS
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
@@ -17,9 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''MOS Recipes for EMIR'''
-
-import logging
+"""MOS Recipes for EMIR"""
 
 from numina.core import Parameter
 from numina.core import DataProductRequirement
@@ -35,13 +33,9 @@ from ..products import MasterSpectralFlat
 from ..products import SlitTransmissionCalibration, WavelengthCalibration
 from ..products import Spectra, LinesCatalog, DataCube
 
-__all__ = []
-
-_logger = logging.getLogger('numina.recipes.emir')
-
 
 class StareSpectraRecipe(EmirRecipe):
-    '''Recipe for the reduction of multiobject spectroscopy.
+    """Recipe for the reduction of multiobject spectroscopy.
 
     Recipe to reduce observations obtained in multiobject spectroscopy,
     considering different possibilities depending on the observing mode. In
@@ -177,7 +171,7 @@ class StareSpectraRecipe(EmirRecipe):
 
      * Spectra extraction: define optimal, average, peak, FWHM.
 
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
@@ -196,7 +190,7 @@ class StareSpectraRecipe(EmirRecipe):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
 
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         return self.create_result(spectra=Spectra(), catalog=LinesCatalog())
 
 
@@ -223,15 +217,15 @@ class DNSpectraRecipe(EmirRecipe):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
 
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         return self.create_result(spectra=Spectra(), catalog=LinesCatalog())
 
 
 class OffsetSpectraRecipe(EmirRecipe):
-    '''
+    """
     Observing mode:
         Offset spectra beyond the slit
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
@@ -250,15 +244,15 @@ class OffsetSpectraRecipe(EmirRecipe):
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
 
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         return self.create_result(spectra=Spectra(), catalog=LinesCatalog())
 
 
 class RasterSpectraRecipe(EmirRecipe):
-    '''
+    """
     Observing mode:
         Raster spectra
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
@@ -274,5 +268,5 @@ class RasterSpectraRecipe(EmirRecipe):
 
     cube = Product(DataCube)
 
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         return self.create_result(cube=DataCube())

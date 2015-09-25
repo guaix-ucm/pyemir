@@ -93,7 +93,7 @@ class StareImageRecipeInputBuilder(object):
     def buildRecipeInput(self, obsres):
 
         if self.sky_image is None:
-            print 'obtaining SKY image'
+            print('obtaining SKY image')
             sky_cal_result = self.dal.getLastRecipeResult("EMIR", "EMIR", "IMAGE_SKY")
             self.sky_image = sky_cal_result['elements']['skyframe']
 
