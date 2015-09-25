@@ -19,7 +19,7 @@
 
 '''AIV Recipes for EMIR'''
 
-from __future__ import division
+from __future__ import division, print_function
 
 import logging
 
@@ -147,7 +147,7 @@ class DitheredImageRecipeInputBuilder(object):
         newOR = ObservationResult()
         newOR.frames = stareImages
         obsres['obresult'] = newOR
-        print 'Adding RI parameters ', obsres
+        print('Adding RI parameters ', obsres)
         newRI = DitheredImageARecipeRequirements(**obsres)
 
         return newRI
