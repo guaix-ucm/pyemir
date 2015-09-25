@@ -25,7 +25,6 @@ import logging
 
 import numpy
 from astropy.io import fits
-
 from numina import __version__
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
@@ -40,8 +39,6 @@ from emirdrp.products import DataFrameType
 
 
 _logger = logging.getLogger('numina.recipes.emir')
-
-_s_author = "Sergio Pascual <sergiopr@fis.ucm.es>"
 
 
 def resize_hdul(hdul, newshape, region, extensions=None, window=None,

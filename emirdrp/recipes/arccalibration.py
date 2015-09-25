@@ -17,62 +17,34 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import division, print_function
+"""Auxiliary Recipes for EMIR"""
 
-'''Auxiliary Recipes for EMIR'''
+
+from __future__ import division, print_function
 
 import logging
 
-import numpy
-
-from six.moves import input
-
-#from numina.core import BaseRecipeAutoQC
-from numina.core import RecipeError
-from numina.core import DataFrame#from numina.core import BaseRecipeAutoQC
 from numina.core import Requirement, Product, Parameter
-from numina.logger import log_to_history
-from numina.array.combine import median
-# from numina.flow.processing import BadPixelCorrector
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.requirements import InstrumentConfigurationRequirement
 
-import emirdrp.instrument.channels as allchannels
-from emirdrp.core import EMIR_BIAS_MODES
-from emirdrp.core import gather_info_frames
 from emirdrp.core import EmirRecipe
-from emirdrp.products import MasterBias, MasterDark
-from emirdrp.products import MasterIntensityFlat
 from numina.core.products import LinesCatalog
 from emirdrp.products import SlitsCatalog
-from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
-from emirdrp.products import ChannelLevelStatisticsType
-from emirdrp.products import ChannelLevelStatistics
-from emirdrp.products import SlitTransmissionCalibration
-from emirdrp.products import CoordinateList1DType
 from numina.core.products import ArrayType
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-from emirdrp.requirements import MasterSpectralFlatFieldRequirement
-from .aiv.flows import init_filters_bdf
 from .aiv.flows import init_filters_bd
-from .aiv.flows import init_filters_b
 from .aiv.flows import basic_processing_with_combination
 
-from numina.array.wavecal.zscale import zscale
 from numina.array.wavecal.statsummary import sigmaG
 from numina.array.wavecal.arccalibration import arccalibration_direct, fit_solution, \
                                         gen_triplets_master
-from numina.array.wavecal.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
+from numina.array.peaks.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
 from scipy.interpolate import interp1d
 
 #------------------------------------------------------------------------------
 
 import numpy as np
-from numpy.polynomial import polynomial
-import matplotlib.pyplot as plt
 
 #------------------------------------------------------------------------------
 
@@ -80,11 +52,6 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 
 class ArcCalibrationRecipe(EmirRecipe):
-    '''Bla, bla, bla.
-
-
-    Bla bla bla
-    '''
 
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
@@ -131,13 +98,12 @@ class ArcCalibrationRecipe(EmirRecipe):
             # find peaks (initial search providing integer numbers)
             threshold = np.median(spectrum1d)+times_sigma*sigmaG(spectrum1d)
             ipeaks_int = findPeaks_spectrum(spectrum1d, nwinwidth = nwinwidth, 
-                                            data_threshold = threshold,
-                                            LDEBUG = True, LPLOT = False)
+                                            data_threshold = threshold)
     
             # refine peaks fitting an appropriate function (providing float 
             # numbers)
             ipeaks_float = refinePeaks_spectrum(spectrum1d, ipeaks_int, nwinwidth, 
-                                                method = 2, LDEBUG = False)
+                                                method=1)
     
             # define interpolation function and interpolate the refined peak 
             # location, passing from index number (within the spectrum1d array) 
@@ -145,23 +111,8 @@ class ArcCalibrationRecipe(EmirRecipe):
             # that the extracted spectrum may correspond to a subregion in the 
             # spectral direction)
             finterp_channel = interp1d(range(xchannel.size), xchannel, 
-                                       kind = 'linear')
+                                       kind='linear')
             xpeaks_refined = finterp_channel(ipeaks_float)
-    
-            if True: # TBR (to be removed in the future)
-                print('xpeaks_refined (channel):\n',xpeaks_refined)
-                # plot extracted spectrum
-                fig = plt.figure()
-                ax = fig.add_subplot(111)
-                ax.set_xlim([1,naxis1])
-                ax.plot(xchannel,spectrum1d,'k-')
-                ax.plot(xchannel[ipeaks_int], spectrum1d[ipeaks_int], 'ro')
-                ax.plot([1,naxis1],[threshold, threshold], linestyle='dashed')
-                ylim = ax.get_ylim()
-                for xdum in zip(xpeaks_refined,xpeaks_refined):
-                    ax.plot(xdum, ylim, linestyle='dotted', color='magenta')
-                plt.show(block=False)
-                input('press <RETURN> to continue...')
 
             # wavelength calibration
             solution = arccalibration_direct(wv_master,
@@ -192,9 +143,6 @@ class ArcCalibrationRecipe(EmirRecipe):
                            LDEBUG = True,
                            LPLOT = True)
 
-            print('>>> approximate crval1, cdelt1:',crval1_approx,cdelt1_approx)
-            print('>>> fitted coefficients.......:\n',numpy_array_with_coeff)
-            input('press <RETURN> to continue...')
             coeff_table[idx] = numpy_array_with_coeff
 
         result = self.create_result(polynomial_coeffs=coeff_table)

@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Detector Nonlinearity Recipe.
+"""Detector Nonlinearity Recipe.
 
 Recipe to calibrate the detector nonlinearity.
 
@@ -41,4 +41,4 @@ computed for the lowest ADU counts, with standard deviations as weights. A new
 fit is performed, this time of ADU_linear/ADU_obs, versus ADU_obs. The
 polynomial terms of the fit are computed.
 
-'''
+"""

@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Auxiliary Recipes for EMIR'''
+"""Auxiliary Recipes for EMIR"""
 
 import logging
 
@@ -53,9 +53,6 @@ from .aiv.flows import init_filters_bd
 from .aiv.flows import init_filters_b
 from .aiv.flows import basic_processing_with_combination
 
-__all__ = ['BiasRecipe', 'DarkRecipe', 'IntensityFlatRecipe',
-           'SpectralFlatRecipe', 'SlitTransmissionRecipe',
-           'WavelengthCalibrationRecipe']
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -67,7 +64,7 @@ def _s_to_f(myslice):
 
 
 class BiasRecipe(EmirRecipe):
-    '''
+    """
     Recipe to process data taken in Bias image Mode.
 
     Bias images only appear in Simple Readout mode.
@@ -88,7 +85,7 @@ class BiasRecipe(EmirRecipe):
     The list of images can be readly processed by
     combining them with a median algorithm.
 
-    '''
+    """
     
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
@@ -150,7 +147,7 @@ class BiasRecipe(EmirRecipe):
 
 
 class DarkRecipe(EmirRecipe):
-    '''Recipe to process data taken in Dark current image Mode.
+    """Recipe to process data taken in Dark current image Mode.
 
     Recipe to process dark images. The dark images will be combined
     using the median.
@@ -165,7 +162,7 @@ class DarkRecipe(EmirRecipe):
     **Outputs:**
 
      * A combined dark frame, with variance extension.
-    '''
+    """
 
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
@@ -228,7 +225,7 @@ class DarkRecipe(EmirRecipe):
 
 
 class IntensityFlatRecipe(EmirRecipe):
-    '''Recipe to process data taken in intensity flat-field mode.
+    """Recipe to process data taken in intensity flat-field mode.
 
     Recipe to process intensity flat-fields. The flat-on and
     flat-off images are combined (method?) separately and the subtracted
@@ -253,7 +250,7 @@ class IntensityFlatRecipe(EmirRecipe):
      * A combined thermal subtracted flat field, normalized to median 1,
        with with variance extension and quality flag.
 
-    '''
+    """
 
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
@@ -293,9 +290,9 @@ class IntensityFlatRecipe(EmirRecipe):
 
 
 class SimpleSkyRecipe(EmirRecipe):
-    '''Recipe to process data taken in intensity flat-field mode.
+    """Recipe to process data taken in intensity flat-field mode.
 
-    '''
+    """
 
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
@@ -329,7 +326,6 @@ class SimpleSkyRecipe(EmirRecipe):
 
 
 class SpectralFlatRecipe(EmirRecipe):
-   
 
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
@@ -340,12 +336,12 @@ class SpectralFlatRecipe(EmirRecipe):
     
     flatframe = Product(MasterSpectralFlat)
 
-    def run(self, obresult, rinput):
+    def run(self, rinput):
         return self.create_result(flatframe=MasterSpectralFlat(None))
 
 
 class SlitTransmissionRecipe(EmirRecipe):
-    '''Recipe to calibrate the slit transmission.
+    """Recipe to calibrate the slit transmission.
 
     **Observing modes:**
 
@@ -363,7 +359,7 @@ class SlitTransmissionRecipe(EmirRecipe):
 
      * TBD
 
-    '''
+    """
 
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
@@ -373,13 +369,13 @@ class SlitTransmissionRecipe(EmirRecipe):
 
 
     @log_to_history(_logger, 'slit')
-    def run(self, obresult, rinput):
+    def run(self, rinput):
         return self.create_result(slit=SlitTransmissionCalibration())
 
 
 
-class WavelengthCalibrationRecipe():
-    '''Recipe to calibrate the spectral response.
+class WavelengthCalibrationRecipe(EmirRecipe):
+    """Recipe to calibrate the spectral response.
 
     **Observing modes:**
 
@@ -397,7 +393,7 @@ class WavelengthCalibrationRecipe():
     **Procedure:**
 
      * TBD
-    '''
+    """
 
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
@@ -409,5 +405,5 @@ class WavelengthCalibrationRecipe():
 
 
     @log_to_history(_logger, 'cal')
-    def run(self, obresult, rinput):
+    def run(self, rinput):
         return self.create_result(cal=WavelengthCalibration())

@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Preprocessing EMIR readout modes'''
+"""Preprocessing EMIR readout modes"""
 
 from __future__ import division
 
@@ -62,7 +62,7 @@ def image_readmode(hdulist, default=None):
     if default:
         return ReadModeGuessing(mode=default, info={'source': 'default'})
     else:
-        None
+        return None
 
 
 def preprocess_single(hdulist):

@@ -17,28 +17,21 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-''' Recipes for engineering modes.
+""" Recipes for engineering modes"""
 
-'''
-
-import logging
 
 from numina.core import Parameter
-from numina.core import DataFrameType, Product, RecipeRequirements
+from numina.core import DataFrameType, Product
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import EmirRecipe
-from emirdrp.products import MasterBias, MasterDark, MasterBadPixelMask
-from emirdrp.products import TelescopeOffset, MSMPositions
-from emirdrp.products import MasterIntensityFlat
 
 from emirdrp.products import DTU_XY_Calibration, DTU_Z_Calibration
-from emirdrp.products import CSU2DetectorCalibration, DTUFlexureCalibration
+from emirdrp.products import DTUFlexureCalibration
 from emirdrp.products import (PointingOriginCalibration,
                            SpectroPhotometricCalibration)
 from emirdrp.products import PhotometricCalibration, WavelengthCalibration
 
-_logger = logging.getLogger('numina.recipes.emir')
 
 from .detectorgain import GainRecipe1
 from .cosmetics import CosmeticsRecipe
@@ -46,12 +39,12 @@ from .cosmetics import CosmeticsRecipe
 
 class DTU_XY_CalibrationRecipe(EmirRecipe):
 
-    '''
+    """
 
     **Observing modes:**
 
         * DTU X_Y calibration
-    '''
+    """
     
     obresult = ObservationResultRequirement()
     slit_pattern = Parameter([], 'Slit pattern'),
@@ -66,12 +59,12 @@ class DTU_XY_CalibrationRecipe(EmirRecipe):
 
 class DTU_Z_CalibrationRecipe(EmirRecipe):
 
-    '''
+    """
 
     **Observing modes:**
 
         * DTU Z calibration
-    '''
+    """
     obresult = ObservationResultRequirement()
     dtu_range = Parameter([], 'DTU range: begin, end and step')
 
@@ -83,12 +76,12 @@ class DTU_Z_CalibrationRecipe(EmirRecipe):
 
 class DTUFlexureRecipe(EmirRecipe):
 
-    '''
+    """
 
     **Observing modes:**
 
         * DTU Flexure compensation
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     calibration = Product(DTUFlexureCalibration)
@@ -99,12 +92,12 @@ class DTUFlexureRecipe(EmirRecipe):
 
 class CSU2DetectorRecipe(EmirRecipe):
 
-    '''
+    """
 
     **Observing modes:**
 
         * CSU2Detector calibration
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     dtu_range = Parameter([], 'DTU range: begin, end and step')
@@ -117,12 +110,12 @@ class CSU2DetectorRecipe(EmirRecipe):
 
 class FocalPlaneCalibrationRecipe(EmirRecipe):
 
-    '''
+    """
 
     **Observing modes:**
 
         * Lateral color
-    '''
+    """
 
     obresult = ObservationResultRequirement()
 
@@ -135,12 +128,12 @@ class FocalPlaneCalibrationRecipe(EmirRecipe):
 
 class SpectralCharacterizationRecipe(EmirRecipe):
 
-    '''
+    """
 
     **Observing modes:**
 
         * Spectral characterization
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     calibration = Product(WavelengthCalibration)
@@ -151,12 +144,12 @@ class SpectralCharacterizationRecipe(EmirRecipe):
 
 class RotationCenterRecipe(EmirRecipe):
 
-    '''
+    """
 
     **Observing modes:**
 
         * Centre of rotation
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     calibration = Product(PointingOriginCalibration)
@@ -167,12 +160,12 @@ class RotationCenterRecipe(EmirRecipe):
 
 class AstrometricCalibrationRecipe(EmirRecipe):
 
-    '''
+    """
 
     **Observing modes:**
 
         * Astrometric calibration
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     calibration = Product(DataFrameType)
@@ -183,12 +176,12 @@ class AstrometricCalibrationRecipe(EmirRecipe):
 
 class PhotometricCalibrationRecipe(EmirRecipe):
 
-    '''
+    """
 
     **Observing modes:**
 
         * Photometric calibration
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     phot = Parameter([], 'Information about standard stars')
@@ -201,12 +194,12 @@ class PhotometricCalibrationRecipe(EmirRecipe):
 
 class SpectroPhotometricCalibrationRecipe(EmirRecipe):
 
-    '''
+    """
 
     **Observing modes:**
 
         * Spectrophotometric calibration
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     sphot = Parameter([], 'Information about standard stars')
