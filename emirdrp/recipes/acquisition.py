@@ -17,13 +17,13 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 Recipe for the processing of target acquisition images.
 
 **Observing modes:**
 
     * Target acquisition
-'''
+"""
 
 import logging
 
@@ -40,14 +40,12 @@ from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 
 
-__all__ = ['TargetAcquisitionRecipe', 'MaskImagingRecipe', 'MaskCheckRecipe']
-
 _logger = logging.getLogger('emirdrp.recipes')
 
 
 class TargetAcquisitionRecipe(EmirRecipe):
 
-    '''
+    """
     Acquire a target.
 
     Recipe for the processing of target acquisition images.
@@ -57,7 +55,7 @@ class TargetAcquisitionRecipe(EmirRecipe):
         * Target acquisition
 
 
-    '''
+    """
 
     # Requirements
     obresult = ObservationResultRequirement()
@@ -69,13 +67,13 @@ class TargetAcquisitionRecipe(EmirRecipe):
     # Products
     telescope_offset = Product(TelescopeOffset)
 
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         return self.create_result(telescope_offset=TelescopeOffset())
 
 
 class MaskImagingRecipe(EmirRecipe):
 
-    '''Acquire a target.
+    """Acquire a target.
 
     Mask image Recipe.
 
@@ -84,7 +82,7 @@ class MaskImagingRecipe(EmirRecipe):
     **Observing modes:**
 
       *  Mask imaging
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
@@ -94,13 +92,13 @@ class MaskImagingRecipe(EmirRecipe):
 
     msm_positions = Product(MSMPositions)
 
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         return self.create_result(msm_positions=MSMPositions())
 
 
 class MaskCheckRecipe(EmirRecipe):
 
-    '''
+    """
     Acquire a target.
 
     Recipe for the processing of multi-slit/long-slit check images.
@@ -109,7 +107,7 @@ class MaskCheckRecipe(EmirRecipe):
 
         * MSM and LSM check
 
-    '''
+    """
 
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
@@ -120,7 +118,6 @@ class MaskCheckRecipe(EmirRecipe):
     msm_positions = Product(MSMPositions)
     telescope_offset = Product(TelescopeOffset)
 
-
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         return self.create_result(msm_positions=MSMPositions(),
                                   telescope_offset=TelescopeOffset())

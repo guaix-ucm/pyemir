@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Geometric Distortion Calibration.
+"""Geometric Distortion Calibration.
 
 **Observing modes:**
 
@@ -35,4 +35,4 @@
 
  * TBD
 
-'''
+"""

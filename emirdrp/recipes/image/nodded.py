@@ -17,12 +17,10 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
-Beam switched-nodded image mode recipe of EMIR
+"""Beam switched-nodded image mode recipe of EMIR"""
 
-'''
 
-from numina.core import Parameter, DataProductRequirement
+from numina.core import Parameter
 from numina.core import RecipeRequirements
 from numina.core import define_requirements, define_result
 from numina.core import Product, DataFrameType
@@ -68,7 +66,7 @@ class NBImageRecipeResult(RecipeResult):
 @define_result(NBImageRecipeResult)
 class NBImageRecipe(DirectImageCommon):
 
-    '''
+    """
     The effect of recording a series of stare images, with the same
     acquisition parameters, and taken by pointing the TS in cycles
     between two, or more, sky positions. Displacements are larger
@@ -80,13 +78,7 @@ class NBImageRecipe(DirectImageCommon):
 
         * Nodded/Beamswitched images
 
-    '''
-
-    def __init__(self):
-        super(NBImageRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
+    """
 
     def run(self, ri):
 

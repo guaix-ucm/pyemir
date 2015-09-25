@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Data products produced by the EMIR pipeline.'''
+"""Data products produced by the EMIR pipeline."""
 
 import logging
 

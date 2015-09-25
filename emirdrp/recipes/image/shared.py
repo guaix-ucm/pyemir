@@ -17,11 +17,8 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""Routines shared by image mode recipes"""
 
-Routines shared by image mode recipes
-
-'''
 import os
 import logging
 import shutil
@@ -40,7 +37,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 from numina import __version__
-from numina.core import DataFrame, BaseRecipe, RecipeError
+from numina.core import DataFrame, RecipeError
 from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, FlatFieldCorrector
@@ -55,6 +52,7 @@ from numina.util.sextractor import SExtractor
 from numina.util.sextractor import open as sopen
 import numina.util.sexcatalog as sexcatalog
 
+from emirdrp.core import EmirRecipe
 from emirdrp.products import SourcesCatalog
 
 from .checks import check_photometry
@@ -149,7 +147,7 @@ def clip_slices(r, region, scale=1):
     return t
 
 
-class DirectImageCommon(BaseRecipe):
+class DirectImageCommon(EmirRecipe):
 
     logger = _logger
     BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = [0, 1, 2, 3, 4]

@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Typical requirements of recipes'''
+"""Typical requirements of recipes"""
 
 from numina.core import Parameter, DataProductRequirement, Requirement
 
@@ -30,14 +30,14 @@ from .products import EMIRConfigurationType
 
 
 class EMIRConfigurationRequirement(Requirement):
-    '''The Recipe requires the configuration of EMIR.'''
+    """The Recipe requires the configuration of EMIR."""
     def __init__(self):
 
         super(EMIRConfigurationRequirement,
-              self).__init__("EMIR Configuration",
-                             type=EMIRConfigurationType,
-                             validate=True
+              self).__init__(EMIRConfigurationType,
+                             "EMIR Configuration"
                              )
+
 
     def __repr__(self):
         sclass = type(self).__name__

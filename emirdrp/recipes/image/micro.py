@@ -17,12 +17,10 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 Micro-dithering Recipe of EMIR
 
-'''
-
-import logging
+"""
 
 from numina.core import Parameter
 from numina.core import define_requirements, define_result
@@ -39,8 +37,6 @@ from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 
 from .shared import DirectImageCommon
-
-_logger = logging.getLogger('numina.recipes.emir')
 
 
 class MicroditheredImageRecipeRequirements(RecipeRequirements):
@@ -75,7 +71,7 @@ class MicroditheredImageRecipeResult(RecipeResult):
 @define_result(MicroditheredImageRecipeResult)
 class MicroditheredImageRecipe(DirectImageCommon):
 
-    '''
+    """
     Recipe for the reduction of microdithering imaging.
 
     The effect of recording a series of stare images, with the same
@@ -154,15 +150,7 @@ class MicroditheredImageRecipe(DirectImageCommon):
        scale in the detector).
        A better calibration might be computed using available stars (TBD).
 
-    '''
-
-    logger = _logger
-
-    def __init__(self):
-        super(MicroditheredImageRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
+    """
 
     def run(self, ri):
 
