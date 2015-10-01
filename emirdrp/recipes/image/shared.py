@@ -56,9 +56,9 @@ from emirdrp.products import SourcesCatalog
 from emirdrp.instrument.channels import FULL
 
 from .checks import check_photometry
-from .naming import (name_redimensioned_frames, name_object_mask,name_skybackground)
+from .naming import name_redimensioned_frames, name_object_mask
 from .naming import name_skybackgroundmask, name_skysub_proc, name_skyflat
-from .naming import name_skyflat_proc, name_segmask
+from .naming import name_skyflat_proc, name_segmask, name_skybackground
 
 import scipy.ndimage as ndimage
 import datetime
@@ -144,15 +144,13 @@ def offsets_from_wcs(frames, pixref):
     :parameter frames: sequence of FITS filenames or file descriptors
     :parameter pixref: numpy array used as reference pixel
 
-    The sky world coordinates are computed on *pixref* using
-    the WCS of the first frame in the sequence. Then, the
-    pixel coordinates of the reference sky world-coordinates
-    are computed for the rest of the frames.
+    The sky world coordinates are computed on *pixref* using the WCS of the
+    first frame in the sequence. Then, the pixel coordinates of the reference
+    sky world-coordinates are computed for the rest of the frames.
 
-    The results is a numpy array with the difference between the
-    computed pixel value and the reference pixel. The first line
-    of the array is [0, 0], being the offset from the first image
-    to itself.
+    The results is a numpy array with the difference between the computed pixel
+    value and the reference pixel. The first line of the array is [0, 0], being
+    the offset from the first image to itself.
 
     '''
 
@@ -327,7 +325,8 @@ class DirectImageCommon(EmirRecipe):
         scaled_chan = clip_slices(channels, window, scale=subpix)
 
         # Reference pixel in the center of the frame
-        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
+        refpix = numpy.divide(numpy.array([baseshape],
+                                          dtype='int'), 2).astype('float')
 
         # lists of targets and sky frames
 
@@ -358,7 +357,8 @@ class DirectImageCommon(EmirRecipe):
             frame.pix_offset = off
             frame.scaled_pix_offset = subpix * off
 
-            _logger.debug('Frame %s, offset=%s, scaled=%s',frame.label, off, subpix * off)
+            _logger.debug('Frame %s, offset=%s, scaled=%s',
+                          frame.label, off, subpix * off)
 
         _logger.info('Computing relative offsets')
         offsets = [(frame.scaled_pix_offset) for frame in self.targetframes]
@@ -366,11 +366,8 @@ class DirectImageCommon(EmirRecipe):
         finalshape, offsetsp = combine_shape(subpixshape, offsets)
         _logger.info('Shape of resized array is %s', finalshape)
 
-        # Resizing target frames
-        # inicio = datetime.datetime.now()
-        self.resize(self.targetframes, subpixshape, offsetsp, finalshape, window=window, scale=subpix)
-        # tiempo_ejecucion = datetime.datetime.now() - inicio
-        # _logger.info ("Tiempo: %s" %tiempo_ejecucion)
+        self.resize(self.targetframes, subpixshape, offsetsp, finalshape,
+                    window=window, scale=subpix)
 
         if not target_is_sky:
             for frame in self.skyframes:
@@ -408,17 +405,18 @@ class DirectImageCommon(EmirRecipe):
 
         return windowshape, scaled_chan, subpixshape, sf_data
 
-    def _fullredComputation(self, sf_data, seeing_fwhm, target_is_sky, windowshape, scaled_chan, subpixshape, step):
+    def _fullredComputation(self, sf_data, seeing_fwhm, target_is_sky,
+                            windowshape, scaled_chan, subpixshape, step):
         # Generating segmentation image
         _logger.info('Step %d, generating segmentation image', step)
-        objmask, seeing_fwhm = self.create_mask(sf_data, seeing_fwhm, step=step)
+        objmask,seeing_fwhm = self.create_mask(sf_data, seeing_fwhm, step=step)
         step += 1
         # Update objects mask
         # For all images
         # FIXME:
         for frame in self.targetframes:
             frame.objmask = name_object_mask(frame.baselabel, step)
-            _logger.info('Step %d, create object mask %s', step,  frame.objmask)
+            _logger.info('Step %d, create object mask %s', step, frame.objmask)
             frame.objmask_data = objmask[frame.valid_region]
             fits.writeto(frame.objmask, frame.objmask_data, clobber=True)
 
@@ -435,15 +433,18 @@ class DirectImageCommon(EmirRecipe):
         self.update_scale_factors(self.ri.obresult.frames, step)
 
         # Create superflat
-        superflat = self.compute_superflat(scaled_chan, segmask=objmask, step=step)
+        superflat = self.compute_superflat(scaled_chan, segmask=objmask,
+                                           step=step)
 
         # Apply superflat
         self.figure_init(subpixshape)
 
-        self.apply_superflat(self.ri.obresult.frames, superflat, step=step, save=True)
+        self.apply_superflat(self.ri.obresult.frames, superflat, step=step,
+                             save=True)
 
         _logger.info('Step %d, advanced sky correction (SC)', step)
-        self.compute_advanced_sky(skyframes=self.skyframes,target_is_sky=target_is_sky,step=step)
+        self.compute_advanced_sky(skyframes=self.skyframes,
+                                  target_is_sky=target_is_sky,step=step)
 
         # Combining the images
         _logger.info("Step %d, Combining the images", step)
@@ -472,7 +473,8 @@ class DirectImageCommon(EmirRecipe):
         _logger.info("Final frame created")
         return result
 
-    def process(self, ri, window=None, subpix=1, store_intermediate=True, target_is_sky=True, stop_after=COMPLETE):
+    def process(self, ri, window=None, subpix=1, store_intermediate=True,
+                target_is_sky=True, stop_after=COMPLETE):
 
         numpy.seterr(divide='raise')
 
@@ -496,16 +498,12 @@ class DirectImageCommon(EmirRecipe):
 
         while state<self.COMPLETE and stop_after>state:
             if state == self.BASIC:
-                inicio = datetime.datetime.now()
                 self._basicComputation()
                 state = self.PRERED
-                tiempo_ejecucion = datetime.datetime.now() - inicio
-                _logger.warning ("Tiempo en ejecutar BASIC: %s" %tiempo_ejecucion)
 
             elif state == self.PRERED:
-                inicio = datetime.datetime.now()
-
-                result = self._preredComputation(window, subpix, target_is_sky, step)
+                result = self._preredComputation(window, subpix,
+                                                 target_is_sky, step)
 
                 windowshape = result[0]
                 scaled_chan = result[1]
@@ -514,33 +512,26 @@ class DirectImageCommon(EmirRecipe):
 
                 state = self.CHECKRED
 
-                tiempo_ejecucion = datetime.datetime.now() - inicio
-                _logger.warning ("Tiempo en ejecutar PRERED: %s" %tiempo_ejecucion)
-
             elif state == self.CHECKRED:
-                inicio = datetime.datetime.now()
 
                 seeing_fwhm = None
                 _logger.info('Recentering is not needed')
                 _logger.info('Checking photometry')
-                check_photometry(self.targetframes, sf_data, seeing_fwhm, figure=self._figure)
+                check_photometry(self.targetframes, sf_data, seeing_fwhm,
+                                 figure=self._figure)
                 state = self.FULLRED
 
-                tiempo_ejecucion = datetime.datetime.now() - inicio
-                _logger.warning ("Tiempo en ejecutar CHECKRED: %s" %tiempo_ejecucion)
-
             elif state == self.FULLRED:
-                inicio = datetime.datetime.now()
                 while step < niteration:
-                    result = self._fullredComputation(sf_data, seeing_fwhm, target_is_sky, windowshape, scaled_chan, subpixshape, step)
+                    result = self._fullredComputation(sf_data, seeing_fwhm,
+                                                      target_is_sky,
+                                                      windowshape, scaled_chan,
+                                                      subpixshape, step)
                     step = result[0]
                     sf_data = result[1]
                     seeing_fwhm = result[2]
-                    _logger.warning ("Tiempo intermedio FULLRED: %s" %(datetime.datetime.now() - inicio))
 
                 state = self.COMPLETE
-                tiempo_ejecucion = datetime.datetime.now() - inicio
-                _logger.warning ("Tiempo en ejecutar FULLRED: %s" %tiempo_ejecucion)
 
         if sf_data is None:
             raise RecipeError(
@@ -566,13 +557,15 @@ class DirectImageCommon(EmirRecipe):
         # 1 / minutes in a Julian day
         MIN_TO_DAY = 0.000694444
         # max_time_sep = ri.sky_images_sep_time / 1440.0
-        _dis, idxs = kdtree.query(tarray, k=k, distance_upper_bound=maxsep * MIN_TO_DAY)
+        _dis, idxs = kdtree.query(tarray, k=k,
+                                  distance_upper_bound=maxsep * MIN_TO_DAY)
 
         nsky = len(sarray)
 
         return idxs, nsky
 
-    def compute_advanced_sky(self, skyframes=None, target_is_sky=False,maxsep=5.0,nframes=10,step=0, save=True):
+    def compute_advanced_sky(self, skyframes=None, target_is_sky=False,
+                             maxsep=5.0,nframes=10,step=0, save=True):
 
         if target_is_sky:
             skyframes = self.targetframes
@@ -682,7 +675,8 @@ class DirectImageCommon(EmirRecipe):
             for frame in self.skyframes:
                 _logger.debug('Step %d, opening resized frame %s',
                               step, frame.resized_base)
-                hdulist = fits.open(frame.resized_base, memmap=True, mode='readonly')
+                hdulist = fits.open(frame.resized_base, memmap=True,
+                                    mode='readonly')
                 filelist.append(hdulist)
                 data.append(hdulist['primary'].data[frame.valid_region])
 
@@ -695,8 +689,10 @@ class DirectImageCommon(EmirRecipe):
                 masks = [segmask[frame.valid_region] for frame in self.skyframes]
             else:
                 for frame in self.skyframes:
-                    _logger.debug('Step %d, opening resized mask %s',step, frame.resized_mask)
-                    hdulist = fits.open(frame.resized_mask, memmap=True, mode='readonly')
+                    _logger.debug('Step %d, opening resized mask %s',
+                                  step, frame.resized_mask)
+                    hdulist = fits.open(frame.resized_mask, memmap=True,
+                                        mode='readonly')
                     filelist.append(hdulist)
                     masks.append(hdulist['primary'].data[frame.valid_region])
 
@@ -737,7 +733,8 @@ class DirectImageCommon(EmirRecipe):
                           frame.resized_base, frame.median_scale)
         return frames
 
-    def resize(self, frames, shape, offsetsp, finalshape, window=None,scale=1, step=0):
+    def resize(self, frames, shape, offsetsp, finalshape, window=None,scale=1,
+               step=0):
         _logger.info('Resizing frames and masks')
         for frame, rel_offset in zip(frames, offsetsp):
             if frame.valid_target:
@@ -747,15 +744,20 @@ class DirectImageCommon(EmirRecipe):
                 # Relative offset
                 frame.rel_offset = rel_offset
                 # names of frame and mask
-                framen, maskn = name_redimensioned_frames(frame.baselabel, step)
+                framen, maskn = name_redimensioned_frames(frame.baselabel,
+                                                          step)
                 frame.resized_base = framen
                 frame.resized_mask = maskn
-                _logger.debug('%s, valid region is %s, relative offset is %s',frame.label, custom_region_to_str(region),rel_offset)
-                self.resize_frame_and_mask(frame, finalshape, framen, maskn, window, scale)
+                _logger.debug('%s, valid region is %s, relative offset is %s',
+                              frame.label, custom_region_to_str(region),
+                              rel_offset)
+                self.resize_frame_and_mask(frame, finalshape, framen, maskn,
+                                           window, scale)
 
         return frames
 
-    def resize_frame_and_mask(self, frame, finalshape, framen, maskn, window, scale):
+    def resize_frame_and_mask(self, frame, finalshape, framen, maskn, window,
+                              scale):
         _logger.info('Resizing frame %s, window=%s, subpix=%i', frame.label,
                      custom_region_to_str(window), scale)
         resize_fits(frame.label, framen, finalshape, frame.valid_region,
@@ -1112,11 +1114,13 @@ class DirectImageCommon(EmirRecipe):
 
 
 
-def paralelo_compute_advanced_sky(targetframes, skyframes, step, tid, idss, nsky):
+def paralelo_compute_advanced_sky(targetframes, skyframes, step, tid,
+                                  idss, nsky):
 
     try:
         tf = targetframes[tid]
-        _logger.info('Step %d, SC: computing advanced sky for %s',step, tf.baselabel)
+        _logger.info('Step %d, SC: computing advanced sky for %s',
+                     step, tf.baselabel)
         aux = idss[(idss<nsky) & (idss!=0)]
         compute_advanced_sky_for_frame(tf, skyframes[aux], step=step)
     except IndexError:
@@ -1148,7 +1152,8 @@ def compute_advanced_sky_for_frame(frame, skyframes, step=0):
                 masks.append(i.objmask_data)
                 _logger.debug('object mask is shared')
             elif i.objmask is not None:
-                hdulistmask = fits.open( i.objmask, mode='readonly', memmap=True)
+                hdulistmask = fits.open( i.objmask, mode='readonly',
+                                         memmap=True)
                 masks.append(hdulistmask['primary'].data)
                 desc.append(hdulistmask)
                 _logger.debug('object mask is particular')
