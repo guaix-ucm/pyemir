@@ -147,8 +147,10 @@ class DitheredImageRecipe(DirectImageCommon):
     """
 
     def run(self, ri):
-        frame, catalog = self.process(ri, window=None, subpix=1,
-                                      stop_after=DirectImageCommon.FULLRED)
+        # frame, catalog = self.process(ri, window=None, subpix=1,
+        #                               stop_after=DirectImageCommon.FULLRED)
+
+        frame, catalog = self.process(ri)
 
         result = self.create_result(frame=frame, catalog=catalog)
         return result

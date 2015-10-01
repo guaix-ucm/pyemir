@@ -42,7 +42,6 @@ from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, FlatFieldCorrector
 from numina.flow.processing import DarkCorrector
-from numina.array import fixpix2
 from numina.frame import resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield
 from numina.array import subarray_match
@@ -57,13 +56,86 @@ from emirdrp.products import SourcesCatalog
 from emirdrp.instrument.channels import FULL
 
 from .checks import check_photometry
-from .naming import (name_redimensioned_frames, name_object_mask,
-                     name_skybackground)
+from .naming import (name_redimensioned_frames, name_object_mask,name_skybackground)
 from .naming import name_skybackgroundmask, name_skysub_proc, name_skyflat
 from .naming import name_skyflat_proc, name_segmask
 
+import scipy.ndimage as ndimage
+import datetime
 
 _logger = logging.getLogger('numina.recipes.emir')
+
+
+import multiprocessing as mp
+
+class FitOne(object):
+    def __init__(self, x, y, z):
+        '''Fit a plane to a region using least squares.'''
+        x = x.astype('float')
+        y = y.astype('float')
+        self.xm = x.mean()
+        self.ym = y.mean()
+        x -= self.xm
+        y -= self.ym
+
+        aa = numpy.zeros(shape=(3, 3))
+        aa[0, 0] = 1
+        aa[1, 1] = (x*x).mean()
+        aa[2, 2] = (y*y).mean()
+        aa[1, 2] = aa[2, 1] = (x*y).mean()
+        bb = [z.mean(), (x*z).mean(), (y*z).mean()]
+
+        self.pf = numpy.linalg.solve(aa, bb)
+
+    def __call__(self, x, y):
+        xf = x.astype('float') - self.xm
+        yf = y.astype('float') - self.ym
+        return self.pf[0] + self.pf[1] * xf + self.pf[2] * yf
+
+
+def fixpix2(data, mask, iterations=3, out=None):
+    '''Substitute pixels in mask by a bilinear least square fitting.
+    '''
+
+    inicio = datetime.datetime.now()
+
+    out = out if out is not None else data.copy()
+    # A binary mask, regions are ones
+    binry = mask != 0
+
+    # Label regions in the binary mask
+    lblarr, labl = ndimage.label(binry)
+
+    # Structure for dilation is 8-way
+    stct = ndimage.generate_binary_structure(2, 2)
+    # Pixels in the background
+    back = lblarr == 0
+    # _logger.info('LABL: %s' %labl)
+    # For each object
+    for idx in range(1, labl + 1):
+        # Pixels of the object
+        segm = lblarr == idx
+        # Pixels of the object or the background
+        # dilation will only touch these pixels
+        dilmask = numpy.logical_or(back, segm)
+        # Dilation 3 times
+        more = ndimage.binary_dilation(segm, stct, iterations, dilmask) ###########!!!!!!TIEMPO!!!!!########
+        # Border pixels
+        # Pixels in the border around the object are more and (not segm)
+        border = numpy.logical_and(more, numpy.logical_not(segm))
+        # Pixels in the border
+        xi, yi = border.nonzero()
+        # Bilinear leastsq calculator
+        calc = FitOne(xi, yi, out[xi, yi])
+        # Pixels in the region
+        xi, yi = segm.nonzero()
+        # Value is obtained from the fit
+        out[segm] = calc(xi, yi)
+
+    tiempo_ejecucion = datetime.datetime.now() - inicio
+
+    # _logger.info ("Tiempo: %s" %tiempo_ejecucion)
+    return out
 
 
 def offsets_from_wcs(frames, pixref):
@@ -147,6 +219,43 @@ def clip_slices(r, region, scale=1):
 
     return t
 
+def paralelo(frame, master_bpm, keywords, scalewindow, target_is_sky):
+        # Getting some metadata from FITS header
+        hdr = fits.getheader(frame.label)
+        targetframes = None
+        skyframes = None
+
+        try:
+            frame.exposure = hdr[str(keywords['exposure'])]
+            # frame.baseshape = get_image_shape(hdr)
+            frame.airmass = hdr[str(keywords['airmass'])]
+            frame.mjd = hdr[str(keywords['juliandate'])]
+        except KeyError as e:
+            raise KeyError("%s in frame %s" %(str(e), frame.label))
+
+        frame.baselabel = os.path.splitext(frame.label)[0]
+        frame.mask = master_bpm
+        # Insert pixel offsets between frames
+        frame.objmask_data = None
+        frame.valid_target = False
+        frame.valid_sky = False
+        frame.valid_region = scalewindow
+        # FIXME: hardcode itype for the moment
+        frame.itype = 'TARGET'
+
+        if frame.itype == 'TARGET':
+            frame.valid_target = True
+            targetframes = frame
+            if target_is_sky:
+                frame.valid_sky = True
+                skyframes = frame
+        elif frame.itype == 'SKY':
+            frame.valid_sky = True
+            skyframes.append(frame)
+        else:
+            pass
+
+        return targetframes, skyframes, frame
 
 class DirectImageCommon(EmirRecipe):
 
@@ -155,19 +264,43 @@ class DirectImageCommon(EmirRecipe):
     __version__ = '0.1.0'
 
     def __init__(self, *args, **kwds):
-        super(DirectImageCommon, self).__init__(version=__version__)
+        super(DirectImageCommon, self).__init__()
 
         self._figure = plt.figure(facecolor='white')
         self._figure.canvas.set_window_title('Recipe Plots')
         self._figure.canvas.draw()
 
-    def process(self, ri,
-                window=None, subpix=1,
-                store_intermediate=True,
-                target_is_sky=True, stop_after=PRERED):
+    def _basicComputation(self):
+        _logger.info('Basic processing')
+        # Basic processing
 
-        numpy.seterr(divide='raise')
+        # FIXME: add this
+        # bpm = fits.getdata(ri.master_bpm)
+        # bpm_corrector = BadPixelCorrector(bpm)
 
+        if self.ri.master_bias:
+            mbias = fits.getdata(self.ri.master_bias)
+            bias_corrector = BiasCorrector(mbias)
+        else:
+            bias_corrector = IdNode()
+
+        mdark = fits.getdata(self.ri.master_dark.label)
+        dark_corrector = DarkCorrector(mdark)
+
+        mflat = fits.getdata(self.ri.master_flat.label)
+        ff_corrector = FlatFieldCorrector(mflat)
+
+        basicflow = SerialFlow([  # bpm_corrector,
+            bias_corrector,
+            dark_corrector,
+            ff_corrector
+        ])
+
+        for frame in self.ri.obresult.frames:
+            with fits.open(frame.label, mode='update') as hdulist:
+                hdulist = basicflow(hdulist)
+
+    def _preredComputation(self, window, subpix, target_is_sky, step):
         # FIXME: hardcoded instrument information
         keywords = {'airmass': 'AIRMASS',
                     'exposure': 'EXPTIME',
@@ -180,264 +313,147 @@ class DirectImageCommon(EmirRecipe):
         if window is None:
             window = tuple((0, siz) for siz in baseshape)
 
-        if store_intermediate:
-            pass
+        # Shape of the window
+        windowshape = tuple((i[1] - i[0]) for i in window)
+        _logger.debug('Shape of window is %s', windowshape)
+        # Shape of the scaled window
+        subpixshape = tuple((side * subpix) for side in windowshape)
 
-        # States
-        sf_data = None
-        state = self.BASIC
-        step = 0
+        # Scaled window region
+        scalewindow = tuple(slice(*(subpix * i for i in p)) for p in window)
+        # Window region
+        window = tuple(slice(*p) for p in window)
 
-        try:
-            niteration = ri.iterations
-        except KeyError:
-            niteration = 1
+        scaled_chan = clip_slices(channels, window, scale=subpix)
 
-        while True:
-            if state == self.BASIC:
-                _logger.info('Basic processing')
+        # Reference pixel in the center of the frame
+        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
 
-                # Basic processing
+        # lists of targets and sky frames
 
-                # FIXME: add this
-                # bpm = fits.getdata(ri.master_bpm)
-                # bpm_corrector = BadPixelCorrector(bpm)
+        pool = mp.Pool(processes=self.procesos)
+        results = [pool.apply_async(paralelo, args=(frame, self.ri.master_bpm, keywords, scalewindow, target_is_sky,)) for frame in self.ri.obresult.frames]
+        results = [p.get() for p in results]
+        pool.close()
+        pool.join()
 
-                if ri.master_bias:
-                    mbias = fits.getdata(ri.master_bias)
-                    bias_corrector = BiasCorrector(mbias)
-                else:
-                    bias_corrector = IdNode()
+        for cont in range(len(results)):
+            self.targetframes.append(results[cont][0])
+            self.skyframes.append(results[cont][1])
+            self.ri.obresult.frames[cont] = results[cont][2]
 
-                mdark = fits.getdata(ri.master_dark.label)
-                dark_corrector = DarkCorrector(mdark)
+        labels = [frame.label for frame in self.targetframes]
 
-                mflat = fits.getdata(ri.master_flat.label)
-                ff_corrector = FlatFieldCorrector(mflat)
+        if self.ri.offsets is None:
+            _logger.info('Computing offsets from WCS information')
+            list_of_offsets = offsets_from_wcs(labels, refpix)
+        else:
+            _logger.info('Using offsets from parameters')
+            list_of_offsets = numpy.asarray(self.ri.offsets)
 
-                basicflow = SerialFlow([  # bpm_corrector,
-                    bias_corrector,
-                    dark_corrector,
-                    ff_corrector
-                ])
+        # Insert pixel offsets between frames
+        for frame, off in zip(self.targetframes, list_of_offsets):
 
-                for frame in ri.obresult.frames:
-                    with fits.open(frame.label, mode='update') as hdulist:
-                        hdulist = basicflow(hdulist)
+            # Insert pixel offsets between frames
+            frame.pix_offset = off
+            frame.scaled_pix_offset = subpix * off
 
-                if stop_after == state:
-                    break
-                else:
-                    state = self.PRERED
-            elif state == self.PRERED:
-                # Shape of the window
-                windowshape = tuple((i[1] - i[0]) for i in window)
-                _logger.debug('Shape of window is %s', windowshape)
-                # Shape of the scaled window
-                subpixshape = tuple((side * subpix) for side in windowshape)
+            _logger.debug('Frame %s, offset=%s, scaled=%s',frame.label, off, subpix * off)
 
-                # Scaled window region
-                scalewindow = tuple(
-                    slice(*(subpix * i for i in p)) for p in window)
-                # Window region
-                window = tuple(slice(*p) for p in window)
+        _logger.info('Computing relative offsets')
+        offsets = [(frame.scaled_pix_offset) for frame in self.targetframes]
+        offsets = numpy.round(offsets).astype('int')
+        finalshape, offsetsp = combine_shape(subpixshape, offsets)
+        _logger.info('Shape of resized array is %s', finalshape)
 
-                scaled_chan = clip_slices(channels, window, scale=subpix)
+        # Resizing target frames
+        # inicio = datetime.datetime.now()
+        self.resize(self.targetframes, subpixshape, offsetsp, finalshape, window=window, scale=subpix)
+        # tiempo_ejecucion = datetime.datetime.now() - inicio
+        # _logger.info ("Tiempo: %s" %tiempo_ejecucion)
 
-                # Reference pixel in the center of the frame
-                refpix = numpy.divide(
-                    numpy.array([baseshape], dtype='int'), 2).astype('float')
+        if not target_is_sky:
+            for frame in self.skyframes:
+                frame.resized_base = frame.label
+                frame.resized_mask = frame.mask
 
-                # lists of targets and sky frames
-                targetframes = []
-                skyframes = []
+        # superflat
+        _logger.info('Step %d, superflat correction (SF)', step)
+        # Compute scale factors (median)
+        self.update_scale_factors(self.ri.obresult.frames)
 
-                for frame in ri.obresult.frames:
+        # Create superflat
+        superflat = self.compute_superflat(channels=scaled_chan,step=step)
 
-                    # Getting some metadata from FITS header
-                    hdr = fits.getheader(frame.label)
-                    try:
-                        frame.exposure = hdr[str(keywords['exposure'])]
-                        # frame.baseshape = get_image_shape(hdr)
-                        frame.airmass = hdr[str(keywords['airmass'])]
-                        frame.mjd = hdr[str(keywords['juliandate'])]
-                    except KeyError as e:
-                        raise KeyError("%s in frame %s" %
-                                       (str(e), frame.label))
+        # Apply superflat
+        self.figure_init(subpixshape)
+        self.apply_superflat(self.ri.obresult.frames, superflat)
 
-                    frame.baselabel = os.path.splitext(frame.label)[0]
-                    frame.mask = ri.master_bpm
-                    # Insert pixel offsets between frames
-                    frame.objmask_data = None
-                    frame.valid_target = False
-                    frame.valid_sky = False
-                    frame.valid_region = scalewindow
-                    # FIXME: hardcode itype for the moment
-                    frame.itype = 'TARGET'
-                    if frame.itype == 'TARGET':
-                        frame.valid_target = True
-                        targetframes.append(frame)
-                        if target_is_sky:
-                            frame.valid_sky = True
-                            skyframes.append(frame)
-                    if frame.itype == 'SKY':
-                        frame.valid_sky = True
-                        skyframes.append(frame)
+        _logger.info('Simple sky correction')
+        if target_is_sky:
+            # Each frame is the closest sky frame available
+            for frame in self.ri.obresult.frames:
+                compute_simple_sky_for_frame(frame, frame)
+        else:
+            self.compute_simple_sky()
 
-                labels = [frame.label for frame in targetframes]
+        # Combining the frames
+        _logger.info("Step %d, Combining target frames", step)
 
-                if ri.offsets is None:
-                    _logger.info('Computing offsets from WCS information')
+        sf_data = self.combine_frames(extinction=self.ri.extinction)
 
-                    list_of_offsets = offsets_from_wcs(labels, refpix)
-                else:
-                    _logger.info('Using offsets from parameters')
-                    list_of_offsets = numpy.asarray(ri.offsets)
+        self.figures_after_combine(sf_data)
 
-                # Insert pixel offsets between frames
-                for frame, off in zip(targetframes, list_of_offsets):
+        _logger.info('Step %d, finished', step)
 
-                    # Insert pixel offsets between frames
-                    frame.pix_offset = off
-                    frame.scaled_pix_offset = subpix * off
+        return windowshape, scaled_chan, subpixshape, sf_data
 
-                    _logger.debug('Frame %s, offset=%s, scaled=%s',
-                                  frame.label, off, subpix * off)
+    def _fullredComputation(self, sf_data, seeing_fwhm, target_is_sky, windowshape, scaled_chan, subpixshape, step):
+        # Generating segmentation image
+        _logger.info('Step %d, generating segmentation image', step)
+        objmask, seeing_fwhm = self.create_mask(sf_data, seeing_fwhm, step=step)
+        step += 1
+        # Update objects mask
+        # For all images
+        # FIXME:
+        for frame in self.targetframes:
+            frame.objmask = name_object_mask(frame.baselabel, step)
+            _logger.info('Step %d, create object mask %s', step,  frame.objmask)
+            frame.objmask_data = objmask[frame.valid_region]
+            fits.writeto(frame.objmask, frame.objmask_data, clobber=True)
 
-                _logger.info('Computing relative offsets')
-                offsets = [(frame.scaled_pix_offset)
-                           for frame in targetframes]
-                offsets = numpy.round(offsets).astype('int')
-                finalshape, offsetsp = combine_shape(subpixshape, offsets)
-                _logger.info('Shape of resized array is %s', finalshape)
+        if not target_is_sky:
+            # Empty object mask for sky frames
+            bogus_objmask = numpy.zeros(windowshape, dtype='int')
 
-                # Resizing target frames
-                self.resize(targetframes, subpixshape, offsetsp, finalshape,
-                            window=window, scale=subpix)
+            for frame in self.skyframes:
+                frame.objmask_data = bogus_objmask
 
-                if not target_is_sky:
-                    for frame in skyframes:
-                        frame.resized_base = frame.label
-                        frame.resized_mask = frame.mask
+        _logger.info('Step %d, superflat correction (SF)', step)
 
-                # superflat
-                _logger.info('Step %d, superflat correction (SF)', step)
-                # Compute scale factors (median)
-                self.update_scale_factors(ri.obresult.frames)
+        # Compute scale factors (median)
+        self.update_scale_factors(self.ri.obresult.frames, step)
 
-                # Create superflat
-                superflat = self.compute_superflat(skyframes,
-                                                   channels=scaled_chan,
-                                                   step=step)
+        # Create superflat
+        superflat = self.compute_superflat(scaled_chan, segmask=objmask, step=step)
 
-                # Apply superflat
-                self.figure_init(subpixshape)
-                self.apply_superflat(ri.obresult.frames, superflat)
+        # Apply superflat
+        self.figure_init(subpixshape)
 
-                _logger.info('Simple sky correction')
-                if target_is_sky:
-                    # Each frame is the closest sky frame available
+        self.apply_superflat(self.ri.obresult.frames, superflat, step=step, save=True)
 
-                    for frame in ri.obresult.frames:
-                        self.compute_simple_sky_for_frame(frame, frame)
-                else:
-                    self.compute_simple_sky(targetframes, skyframes)
+        _logger.info('Step %d, advanced sky correction (SC)', step)
+        self.compute_advanced_sky(skyframes=self.skyframes,target_is_sky=target_is_sky,step=step)
 
-                # Combining the frames
-                _logger.info("Step %d, Combining target frames", step)
+        # Combining the images
+        _logger.info("Step %d, Combining the images", step)
+        # FIXME: only for science
+        sf_data = self.combine_frames(self.ri.extinction, step=step)
+        self.figures_after_combine(sf_data)
 
-                sf_data = self.combine_frames(
-                    targetframes, extinction=ri.extinction)
+        return step, sf_data, seeing_fwhm
 
-                self.figures_after_combine(sf_data)
-
-                _logger.info('Step %d, finished', step)
-
-                if stop_after == state:
-                    break
-                else:
-                    state = self.CHECKRED
-            elif state == self.CHECKRED:
-
-                seeing_fwhm = None
-
-                # self.check_position(images_info, sf_data, seeing_fwhm)
-                recompute = False
-                if recompute:
-                    _logger.info('Recentering is needed')
-                    state = self.PRERED
-                else:
-                    _logger.info('Recentering is not needed')
-                    _logger.info('Checking photometry')
-                    check_photometry(targetframes, sf_data,
-                                     seeing_fwhm, figure=self._figure)
-
-                    if stop_after == state:
-                        break
-                    else:
-                        state = self.FULLRED
-            elif state == self.FULLRED:
-
-                # Generating segmentation image
-                _logger.info('Step %d, generating segmentation image', step)
-                objmask, seeing_fwhm = self.create_mask(
-                    sf_data, seeing_fwhm, step=step)
-                step += 1
-                # Update objects mask
-                # For all images
-                # FIXME:
-                for frame in targetframes:
-                    frame.objmask = name_object_mask(frame.baselabel, step)
-                    _logger.info(
-                        'Step %d, create object mask %s', step,  frame.objmask)
-                    frame.objmask_data = objmask[frame.valid_region]
-                    fits.writeto(
-                        frame.objmask, frame.objmask_data, clobber=True)
-
-                if not target_is_sky:
-                    # Empty object mask for sky frames
-                    bogus_objmask = numpy.zeros(windowshape, dtype='int')
-
-                    for frame in skyframes:
-                        frame.objmask_data = bogus_objmask
-
-                _logger.info('Step %d, superflat correction (SF)', step)
-
-                # Compute scale factors (median)
-                self.update_scale_factors(ri.obresult.frames, step)
-
-                # Create superflat
-                superflat = self.compute_superflat(skyframes, scaled_chan,
-                                                   segmask=objmask, step=step)
-
-                # Apply superflat
-                self.figure_init(subpixshape)
-
-                self.apply_superflat(
-                    ri.obresult.frames, superflat, step=step, save=True)
-
-                _logger.info('Step %d, advanced sky correction (SC)', step)
-                self.compute_advanced_sky(targetframes, objmask,
-                                          skyframes=skyframes,
-                                          target_is_sky=target_is_sky,
-                                          step=step)
-
-                # Combining the images
-                _logger.info("Step %d, Combining the images", step)
-                # FIXME: only for science
-                sf_data = self.combine_frames(
-                    targetframes, ri.extinction, step=step)
-                self.figures_after_combine(sf_data)
-
-                if step >= niteration:
-                    state = self.COMPLETE
-            else:
-                break
-
-        if sf_data is None:
-            raise RecipeError(
-                'no combined image has been generated at step %d', state)
-
+    def _resultComputation(self, sf_data):
         hdu = fits.PrimaryHDU(sf_data[0])
         hdr = hdu.header
         hdr.update('NUMXVER', __version__, 'Numina package version')
@@ -454,97 +470,94 @@ class DirectImageCommon(EmirRecipe):
         result = fits.HDUList([hdu, varhdu, num])
 
         _logger.info("Final frame created")
+        return result
+
+    def process(self, ri, window=None, subpix=1, store_intermediate=True, target_is_sky=True, stop_after=COMPLETE):
+
+        numpy.seterr(divide='raise')
+
+        self.ri = ri
+        self.procesos = 3 if mp.cpu_count() >3 else 1
+
+        # States
+        state = self.BASIC
+        step = 0
+        self.targetframes = []
+        self.skyframes = []
+        windowshape = None
+        scaled_chan = None
+        subpixshape = None
+        sf_data = None
+
+        try:
+            niteration = ri.iterations
+        except KeyError:
+            niteration = 1
+
+        while state<self.COMPLETE and stop_after>state:
+            if state == self.BASIC:
+                inicio = datetime.datetime.now()
+                self._basicComputation()
+                state = self.PRERED
+                tiempo_ejecucion = datetime.datetime.now() - inicio
+                _logger.warning ("Tiempo en ejecutar BASIC: %s" %tiempo_ejecucion)
+
+            elif state == self.PRERED:
+                inicio = datetime.datetime.now()
+
+                result = self._preredComputation(window, subpix, target_is_sky, step)
+
+                windowshape = result[0]
+                scaled_chan = result[1]
+                subpixshape = result[2]
+                sf_data = result[3]
+
+                state = self.CHECKRED
+
+                tiempo_ejecucion = datetime.datetime.now() - inicio
+                _logger.warning ("Tiempo en ejecutar PRERED: %s" %tiempo_ejecucion)
+
+            elif state == self.CHECKRED:
+                inicio = datetime.datetime.now()
+
+                seeing_fwhm = None
+                _logger.info('Recentering is not needed')
+                _logger.info('Checking photometry')
+                check_photometry(self.targetframes, sf_data, seeing_fwhm, figure=self._figure)
+                state = self.FULLRED
+
+                tiempo_ejecucion = datetime.datetime.now() - inicio
+                _logger.warning ("Tiempo en ejecutar CHECKRED: %s" %tiempo_ejecucion)
+
+            elif state == self.FULLRED:
+                inicio = datetime.datetime.now()
+                while step < niteration:
+                    result = self._fullredComputation(sf_data, seeing_fwhm, target_is_sky, windowshape, scaled_chan, subpixshape, step)
+                    step = result[0]
+                    sf_data = result[1]
+                    seeing_fwhm = result[2]
+                    _logger.warning ("Tiempo intermedio FULLRED: %s" %(datetime.datetime.now() - inicio))
+
+                state = self.COMPLETE
+                tiempo_ejecucion = datetime.datetime.now() - inicio
+                _logger.warning ("Tiempo en ejecutar FULLRED: %s" %tiempo_ejecucion)
+
+        if sf_data is None:
+            raise RecipeError(
+                'no combined image has been generated at step %d', state)
+
+        result = self._resultComputation(sf_data)
 
         return DataFrame(result), SourcesCatalog()
 
-    def compute_simple_sky(self, targetframes, skyframes,
-                           maxsep=5, step=0, save=True):
 
+    def _common_compute_sky(self, skyframes, maxsep, k):
         # build kdtree
         sarray = numpy.array([frame.mjd for frame in skyframes])
         # shape must be (n, 1)
         sarray = numpy.expand_dims(sarray, axis=1)
-
         # query
-        tarray = numpy.array([frame.mjd for frame in targetframes])
-        # shape must be (n, 1)
-        tarray = numpy.expand_dims(tarray, axis=1)
-
-        kdtree = KDTree(sarray)
-
-        # 1 / minutes in a day
-        MIN_TO_DAY = 0.000694444
-        _dis, idxs = kdtree.query(tarray, k=1,
-                                  distance_upper_bound=maxsep * MIN_TO_DAY)
-
-        for tid, idss in enumerate(idxs):
-            try:
-                tf = targetframes[tid]
-                sf = skyframes[idss]
-                self.compute_simple_sky_for_frame(tf, sf, step=step, save=save)
-            except IndexError:
-                _logger.error(
-                    'No sky image available for frame %s', tf.lastname)
-                raise
-
-    def compute_simple_sky_for_frame(self, frame, skyframe, step=0, save=True):
-        _logger.info('Correcting sky in frame %s', frame.lastname)
-        _logger.info('with sky computed from frame %s', skyframe.lastname)
-
-        if hasattr(skyframe, 'median_sky'):
-            sky = skyframe.median_sky
-        else:
-
-            with fits.open(skyframe.lastname, mode='readonly') as hdulist:
-                data = hdulist['primary'].data
-                valid = data[frame.valid_region]
-
-                if skyframe.objmask_data is not None:
-                    _logger.debug('object mask defined')
-                    msk = frame.objmask_data
-                    sky = numpy.median(valid[msk == 0])
-                else:
-                    _logger.debug('object mask empty')
-                    sky = numpy.median(valid)
-
-            _logger.debug('median sky value is %f', sky)
-            skyframe.median_sky = sky
-
-        dst = name_skysub_proc(frame.baselabel, step)
-        prev = frame.lastname
-
-        if save:
-            shutil.copyfile(prev, dst)
-        else:
-            os.rename(prev, dst)
-
-        frame.lastname = dst
-
-        with fits.open(frame.lastname, mode='update') as hdulist:
-            data = hdulist['primary'].data
-            valid = data[frame.valid_region]
-            valid -= sky
-
-    def compute_advanced_sky(self, targetframes, objmask,
-                             skyframes=None, target_is_sky=False,
-                             maxsep=5.0,
-                             nframes=10,
-                             step=0, save=True):
-
-        if target_is_sky:
-            skyframes = targetframes
-            # Each frame is its closets sky frame
-            nframes += 1
-        elif skyframes is None:
-            raise ValueError('skyframes not defined')
-
-        # build kdtree
-        sarray = numpy.array([frame.mjd for frame in skyframes])
-        # shape must be (n, 1)
-        sarray = numpy.expand_dims(sarray, axis=1)
-
-        # query
-        tarray = numpy.array([frame.mjd for frame in targetframes])
+        tarray = numpy.array([frame.mjd for frame in self.targetframes])
         # shape must be (n, 1)
         tarray = numpy.expand_dims(tarray, axis=1)
 
@@ -553,100 +566,44 @@ class DirectImageCommon(EmirRecipe):
         # 1 / minutes in a Julian day
         MIN_TO_DAY = 0.000694444
         # max_time_sep = ri.sky_images_sep_time / 1440.0
-        _dis, idxs = kdtree.query(tarray, k=nframes,
-                                  distance_upper_bound=maxsep * MIN_TO_DAY)
+        _dis, idxs = kdtree.query(tarray, k=k, distance_upper_bound=maxsep * MIN_TO_DAY)
 
         nsky = len(sarray)
 
-        for tid, idss in enumerate(idxs):
-            try:
-                tf = targetframes[tid]
-                _logger.info('Step %d, SC: computing advanced sky for %s',
-                             step, tf.baselabel)
-                # filter(lambda x: x < nsky, idss)
-                locskyframes = []
-                for si in idss:
-                    if tid == si:
-                        # this sky frame its the current frame, reject
-                        continue
-                    if si < nsky:
-                        _logger.debug('Step %d, SC: %s is a sky frame',
-                                      step, skyframes[si].baselabel)
-                        locskyframes.append(skyframes[si])
-                self.compute_advanced_sky_for_frame(
-                    tf, locskyframes, step=step, save=save)
-            except IndexError:
-                _logger.error(
-                    'No sky image available for frame %s', tf.lastname)
-                raise
+        return idxs, nsky
 
-    def compute_advanced_sky_for_frame(self, frame, skyframes,
-                                       step=0, save=True):
-        _logger.info('Correcting sky in frame %s', frame.lastname)
-        _logger.info('with sky computed from frames')
-        for i in skyframes:
-            _logger.info('%s', i.flat_corrected)
+    def compute_advanced_sky(self, skyframes=None, target_is_sky=False,maxsep=5.0,nframes=10,step=0, save=True):
 
-        data = []
-        scales = []
-        masks = []
-        # handle the FITS file to close it finally
-        desc = []
-        try:
-            for i in skyframes:
-                filename = i.flat_corrected
-                hdulist = fits.open(filename, mode='readonly', memmap=True)
+        if target_is_sky:
+            skyframes = self.targetframes
+            # Each frame is its closets sky frame
+            nframes += 1
+        elif skyframes is None:
+            raise ValueError('skyframes not defined')
 
-                data.append(hdulist['primary'].data[i.valid_region])
-                desc.append(hdulist)
-                scales.append(numpy.median(data[-1]))
-                if i.objmask_data is not None:
-                    masks.append(i.objmask_data)
-                    _logger.debug('object mask is shared')
-                elif i.objmask is not None:
-                    hdulistmask = fits.open(
-                        i.objmask, mode='readonly', memmap=True)
-                    masks.append(hdulistmask['primary'].data)
-                    desc.append(hdulistmask)
-                    _logger.debug('object mask is particular')
-                else:
-                    _logger.warn('no object mask for %s', filename)
+        idxs, nsky = self._common_compute_sky(skyframes, maxsep, nframes)
 
-            _logger.debug('computing background with %d frames', len(data))
-            sky, _, num = median(data, masks, scales=scales)
+        skyframes = numpy.array(skyframes)
 
-        finally:
-            # Closing all FITS files
-            for hdl in desc:
-                hdl.close()
+        pool = mp.Pool(processes=self.procesos)
+        results = [pool.apply_async(paralelo_compute_advanced_sky, args=(self.targetframes, skyframes, step, tid, idss, nsky,)) for tid, idss in enumerate(idxs)]
+        results = [p.get() for p in results]
+        pool.close()
+        pool.join()
 
-        if numpy.any(num == 0):
-            # We have pixels without
-            # sky background information
-            _logger.warn('pixels without sky information when correcting %s',
-                         frame.flat_corrected)
-            binmask = num == 0
-            # FIXME: during development, this is faster
-            # sky[binmask] = sky[num != 0].mean()
+    def compute_simple_sky(self, maxsep=5, step=0, save=True):
 
-            # To continue we interpolate over the patches
-            fixpix2(sky, binmask, out=sky, iterations=1)
-            name = name_skybackground(frame.baselabel, step)
-            fits.writeto(name, sky, clobber=True)
-            name = name_skybackgroundmask(frame.baselabel, step)
-            fits.writeto(name, binmask.astype('int16'), clobber=True)
+        skyframes = self.skyframes
 
-        dst = name_skysub_proc(frame.baselabel, step)
-        prev = frame.lastname
-        shutil.copyfile(prev, dst)
-        frame.lastname = dst
+        idxs, nsky = self._common_compute_sky(skyframes, maxsep, 1)
 
-        with fits.open(frame.lastname, mode='update') as hdulist:
-            data = hdulist['primary'].data
-            valid = data[frame.valid_region]
-            valid -= sky
+        pool = mp.Pool(processes=self.procesos)
+        results = [pool.apply_async(compute_simple_sky_for_frame, args=(self.targetframes[tid], self.skyframes[idss], step, save,)) for tid, idss in enumerate(idxs)]
+        results = [p.get() for p in results]
+        pool.close()
+        pool.join()
 
-    def combine_frames(self, frames, extinction, out=None, step=0):
+    def combine_frames(self, extinction, out=None, step=0):
         _logger.debug('Step %d, opening sky-subtracted frames', step)
 
         def fits_open(name):
@@ -654,14 +611,14 @@ class DirectImageCommon(EmirRecipe):
             return fits.open(name, mode='readonly', memmap=True)
 
         frameslll = [fits_open(frame.lastname)
-                     for frame in frames if frame.valid_target]
+                     for frame in self.targetframes if frame.valid_target]
         _logger.debug('Step %d, opening mask frames', step)
         mskslll = [fits_open(frame.resized_mask)
-                   for frame in frames if frame.valid_target]
+                   for frame in self.targetframes if frame.valid_target]
         _logger.debug('Step %d, combining %d frames', step, len(frameslll))
         try:
             extinc = [pow(10, -0.4 * frame.airmass * extinction)
-                      for frame in frames if frame.valid_target]
+                      for frame in self.targetframes if frame.valid_target]
             data = [i['primary'].data for i in frameslll]
             masks = [i['primary'].data for i in mskslll]
 
@@ -716,33 +673,30 @@ class DirectImageCommon(EmirRecipe):
             except ValueError:
                 _logger.warning('Problem plotting %s', frame.lastname)
 
-    def compute_superflat(self, frames, channels, segmask=None, step=0):
+    def compute_superflat(self, channels, segmask=None, step=0):
         _logger.info("Step %d, SF: combining the frames without offsets", step)
         try:
             filelist = []
             data = []
             masks = []
-            for frame in frames:
+            for frame in self.skyframes:
                 _logger.debug('Step %d, opening resized frame %s',
                               step, frame.resized_base)
-                hdulist = fits.open(
-                    frame.resized_base, memmap=True, mode='readonly')
+                hdulist = fits.open(frame.resized_base, memmap=True, mode='readonly')
                 filelist.append(hdulist)
                 data.append(hdulist['primary'].data[frame.valid_region])
 
-            scales = [frame.median_scale for frame in frames]
+            scales = [frame.median_scale for frame in self.skyframes]
 
             # FIXME: plotting
             self.figure_median_background(scales)
 
             if segmask is not None:
-                masks = [segmask[frame.valid_region] for frame in frames]
+                masks = [segmask[frame.valid_region] for frame in self.skyframes]
             else:
-                for frame in frames:
-                    _logger.debug('Step %d, opening resized mask %s',
-                                  step, frame.resized_mask)
-                    hdulist = fits.open(
-                        frame.resized_mask, memmap=True, mode='readonly')
+                for frame in self.skyframes:
+                    _logger.debug('Step %d, opening resized mask %s',step, frame.resized_mask)
+                    hdulist = fits.open(frame.resized_mask, memmap=True, mode='readonly')
                     filelist.append(hdulist)
                     masks.append(hdulist['primary'].data[frame.valid_region])
 
@@ -783,8 +737,7 @@ class DirectImageCommon(EmirRecipe):
                           frame.resized_base, frame.median_scale)
         return frames
 
-    def resize(self, frames, shape, offsetsp, finalshape, window=None,
-               scale=1, step=0):
+    def resize(self, frames, shape, offsetsp, finalshape, window=None,scale=1, step=0):
         _logger.info('Resizing frames and masks')
         for frame, rel_offset in zip(frames, offsetsp):
             if frame.valid_target:
@@ -794,21 +747,15 @@ class DirectImageCommon(EmirRecipe):
                 # Relative offset
                 frame.rel_offset = rel_offset
                 # names of frame and mask
-                framen, maskn = name_redimensioned_frames(
-                    frame.baselabel, step)
+                framen, maskn = name_redimensioned_frames(frame.baselabel, step)
                 frame.resized_base = framen
                 frame.resized_mask = maskn
-                _logger.debug('%s, valid region is %s, relative offset is %s',
-                              frame.label, custom_region_to_str(region),
-                              rel_offset
-                              )
-                self.resize_frame_and_mask(
-                    frame, finalshape, framen, maskn, window, scale)
+                _logger.debug('%s, valid region is %s, relative offset is %s',frame.label, custom_region_to_str(region),rel_offset)
+                self.resize_frame_and_mask(frame, finalshape, framen, maskn, window, scale)
 
         return frames
 
-    def resize_frame_and_mask(self, frame, finalshape,
-                              framen, maskn, window, scale):
+    def resize_frame_and_mask(self, frame, finalshape, framen, maskn, window, scale):
         _logger.info('Resizing frame %s, window=%s, subpix=%i', frame.label,
                      custom_region_to_str(window), scale)
         resize_fits(frame.label, framen, finalshape, frame.valid_region,
@@ -1162,3 +1109,120 @@ class DirectImageCommon(EmirRecipe):
         ax.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
         self._figure.canvas.draw()
         self._figure.savefig('figure-fwhm-histogram_i%01d.png' % step)
+
+
+
+def paralelo_compute_advanced_sky(targetframes, skyframes, step, tid, idss, nsky):
+
+    try:
+        tf = targetframes[tid]
+        _logger.info('Step %d, SC: computing advanced sky for %s',step, tf.baselabel)
+        aux = idss[(idss<nsky) & (idss!=0)]
+        compute_advanced_sky_for_frame(tf, skyframes[aux], step=step)
+    except IndexError:
+        _logger.error('No sky image available for frame %s', tf.lastname)
+        raise
+
+
+def compute_advanced_sky_for_frame(frame, skyframes, step=0):
+
+    _logger.info('Correcting sky in frame %s', frame.lastname)
+    _logger.info('with sky computed from frames')
+    for i in skyframes:
+        _logger.info('%s', i.flat_corrected)
+
+    data = []
+    scales = []
+    masks = []
+    desc = []
+
+    try:
+        for i in skyframes:
+            filename = i.flat_corrected
+            hdulist = fits.open(filename, mode='readonly', memmap=True)
+
+            data.append(hdulist['primary'].data[i.valid_region])
+            desc.append(hdulist)
+            scales.append(numpy.median(data[-1]))
+            if i.objmask_data is not None:
+                masks.append(i.objmask_data)
+                _logger.debug('object mask is shared')
+            elif i.objmask is not None:
+                hdulistmask = fits.open( i.objmask, mode='readonly', memmap=True)
+                masks.append(hdulistmask['primary'].data)
+                desc.append(hdulistmask)
+                _logger.debug('object mask is particular')
+            else:
+                _logger.warn('no object mask for %s', filename)
+
+        _logger.debug('computing background with %d frames', len(data))
+        sky, _, num = median(data, masks, scales=scales)
+
+    finally:
+        # Closing all FITS files
+        for hdl in desc:
+            hdl.close()
+
+    if numpy.any(num == 0):
+        # We have pixels without sky background information
+        _logger.warn('pixels without sky information when correcting %s',
+                     frame.flat_corrected)
+        binmask = num == 0
+        # FIXME: during development, this is faster
+        # sky[binmask] = sky[num != 0].mean()
+
+        # To continue we interpolate over the patches
+        fixpix2(sky, binmask, out=sky, iterations=1)
+        name = name_skybackground(frame.baselabel, step)
+        fits.writeto(name, sky, clobber=True)
+        name = name_skybackgroundmask(frame.baselabel, step)
+        fits.writeto(name, binmask.astype('int16'), clobber=True)
+
+    dst = name_skysub_proc(frame.baselabel, step)
+    prev = frame.lastname
+    shutil.copyfile(prev, dst)
+    frame.lastname = dst
+
+    with fits.open(frame.lastname, mode='update') as hdulist:
+        data = hdulist['primary'].data
+        valid = data[frame.valid_region]
+        valid -= sky
+
+
+def compute_simple_sky_for_frame(frame, skyframe, step=0, save=True):
+    _logger.info('Correcting sky in frame %s', frame.lastname)
+    _logger.info('with sky computed from frame %s', skyframe.lastname)
+
+    if hasattr(skyframe, 'median_sky'):
+        sky = skyframe.median_sky
+    else:
+
+        with fits.open(skyframe.lastname, mode='readonly') as hdulist:
+            data = hdulist['primary'].data
+            valid = data[frame.valid_region]
+
+            if skyframe.objmask_data is not None:
+                _logger.debug('object mask defined')
+                msk = frame.objmask_data
+                sky = numpy.median(valid[msk == 0])
+            else:
+                _logger.debug('object mask empty')
+                sky = numpy.median(valid)
+
+        _logger.debug('median sky value is %f', sky)
+        skyframe.median_sky = sky
+
+    dst = name_skysub_proc(frame.baselabel, step)
+    prev = frame.lastname
+
+    if save:
+        shutil.copyfile(prev, dst)
+    else:
+        os.rename(prev, dst)
+
+    frame.lastname = dst
+
+    with fits.open(frame.lastname, mode='update') as hdulist:
+        data = hdulist['primary'].data
+        valid = data[frame.valid_region]
+        valid -= sky
