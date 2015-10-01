@@ -148,11 +148,11 @@ class DitheredImageRecipeInputBuilder(object):
         newOR.frames = stareImages
         obsres['obresult'] = newOR
         print('Adding RI parameters ', obsres)
-        newRI = DitheredImageARecipeRequirements(**obsres)
+        newRI = DitheredImageARecipeInput(**obsres)
 
         return newRI
 
 
-DitheredImageARecipeRequirements = DitheredImageARecipe.RecipeRequirements
+DitheredImageARecipeInput = DitheredImageARecipe.RecipeInput
 DitheredImageARecipe.InputBuilder = DitheredImageRecipeInputBuilder
 

@@ -35,7 +35,6 @@ from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 
 
-
 _logger = logging.getLogger('numina.recipes.emir')
 
 
@@ -92,10 +91,10 @@ class StareImageRecipeInputBuilder(object):
         newOR = ObservationResult()
         newOR.frames = obsres['frames']
         obsres['obresult'] = newOR
-        newRI = StareImageRecipeRequirements(**obsres)
+        newRI = StareImageRecipeInput(**obsres)
 
         return newRI
 
 
-StareImageRecipeRequirements = TestSkyCorrectRecipe.RecipeRequirements
+StareImageRecipeInput = TestSkyCorrectRecipe.RecipeInput
 TestSkyCorrectRecipe.InputBuilder = StareImageRecipeInputBuilder

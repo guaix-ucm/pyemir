@@ -49,7 +49,7 @@ class MMTestCase(unittest.TestCase):
         obsres = ObservationResult()
         obsres.frames = [dataframe_from_list(val) for val in somefits]
         # empty requirements
-        reqs = SimpleBiasRecipe.RecipeRequirements(obresult=obsres)
+        reqs = SimpleBiasRecipe.RecipeInput(obresult=obsres)
         recipe = SimpleBiasRecipe()
         #
         result = recipe(reqs)
@@ -90,7 +90,7 @@ class MMTestCase(unittest.TestCase):
         obsres = ObservationResult()
         obsres.frames = [dataframe_from_list(val) for val in somefits]
         # empty requirements
-        reqs = SimpleBiasRecipe.RecipeRequirements(obresult=obsres)
+        reqs = SimpleBiasRecipe.RecipeInput(obresult=obsres)
         #
         recipe = SimpleBiasRecipe()
         result = recipe(reqs)

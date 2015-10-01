@@ -21,8 +21,8 @@
 
 from numina.core import Parameter
 from numina.core import DataFrameType
-from numina.core import Product, RecipeRequirements
-from numina.core import define_requirements, define_result
+from numina.core import Product, RecipeInput
+from numina.core import define_input, define_result
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import RecipeResult
@@ -40,7 +40,7 @@ from emirdrp.products import SourcesCatalog
 from .shared import DirectImageCommon
 
 
-class DitheredImageRecipeRequirements(RecipeRequirements):
+class DitheredImageRecipeInput(RecipeInput):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
@@ -66,7 +66,7 @@ class DitheredImageRecipeResult(RecipeResult):
     catalog = Product(SourcesCatalog)
 
 
-@define_requirements(DitheredImageRecipeRequirements)
+@define_input(DitheredImageRecipeInput)
 @define_result(DitheredImageRecipeResult)
 class DitheredImageRecipe(DirectImageCommon):
 
@@ -146,8 +146,8 @@ class DitheredImageRecipe(DirectImageCommon):
 
     """
 
-    def run(self, ri):
-        frame, catalog = self.process(ri, window=None, subpix=1,
+    def run(self, recipe_input):
+        frame, catalog = self.process(recipe_input, window=None, subpix=1,
                                       stop_after=DirectImageCommon.FULLRED)
 
         result = self.create_result(frame=frame, catalog=catalog)
