@@ -27,12 +27,11 @@ import six
 import numpy
 from scipy import ndimage
 from scipy.ndimage.filters import median_filter
-from skimage.filter import canny
+from skimage.feature import canny
 
 from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
-from numina.constants import FWHM_G
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.products import CoordinateList2DType
@@ -51,7 +50,6 @@ from .common import get_dtur_from_header
 _logger = logging.getLogger('numina.recipes.emir')
 
 
-GAUSS_FWHM_FACTOR = FWHM_G
 PIXSCALE = 18.0
 
 
@@ -130,7 +128,6 @@ class TestMaskRecipe(EmirRecipe):
             _logger.info('using pinhole coordinates as they are')
             ncenters = rinput.pinhole_nominal_positions
 
-
         _logger.info('pinhole characterization')
         positions = pinhole_char(
             hdulist[0].data,
@@ -156,7 +153,6 @@ class TestMaskRecipe(EmirRecipe):
         obj_min_size = rinput.obj_min_size
         obj_max_size = rinput.obj_max_size
 
-
         data1 = hdulist[0].data
         _logger.debug('Median filter with box %d', median_filter_size)
         data2 = median_filter(data1, size=median_filter_size)
@@ -170,7 +166,7 @@ class TestMaskRecipe(EmirRecipe):
 
         # Fill edges
         _logger.debug('Fill holes')
-        fill_slits =  ndimage.binary_fill_holes(edges)
+        fill_slits = ndimage.binary_fill_holes(edges)
 
         _logger.debug('Label objects')
         label_objects, nb_labels = ndimage.label(fill_slits)
@@ -194,7 +190,6 @@ class TestMaskRecipe(EmirRecipe):
         mm.shape = label_objects.shape
 
         fill_slits_clean = numpy.where(mm, 1, 0)
-        #plt.imshow(fill_slits_clean)
 
         # and relabel
         _logger.debug('Label filtered objects')
@@ -208,7 +203,7 @@ class TestMaskRecipe(EmirRecipe):
                                          index=ids
                                          )
 
-        table = char_slit(data2, regions, centers,
+        table = char_slit(data2, regions,
                           slit_size_ratio=rinput.slit_size_ratio
                           )
 
