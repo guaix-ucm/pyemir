@@ -30,14 +30,6 @@ from numina.array.utils import wc_to_pix_1d
 from .common import normalize_raw
 
 
-def load_position_table():
-    fname = "final.csv"
-    table = numpy.loadtxt(fname, delimiter=',')
-    # Coordinates are in FITS, so we
-    # substract 1
-    return table - 1
-
-
 def find_position(edges, yref, bstart, bend, total=5, maxdist=1.5):
     """Find a EMIR CSU bar position in a edge image.
 
