@@ -2,7 +2,6 @@
 from numina.core import import_object
 
 from ..loader import load_drp
-from numina.core import BaseRecipe
 
 
 def test_recipes_are_defined():
