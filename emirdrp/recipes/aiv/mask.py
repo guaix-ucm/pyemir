@@ -27,7 +27,6 @@ import numpy
 from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
-from numina.constants import FWHM_G
 from numina.core.products import ArrayType
 
 from emirdrp.core import EmirRecipe
@@ -45,7 +44,6 @@ from .common import get_dtur_from_header
 _logger = logging.getLogger('numina.recipes.emir')
 
 
-GAUSS_FWHM_FACTOR = FWHM_G
 PIXSCALE = 18.0
 
 

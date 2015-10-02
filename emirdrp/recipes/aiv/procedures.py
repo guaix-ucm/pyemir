@@ -39,12 +39,14 @@ from numina.array.utils import image_box2d
 from numina.modeling import EnclosedGaussian
 from numina.constants import FWHM_G
 
+
 def encloses_annulus(x_min, x_max, y_min, y_max, nx, ny, r_in, r_out):
     '''Encloses function backported from old photutils'''
 
     gout = circular_overlap_grid(x_min, x_max, y_min, y_max, nx, ny, r_out, 1, 1)
     gin = circular_overlap_grid(x_min, x_max, y_min, y_max, nx, ny, r_in, 1, 1)
     return gout - gin
+
 
 def comp_back_with_annulus(img, xc, yc, r_in, r_out, frac=0.1):
     '''

@@ -21,19 +21,20 @@ import numpy
 from astropy import wcs
 
 from numina.core import DataFrame, ObservationResult
-from numina.core.recipeinout import RecipeResultAutoQC as RecipeResult
+from numina.core.recipeinout import RecipeResult
 from numina.core import BaseRecipeAutoQC
 
 
 class EmirRecipe(BaseRecipeAutoQC):
-    def __init__(self):
-        super(EmirRecipe, self).__init__(version="0.1.0")
+    def __init__(self, version="1"):
+        super(EmirRecipe, self).__init__(version=version)
 
 
 def gather_info_dframe(dataframe):
     with dataframe.open() as hdulist:
         info = gather_info_hdu(hdulist)
     return info
+
 
 _meta = {'readmode': ('READMODE', 'undefined'),
          'bunit': ('BUNIT', 'ADU'),

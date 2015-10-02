@@ -27,15 +27,17 @@ import math
 import six
 import numpy
 from astropy.io import fits
-from astropy import wcs
+import astropy.wcs
 from astropy.visualization import SqrtStretch
 from astropy.visualization import PercentileInterval
 from astropy.visualization.mpl_normalize import ImageNormalize
 from scipy.spatial import KDTree as KDTree
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
+
 from numina import __version__
 from numina.core import DataFrame, RecipeError
 from numina.flow import SerialFlow
@@ -47,7 +49,6 @@ from numina.frame import resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield
 from numina.array import subarray_match
 from numina.array.combine import flatcombine, median, quantileclip
-
 from numina.util.sextractor import SExtractor
 from numina.util.sextractor import open as sopen
 import numina.util.sexcatalog as sexcatalog
@@ -87,12 +88,12 @@ def offsets_from_wcs(frames, pixref):
     result = numpy.zeros((len(frames), pixref.shape[1]))
 
     with fits.open(frames[0]) as hdulist:
-        wcs = wcs.WCS(hdulist[0].header)
+        wcs = astropy.wcs.WCS(hdulist[0].header)
         skyref = wcs.wcs_pix2sky(pixref, 1)
 
     for idx, frame in enumerate(frames[1:]):
         with fits.open(frame) as hdulist:
-            wcs = wcs.WCS(hdulist[0].header)
+            wcs = astropy.wcs.WCS(hdulist[0].header)
             pixval = wcs.wcs_sky2pix(skyref, 1)
             result[idx + 1] = pixval[0] - pixref[0]
 
@@ -152,7 +153,7 @@ class DirectImageCommon(EmirRecipe):
 
     logger = _logger
     BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = [0, 1, 2, 3, 4]
-    __version__ = '0.1.0'
+    __version__ = '1'
 
     def __init__(self, *args, **kwds):
         super(DirectImageCommon, self).__init__(version=__version__)

@@ -20,29 +20,16 @@
 """Mosaic image mode recipe of EMIR"""
 
 
-from numina.core import BaseRecipe, Parameter
-from numina.core import define_requirements, define_result, DataFrame
-from numina.core import Product, DataFrameType, RecipeRequirements
+from numina.core import Parameter
+from numina.core import DataFrame
+from numina.core import Product, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 
-from emirdrp.core import RecipeResult
+from emirdrp.core import EmirRecipe
 from emirdrp.products import SourcesCatalog
 
 
-class MosaicRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-    # FIXME: this parameter is optional
-    sources = Parameter([], 'List of x, y coordinates to measure FWHM')
-
-
-class MosaicRecipeResult(RecipeResult):
-    frame = Product(DataFrameType)
-    catalog = Product(SourcesCatalog)
-
-
-@define_requirements(MosaicRecipeRequirements)
-@define_result(MosaicRecipeResult)
-class MosaicRecipe(BaseRecipe):
+class MosaicRecipe(EmirRecipe):
 
     """
     The effect of recording a series of stare images, with the same
@@ -58,6 +45,13 @@ class MosaicRecipe(BaseRecipe):
         * Mosaic images
 
     """
+
+    obresult = ObservationResultRequirement()
+    # FIXME: this parameter is optional
+    sources = Parameter([], 'List of x, y coordinates to measure FWHM')
+
+    frame = Product(DataFrameType)
+    catalog = Product(SourcesCatalog)
 
     def run(self, ri):
         return self.create_result(frame=DataFrame(None),

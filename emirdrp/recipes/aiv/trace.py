@@ -26,19 +26,12 @@ import numpy
 from scipy.ndimage.filters import median_filter, generic_filter
 from astropy.io import fits
 
-#from numina.core import BaseRecipeAutoQC
-from numina.core import RecipeError
-from numina.core import DataFrame#from numina.core import BaseRecipeAutoQC
 from numina.core import Requirement, Product, Parameter
-
-# from numina.flow.processing import BadPixelCorrector
 from numina.core.requirements import ObservationResultRequirement
-
-from emirdrp.core import gather_info_frames
-from emirdrp.core import EmirRecipe
 from numina.core.products import ArrayType
-from emirdrp.products import DataFrameType
 
+from emirdrp.core import EmirRecipe
+from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
@@ -164,7 +157,7 @@ def _internal_trace(img, trace1, trace2, col, step, hs, ws, tol=2, direction=1, 
         
         out = generic_filter(dd1d, filter_fun, size=len(_w2))
         # Quantiles to estimate background noise
-        q75, _q50, q25 = numpy.percentile(out, [75 ,50, 25])
+        q75, _q50, q25 = numpy.percentile(out, [75, 50, 25])
         iqr = q75 - q25
         background = 2.5 * iqr
 
@@ -209,6 +202,7 @@ def _internal_trace(img, trace1, trace2, col, step, hs, ws, tol=2, direction=1, 
         
     return trace1, trace2
 
+
 def _internal_trace_c(img, trace1, trace2, col, step, hs, ws, tol, doplot=False):
 
     _internal_trace(img, trace1, trace2, col, step, hs, ws, tol, direction=-1, doplot=doplot)
@@ -219,6 +213,7 @@ def _internal_trace_c(img, trace1, trace2, col, step, hs, ws, tol, doplot=False)
     _internal_trace(img, trace1, trace2, col, step, hs, ws, tol, direction=+1, doplot=doplot)
     
     return trace1, trace2
+
 
 def ex_region(img, x, y1, y2, step, hs, ws, tol=2, doplot=False):
     
@@ -241,11 +236,13 @@ def ex_region(img, x, y1, y2, step, hs, ws, tol=2, doplot=False):
             pfit2
            )
 
+
 def convert_to_(x, y, ax, ay):
     col = wc_to_pix(x - 1)
     y1 = y - 1 - 0.5 * ay
     y2 = y - 1 + 0.5 * ay
     return col, y1, y2
+
 
 class TraceMapRecipe(EmirRecipe):
     '''
@@ -271,7 +268,6 @@ class TraceMapRecipe(EmirRecipe):
     #IPA = Product(float)
     #DETPA = Product(float)
     #DTUPA = Product(float)
-
 
     def run(self, rinput):
         _logger.info('starting trace map')

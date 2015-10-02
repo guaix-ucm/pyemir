@@ -21,8 +21,8 @@
 
 
 from numina.core import Parameter
-from numina.core import RecipeRequirements
-from numina.core import define_requirements, define_result
+from numina.core import RecipeInput
+from numina.core import define_input, define_result
 from numina.core import Product, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 
@@ -38,7 +38,7 @@ from emirdrp.requirements import SkyImageSepTime_Requirement
 from .shared import DirectImageCommon
 
 
-class NBImageRecipeRequirements(RecipeRequirements):
+class NBImageRecipeInput(RecipeInput):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
@@ -62,7 +62,7 @@ class NBImageRecipeResult(RecipeResult):
     catalog = Product(SourcesCatalog)
 
 
-@define_requirements(NBImageRecipeRequirements)
+@define_input(NBImageRecipeInput)
 @define_result(NBImageRecipeResult)
 class NBImageRecipe(DirectImageCommon):
 
