@@ -71,7 +71,7 @@ def gather_info_frames(framelist):
 def gather_info(recipeinput):
     klass = recipeinput.__class__
     metadata = {}
-    for key in klass:
+    for key in klass.stored():
         val = getattr(recipeinput, key)
         if isinstance(val, DataFrame):
             metadata[key] = gather_info_dframe(val)
