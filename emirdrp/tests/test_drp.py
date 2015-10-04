@@ -20,9 +20,5 @@ def test_recipes_are_defined():
     for pipeval in emir_drp.pipelines.values():
         for k, v in pipeval.recipes.items():
             RecipeClass = import_object(v)
-            # FIXME: check that RecipeClass is a Recipe
-            # not so easy because BaseRecipe and BaseRecipeAutoQC
-            # are not derived from each other...
-            assert RecipeClass is not None
+            assert issubclass(RecipeClass, BaseRecipe)
 
-    assert emir_drp is not None
