@@ -1,34 +1,43 @@
-
-import pkg_resources
-
+import yaml
 from numina.core import init_drp_system
-from numina.core import import_object
-from numina.core import BaseRecipe
+from numina.core.pipeline import Instrument, Pipeline
 
-import emirdrp.loader as el
-from emirdrp.core import EmirRecipe
+def assert_valid_instrument(instrument):
+    assert isinstance(instrument, Instrument)
 
+    pipes = instrument.pipelines
+    assert 'default' in pipes
+    for k, v in pipes.items():
+        assert k == v.name
+        assert isinstance(v, Pipeline)
 
-def test_load_pipeline(monkeypatch):
-    """Check that our pipeline can be imported"""
+def test_recipes_are_defined():
 
-    def mockreturn(group=None):
+    drp_to_test = """
+    id: 1
+    mode: bias
+    instrument: EMIR
+    images:
+     - ThAr_LR-U.fits
+    """
 
-        ep = pkg_resources.EntryPoint('emir', 'emir.loader')
-        monkeypatch.setattr(ep, 'load', lambda: el.load_drp)
-        return [ep]
+    loaded_obs = {}
+    loaded_ids = []
+    for doc in yaml.load_all(drp_to_test):
+        loaded_ids.append(doc['id'])
+        loaded_obs[doc['id']] = doc
 
-    monkeypatch.setattr(pkg_resources, 'iter_entry_points', mockreturn)
+    modes = ['fail', 'IMAGE_BIAS', 'IMAGE_DARK', 'IMAGE_FLAT', 'STARE_IMAGE', 'NODDED_BEAM_SWITCHED_IMAGE', 'DITHERED_IMAGE', 'MICRODITHERED_IMAGE', 'MOSAICED_IMAGE', 'gain_mode1', 'cosmetics', 'dark_current', 'simple_bias', 'TEST0', 'TEST1', 'TEST2', 'TEST3', 'TEST5', 'TEST6', 'IMAGE_SKY', 'TEST7', 'TEST8', 'ARC_CALIBRATION', 'TEST9', 'TEST9', 'FULL_DITHERED_IMAGE']
 
-    m = init_drp_system()
+    m = init_drp_system(loaded_obs)
+    for k, v in m.items():
+        assert_valid_instrument(v)
+        for m in v.modes:
+            assert m.key in modes
+            modes.remove(m.key)
+            print modes
 
-    thisdrp = m['EMIR']
-    # Import all recipes
-    for thispipeline in thisdrp.pipelines.values():
-        for key, value in thispipeline.recipes.items():
+    assert len(modes)== 0
 
-            recipe = import_object(value)
-            assert issubclass(recipe, BaseRecipe)
-            # Asume that recipes in emirdrp inherit from EmirRecipe
-            if value.startswith('emirdrp'):
-                assert issubclass(recipe, EmirRecipe)
+if __name__ == "__main__":
+    test_recipes_are_defined()
