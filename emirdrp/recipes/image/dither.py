@@ -22,7 +22,7 @@
 from numina.core import Parameter
 from numina.core import DataFrameType
 from numina.core import Product, RecipeInput
-from numina.core import define_input, define_result
+from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import RecipeResult
@@ -146,9 +146,11 @@ class DitheredImageRecipe(DirectImageCommon):
 
     """
 
-    def run(self, recipe_input):
-        frame, catalog = self.process(recipe_input, window=None, subpix=1,
-                                      stop_after=DirectImageCommon.FULLRED)
+    def run(self, ri):
+        # frame, catalog = self.process(ri, window=None, subpix=1,
+        #                               stop_after=DirectImageCommon.FULLRED)
+
+        frame, catalog = self.process(ri)
 
         result = self.create_result(frame=frame, catalog=catalog)
         return result

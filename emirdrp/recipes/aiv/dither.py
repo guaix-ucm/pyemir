@@ -88,8 +88,8 @@ class DitheredImageARecipe(EmirRecipe):
 
         _logger.info('Computing offsets from WCS information')
         baseshape = (2048, 2048)
-        refpix = numpy.divide(numpy.array([baseshape],
-                                          dtype='int'), 2).astype('float')
+        refpix = numpy.divide(numpy.array([baseshape], dtype='int'),
+                              2).astype('float')
         offsets_xy = offsets_from_wcs(rinput.obresult.frames, refpix)
         _logger.debug("offsets_xy %s", offsets_xy)
         # Offsets in numpy order, swaping

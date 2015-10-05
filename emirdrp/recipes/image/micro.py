@@ -39,7 +39,7 @@ from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from .shared import DirectImageCommon
 
 
-class MicroditheredImageRecipeInput(RecipeInput):
+class MicroditheredImageRecipeRequirements(RecipeInput):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
