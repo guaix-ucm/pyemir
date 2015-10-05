@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''AIV Recipes for EMIR'''
+"""AIV Recipes for EMIR"""
 
 from __future__ import division
 
@@ -47,9 +47,6 @@ from .procedures import AnnulusBackgroundEstimator
 from .procedures import image_box2d
 
 _logger = logging.getLogger('numina.recipes.emir')
-
-
-GAUSS_FWHM_FACTOR = FWHM_G
 
 
 # returns y,x
@@ -194,6 +191,7 @@ def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_ha
 
     return centers_r, compute_mask, status_array
 
+
 def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
 
     ibox = (box, box)
@@ -271,7 +269,7 @@ def pinhole_char2(
 ):
 
     sigma0 = 1.0
-    rad = 3 * sigma0 * GAUSS_FWHM_FACTOR
+    rad = 3 * sigma0 * FWHM_G
     box = recenter_half_box
     recenter_half_box = (box, box)
 
@@ -342,13 +340,13 @@ def pinhole_char2(
             xx0 = x0 - sl[1].start
             yy0 = y0 - sl[0].start
 
-            Y, X = numpy.mgrid[sl]
+            yy, xx = numpy.mgrid[sl]
             _logger.debug('Iter %d, radial fit', i)
 
             # Photometry
-            D = numpy.sqrt((X - x0) ** 2 + (Y - y0) ** 2)
-            phot_mask = D < fit_rad
-            r1 = D[phot_mask]
+            dist = numpy.sqrt((xx - x0) ** 2 + (yy - y0) ** 2)
+            phot_mask = dist < fit_rad
+            r1 = dist[phot_mask]
             part_s = part - bck
             f1 = part_s[phot_mask]
             # Fit radial profile
@@ -361,7 +359,7 @@ def pinhole_char2(
             # sometimes the fit is negative
             rsigma = abs(g1d_f.stddev.value)
 
-            rfwhm = rsigma * GAUSS_FWHM_FACTOR
+            rfwhm = rsigma * FWHM_G
 
             rad = 2.5 * rfwhm
             _logger.debug('Iter %d, new rad is %f', i, rad)
@@ -427,17 +425,17 @@ def pinhole_char2(
         sl1 = image_box2d(x0, y0, data.shape, fit2d_half_box)
 
         part1 = data[sl1]
-        Y1, X1 = numpy.mgrid[sl1]
+        yy1, xx1 = numpy.mgrid[sl1]
 
         g2d = models.Gaussian2D(amplitude=rpeak, x_mean=x0, y_mean=y0,
                                 x_stddev=1.0, y_stddev=1.0)
-        g2d_f = fitter(g2d, X1, Y1, part1 - bck)
+        g2d_f = fitter(g2d, xx1, yy1, part1 - bck)
 
         res_gauss2d = (g2d_f.amplitude.value,
                        g2d_f.x_mean.value + 1,  # FITS coordinates
                        g2d_f.y_mean.value + 1,  # FITS coordinates
-                       g2d_f.x_stddev.value * GAUSS_FWHM_FACTOR,
-                       g2d_f.y_stddev.value * GAUSS_FWHM_FACTOR,
+                       g2d_f.x_stddev.value * FWHM_G,
+                       g2d_f.y_stddev.value * FWHM_G,
                        g2d_f.theta.value
                        )
 
@@ -485,14 +483,26 @@ def normalize(data):
 
 
 def normalize_raw(arr):
-    """Rescale float image between -1, 1"""
+    """Rescale float image between 0 and 1
+
+    This is an extension of image_as_float of scikit-image
+    when the original image was uint16 but later was
+    processed and transformed to float32
+
+    Parameters
+    ----------
+    arr; ndarray
+
+    Returns
+    -------
+      A ndarray mapped between 0 and 1
+    """
 
     # FIXME: use other limits acording to original arr.dtype
     # This applies only to uint16 images
     # As images were positive, the range is 0,1
-    b = 65535.0
 
-    return numpy.clip(arr / b, 0.0, 1.0)
+    return numpy.clip(arr / 65535.0, 0.0, 1.0)
 
 
 def get_dtur_from_header(hdr):
@@ -518,7 +528,8 @@ def get_dtur_from_header(hdr):
     dtur = [xdtur, ydtur, zdtu]
     return dtur
 
-def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
+
+def char_slit(data, regions, box_increase=3, slit_size_ratio=4.0):
 
     result = []
 
@@ -552,7 +563,7 @@ def char_slit(data, regions, centers, box_increase=3, slit_size_ratio=4.0):
         _logger.debug('x=%f y=%f', c[1] +  ref[1], c[0] +  ref[0])
         _logger.debug('fwhm_x %f fwhm_y %f', fwhm_x, fwhm_y)
 
-        colrow = ref[1] + cc + 1, ref[0] + fc + 1
+        # colrow = ref[1] + cc + 1, ref[0] + fc + 1
 
         result.append([c[1] +  ref[1] + 1, c[0] +  ref[0] + 1, fwhm_x, fwhm_y])
 

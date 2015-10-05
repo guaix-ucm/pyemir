@@ -40,7 +40,7 @@ from emirdrp.products import SourcesCatalog
 from .shared import DirectImageCommon
 
 
-class DitheredImageRecipeRequirements(RecipeInput):
+class DitheredImageRecipeInput(RecipeInput):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
@@ -66,7 +66,7 @@ class DitheredImageRecipeResult(RecipeResult):
     catalog = Product(SourcesCatalog)
 
 
-@define_requirements(DitheredImageRecipeRequirements)
+@define_input(DitheredImageRecipeInput)
 @define_result(DitheredImageRecipeResult)
 class DitheredImageRecipe(DirectImageCommon):
 

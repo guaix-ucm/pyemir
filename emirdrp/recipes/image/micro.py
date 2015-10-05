@@ -23,7 +23,7 @@ Micro-dithering Recipe of EMIR
 """
 
 from numina.core import Parameter
-from numina.core import define_requirements, define_result
+from numina.core import define_input, define_result
 from numina.core import Product, DataFrameType, RecipeInput
 from numina.core.requirements import ObservationResultRequirement
 
@@ -67,7 +67,7 @@ class MicroditheredImageRecipeResult(RecipeResult):
     catalog = Product(SourcesCatalog)
 
 
-@define_requirements(MicroditheredImageRecipeRequirements)
+@define_input(MicroditheredImageRecipeInput)
 @define_result(MicroditheredImageRecipeResult)
 class MicroditheredImageRecipe(DirectImageCommon):
 

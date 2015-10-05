@@ -27,7 +27,7 @@ import six
 import numpy
 from scipy import ndimage
 from scipy.ndimage.filters import median_filter
-from skimage.filter import canny
+from skimage.feature import canny
 from numina.core import Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import RecipeError
@@ -132,7 +132,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
                                          index=ids
                                          )
 
-        table = char_slit(data2, regions, centers,
+        table = char_slit(data2, regions,
                           slit_size_ratio=-1.0
                           )
 
@@ -250,7 +250,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
                                          index=ids
                                          )
 
-        table = char_slit(data2, regions, centers,
+        table = char_slit(data2, regions,
                           slit_size_ratio=rinput.slit_size_ratio
                           )
 

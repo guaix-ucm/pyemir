@@ -62,7 +62,7 @@ class NBImageRecipeResult(RecipeResult):
     catalog = Product(SourcesCatalog)
 
 
-@define_requirements(NBImageRecipeRequirements)
+@define_input(NBImageRecipeInput)
 @define_result(NBImageRecipeResult)
 class NBImageRecipe(DirectImageCommon):
 

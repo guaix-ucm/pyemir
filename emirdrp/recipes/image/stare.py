@@ -23,8 +23,8 @@ Image mode recipes of EMIR
 
 
 from numina.core import Parameter
-from numina.core import RecipeRequirements, Product
-from numina.core import DataFrameType, define_requirements, define_result
+from numina.core import RecipeInput, Product
+from numina.core import DataFrameType, define_input, define_result
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import RecipeResult
@@ -41,7 +41,7 @@ from emirdrp.requirements import Catalog_Requirement
 from .shared import DirectImageCommon
 
 
-class StareImageRecipeRequirements(RecipeRequirements):
+class StareImageRecipeInput(RecipeInput):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
@@ -58,7 +58,7 @@ class StareImageRecipeResult(RecipeResult):
     catalog = Product(SourcesCatalog)
 
 
-@define_requirements(StareImageRecipeRequirements)
+@define_input(StareImageRecipeInput)
 @define_result(StareImageRecipeResult)
 class StareImageRecipe(DirectImageCommon):
 
@@ -73,9 +73,9 @@ class StareImageRecipe(DirectImageCommon):
 
     """
 
-    def run(self, ri):
+    def run(self, recipe_input):
 
-        frame, catalog = self.process(ri,
+        frame, catalog = self.process(recipe_input,
                                       window=None, subpix=1,
                                       stop_after=DirectImageCommon.PRERED)
 
