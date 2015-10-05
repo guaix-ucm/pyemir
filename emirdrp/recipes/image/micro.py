@@ -24,7 +24,7 @@ Micro-dithering Recipe of EMIR
 
 from numina.core import Parameter
 from numina.core import define_requirements, define_result
-from numina.core import Product, DataFrameType, RecipeRequirements
+from numina.core import Product, DataFrameType, RecipeInput
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import RecipeResult
@@ -39,7 +39,7 @@ from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from .shared import DirectImageCommon
 
 
-class MicroditheredImageRecipeRequirements(RecipeRequirements):
+class MicroditheredImageRecipeRequirements(RecipeInput):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()

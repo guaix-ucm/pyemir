@@ -384,7 +384,8 @@ class DirectImageCommon(EmirRecipe):
 
         # Apply superflat
         self.figure_init(subpixshape)
-        self.apply_superflat(self.ri.obresult.frames, superflat)
+        # self.apply_superflat(self.ri.obresult.frames, superflat)
+        self.apply_superflat_sergio(self.ri.obresult.frames, superflat)
 
         _logger.info('Simple sky correction')
         if target_is_sky:
@@ -439,8 +440,8 @@ class DirectImageCommon(EmirRecipe):
         # Apply superflat
         self.figure_init(subpixshape)
 
-        self.apply_superflat(self.ri.obresult.frames, superflat, step=step,
-                             save=True)
+        # self.apply_superflat(self.ri.obresult.frames, superflat, step=step,save=True)
+        self.apply_superflat_sergio(self.ri.obresult.frames, superflat, step=step,save=True)
 
         _logger.info('Step %d, advanced sky correction (SC)', step)
         self.compute_advanced_sky(skyframes=self.skyframes,
@@ -632,6 +633,16 @@ class DirectImageCommon(EmirRecipe):
             _logger.debug('Step %d, closing mask frames', step)
             for f in mskslll:
                 f.close()
+
+    def apply_superflat_sergio(self, frames, flatdata, step=0, save=True):
+        _logger.info("Step %d, SF: apply superflat", step)
+
+        pool = mp.Pool(processes=self.procesos)
+        results = [pool.apply_async(correct_superflat_paralelo,args=(frame, flatdata,step, save))for frame in frames]
+        [p.get() for p in results]
+        pool.close()
+        pool.join()
+        return frames
 
     def apply_superflat(self, frames, flatdata, step=0, save=True):
         _logger.info("Step %d, SF: apply superflat", step)
@@ -1231,3 +1242,21 @@ def compute_simple_sky_for_frame(frame, skyframe, step=0, save=True):
         data = hdulist['primary'].data
         valid = data[frame.valid_region]
         valid -= sky
+
+def correct_superflat_paralelo(frame, fitted, step=0, save=True):
+
+    frame.flat_corrected = name_skyflat_proc(frame.baselabel, step)
+
+    if save:
+        shutil.copyfile(frame.resized_base, frame.flat_corrected)
+    else:
+        os.rename(frame.resized_base, frame.flat_corrected)
+
+    _logger.info("Step %d, SF: apply superflat to frame %s",
+                 step, frame.flat_corrected)
+    with fits.open(frame.flat_corrected, mode='update') as hdulist:
+        data = hdulist['primary'].data
+        datar = data[frame.valid_region]
+        data[frame.valid_region] = correct_flatfield(datar, fitted)
+
+        frame.lastname = frame.flat_corrected

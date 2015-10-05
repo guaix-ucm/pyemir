@@ -22,14 +22,14 @@
 
 from numina.core import BaseRecipe, Parameter
 from numina.core import define_requirements, define_result, DataFrame
-from numina.core import Product, DataFrameType, RecipeRequirements
+from numina.core import Product, DataFrameType, RecipeInput
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import RecipeResult
 from emirdrp.products import SourcesCatalog
 
 
-class MosaicRecipeRequirements(RecipeRequirements):
+class MosaicRecipeRequirements(RecipeInput):
     obresult = ObservationResultRequirement()
     # FIXME: this parameter is optional
     sources = Parameter([], 'List of x, y coordinates to measure FWHM')

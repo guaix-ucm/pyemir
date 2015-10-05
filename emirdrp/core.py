@@ -21,7 +21,7 @@ import numpy
 from astropy import wcs
 
 from numina.core import DataFrame, ObservationResult
-from numina.core.recipeinout import RecipeResultAutoQC as RecipeResult
+from numina.core.recipeinout import RecipeResult
 from numina.core import BaseRecipeAutoQC
 
 

@@ -21,7 +21,7 @@
 
 from numina.core import Parameter
 from numina.core import DataFrameType
-from numina.core import Product, RecipeRequirements
+from numina.core import Product, RecipeInput
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 
@@ -40,7 +40,7 @@ from emirdrp.products import SourcesCatalog
 from .shared import DirectImageCommon
 
 
-class DitheredImageRecipeRequirements(RecipeRequirements):
+class DitheredImageRecipeRequirements(RecipeInput):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
