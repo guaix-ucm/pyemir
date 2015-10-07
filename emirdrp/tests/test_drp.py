@@ -1,8 +1,9 @@
 
 from numina.core import import_object
+from numina.core import BaseRecipe
 
 from ..loader import load_drp
-from numina.core import BaseRecipe
+from ..core import EmirRecipe
 
 
 def test_recipes_are_defined():
@@ -18,7 +19,9 @@ def test_recipes_are_defined():
     assert 'default' in emir_drp.pipelines
 
     for pipeval in emir_drp.pipelines.values():
-        for k, v in pipeval.recipes.items():
-            RecipeClass = import_object(v)
-            assert issubclass(RecipeClass, BaseRecipe)
-
+        for key, val in pipeval.recipes.items():
+            recipeClass = import_object(val)
+            assert issubclass(recipeClass, BaseRecipe)
+            # Asume that recipes in emirdrp inherit from EmirRecipe
+            if val.startswith('emirdrp'):
+                assert issubclass(recipeClass, EmirRecipe)
