@@ -17,16 +17,14 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Test the AIV pinhole mask recipe'''
+"""Test the AIV pinhole mask recipe"""
 
 import pytest
 
 from numina.user.cli import main
+from emirdrp.tests.runrecipe import run_recipe
 
 BASE_URL = 'http://guaix.fis.ucm.es/~spr/emir_test/'
-
-def run_recipe():
-    main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
 
 @pytest.mark.remote
 def test_mode_TEST6_set0(numinatpldir):
