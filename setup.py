@@ -30,7 +30,7 @@ setup(name='pyemir',
       zip_safe=False,
       entry_points = {
         'numina.pipeline.1': [
-            'emir = emirdrp.loader:load_drp',
+            'EMIR = emirdrp.loader:load_drp',
             ],
         'numina.storage.1': [
             'emir_default = emirdrp.loader:load_cli_storage',

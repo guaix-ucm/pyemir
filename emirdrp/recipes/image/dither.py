@@ -22,10 +22,9 @@
 from numina.core import Parameter
 from numina.core import DataFrameType
 from numina.core import Product, RecipeInput
-from numina.core import define_requirements, define_result
+from numina.core import define_input, define_result
 from numina.core.requirements import ObservationResultRequirement
 
-from emirdrp.core import RecipeResult
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterDarkRequirement
@@ -40,34 +39,6 @@ from emirdrp.products import SourcesCatalog
 from .shared import DirectImageCommon
 
 
-class DitheredImageRecipeInput(RecipeInput):
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    extinction = Extinction_Requirement()
-    sources = Catalog_Requirement()
-    offsets = Offsets_Requirement()
-
-    iterations = Parameter(4, 'Iterations of the recipe')
-    sky_images = Parameter(
-        5, 'Images used to estimate the '
-        'background before and after current image')
-    sky_images_sep_time = SkyImageSepTime_Requirement()
-    check_photometry_levels = Parameter(
-        [0.5, 0.8], 'Levels to check the flux of the objects')
-    check_photometry_actions = Parameter(
-        ['warn', 'warn', 'default'], 'Actions to take on images')
-
-
-class DitheredImageRecipeResult(RecipeResult):
-    frame = Product(DataFrameType)
-    catalog = Product(SourcesCatalog)
-
-
-@define_input(DitheredImageRecipeInput)
-@define_result(DitheredImageRecipeResult)
 class DitheredImageRecipe(DirectImageCommon):
 
     """Recipe for the reduction of imaging mode observations.
@@ -145,6 +116,27 @@ class DitheredImageRecipe(DirectImageCommon):
        A better calibration might be computed using available stars (TBD).
 
     """
+    obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    extinction = Extinction_Requirement()
+    sources = Catalog_Requirement()
+    offsets = Offsets_Requirement()
+
+    iterations = Parameter(4, 'Iterations of the recipe')
+    sky_images = Parameter(
+        5, 'Images used to estimate the '
+        'background before and after current image')
+    sky_images_sep_time = SkyImageSepTime_Requirement()
+    check_photometry_levels = Parameter(
+        [0.5, 0.8], 'Levels to check the flux of the objects')
+    check_photometry_actions = Parameter(
+        ['warn', 'warn', 'default'], 'Actions to take on images')
+
+    frame = Product(DataFrameType)
+    catalog = Product(SourcesCatalog)
 
     def run(self, ri):
         # frame, catalog = self.process(ri, window=None, subpix=1,

@@ -304,3 +304,13 @@ def basic_processing_with_combination(rinput, flow,
     _logger.debug('update result header')
 
     return result
+
+
+def basic_processing_with_update(rinput, flow):
+
+    # FIXME: this only works with local images
+    # We don't know how to store temporary GCS frames
+    _logger.info('processing input images')
+    for frame in rinput.obresult.images:
+        with fits.open(frame.label, mode='update') as hdul:
+            flow(hdul)
