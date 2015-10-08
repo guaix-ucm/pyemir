@@ -10,6 +10,11 @@ matrix:
     - python: "2.7"
       env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0" COVERAGE=true
 
+cache:
+  directories:
+    - $HOME/.pip-cache/
+    - /home/travis/virtualenv/python2.7
+
 install:
   # See:
   # https://groups.google.com/a/continuum.io/forum/#!topic/conda/RSFENqovnro
@@ -22,8 +27,8 @@ install:
   - pip install pytest-benchmark
   - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
-  - pip install photutils
-  - pip install matplotlib six scikit-image>=0.10
+  - pip install photutils --download-cache $HOME/.pip-cache
+  - pip install matplotlib six scikit-image>=0.10 --download-cache $HOME/.pip-cache
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
 
