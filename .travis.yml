@@ -4,11 +4,9 @@ sudo: false
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
+      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0" COVERAGE=true
     - python: "3.4"
       env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
-    - python: "2.7"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0" COVERAGE=true
 
 cache:
   directories:
@@ -27,8 +25,8 @@ install:
   - pip install pytest-benchmark
   - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
-  - pip install photutils --download-cache $HOME/.pip-cache
-  - pip install matplotlib six scikit-image>=0.10 --download-cache $HOME/.pip-cache
+  - pip install photutils
+  - pip install matplotlib six scikit-image>=0.10
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
 
