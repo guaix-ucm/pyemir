@@ -22,7 +22,7 @@
 
 from numina.core import Parameter
 from numina.core import RecipeInput
-from numina.core import define_requirements, define_result
+from numina.core import define_input, define_result
 from numina.core import Product, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 
@@ -38,7 +38,7 @@ from emirdrp.requirements import SkyImageSepTime_Requirement
 from .shared import DirectImageCommon
 
 
-class NBImageRecipeRequirements(RecipeInput):
+class NBImageRecipeInput(RecipeInput):
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
@@ -72,12 +72,8 @@ class NBImageRecipe(DirectImageCommon):
     between two, or more, sky positions. Displacements are larger
     than the EMIR FOV, so the images have no common area. Used
     for sky subtraction
-
-
     **Observing modes:**
-
         * Nodded/Beamswitched images
-
     """
 
     def run(self, ri):
