@@ -9,9 +9,12 @@ matrix:
       env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
 
 cache:
+  apt: true
+  pip: true
   directories:
-    - $HOME/.pip-cache/
-    - /home/travis/virtualenv/python2.7
+    - $HOME/.cache/pip
+    - $HOME/.local
+
 
 install:
   # See:
