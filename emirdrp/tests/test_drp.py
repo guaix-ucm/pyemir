@@ -8,13 +8,7 @@ from ..core import EmirRecipe
 
 def test_recipes_are_defined():
 
-    thisdrp = load_drp()
-
-    assert thisdrp is not None
-
-    assert 'EMIR' in thisdrp.instruments
-
-    emir_drp = thisdrp.instruments['EMIR']
+    emir_drp = load_drp()
 
     assert 'default' in emir_drp.pipelines
 
