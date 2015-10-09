@@ -17,13 +17,15 @@ install:
   # OK, this used to *fix* the build, but now it *breaks* the build.
   # If you're reading this, good luck out there. I'm not sure what to tell you.
   - conda update --yes conda
-  - conda create -n testenv --yes $DEPS pip pytest setuptools Cython six>=1.7 pyyaml python=$TRAVIS_PYTHON_VERSION
+  - > 
+    conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION 
+    $DEPS pip pytest setuptools Cython six>=1.7 
+    pyyaml matplotlib scikit-image>=0.10
   - source activate testenv
   - pip install pytest-benchmark
   - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   - pip install photutils
-  - pip install matplotlib six scikit-image>=0.10
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
 
