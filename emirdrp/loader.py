@@ -23,8 +23,3 @@ import numina.core
 def load_drp():
     return numina.core.drp_load('emirdrp', 'drp.yaml')
 
-
-def load_cli_storage():
-    'Entry point to load storage functions for the CLI.'
-    import emirdrp.store
-    return 0

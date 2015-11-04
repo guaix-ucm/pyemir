@@ -32,9 +32,6 @@ setup(name='pyemir',
         'numina.pipeline.1': [
             'EMIR = emirdrp.loader:load_drp',
             ],
-        'numina.storage.1': [
-            'emir_default = emirdrp.loader:load_cli_storage',
-            ]
         },
       classifiers=[
                    "Programming Language :: Python :: 2.7",

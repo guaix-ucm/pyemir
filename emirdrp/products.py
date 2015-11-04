@@ -20,12 +20,14 @@
 """Data products produced by the EMIR pipeline."""
 
 import numpy
+import yaml
 
 from numina.core import DataFrameType, DataProductType
 from numina.core.products import ArrayNType
 from numina.core.products import DataProductTag
 from numina.core.requirements import InstrumentConfigurationType
 from numina.core import ValidationError
+from numina.array.wavecal.slitlet import Slitlet
 
 # FIXME:
 try:
@@ -241,14 +243,24 @@ class SourcesCatalog(DataProductType):
         super(SourcesCatalog, self).__init__(ptype=list)
 
 
-class LinesCatalog(DataProductType):
-    def __init__(self):
-        super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
-
-
 class SlitsCatalog(DataProductType):
     def __init__(self):
         super(SlitsCatalog, self).__init__(ptype=list)
+
+    def __numina_load__(self, obj):
+
+        with open(obj, 'r') as fd:
+            slits_cat = yaml.load(fd)
+
+        slits_list = []
+        for slit in slits_cat:
+            bbox = slit['bbox']
+            slitdum = Slitlet(*bbox)
+            borders = slit['borders']
+            slitdum.set_nc_coeff_lower_boundary_pix(borders[0])
+            slitdum.set_nc_coeff_upper_boundary_pix(borders[1])
+            slits_list.append(slitdum)
+        return slits_list
 
 
 class CentroidsTableType(DataProductType):
@@ -262,6 +274,22 @@ class ChannelLevelStatistics(DataProductType):
     def __init__(self, exposure, statistics):
         self.exposure = exposure
         self.statistics = statistics
+
+    def __numina_dump__(self, obj, where):
+        fname = 'statistics.txt'
+
+        header = ("Channel Level Statistics\n"
+                  "comment 2\n"
+                  "pixels start in 1\n"
+                  "pixels end in 2048\n"
+                  "exposure={exposure}\n"
+                  "xbegin xend ybegin yend mean median var\n"
+                  )
+
+        inter = header.format(exposure=obj.exposure)
+        numpy.savetxt(fname, obj.statistics, header=inter)
+        return fname
+
 
 
 class ChannelLevelStatisticsType(DataProductType):
