@@ -45,9 +45,6 @@ from .bardetect import find_position
 from .bardetect import calc_fwhm
 
 
-_logger = logging.getLogger('numina.recipes.emir')
-
-
 class BarDetectionRecipe(EmirRecipe):
 
     # Recipe Requirements
@@ -61,7 +58,7 @@ class BarDetectionRecipe(EmirRecipe):
     bars_nominal_positions = Requirement(CoordinateList2DType,
                                          'Nominal positions of the bars'
                                          )
-    median_filter_size = Parameter(4, 'Size of the median box')
+    median_filter_size = Parameter(5, 'Size of the median box')
     canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
     canny_high_threshold = Parameter(0.04, 'High threshold for the canny algorithm')
     canny_low_threshold = Parameter(0.01, 'High threshold for the canny algorithm')
@@ -71,7 +68,10 @@ class BarDetectionRecipe(EmirRecipe):
     positions = Product(ArrayType)
 
     def run(self, rinput):
-        _logger.info('starting processing for bars detection')
+
+        logger = logging.getLogger('numina.recipes.emir')
+
+        logger.info('starting processing for bars detection')
 
         flow = init_filters_bdfs(rinput)
 
@@ -80,23 +80,23 @@ class BarDetectionRecipe(EmirRecipe):
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
 
-        _logger.debug('finding bars')
+        logger.debug('finding bars')
 
         arr = hdulist[0].data
 
         # Median filter
-        _logger.debug('median filtering')
+        logger.debug('median filtering')
         mfilter_size = rinput.median_filter_size
 
         arr_median = median_filter(arr, size=mfilter_size)
 
         # Image is mapped between 0 and 1
         # for the full range [0: 2**16]
-        _logger.debug('image scaling to 0-1')
+        logger.debug('image scaling to 0-1')
         arr_grey = normalize_raw(arr_median)
 
         # Find borders
-        _logger.debug('find borders')
+        logger.debug('find borders')
         canny_sigma = rinput.canny_sigma
         # These threshols corespond roughly with
         # value x (2**16 - 1)
@@ -108,7 +108,7 @@ class BarDetectionRecipe(EmirRecipe):
                       low_threshold=low_threshold)
 
         # Number or rows used
-        # These other oarameters cab be tuned also
+        # These other parameters cab be tuned also
         total = 5
         maxdist = 1.0
         bstart = 100
@@ -123,28 +123,28 @@ class BarDetectionRecipe(EmirRecipe):
         slitstab = rinput.bars_nominal_positions
 
         for slitid, coords in enumerate(slitstab):
-            _logger.debug('looking for bar with id %i', slitid)
-            _logger.debug('reference y position is id %7.2f', coords[1])
+            logger.debug('looking for bar with id %i', slitid)
+            logger.debug('reference y position is id %7.2f', coords[1])
             # Find the position of each bar
             bpos = find_position(edges, coords[1], bstart, bend, total, maxdist)
 
             # If no bar is found, append and empty token
             if bpos is None:
-                _logger.debug('bar not found')
+                logger.debug('bar not found')
                 thisres = (slitid, -1, -1, -1, -1, 0)
             else:
                 prow, c1, c2 = bpos
-                _logger.debug('bar found between %7.2f - %7.2f', c1, c2)
+                logger.debug('bar found between %7.2f - %7.2f', c1, c2)
                 # Compute FWHM of the collapsed profile
 
                 region = (slice(prow-nt, prow+nt+1), slice(c1, c2+1))
                 fwhm = calc_fwhm(arr_grey, region, fexpand)
-                _logger.debug('bar has a FWHM %7.2f - %7.2f', fwhm)
+                logger.debug('bar has a FWHM %7.2f', fwhm)
                 thisres = (slitid, prow+1, c1+1, c2+1, fwhm, 1)
 
             positions.append(thisres)
 
-        _logger.debug('end finding bars')
+        logger.debug('end finding bars')
         result = self.create_result(frame=hdulist,
                                     positions=positions,
                                     )

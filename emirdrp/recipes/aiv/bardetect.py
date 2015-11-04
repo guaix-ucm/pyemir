@@ -19,6 +19,8 @@
 
 """Bar detection procedures for EMIR"""
 
+import logging
+
 import numpy
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
@@ -66,9 +68,7 @@ def find_position(edges, yref, bstart, bend, total=5, maxdist=1.5):
         tcuts = cuts + bstart
         # if there are exactly 2 peaks
         # accumulate these pair of borders
-        if len(tcuts) > 2:
-            continue
-        if len(tcuts) < 2:
+        if len(tcuts) != 2:
             continue
 
         cents.append(tcuts)
@@ -125,61 +125,73 @@ def calc_fwhm(img, region, fexpand=3, axis=0):
     return fwhm
 
 
-def recipe_function(arr, slitstab):
+def recipe_function(arr,
+                    bars_nominal_positions,
+                    median_filter_size=5,
+                    canny_sigma=3.0,
+                    canny_high_threshold=0.04,
+                    canny_low_threshold=0.01):
+
+    logger = logging.getLogger('numina.recipes.emir')
 
     # Median filter
-    mfilter_size = 5
+    logger.debug('median filtering')
+    mfilter_size = median_filter_size
 
     arr_median = median_filter(arr, size=mfilter_size)
 
     # Image is mapped between 0 and 1
     # for the full range [0: 2**16]
+    logger.debug('image scaling to 0-1')
     arr_grey = normalize_raw(arr_median)
 
     # Find borders
-    canny_sigma = 3.0
+    logger.debug('find borders')
+
     # These threshols corespond roughly with
     # value x (2**16 - 1)
-    high_threshold = 0.04
-    low_threshold = 0.01
+
     edges = canny(arr_grey, sigma=canny_sigma,
-                  high_threshold=high_threshold,
-                  low_threshold=low_threshold)
+                  high_threshold=canny_high_threshold,
+                  low_threshold=canny_low_threshold)
 
     # Number or rows used
-
+    # These other parameters cab be tuned also
     total = 5
     maxdist = 1.0
-    nt = total // 2
-
     bstart = 100
     bend = 1900
-
     fexpand = 3
 
-    result = []
+    positions = []
+    nt = total // 2
 
     # Based om the 'edges image'
     # and the table of approx positions of the slits
-    for slitid, coords in enumerate(slitstab):
+    slitstab = bars_nominal_positions
 
+    for slitid, coords in enumerate(slitstab):
+        logger.debug('looking for bar with id %i', slitid)
+        logger.debug('reference y position is id %7.2f', coords[1])
         # Find the position of each bar
         bpos = find_position(edges, coords[1], bstart, bend, total, maxdist)
 
         # If no bar is found, append and empty token
         if bpos is None:
-            thisres = (slitid, )
+            logger.debug('bar not found')
+            thisres = (slitid, -1, -1, -1, -1, 0)
         else:
             prow, c1, c2 = bpos
-
+            logger.debug('bar found between %7.2f - %7.2f', c1, c2)
             # Compute FWHM of the collapsed profile
 
             region = (slice(prow-nt, prow+nt+1), slice(c1, c2+1))
             fwhm = calc_fwhm(arr_grey, region, fexpand)
+            logger.debug('bar has a FWHM %7.2f', fwhm)
+            thisres = (slitid, prow+1, c1+1, c2+1, fwhm, 1)
 
-            thisres = (slitid, prow+1, c1+1, c2+1, fwhm)
+        positions.append(thisres)
 
-        result.append(thisres)
+    logger.debug('end finding bars')
 
-
-    return result
+    return positions
