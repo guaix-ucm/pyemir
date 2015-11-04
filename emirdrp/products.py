@@ -30,9 +30,10 @@ from numina.core import ValidationError
 # FIXME:
 try:
     import ext.gtc
+    RUN_IN_GTC = True
 except ImportError:
     # We are not in GTC
-    pass
+    RUN_IN_GTC = False
 
 base_schema_description = {
     'keywords': {
