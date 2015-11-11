@@ -26,7 +26,7 @@ import logging
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
-from numina.core import Requirement, Product, Parameter
+from numina.core import Requirement, Product, Parameter, RecipeError
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import ArrayType
 
@@ -41,6 +41,7 @@ from emirdrp.requirements import MasterSkyRequirement
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 from .common import normalize_raw
+from .common import get_dtur_from_header
 from .bardetect import find_position
 from .bardetect import calc_fwhm
 
@@ -66,6 +67,7 @@ class BarDetectionRecipe(EmirRecipe):
     # Recipe Products
     frame = Product(DataFrameType)
     positions = Product(ArrayType)
+    DTU = Product(ArrayType)
 
     def run(self, rinput):
 
@@ -79,6 +81,13 @@ class BarDetectionRecipe(EmirRecipe):
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
+
+        try:
+            dtur = get_dtur_from_header(hdr)
+
+        except KeyError as error:
+            logger.error(error)
+            raise RecipeError(error)
 
         logger.debug('finding bars')
 
@@ -147,5 +156,6 @@ class BarDetectionRecipe(EmirRecipe):
         logger.debug('end finding bars')
         result = self.create_result(frame=hdulist,
                                     positions=positions,
+                                    DTU=dtur
                                     )
         return result
