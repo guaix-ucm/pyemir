@@ -43,7 +43,7 @@ from .flows import init_filters_bdfs
 from .common import normalize_raw
 from .common import get_dtur_from_header
 from .bardetect import find_position
-from .bardetect import calc_fwhm
+from .bardetect import locate_bar_l, locate_bar_r
 
 
 class BarDetectionRecipe(EmirRecipe):
@@ -131,10 +131,14 @@ class BarDetectionRecipe(EmirRecipe):
         # and the table of approx positions of the slits
         barstab = rinput.bars_nominal_positions
 
+        # Currently, we only use fields 0 and 2
+        # of the nominal positions file
+
         for coords in barstab:
-            lbarid = coords[0]
-            rbarid = coords[0] + 55
+            lbarid = int(coords[0])
+            rbarid = lbarid + 55
             ref_y_coor = coords[2]
+
             logger.debug('looking for bars with ids %i - %i', lbarid, rbarid)
             logger.debug('reference y position is Y %7.2f', ref_y_coor)
             # Find the position of each bar
@@ -142,19 +146,28 @@ class BarDetectionRecipe(EmirRecipe):
 
             # If no bar is found, append and empty token
             if bpos is None:
-                logger.debug('bar not found')
-                thisres = (lbarid, -1, -1, -1, -1, 0)
+                logger.debug('bar %d not found', lbarid)
+                logger.debug('bar %d not found', rbarid)
+                thisres1 = (lbarid, 0, 0, 0, 1)
+                thisres2 = (rbarid, 0, 0, 0, 1)
             else:
                 prow, c1, c2 = bpos
-                logger.debug('bar found between %7.2f - %7.2f', c1, c2)
+                logger.debug('bars found between %7.2f - %7.2f', c1, c2)
                 # Compute FWHM of the collapsed profile
 
-                region = (slice(prow-nt, prow+nt+1), slice(c1, c2+1))
-                fwhm = calc_fwhm(arr_grey, region, fexpand)
-                logger.debug('bar has a FWHM %7.2f', fwhm)
-                thisres = (lbarid, prow+1, c1+1, c2+1, fwhm, 1)
+                cslit = arr_grey[prow-nt:prow+nt+1,:]
+                pslit = cslit.mean(axis=0)
 
-            positions.append(thisres)
+                # Add 1 to return FITS coordinates
+                epos, epos_f, error = locate_bar_l(pslit, c1)
+                thisres1 = lbarid, prow + 1, epos + 1, epos_f + 1, error
+
+
+                epos, epos_f, error = locate_bar_r(pslit, c2)
+                thisres2 = rbarid, prow + 1, epos + 1, epos_f + 1, error
+
+            positions.append(thisres1)
+            positions.append(thisres2)
 
         logger.debug('end finding bars')
         result = self.create_result(frame=hdulist,
