@@ -127,20 +127,23 @@ class BarDetectionRecipe(EmirRecipe):
         positions = []
         nt = total // 2
 
-        # Based om the 'edges image'
+        # Based on the 'edges image'
         # and the table of approx positions of the slits
-        slitstab = rinput.bars_nominal_positions
+        barstab = rinput.bars_nominal_positions
 
-        for slitid, coords in enumerate(slitstab):
-            logger.debug('looking for bar with id %i', slitid)
-            logger.debug('reference y position is id %7.2f', coords[1])
+        for coords in barstab:
+            lbarid = coords[0]
+            rbarid = coords[0] + 55
+            ref_y_coor = coords[2]
+            logger.debug('looking for bars with ids %i - %i', lbarid, rbarid)
+            logger.debug('reference y position is Y %7.2f', ref_y_coor)
             # Find the position of each bar
-            bpos = find_position(edges, coords[1], bstart, bend, total, maxdist)
+            bpos = find_position(edges, ref_y_coor, bstart, bend, total, maxdist)
 
             # If no bar is found, append and empty token
             if bpos is None:
                 logger.debug('bar not found')
-                thisres = (slitid, -1, -1, -1, -1, 0)
+                thisres = (lbarid, -1, -1, -1, -1, 0)
             else:
                 prow, c1, c2 = bpos
                 logger.debug('bar found between %7.2f - %7.2f', c1, c2)
@@ -149,7 +152,7 @@ class BarDetectionRecipe(EmirRecipe):
                 region = (slice(prow-nt, prow+nt+1), slice(c1, c2+1))
                 fwhm = calc_fwhm(arr_grey, region, fexpand)
                 logger.debug('bar has a FWHM %7.2f', fwhm)
-                thisres = (slitid, prow+1, c1+1, c2+1, fwhm, 1)
+                thisres = (lbarid, prow+1, c1+1, c2+1, fwhm, 1)
 
             positions.append(thisres)
 
