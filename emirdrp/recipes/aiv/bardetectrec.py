@@ -26,7 +26,7 @@ import logging
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
-from numina.core import Requirement, Product, Parameter
+from numina.core import Requirement, Product, Parameter, RecipeError
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import ArrayType
 
@@ -41,8 +41,13 @@ from emirdrp.requirements import MasterSkyRequirement
 from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 from .common import normalize_raw
+from .common import get_dtur_from_header
+from .common import create_dtu_wcs_header
+from .common import create_dtu_wcs_header_um
 from .bardetect import find_position
-from .bardetect import calc_fwhm
+from .bardetect import locate_bar_l, locate_bar_r
+
+PIXSCALE = 18.0
 
 
 class BarDetectionRecipe(EmirRecipe):
@@ -66,6 +71,7 @@ class BarDetectionRecipe(EmirRecipe):
     # Recipe Products
     frame = Product(DataFrameType)
     positions = Product(ArrayType)
+    DTU = Product(ArrayType)
 
     def run(self, rinput):
 
@@ -79,6 +85,13 @@ class BarDetectionRecipe(EmirRecipe):
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
+
+        try:
+            dtur = get_dtur_from_header(hdr)
+
+        except KeyError as error:
+            logger.error(error)
+            raise RecipeError(error)
 
         logger.debug('finding bars')
 
@@ -113,39 +126,61 @@ class BarDetectionRecipe(EmirRecipe):
         maxdist = 1.0
         bstart = 100
         bend = 1900
-        fexpand = 3
 
         positions = []
         nt = total // 2
 
-        # Based om the 'edges image'
-        # and the table of approx positions of the slits
-        slitstab = rinput.bars_nominal_positions
+        xfac = dtur[0] / PIXSCALE
+        yfac = -dtur[1] / PIXSCALE
 
-        for slitid, coords in enumerate(slitstab):
-            logger.debug('looking for bar with id %i', slitid)
-            logger.debug('reference y position is id %7.2f', coords[1])
+        vec = [yfac, xfac]
+        logger.debug('DTU shift is %s', vec)
+
+        # Based on the 'edges image'
+        # and the table of approx positions of the slits
+        barstab = rinput.bars_nominal_positions
+
+        # Currently, we only use fields 0 and 2
+        # of the nominal positions file
+
+        for coords in barstab:
+            lbarid = int(coords[0])
+            rbarid = lbarid + 55
+            ref_y_coor = coords[2] + vec[1]
+
+            logger.debug('looking for bars with ids %i - %i', lbarid, rbarid)
+            logger.debug('reference y position is Y %7.2f', ref_y_coor)
             # Find the position of each bar
-            bpos = find_position(edges, coords[1], bstart, bend, total, maxdist)
+            bpos = find_position(edges, ref_y_coor, bstart, bend, total, maxdist)
 
             # If no bar is found, append and empty token
             if bpos is None:
-                logger.debug('bar not found')
-                thisres = (slitid, -1, -1, -1, -1, 0)
+                logger.debug('bar %d not found', lbarid)
+                logger.debug('bar %d not found', rbarid)
+                thisres1 = (lbarid, 0, 0, 0, 1)
+                thisres2 = (rbarid, 0, 0, 0, 1)
             else:
                 prow, c1, c2 = bpos
-                logger.debug('bar found between %7.2f - %7.2f', c1, c2)
+                logger.debug('bars found between %7.2f - %7.2f', c1, c2)
                 # Compute FWHM of the collapsed profile
 
-                region = (slice(prow-nt, prow+nt+1), slice(c1, c2+1))
-                fwhm = calc_fwhm(arr_grey, region, fexpand)
-                logger.debug('bar has a FWHM %7.2f', fwhm)
-                thisres = (slitid, prow+1, c1+1, c2+1, fwhm, 1)
+                cslit = arr_grey[prow-nt:prow+nt+1,:]
+                pslit = cslit.mean(axis=0)
 
-            positions.append(thisres)
+                # Add 1 to return FITS coordinates
+                epos, epos_f, error = locate_bar_l(pslit, c1)
+                thisres1 = lbarid, prow + 1, epos + 1, epos_f + 1, error
+
+
+                epos, epos_f, error = locate_bar_r(pslit, c2)
+                thisres2 = rbarid, prow + 1, epos + 1, epos_f + 1, error
+
+            positions.append(thisres1)
+            positions.append(thisres2)
 
         logger.debug('end finding bars')
         result = self.create_result(frame=hdulist,
                                     positions=positions,
+                                    DTU=dtur
                                     )
         return result
