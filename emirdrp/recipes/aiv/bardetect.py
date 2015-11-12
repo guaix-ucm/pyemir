@@ -60,6 +60,10 @@ def find_position(edges, yref, bstart, bend, total=5, maxdist=1.5):
 
     nt = total // 2
 
+    # This bar is too near the border
+    if prow-nt < 0 or prow + nt >= edges.shape[0]:
+        return None
+
     cents = []
     # do "total" cuts and find peaks
     for h in range(-nt, nt+1):
