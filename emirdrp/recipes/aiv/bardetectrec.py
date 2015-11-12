@@ -130,13 +130,11 @@ class BarDetectionRecipe(EmirRecipe):
         positions = []
         nt = total // 2
 
-        logger.debug('using reference coordinates as they are')
+        xfac = dtur[0] / PIXSCALE
+        yfac = -dtur[1] / PIXSCALE
 
-        dtuwcs = create_dtu_wcs_header(hdr)
-        hdr.update(dtuwcs.to_header(key='A'))
-        # A third WCS with coordinates in um
-        dtuwcs_um = create_dtu_wcs_header_um(hdr)
-        hdr.update(dtuwcs_um.to_header(key='B'))
+        vec = [yfac, xfac]
+        logger.debug('DTU shift is %s', vec)
 
         # Based on the 'edges image'
         # and the table of approx positions of the slits
@@ -148,7 +146,7 @@ class BarDetectionRecipe(EmirRecipe):
         for coords in barstab:
             lbarid = int(coords[0])
             rbarid = lbarid + 55
-            ref_y_coor = coords[2]
+            ref_y_coor = coords[2] + vec[1]
 
             logger.debug('looking for bars with ids %i - %i', lbarid, rbarid)
             logger.debug('reference y position is Y %7.2f', ref_y_coor)
