@@ -42,8 +42,12 @@ from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 from .common import normalize_raw
 from .common import get_dtur_from_header
+from .common import create_dtu_wcs_header
+from .common import create_dtu_wcs_header_um
 from .bardetect import find_position
 from .bardetect import locate_bar_l, locate_bar_r
+
+PIXSCALE = 18.0
 
 
 class BarDetectionRecipe(EmirRecipe):
@@ -122,10 +126,17 @@ class BarDetectionRecipe(EmirRecipe):
         maxdist = 1.0
         bstart = 100
         bend = 1900
-        fexpand = 3
 
         positions = []
         nt = total // 2
+
+        logger.debug('using reference coordinates as they are')
+
+        dtuwcs = create_dtu_wcs_header(hdr)
+        hdr.update(dtuwcs.to_header(key='A'))
+        # A third WCS with coordinates in um
+        dtuwcs_um = create_dtu_wcs_header_um(hdr)
+        hdr.update(dtuwcs_um.to_header(key='B'))
 
         # Based on the 'edges image'
         # and the table of approx positions of the slits
