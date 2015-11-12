@@ -20,9 +20,10 @@
 """Recipes for finding the best focus."""
 
 from numina.core import Parameter
-from numina.core import DataProductRequirement
+from numina.core import Requirement
 from numina.core import Product
 
+import emirdrp.requirements as reqs
 from emirdrp.core import EmirRecipe
 from emirdrp.products import MasterBias, MasterDark, MasterBadPixelMask
 from emirdrp.products import TelescopeFocus
@@ -51,12 +52,10 @@ class TelescopeRoughFocusRecipe(EmirRecipe):
      * Best focus
     """
 
-    master_bpm = DataProductRequirement(
-        MasterBadPixelMask, 'Master bad pixel mask')
-    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
-    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    master_flat = DataProductRequirement(
-        MasterIntensityFlat, 'Master intensity flatfield')
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
     objects = Parameter([], 'List of x-y pair of object coordinates'),
     focus_range = Parameter([], 'Focus range: begin, end and step')
 
@@ -87,12 +86,10 @@ class TelescopeFineFocusRecipe(EmirRecipe):
 
     """
 
-    master_bpm = DataProductRequirement(
-        MasterBadPixelMask, 'Master bad pixel mask')
-    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
-    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    master_flat = DataProductRequirement(
-        MasterIntensityFlat, 'Master intensity flatfield')
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
     objects = Parameter([], 'List of x-y pair of object coordinates'),
 
     focus = Product(TelescopeFocus)
@@ -122,12 +119,10 @@ class DTUFocusRecipe(EmirRecipe):
 
     """
 
-    master_bpm = DataProductRequirement(
-        MasterBadPixelMask, 'Master bad pixel mask')
-    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
-    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
-    master_flat = DataProductRequirement(
-        MasterIntensityFlat, 'Master intensity flatfield')
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
     objects = Parameter([], 'List of x-y pair of object coordinates'),
     msm_pattern = Parameter([], 'List of x-y pair of slit coordinates'),
     dtu_focus_range = Parameter(

@@ -21,7 +21,7 @@
 
 import logging
 
-from numina.core import Product, DataProductRequirement
+from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median
 
@@ -44,9 +44,7 @@ class TestSkyCorrectRecipe(EmirRecipe):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = DataProductRequirement(MasterIntensityFlat,
-                                        'Master Sky calibration'
-                                        )
+    master_sky = Requirement(MasterIntensityFlat, 'Master Sky calibration')
 
     frame = Product(DataFrameType)
 

@@ -28,7 +28,7 @@ import numpy
 from astropy.io import fits
 
 from numina import __version__
-from numina.core import Parameter, DataProductRequirement
+from numina.core import Parameter, Requirement
 from numina.core import RecipeError
 from numina.core import Product
 from numina.core import DataFrameType
@@ -76,8 +76,8 @@ class CosmeticsRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
     insconf = InstrumentConfigurationRequirement()
-    master_bias = DataProductRequirement(MasterBias, 'Master bias image')
-    master_dark = DataProductRequirement(MasterDark, 'Master dark image')
+    master_bias = Requirement(MasterBias, 'Master bias image')
+    master_dark = Requirement(MasterDark, 'Master dark image')
     lowercut = Parameter(
         4.0, 'Values bellow this sigma level are flagged as dead pixels')
     uppercut = Parameter(
