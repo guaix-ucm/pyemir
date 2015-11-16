@@ -255,6 +255,11 @@ modes:
   key: TEST10
   name: Bar detection
   summary: Positions of the CSU bars
+- date: 2015-11-12
+  description: Extraction of spectra
+  key: TEST11
+  name: TEST11
+  summary: Extraction of spectra
 - date: 2012-05-21
   description: Lines and mode lines
   key: FULL_DITHERED_IMAGE
@@ -291,6 +296,7 @@ pipelines:
       TEST8: emirdrp.recipes.aiv.maskn.TestMaskRecipe
       TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
       TEST10: emirdrp.recipes.aiv.bardetectrec.BarDetectionRecipe
+      TEST11: emirdrp.recipes.aiv.extraction.CSUSpectraExtractionRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
       trace_map: emirdrp.recipes.aiv.trace.TraceMapRecipe
     version: 1

@@ -28,10 +28,9 @@ from astropy.io import fits
 
 from numina.core import Requirement, Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
-
+from numina.core.products import ArrayType
 
 from emirdrp.core import EmirRecipe
-from numina.core.products import ArrayType
 from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
@@ -129,7 +128,7 @@ def _internal_trace(img, trace1, trace2, col, step, hs, ws, tol=2, direction=1, 
     tolcounter = tol
     axis_size = img.shape[1]
     
-    # first derivatice cuadratic fit
+    # first derivative cuadratic fit
     _w1 = [-2.0, -1.0, 0.0, 1.0, 2.0]
     _w2 = [-0.1071, -0.0714, -0.0357, 0.0, 0.0357, 0.0714, 0.1071]
     
@@ -271,7 +270,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
     #DTUPA = Product(float)
 
     def run(self, rinput):
-        _logger.info('starting arc calibration')
+        _logger.info('starting extraction')
 
         flow = init_filters_bdfs(rinput)
 
@@ -312,7 +311,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
         # Loop over slits
         for slit_coords in rinput.slits_positions:
             col, y1, y2 = convert_to_(*slit_coords)
-            _logger.info('Processing slit in coords %i, %i, %i', col, y1, y2)
+            _logger.info('Processing slit in column %i, row1=%i, row2=%i', col, y1, y2)
             xmin, xmax, ymin, ymax, pfit1, pfit2 = ex_region(data3,
                                                              col, y1, y2,
                                                              step, hs, ws,
@@ -335,5 +334,65 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
         hdurss = fits.PrimaryHDU(rssdata)
         
         result = self.create_result(frame=hdulist, rss=hdurss, regions=regiontable)
+
+        return result
+
+
+class CSUSpectraExtractionRecipe(EmirRecipe):
+    """Extract spectra in image taken with the CSU configured"""
+
+    # Recipe Requirements
+    obresult = ObservationResultRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    master_sky = MasterSkyRequirement()
+    nrows_side = Parameter(5, 'Number of rows to extract around the center')
+    slits_positions = Requirement(ArrayType,
+                                 'Positions and widths of the slits'
+                                 )
+
+    # Recipe products
+    frame = Product(DataFrameType)
+    rss = Product(DataFrameType)
+
+    def run(self, rinput):
+        _logger.info('starting extraction')
+
+        flow = init_filters_bdfs(rinput)
+
+        hdulist = basic_processing_with_combination(rinput, flow=flow)
+
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
+
+        data1 = hdulist[0].data
+
+        _logger.info('Create output images')
+        rssdata = numpy.zeros((rinput.slits_positions.shape[0], data1.shape[1]),
+                              dtype='float32')
+
+        nrows = rinput.nrows_side
+        # Loop over slits
+        for idx, slit_coords in enumerate(rinput.slits_positions):
+
+            x, y, ax, ay = slit_coords # Coords in FITS coordinates
+
+            ref_col = wc_to_pix(x - 1)
+            ref_row = wc_to_pix(y - 1)
+
+            _logger.info('Processing slit in column %i, row=%i', ref_col, ref_row)
+
+            # Simple extraction
+
+            _logger.info('Extract %i rows around center', nrows)
+            region = data1[ref_row-nrows:ref_row+nrows+1,:]
+
+            rssdata[idx,:] = region.mean(axis=0)
+
+
+        hdurss = fits.PrimaryHDU(rssdata)
+
+        result = self.create_result(frame=hdulist, rss=hdurss)
 
         return result
