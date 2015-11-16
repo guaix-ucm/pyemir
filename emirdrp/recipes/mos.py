@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2015 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -19,8 +19,7 @@
 
 """MOS Recipes for EMIR"""
 
-from numina.core import Parameter
-from numina.core import DataProductRequirement
+from numina.core import Parameter, Requirement
 from numina.core import Product
 
 from emirdrp.core import EmirRecipe
@@ -178,14 +177,10 @@ class StareSpectraRecipe(EmirRecipe):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    master_spectral_ff = DataProductRequirement(MasterSpectralFlat,
-                                                'Master spectral flatfield')
-    st_calibration = DataProductRequirement(SlitTransmissionCalibration,
-                                            'Slit tranmision calibration')
-    w_calibration = DataProductRequirement(WavelengthCalibration,
-                                           'Wavelength calibration')
-    lines = Parameter('lines', None,
-                      'List of x-lambda pairs of line coordinates')
+    master_spectral_ff = Requirement(MasterSpectralFlat, 'Master spectral flatfield')
+    st_calibration = Requirement(SlitTransmissionCalibration, 'Slit tranmision calibration')
+    w_calibration = Requirement(WavelengthCalibration, 'Wavelength calibration')
+    lines = Parameter('lines', None, 'List of x-lambda pairs of line coordinates')
 
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
@@ -205,14 +200,10 @@ class DNSpectraRecipe(EmirRecipe):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    master_spectral_ff = DataProductRequirement(MasterSpectralFlat,
-                                                'Master spectral flatfield')
-    st_calibration = DataProductRequirement(SlitTransmissionCalibration,
-                                            'Slit tranmision calibration')
-    w_calibration = DataProductRequirement(WavelengthCalibration,
-                                           'Wavelength calibration')
-    lines = Parameter('lines', None,
-                      'List of x-lambda pairs of line coordinates')
+    master_spectral_ff = Requirement(MasterSpectralFlat, 'Master spectral flatfield')
+    st_calibration = Requirement(SlitTransmissionCalibration, 'Slit tranmision calibration')
+    w_calibration = Requirement(WavelengthCalibration, 'Wavelength calibration')
+    lines = Parameter('lines', None, 'List of x-lambda pairs of line coordinates')
 
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
@@ -232,14 +223,10 @@ class OffsetSpectraRecipe(EmirRecipe):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    master_spectral_ff = DataProductRequirement(MasterSpectralFlat,
-                                                'Master spectral flatfield')
-    st_calibration = DataProductRequirement(SlitTransmissionCalibration,
-                                            'Slit tranmision calibration')
-    w_calibration = DataProductRequirement(WavelengthCalibration,
-                                           'Wavelength calibration')
-    lines = Parameter('lines', None,
-                      'List of x-lambda pairs of line coordinates')
+    master_spectral_ff = Requirement(MasterSpectralFlat, 'Master spectral flatfield')
+    st_calibration = Requirement(SlitTransmissionCalibration, 'Slit tranmision calibration')
+    w_calibration = Requirement(WavelengthCalibration, 'Wavelength calibration')
+    lines = Parameter('lines', None, 'List of x-lambda pairs of line coordinates')
 
     spectra = Product(Spectra)
     catalog = Product(LinesCatalog)
@@ -259,12 +246,9 @@ class RasterSpectraRecipe(EmirRecipe):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    master_spectral_ff = DataProductRequirement(MasterSpectralFlat,
-                                                'Master spectral flatfield')
-    st_calibration = DataProductRequirement(SlitTransmissionCalibration,
-                                            'Slit tranmision calibration')
-    w_calibration = DataProductRequirement(WavelengthCalibration,
-                                           'Wavelength calibration')
+    master_spectral_ff = Requirement(MasterSpectralFlat, 'Master spectral flatfield')
+    st_calibration = Requirement(SlitTransmissionCalibration, 'Slit tranmision calibration')
+    w_calibration = Requirement(WavelengthCalibration, 'Wavelength calibration')
 
     cube = Product(DataCube)
 

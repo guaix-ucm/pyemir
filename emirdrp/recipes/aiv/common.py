@@ -30,6 +30,7 @@ import scipy.optimize as opz
 from scipy import ndimage
 
 from astropy.modeling import models, fitting
+import astropy.wcs
 import photutils
 from photutils import CircularAperture
 
@@ -47,6 +48,9 @@ from .procedures import AnnulusBackgroundEstimator
 from .procedures import image_box2d
 
 _logger = logging.getLogger('numina.recipes.emir')
+
+
+PIXSCALE = 18.0
 
 
 # returns y,x
@@ -527,6 +531,66 @@ def get_dtur_from_header(hdr):
     _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f', xdtur, ydtur)
     dtur = [xdtur, ydtur, zdtu]
     return dtur
+
+
+def create_dtu_wcs_header(hdr):
+
+    # get DTU things from header
+    xdtu = hdr['XDTU']
+    ydtu = hdr['YDTU']
+
+    # Defined even if not in the header
+    xdtuf = hdr.get('XDTU_F', 1.0)
+    ydtuf = hdr.get('YDTU_F', 1.0)
+    xdtu0 = hdr.get('XDTU_0', 0.0)
+    ydtu0 = hdr.get('YDTU_0', 0.0)
+
+    xdtur = (xdtu / xdtuf - xdtu0)
+    ydtur = (ydtu / ydtuf - ydtu0)
+
+    xfac = xdtur / PIXSCALE
+    yfac = -ydtur / PIXSCALE
+
+    # xout = xin + yfac
+    # yout = yin + xfac
+
+    dtuwcs = astropy.wcs.WCS(naxis=2)
+    dtuwcs.wcs.name = 'DTU WCS'
+    dtuwcs.wcs.crpix = [0, 0]
+    dtuwcs.wcs.cdelt = [1, 1]
+    dtuwcs.wcs.crval = [yfac, xfac]
+    dtuwcs.wcs.ctype = ['linear', 'linear']
+
+    return dtuwcs
+
+
+def create_dtu_wcs_header_um(hdr):
+
+    # get DTU things from header
+    xdtu = hdr['XDTU']
+    ydtu = hdr['YDTU']
+
+    # Defined even if not in the header
+    xdtuf = hdr.get('XDTU_F', 1.0)
+    ydtuf = hdr.get('YDTU_F', 1.0)
+    xdtu0 = hdr.get('XDTU_0', 0.0)
+    ydtu0 = hdr.get('YDTU_0', 0.0)
+
+    xdtur = (xdtu / xdtuf - xdtu0)
+    ydtur = (ydtu / ydtuf - ydtu0)
+
+    xfac = xdtur
+    yfac = -ydtur
+
+    dtuwcs = astropy.wcs.WCS(naxis=2)
+    dtuwcs.wcs.name = 'DTU WCS um'
+    dtuwcs.wcs.crpix = [0, 0]
+    dtuwcs.wcs.cdelt = [1, 1]
+    dtuwcs.wcs.crval = [yfac, xfac]
+    dtuwcs.wcs.ctype = ['linear', 'linear']
+    dtuwcs.wcs.cunit = ['um', 'um']
+
+    return dtuwcs
 
 
 def char_slit(data, regions, box_increase=3, slit_size_ratio=4.0):

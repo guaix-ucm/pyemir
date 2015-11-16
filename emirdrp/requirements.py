@@ -19,7 +19,7 @@
 
 """Typical requirements of recipes"""
 
-from numina.core import Parameter, DataProductRequirement, Requirement
+from numina.core import Parameter, Requirement
 
 from .products import MasterBias, MasterDark, MasterBadPixelMask
 from .products import MasterIntensityFlat
@@ -47,7 +47,7 @@ class EMIRConfigurationRequirement(Requirement):
                                                   )
 
 
-class MasterBadPixelMaskRequirement(DataProductRequirement):
+class MasterBadPixelMaskRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterBadPixelMaskRequirement,
               self).__init__(MasterBadPixelMask,
@@ -56,7 +56,7 @@ class MasterBadPixelMaskRequirement(DataProductRequirement):
                              )
 
 
-class MasterBiasRequirement(DataProductRequirement):
+class MasterBiasRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterBiasRequirement,
               self).__init__(MasterBias,
@@ -65,25 +65,25 @@ class MasterBiasRequirement(DataProductRequirement):
                              )
 
 
-class MasterDarkRequirement(DataProductRequirement):
+class MasterDarkRequirement(Requirement):
     def __init__(self):
         super(MasterDarkRequirement,
               self).__init__(MasterDark, 'Master DARK image')
 
 
-class MasterIntensityFlatFieldRequirement(DataProductRequirement):
+class MasterIntensityFlatFieldRequirement(Requirement):
     def __init__(self):
         super(MasterIntensityFlatFieldRequirement,
               self).__init__(MasterIntensityFlat, 'Master intensity flatfield')
 
 
-class MasterSpectralFlatFieldRequirement(DataProductRequirement):
+class MasterSpectralFlatFieldRequirement(Requirement):
     def __init__(self):
         super(MasterSpectralFlatFieldRequirement,
               self).__init__(MasterSpectralFlat, 'Master spectral flatfield')
 
 
-class MasterSkyRequirement(DataProductRequirement):
+class MasterSkyRequirement(Requirement):
     def __init__(self):
         super(MasterSkyRequirement,
               self).__init__(MasterSky, 'Master Sky calibration')
