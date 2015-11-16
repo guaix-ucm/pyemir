@@ -32,31 +32,30 @@ from numina.array.utils import wc_to_pix_1d
 from .common import normalize_raw
 
 
-def find_position(edges, yref, bstart, bend, total=5, maxdist=1.5):
+def find_position(edges, prow, bstart, bend, total=5, maxdist=1.5):
     """Find a EMIR CSU bar position in a edge image.
 
     Parameters
     ==========
     edges; ndarray,
         a 2d image with 1 where is a border, 0 otherwise
-    yref: float,
-        reference 'y' coordinate of this bar
+    prow: int,
+        reference 'row' of the bars
     bstart: int,
         minimum 'x' position of a bar (0-based)
     bend: int
         maximum 'x' position of a bar (0 based)
     total: int
-        number of rows to check near `yref`
+        number of rows to check near `prow`
     maxdist: float
         maximum distance between peaks in different rows
 
     Return
     ======
-    tuple with row as given by yref, left border and rigth border of the bar,
+    tuple with row as given by prow, left border and rigth border of the bar,
     None if the bar is not found
 
     """
-    prow = wc_to_pix_1d(yref)
 
     nt = total // 2
 

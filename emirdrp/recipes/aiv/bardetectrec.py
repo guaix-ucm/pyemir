@@ -29,6 +29,7 @@ from skimage.feature import canny
 from numina.core import Requirement, Product, Parameter, RecipeError
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import ArrayType
+from numina.array.utils import wc_to_pix_1d
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
@@ -155,21 +156,22 @@ class BarDetectionRecipe(EmirRecipe):
             lbarid = int(coords[0])
             rbarid = lbarid + 55
             ref_y_coor = coords[2] + vec[1]
+            prow = wc_to_pix_1d(ref_y_coor) - 1
+            fits_row = prow + 1 # FITS pixel index
 
-            logger.debug('looking for bars with ids %i - %i', lbarid, rbarid)
+            logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
             logger.debug('reference y position is Y %7.2f', ref_y_coor)
             # Find the position of each bar
-            bpos = find_position(edges, ref_y_coor, bstart, bend, total, maxdist)
+            bpos = find_position(edges, prow, bstart, bend, total, maxdist)
 
             # If no bar is found, append and empty token
             if bpos is None:
-                logger.debug('bar %d not found', lbarid)
-                logger.debug('bar %d not found', rbarid)
-                thisres1 = (lbarid, 0, 0, 0, 1)
-                thisres2 = (rbarid, 0, 0, 0, 1)
+                logger.debug('bars %d, %d not found at row %d', lbarid, rbarid, fits_row)
+                thisres1 = (lbarid, fits_row, 0, 0, 1)
+                thisres2 = (rbarid, fits_row, 0, 0, 1)
             else:
                 prow, c1, c2 = bpos
-                logger.debug('bars found between %7.2f - %7.2f', c1, c2)
+                logger.debug('bars found  at row %d between %7.2f - %7.2f', fits_row, c1, c2)
                 # Compute FWHM of the collapsed profile
 
                 cslit = arr_grey[prow-nt:prow+nt+1,:]
@@ -177,11 +179,11 @@ class BarDetectionRecipe(EmirRecipe):
 
                 # Add 1 to return FITS coordinates
                 epos, epos_f, error = locate_bar_l(pslit, c1)
-                thisres1 = lbarid, prow + 1, epos + 1, epos_f + 1, error
+                thisres1 = lbarid, fits_row, epos + 1, epos_f + 1, error
 
 
                 epos, epos_f, error = locate_bar_r(pslit, c2)
-                thisres2 = rbarid, prow + 1, epos + 1, epos_f + 1, error
+                thisres2 = rbarid, fits_row, epos + 1, epos_f + 1, error
 
             positions.append(thisres1)
             positions.append(thisres2)
