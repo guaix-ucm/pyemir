@@ -28,10 +28,9 @@ from astropy.io import fits
 
 from numina.core import Requirement, Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
-
+from numina.core.products import ArrayType
 
 from emirdrp.core import EmirRecipe
-from numina.core.products import ArrayType
 from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
@@ -129,7 +128,7 @@ def _internal_trace(img, trace1, trace2, col, step, hs, ws, tol=2, direction=1, 
     tolcounter = tol
     axis_size = img.shape[1]
     
-    # first derivatice cuadratic fit
+    # first derivative cuadratic fit
     _w1 = [-2.0, -1.0, 0.0, 1.0, 2.0]
     _w2 = [-0.1071, -0.0714, -0.0357, 0.0, 0.0357, 0.0714, 0.1071]
     
@@ -312,7 +311,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
         # Loop over slits
         for slit_coords in rinput.slits_positions:
             col, y1, y2 = convert_to_(*slit_coords)
-            _logger.info('Processing slit in coords %i, %i, %i', col, y1, y2)
+            _logger.info('Processing slit in column %i, row1=%i, row2=%i', col, y1, y2)
             xmin, xmax, ymin, ymax, pfit1, pfit2 = ex_region(data3,
                                                              col, y1, y2,
                                                              step, hs, ws,
@@ -334,6 +333,98 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
 
         hdurss = fits.PrimaryHDU(rssdata)
         
+        result = self.create_result(frame=hdulist, rss=hdurss, regions=regiontable)
+
+        return result
+
+
+class CSUSpectraExtractionRecipe(EmirRecipe):
+
+    # Recipe Requirements
+    obresult = ObservationResultRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    master_sky = MasterSkyRequirement()
+
+    median_filter_size = Parameter(5, 'Size of the median box')
+    slits_positions = Requirement(ArrayType,
+                                 'Positions and widths of the slits'
+                                 )
+
+    frame = Product(DataFrameType)
+    rss = Product(DataFrameType)
+    regions = Product(ArrayType)
+    #slitstable = Product(ArrayType)
+    #DTU = Product(ArrayType)
+    #IPA = Product(float)
+    #DETPA = Product(float)
+    #DTUPA = Product(float)
+
+    def run(self, rinput):
+        _logger.info('starting arc calibration')
+
+        flow = init_filters_bdfs(rinput)
+
+        hdulist = basic_processing_with_combination(rinput, flow=flow)
+
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
+
+        # First, prefilter with median
+        median_filter_size = rinput.median_filter_size
+
+
+        data1 = hdulist[0].data
+        _logger.debug('Median filter with box %d', median_filter_size)
+        data2 = median_filter(data1, size=median_filter_size)
+
+        # Normalize input between -1 and +1
+        data3 = img_norm(data2)
+
+        # Tracing parameters
+        ws = 10
+        step = 15
+        hs = 15
+        tol = 2
+        doplot = False
+        npol = 5
+
+        _logger.info('Create output images')
+        rssdata = numpy.zeros((rinput.slits_positions.shape[0], data3.shape[1]),
+                              dtype='float32')
+
+        # FIXME, number of columns depends on polynomial degree
+        regiontable = numpy.zeros((rinput.slits_positions.shape[0], 4 + 2 * (npol + 1)),
+                                  dtype='float32')
+
+
+        count = 0
+        # Loop over slits
+        for slit_coords in rinput.slits_positions:
+            col, y1, y2 = convert_to_(*slit_coords)
+            _logger.info('Processing slit in column %i, row1=%i, row2=%i', col, y1, y2)
+            xmin, xmax, ymin, ymax, pfit1, pfit2 = ex_region(data3,
+                                                             col, y1, y2,
+                                                             step, hs, ws,
+                                                             tol=tol,
+                                                             doplot=doplot)
+
+            _logger.info('Spectrum region is %i, %i, %i, %i', xmin, xmax, ymin, ymax)
+            try:
+                region = data1[ymin:ymax+1,xmin:xmax+1]
+                rssdata[count,xmin:xmax+1] = region.mean(axis=0)
+            except ValueError as err:
+                _logger.error("Error collapsing spectrum: %s", err)
+            # IN FITS convention
+            _logger.info('Create regions table')
+            regiontable[count, :4] = xmin + 1, xmax + 1, ymin +1, ymax +1
+            #regiontable[count, 4:4 + npol + 1] = pfit1
+            #regiontable[count, 4 + npol + 1:] = pfit2
+            count += 1
+
+        hdurss = fits.PrimaryHDU(rssdata)
+
         result = self.create_result(frame=hdulist, rss=hdurss, regions=regiontable)
 
         return result
