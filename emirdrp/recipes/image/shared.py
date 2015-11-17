@@ -34,7 +34,6 @@ from astropy.visualization.mpl_normalize import ImageNormalize
 from scipy.spatial import KDTree as KDTree
 
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 
@@ -157,6 +156,8 @@ class DirectImageCommon(EmirRecipe):
 
     def __init__(self, *args, **kwds):
         super(DirectImageCommon, self).__init__(version=__version__)
+        # Required to delay the backend initialization (issue numina/#102, #49)
+        import matplotlib.pyplot as plt
 
         self._figure = plt.figure(facecolor='white')
         self._figure.canvas.set_window_title('Recipe Plots')
