@@ -58,6 +58,8 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
     median_filter_size = Parameter(5, 'Size of the median box')
     canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
+    canny_high_threshold = Parameter(0.04, 'High threshold for the Canny algorithm')
+    canny_low_threshold = Parameter(0.01, 'High threshold for the Canny algorithm')
 
     # Recipe Results
     frame = Product(DataFrameType)
@@ -106,12 +108,17 @@ class TestSlitDetectionRecipe(EmirRecipe):
         # Grey level image
         img_grey = normalize_raw(data2)
 
-        # Find edges with canny
-        _logger.debug('Find edges with canny, sigma %d', canny_sigma)
-        _logger.debug('Find edges with canny, high threshold %d', canny_sigma)
+        # Find edges with Canny
+        _logger.debug('Find edges, Canny sigma %f', canny_sigma)
+        # These thresholds corespond roughly with
+        # value x (2**16 - 1)
+        high_threshold = rinput.canny_high_threshold
+        low_threshold = rinput.canny_low_threshold
+        _logger.debug('Find edges, Canny high threshold %f', high_threshold)
+        _logger.debug('Find edges, Canny low threshold %f', low_threshold)
         edges = canny(img_grey, sigma=canny_sigma,
-                      high_threshold=0.1, # approx 6500 counts
-                      low_threshold=0.05)
+                      high_threshold=high_threshold,
+                      low_threshold=low_threshold)
         
         # Fill edges
         _logger.debug('Fill holes')
@@ -157,7 +164,9 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
     master_sky = MasterSkyRequirement()
 
     median_filter_size = Parameter(4, 'Size of the median box')
-    canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
+    canny_sigma = Parameter(3.0, 'Sigma for the Canny algorithm')
+    canny_high_threshold = Parameter(0.04, 'High threshold for the Canny algorithm')
+    canny_low_threshold = Parameter(0.01, 'High threshold for the Canny algorithm')
     obj_min_size = Parameter(200, 'Minimum size of the slit')
     obj_max_size = Parameter(3000, 'Maximum size of the slit')
     slit_size_ratio = Parameter(4.0, 'Minimum ratio between height and width for slits')
@@ -206,10 +215,17 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
         # Grey level image
         img_grey = normalize_raw(data2)
 
-        # Find edges with canny
-        _logger.debug('Find edges with canny, sigma %d', canny_sigma)
-        edges = canny(img_grey, sigma=canny_sigma)
-        
+        # Find edges with Canny
+        _logger.debug('Find edges with Canny, sigma %f', canny_sigma)
+        # These thresholds corespond roughly with
+        # value x (2**16 - 1)
+        high_threshold = rinput.canny_high_threshold
+        low_threshold = rinput.canny_low_threshold
+        _logger.debug('Find edges, Canny high threshold %f', high_threshold)
+        _logger.debug('Find edges, Canny low threshold %f', low_threshold)
+        edges = canny(img_grey, sigma=canny_sigma,
+                      high_threshold=high_threshold,
+                      low_threshold=low_threshold)
         # Fill edges
         _logger.debug('Fill holes')
         fill_slits =  ndimage.binary_fill_holes(edges)
