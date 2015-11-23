@@ -208,4 +208,4 @@ def _locate_bar_gen(icut, epos, transform1, transform2):
         error = 2
         epos_f = epos
 
-    return epos, epos_f, error
+    return epos_pix, epos_f, error
