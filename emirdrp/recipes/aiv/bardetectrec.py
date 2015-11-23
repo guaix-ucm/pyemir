@@ -91,10 +91,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         try:
             ipa = hdr['IPA']
-            xdtu = hdr['XDTU']
-            ydtu = hdr['YDTU']
-            zdtu = hdr['ZDTU']
-            dtur = get_dtur_from_header(hdr)
+            dtub, dtur = get_dtur_from_header(hdr)
 
         except KeyError as error:
             logger.error(error)
@@ -208,7 +205,7 @@ class BarDetectionRecipe(EmirRecipe):
         logger.debug('end finding bars')
         result = self.create_result(frame=hdulist,
                                     positions=positions,
-                                    DTU=[xdtu, ydtu, zdtu],
+                                    DTU=dtub,
                                     IPA=ipa,
                                     param_median_filter_size=rinput.median_filter_size,
                                     param_canny_high_threshold=rinput.canny_high_threshold,

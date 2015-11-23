@@ -99,12 +99,13 @@ class TestPinholeRecipe(EmirRecipe):
             ipa = hdr['IPA']
             detpa = hdr['DETPA']
             dtupa = hdr['DTUPA']
-            xdtur, ydtur, zdtur = get_dtur_from_header(hdr)
+            dtub, dtur = get_dtur_from_header(hdr)
         except KeyError as error:
             _logger.error(error)
             raise RecipeError(error)
 
         if rinput.shift_coordinates:
+            xdtur, ydtur, zdtur = dtur
             xfac = xdtur / PIXSCALE
             yfac = -ydtur / PIXSCALE
 
@@ -137,7 +138,7 @@ class TestPinholeRecipe(EmirRecipe):
                                     positions=positions,
                                     positions_alt=positions_alt,
                                     filter=filtername,
-                                    DTU=[xdtur, ydtur, zdtur],
+                                    DTU=dtub,
                                     readmode=readmode,
                                     IPA=ipa,
                                     DETPA=detpa,

@@ -529,8 +529,9 @@ def get_dtur_from_header(hdr):
     xdtur = (xdtu / xdtuf - xdtu0)
     ydtur = (ydtu / ydtuf - ydtu0)
     _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f', xdtur, ydtur)
+    dtu = [xdtu, ydtu, zdtu]
     dtur = [xdtur, ydtur, zdtu]
-    return dtur
+    return dtu, dtur
 
 
 def create_dtu_wcs_header(hdr):

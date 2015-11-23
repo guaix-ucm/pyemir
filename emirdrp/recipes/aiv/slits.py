@@ -84,7 +84,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
             ipa = hdr['IPA']
             detpa = hdr['DETPA']
             dtupa = hdr['DTUPA']
-            dtur = get_dtur_from_header(hdr)
+            dtub, dtur = get_dtur_from_header(hdr)
 
         except KeyError as error:
             _logger.error(error)
@@ -145,7 +145,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         result = self.create_result(frame=hdulist,
                                     slitstable=table,
-                                    DTU=dtur,
+                                    DTU=dtub,
                                     IPA=ipa,
                                     DETPA=detpa,
                                     DTUPA=dtupa
@@ -194,7 +194,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
             ipa = hdr['IPA']
             detpa = hdr['DETPA']
             dtupa = hdr['DTUPA']
-            dtur = get_dtur_from_header(hdr)
+            dtub, dtur = get_dtur_from_header(hdr)
 
         except KeyError as error:
             _logger.error(error)
@@ -271,7 +271,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
                           )
 
         result = self.create_result(frame=hdulist, slitstable=table,
-                                    DTU=dtur,
+                                    DTU=dtub,
                                     IPA=ipa,
                                     DETPA=detpa,
                                     DTUPA=dtupa
