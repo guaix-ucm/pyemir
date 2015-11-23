@@ -43,6 +43,7 @@ from .flows import basic_processing_with_combination
 from .flows import init_filters_bdfs
 from .common import normalize_raw
 from .common import get_dtur_from_header
+from .common import get_cs_from_header, get_csup_from_header
 from .bardetect import find_position
 from .bardetect import locate_bar_l, locate_bar_r
 
@@ -72,6 +73,8 @@ class BarDetectionRecipe(EmirRecipe):
     positions = Product(ArrayType)
     DTU = Product(ArrayType)
     IPA = Product(float)
+    csupos = Product(ArrayType)
+    csusens = Product(ArrayType)
     param_median_filter_size = Product(float)
     param_canny_high_threshold = Product(float)
     param_canny_low_threshold = Product(float)
@@ -92,6 +95,8 @@ class BarDetectionRecipe(EmirRecipe):
         try:
             ipa = hdr['IPA']
             dtub, dtur = get_dtur_from_header(hdr)
+            csupos = get_csup_from_header(hdr)
+            csusens = get_cs_from_header(hdr)
 
         except KeyError as error:
             logger.error(error)
@@ -207,6 +212,8 @@ class BarDetectionRecipe(EmirRecipe):
                                     positions=positions,
                                     DTU=dtub,
                                     IPA=ipa,
+                                    csupos=csupos,
+                                    csusens=csusens,
                                     param_median_filter_size=rinput.median_filter_size,
                                     param_canny_high_threshold=rinput.canny_high_threshold,
                                     param_canny_low_threshold=rinput.canny_low_threshold
