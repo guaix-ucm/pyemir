@@ -30,6 +30,7 @@ from skimage.feature import canny
 from numina.array.utils import expand_region
 import numina.array.fwhm as fmod
 from numina.array.utils import wc_to_pix_1d
+from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 from .common import normalize_raw
 
@@ -209,3 +210,59 @@ def _locate_bar_gen(icut, epos, transform1, transform2):
         epos_f = epos
 
     return epos_pix, epos_f, error
+
+
+def char_bar_peak_l(arr_deriv, ypix, bstart, bend, th, barid, wx=10, wy=3, wfit=5):
+    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th, barid, wx=wx, wy=wy, wfit=wfit, sign=1)
+
+
+def char_bar_peak_r(arr_deriv, ypix, bstart, bend, th, barid, wx=10, wy=3, wfit=5):
+    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th, barid, wx=wx, wy=wy, wfit=wfit, sign=-1)
+
+
+def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, barid, wx=10, wy=3, wfit=5, sign=1):
+
+    # extract a region to average
+    # wy = 3
+    # wx = 10
+    # Fit the peak with these points
+    # wfit = 5
+
+    cut = sign * arr_deriv[ypix, bstart:bend]
+
+    idxs = find_peaks_indexes(cut, threshold=th)
+
+    if len(idxs) == 0:
+        return 0, 1
+
+    # Characterize: use the peak that has the greates value in the derivative?
+    pix_m = cut[idxs].argmax()
+
+    centerx = idxs[pix_m]
+
+    # This function should return the center of 'barid'
+    # when its position is 'x'
+    # without information, the best guess is 'ypix'
+    def center_of_bar(barid, x):
+        return ypix
+
+    centery = center_of_bar(barid, centerx)
+
+    print 'For bar', barid, 'x=',centerx, 'center is', centery, '(not computed)'
+
+    #print 'average {} rows'.format(2*wy+1)
+    collapsed = sign * arr_deriv[centery-wy:centery+wy+1, bstart+centerx-wx:bstart+centerx+wx+1].mean(axis=0)
+
+    #print 'fit peak with {} points'.format(wfit)
+
+    # Fine tunning
+    idxs_t = find_peaks_indexes(collapsed, threshold=th)
+    # Use only the peak nearest the original peak
+    dist_t = numpy.abs(idxs_t - wx)
+    only_this = dist_t.argmin()
+
+    x_t, y_t = refine_peaks(collapsed, idxs_t[only_this], wfit)
+
+    xl = bstart + centerx - wx + x_t[0]
+
+    return xl, 0
