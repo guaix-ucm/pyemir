@@ -22,18 +22,14 @@
 import logging
 
 import numpy
-from scipy.ndimage.filters import median_filter
+
 import scipy.ndimage.measurements as mes
 import scipy.ndimage.morphology as morph
-from skimage.feature import canny
 
 from numina.array.utils import expand_region
 import numina.array.fwhm as fmod
 from numina.array.utils import wc_to_pix_1d
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
-
-from .common import normalize_raw
-
 
 def find_position(edges, prow, bstart, bend, total=5):
     """Find a EMIR CSU bar position in a edge image.
@@ -248,12 +244,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, barid, wx=10, wy=3, wfit=5
 
     centery = center_of_bar(barid, centerx)
 
-    print 'For bar', barid, 'x=',centerx, 'center is', centery, '(not computed)'
-
-    #print 'average {} rows'.format(2*wy+1)
     collapsed = sign * arr_deriv[centery-wy:centery+wy+1, bstart+centerx-wx:bstart+centerx+wx+1].mean(axis=0)
-
-    #print 'fit peak with {} points'.format(wfit)
 
     # Fine tunning
     idxs_t = find_peaks_indexes(collapsed, threshold=th)
