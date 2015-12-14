@@ -260,8 +260,12 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     logger.debug('collapsing %d pixels', wy)
     #
     slicey = slice_create(centery, wy, start=1, stop=2047)
+    region = arr_deriv[slicey, bstart+centerx-wx:bstart+centerx+wx+1]
+    if region.size == 0:
+        logger.debug('region to collapse is empty')
+        return centery, 0, 0, 1
 
-    collapsed = sign * arr_deriv[slicey, bstart+centerx-wx:bstart+centerx+wx+1].mean(axis=0)
+    collapsed = sign * region.mean(axis=0)
 
     # Fine tunning
     idxs_t = find_peaks_indexes(collapsed, threshold=th)
