@@ -539,7 +539,7 @@ def get_csup_from_header(hdr):
     # CSUP keys
     default = 0.0
     first_idx = 1
-    last_idx = 100
+    last_idx = 110
     _logger.info('getting CSUP keys from header')
     values = []
     for idx in range(first_idx, last_idx+1):
