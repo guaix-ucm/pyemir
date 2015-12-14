@@ -26,8 +26,7 @@ import logging
 import numpy
 from scipy.ndimage.filters import median_filter
 from scipy.ndimage import convolve1d
-from skimage.filters import threshold_li
-import astropy.io.fits as fits
+from numpy.polynomial.polynomial import polyval
 
 from numina.core import Requirement, Product, Parameter, RecipeError
 from numina.core.requirements import ObservationResultRequirement
@@ -72,8 +71,11 @@ class BarDetectionRecipe(EmirRecipe):
 
     # Recipe Products
     frame = Product(DataFrameType)
-    derivative = Product(DataFrameType)
-    positions = Product(ArrayType)
+    # derivative = Product(DataFrameType)
+    positions3 = Product(ArrayType)
+    positions5 = Product(ArrayType)
+    positions7 = Product(ArrayType)
+    positions9 = Product(ArrayType)
     DTU = Product(ArrayType)
     IPA = Product(float)
     csupos = Product(ArrayType)
@@ -117,15 +119,6 @@ class BarDetectionRecipe(EmirRecipe):
         logger.debug('median filtering, %d rows', mfilter_size)
         arr_median = median_filter(arr_median, size=(mfilter_size, 1))
 
-        # Savitsky and Golay (1964) filter to compute the X derivative
-        # scipy >= xx has a savgol_filter function
-        # for compatibility we do it manually
-
-        # Weights hardcoded for a 9 pixel window
-
-        coeffs_are = [0.066667, 0.05, 0.033333, 0.025, 0, -0.025, -0.03333, -0.0666667]
-        arr_deriv = convolve1d(arr_median, coeffs_are, axis=-1)
-
         positions = []
 
         xfac = dtur[0] / PIXSCALE
@@ -145,10 +138,6 @@ class BarDetectionRecipe(EmirRecipe):
         bend = 1900
         logger.debug('ignoring columns outside %d - %d',bstart, bend-1)
 
-        # Threshold in the derivative image using
-        # Li's Minimum Cross Entropy method.
-        threshold = threshold_li(numpy.abs(arr_deriv[:,bstart:bend]))
-        logger.debug('threshold value in derivative image is %7.2f', threshold)
         # extract a region to average
         wy = (rinput.average_box_row_size // 2)
         wx = (rinput.average_box_col_size // 2)
@@ -157,27 +146,69 @@ class BarDetectionRecipe(EmirRecipe):
         wfit = 2 * (rinput.fit_peak_npoints // 2) + 1
         logger.debug('fit with %d points', wfit)
 
-        for coords in barstab:
-            lbarid = int(coords[0])
-            rbarid = lbarid + 55
-            ref_y_coor = coords[2] + vec[1]
-            prow = wc_to_pix_1d(ref_y_coor) - 1
-            fits_row = prow + 1 # FITS pixel index
+        # Minimum threshold
+        threshold = 15
+        # Savitsky and Golay (1964) filter to compute the X derivative
+        # scipy >= xx has a savgol_filter function
+        # for compatibility we do it manually
 
-            logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
-            logger.debug('reference y position is Y %7.2f', ref_y_coor)
+        allpos = {}
+        #fits.writeto('/tmp/test12-array-median.fits', arr_median, clobber=True)
 
-            # Find the position of each bar
-            xpos, st = char_bar_peak_l(arr_deriv, prow, bstart, bend, threshold, lbarid, wx=wx, wy=wy, wfit=wfit)
-            positions.append((lbarid, fits_row, xpos+1, st))
+        for ks in [3,5,7,9]:
+            logger.debug('kernel size is %d', ks)
+            # S and G kernel for derivative
+            kw = ks * (ks*ks-1) / 12.0
+            coeffs_are = -numpy.arange((1-ks)//2, (ks-1)//2 + 1) / kw
+            logger.debug('kernel weights are %s', coeffs_are)
+            arr_deriv = convolve1d(arr_median, coeffs_are, axis=-1)
+            #fits.writeto('/tmp/test12-array-deriv%d.fits' % ks, arr_deriv, clobber=True)
 
-            xpos, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold, rbarid, wx=wx, wy=wy, wfit=wfit)
-            positions.append((rbarid, fits_row, xpos+1, st))
+            positions = []
+            for coords in barstab:
+                lbarid = int(coords[0])
+                rbarid = lbarid + 55
+                ref_y_coor = coords[1] + vec[1]
+                poly_coeffs = coords[2:]
+                prow = wc_to_pix_1d(ref_y_coor) - 1
+                fits_row = prow + 1 # FITS pixel index
+
+                # A function that returns the center of the bar
+                # given its X position
+                def center_of_bar(x):
+                    # Pixel values are 0-based
+                    return polyval(x+1-vec[0], poly_coeffs) + vec[1] - 1
+
+
+                logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
+                logger.debug('reference y position is Y %7.2f', ref_y_coor)
+
+                # if ref_y_coor is outlimits, skip this bar
+		        # ref_y_coor is in FITS format
+                if (ref_y_coor >= 2047) or (ref_y_coor <= 1):
+                    logger.debug('reference y position is outlimits, skipping')
+                    positions.append((lbarid, fits_row, 1, 0, 3))
+                    positions.append((rbarid, fits_row, 1, 0, 3))
+                    continue
+
+                # Find the position of each bar
+                centery, xpos, fwhm, st = char_bar_peak_l(arr_deriv, prow, bstart, bend, threshold, center_of_bar, wx=wx, wy=wy, wfit=wfit)
+                positions.append((lbarid, centery+1, fits_row, xpos+1, fwhm, st))
+                logger.debug('bar %d center-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',*positions[-1])
+
+                centery, xpos, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold, center_of_bar, wx=wx, wy=wy, wfit=wfit)
+                positions.append((rbarid, centery+1, fits_row, xpos+1, fwhm, st))
+                logger.debug('bar %d center-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',*positions[-1])
+
+            allpos[ks] = positions
 
         logger.debug('end finding bars')
         result = self.create_result(frame=hdulist,
-                                    derivative=fits.PrimaryHDU(data=arr_deriv),
-                                    positions=positions,
+    #                                derivative=fits.PrimaryHDU(data=arr_deriv),
+                                    positions9=allpos[9],
+                                    positions7=allpos[7],
+                                    positions5=allpos[5],
+                                    positions3=allpos[3],
                                     DTU=dtub,
                                     IPA=ipa,
                                     csupos=csupos,

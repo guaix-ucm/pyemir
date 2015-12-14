@@ -30,6 +30,8 @@ from numina.array.utils import expand_region
 import numina.array.fwhm as fmod
 from numina.array.utils import wc_to_pix_1d
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
+from numina.array.utils import slice_create
+
 
 def find_position(edges, prow, bstart, bend, total=5):
     """Find a EMIR CSU bar position in a edge image.
@@ -208,15 +210,17 @@ def _locate_bar_gen(icut, epos, transform1, transform2):
     return epos_pix, epos_f, error
 
 
-def char_bar_peak_l(arr_deriv, ypix, bstart, bend, th, barid, wx=10, wy=3, wfit=5):
-    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th, barid, wx=wx, wy=wy, wfit=wfit, sign=1)
+def char_bar_peak_l(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=5):
+    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th,
+                          center_of_bar=center_of_bar, wx=wx, wy=wy, wfit=wfit, sign=1)
 
 
-def char_bar_peak_r(arr_deriv, ypix, bstart, bend, th, barid, wx=10, wy=3, wfit=5):
-    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th, barid, wx=wx, wy=wy, wfit=wfit, sign=-1)
+def char_bar_peak_r(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=5):
+    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th,
+                          center_of_bar=center_of_bar, wx=wx, wy=wy, wfit=wfit, sign=-1)
 
 
-def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, barid, wx=10, wy=3, wfit=5, sign=1):
+def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=5, sign=1):
 
     # extract a region to average
     # wy = 3
@@ -224,12 +228,17 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, barid, wx=10, wy=3, wfit=5
     # Fit the peak with these points
     # wfit = 5
 
+    logger = logging.getLogger('emir.recipes')
+
     cut = sign * arr_deriv[ypix, bstart:bend]
+
+    th = max(th, abs(cut.max() / 6.0), abs(cut.min() / 6.0))
+    logger.debug('internal th is %f', th)
 
     idxs = find_peaks_indexes(cut, threshold=th)
 
     if len(idxs) == 0:
-        return 0, 1
+        return 0, 0, 0, 1
 
     # Characterize: use the peak that has the greates value in the derivative?
     pix_m = cut[idxs].argmax()
@@ -239,21 +248,36 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, barid, wx=10, wy=3, wfit=5
     # This function should return the center of 'barid'
     # when its position is 'x'
     # without information, the best guess is 'ypix'
-    def center_of_bar(barid, x):
-        return ypix
+    if center_of_bar is None:
+        logger.debug('using reference value for center of bar')
+        def center_of_bar(x):
+            return ypix
 
-    centery = center_of_bar(barid, centerx)
+    centery = center_of_bar(centerx)
+    logger.debug('centery is %7.2f at position %7.2f', centery+1,  centerx+1)
+    # FIXME: hardcoded value
+    wy = 15
+    logger.debug('collapsing %d pixels', wy)
+    #
+    slicey = slice_create(centery, wy, start=1, stop=2047)
 
-    collapsed = sign * arr_deriv[centery-wy:centery+wy+1, bstart+centerx-wx:bstart+centerx+wx+1].mean(axis=0)
+    collapsed = sign * arr_deriv[slicey, bstart+centerx-wx:bstart+centerx+wx+1].mean(axis=0)
 
     # Fine tunning
     idxs_t = find_peaks_indexes(collapsed, threshold=th)
     # Use only the peak nearest the original peak
+    if len(idxs_t) == 0:
+        logger.debug('no peaks after fine-tunning')
+        return centery, 0, 0, 2
+
     dist_t = numpy.abs(idxs_t - wx)
     only_this = dist_t.argmin()
+    idxs_p = numpy.atleast_1d(idxs_t[only_this])
 
-    x_t, y_t = refine_peaks(collapsed, idxs_t[only_this], wfit)
+    x_t, y_t = refine_peaks(collapsed, idxs_p, wfit)
 
     xl = bstart + centerx - wx + x_t[0]
 
-    return xl, 0
+    _, fwhm_x = fmod.compute_fwhm_1d_simple(collapsed, x_t[0])
+
+    return centery, xl, fwhm_x, 0
