@@ -29,9 +29,7 @@ from numina.core import DataFrame#from numina.core import BaseRecipeAutoQC
 from numina.core import Product
 from numina.logger import log_to_history
 from numina.array.combine import median
-# from numina.flow.processing import BadPixelCorrector
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.requirements import InstrumentConfigurationRequirement
 
 import emirdrp.instrument.channels as allchannels
 from emirdrp.core import EMIR_BIAS_MODES
@@ -89,20 +87,14 @@ class BiasRecipe(EmirRecipe):
     
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
 
     biasframe = Product(MasterBias)
     stats = Product(ChannelLevelStatisticsType)
 
-    
-
-    # FIXME find a better way of doing this automatically
-    # @log_to_history(_logger)
     def run(self, rinput):
         _logger.info('starting bias reduction')
 
-        insconf = rinput.insconf.values
-        channels_name = insconf['detector']['channels']
+        channels_name = 'FULL'
         channels = getattr(allchannels, channels_name)
 
         iinfo = gather_info_frames(rinput.obresult.frames)
@@ -166,19 +158,15 @@ class DarkRecipe(EmirRecipe):
 
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
     master_bias = MasterBiasRequirement()
 
     darkframe = Product(MasterDark)
     stats = Product(ChannelLevelStatisticsType)
 
-
-    # @log_to_history(_logger)
     def run(self, rinput):
 
         _logger.info('starting dark reduction')
-        insconf = rinput.insconf.values
-        channels_name = insconf['detector']['channels']
+        channels_name = 'FULL'
         channels = getattr(allchannels, channels_name)
 
         flow = init_filters_b(rinput)
@@ -254,12 +242,10 @@ class IntensityFlatRecipe(EmirRecipe):
 
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
 
     flatframe = Product(MasterIntensityFlat)    
-
 
     def run(self, rinput):
         _logger.info('starting flat reduction')
@@ -296,7 +282,6 @@ class SimpleSkyRecipe(EmirRecipe):
 
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -329,7 +314,6 @@ class SpectralFlatRecipe(EmirRecipe):
 
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -337,7 +321,7 @@ class SpectralFlatRecipe(EmirRecipe):
     flatframe = Product(MasterSpectralFlat)
 
     def run(self, rinput):
-        return self.create_result(flatframe=MasterSpectralFlat(None))
+        return self.create_result(flatframe=MasterSpectralFlat())
 
 
 class SlitTransmissionRecipe(EmirRecipe):
@@ -367,8 +351,6 @@ class SlitTransmissionRecipe(EmirRecipe):
 
     slit = Product(SlitTransmissionCalibration)
 
-
-    @log_to_history(_logger, 'slit')
     def run(self, rinput):
         return self.create_result(slit=SlitTransmissionCalibration())
 
@@ -403,7 +385,5 @@ class WavelengthCalibrationRecipe(EmirRecipe):
 
     cal = Product(WavelengthCalibration)
 
-
-    @log_to_history(_logger, 'cal')
     def run(self, rinput):
         return self.create_result(cal=WavelengthCalibration())
