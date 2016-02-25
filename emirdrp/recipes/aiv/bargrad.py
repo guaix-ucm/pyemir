@@ -135,8 +135,8 @@ class BarDetectionRecipe(EmirRecipe):
 
         # Number or rows used
         # These other parameters cab be tuned also
-        bstart = 100
-        bend = 1900
+        bstart = 1
+        bend = 2047
         logger.debug('ignoring columns outside %d - %d',bstart, bend-1)
 
         # extract a region to average
