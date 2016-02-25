@@ -100,6 +100,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         try:
             ipa = hdr['IPA']
+            tsutc2 = hdr['TSUTC2']
             dtub, dtur = get_dtur_from_header(hdr)
             csupos = get_csup_from_header(hdr)
             csusens = get_cs_from_header(hdr)
@@ -211,6 +212,7 @@ class BarDetectionRecipe(EmirRecipe):
                                     positions3=allpos[3],
                                     DTU=dtub,
                                     IPA=ipa,
+                                    TSUTC2=tsutc2,
                                     csupos=csupos,
                                     csusens=csusens,
                                     param_median_filter_size=rinput.median_filter_size,
