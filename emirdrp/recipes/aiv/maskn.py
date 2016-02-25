@@ -73,7 +73,7 @@ class TestMaskRecipe(EmirRecipe):
     recenter = Parameter(True, 'Recenter the pinhole coordinates')
     max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
 
-    median_filter_size = Parameter(4, 'Size of the median box')
+    median_filter_size = Parameter(5, 'Size of the median box')
     canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
     obj_min_size = Parameter(200, 'Minimum size of the slit')
     obj_max_size = Parameter(3000, 'Maximum size of the slit')

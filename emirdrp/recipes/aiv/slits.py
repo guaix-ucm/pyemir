@@ -163,7 +163,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
     master_flat = MasterIntensityFlatFieldRequirement()
     master_sky = MasterSkyRequirement()
 
-    median_filter_size = Parameter(4, 'Size of the median box')
+    median_filter_size = Parameter(5, 'Size of the median box')
     canny_sigma = Parameter(3.0, 'Sigma for the Canny algorithm')
     canny_high_threshold = Parameter(0.04, 'High threshold for the Canny algorithm')
     canny_low_threshold = Parameter(0.01, 'High threshold for the Canny algorithm')
