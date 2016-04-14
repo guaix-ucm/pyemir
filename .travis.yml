@@ -4,11 +4,11 @@ sudo: false
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
+      env: DEPS="numpy=1.9 scipy=0.17 astropy" ASTRO=false
     - python: "3.4"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
+      env: DEPS="numpy=1.9 scipy=0.17 astropy" ASTRO=false
     - python: "2.7"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0" COVERAGE=true
+      env: DEPS="scipy" COVERAGE=true ASTRO=true COND="numpy astropy"
 
 install:
   # See:
@@ -20,8 +20,9 @@ install:
   - > 
     conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION 
     $DEPS pip pytest setuptools Cython six>=1.7 
-    pyyaml matplotlib scikit-image>=0.10
+    pyyaml matplotlib scikit-image>=0.12
   - source activate testenv
+  - if [[ $ASTRO == true ]]; then conda install -n testenv --yes -c astropy-ci-extras $COND; else conda install -n testenv --yes libgfortran;fi
   - pip install pytest-benchmark
   - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
