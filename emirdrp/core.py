@@ -22,10 +22,14 @@ from astropy import wcs
 
 from numina.core import DataFrame, ObservationResult
 from numina.core.recipeinout import RecipeResult
-from numina.core import BaseRecipeAutoQC
+from numina.core import BaseRecipe, Product
+from numina.core.products import QualityControlProduct
 
 
-class EmirRecipe(BaseRecipeAutoQC):
+class EmirRecipe(BaseRecipe):
+
+    qc = Product(QualityControlProduct, dest='qc')
+
     def __init__(self, version="1"):
         super(EmirRecipe, self).__init__(version=version)
 
