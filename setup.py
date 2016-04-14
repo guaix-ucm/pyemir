@@ -26,7 +26,7 @@ setup(name='pyemir',
       install_requires=['setuptools', 'numpy', 'scipy',
                         'numina>=0.14', 'astropy>=0.4',
                         'matplotlib', 'six', 'photutils>=0.1',
-                        'scikit-image>=0.10'],
+                        'scikit-image>=0.12'],
       zip_safe=False,
       entry_points = {
         'numina.pipeline.1': [
