@@ -193,13 +193,21 @@ class BarDetectionRecipe(EmirRecipe):
                     continue
 
                 # Find the position of each bar
-                centery, xpos, fwhm, st = char_bar_peak_l(arr_deriv, prow, bstart, bend, threshold, center_of_bar, wx=wx, wy=wy, wfit=wfit)
-                positions.append((lbarid, centery+1, fits_row, xpos+1, fwhm, st))
-                logger.debug('bar %d center-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',*positions[-1])
+                # Left bar
+                centery, xpos, fwhm, st = char_bar_peak_l(arr_deriv, prow, bstart, bend, threshold, center_of_bar,
+                                                          wx=wx, wy=wy, wfit=wfit)
+                centroidy = centery
+                positions.append((lbarid, centery+1, centroidy + 1, fits_row, xpos+1, fwhm, st))
+                logger.debug('bar %d center-y %9.4f, centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',
+                             *positions[-1])
 
-                centery, xpos, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold, center_of_bar, wx=wx, wy=wy, wfit=wfit)
-                positions.append((rbarid, centery+1, fits_row, xpos+1, fwhm, st))
-                logger.debug('bar %d center-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',*positions[-1])
+                # Right bar
+                centery, xpos, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold, center_of_bar,
+                                                          wx=wx, wy=wy, wfit=wfit)
+                centroidy = centery
+                positions.append((rbarid, centery+1, centroidy + 1, fits_row, xpos+1, fwhm, st))
+                logger.debug('bar %d center-y %9.4f, centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',
+                             *positions[-1])
 
             allpos[ks] = positions
 
