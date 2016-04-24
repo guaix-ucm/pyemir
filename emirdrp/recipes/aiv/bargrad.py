@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -31,7 +31,7 @@ from numpy.polynomial.polynomial import polyval
 from numina.core import Requirement, Product, Parameter, RecipeError
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import ArrayType
-from numina.array.utils import wc_to_pix_1d
+from numina.array.utils import wc_to_pix_1d, image_box
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
@@ -110,17 +110,15 @@ class BarDetectionRecipe(EmirRecipe):
             raise RecipeError(error)
 
         logger.debug('finding bars')
-
+        # Processed array
         arr = hdulist[0].data
 
-        # Median filter
+        # Median filter of processed array (two times)
         mfilter_size = rinput.median_filter_size
         logger.debug('median filtering, %d columns', mfilter_size)
         arr_median = median_filter(arr, size=(1, mfilter_size))
         logger.debug('median filtering, %d rows', mfilter_size)
         arr_median = median_filter(arr_median, size=(mfilter_size, 1))
-
-        positions = []
 
         xfac = dtur[0] / PIXSCALE
         yfac = -dtur[1] / PIXSCALE
@@ -163,7 +161,6 @@ class BarDetectionRecipe(EmirRecipe):
             coeffs_are = -numpy.arange((1-ks)//2, (ks-1)//2 + 1) / kw
             logger.debug('kernel weights are %s', coeffs_are)
             arr_deriv = convolve1d(arr_median, coeffs_are, axis=-1)
-            #fits.writeto('/tmp/test12-array-deriv%d.fits' % ks, arr_deriv, clobber=True)
 
             positions = []
             for coords in barstab:
@@ -180,23 +177,26 @@ class BarDetectionRecipe(EmirRecipe):
                     # Pixel values are 0-based
                     return polyval(x+1-vec[0], poly_coeffs) + vec[1] - 1
 
-
                 logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
                 logger.debug('reference y position is Y %7.2f', ref_y_coor)
 
                 # if ref_y_coor is outlimits, skip this bar
-		        # ref_y_coor is in FITS format
+                # ref_y_coor is in FITS format
                 if (ref_y_coor >= 2047) or (ref_y_coor <= 1):
                     logger.debug('reference y position is outlimits, skipping')
                     positions.append((lbarid, fits_row, 1, 0, 3))
                     positions.append((rbarid, fits_row, 1, 0, 3))
                     continue
 
+                centroid_shape = (15, 2)
                 # Find the position of each bar
                 # Left bar
                 centery, xpos, fwhm, st = char_bar_peak_l(arr_deriv, prow, bstart, bend, threshold, center_of_bar,
                                                           wx=wx, wy=wy, wfit=wfit)
-                centroidy = centery
+                # measure centroid in processed image
+                # create a box around (centery, xpos)
+                # 30 pixels height, 4 pixels width
+                centroidy, centroidx = self.centroid(arr, image_box((centery, xpos), arr.shape, centroid_shape))
                 positions.append((lbarid, centery+1, centroidy + 1, fits_row, xpos+1, fwhm, st))
                 logger.debug('bar %d center-y %9.4f, centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',
                              *positions[-1])
@@ -204,7 +204,10 @@ class BarDetectionRecipe(EmirRecipe):
                 # Right bar
                 centery, xpos, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold, center_of_bar,
                                                           wx=wx, wy=wy, wfit=wfit)
-                centroidy = centery
+                # measure centroid in processed image
+                # create a box around (centery, xpos)
+                # 30 pixels height, 4 pixels width
+                centroidy, centroidx = self.centroid(arr, image_box((centery, xpos), arr.shape, centroid_shape))
                 positions.append((rbarid, centery+1, centroidy + 1, fits_row, xpos+1, fwhm, st))
                 logger.debug('bar %d center-y %9.4f, centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',
                              *positions[-1])
@@ -213,7 +216,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         logger.debug('end finding bars')
         result = self.create_result(frame=hdulist,
-    #                                derivative=fits.PrimaryHDU(data=arr_deriv),
+                                    # derivative=fits.PrimaryHDU(data=arr_deriv),
                                     positions9=allpos[9],
                                     positions7=allpos[7],
                                     positions5=allpos[5],
@@ -229,3 +232,28 @@ class BarDetectionRecipe(EmirRecipe):
                                     param_fit_peak_npoints=wfit
                                     )
         return result
+
+    def centroid(self, arr, region, threshold=0.0):
+        # extract raster image
+        sl = region
+        raster = arr[sl]
+
+        mask = raster >= threshold
+        if not numpy.any(mask):
+            # no values to compute centroid
+            return -1.0, -1.0
+
+        # Filter values under threshold
+        rr = numpy.where(mask, raster, 0.0)
+        norm = rr.sum()
+        # All points in thresholded raster are 0.0
+        if norm <= 0.0:
+            # no values to compute centroid
+            return -1.0, -1.0
+
+        fi, ci = numpy.indices(raster.shape)
+
+        fm = (rr * fi).sum() / norm
+        cm = (rr * ci).sum() / norm
+
+        return fm + sl[0].start, cm + sl[1].start
