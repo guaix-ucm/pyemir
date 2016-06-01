@@ -55,6 +55,7 @@ import numina.util.sexcatalog as sexcatalog
 from emirdrp.core import EmirRecipe
 from emirdrp.products import SourcesCatalog
 from emirdrp.instrument.channels import FULL
+from emirdrp.core import offsets_from_wcs
 
 from .checks import check_photometry
 from .naming import (name_redimensioned_frames, name_object_mask,
@@ -64,39 +65,6 @@ from .naming import name_skyflat_proc, name_segmask
 
 
 _logger = logging.getLogger('numina.recipes.emir')
-
-
-def offsets_from_wcs(frames, pixref):
-    '''Compute offsets between frames using WCS information.
-
-    :parameter frames: sequence of FITS filenames or file descriptors
-    :parameter pixref: numpy array used as reference pixel
-
-    The sky world coordinates are computed on *pixref* using
-    the WCS of the first frame in the sequence. Then, the
-    pixel coordinates of the reference sky world-coordinates
-    are computed for the rest of the frames.
-
-    The results is a numpy array with the difference between the
-    computed pixel value and the reference pixel. The first line
-    of the array is [0, 0], being the offset from the first image
-    to itself.
-
-    '''
-
-    result = numpy.zeros((len(frames), pixref.shape[1]))
-
-    with fits.open(frames[0]) as hdulist:
-        wcs = astropy.wcs.WCS(hdulist[0].header)
-        skyref = wcs.wcs_pix2sky(pixref, 1)
-
-    for idx, frame in enumerate(frames[1:]):
-        with fits.open(frame) as hdulist:
-            wcs = astropy.wcs.WCS(hdulist[0].header)
-            pixval = wcs.wcs_sky2pix(skyref, 1)
-            result[idx + 1] = pixval[0] - pixref[0]
-
-    return result
 
 
 def intersection(a, b, scale=1):
