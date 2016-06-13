@@ -92,6 +92,8 @@ def gather_info(recipeinput):
 EMIR_BIAS_MODES = ['simple', 'bias', 'single']
 EMIR_READ_MODES = ['simple', 'bias', 'single', 'cds', 'fowler', 'ramp']
 
+EMIR_PIXSCALE = 18.0
+
 def offsets_from_wcs(frames, pixref):
     '''Compute offsets between frames using WCS information.
 
