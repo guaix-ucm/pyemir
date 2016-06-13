@@ -122,21 +122,38 @@ class TestPointSourceRecipe(EmirRecipe):
             positions[:, n] = input[columnname].astype(numpy.float64)
 
         _logger.info('point source detection2')
-        positions_alt = []
 
+        from photutils import detect_threshold
+        threshold = detect_threshold(data, snr=3.)
+
+        from astropy.convolution import Gaussian2DKernel
+        from astropy.stats import gaussian_fwhm_to_sigma
+        from photutils import detect_sources
+        sigma = 2.0 * gaussian_fwhm_to_sigma  # FWHM = 2.
+        kernel = Gaussian2DKernel(sigma, x_size=3, y_size=3)
+        kernel.normalize()
+        segm = detect_sources(data, threshold, npixels=5, filter_kernel=kernel)
+
+        from photutils import source_properties, properties_table
+        props = source_properties(data, segm)
+        tbl = properties_table(props)
+
+        ncolumns = len(tbl.dtype)
+        positions_alt = numpy.zeros((len(input), ncolumns), dtype=numpy.float64)
+        for n, (columnname, dummy) in enumerate(tableresult.dtype):
+            positions[:, n] = input[columnname].astype(numpy.float64)
 
         result = self.create_result(frame=hdulist,
-                                    positions=positions,
-                                    positions_alt=positions_alt,
-                                    filter=filtername,
-                                    DTU=dtub,
-                                    readmode=readmode,
-                                    IPA=ipa,
-                                    DETPA=detpa,
-                                    DTUPA=dtupa,
-                                    param_recenter=rinput.recenter,
-                                    param_max_recenter_radius=rinput.max_recenter_radius,
-                                    param_box_half_size=rinput.box_half_size
-                                    )
+                                positions=positions,
+                                positions_alt=positions_alt,
+                                filter=filtername,
+                                DTU=dtub,
+                                readmode=readmode,
+                                IPA=ipa,
+                                DETPA=detpa,
+                                DTUPA=dtupa,
+                                param_recenter=rinput.recenter,
+                                param_max_recenter_radius=rinput.max_recenter_radius,
+                                param_box_half_size=rinput.box_half_size
+                                )
         return result
-2
