@@ -296,7 +296,7 @@ pipelines:
       TEST3: emirdrp.recipes.aiv.TestFlatCorrectRecipe
       TEST4: emirdrp.recipes.aiv.TestFlatCorrectRecipe
       TEST5: emirdrp.recipes.aiv.sky.TestSkyCorrectRecipe
-      TEST6: emirdrp.recipes.aiv.mask.TestPinholeRecipe
+      TEST6: emirdrp.recipes.aiv.pointsources.TestPointSourceRecipe
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
       TEST8: emirdrp.recipes.aiv.maskn.TestMaskRecipe
       TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
