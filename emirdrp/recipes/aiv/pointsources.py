@@ -24,7 +24,7 @@ from __future__ import division
 import logging
 
 import numpy
-from astropy.stats import sigma_clipped_stats
+from astropy.wcs import WCS
 import photutils
 from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
@@ -104,47 +104,60 @@ class TestPointSourceRecipe(EmirRecipe):
             _logger.error(error)
             raise RecipeError(error)
 
-        _logger.info('point source detection1')
-        data = hdulist[0].data
-
-        mean, median, std = sigma_clipped_stats(data, sigma=3.0, iters=5)
-
-        threshold = median + 5 * std
-        _logger.info('value of threshold for "daofind" %7.3f', threshold)
-
-        fwhm = 3.0
-        _logger.info('reference fwhm is %5.1f', fwhm)
-
-        tableresult = photutils.daofind(data, threshold=threshold, fwhm=fwhm)
-        ncolumns = len(tableresult.dtype)
-        positions = numpy.zeros((len(input), ncolumns), dtype=numpy.float64)
-        for n, (columnname, dummy) in enumerate(tableresult.dtype):
-            positions[:, n] = input[columnname].astype(numpy.float64)
-
-        _logger.info('point source detection2')
-
+        import astropy.io.fits as fits
         from photutils import detect_threshold
-        threshold = detect_threshold(data, snr=3.)
-
         from astropy.convolution import Gaussian2DKernel
         from astropy.stats import gaussian_fwhm_to_sigma
         from photutils import detect_sources
-        sigma = 2.0 * gaussian_fwhm_to_sigma  # FWHM = 2.
-        kernel = Gaussian2DKernel(sigma, x_size=3, y_size=3)
-        kernel.normalize()
-        segm = detect_sources(data, threshold, npixels=5, filter_kernel=kernel)
-
         from photutils import source_properties, properties_table
-        props = source_properties(data, segm)
-        tbl = properties_table(props)
 
-        ncolumns = len(tbl.dtype)
-        positions_alt = numpy.zeros((len(input), ncolumns), dtype=numpy.float64)
-        for n, (columnname, dummy) in enumerate(tableresult.dtype):
-            positions[:, n] = input[columnname].astype(numpy.float64)
+        data = hdulist[0].data
+        wcs = WCS(header=hdr)
+
+        snr_detect = 5.0
+        fwhm = 4.0
+        npixels = 15
+        box_shape = [64, 64]
+        _logger.info('point source detection2')
+        mask = numpy.zeros_like(data, dtype='bool')
+        _logger.info('compute background map, %s', box_shape)
+        bkg = photutils.background.Background(data, box_shape=box_shape,
+                                              mask=mask)
+
+        _logger.info('reference fwhm is %5.1f pixels', fwhm)
+        _logger.info('detect threshold, %3.1f over background', snr_detect)
+        threshold = detect_threshold(data, background=bkg.background,
+                                     snr=snr_detect, mask=mask)
+        _logger.info('convolve with gaussian kernel, FWHM %3.1f pixels', fwhm)
+        sigma = fwhm * gaussian_fwhm_to_sigma  # FWHM = 2.
+
+        kernel = Gaussian2DKernel(sigma)
+        kernel.normalize()
+
+        _logger.info('create segmentation image, npixels >= %d', npixels)
+        segm = detect_sources(data, threshold, npixels=npixels, filter_kernel=kernel)
+
+        fits.writeto('segm.fits', segm.data, clobber=True)
+
+        _logger.info('compute properties')
+        props = source_properties(data - bkg.background,
+                                  segm, mask=mask,
+                                  background=bkg.background,
+                                  wcs=wcs)
+
+        tbl = properties_table(props)
+        tbl.remove_columns(['source_sum_err',])
+        # 'id', 'xcentroid', 'ycentroid', 'ra_icrs_centroid', 'dec_icrs_centroid',
+        # 'source_sum', 'source_sum_err', 'background_sum', 'background_mean', 'background_at_centroid',
+        # 'xmin', 'xmax', 'ymin', 'ymax', 'min_value', 'max_value', 'minval_xpos', 'minval_ypos', 'maxval_xpos', 'maxval_ypos', 'area',
+        # 'equivalent_radius', 'perimeter', 'semimajor_axis_sigma', 'semiminor_axis_sigma', 'eccentricity', 'orientation', 'ellipticity',
+        # 'elongation', 'covar_sigx2', 'covar_sigxy', 'covar_sigy2', 'cxx', 'cxy', 'cyy'
+        # print(tbl.columns)
+        positions_alt = tbl.as_array()
+        positions_alt = numpy.array(positions_alt.tolist())
 
         result = self.create_result(frame=hdulist,
-                                positions=positions,
+                                positions=positions_alt,
                                 positions_alt=positions_alt,
                                 filter=filtername,
                                 DTU=dtub,
