@@ -32,6 +32,7 @@ from numina.core.products import ArrayType
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
