@@ -36,6 +36,7 @@ from astropy.io import fits
 from numina import __version__
 from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.processing import FlatFieldCorrector, SkyCorrector
+from numina.flow.processing import Corrector
 from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.array import combine
@@ -47,9 +48,16 @@ from emirdrp.core import gather_info
 _logger = logging.getLogger('numina.recipes.emir')
 
 
-class BadPixelCorrectorEmir(object):
-    """A Node that corrects a frame from bad pixels."""
-    def __init__(self, badpixelmask):
+class BadPixelCorrectorEmir(Corrector):
+    '''A Node that corrects a frame from bad pixels.'''
+
+    def __init__(self, badpixelmask, mark=True, tagger=None,
+                 datamodel=None, dtype='float32'):
+
+        super(BadPixelCorrectorEmir, self).__init__(datamodel,
+                                                    tagger=tagger,
+                                                    dtype=dtype)
+
         self.bpm = badpixelmask
         self.good_vals = (self.bpm == 0)
         self.bad_vals = ~self.good_vals
