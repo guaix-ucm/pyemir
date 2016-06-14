@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -24,6 +24,7 @@ from __future__ import division, print_function
 
 import logging
 
+import numpy
 from numina.core import Requirement, Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
 
@@ -31,6 +32,7 @@ from emirdrp.core import EmirRecipe
 from numina.core.products import LinesCatalog
 from emirdrp.products import SlitsCatalog
 from numina.core.products import ArrayType
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from .aiv.flows import init_filters_bd
@@ -42,11 +44,6 @@ from numina.array.wavecal.arccalibration import arccalibration_direct, fit_solut
 from numina.array.peaks.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
 from scipy.interpolate import interp1d
 
-#------------------------------------------------------------------------------
-
-import numpy as np
-
-#------------------------------------------------------------------------------
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -54,6 +51,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 class ArcCalibrationRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     lines_catalog = Requirement(LinesCatalog, "Catalog of lines")
@@ -78,7 +76,7 @@ class ArcCalibrationRecipe(EmirRecipe):
         # - loop in nslits to excecute the code in calibrate_arcframe.py
 
         nslits = len(rinput.slits_catalog)
-        coeff_table = np.zeros((nslits, rinput.polynomial_degree + 1))
+        coeff_table = numpy.zeros((nslits, rinput.polynomial_degree + 1))
 
         image2d = hdulist[0].data
         naxis2, naxis1 = image2d.shape
@@ -86,7 +84,7 @@ class ArcCalibrationRecipe(EmirRecipe):
         # all the slits) for the wavelength calibration
         wv_master = rinput.lines_catalog[:,0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
-          gen_triplets_master(wv_master, LDEBUG = True) 
+          gen_triplets_master(wv_master, LDEBUG=True)
         # loop in number of slitlets
         for idx, slitdum in enumerate(rinput.slits_catalog):
             times_sigma = 3.0 # for minimum threshold level 
@@ -96,7 +94,7 @@ class ArcCalibrationRecipe(EmirRecipe):
                                                          method = 'mean',
                                                          LDEBUG = True)
             # find peaks (initial search providing integer numbers)
-            threshold = np.median(spectrum1d)+times_sigma*sigmaG(spectrum1d)
+            threshold = numpy.median(spectrum1d)+times_sigma*sigmaG(spectrum1d)
             ipeaks_int = findPeaks_spectrum(spectrum1d, nwinwidth = nwinwidth, 
                                             data_threshold = threshold)
     

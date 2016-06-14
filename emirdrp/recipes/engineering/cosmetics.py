@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2014 Universidad Complutense de Madrid
+# Copyright 2010-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -34,6 +34,7 @@ from numina.core import Product
 from numina.core import DataFrameType
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 from numina.core.requirements import ObservationResultRequirement
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
 from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.node import IdNode
@@ -76,6 +77,7 @@ class CosmeticsRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
     insconf = InstrumentConfigurationRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = Requirement(MasterBias, 'Master bias image')
     master_dark = Requirement(MasterDark, 'Master dark image')
     lowercut = Parameter(

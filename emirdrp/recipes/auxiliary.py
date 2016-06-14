@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -22,12 +22,9 @@
 import logging
 
 import numpy
-
-#from numina.core import BaseRecipeAutoQC
 from numina.core import RecipeError
-from numina.core import DataFrame#from numina.core import BaseRecipeAutoQC
+from numina.core import DataFrame
 from numina.core import Product
-from numina.logger import log_to_history
 from numina.array.combine import median
 from numina.core.requirements import ObservationResultRequirement
 
