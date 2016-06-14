@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2014 Universidad Complutense de Madrid
+# Copyright 2013-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -24,7 +24,7 @@ from __future__ import division
 import logging
 # import math
 #
-# import numpy
+import numpy
 # import scipy.interpolate as itpl
 # import scipy.optimize as opz
 # from astropy.modeling import models, fitting
@@ -47,9 +47,138 @@ from emirdrp.core import gather_info
 _logger = logging.getLogger('numina.recipes.emir')
 
 
-def init_filters_bdfs(rinput):
-    # with bias, dark, flat and sky
+class BadPixelCorrectorEmir(object):
+    """A Node that corrects a frame from bad pixels."""
+    def __init__(self, badpixelmask):
+        self.bpm = badpixelmask
+        self.good_vals = (self.bpm == 0)
+        self.bad_vals = ~self.good_vals
+        self.median_box = 5
+
+    def _run(self, img):
+        import scipy.ndimage as snd
+        # global median
+        imgid = self.get_imgid(img)
+        _logger.debug('correcting bad pixel mask in %s', imgid)
+        base = img[0].data
+        interp = base.copy()
+
+        # Fill BPM with median values
+        median = numpy.median(base[self.good_vals])
+        interp[self.bad_vals] = median
+        interp = snd.median_filter(interp, size=self.median_box)
+        #
+        img[0].data[self.bad_vals] = interp[self.bad_vals]
+
+        return img
+
+
+    def get_imgid(self, img):
+        # FIXME, use method from base class
+        imgid = img.filename()
+
+        # More heuristics here...
+        # get FILENAME keyword, for example...
+
+        if not imgid:
+            imgid = repr(img)
+
+        return imgid
+
+
+def init_filters_generic(rinput, getters):
+    # with BPM, bias, dark, flat and sky
     meta = gather_info(rinput)
+
+    correctors = [getter(rinput, meta) for getter in getters]
+
+    flow = SerialFlow(correctors)
+
+    return flow
+
+
+def init_filters_pbdfs(rinput):
+    # with BPM, bias, dark, flat and sky
+
+    # Methods required:
+    getters = [get_corrector_p,
+               get_corrector_b,
+               get_corrector_d,
+               get_corrector_f,
+               get_corrector_s
+    ]
+
+    return init_filters_generic(rinput, getters)
+
+def init_filters_pbdf(rinput):
+    # with BPM, bias, dark, flat
+
+    # Methods required:
+    getters = [get_corrector_p,
+               get_corrector_b,
+               get_corrector_d,
+               get_corrector_f,
+    ]
+
+    return init_filters_generic(rinput, getters)
+
+
+def init_filters_pbd(rinput):
+    # with BPM, bias, dark
+
+    # Methods required:
+    getters = [get_corrector_p,
+               get_corrector_b,
+               get_corrector_d,
+    ]
+
+    return init_filters_generic(rinput, getters)
+
+
+def init_filters_pb(rinput):
+    # with BPM, bias
+
+    # Methods required:
+    getters = [get_corrector_p,
+               get_corrector_b,
+    ]
+
+    return init_filters_generic(rinput, getters)
+
+
+def init_filters_p(rinput):
+    # with BPM
+
+    # Methods required:
+    getters = [get_corrector_p]
+
+    return init_filters_generic(rinput, getters)
+
+
+# Alias for backwards compatibility
+init_filters_b = init_filters_pb
+init_filters_bd = init_filters_pbd
+init_filters_bdf = init_filters_pbdf
+init_filters_bdfs = init_filters_pbdfs
+
+
+def get_corrector_p(rinput, meta):
+
+    bpm_info = meta.get('master_bpm')
+    if bpm_info is not None:
+        with rinput.master_bpm.open() as hdul:
+            _logger.info('loading BPM')
+            _logger.debug('BPM image: %s', bpm_info)
+            mbpm = hdul[0].data
+            bpm_corrector = BadPixelCorrectorEmir(mbpm)
+    else:
+        _logger.info('BPM not provided, ignored')
+        bpm_corrector = IdNode()
+
+    return bpm_corrector
+
+
+def get_corrector_b(rinput, meta):
     iinfo = meta['obresult']
 
     if iinfo:
@@ -63,207 +192,65 @@ def init_filters_bdfs(rinput):
     else:
         raise ValueError('cannot gather images info')
 
-    dark_info = meta['master_dark']
-    flat_info = meta['master_flat']
-    sky_info = meta['master_sky']
-
-    print('images info:', iinfo)
-    if use_bias:
-        bias_info = meta['master_bias']
-        print('bias info:', bias_info)
-        _logger.debug('bias info: %s', bias_info)
-
-    print('dark info:', dark_info)
-    _logger.debug('dark info: %s', dark_info)
-    print('flat info:', flat_info)
-    _logger.debug('flat info: %s', flat_info)
-    print('sky info:', sky_info)
-    _logger.debug('sky info: %s', sky_info)
-
     # Loading calibrations
     if use_bias:
+        bias_info = meta['master_bias']
         with rinput.master_bias.open() as hdul:
             _logger.info('loading bias')
+            _logger.debug('bias info: %s', bias_info)
             mbias = hdul[0].data
             bias_corrector = BiasCorrector(mbias)
     else:
         _logger.info('ignoring bias')
         bias_corrector = IdNode()
 
-    with rinput.master_dark.open() as mdark_hdul:
-        _logger.info('loading dark')
-        mdark = mdark_hdul[0].data
-        dark_corrector = DarkCorrector(mdark)
+    return bias_corrector
 
-    with rinput.master_flat.open() as mflat_hdul:
-        _logger.info('loading intensity flat')
-        mflat = mflat_hdul[0].data
-        flat_corrector = FlatFieldCorrector(mflat)
+
+def get_corrector_s(rinput, meta):
+    sky_info = meta['master_sky']
+
 
     with rinput.master_sky.open() as msky_hdul:
         _logger.info('loading sky')
+        _logger.debug('sky info: %s', sky_info)
         msky = msky_hdul[0].data
         sky_corrector = SkyCorrector(msky)
 
-    flow = SerialFlow([bias_corrector,
-                       dark_corrector,
-                       flat_corrector,
-                       sky_corrector]
-                      )
-
-    return flow
+    return sky_corrector
 
 
-def init_filters_bdf(rinput):
-    # with bias, dark, flat and sky
-    meta = gather_info(rinput)
-    iinfo = meta['obresult']
-
-    if iinfo:
-        mode = iinfo[0]['readmode']
-        if mode.lower() in EMIR_BIAS_MODES:
-            use_bias = True
-            _logger.info('readmode is %s, bias required', mode)
-        else:
-            use_bias = False
-            _logger.info('readmode is %s, bias not required', mode)
-    else:
-        raise ValueError('cannot gather images info')
-
-    dark_info = meta['master_dark']
+def get_corrector_f(rinput, meta):
     flat_info = meta['master_flat']
 
-    print('images info:', iinfo)
-    if use_bias:
-        bias_info = meta['master_bias']
-        print('bias info:', bias_info)
-        _logger.debug('bias info: %s', bias_info)
-
-    print('dark info:', dark_info)
-    _logger.debug('dark info: %s', dark_info)
-    print('flat info:', flat_info)
-    _logger.debug('flat info: %s', flat_info)
-
-    # Loading calibrations
-    if use_bias:
-        with rinput.master_bias.open() as hdul:
-            _logger.info('loading bias')
-            mbias = hdul[0].data
-            bias_corrector = BiasCorrector(mbias)
-    else:
-        _logger.info('ignoring bias')
-        bias_corrector = IdNode()
-
-    with rinput.master_dark.open() as mdark_hdul:
-        _logger.info('loading dark')
-        mdark = mdark_hdul[0].data
-        dark_corrector = DarkCorrector(mdark)
 
     with rinput.master_flat.open() as mflat_hdul:
         _logger.info('loading intensity flat')
+        _logger.debug('flat info: %s', flat_info)
         mflat = mflat_hdul[0].data
         flat_corrector = FlatFieldCorrector(mflat)
 
-    flow = SerialFlow([bias_corrector,
-                       dark_corrector,
-                       flat_corrector
-                       ]
-                      )
-
-    return flow
+    return flat_corrector
 
 
-def init_filters_bd(rinput):
-    # with bias, dark, flat and sky
-    meta = gather_info(rinput)
-    iinfo = meta['obresult']
+def get_corrector_d(rinput, meta):
+    key = 'master_dark'
+    CorrectorClass = DarkCorrector
 
-    if iinfo:
-        mode = iinfo[0]['readmode']
-        if mode.lower() in EMIR_BIAS_MODES:
-            use_bias = True
-            _logger.info('readmode is %s, bias required', mode)
-        else:
-            use_bias = False
-            _logger.info('readmode is %s, bias not required', mode)
-    else:
-        raise ValueError('cannot gather images info')
+    info = meta[key]
+    req = getattr(rinput, key)
+    with req.open() as hdul:
+        _logger.info('loading %s', key)
+        _logger.debug('%s info: %s', key, info)
+        datac = hdul[0].data
+        corrector = CorrectorClass(datac)
 
-    dark_info = meta['master_dark']
-
-    print('images info:', iinfo)
-    if use_bias:
-        bias_info = meta['master_bias']
-        print('bias info:', bias_info)
-        _logger.debug('bias info: %s', bias_info)
-
-    print('dark info:', dark_info)
-    _logger.debug('dark info: %s', dark_info)
-
-    # Loading calibrations
-    if use_bias:
-        with rinput.master_bias.open() as hdul:
-            _logger.info('loading bias')
-            mbias = hdul[0].data
-            bias_corrector = BiasCorrector(mbias)
-    else:
-        _logger.info('ignoring bias')
-        bias_corrector = IdNode()
-
-    with rinput.master_dark.open() as mdark_hdul:
-        _logger.info('loading dark')
-        mdark = mdark_hdul[0].data
-        dark_corrector = DarkCorrector(mdark)
-
-    flow = SerialFlow([bias_corrector,
-                       dark_corrector
-                       ]
-                      )
-
-    return flow
-
-
-def init_filters_b(rinput):
-    # with bias, dark, flat and sky
-    meta = gather_info(rinput)
-    iinfo = meta['obresult']
-
-    if iinfo:
-        mode = iinfo[0]['readmode']
-        if mode.lower() in EMIR_BIAS_MODES:
-            use_bias = True
-            _logger.info('readmode is %s, bias required', mode)
-        else:
-            use_bias = False
-            _logger.info('readmode is %s, bias not required', mode)
-    else:
-        raise ValueError('cannot gather images info')
-
-    print('images info:', iinfo)
-    if use_bias:
-        bias_info = meta['master_bias']
-        print('bias info:', bias_info)
-        _logger.debug('bias info: %s', bias_info)
-
-    # Loading calibrations
-    if use_bias:
-        with rinput.master_bias.open() as hdul:
-            _logger.info('loading bias')
-            mbias = hdul[0].data
-            bias_corrector = BiasCorrector(mbias)
-    else:
-        _logger.info('ignoring bias')
-        bias_corrector = IdNode()
-
-    flow = SerialFlow([bias_corrector])
-
-    return flow
+    return corrector
 
 
 def basic_processing_with_combination(rinput, flow,
                                       method=combine.mean,
                                       errors=True):
-
     odata = []
     cdata = []
     try:
