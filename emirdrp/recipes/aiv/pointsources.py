@@ -25,12 +25,14 @@ import logging
 
 import numpy
 from astropy.wcs import WCS
+#import astropy.io.fits as fits
+from astropy.convolution import Gaussian2DKernel
+from astropy.stats import gaussian_fwhm_to_sigma
 import photutils
 from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import ArrayType
-
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
@@ -40,9 +42,9 @@ from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
 from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
-from .common import pinhole_char, pinhole_char2
+from .flows import init_filters_pbdfs
 from .common import get_dtur_from_header
+
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -84,7 +86,7 @@ class TestPointSourceRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting processing for slit detection')
 
-        flow = init_filters_bdfs(rinput)
+        flow = init_filters_pbdfs(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 
@@ -104,13 +106,6 @@ class TestPointSourceRecipe(EmirRecipe):
             _logger.error(error)
             raise RecipeError(error)
 
-        import astropy.io.fits as fits
-        from photutils import detect_threshold
-        from astropy.convolution import Gaussian2DKernel
-        from astropy.stats import gaussian_fwhm_to_sigma
-        from photutils import detect_sources
-        from photutils import source_properties, properties_table
-
         data = hdulist[0].data
         wcs = WCS(header=hdr)
 
@@ -126,8 +121,8 @@ class TestPointSourceRecipe(EmirRecipe):
 
         _logger.info('reference fwhm is %5.1f pixels', fwhm)
         _logger.info('detect threshold, %3.1f over background', snr_detect)
-        threshold = detect_threshold(data, background=bkg.background,
-                                     snr=snr_detect, mask=mask)
+        threshold = photutils.detect_threshold(data, background=bkg.background,
+                                               snr=snr_detect, mask=mask)
         _logger.info('convolve with gaussian kernel, FWHM %3.1f pixels', fwhm)
         sigma = fwhm * gaussian_fwhm_to_sigma  # FWHM = 2.
 
@@ -135,17 +130,17 @@ class TestPointSourceRecipe(EmirRecipe):
         kernel.normalize()
 
         _logger.info('create segmentation image, npixels >= %d', npixels)
-        segm = detect_sources(data, threshold, npixels=npixels, filter_kernel=kernel)
+        segm = photutils.detect_sources(data, threshold, npixels=npixels, filter_kernel=kernel)
 
-        fits.writeto('segm.fits', segm.data, clobber=True)
+        # fits.writeto('segm.fits', segm.data, clobber=True)
 
         _logger.info('compute properties')
-        props = source_properties(data - bkg.background,
-                                  segm, mask=mask,
-                                  background=bkg.background,
-                                  wcs=wcs)
+        props = photutils.source_properties(data - bkg.background,
+                                            segm, mask=mask,
+                                            background=bkg.background,
+                                            wcs=wcs)
 
-        tbl = properties_table(props)
+        tbl = photutils.properties_table(props)
         tbl.remove_columns(['source_sum_err',])
         # 'id', 'xcentroid', 'ycentroid', 'ra_icrs_centroid', 'dec_icrs_centroid',
         # 'source_sum', 'source_sum_err', 'background_sum', 'background_mean', 'background_at_centroid',
