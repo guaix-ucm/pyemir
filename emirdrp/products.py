@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -297,3 +297,8 @@ class ChannelLevelStatisticsType(DataProductType):
     def __init__(self):
         super(ChannelLevelStatisticsType,
               self).__init__(ptype=ChannelLevelStatistics)
+
+
+class LinesCatalog(DataProductType):
+    def __init__(self):
+        super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
