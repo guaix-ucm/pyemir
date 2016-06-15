@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Recipe to detect slits in the AIV mask'''
+"""Load basic calibrations and create reduction flows"""
 
 from __future__ import division
 #
