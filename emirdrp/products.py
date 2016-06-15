@@ -29,13 +29,6 @@ from numina.core.requirements import InstrumentConfigurationType
 from numina.core import ValidationError
 from numina.array.wavecal.slitlet import Slitlet
 
-# FIXME:
-try:
-    import ext.gtc
-    RUN_IN_GTC = True
-except ImportError:
-    # We are not in GTC
-    RUN_IN_GTC = False
 
 base_schema_description = {
     'keywords': {
