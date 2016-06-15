@@ -84,6 +84,10 @@ class DitheredImageARecipe(EmirRecipe):
     obresult = ObservationResultRequirement()
     frame = Product(DataFrameType)
 
+    def build_recipe_input(cls, ob, dal, pipeline='default'):
+        rib = DitheredImageRecipeInputBuilder(dal)
+        return rib.buildRecipeInput(ob)
+        
     def run(self, rinput):
 
         _logger.info('Computing offsets from WCS information')
@@ -136,19 +140,22 @@ class DitheredImageRecipeInputBuilder(object):
         self.dal = dal
    
     def buildRecipeInput(self, obsres):
-       
+
         stareImages = []
 
-        stareImagesIds = obsres['stareImagesIds']._v 
+        #stareImagesIds = obsres['stareImagesIds']._v
+        stareImagesIds = obsres.stareImagesIds 
+        print ('STARE IMAGES IDS: ', stareImagesIds)
         for subresId in stareImagesIds:
             subres = self.dal.getRecipeResult(subresId)
             stareImages.append(subres['elements']['frame'])
         
         newOR = ObservationResult()
         newOR.frames = stareImages
-        obsres['obresult'] = newOR
-        print('Adding RI parameters ', obsres)
-        newRI = DitheredImageARecipeInput(**obsres)
+        #obsres['obresult'] = newOR
+        #print('Adding RI parameters ', obsres)
+        #newRI = DitheredImageARecipeInput(**obsres)
+        newRI = DitheredImageARecipe.create_input(obresult=newOR)
 
         return newRI
 
