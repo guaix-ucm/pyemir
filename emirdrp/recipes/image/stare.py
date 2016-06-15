@@ -39,8 +39,8 @@ from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
 from emirdrp.requirements import Offsets_Requirement
-from processing.flows import basic_processing_with_combination
-from processing.flows import init_filters_bdfs
+from emirdrp.processing.flows import basic_processing_with_combination
+from emirdrp.processing.flows import init_filters_bdfs
 from .shared import DirectImageCommon
 
 _logger = logging.getLogger('numina.recipes.emir')
