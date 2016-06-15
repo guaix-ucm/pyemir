@@ -304,5 +304,4 @@ pipelines:
       TEST11: emirdrp.recipes.aiv.extraction.CSUSpectraExtractionRecipe
       TEST12: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
-      trace_map: emirdrp.recipes.aiv.trace.TraceMapRecipe
     version: 1
