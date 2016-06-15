@@ -36,7 +36,7 @@ from astropy.io import fits
 #
 from numina import __version__
 from numina.flow.processing import BiasCorrector, DarkCorrector
-from numina.flow.processing import FlatFieldCorrector, SkyCorrector
+from numina.flow.processing import SkyCorrector
 from numina.flow.processing import Corrector
 from numina.flow import SerialFlow
 from numina.flow.node import IdNode
@@ -71,7 +71,7 @@ class BadPixelCorrectorEmir(Corrector):
         _logger.debug('correcting bad pixel mask in %s', imgid)
         base = img[0].data
         interp = base.copy()
-
+        mask1 = ~numpy.isfinite(base)
         # Fill BPM with median values
         median = numpy.median(base[self.good_vals])
         interp[self.bad_vals] = median
@@ -79,6 +79,55 @@ class BadPixelCorrectorEmir(Corrector):
         #
         img[0].data[self.bad_vals] = interp[self.bad_vals]
 
+        mask1 = ~numpy.isfinite(base)
+        if numpy.any(mask1):
+            _logger.warning('image has %d NaN', mask1.sum())
+
+        mask2 = ~numpy.isfinite(img[0].data)
+        if numpy.any(mask2):
+            _logger.warning('image has %d NaN', mask2.sum())
+
+        return img
+
+
+class FlatFieldCorrector(Corrector):
+    '''A Node that corrects a frame from flat-field.'''
+
+    def __init__(self, flatdata, datamodel=None, mark=True,
+                 tagger=None, dtype='float32'):
+
+        self.update_variance = False
+
+        super(FlatFieldCorrector, self).__init__(
+            datamodel=datamodel,
+            tagger=tagger,
+            dtype=dtype)
+
+        self.flatdata = flatdata
+        self.flat_stats = flatdata.mean()
+
+    def _run(self, img):
+        import numina.array as array
+        imgid = self.get_imgid(img)
+
+        _logger.debug('correcting flat in %s', imgid)
+        _logger.debug('flat mean is %f', self.flat_stats)
+
+        data = self.datamodel.get_data(img)
+        # data = array.correct_flatfield(data, self.flatdata, dtype=self.dtype)
+        # Check if flatdata as 0
+        mask1 = self.flatdata < 0
+        if numpy.any(mask1):
+            _logger.warning('flat has %d zeros', mask1.sum())
+        mask2 = ~numpy.isfinite(data)
+        if numpy.any(mask2):
+            _logger.warning('image has %d NaN', mask2.sum())
+
+        result = data / self.flatdata
+        result = result.astype(self.dtype)
+
+        # FIXME
+        img[0].data = result
         return img
 
 
@@ -93,7 +142,7 @@ class Checker(Corrector):
         # Check NaN and Ceros
         mask1 = ~numpy.isfinite(base)
         if numpy.any(mask1):
-            _logger.warning('flat has %d NaN', mask1.sum())
+            _logger.warning('image has %d NaN', mask1.sum())
 
         return img
 
