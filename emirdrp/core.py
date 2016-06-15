@@ -45,7 +45,7 @@ _meta = {'readmode': ('READMODE', 'undefined'),
          'texp': ('EXPTIME', None),
          'filter': ('FILTER', 'undefined'),
          'imagetype': ('IMGTYP', 'undefined'),
-         'FILTERPOS': ('FILTERPOS', -1)
+         'FILTPOS': ('FILTPOS', -1)
          }
 
 
