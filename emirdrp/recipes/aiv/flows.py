@@ -104,6 +104,7 @@ class FlatFieldCorrector(Corrector):
             dtype=dtype)
 
         self.flatdata = flatdata
+        self.flatdata[flatdata <= 0] = 1.0 # To avoid NaN
         self.flat_stats = flatdata.mean()
 
     def _run(self, img):
