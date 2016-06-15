@@ -245,7 +245,6 @@ def basic_processing_with_combination(rinput, flow,
         _logger.info("stacking %d images using 'mean'", len(cdata))
         data = method([d[0].data for d in cdata], dtype='float32')
         hdu = fits.PrimaryHDU(data[0], header=cdata[0][0].header.copy())
-        hdu.header['NUMXVER'] = (__version__, 'Numina package version')
         if errors:
             varhdu = fits.ImageHDU(data[1], name='VARIANCE')
             num = fits.ImageHDU(data[2], name='MAP')

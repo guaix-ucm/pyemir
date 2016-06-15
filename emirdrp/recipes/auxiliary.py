@@ -255,13 +255,8 @@ class IntensityFlatRecipe(EmirRecipe):
                                                     errors=errors)
 
         hdr = hdulist[0].header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-
-        hdr['IMGTYP'] = ('FLAT', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_FLAT', 'Data product type')
-
         mm = hdulist[0].data.mean()
+        hdr['CCDMEAN'] = mm
 
         hdulist[0].data /= mm
         if errors:
