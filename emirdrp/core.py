@@ -44,7 +44,8 @@ _meta = {'readmode': ('READMODE', 'undefined'),
          'bunit': ('BUNIT', 'ADU'),
          'texp': ('EXPTIME', None),
          'filter': ('FILTER', 'undefined'),
-         'imagetype': ('IMGTYP', 'undefined')
+         'imagetype': ('IMGTYP', 'undefined'),
+         'FILTERPOS': ('FILTERPOS', -1)
          }
 
 

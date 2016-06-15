@@ -1,4 +1,5 @@
 #
+#
 # Copyright 2013-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
@@ -81,17 +82,20 @@ class BadPixelCorrectorEmir(Corrector):
         return img
 
 
-    def get_imgid(self, img):
-        # FIXME, use method from base class
-        imgid = img.filename()
+class Checker(Corrector):
+    '''A Node that checks.'''
+    def __init__(self):
+        super(Checker, self).__init__(None)
 
-        # More heuristics here...
-        # get FILENAME keyword, for example...
+    def _run(self, img):
+        base = img[0].data
+        _logger.debug('running checker after flat')
+        # Check NaN and Ceros
+        mask1 = ~numpy.isfinite(base)
+        if numpy.any(mask1):
+            _logger.warning('flat has %d NaN', mask1.sum())
 
-        if not imgid:
-            imgid = repr(img)
-
-        return imgid
+        return img
 
 
 def init_filters_generic(rinput, getters):
@@ -113,6 +117,7 @@ def init_filters_pbdfs(rinput):
                get_corrector_b,
                get_corrector_d,
                get_corrector_f,
+               get_checker,
                get_corrector_s
     ]
 
@@ -188,7 +193,7 @@ def get_corrector_p(rinput, meta):
 
 def get_corrector_b(rinput, meta):
     iinfo = meta['obresult']
-
+    _logger.debug('images info: %s', iinfo)
     if iinfo:
         mode = iinfo[0]['readmode']
         if mode.lower() in EMIR_BIAS_MODES:
@@ -231,11 +236,17 @@ def get_corrector_s(rinput, meta):
 def get_corrector_f(rinput, meta):
     flat_info = meta['master_flat']
 
-
     with rinput.master_flat.open() as mflat_hdul:
         _logger.info('loading intensity flat')
         _logger.debug('flat info: %s', flat_info)
         mflat = mflat_hdul[0].data
+        # Check NaN and Ceros
+        mask1 = mflat < 0
+        mask2 = ~numpy.isfinite(mflat)
+        if numpy.any(mask1):
+            _logger.warning('flat has %d values below 0', mask1.sum())
+        if numpy.any(mask2):
+            _logger.warning('flat has %d NaN', mask2.sum())
         flat_corrector = FlatFieldCorrector(mflat)
 
     return flat_corrector
@@ -254,6 +265,11 @@ def get_corrector_d(rinput, meta):
         corrector = CorrectorClass(datac)
 
     return corrector
+
+
+def get_checker(rinput, meta):
+
+    return Checker()
 
 
 def basic_processing_with_combination(rinput, flow,
