@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2014 Universidad Complutense de Madrid
+# Copyright 2013-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -24,16 +24,15 @@ import logging
 
 from astropy.io import fits
 
-
 from numina.core import DataFrame
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
-
 from numina.array.combine import median
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import MasterBias
 from emirdrp.products import DataFrameType
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
@@ -93,6 +92,7 @@ class SimpleBiasRecipe(EmirRecipe):
 class TestBiasCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     frame = Product(DataFrameType)
 
@@ -113,6 +113,7 @@ class TestBiasCorrectRecipe(EmirRecipe):
 class TestDarkCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
 
@@ -136,6 +137,7 @@ class TestDarkCorrectRecipe(EmirRecipe):
 class TestFlatCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -152,4 +154,3 @@ class TestFlatCorrectRecipe(EmirRecipe):
         result = self.create_result(frame=hdulist)
 
         return result
-
