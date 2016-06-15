@@ -39,32 +39,6 @@ from emirdrp.products import SourcesCatalog
 from .shared import DirectImageCommon
 
 
-class TestSkyCorrectRecipe(EmirRecipe):
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = Requirement(MasterIntensityFlat, 'Master Sky calibration')
-
-    frame = Product(DataFrameType)
-
-    def run(self, rinput):
-        _logger.info('starting simple sky reduction')
-
-        flow = init_filters_bdfs(rinput)
-
-        hdulist = basic_processing_with_combination(rinput, flow, method=median)
-        hdr = hdulist[0].header
-        self.set_base_headers(hdr)
-        # Update SEC to 0
-        hdr['SEC'] = 0
-
-        result = self.create_result(frame=hdulist)
-
-        return result
-
-
 class DitheredImageRecipe(DirectImageCommon):
 
     """Recipe for the reduction of imaging mode observations.
