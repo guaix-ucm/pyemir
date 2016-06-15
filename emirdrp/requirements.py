@@ -86,7 +86,7 @@ class MasterSpectralFlatFieldRequirement(Requirement):
 class MasterSkyRequirement(Requirement):
     def __init__(self):
         super(MasterSkyRequirement,
-              self).__init__(MasterSky, 'Master Sky calibration')
+              self).__init__(MasterSky, 'Sky image for subtraction')
 
 
 class Extinction_Requirement(Parameter):
