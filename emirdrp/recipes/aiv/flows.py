@@ -151,7 +151,7 @@ class Checker(Corrector):
 def init_filters_generic(rinput, getters):
     # with BPM, bias, dark, flat and sky
     meta = gather_info(rinput)
-
+    _logger.debug('obresult info is %s', meta['obresult'])
     correctors = [getter(rinput, meta) for getter in getters]
 
     flow = SerialFlow(correctors)
