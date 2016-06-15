@@ -37,7 +37,7 @@ from numina.core import ObservationResult
 from emirdrp.core import offsets_from_wcs
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
-
+from emirdrp.ext.gtc import RUN_IN_GTC
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -88,6 +88,14 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
     @classmethod
     def build_recipe_input(cls, obsres, dal, pipeline='default'):
+        if RUN_IN_GTC:
+            _logger.debug('Using GTC version of build_recipe_input in DitheredImages')
+            return cls.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
+        else:
+            super(JoinDitheredImagesRecipe, cls).build_recipe_input(obsres, dal, pipeline=pipeline)
+
+    @classmethod
+    def build_recipe_input_gtc(cls, obsres, dal, pipeline='default'):
 
         # FIXME: this method will work only in GTC
         # stareImagesIds = obsres['stareImagesIds']._v

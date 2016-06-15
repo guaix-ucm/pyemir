@@ -26,13 +26,13 @@ import logging
 import numpy
 from astropy.io import fits
 
-from numina import __version__
 from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.processing import SkyCorrector
 from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.array import combine
 #
+import emirdrp.ext.gtc
 from emirdrp.core import EMIR_BIAS_MODES
 from emirdrp.core import gather_info
 from emirdrp.processing.badpixels import BadPixelCorrectorEmir
@@ -45,6 +45,11 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 def init_filters_generic(rinput, getters):
     # with BPM, bias, dark, flat and sky
+    if emirdrp.ext.gtc.RUN_IN_GTC:
+        _logger.debug('running in GTC environment')
+    else:
+        _logger.debug('running outside of GTC environment')
+
     meta = gather_info(rinput)
     _logger.debug('obresult info is %s', meta['obresult'])
     correctors = [getter(rinput, meta) for getter in getters]
