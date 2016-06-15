@@ -23,129 +23,25 @@
 from __future__ import division
 #
 import logging
-# import math
-#
+
 import numpy
-# import scipy.interpolate as itpl
-# import scipy.optimize as opz
-# from astropy.modeling import models, fitting
 from astropy.io import fits
-# import photutils
-#
-# from numina.array.recenter import img_box, centering_centroid
-#
+
 from numina import __version__
 from numina.flow.processing import BiasCorrector, DarkCorrector
 from numina.flow.processing import SkyCorrector
-from numina.flow.processing import Corrector
 from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.array import combine
 #
 from emirdrp.core import EMIR_BIAS_MODES
 from emirdrp.core import gather_info
+from emirdrp.processing.badpixels import BadPixelCorrectorEmir
+from emirdrp.processing.flatfield import FlatFieldCorrector
+from emirdrp.processing.checkers import Checker
 
 
 _logger = logging.getLogger('numina.recipes.emir')
-
-
-class BadPixelCorrectorEmir(Corrector):
-    '''A Node that corrects a frame from bad pixels.'''
-
-    def __init__(self, badpixelmask, mark=True, tagger=None,
-                 datamodel=None, dtype='float32'):
-
-        super(BadPixelCorrectorEmir, self).__init__(datamodel,
-                                                    tagger=tagger,
-                                                    dtype=dtype)
-
-        self.bpm = badpixelmask
-        self.good_vals = (self.bpm == 0)
-        self.bad_vals = ~self.good_vals
-        self.median_box = 5
-
-    def _run(self, img):
-        import scipy.ndimage as snd
-        # global median
-        imgid = self.get_imgid(img)
-        _logger.debug('correcting bad pixel mask in %s', imgid)
-        base = img[0].data
-        interp = base.copy()
-        mask1 = ~numpy.isfinite(base)
-        # Fill BPM with median values
-        median = numpy.median(base[self.good_vals])
-        interp[self.bad_vals] = median
-        interp = snd.median_filter(interp, size=self.median_box)
-        #
-        img[0].data[self.bad_vals] = interp[self.bad_vals]
-
-        mask1 = ~numpy.isfinite(base)
-        if numpy.any(mask1):
-            _logger.warning('image has %d NaN', mask1.sum())
-
-        mask2 = ~numpy.isfinite(img[0].data)
-        if numpy.any(mask2):
-            _logger.warning('image has %d NaN', mask2.sum())
-
-        return img
-
-
-class FlatFieldCorrector(Corrector):
-    '''A Node that corrects a frame from flat-field.'''
-
-    def __init__(self, flatdata, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-
-        self.update_variance = False
-
-        super(FlatFieldCorrector, self).__init__(
-            datamodel=datamodel,
-            tagger=tagger,
-            dtype=dtype)
-
-        self.flatdata = flatdata
-        self.flatdata[flatdata <= 0] = 1.0 # To avoid NaN
-        self.flat_stats = flatdata.mean()
-
-    def _run(self, img):
-        import numina.array as array
-        imgid = self.get_imgid(img)
-
-        _logger.debug('correcting flat in %s', imgid)
-        _logger.debug('flat mean is %f', self.flat_stats)
-
-        data = self.datamodel.get_data(img)
-        # data = array.correct_flatfield(data, self.flatdata, dtype=self.dtype)
-        # Check if flatdata as 0
-        mask1 = self.flatdata < 0
-        if numpy.any(mask1):
-            _logger.warning('flat has %d zeros', mask1.sum())
-        mask2 = ~numpy.isfinite(data)
-        if numpy.any(mask2):
-            _logger.warning('image has %d NaN', mask2.sum())
-
-        result = data / self.flatdata
-        result = result.astype(self.dtype)
-
-        # FIXME
-        img[0].data = result
-        return img
-
-
-class Checker(Corrector):
-    '''A Node that checks.'''
-    def __init__(self):
-        super(Checker, self).__init__(None)
-
-    def _run(self, img):
-        base = img[0].data
-        _logger.debug('running checker after flat')
-        # Check NaN and Ceros
-        mask1 = ~numpy.isfinite(base)
-        if numpy.any(mask1):
-            _logger.warning('image has %d NaN', mask1.sum())
-
-        return img
 
 
 def init_filters_generic(rinput, getters):
