@@ -280,8 +280,15 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     x_t, y_t = refine_peaks(collapsed, idxs_p, wfit)
 
-    xl = bstart + centerx - wx + x_t[0]
+    if len(x_t) == 0:
+    	logger.debug('no peaks to refine')
+        return centery, 0, 0, 2
+
+    if x_t[0] >= collapsed.shape[0]:
+    	logger.debug('wrong position %d when refining', x_t[0])
+        return centery, 0, 0, 2
 
     _, fwhm_x = fmod.compute_fwhm_1d_simple(collapsed, x_t[0])
 
+    xl = bstart + centerx - wx + x_t[0]
     return centery, xl, fwhm_x, 0
