@@ -21,45 +21,61 @@
 Image mode recipes of EMIR
 """
 
+import logging
 
 from numina.core import Parameter
-from numina.core import RecipeInput, Product
-from numina.core import DataFrameType, define_input, define_result
+from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
+from numina.array.combine import median
 
-from emirdrp.core import RecipeResult
+from emirdrp.core import EmirRecipe
+from emirdrp.products import DataFrameType
+from emirdrp.recipes.aiv.flows import basic_processing_with_combination
+from emirdrp.recipes.aiv.flows import init_filters_bdfs
 from emirdrp.products import SourcesCatalog
 
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
+from emirdrp.requirements import MasterSkyRequirement
 from emirdrp.requirements import Extinction_Requirement
 from emirdrp.requirements import Offsets_Requirement
 from emirdrp.requirements import Catalog_Requirement
 
 from .shared import DirectImageCommon
 
+_logger = logging.getLogger('numina.recipes.emir')
 
-class StareImageRecipeInput(RecipeInput):
+
+class StareImageBaseRecipe(EmirRecipe):
+    """Process images in Stare Image Mode"""
+
     obresult = ObservationResultRequirement()
     master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    extinction = Extinction_Requirement()
-    sources = Catalog_Requirement()
-    offsets = Offsets_Requirement()
-    iterations = Parameter(4, 'Iterations of the recipe')
+    master_sky = MasterSkyRequirement()
 
-
-class StareImageRecipeResult(RecipeResult):
     frame = Product(DataFrameType)
-    catalog = Product(SourcesCatalog)
+
+    def run(self, rinput):
+        _logger.info('starting stare image reduction')
+
+        flow = init_filters_bdfs(rinput)
+
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
+        # Update SEC to 0
+        hdr['SEC'] = 0
+        _logger.info('end stare image reduction')
+        result = self.create_result(frame=hdulist)
+
+        return result
 
 
-@define_input(StareImageRecipeInput)
-@define_result(StareImageRecipeResult)
 class StareImageRecipe(DirectImageCommon):
 
     """
@@ -73,10 +89,23 @@ class StareImageRecipe(DirectImageCommon):
 
     """
 
+    obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    extinction = Extinction_Requirement()
+    sources = Catalog_Requirement()
+    offsets = Offsets_Requirement()
+    iterations = Parameter(4, 'Iterations of the recipe')
+
+    frame = Product(DataFrameType)
+    catalog = Product(SourcesCatalog)
+
     def run(self, recipe_input):
 
         frame, catalog = self.process(recipe_input,
                                       window=None, subpix=1,
                                       stop_after=DirectImageCommon.PRERED)
 
-        return StareImageRecipeResult(frame=frame, catalog=catalog)
+        return self.create_result(frame=frame, catalog=catalog)

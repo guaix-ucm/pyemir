@@ -280,12 +280,12 @@ pipelines:
       IMAGE_DARK: emirdrp.recipes.auxiliary.DarkRecipe
       IMAGE_FLAT: emirdrp.recipes.auxiliary.IntensityFlatRecipe
       IMAGE_SKY: emirdrp.recipes.auxiliary.SimpleSkyRecipe
-      DITHERED_IMAGE: emirdrp.recipes.aiv.dither.DitheredImageARecipe
+      DITHERED_IMAGE: emirdrp.recipes.image.join.JoinDitheredImagesRecipe
       FULL_DITHERED_IMAGE: emirdrp.recipes.image.dither.DitheredImageRecipe
       MICRODITHERED_IMAGE: emirdrp.recipes.image.micro.MicroditheredImageRecipe
       MOSAICED_IMAGE: emirdrp.recipes.image.mosaic.MosaicRecipe
       NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.image.nodded.NBImageRecipe
-      STARE_IMAGE: emirdrp.recipes.aiv.sky.TestSkyCorrectRecipe
+      STARE_IMAGE: emirdrp.recipes.image.stare.StareImageBaseRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       gain_mode1: emirdrp.recipes.engineering.GainRecipe1
       cosmetics: emirdrp.recipes.engineering.CosmeticsRecipe
