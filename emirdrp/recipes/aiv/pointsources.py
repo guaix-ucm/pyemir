@@ -24,15 +24,16 @@ from __future__ import division
 import logging
 
 import numpy
-from astropy.wcs import WCS
-#import astropy.io.fits as fits
+import astropy.io.fits as fits
+import sep
 from astropy.convolution import Gaussian2DKernel
 from astropy.stats import gaussian_fwhm_to_sigma
-import photutils
+from scipy.spatial import KDTree
 from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import ArrayType
+from numina.array.fwhm import compute_fwhm_2d_simple
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
@@ -45,6 +46,7 @@ from emirdrp.requirements import MasterSkyRequirement
 from .flows import basic_processing_with_combination
 from .flows import init_filters_pbdfs
 from .common import get_dtur_from_header
+from .procedures import image_box2d
 
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -86,7 +88,7 @@ class TestPointSourceRecipe(EmirRecipe):
     param_box_half_size = Product(float)
 
     def run(self, rinput):
-        _logger.info('starting processing for slit detection')
+        _logger.info('starting processing for object detection')
 
         flow = init_filters_pbdfs(rinput)
 
@@ -109,49 +111,88 @@ class TestPointSourceRecipe(EmirRecipe):
             raise RecipeError(error)
 
         data = hdulist[0].data
-        wcs = WCS(header=hdr)
+
+        # Copy needed in numpy 1.7
+        # This seems already bitswapped??
+        # FIXME: check this works offline/online
+        # ndata = data.byteswap().newbyteorder()
+        # data = data.byteswap(inplace=True).newbyteorder()
 
         snr_detect = 5.0
         fwhm = 4.0
         npixels = 15
         box_shape = [64, 64]
         _logger.info('point source detection2')
-        mask = numpy.zeros_like(data, dtype='bool')
+        _logger.info('using internal mask to remove corners')
+        # Corners
+        mask = numpy.zeros_like(data, dtype='int32')
+        mask[2000:, 0:80] = 1
+        mask[2028:, 2000:] = 1
+        mask[:50, 1950:] = 1
+        mask[:100, :50] = 1
+        # Remove corner regions
+
         _logger.info('compute background map, %s', box_shape)
-        bkg = photutils.background.Background(data, box_shape=box_shape,
-                                              mask=mask)
+        bkg = sep.Background(data)
 
         _logger.info('reference fwhm is %5.1f pixels', fwhm)
         _logger.info('detect threshold, %3.1f over background', snr_detect)
-        threshold = photutils.detect_threshold(data, background=bkg.background,
-                                               snr=snr_detect, mask=mask)
         _logger.info('convolve with gaussian kernel, FWHM %3.1f pixels', fwhm)
-        sigma = fwhm * gaussian_fwhm_to_sigma  # FWHM = 2.
-
+        sigma = fwhm * gaussian_fwhm_to_sigma
+        #
         kernel = Gaussian2DKernel(sigma)
         kernel.normalize()
 
-        _logger.info('create segmentation image, npixels >= %d', npixels)
-        segm = photutils.detect_sources(data, threshold, npixels=npixels, filter_kernel=kernel)
+        thresh = snr_detect * bkg.globalrms
+        data_s = data - bkg.back()
+        objects, segmap = sep.extract(data - bkg.back(), thresh, minarea=npixels,
+                                      filter_kernel=kernel.array, segmentation_map=True,
+                                      mask=mask)
+        fits.writeto('segmap.fits', segmap)
+        _logger.info('detected %d objects', len(objects))
 
-        # fits.writeto('segm.fits', segm.data, clobber=True)
+        # Hardcoded values
+        rs2 = 15.0
+        fit_rad = 10.0
+        flux_min = 1000.0
+        flux_max = 30000.0
+        _logger.debug('Flux limit is %6.1f %6.1f', flux_min, flux_max)
+        # FIXME: this should be a view, not a copy
+        xall = objects['x']
+        yall = objects['y']
+        mm = numpy.array([xall, yall]).T
+        _logger.info('computing FWHM')
+        # Find objects with pairs inside fit_rad
+        kdtree = KDTree(mm)
+        nearobjs = (kdtree.query_ball_tree(kdtree, r=fit_rad))
+        positions = []
+        for idx, obj in enumerate(objects):
+            x0 = obj['x']
+            y0 = obj['y']
+            sl = image_box2d(x0, y0, data.shape, (fit_rad, fit_rad))
+            # sl_sky = image_box2d(x0, y0, data.shape, (rs2, rs2))
+            part_s = data_s[sl]
+            # Logical coordinates
+            xx0 = x0 - sl[1].start
+            yy0 = y0 - sl[0].start
 
-        _logger.info('compute properties')
-        props = photutils.source_properties(data - bkg.background,
-                                            segm, mask=mask,
-                                            background=bkg.background,
-                                            wcs=wcs)
+            _, fwhm_x, fwhm_y = compute_fwhm_2d_simple(part_s, xx0, yy0)
 
-        tbl = photutils.properties_table(props)
-        tbl.remove_columns(['source_sum_err',])
-        # 'id', 'xcentroid', 'ycentroid', 'ra_icrs_centroid', 'dec_icrs_centroid',
-        # 'source_sum', 'source_sum_err', 'background_sum', 'background_mean', 'background_at_centroid',
-        # 'xmin', 'xmax', 'ymin', 'ymax', 'min_value', 'max_value', 'minval_xpos', 'minval_ypos', 'maxval_xpos', 'maxval_ypos', 'area',
-        # 'equivalent_radius', 'perimeter', 'semimajor_axis_sigma', 'semiminor_axis_sigma', 'eccentricity', 'orientation', 'ellipticity',
-        # 'elongation', 'covar_sigx2', 'covar_sigxy', 'covar_sigy2', 'cxx', 'cxy', 'cyy'
-        # print(tbl.columns)
-        positions_alt = tbl.as_array()
-        positions_alt = numpy.array(positions_alt.tolist())
+            if min(fwhm_x, fwhm_x) < 3:
+                continue
+            if flux_min > obj['peak'] or flux_max < obj['peak']:
+                continue
+            # nobjs is the number of object inside fit_rad
+            nobjs = len(nearobjs[idx])
+
+            flag = 0 if nobjs == 1 else 1
+
+            positions.append([idx, x0, y0, obj['peak'], fwhm_x, fwhm_y, flag])
+
+        _logger.info('saving photometry')
+        positions = numpy.array(positions)
+        positions_alt = positions
+        _logger.info('end processing for object detection')
 
         result = self.create_result(frame=hdulist,
                                 positions=positions_alt,
@@ -167,3 +208,4 @@ class TestPointSourceRecipe(EmirRecipe):
                                 param_box_half_size=rinput.box_half_size
                                 )
         return result
+
