@@ -23,15 +23,15 @@ from __future__ import division
 
 import logging
 
-import six
 import numpy
+import six
+from numina.core import Product, Parameter
+from numina.core import RecipeError
+from numina.core.products import ArrayType
+from numina.core.requirements import ObservationResultRequirement
 from scipy import ndimage
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
-from numina.core import Product, Parameter
-from numina.core.requirements import ObservationResultRequirement
-from numina.core import RecipeError
-from numina.core.products import ArrayType
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
@@ -40,10 +40,10 @@ from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
-from .common import normalize_raw, char_slit
+from emirdrp.processing.flows import basic_processing_with_combination
+from emirdrp.processing.flows import init_filters_bdfs
 from .common import get_dtur_from_header
+from .common import normalize_raw, char_slit
 
 _logger = logging.getLogger('numina.recipes.emir')
 

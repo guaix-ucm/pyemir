@@ -22,31 +22,31 @@
 import logging
 
 import numpy
-from numina.core import RecipeError
+from numina.array.combine import median
 from numina.core import DataFrame
 from numina.core import Product
-from numina.array.combine import median
+from numina.core import RecipeError
 from numina.core.requirements import ObservationResultRequirement
 
 import emirdrp.instrument.channels as allchannels
 from emirdrp.core import EMIR_BIAS_MODES
-from emirdrp.core import gather_info_frames
 from emirdrp.core import EmirRecipe
+from emirdrp.core import gather_info_frames
+from emirdrp.products import ChannelLevelStatistics
+from emirdrp.products import ChannelLevelStatisticsType
 from emirdrp.products import MasterBias, MasterDark
 from emirdrp.products import MasterIntensityFlat
-from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
-from emirdrp.products import ChannelLevelStatisticsType
-from emirdrp.products import ChannelLevelStatistics
 from emirdrp.products import SlitTransmissionCalibration
+from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSpectralFlatFieldRequirement
-from .aiv.flows import init_filters_bdf
-from .aiv.flows import init_filters_bd
-from .aiv.flows import init_filters_b
-from .aiv.flows import basic_processing_with_combination
+from emirdrp.processing.flows import basic_processing_with_combination
+from emirdrp.processing.flows import init_filters_b
+from emirdrp.processing.flows import init_filters_bd
+from emirdrp.processing.flows import init_filters_bdf
 
 
 _logger = logging.getLogger('numina.recipes.emir')

@@ -22,29 +22,29 @@
 from __future__ import division
 
 import logging
-
-import numpy
-import astropy.io.fits as fits
 import sep
+
+import astropy.io.fits as fits
+import numpy
 from astropy.convolution import Gaussian2DKernel
 from astropy.stats import gaussian_fwhm_to_sigma
-from scipy.spatial import KDTree
+from numina.array.fwhm import compute_fwhm_2d_simple
 from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
-from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import ArrayType
-from numina.array.fwhm import compute_fwhm_2d_simple
+from numina.core.requirements import ObservationResultRequirement
+from scipy.spatial import KDTree
 
 from emirdrp.core import EmirRecipe
-from emirdrp.products import DataFrameType
 from emirdrp.products import CoordinateList2DType
+from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from .flows import basic_processing_with_combination
-from .flows import init_filters_pbdfs
+from emirdrp.processing.flows import basic_processing_with_combination
+from emirdrp.processing.flows import init_filters_pbdfs
 from .common import get_dtur_from_header
 from .procedures import image_box2d
 

@@ -24,32 +24,27 @@ from __future__ import division
 import logging
 
 import numpy
-from scipy.ndimage.filters import median_filter
-from scipy.ndimage import convolve1d
-from numpy.polynomial.polynomial import polyval
-
-from numina.core import Requirement, Product, Parameter, RecipeError
-from numina.core.requirements import ObservationResultRequirement
-from numina.core.products import ArrayType
 from numina.array.utils import wc_to_pix_1d, image_box
+from numina.core import Requirement, Product, Parameter, RecipeError
+from numina.core.products import ArrayType
+from numina.core.requirements import ObservationResultRequirement
+from numpy.polynomial.polynomial import polyval
+from scipy.ndimage import convolve1d
+from scipy.ndimage.filters import median_filter
 
-from emirdrp.core import EmirRecipe
-from emirdrp.products import DataFrameType
+from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
 from emirdrp.products import CoordinateList2DType
+from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-
-from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
-from .common import get_dtur_from_header
-from .common import get_cs_from_header, get_csup_from_header
-
+from emirdrp.processing.flows import basic_processing_with_combination
+from emirdrp.processing.flows import init_filters_bdfs
 from .bardetect import char_bar_peak_l, char_bar_peak_r
-
-PIXSCALE = 18.0
+from .common import get_cs_from_header, get_csup_from_header
+from .common import get_dtur_from_header
 
 
 class BarDetectionRecipe(EmirRecipe):
@@ -122,8 +117,8 @@ class BarDetectionRecipe(EmirRecipe):
         logger.debug('median filtering, %d rows', mfilter_size)
         arr_median = median_filter(arr_median, size=(mfilter_size, 1))
 
-        xfac = dtur[0] / PIXSCALE
-        yfac = -dtur[1] / PIXSCALE
+        xfac = dtur[0] / EMIR_PIXSCALE
+        yfac = -dtur[1] / EMIR_PIXSCALE
 
         vec = [yfac, xfac]
         logger.debug('DTU shift is %s', vec)
@@ -217,7 +212,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         logger.debug('end finding bars')
 
-	result = self.create_result(frame=hdulist,
+        result = self.create_result(frame=hdulist,
     #                                derivative=fits.PrimaryHDU(data=arr_deriv),
                                     positions9=allpos[9],
                                     positions7=allpos[7],
@@ -259,4 +254,3 @@ class BarDetectionRecipe(EmirRecipe):
         cm = (rr * ci).sum() / norm
 
         return fm + sl[0].start, cm + sl[1].start
-

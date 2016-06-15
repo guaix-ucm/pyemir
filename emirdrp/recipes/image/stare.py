@@ -23,26 +23,24 @@ Image mode recipes of EMIR
 
 import logging
 
+from numina.array.combine import median
 from numina.core import Parameter
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
-from numina.array.combine import median
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
-from emirdrp.recipes.aiv.flows import basic_processing_with_combination
-from emirdrp.recipes.aiv.flows import init_filters_bdfs
 from emirdrp.products import SourcesCatalog
-
+from emirdrp.requirements import Catalog_Requirement
+from emirdrp.requirements import Extinction_Requirement
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.requirements import Extinction_Requirement
 from emirdrp.requirements import Offsets_Requirement
-from emirdrp.requirements import Catalog_Requirement
-
+from processing.flows import basic_processing_with_combination
+from processing.flows import init_filters_bdfs
 from .shared import DirectImageCommon
 
 _logger = logging.getLogger('numina.recipes.emir')

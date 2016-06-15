@@ -23,12 +23,11 @@ import logging
 import math
 
 import numpy
-from scipy.ndimage.filters import median_filter, generic_filter
 from astropy.io import fits
-
 from numina.core import Requirement, Product, Parameter
-from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import ArrayType
+from numina.core.requirements import ObservationResultRequirement
+from scipy.ndimage.filters import median_filter, generic_filter
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
@@ -37,8 +36,8 @@ from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from .flows import init_filters_bdfs
-from .flows import basic_processing_with_combination
+from emirdrp.processing.flows import basic_processing_with_combination
+from emirdrp.processing.flows import init_filters_bdfs
 
 _logger = logging.getLogger('numina.recipes.emir')
 

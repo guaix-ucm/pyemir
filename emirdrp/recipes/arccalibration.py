@@ -19,30 +19,28 @@
 
 """Auxiliary Recipes for EMIR"""
 
-
 from __future__ import division, print_function
 
 import logging
 
 import numpy
+from numina.array.peaks.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
+from numina.array.wavecal.arccalibration import arccalibration_direct, fit_solution, \
+                                        gen_triplets_master
+from numina.array.wavecal.statsummary import sigmaG
 from numina.core import Requirement, Product, Parameter
+from numina.core.products import ArrayType
+from numina.core.products import LinesCatalog
 from numina.core.requirements import ObservationResultRequirement
+from scipy.interpolate import interp1d
 
 from emirdrp.core import EmirRecipe
-from numina.core.products import LinesCatalog
 from emirdrp.products import SlitsCatalog
-from numina.core.products import ArrayType
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
-from .aiv.flows import init_filters_bd
-from .aiv.flows import basic_processing_with_combination
-
-from numina.array.wavecal.statsummary import sigmaG
-from numina.array.wavecal.arccalibration import arccalibration_direct, fit_solution, \
-                                        gen_triplets_master
-from numina.array.peaks.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
-from scipy.interpolate import interp1d
+from emirdrp.processing.flows import basic_processing_with_combination
+from emirdrp.processing.flows import init_filters_bd
 
 
 _logger = logging.getLogger('numina.recipes.emir')

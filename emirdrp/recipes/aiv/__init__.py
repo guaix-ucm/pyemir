@@ -21,27 +21,23 @@
 
 import logging
 
-
 from astropy.io import fits
-
+from numina.array.combine import median
 from numina.core import DataFrame
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
-from numina.array.combine import median
 
 from emirdrp.core import EmirRecipe
-from emirdrp.products import MasterBias
 from emirdrp.products import DataFrameType
+from emirdrp.products import MasterBias
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-
-from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
-from .flows import init_filters_bdf
-from .flows import init_filters_bd
-from .flows import init_filters_b
+from emirdrp.processing.flows import basic_processing_with_combination
+from emirdrp.processing.flows import init_filters_b
+from emirdrp.processing.flows import init_filters_bd
+from emirdrp.processing.flows import init_filters_bdf
 
 
 _logger = logging.getLogger('numina.recipes.emir')
