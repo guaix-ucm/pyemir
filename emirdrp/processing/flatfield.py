@@ -17,7 +17,8 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Recipe to detect slits in the AIV mask'''
+
+"""Corrector to remove flat field"""
 
 from __future__ import division
 #
