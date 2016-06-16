@@ -72,6 +72,39 @@ def resize(frames, shape, offsetsp, finalshape, window=None, scale=1, step=0):
     return rframes
 
 
+def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, conserve=True):
+
+    _logger.info('Resizing arrays')
+    rarrays = []
+    for array, rel_offset in zip(arrays, offsetsp):
+        region, _ = subarray_match(finalshape, rel_offset, shape)
+        newdata = resize_array(array, finalshape, region, window=window,
+                               fill=0.0, scale=scale, conserve=conserve)
+        rarrays.append(newdata)
+
+    return rarrays
+
+
+def resize_array(data, finalshape, region, window=None,
+                     scale=1, fill=0.0, conserve=True):
+    from numina.array import rebin_scale
+    if window:
+        data = data[window]
+
+    if scale == 1:
+        finaldata = data
+    else:
+        finaldata = rebin_scale(data, scale)
+
+    newdata = numpy.empty(finalshape, dtype='float')
+    newdata.fill(fill)
+    newdata[region] = finaldata
+    # Conserve the total sum of the original data
+    if conserve:
+        newdata[region] /= scale ** 2
+    return newdata
+
+
 def combine_frames(rframes):
     # frameslll = [frame.open() for frame in rframes]
     frameslll = rframes
@@ -92,7 +125,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             _logger.debug('Using GTC version of build_recipe_input in DitheredImages')
             return cls.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
         else:
-            super(JoinDitheredImagesRecipe, cls).build_recipe_input(obsres, dal, pipeline=pipeline)
+            return super(JoinDitheredImagesRecipe, cls).build_recipe_input(obsres, dal, pipeline=pipeline)
 
     @classmethod
     def build_recipe_input_gtc(cls, obsres, dal, pipeline='default'):
@@ -116,10 +149,20 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
     def run(self, rinput):
 
+        fframe = rinput.obresult.frames[0]
+        img = fframe.open()
+        template_header = img[0].header
+
+        _logger.debug('Data types of input images')
+        data_arrays = []
+        for f in rinput.obresult.frames:
+            img = f.open()
+            _logger.debug('datatype is %s', img[0].data.dtype)
+            data_arrays.append(img[0].data)
+
         _logger.info('Computing offsets from WCS information')
         baseshape = (2048, 2048)
-        refpix = numpy.divide(numpy.array([baseshape],
-                                          dtype='int'), 2).astype('float')
+        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
         offsets_xy = offsets_from_wcs(rinput.obresult.frames, refpix)
         _logger.debug("offsets_xy %s", offsets_xy)
         # Offsets in numpy order, swaping
@@ -135,14 +178,16 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # Resizing target frames
         rframes = resize(rinput.obresult.frames, subpixshape,
                          offsetsp, finalshape)
-        out = combine_frames(rframes)
-        hdu = fits.PrimaryHDU(out[0])
+        r_arrays = resize_arrays(data_arrays, subpixshape, offsetsp, finalshape)
+        for f in r_arrays:
+            _logger.debug('datatype is %s', f.dtype)
+
+        out = combine.mean(r_arrays, dtype='float32')
+
+        hdu = fits.PrimaryHDU(out[0], header=template_header)
 
         _logger.debug('update result header')
         hdr = hdu.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdr['IMGOBBL'] = 0
 
         hdulist = fits.HDUList([hdu])
