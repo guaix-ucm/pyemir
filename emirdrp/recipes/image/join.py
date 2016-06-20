@@ -71,14 +71,14 @@ def resize(frames, shape, offsetsp, finalshape, window=None, scale=1, step=0):
     return rframes
 
 
-def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, conserve=True):
+def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, conserve=True, fill=0.0):
 
     _logger.info('Resizing arrays')
     rarrays = []
     for array, rel_offset in zip(arrays, offsetsp):
         region, _ = subarray_match(finalshape, rel_offset, shape)
         newdata = resize_array(array, finalshape, region, window=window,
-                               fill=0.0, scale=scale, conserve=conserve)
+                               fill=fill, scale=scale, conserve=conserve)
         rarrays.append(newdata)
 
     return rarrays
@@ -95,7 +95,7 @@ def resize_array(data, finalshape, region, window=None,
     else:
         finaldata = rebin_scale(data, scale)
 
-    newdata = numpy.empty(finalshape, dtype='float')
+    newdata = numpy.empty(finalshape, dtype=data.dtype)
     newdata.fill(fill)
     newdata[region] = finaldata
     # Conserve the total sum of the original data
@@ -148,9 +148,10 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
     def run(self, rinput):
 
+        use_errors = True
         fframe = rinput.obresult.frames[0]
         img = fframe.open()
-        template_header = img[0].header
+        base_header = img[0].header
 
         _logger.debug('Data types of input images')
         data_arrays = []
@@ -178,18 +179,25 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         rframes = resize(rinput.obresult.frames, subpixshape,
                          offsetsp, finalshape)
         r_arrays = resize_arrays(data_arrays, subpixshape, offsetsp, finalshape)
+        _logger.warning('BPM missing, ones zeros instead')
+        false_mask = numpy.zeros_like(data_arrays[0], dtype='int16')
+        r_masks = resize_arrays([false_mask for _ in r_arrays], subpixshape, offsetsp, finalshape, fill=1)
         for f in r_arrays:
             _logger.debug('datatype is %s', f.dtype)
 
-        out = combine.mean(r_arrays, dtype='float32')
+        out = combine.mean(r_arrays, masks=r_masks, dtype='float32')
 
-        hdu = fits.PrimaryHDU(out[0], header=template_header)
-
+        hdu = fits.PrimaryHDU(out[0], header=base_header)
         _logger.debug('update result header')
         hdr = hdu.header
         hdr['IMGOBBL'] = 0
 
-        hdulist = fits.HDUList([hdu])
+        if use_errors:
+            varhdu = fits.ImageHDU(out[1], name='VARIANCE')
+            num = fits.ImageHDU(out[2], name='MAP')
+            hdulist = fits.HDUList([hdu, varhdu, num])
+        else:
+            hdulist = fits.HDUList([hdu])
 
         result = self.create_result(frame=hdulist)
 
