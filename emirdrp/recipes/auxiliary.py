@@ -31,7 +31,7 @@ from numina.core.requirements import ObservationResultRequirement
 import emirdrp.instrument.channels as allchannels
 from emirdrp.core import EMIR_BIAS_MODES
 from emirdrp.core import EmirRecipe
-from emirdrp.core import gather_info_frames
+from emirdrp.processing.info import gather_info_frames
 from emirdrp.products import ChannelLevelStatistics
 from emirdrp.products import ChannelLevelStatisticsType
 from emirdrp.products import MasterBias, MasterDark
@@ -43,10 +43,8 @@ from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSpectralFlatFieldRequirement
-from emirdrp.processing.flows import basic_processing_with_combination
-from emirdrp.processing.flows import init_filters_b
-from emirdrp.processing.flows import init_filters_bd
-from emirdrp.processing.flows import init_filters_bdf
+from emirdrp.processing.combine import basic_processing_with_combination
+from emirdrp.processing.combine import  basic_processing_with_segmentation
 
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -166,7 +164,7 @@ class DarkRecipe(EmirRecipe):
         channels_name = 'FULL'
         channels = getattr(allchannels, channels_name)
 
-        flow = init_filters_b(rinput)
+        flow = self.init_filters(rinput)
 
         iinfo = gather_info_frames(rinput.obresult.frames)
         ref_exptime = 0.0
@@ -249,7 +247,7 @@ class IntensityFlatRecipe(EmirRecipe):
 
         errors = True
 
-        flow = init_filters_bd(rinput)
+        flow = self.init_filters(rinput)
         hdulist = basic_processing_with_combination(rinput, flow,
                                                     method=median,
                                                     errors=errors)
@@ -284,7 +282,7 @@ class SimpleSkyRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting sky reduction')
 
-        flow = init_filters_bdf(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow,
                                                     method=median,
@@ -296,6 +294,39 @@ class SimpleSkyRecipe(EmirRecipe):
 
         hdr['IMGTYP'] = ('SKY', 'Image type')
         hdr['NUMTYP'] = ('MASTER_SKY', 'Data product type')
+
+        result = self.create_result(skyframe=hdulist)
+
+        return result
+
+
+class DitherSkyRecipe(EmirRecipe):
+    """Recipe to process data taken in dither sky mode.
+
+    """
+
+    obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+
+    skyframe = Product(MasterIntensityFlat)
+
+
+    def run(self, rinput):
+        _logger.debug('instrument %s, mode %s', rinput.obresult.instrument,
+                      rinput.obresult.mode
+                      )
+        _logger.info('starting sky reduction with dither')
+
+        flow = self.init_filters(rinput)
+
+        hdulist = basic_processing_with_segmentation(rinput, flow,
+                                                    method=median,
+                                                    errors=True)
+
+        _logger.info('end sky reduction with dither')
 
         result = self.create_result(skyframe=hdulist)
 

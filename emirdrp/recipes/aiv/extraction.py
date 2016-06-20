@@ -36,8 +36,7 @@ from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.processing.flows import basic_processing_with_combination
-from emirdrp.processing.flows import init_filters_bdfs
+from emirdrp.processing.combine import basic_processing_with_combination
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -273,7 +272,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting extraction')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 
@@ -360,7 +359,7 @@ class CSUSpectraExtractionRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting extraction')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 

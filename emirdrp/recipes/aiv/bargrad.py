@@ -40,8 +40,7 @@ from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.processing.flows import basic_processing_with_combination
-from emirdrp.processing.flows import init_filters_bdfs
+from emirdrp.processing.combine import basic_processing_with_combination
 from .bardetect import char_bar_peak_l, char_bar_peak_r
 from .common import get_cs_from_header, get_csup_from_header
 from .common import get_dtur_from_header
@@ -88,7 +87,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         logger.info('starting processing for bars detection')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 
@@ -177,7 +176,7 @@ class BarDetectionRecipe(EmirRecipe):
                 logger.debug('reference y position is Y %7.2f', ref_y_coor)
 
                 # if ref_y_coor is outlimits, skip this bar
-		# ref_y_coor is in FITS format
+		        # ref_y_coor is in FITS format
                 if (ref_y_coor >= 2047) or (ref_y_coor <= 1):
                     logger.debug('reference y position is outlimits, skipping')
                     positions.append([lbarid, fits_row, fits_row, 1, 0, 3])

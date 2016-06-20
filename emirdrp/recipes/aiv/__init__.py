@@ -34,11 +34,7 @@ from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-from emirdrp.processing.flows import basic_processing_with_combination
-from emirdrp.processing.flows import init_filters_b
-from emirdrp.processing.flows import init_filters_bd
-from emirdrp.processing.flows import init_filters_bdf
-
+from emirdrp.processing.combine import basic_processing_with_combination
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -95,7 +91,7 @@ class TestBiasCorrectRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting simple bias reduction')
 
-        flow = init_filters_b(rinput)
+        flow = self.init_filters(rinput)
         hdu = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdu.header
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
@@ -118,7 +114,7 @@ class TestDarkCorrectRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting simple dark reduction')
 
-        flow = init_filters_bd(rinput)
+        flow = self.init_filters(rinput)
         hdulist = basic_processing_with_combination(rinput, flow,
                                                     method=median)
         hdr = hdulist[0].header
@@ -143,7 +139,7 @@ class TestFlatCorrectRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting simple flat reduction')
 
-        flow = init_filters_bdf(rinput)
+        flow = self.init_filters(rinput)
         hdulist = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)

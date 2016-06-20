@@ -25,7 +25,6 @@ import logging
 
 import numpy
 from astropy.io import fits
-from numina import __version__
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
@@ -34,7 +33,7 @@ from numina.array import subarray_match
 from numina.frame import resize_hdu
 from numina.core import ObservationResult
 
-from emirdrp.core import offsets_from_wcs
+from emirdrp.processing.wcs import offsets_from_wcs
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.ext.gtc import RUN_IN_GTC
@@ -43,7 +42,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 
 def resize_hdul(hdul, newshape, region, extensions=None, window=None,
-                scale=1, fill=0.0, clobber=True, conserve=True):
+                scale=1, fill=0.0, conserve=True):
 
     if extensions is None:
         extensions = [0]

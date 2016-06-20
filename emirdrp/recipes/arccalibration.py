@@ -39,8 +39,7 @@ from emirdrp.products import SlitsCatalog
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.processing.flows import basic_processing_with_combination
-from emirdrp.processing.flows import init_filters_bd
+from emirdrp.processing.combine import basic_processing_with_combination
 
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -61,7 +60,7 @@ class ArcCalibrationRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting arc calibration')
 
-        flow = init_filters_bd(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 

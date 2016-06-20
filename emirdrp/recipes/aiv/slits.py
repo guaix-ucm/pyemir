@@ -40,8 +40,7 @@ from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.processing.flows import basic_processing_with_combination
-from emirdrp.processing.flows import init_filters_bdfs
+from emirdrp.processing.combine import basic_processing_with_combination
 from .common import get_dtur_from_header
 from .common import normalize_raw, char_slit
 
@@ -76,7 +75,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         _logger.info('basic image reduction')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
         hdr = hdulist[0].header
@@ -187,7 +186,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
 
         _logger.info('basic image reduction')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
         hdr = hdulist[0].header

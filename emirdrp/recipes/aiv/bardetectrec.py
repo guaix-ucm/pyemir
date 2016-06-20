@@ -38,8 +38,7 @@ from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.processing.flows import basic_processing_with_combination
-from emirdrp.processing.flows import init_filters_bdfs
+from emirdrp.processing.combine import basic_processing_with_combination
 from .bardetect import find_position
 from .bardetect import locate_bar_l, locate_bar_r
 from .common import get_cs_from_header, get_csup_from_header
@@ -83,7 +82,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         logger.info('starting processing for bars detection')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 

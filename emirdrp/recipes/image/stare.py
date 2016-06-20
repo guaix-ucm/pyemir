@@ -39,8 +39,7 @@ from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
 from emirdrp.requirements import Offsets_Requirement
-from emirdrp.processing.flows import basic_processing_with_combination
-from emirdrp.processing.flows import init_filters_bdfs
+from emirdrp.processing.combine import basic_processing_with_combination
 from .shared import DirectImageCommon
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -61,7 +60,7 @@ class StareImageBaseRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting stare image reduction')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdulist[0].header

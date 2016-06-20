@@ -31,10 +31,12 @@ from numina.flow.processing import SkyCorrector
 from numina.flow import SerialFlow
 from numina.flow.node import IdNode
 from numina.array import combine
+from numina.array import combine_shape
 #
 import emirdrp.ext.gtc
 from emirdrp.core import EMIR_BIAS_MODES
 from emirdrp.core import gather_info
+from emirdrp.core import offsets_from_wcs
 from emirdrp.processing.badpixels import BadPixelCorrectorEmir
 from emirdrp.processing.flatfield import FlatFieldCorrector
 from emirdrp.processing.checkers import Checker
@@ -57,72 +59,6 @@ def init_filters_generic(rinput, getters):
     flow = SerialFlow(correctors)
 
     return flow
-
-
-def init_filters_pbdfs(rinput):
-    # with BPM, bias, dark, flat and sky
-
-    # Methods required:
-    getters = [get_corrector_p,
-               get_corrector_b,
-               get_corrector_d,
-               get_corrector_f,
-               get_checker,
-               get_corrector_s
-    ]
-
-    return init_filters_generic(rinput, getters)
-
-def init_filters_pbdf(rinput):
-    # with BPM, bias, dark, flat
-
-    # Methods required:
-    getters = [get_corrector_p,
-               get_corrector_b,
-               get_corrector_d,
-               get_corrector_f,
-    ]
-
-    return init_filters_generic(rinput, getters)
-
-
-def init_filters_pbd(rinput):
-    # with BPM, bias, dark
-
-    # Methods required:
-    getters = [get_corrector_p,
-               get_corrector_b,
-               get_corrector_d,
-    ]
-
-    return init_filters_generic(rinput, getters)
-
-
-def init_filters_pb(rinput):
-    # with BPM, bias
-
-    # Methods required:
-    getters = [get_corrector_p,
-               get_corrector_b,
-    ]
-
-    return init_filters_generic(rinput, getters)
-
-
-def init_filters_p(rinput):
-    # with BPM
-
-    # Methods required:
-    getters = [get_corrector_p]
-
-    return init_filters_generic(rinput, getters)
-
-
-# Alias for backwards compatibility
-init_filters_b = init_filters_pb
-init_filters_bd = init_filters_pbd
-init_filters_bdf = init_filters_pbdf
-init_filters_bdfs = init_filters_pbdfs
 
 
 def get_corrector_p(rinput, meta):
@@ -221,56 +157,3 @@ def get_checker(rinput, meta):
 
     return Checker()
 
-
-def basic_processing_with_combination(rinput, flow,
-                                      method=combine.mean,
-                                      errors=True):
-    odata = []
-    cdata = []
-    try:
-        _logger.info('processing input images')
-        for frame in rinput.obresult.images:
-            hdulist = frame.open()
-            fname = hdulist.filename()
-            if fname:
-                _logger.info('input is %s', fname)
-            else:
-                _logger.info('input is %s', hdulist)
-
-            final = flow(hdulist)
-            _logger.debug('output is input: %s', final is hdulist)
-
-            cdata.append(final)
-
-            # Files to be closed at the end
-            odata.append(hdulist)
-            if final is not hdulist:
-                odata.append(final)
-
-        _logger.info("stacking %d images using 'mean'", len(cdata))
-        data = method([d[0].data for d in cdata], dtype='float32')
-        hdu = fits.PrimaryHDU(data[0], header=cdata[0][0].header.copy())
-        if errors:
-            varhdu = fits.ImageHDU(data[1], name='VARIANCE')
-            num = fits.ImageHDU(data[2], name='MAP')
-            result = fits.HDUList([hdu, varhdu, num])
-        else:
-            result = fits.HDUList([hdu])
-    finally:
-        _logger.debug('closing images')
-        for hdulist in odata:
-            hdulist.close()
-
-    _logger.debug('update result header')
-
-    return result
-
-
-def basic_processing_with_update(rinput, flow):
-
-    # FIXME: this only works with local images
-    # We don't know how to store temporary GCS frames
-    _logger.info('processing input images')
-    for frame in rinput.obresult.images:
-        with fits.open(frame.label, mode='update') as hdul:
-            flow(hdul)
