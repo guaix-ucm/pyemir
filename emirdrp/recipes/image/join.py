@@ -172,7 +172,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         _logger.info('Computing relative offsets')
         subpixshape = (2048, 2048)
         finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
-        _logger.debug("offsetsp %s", offsetsp)
+        _logger.debug("Relative offsetsp %s", offsetsp)
         _logger.info('Shape of resized array is %s', finalshape)
 
         # Resizing target frames
@@ -185,13 +185,21 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         for f in r_arrays:
             _logger.debug('datatype is %s', f.dtype)
 
+        # Position of refpixel in final image
+        refpix_final = refpix + offsetsp[0]
+        _logger.info('Position of refpixel in final image %s', refpix_final)
+
+
         out = combine.mean(r_arrays, masks=r_masks, dtype='float32')
 
         hdu = fits.PrimaryHDU(out[0], header=base_header)
         _logger.debug('update result header')
         hdr = hdu.header
         hdr['IMGOBBL'] = 0
-
+        # Approximate solution
+        hdr['CRPIX1'] += offsetsp[0][0]
+        hdr['CRPIX2'] += offsetsp[0][1]
+        #
         if use_errors:
             varhdu = fits.ImageHDU(out[1], name='VARIANCE')
             num = fits.ImageHDU(out[2], name='MAP')
