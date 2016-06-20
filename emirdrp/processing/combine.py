@@ -115,7 +115,7 @@ def resize(frames, shape, offsetsp, finalshape, window=None):
 
 def basic_processing_with_segmentation(rinput, flow,
                                           method=combine.mean,
-                                          errors=True):
+                                          errors=True, bpm=None):
 
     odata = []
     cdata = []
@@ -165,7 +165,10 @@ def basic_processing_with_segmentation(rinput, flow,
 
         segmap  = segmentation_combined(data1[0])
         # submasks
-        masks = [(segmap[region] > 0) for region in regions]
+        if bpm is None:
+            masks = [(segmap[region] > 0) for region in regions]
+        else:
+            masks = [((segmap[region] > 0) & bpm) for region in regions]
 
         _logger.info("stacking %d images, with objects mask using '%s'", len(cdata), method.func_name)
         data2 = method([d[0].data for d in cdata], masks=masks, dtype='float32')
