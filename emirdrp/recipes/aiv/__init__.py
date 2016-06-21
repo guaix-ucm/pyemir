@@ -102,6 +102,31 @@ class TestBiasCorrectRecipe(EmirRecipe):
         return result
 
 
+class TestRectImageRecipe(EmirRecipe):
+    """A Recipe to test GCS handling of rectangular images.
+
+    This appeared as a problem during EMIR first comisioning,
+    it was fixed, date 2016-06-21
+    """
+
+    obresult = ObservationResultRequirement()
+    frame = Product(DataFrameType)
+
+    def run(self, rinput):
+        import numpy
+        _logger.info('testing rectangular image')
+
+        data = numpy.zeros((500, 1000), dtype='float32')
+        data[200:400, 400:600] = 10000.0
+        hdu = fits.PrimaryHDU(data)
+        hdulist = fits.HDUList([hdu])
+        print("numpy shape of data is", data.shape)
+
+        _logger.info('end testing rectangular image')
+        result = self.create_result(frame=hdulist)
+        return result
+
+
 class TestDarkCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
