@@ -22,6 +22,7 @@ import logging
 import numpy
 
 from numina.flow.node import IdNode
+from numina.flow.processing import BadPixelCorrector
 from numina.core import BaseRecipe, Product, RecipeResult
 from numina.core.products import QualityControlProduct
 from emirdrp.products import MasterBadPixelMask, MasterBias, MasterDark, MasterIntensityFlat, MasterSky
@@ -39,7 +40,7 @@ def get_corrector_p(rinput, meta):
             _logger.info('loading BPM')
             _logger.debug('BPM image: %s', bpm_info)
             mbpm = hdul[0].data
-            bpm_corrector = BadPixelCorrectorEmir(mbpm)
+            bpm_corrector = BadPixelCorrector(mbpm)
     else:
         _logger.info('BPM not provided, ignored')
         bpm_corrector = IdNode()

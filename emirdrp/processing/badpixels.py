@@ -22,7 +22,7 @@
 from __future__ import division
 
 import logging
-
+import warnings
 import numpy
 import scipy.ndimage as snd
 from numina.flow.processing import Corrector
@@ -30,11 +30,15 @@ from numina.flow.processing import Corrector
 
 _logger = logging.getLogger('numina.recipes.emir')
 
+
 class BadPixelCorrectorEmir(Corrector):
-    '''A Node that corrects a frame from bad pixels.'''
+    """A Node that corrects a frame from bad pixels."""
 
     def __init__(self, badpixelmask, mark=True, tagger=None,
                  datamodel=None, dtype='float32'):
+
+        warnings.warn("Use numina.flow.processing.BadPixelCorrector",
+                      DeprecationWarning)
 
         super(BadPixelCorrectorEmir, self).__init__(datamodel,
                                                     tagger=tagger,
