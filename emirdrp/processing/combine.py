@@ -35,6 +35,28 @@ from emirdrp.processing.wcs import offsets_from_wcs
 
 _logger = logging.getLogger('numina.recipes.emir')
 
+
+def basic_processing(rinput, flow):
+
+    cdata = []
+
+    _logger.info('processing input images')
+    for frame in rinput.obresult.images:
+        hdulist = frame.open()
+        fname = hdulist.filename()
+        if fname:
+            _logger.info('input is %s', fname)
+        else:
+            _logger.info('input is %s', hdulist)
+
+        final = flow(hdulist)
+        _logger.debug('output is input: %s', final is hdulist)
+
+        cdata.append(final)
+
+    return cdata
+
+
 def basic_processing_with_combination(rinput, flow,
                                       method=combine.mean,
                                       errors=True):
@@ -225,7 +247,6 @@ def segmentation_combined(data, snr_detect=5.0, fwhm=4.0, npixels=15):
     objects, segmap = sep.extract(data_s, thresh, minarea=npixels,
                                   filter_kernel=kernel.array, segmentation_map=True,
                                   mask=mask)
-    fits.writeto('segmap.fits', segmap)
     _logger.info('detected %d objects', len(objects))
     return segmap
 
