@@ -32,14 +32,17 @@ def gather_info_hdu(hdulist):
     _meta = {'readmode': ('READMODE', 'undefined'),
              'bunit': ('BUNIT', 'ADU'),
              'texp': ('EXPTIME', None),
+             'grism': ('GRISM', 'undefined'),
              'filter': ('FILTER', 'undefined'),
-             'imagetype': ('IMGTYP', 'undefined'),
-             'FILTPOS': ('FILTPOS', -1)
+             'obsmode': ('OBSMODE', 'undefined'),
+             'tstamp': ('TSTAMP', 'undefined')
              }
 
     # READMODE is STRING
     meta = {}
     meta['n_ext'] = len(hdulist)
+    extnames = [hdu.header.get('extname', '') for hdu in hdulist[1:]]
+    meta['name_ext'] = ['PRIMARY'] + extnames
     for key, val in _meta.items():
         meta[key] = hdulist[0].header.get(val[0], val[1])
 
