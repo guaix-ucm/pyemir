@@ -25,22 +25,24 @@ from numina.flow.node import IdNode
 from numina.flow.processing import BadPixelCorrector
 from numina.core import BaseRecipe, Product, RecipeResult
 from numina.core.products import QualityControlProduct
+
 from emirdrp.products import MasterBadPixelMask, MasterBias, MasterDark, MasterIntensityFlat, MasterSky
 import emirdrp.ext.gtc
 import emirdrp.processing.info
+from emirdrp.processing.datamodel import EmirDataModel
+
 
 _logger = logging.getLogger('numina.recipes.emir')
 
 
 def get_corrector_p(rinput, meta):
-    from emirdrp.processing.badpixels import BadPixelCorrectorEmir
     bpm_info = meta.get('master_bpm')
     if bpm_info is not None:
         with rinput.master_bpm.open() as hdul:
             _logger.info('loading BPM')
             _logger.debug('BPM image: %s', bpm_info)
             mbpm = hdul[0].data
-            bpm_corrector = BadPixelCorrector(mbpm)
+            bpm_corrector = BadPixelCorrector(mbpm, datamodel=EmirDataModel())
     else:
         _logger.info('BPM not provided, ignored')
         bpm_corrector = IdNode()
@@ -51,7 +53,6 @@ def get_corrector_p(rinput, meta):
 def get_corrector_b(rinput, meta):
     from numina.flow.processing import BiasCorrector
     iinfo = meta['obresult']
-    _logger.debug('images info: %s', iinfo)
     if iinfo:
         mode = iinfo[0]['readmode']
         if mode.lower() in EMIR_BIAS_MODES:
@@ -70,7 +71,7 @@ def get_corrector_b(rinput, meta):
             _logger.info('loading bias')
             _logger.debug('bias info: %s', bias_info)
             mbias = hdul[0].data
-            bias_corrector = BiasCorrector(mbias)
+            bias_corrector = BiasCorrector(mbias, datamodel=EmirDataModel())
     else:
         _logger.info('ignoring bias')
         bias_corrector = IdNode()
@@ -80,14 +81,14 @@ def get_corrector_b(rinput, meta):
 
 def get_corrector_s(rinput, meta):
     from numina.flow.processing import SkyCorrector
+    #from emirdrp.processing.badpixels import SkyCorrector
     sky_info = meta['master_sky']
-
 
     with rinput.master_sky.open() as msky_hdul:
         _logger.info('loading sky')
         _logger.debug('sky info: %s', sky_info)
         msky = msky_hdul[0].data
-        sky_corrector = SkyCorrector(msky)
+        sky_corrector = SkyCorrector(msky, datamodel=EmirDataModel())
 
     return sky_corrector
 
@@ -107,7 +108,7 @@ def get_corrector_f(rinput, meta):
             _logger.warning('flat has %d values below 0', mask1.sum())
         if numpy.any(mask2):
             _logger.warning('flat has %d NaN', mask2.sum())
-        flat_corrector = FlatFieldCorrector(mflat)
+        flat_corrector = FlatFieldCorrector(mflat, datamodel=EmirDataModel())
 
     return flat_corrector
 
@@ -116,14 +117,16 @@ def get_corrector_d(rinput, meta):
     from numina.flow.processing import DarkCorrector
     key = 'master_dark'
     CorrectorClass = DarkCorrector
+    datamodel = EmirDataModel()
 
     info = meta[key]
+    _logger.debug('datamodel is %s', datamodel)
     req = getattr(rinput, key)
     with req.open() as hdul:
         _logger.info('loading %s', key)
         _logger.debug('%s info: %s', key, info)
-        datac = hdul[0].data
-        corrector = CorrectorClass(datac)
+        datac = hdul['primary'].data
+        corrector = CorrectorClass(datac, datamodel=datamodel)
 
     return corrector
 
@@ -174,7 +177,9 @@ class EmirRecipe(BaseRecipe):
             _logger.debug('running outside of GTC environment')
 
         meta = emirdrp.processing.info.gather_info(rinput)
-        _logger.debug('obresult info is %s', meta['obresult'])
+        _logger.debug('obresult info')
+        for entry in meta['obresult']:
+            _logger.debug('frame info is %s', entry)
         correctors = [getter(rinput, meta) for getter in getters]
 
         flow = SerialFlow(correctors)
@@ -191,3 +196,5 @@ EMIR_BIAS_MODES = ['simple', 'bias', 'single']
 EMIR_READ_MODES = ['simple', 'bias', 'single', 'cds', 'fowler', 'ramp']
 
 EMIR_PIXSCALE = 18.0
+EMIR_GAIN = 5.0 # ADU / e-
+EMIR_RON = 5.69 # ADU
