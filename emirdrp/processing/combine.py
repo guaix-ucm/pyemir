@@ -86,6 +86,8 @@ def basic_processing_with_combination(rinput, flow,
         _logger.info("stacking %d images using '%s'", len(cdata), method.func_name)
         data = method([d[0].data for d in cdata], dtype='float32')
         hdu = fits.PrimaryHDU(data[0], header=base_header)
+        _logger.debug('update result header')
+        hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.func_name)
         if errors:
             varhdu = fits.ImageHDU(data[1], name='VARIANCE')
             num = fits.ImageHDU(data[2], name='MAP')
@@ -96,8 +98,6 @@ def basic_processing_with_combination(rinput, flow,
         _logger.debug('closing images')
         for hdulist in odata:
             hdulist.close()
-
-    _logger.debug('update result header')
 
     return result
 
@@ -197,6 +197,8 @@ def basic_processing_with_segmentation(rinput, flow,
         hdu = fits.PrimaryHDU(data2[0], header=base_header)
         points_no_data = (data2[2] == 0).sum()
 
+        _logger.debug('update result header')
+        hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.func_name)
         _logger.info("missing points, total: %d, fraction: %3.1f", points_no_data, points_no_data / data2[2].size)
 
         if errors:
@@ -209,8 +211,6 @@ def basic_processing_with_segmentation(rinput, flow,
         _logger.debug('closing images')
         for hdulist in odata:
             hdulist.close()
-
-    _logger.debug('update result header')
 
     return result
 
