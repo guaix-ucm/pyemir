@@ -22,13 +22,13 @@
 from __future__ import division
 
 import logging
-from numina.flow.processing import SimpleDataModel
+from numina.flow.datamodel import DataModel
 
 
 _logger = logging.getLogger('numina.recipes.emir')
 
 
-class EmirDataModel(SimpleDataModel):
+class EmirDataModel(DataModel):
     """Data model of EMIR.
 
     Empty for the moment"""

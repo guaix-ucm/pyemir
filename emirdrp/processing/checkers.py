@@ -31,9 +31,9 @@ _logger = logging.getLogger('numina.recipes.emir')
 class Checker(Corrector):
     '''A Node that checks.'''
     def __init__(self):
-        super(Checker, self).__init__(None)
+        super(Checker, self).__init__()
 
-    def _run(self, img):
+    def run(self, img):
         base = img[0].data
         _logger.debug('running checker after flat')
         # Check NaN and Ceros

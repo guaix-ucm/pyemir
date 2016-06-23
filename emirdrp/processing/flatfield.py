@@ -33,22 +33,21 @@ _logger = logging.getLogger('numina.recipes.emir')
 class FlatFieldCorrector(Corrector):
     """A Node that corrects a frame from flat-field."""
 
-    def __init__(self, flatdata, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
+    def __init__(self, flatdata, datamodel=None, dtype='float32'):
 
         self.update_variance = False
 
         super(FlatFieldCorrector, self).__init__(
             datamodel=datamodel,
-            tagger=tagger,
             dtype=dtype)
 
         self.flatdata = flatdata
         self.flatdata[flatdata <= 0] = 1.0 # To avoid NaN
         self.flat_stats = flatdata.mean()
+        self.calibid = 'ID-of-calib-image'
 
     def _run(self, img):
-        import numina.array as array
+        import datetime
         imgid = self.get_imgid(img)
 
         _logger.debug('correcting flat in %s', imgid)
@@ -68,5 +67,10 @@ class FlatFieldCorrector(Corrector):
         result = result.astype(self.dtype)
 
         # FIXME: not using datamodel
-        img[0].data = result
+        img['primary'].data = result
+        hdr = img['primary'].header
+        hdr['NUM-FF'] = self.calibid
+        hdr['history'] = 'Flat-field correction with {}'.format(self.calibid)
+        hdr['history'] = 'Flat-field correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = 'Flat-field correction mean {}'.format(self.flat_stats)
         return img
