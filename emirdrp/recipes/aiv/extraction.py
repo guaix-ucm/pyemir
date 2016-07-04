@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -23,21 +23,20 @@ import logging
 import math
 
 import numpy
-from scipy.ndimage.filters import median_filter, generic_filter
 from astropy.io import fits
-
 from numina.core import Requirement, Product, Parameter
-from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import ArrayType
+from numina.core.requirements import ObservationResultRequirement
+from scipy.ndimage.filters import median_filter, generic_filter
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from .flows import init_filters_bdfs
-from .flows import basic_processing_with_combination
+from emirdrp.processing.combine import basic_processing_with_combination
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -250,6 +249,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
 
     # Recipe Requirements
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -272,7 +272,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting extraction')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 
@@ -359,7 +359,7 @@ class CSUSpectraExtractionRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting extraction')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 

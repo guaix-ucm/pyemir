@@ -55,7 +55,7 @@ import numina.util.sexcatalog as sexcatalog
 from emirdrp.core import EmirRecipe
 from emirdrp.products import SourcesCatalog
 from emirdrp.instrument.channels import FULL
-from emirdrp.core import offsets_from_wcs
+from emirdrp.processing.wcs import offsets_from_wcs
 
 from .checks import check_photometry
 from .naming import (name_redimensioned_frames, name_object_mask,

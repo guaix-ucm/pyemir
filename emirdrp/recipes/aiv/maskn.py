@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2015 Universidad Complutense de Madrid
+# Copyright 2013-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -22,35 +22,31 @@
 from __future__ import division
 
 import logging
-import six
 
 import numpy
+import six
+from numina.core import RecipeError
+from numina.core import Requirement, Product, Parameter
+from numina.core.products import ArrayType
+from numina.core.requirements import ObservationResultRequirement
 from scipy import ndimage
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
-from numina.core import RecipeError
-from numina.core import Requirement, Product, Parameter
-from numina.core.requirements import ObservationResultRequirement
-from emirdrp.core import EmirRecipe
-from emirdrp.products import DataFrameType
+from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
 from emirdrp.products import CoordinateList2DType
-from numina.core.products import ArrayType
+from emirdrp.products import DataFrameType
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-
-from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
-from .common import pinhole_char, pinhole_char2
-from .common import normalize, char_slit
+from emirdrp.processing.combine import basic_processing_with_combination
 from .common import get_dtur_from_header
+from .common import normalize, char_slit
+from .common import pinhole_char, pinhole_char2
 
 _logger = logging.getLogger('numina.recipes.emir')
-
-
-PIXSCALE = 18.0
 
 
 class TestMaskRecipe(EmirRecipe):
@@ -58,6 +54,7 @@ class TestMaskRecipe(EmirRecipe):
     # Recipe Requirements
     #
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -97,7 +94,7 @@ class TestMaskRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting processing for slit detection')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 
@@ -119,8 +116,8 @@ class TestMaskRecipe(EmirRecipe):
 
         if rinput.shift_coordinates:
             xdtur, ydtur, zdtur = dtur
-            xfac = xdtur / PIXSCALE
-            yfac = -ydtur / PIXSCALE
+            xfac = xdtur / EMIR_PIXSCALE
+            yfac = -ydtur / EMIR_PIXSCALE
 
             vec = numpy.array([yfac, xfac])
             _logger.info('shift is %s', vec)

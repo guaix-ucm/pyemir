@@ -20,16 +20,12 @@
 """Recipes for finding the best focus."""
 
 from numina.core import Parameter
-from numina.core import Requirement
 from numina.core import Product
 
 import emirdrp.requirements as reqs
 from emirdrp.core import EmirRecipe
-from emirdrp.products import MasterBias, MasterDark, MasterBadPixelMask
 from emirdrp.products import TelescopeFocus
 from emirdrp.products import DTUFocus
-from emirdrp.products import MasterIntensityFlat
-
 
 
 class TelescopeRoughFocusRecipe(EmirRecipe):

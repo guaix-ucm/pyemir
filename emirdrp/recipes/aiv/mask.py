@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2014 Universidad Complutense de Madrid
+# Copyright 2013-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -26,25 +26,22 @@ import logging
 import numpy
 from numina.core import RecipeError
 from numina.core import Requirement, Product, Parameter
-from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import ArrayType
+from numina.core.requirements import ObservationResultRequirement
 
-from emirdrp.core import EmirRecipe
-from emirdrp.products import DataFrameType
+from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
 from emirdrp.products import CoordinateList2DType
+from emirdrp.products import DataFrameType
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
-from .common import pinhole_char, pinhole_char2
+from emirdrp.processing.combine import basic_processing_with_combination
 from .common import get_dtur_from_header
+from .common import pinhole_char, pinhole_char2
 
 _logger = logging.getLogger('numina.recipes.emir')
-
-
-PIXSCALE = 18.0
 
 
 class TestPinholeRecipe(EmirRecipe):
@@ -52,6 +49,7 @@ class TestPinholeRecipe(EmirRecipe):
     # Recipe Requirements
     #
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -84,7 +82,7 @@ class TestPinholeRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting processing for slit detection')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 
@@ -106,8 +104,8 @@ class TestPinholeRecipe(EmirRecipe):
 
         if rinput.shift_coordinates:
             xdtur, ydtur, zdtur = dtur
-            xfac = xdtur / PIXSCALE
-            yfac = -ydtur / PIXSCALE
+            xfac = xdtur / EMIR_PIXSCALE
+            yfac = -ydtur / EMIR_PIXSCALE
 
             vec = numpy.array([yfac, xfac])
             _logger.info('shift is %s', vec)

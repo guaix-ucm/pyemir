@@ -23,6 +23,7 @@ install:
     pyyaml matplotlib scikit-image>=0.12
   - source activate testenv
   - if [[ $ASTRO == true ]]; then conda install -n testenv --yes -c astropy-ci-extras $COND; else conda install -n testenv --yes libgfortran;fi
+  - pip install sep
   - pip install pytest-benchmark
   - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi

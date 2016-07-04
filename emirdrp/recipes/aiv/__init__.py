@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2014 Universidad Complutense de Madrid
+# Copyright 2013-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -21,29 +21,20 @@
 
 import logging
 
-
 from astropy.io import fits
-
-
+from numina.array.combine import median
 from numina.core import DataFrame
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
-from numina.array.combine import median
-
 from emirdrp.core import EmirRecipe
-from emirdrp.products import MasterBias
 from emirdrp.products import DataFrameType
+from emirdrp.products import MasterBias
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-
-from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
-from .flows import init_filters_bdf
-from .flows import init_filters_bd
-from .flows import init_filters_b
-
+from emirdrp.processing.combine import basic_processing_with_combination
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -93,13 +84,14 @@ class SimpleBiasRecipe(EmirRecipe):
 class TestBiasCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     frame = Product(DataFrameType)
 
     def run(self, rinput):
         _logger.info('starting simple bias reduction')
 
-        flow = init_filters_b(rinput)
+        flow = self.init_filters(rinput)
         hdu = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdu.header
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
@@ -110,9 +102,35 @@ class TestBiasCorrectRecipe(EmirRecipe):
         return result
 
 
+class TestRectImageRecipe(EmirRecipe):
+    """A Recipe to test GCS handling of rectangular images.
+
+    This appeared as a problem during EMIR first comisioning,
+    it was fixed, date 2016-06-21
+    """
+
+    obresult = ObservationResultRequirement()
+    frame = Product(DataFrameType)
+
+    def run(self, rinput):
+        import numpy
+        _logger.info('testing rectangular image')
+
+        data = numpy.zeros((500, 1000), dtype='float32')
+        data[200:400, 400:600] = 10000.0
+        hdu = fits.PrimaryHDU(data)
+        hdulist = fits.HDUList([hdu])
+        print("numpy shape of data is", data.shape)
+
+        _logger.info('end testing rectangular image')
+        result = self.create_result(frame=hdulist)
+        return result
+
+
 class TestDarkCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
 
@@ -121,7 +139,7 @@ class TestDarkCorrectRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting simple dark reduction')
 
-        flow = init_filters_bd(rinput)
+        flow = self.init_filters(rinput)
         hdulist = basic_processing_with_combination(rinput, flow,
                                                     method=median)
         hdr = hdulist[0].header
@@ -136,6 +154,7 @@ class TestDarkCorrectRecipe(EmirRecipe):
 class TestFlatCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -145,11 +164,10 @@ class TestFlatCorrectRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting simple flat reduction')
 
-        flow = init_filters_bdf(rinput)
+        flow = self.init_filters(rinput)
         hdulist = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         result = self.create_result(frame=hdulist)
 
         return result
-

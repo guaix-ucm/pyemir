@@ -10,5 +10,7 @@ try:
              'emirdrp.products.CoordinateList2DType': DF.TYPE_DOUBLE_ARRAY2D,
              }
     register(_more)
+    # FIXME: this in numina
+    RUN_IN_GTC = True
 except ImportError:
-    pass
+    RUN_IN_GTC = False

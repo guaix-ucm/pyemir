@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2014 Universidad Complutense de Madrid
+# Copyright 2013-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -23,26 +23,26 @@ from __future__ import division
 
 import logging
 
-import six
 import numpy
+import six
+from numina.core import Product, Parameter
+from numina.core import RecipeError
+from numina.core.products import ArrayType
+from numina.core.requirements import ObservationResultRequirement
 from scipy import ndimage
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
-from numina.core import Product, Parameter
-from numina.core.requirements import ObservationResultRequirement
-from numina.core import RecipeError
-from numina.core.products import ArrayType
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
-from .common import normalize_raw, char_slit
+from emirdrp.processing.combine import basic_processing_with_combination
 from .common import get_dtur_from_header
+from .common import normalize_raw, char_slit
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -51,6 +51,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
     # Recipe Requirements
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -74,7 +75,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         _logger.info('basic image reduction')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
         hdr = hdulist[0].header
@@ -158,6 +159,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
 
     # Recipe Requirements
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -184,7 +186,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
 
         _logger.info('basic image reduction')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
         hdr = hdulist[0].header

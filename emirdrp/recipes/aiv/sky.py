@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2014 Universidad Complutense de Madrid
+# Copyright 2013-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -21,18 +21,17 @@
 
 import logging
 
+from numina.array.combine import median
 from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement
-from numina.array.combine import median
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType, MasterIntensityFlat
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-
-from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
+from emirdrp.processing.combine import basic_processing_with_combination
 
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -41,6 +40,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 class TestSkyCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -51,7 +51,7 @@ class TestSkyCorrectRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting simple sky reduction')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdulist[0].header

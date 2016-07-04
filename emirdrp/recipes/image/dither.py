@@ -19,6 +19,7 @@
 
 """Recipe for the reduction of imaging mode observations."""
 
+
 from numina.core import Parameter
 from numina.core import DataFrameType
 from numina.core import Product

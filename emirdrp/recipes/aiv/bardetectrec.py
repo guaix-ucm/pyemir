@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -23,31 +23,27 @@ from __future__ import division
 
 import logging
 
+from numina.array.utils import wc_to_pix_1d
+from numina.core import Requirement, Product, Parameter, RecipeError
+from numina.core.products import ArrayType
+from numina.core.requirements import ObservationResultRequirement
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
-from numina.core import Requirement, Product, Parameter, RecipeError
-from numina.core.requirements import ObservationResultRequirement
-from numina.core.products import ArrayType
-from numina.array.utils import wc_to_pix_1d
-
-from emirdrp.core import EmirRecipe
-from emirdrp.products import DataFrameType
+from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
 from emirdrp.products import CoordinateList2DType
+from emirdrp.products import DataFrameType
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-
-from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
-from .common import normalize_raw
-from .common import get_dtur_from_header
-from .common import get_cs_from_header, get_csup_from_header
+from emirdrp.processing.combine import basic_processing_with_combination
 from .bardetect import find_position
 from .bardetect import locate_bar_l, locate_bar_r
-
-PIXSCALE = 18.0
+from .common import get_cs_from_header, get_csup_from_header
+from .common import get_dtur_from_header
+from .common import normalize_raw
 
 
 class BarDetectionRecipe(EmirRecipe):
@@ -55,6 +51,7 @@ class BarDetectionRecipe(EmirRecipe):
     # Recipe Requirements
     #
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -85,7 +82,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         logger.info('starting processing for bars detection')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 
@@ -139,8 +136,8 @@ class BarDetectionRecipe(EmirRecipe):
         positions = []
         nt = total // 2
 
-        xfac = dtur[0] / PIXSCALE
-        yfac = -dtur[1] / PIXSCALE
+        xfac = dtur[0] / EMIR_PIXSCALE
+        yfac = -dtur[1] / EMIR_PIXSCALE
 
         vec = [yfac, xfac]
         logger.debug('DTU shift is %s', vec)

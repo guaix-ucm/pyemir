@@ -24,31 +24,26 @@ from __future__ import division
 import logging
 
 import numpy
-from scipy.ndimage.filters import median_filter
-from scipy.ndimage import convolve1d
-from numpy.polynomial.polynomial import polyval
-
-from numina.core import Requirement, Product, Parameter, RecipeError
-from numina.core.requirements import ObservationResultRequirement
-from numina.core.products import ArrayType
 from numina.array.utils import wc_to_pix_1d, image_box
+from numina.core import Requirement, Product, Parameter, RecipeError
+from numina.core.products import ArrayType
+from numina.core.requirements import ObservationResultRequirement
+from numpy.polynomial.polynomial import polyval
+from scipy.ndimage import convolve1d
+from scipy.ndimage.filters import median_filter
 
-from emirdrp.core import EmirRecipe
-from emirdrp.products import DataFrameType
+from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
 from emirdrp.products import CoordinateList2DType
+from emirdrp.products import DataFrameType
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-
-from .flows import basic_processing_with_combination
-from .flows import init_filters_bdfs
-from .common import get_dtur_from_header
-from .common import get_cs_from_header, get_csup_from_header
-
+from emirdrp.processing.combine import basic_processing_with_combination
 from .bardetect import char_bar_peak_l, char_bar_peak_r
-
-PIXSCALE = 18.0
+from .common import get_cs_from_header, get_csup_from_header
+from .common import get_dtur_from_header
 
 
 class BarDetectionRecipe(EmirRecipe):
@@ -56,6 +51,7 @@ class BarDetectionRecipe(EmirRecipe):
     # Recipe Requirements
     #
     obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
@@ -91,7 +87,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         logger.info('starting processing for bars detection')
 
-        flow = init_filters_bdfs(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow=flow)
 
@@ -120,8 +116,8 @@ class BarDetectionRecipe(EmirRecipe):
         logger.debug('median filtering, %d rows', mfilter_size)
         arr_median = median_filter(arr_median, size=(mfilter_size, 1))
 
-        xfac = dtur[0] / PIXSCALE
-        yfac = -dtur[1] / PIXSCALE
+        xfac = dtur[0] / EMIR_PIXSCALE
+        yfac = -dtur[1] / EMIR_PIXSCALE
 
         vec = [yfac, xfac]
         logger.debug('DTU shift is %s', vec)
@@ -152,9 +148,8 @@ class BarDetectionRecipe(EmirRecipe):
         # for compatibility we do it manually
 
         allpos = {}
-        #fits.writeto('/tmp/test12-array-median.fits', arr_median, clobber=True)
 
-        for ks in [3,5,7,9]:
+        for ks in [3, 5, 7, 9]:
             logger.debug('kernel size is %d', ks)
             # S and G kernel for derivative
             kw = ks * (ks*ks-1) / 12.0
@@ -181,42 +176,43 @@ class BarDetectionRecipe(EmirRecipe):
                 logger.debug('reference y position is Y %7.2f', ref_y_coor)
 
                 # if ref_y_coor is outlimits, skip this bar
-                # ref_y_coor is in FITS format
+		        # ref_y_coor is in FITS format
                 if (ref_y_coor >= 2047) or (ref_y_coor <= 1):
                     logger.debug('reference y position is outlimits, skipping')
-                    positions.append((lbarid, fits_row, 1, 0, 3))
-                    positions.append((rbarid, fits_row, 1, 0, 3))
+                    positions.append([lbarid, fits_row, fits_row, 1, 0, 3])
+                    positions.append([rbarid, fits_row, fits_row, 1, 0, 3])
                     continue
 
+                # centroid shape
+                # FIXME: hardcoded
                 centroid_shape = (15, 2)
                 # Find the position of each bar
+
                 # Left bar
-                centery, xpos, fwhm, st = char_bar_peak_l(arr_deriv, prow, bstart, bend, threshold, center_of_bar,
-                                                          wx=wx, wy=wy, wfit=wfit)
+                centery, xpos, fwhm, st = char_bar_peak_l(arr_deriv, prow, bstart, bend, threshold, center_of_bar, wx=wx, wy=wy, wfit=wfit)
                 # measure centroid in processed image
                 # create a box around (centery, xpos)
                 # 30 pixels height, 4 pixels width
                 centroidy, centroidx = self.centroid(arr, image_box((centery, xpos), arr.shape, centroid_shape))
-                positions.append((lbarid, centery+1, centroidy + 1, fits_row, xpos+1, fwhm, st))
-                logger.debug('bar %d center-y %9.4f, centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',
-                             *positions[-1])
+                
+                positions.append([lbarid, centroidy+1, fits_row, xpos+1, fwhm, st])
+                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',*positions[-1])
 
                 # Right bar
-                centery, xpos, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold, center_of_bar,
-                                                          wx=wx, wy=wy, wfit=wfit)
+                centery, xpos, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold, center_of_bar, wx=wx, wy=wy, wfit=wfit)
                 # measure centroid in processed image
                 # create a box around (centery, xpos)
                 # 30 pixels height, 4 pixels width
                 centroidy, centroidx = self.centroid(arr, image_box((centery, xpos), arr.shape, centroid_shape))
-                positions.append((rbarid, centery+1, centroidy + 1, fits_row, xpos+1, fwhm, st))
-                logger.debug('bar %d center-y %9.4f, centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',
-                             *positions[-1])
+                positions.append([rbarid, centroidy+1, fits_row, xpos+1, fwhm, st])
+                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',*positions[-1])
 
-            allpos[ks] = positions
+            allpos[ks] = numpy.asarray(positions, dtype='float') # GCS doesn't like lists of lists
 
         logger.debug('end finding bars')
+
         result = self.create_result(frame=hdulist,
-                                    # derivative=fits.PrimaryHDU(data=arr_deriv),
+    #                                derivative=fits.PrimaryHDU(data=arr_deriv),
                                     positions9=allpos[9],
                                     positions7=allpos[7],
                                     positions5=allpos[5],

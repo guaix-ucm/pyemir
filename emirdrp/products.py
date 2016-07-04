@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -29,13 +29,6 @@ from numina.core.requirements import InstrumentConfigurationType
 from numina.core import ValidationError
 from numina.array.wavecal.slitlet import Slitlet
 
-# FIXME:
-try:
-    import ext.gtc
-    RUN_IN_GTC = True
-except ImportError:
-    # We are not in GTC
-    RUN_IN_GTC = False
 
 base_schema_description = {
     'keywords': {
@@ -297,3 +290,8 @@ class ChannelLevelStatisticsType(DataProductType):
     def __init__(self):
         super(ChannelLevelStatisticsType,
               self).__init__(ptype=ChannelLevelStatistics)
+
+
+class LinesCatalog(DataProductType):
+    def __init__(self):
+        super(LinesCatalog, self).__init__(ptype=numpy.ndarray)

@@ -24,9 +24,9 @@ setup(name='pyemir',
                    },
       test_suite="emirdrp.tests",
       install_requires=['setuptools', 'numpy', 'scipy',
-                        'numina>=0.14', 'astropy>=0.4',
-                        'matplotlib', 'six', 'photutils>=0.1',
-                        'scikit-image>=0.11'],
+                        'numina>=0.14', 'astropy>=1.1,<1.2rc1',
+                        'matplotlib', 'six', 'photutils>=0.2',
+                        'sep>0.5', 'scikit-image>=0.11'],
       zip_safe=False,
       entry_points = {
         'numina.pipeline.1': [

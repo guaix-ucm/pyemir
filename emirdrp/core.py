@@ -17,13 +17,123 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import collections
+import logging
 import numpy
-from astropy import wcs
 
-from numina.core import DataFrame, ObservationResult
-from numina.core.recipeinout import RecipeResult
-from numina.core import BaseRecipe, Product
+from numina.flow.node import IdNode
+from numina.flow.processing import BadPixelCorrector
+from numina.core import BaseRecipe, Product, RecipeResult
 from numina.core.products import QualityControlProduct
+
+from emirdrp.products import MasterBadPixelMask, MasterBias, MasterDark, MasterIntensityFlat, MasterSky
+import emirdrp.ext.gtc
+import emirdrp.processing.info
+from emirdrp.processing.datamodel import EmirDataModel
+
+
+_logger = logging.getLogger('numina.recipes.emir')
+
+
+def get_corrector_p(rinput, meta):
+    bpm_info = meta.get('master_bpm')
+    if bpm_info is not None:
+        with rinput.master_bpm.open() as hdul:
+            _logger.info('loading BPM')
+            _logger.debug('BPM image: %s', bpm_info)
+            mbpm = hdul[0].data
+            bpm_corrector = BadPixelCorrector(mbpm, datamodel=EmirDataModel())
+    else:
+        _logger.info('BPM not provided, ignored')
+        bpm_corrector = IdNode()
+
+    return bpm_corrector
+
+
+def get_corrector_b(rinput, meta):
+    from numina.flow.processing import BiasCorrector
+    iinfo = meta['obresult']
+    if iinfo:
+        mode = iinfo[0]['readmode']
+        if mode.lower() in EMIR_BIAS_MODES:
+            use_bias = True
+            _logger.info('readmode is %s, bias required', mode)
+        else:
+            use_bias = False
+            _logger.info('readmode is %s, bias not required', mode)
+    else:
+        raise ValueError('cannot gather images info')
+
+    # Loading calibrations
+    if use_bias:
+        bias_info = meta['master_bias']
+        with rinput.master_bias.open() as hdul:
+            _logger.info('loading bias')
+            _logger.debug('bias info: %s', bias_info)
+            mbias = hdul[0].data
+            bias_corrector = BiasCorrector(mbias, datamodel=EmirDataModel())
+    else:
+        _logger.info('ignoring bias')
+        bias_corrector = IdNode()
+
+    return bias_corrector
+
+
+def get_corrector_s(rinput, meta):
+    from numina.flow.processing import SkyCorrector
+    #from emirdrp.processing.badpixels import SkyCorrector
+    sky_info = meta['master_sky']
+
+    with rinput.master_sky.open() as msky_hdul:
+        _logger.info('loading sky')
+        _logger.debug('sky info: %s', sky_info)
+        msky = msky_hdul[0].data
+        sky_corrector = SkyCorrector(msky, datamodel=EmirDataModel())
+
+    return sky_corrector
+
+
+def get_corrector_f(rinput, meta):
+    from emirdrp.processing.flatfield import FlatFieldCorrector
+    flat_info = meta['master_flat']
+
+    with rinput.master_flat.open() as mflat_hdul:
+        _logger.info('loading intensity flat')
+        _logger.debug('flat info: %s', flat_info)
+        mflat = mflat_hdul[0].data
+        # Check NaN and Ceros
+        mask1 = mflat < 0
+        mask2 = ~numpy.isfinite(mflat)
+        if numpy.any(mask1):
+            _logger.warning('flat has %d values below 0', mask1.sum())
+        if numpy.any(mask2):
+            _logger.warning('flat has %d NaN', mask2.sum())
+        flat_corrector = FlatFieldCorrector(mflat, datamodel=EmirDataModel())
+
+    return flat_corrector
+
+
+def get_corrector_d(rinput, meta):
+    from numina.flow.processing import DarkCorrector
+    key = 'master_dark'
+    CorrectorClass = DarkCorrector
+    datamodel = EmirDataModel()
+
+    info = meta[key]
+    _logger.debug('datamodel is %s', datamodel)
+    req = getattr(rinput, key)
+    with req.open() as hdul:
+        _logger.info('loading %s', key)
+        _logger.debug('%s info: %s', key, info)
+        datac = hdul['primary'].data
+        corrector = CorrectorClass(datac, datamodel=datamodel)
+
+    return corrector
+
+
+def get_checker(rinput, meta):
+    from emirdrp.processing.checkers import Checker
+    return Checker()
 
 
 class EmirRecipe(BaseRecipe):
@@ -33,93 +143,58 @@ class EmirRecipe(BaseRecipe):
     def __init__(self, version="1"):
         super(EmirRecipe, self).__init__(version=version)
 
+    @classmethod
+    def types_getter(cls):
+        imgtypes = [MasterBadPixelMask, MasterBias, MasterDark, MasterIntensityFlat, MasterSky]
+        getters = [get_corrector_p, get_corrector_b, get_corrector_d,
+                   [get_corrector_f, get_checker], get_corrector_s]
 
-def gather_info_dframe(dataframe):
-    with dataframe.open() as hdulist:
-        info = gather_info_hdu(hdulist)
-    return info
+        return imgtypes, getters
 
+    @classmethod
+    def load_getters(cls):
+        imgtypes, getters = cls.types_getter()
+        used_getters = []
+        for rtype, getter in zip(imgtypes, getters):
+            for key, val in cls.RecipeInput.stored().items():
+                if isinstance(val.type, rtype):
+                    if isinstance(getter, collections.Iterable):
+                        used_getters.extend(getter)
+                    else:
+                        used_getters.append(getter)
+                    break
+            else:
+                pass
+        return used_getters
 
-_meta = {'readmode': ('READMODE', 'undefined'),
-         'bunit': ('BUNIT', 'ADU'),
-         'texp': ('EXPTIME', None),
-         'filter': ('FILTER', 'undefined'),
-         'imagetype': ('IMGTYP', 'undefined')
-         }
-
-
-def gather_info_hdu(hdulist):
-
-    # READMODE is STRING
-    meta = {}
-    meta['n_ext'] = len(hdulist)
-    for key, val in _meta.items():
-        meta[key] = hdulist[0].header.get(val[0], val[1])
-
-    adu_s = False
-    if meta['bunit'].lower() == 'adu/s':
-        adu_s = True
-    meta['adu_s'] = adu_s
-
-    return meta
-
-
-def gather_info_frames(framelist):
-    iinfo = []
-    for frame in framelist:
-        with frame.open() as hdulist:
-            iinfo.append(gather_info_hdu(hdulist))
-    return iinfo
-
-
-def gather_info(recipeinput):
-    klass = recipeinput.__class__
-    metadata = {}
-    for key in klass.stored():
-        val = getattr(recipeinput, key)
-        if isinstance(val, DataFrame):
-            metadata[key] = gather_info_dframe(val)
-        elif isinstance(val, ObservationResult):
-            metas = []
-            for f in val.images:
-                metas.append(gather_info_dframe(f))
-            metadata[key] = metas
+    @classmethod
+    def init_filters_generic(cls, rinput, getters):
+        from numina.flow import SerialFlow
+        # with BPM, bias, dark, flat and sky
+        if emirdrp.ext.gtc.RUN_IN_GTC:
+            _logger.debug('running in GTC environment')
         else:
-            pass
-    return metadata
+            _logger.debug('running outside of GTC environment')
+
+        meta = emirdrp.processing.info.gather_info(rinput)
+        _logger.debug('obresult info')
+        for entry in meta['obresult']:
+            _logger.debug('frame info is %s', entry)
+        correctors = [getter(rinput, meta) for getter in getters]
+
+        flow = SerialFlow(correctors)
+
+        return flow
+
+    @classmethod
+    def init_filters(cls, rinput):
+        getters = cls.load_getters()
+        return cls.init_filters_generic(rinput, getters)
 
 
 EMIR_BIAS_MODES = ['simple', 'bias', 'single']
 EMIR_READ_MODES = ['simple', 'bias', 'single', 'cds', 'fowler', 'ramp']
 
-def offsets_from_wcs(frames, pixref):
-    '''Compute offsets between frames using WCS information.
-
-    :parameter frames: sequence of FITS filenames or file descriptors
-    :parameter pixref: numpy array used as reference pixel
-
-    The sky world coordinates are computed on *pixref* using
-    the WCS of the first frame in the sequence. Then, the
-    pixel coordinates of the reference sky world-coordinates
-    are computed for the rest of the frames.
-
-    The results is a numpy array with the difference between the
-    computed pixel value and the reference pixel. The first line
-    of the array is [0, 0], being the offset from the first image
-    to itself.
-
-    '''
-
-    result = numpy.zeros((len(frames), pixref.shape[1]))
-
-    with frames[0].open() as hdulist:
-        wcsh = wcs.WCS(hdulist[0].header)
-        skyref = wcsh.wcs_pix2world(pixref, 1)
-
-    for idx, frame in enumerate(frames[1:]):
-        with frame.open() as hdulist:
-            wcsh = wcs.WCS(hdulist[0].header)
-            pixval = wcsh.wcs_world2pix(skyref, 1)
-            result[idx + 1] = -(pixval[0] - pixref[0])
-
-    return result
+EMIR_PIXSCALE = 18.0
+EMIR_GAIN = 5.0 # ADU / e-
+EMIR_RON = 5.69 # ADU

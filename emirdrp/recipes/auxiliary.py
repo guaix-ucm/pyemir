@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -22,43 +22,32 @@
 import logging
 
 import numpy
-
-#from numina.core import BaseRecipeAutoQC
-from numina.core import RecipeError
-from numina.core import DataFrame#from numina.core import BaseRecipeAutoQC
-from numina.core import Product
-from numina.logger import log_to_history
 from numina.array.combine import median
+from numina.core import DataFrame
+from numina.core import Product
+from numina.core import RecipeError
 from numina.core.requirements import ObservationResultRequirement
 
 import emirdrp.instrument.channels as allchannels
 from emirdrp.core import EMIR_BIAS_MODES
-from emirdrp.core import gather_info_frames
 from emirdrp.core import EmirRecipe
+from emirdrp.processing.info import gather_info_frames
+from emirdrp.products import ChannelLevelStatistics
+from emirdrp.products import ChannelLevelStatisticsType
 from emirdrp.products import MasterBias, MasterDark
 from emirdrp.products import MasterIntensityFlat
-from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
-from emirdrp.products import ChannelLevelStatisticsType
-from emirdrp.products import ChannelLevelStatistics
 from emirdrp.products import SlitTransmissionCalibration
+from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
+from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSpectralFlatFieldRequirement
-from .aiv.flows import init_filters_bdf
-from .aiv.flows import init_filters_bd
-from .aiv.flows import init_filters_b
-from .aiv.flows import basic_processing_with_combination
+from emirdrp.processing.combine import basic_processing_with_combination
+from emirdrp.processing.combine import  basic_processing_with_segmentation
 
 
 _logger = logging.getLogger('numina.recipes.emir')
-
-
-def _s_to_f(myslice):
-    b = myslice.start
-    e = myslice.stop
-    return b+1, e
 
 
 class BiasRecipe(EmirRecipe):
@@ -89,13 +78,9 @@ class BiasRecipe(EmirRecipe):
     obresult = ObservationResultRequirement()
 
     biasframe = Product(MasterBias)
-    stats = Product(ChannelLevelStatisticsType)
 
     def run(self, rinput):
         _logger.info('starting bias reduction')
-
-        channels_name = 'FULL'
-        channels = getattr(allchannels, channels_name)
 
         iinfo = gather_info_frames(rinput.obresult.frames)
 
@@ -113,28 +98,15 @@ class BiasRecipe(EmirRecipe):
 
         pdata = hdulist[0].data
 
-        statistics = numpy.empty((len(channels), 7))
-        for idx, region in enumerate(channels):
-            mean = numpy.mean(pdata[region])
-            med = numpy.median(pdata[region])
-            var = numpy.var(pdata[region])
-            regy, regx = region
-            stats = _s_to_f(regy) + _s_to_f(regx) + (mean, med, var)
-            statistics[idx, :] = stats
-
-        cls = ChannelLevelStatistics(exposure=0.0, statistics=statistics)
         # update hdu header with
         # reduction keywords
         hdr = hdulist[0].header
-        hdr['IMGTYP'] = ('BIAS', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        self.set_base_headers(hdr)
         hdr['CCDMEAN'] = pdata.mean()
 
         _logger.info('bias reduction ended')
 
-        result = self.create_result(biasframe=DataFrame(hdulist), stats=cls)
+        result = self.create_result(biasframe=DataFrame(hdulist))
         return result
 
 
@@ -161,15 +133,12 @@ class DarkRecipe(EmirRecipe):
     master_bias = MasterBiasRequirement()
 
     darkframe = Product(MasterDark)
-    stats = Product(ChannelLevelStatisticsType)
 
     def run(self, rinput):
 
         _logger.info('starting dark reduction')
-        channels_name = 'FULL'
-        channels = getattr(allchannels, channels_name)
 
-        flow = init_filters_b(rinput)
+        flow = self.init_filters(rinput)
 
         iinfo = gather_info_frames(rinput.obresult.frames)
         ref_exptime = 0.0
@@ -184,31 +153,15 @@ class DarkRecipe(EmirRecipe):
 
         pdata = hdulist[0].data
 
-        statistics = numpy.empty((len(channels), 7))
-        for idx, region in enumerate(channels):
-            mean = numpy.mean(pdata[region])
-            med = numpy.median(pdata[region])
-            var = numpy.var(pdata[region])
-            regy, regx = region
-            stats = _s_to_f(regy) + _s_to_f(regx) + (mean, med, var)
-            statistics[idx, :] = stats
-            # var2[region] = var
-
-        cls = ChannelLevelStatistics(exposure=ref_exptime,
-                                     statistics=statistics)
-
         # update hdu header with
         # reduction keywords
-        hdr = hdulist[0].header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
 
-        hdr['IMGTYP'] = ('DARK', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_DARK', 'Data product type')
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
         hdr['CCDMEAN'] = pdata.mean()
 
         _logger.info('dark reduction ended')
-        result = self.create_result(darkframe=hdulist, stats=cls)
+        result = self.create_result(darkframe=hdulist)
         return result
 
 
@@ -252,19 +205,15 @@ class IntensityFlatRecipe(EmirRecipe):
 
         errors = True
 
-        flow = init_filters_bd(rinput)
+        flow = self.init_filters(rinput)
         hdulist = basic_processing_with_combination(rinput, flow,
                                                     method=median,
                                                     errors=errors)
 
         hdr = hdulist[0].header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-
-        hdr['IMGTYP'] = ('FLAT', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_FLAT', 'Data product type')
-
+        self.set_base_headers(hdr)
         mm = hdulist[0].data.mean()
+        hdr['CCDMEAN'] = mm
 
         hdulist[0].data /= mm
         if errors:
@@ -292,18 +241,49 @@ class SimpleSkyRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting sky reduction')
 
-        flow = init_filters_bdf(rinput)
+        flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow,
                                                     method=median,
                                                     errors=True)
 
         hdr = hdulist[0].header
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        self.set_base_headers(hdr)
 
-        hdr['IMGTYP'] = ('SKY', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_SKY', 'Data product type')
+        result = self.create_result(skyframe=hdulist)
+
+        return result
+
+
+class DitherSkyRecipe(EmirRecipe):
+    """Recipe to process data taken in dither sky mode.
+
+    """
+
+    obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+
+    skyframe = Product(MasterIntensityFlat)
+
+
+    def run(self, rinput):
+        _logger.debug('instrument %s, mode %s', rinput.obresult.instrument,
+                      rinput.obresult.mode
+                      )
+        _logger.info('starting sky reduction with dither')
+
+        flow = self.init_filters(rinput)
+
+        hdulist = basic_processing_with_segmentation(rinput, flow,
+                                                    method=median,
+                                                    errors=True)
+
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
+        _logger.info('end sky reduction with dither')
 
         result = self.create_result(skyframe=hdulist)
 

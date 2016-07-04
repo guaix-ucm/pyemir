@@ -41,6 +41,7 @@ from numina.constants import FWHM_G
 from numina.array.fwhm import compute_fwhm_2d_simple
 from numina.array.utils import expand_region
 
+from emirdrp.core import EMIR_PIXSCALE
 from .procedures import compute_fwhm_enclosed_direct
 from .procedures import compute_fwhm_enclosed_grow
 from .procedures import moments
@@ -48,9 +49,6 @@ from .procedures import AnnulusBackgroundEstimator
 from .procedures import image_box2d
 
 _logger = logging.getLogger('numina.recipes.emir')
-
-
-PIXSCALE = 18.0
 
 
 # returns y,x
@@ -579,8 +577,8 @@ def create_dtu_wcs_header(hdr):
     xdtur = (xdtu / xdtuf - xdtu0)
     ydtur = (ydtu / ydtuf - ydtu0)
 
-    xfac = xdtur / PIXSCALE
-    yfac = -ydtur / PIXSCALE
+    xfac = xdtur / EMIR_PIXSCALE
+    yfac = -ydtur / EMIR_PIXSCALE
 
     # xout = xin + yfac
     # yout = yin + xfac
