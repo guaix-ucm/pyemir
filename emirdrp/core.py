@@ -198,3 +198,4 @@ EMIR_READ_MODES = ['simple', 'bias', 'single', 'cds', 'fowler', 'ramp']
 EMIR_PIXSCALE = 18.0
 EMIR_GAIN = 5.0 # ADU / e-
 EMIR_RON = 5.69 # ADU
+EMIR_NBARS = 55
