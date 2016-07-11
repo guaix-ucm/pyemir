@@ -273,6 +273,14 @@ modes:
   status: DRAFT
   summary: Summary of Dithered images
   url: http://somegtc_url.es/emir/obsmode4.html
+- key: TEST20
+  name: TEST12
+  summary: Spectroscopy ABBA
+  description: Spectroscopy ABBA
+- key: TEST21
+  name: TEST21
+  summary: Spectroscopy with nodding
+  description: Spectroscopy with nodding
 pipelines:
   default:
     recipes:
@@ -304,4 +312,6 @@ pipelines:
       TEST11: emirdrp.recipes.aiv.extraction.CSUSpectraExtractionRecipe
       TEST12: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
+      TEST20: numina.core.utils.AlwaysSuccessRecipe
+      TEST21: numina.core.utils.AlwaysSuccessRecipe
     version: 1
