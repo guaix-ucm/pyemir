@@ -46,7 +46,7 @@ class FlatFieldCorrector(Corrector):
         self.flat_stats = flatdata.mean()
         self.calibid = 'ID-of-calib-image'
 
-    def _run(self, img):
+    def run(self, img):
         import datetime
         imgid = self.get_imgid(img)
 
