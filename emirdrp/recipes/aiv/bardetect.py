@@ -228,7 +228,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     # Fit the peak with these points
     # wfit = 5
 
-    logger = logging.getLogger('emir.recipes')
+    logger = logging.getLogger('emir.recipes.bardetect')
 
     cut = sign * arr_deriv[ypix, bstart:bend]
 
@@ -292,3 +292,49 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     xl = bstart + centerx - wx + x_t[0]
     return centery, xl, fwhm_x, 0
+
+
+def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, wh=35):
+
+    logger = logging.getLogger('emir.recipes.bardetect')
+    # FIXME, use correct conversion to pixels
+    pcentery = int(centery)
+
+    # Stats in Central region
+    mm = arr_deriv_alt[pcentery - 5:pcentery + 6, xpos1:xpos2 + 1]
+    mean_c_deriv = mm.mean()
+    std_c_deriv = mm.std()
+
+    mm = arr_deriv_alt[pcentery - wh:pcentery + wh + 1, xpos1:xpos2 + 1].mean(axis=-1)
+
+    # Fine tunning
+    theshold = mean_c_deriv + 6 * std_c_deriv
+    idxs_t = find_peaks_indexes(mm, window_width=3, threshold=theshold)
+    x_t, y_t = refine_peaks(mm, idxs_t, window_width=3)
+
+    idxs_u = find_peaks_indexes(-mm, window_width=3, threshold=theshold)
+    x_u, y_u = refine_peaks(mm, idxs_u, window_width=3)
+    # Peaks on the right
+
+    status = 0
+    npeaks_u = len(idxs_u)
+    if npeaks_u == 0:
+        # This is a problem, no peak on the rigth
+        b2 = 0
+        status = 4
+        logger.debug('no lower border found')
+    else:
+        # Use the closest peak to the reference
+        b2 = x_u[x_u >= wh].min()
+
+    # peaks on the left
+    npeaks_t = len(idxs_t)
+    if npeaks_t == 0:
+        # This is a problem, no ppeak on the rigth
+        b1 = 0
+        logger.debug('no higher border found')
+        status = 4
+    else:
+        # Use the closest peak to the reference
+        b1 = x_t[x_t <= wh].max()
+    return pcentery - wh + b1, pcentery - wh + b2, status

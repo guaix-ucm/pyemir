@@ -32,7 +32,7 @@ from numpy.polynomial.polynomial import polyval
 from scipy.ndimage import convolve1d
 from scipy.ndimage.filters import median_filter
 
-from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
+from emirdrp.core import EmirRecipe, EMIR_PIXSCALE, EMIR_NBARS
 from emirdrp.products import CoordinateList2DType
 from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBadPixelMaskRequirement
@@ -41,7 +41,7 @@ from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
 from emirdrp.processing.combine import basic_processing_with_combination
-from .bardetect import char_bar_peak_l, char_bar_peak_r
+from .bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
 from .common import get_cs_from_header, get_csup_from_header
 from .common import get_dtur_from_header
 
@@ -117,6 +117,13 @@ class BarDetectionRecipe(EmirRecipe):
         logger.debug('median filtering, %d rows', mfilter_size)
         arr_median = median_filter(arr_median, size=(mfilter_size, 1))
 
+        # Median filter of processed array (two times) in the other direction
+        # for Y coordinates
+        logger.debug('median filtering, %d rows', mfilter_size)
+        arr_median_alt = median_filter(arr, size=(mfilter_size, 1))
+        logger.debug('median filtering, %d columns', mfilter_size)
+        arr_median_alt = median_filter(arr_median, size=(1, mfilter_size))
+
         xfac = dtur[0] / EMIR_PIXSCALE
         yfac = -dtur[1] / EMIR_PIXSCALE
 
@@ -149,19 +156,26 @@ class BarDetectionRecipe(EmirRecipe):
         # for compatibility we do it manually
 
         allpos = {}
+        ypos3_kernel = None
+        slits = numpy.zeros((EMIR_NBARS, 8), dtype='float')
 
         for ks in [3, 5, 7, 9]:
             logger.debug('kernel size is %d', ks)
             # S and G kernel for derivative
             kw = ks * (ks*ks-1) / 12.0
             coeffs_are = -numpy.arange((1-ks)//2, (ks-1)//2 + 1) / kw
+            if ks == 3:
+                ypos3_kernel = coeffs_are
             logger.debug('kernel weights are %s', coeffs_are)
             arr_deriv = convolve1d(arr_median, coeffs_are, axis=-1)
+            # Axis 0 is
+            #
+            arr_deriv_alt = convolve1d(arr_median_alt, ypos3_kernel, axis=0)
 
             positions = []
             for coords in barstab:
                 lbarid = int(coords[0])
-                rbarid = lbarid + 55
+                rbarid = lbarid + EMIR_NBARS
                 ref_y_coor = coords[1] + vec[1]
                 poly_coeffs = coords[2:]
                 prow = wc_to_pix_1d(ref_y_coor) - 1
@@ -195,9 +209,10 @@ class BarDetectionRecipe(EmirRecipe):
                 # create a box around (centery, xpos)
                 # 30 pixels height, 4 pixels width
                 centroidy, centroidx = self.centroid(arr, image_box((centery, xpos), arr.shape, centroid_shape))
-                
+                xpos1 = xpos
+                #char_bar_peak_alt(arr_deriv_alt, fits_row - 1, centery-10, centery+10, threshold, center_of_bar, wx=wx, wy=wy, wfit=wfit)
+
                 positions.append([lbarid, centroidy+1, fits_row, xpos+1, fwhm, st])
-                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',*positions[-1])
 
                 # Right bar
                 centery, xpos, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold, center_of_bar, wx=wx, wy=wy, wfit=wfit)
@@ -206,16 +221,38 @@ class BarDetectionRecipe(EmirRecipe):
                 # 30 pixels height, 4 pixels width
                 centroidy, centroidx = self.centroid(arr, image_box((centery, xpos), arr.shape, centroid_shape))
                 positions.append([rbarid, centroidy+1, fits_row, xpos+1, fwhm, st])
-                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',*positions[-1])
+
+                xpos2 = xpos
+                #
+                y1, y2, status = char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, wh=35)
+
+                if status == 4:
+                    # Update status
+                    centroid = centery
+                    if positions[-1][-1] == 0:
+                        positions[-1][-1] = status
+                    if positions[-2][-1] == 0:
+                        positions[-2][-1] = status
+                else:
+                    centroid = 0.5 * (y1 + y2)
+                # Update positions
+                positions[-1][1] = centroid + 1
+                positions[-2][1] = centroid + 1
+                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-2])
+                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-1])
+
+                if ks == 5:
+                    if status == 4:
+                        y1 = y2 = centroid + 1
+                    slits[lbarid - 1] = [xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1]
+                    # FITS coordinates
+                    slits[lbarid - 1] += 1.0
+                    logger.debug('inserting bars %d-%d into "slits"', lbarid, rbarid)
 
             allpos[ks] = numpy.asarray(positions, dtype='float') # GCS doesn't like lists of lists
 
-        nbars = 55
-        slits = numpy.array((nbars, 8), dtype='float32')
-
         logger.debug('end finding bars')
         result = self.create_result(frame=hdulist,
-    #                                derivative=fits.PrimaryHDU(data=arr_deriv),
                                     slits=slits,
                                     positions9=allpos[9],
                                     positions7=allpos[7],
