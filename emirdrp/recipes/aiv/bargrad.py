@@ -68,6 +68,7 @@ class BarDetectionRecipe(EmirRecipe):
     # Recipe Products
     frame = Product(DataFrameType)
     # derivative = Product(DataFrameType)
+    slits = Product(ArrayType)
     positions3 = Product(ArrayType)
     positions5 = Product(ArrayType)
     positions7 = Product(ArrayType)
@@ -209,10 +210,13 @@ class BarDetectionRecipe(EmirRecipe):
 
             allpos[ks] = numpy.asarray(positions, dtype='float') # GCS doesn't like lists of lists
 
-        logger.debug('end finding bars')
+        nbars = 55
+        slits = numpy.array((nbars, 8), dtype='float32')
 
+        logger.debug('end finding bars')
         result = self.create_result(frame=hdulist,
     #                                derivative=fits.PrimaryHDU(data=arr_deriv),
+                                    slits=slits,
                                     positions9=allpos[9],
                                     positions7=allpos[7],
                                     positions5=allpos[5],
