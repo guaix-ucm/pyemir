@@ -77,10 +77,6 @@ class BarDetectionRecipe(EmirRecipe):
     ROTANG = Product(float)
     csupos = Product(ArrayType)
     csusens = Product(ArrayType)
-    param_median_filter_size = Product(int)
-    param_average_box_row_size  = Product(int)
-    param_average_box_col_size  = Product(int)
-    param_fit_peak_npoints  = Product(int)
 
     def run(self, rinput):
 
@@ -263,10 +259,6 @@ class BarDetectionRecipe(EmirRecipe):
                                     TSUTC2=tsutc2,
                                     csupos=csupos,
                                     csusens=csusens,
-                                    param_median_filter_size=rinput.median_filter_size,
-                                    param_average_box_row_size=2*wy+1,
-                                    param_average_box_col_size=2*wx+1,
-                                    param_fit_peak_npoints=wfit
                                     )
         return result
 
