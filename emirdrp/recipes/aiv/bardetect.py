@@ -325,7 +325,12 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, wh=35):
         logger.debug('no lower border found')
     else:
         # Use the closest peak to the reference
-        b2 = x_u[x_u >= wh].min()
+        g_x_u = x_u[x_u >= wh]
+        if len(g_x_u) == 0:
+            logger.debug('no peak over center')
+            b2 = 0
+        else:
+            b2 = g_x_u.min()
 
     # peaks on the left
     npeaks_t = len(idxs_t)
@@ -336,5 +341,10 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, wh=35):
         status = 4
     else:
         # Use the closest peak to the reference
-        b1 = x_t[x_t <= wh].max()
+        l_x_t = x_t[x_t <= wh]
+        if len(l_x_t) == 0:
+            logger.debug('no peak under center')
+            b1 = 0
+        else:
+            b1 = l_x_t.max()
     return pcentery - wh + b1, pcentery - wh + b2, status
