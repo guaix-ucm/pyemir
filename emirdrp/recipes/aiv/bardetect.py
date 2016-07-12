@@ -232,35 +232,32 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     cut = sign * arr_deriv[ypix, bstart:bend]
 
-    th = max(th, abs(cut.max() / 6.0), abs(cut.min() / 6.0))
-    logger.debug('internal th is %f', th)
-
     idxs = find_peaks_indexes(cut, threshold=th)
+    logger.debug('found %d peaks over threshold %f', len(idxs), th)
 
     if len(idxs) == 0:
+        logger.debug('no peaks, exit')
         return 0, 0, 0, 1
 
-    # Characterize: use the peak that has the greates value in the derivative?
+    # Characterize: use the peak that has the greatest value in the derivative?
     pix_m = cut[idxs].argmax()
-
     centerx = idxs[pix_m]
-
+    logger.debug('select the peak with maximum derivative')
     # This function should return the center of 'barid'
     # when its position is 'x'
     # without information, the best guess is 'ypix'
     if center_of_bar is None:
         logger.debug('using reference value for center of bar')
-        def center_of_bar(x):
-            return ypix
+        centery = ypix
+    else:
+        centery = center_of_bar(centerx)
 
-    centery = center_of_bar(centerx)
     logger.debug('centery is %7.2f at position %7.2f', centery+1,  centerx+1)
-    # FIXME: hardcoded value
-    wy = 15
-    logger.debug('collapsing %d pixels', wy)
+    logger.debug('collapsing a %d x %d region', 2* wx, 2 * wy)
     #
     slicey = slice_create(centery, wy, start=1, stop=2047)
-    region = arr_deriv[slicey, bstart+centerx-wx:bstart+centerx+wx+1]
+    slicex = slice_create(bstart + centerx, wx, start=1, stop=2047)
+    region = arr_deriv[slicey, slicex]
     if region.size == 0:
         logger.debug('region to collapse is empty')
         return centery, 0, 0, 1
@@ -277,11 +274,10 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     dist_t = numpy.abs(idxs_t - wx)
     only_this = dist_t.argmin()
     idxs_p = numpy.atleast_1d(idxs_t[only_this])
-
     x_t, y_t = refine_peaks(collapsed, idxs_p, wfit)
 
     if len(x_t) == 0:
-        logger.debug('no peaks to refine')
+        logger.debug('no peaks to refine after fitting')
         return centery, 0, 0, 2
 
     if x_t[0] >= collapsed.shape[0]:
@@ -294,38 +290,35 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     return centery, xl, fwhm_x, 0
 
 
-def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, wh=35):
+def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=5):
+    import matplotlib.pyplot as plt
 
     logger = logging.getLogger('emir.recipes.bardetect')
-    # FIXME, use correct conversion to pixels
-    pcentery = int(centery)
+    pcentery = wc_to_pix_1d(centery)
 
-    # Stats in Central region
-    mm = arr_deriv_alt[pcentery - 5:pcentery + 6, xpos1:xpos2 + 1]
-    mean_c_deriv = mm.mean()
-    std_c_deriv = mm.std()
+    slicey = slice_create(pcentery, wh, start=1, stop=2047)
 
-    mm = arr_deriv_alt[pcentery - wh:pcentery + wh + 1, xpos1:xpos2 + 1].mean(axis=-1)
+    ref_pcentery = pcentery - slicey.start
+    mm = arr_deriv_alt[slicey, xpos1:xpos2 + 1].mean(axis=-1)
 
     # Fine tunning
-    theshold = mean_c_deriv + 6 * std_c_deriv
-    idxs_t = find_peaks_indexes(mm, window_width=3, threshold=theshold)
-    x_t, y_t = refine_peaks(mm, idxs_t, window_width=3)
+    idxs_t = find_peaks_indexes(mm, threshold=threshold)
+    x_t, y_t = refine_peaks(mm, idxs_t, window_width=wfit)
 
-    idxs_u = find_peaks_indexes(-mm, window_width=3, threshold=theshold)
-    x_u, y_u = refine_peaks(mm, idxs_u, window_width=3)
+    idxs_u = find_peaks_indexes(-mm, threshold=threshold)
+    x_u, y_u = refine_peaks(mm, idxs_u, window_width=wfit)
     # Peaks on the right
 
     status = 0
     npeaks_u = len(idxs_u)
     if npeaks_u == 0:
-        # This is a problem, no peak on the rigth
+        # This is a problem, no peak on the right
         b2 = 0
         status = 4
-        logger.debug('no lower border found')
+        logger.debug('no bottom border found')
     else:
         # Use the closest peak to the reference
-        g_x_u = x_u[x_u >= wh]
+        g_x_u = x_u[x_u >= ref_pcentery]
         if len(g_x_u) == 0:
             logger.debug('no peak over center')
             b2 = 0
@@ -335,16 +328,17 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, wh=35):
     # peaks on the left
     npeaks_t = len(idxs_t)
     if npeaks_t == 0:
-        # This is a problem, no ppeak on the rigth
+        # This is a problem, no peak on the left
         b1 = 0
-        logger.debug('no higher border found')
+        logger.debug('no top border found')
         status = 4
     else:
         # Use the closest peak to the reference
-        l_x_t = x_t[x_t <= wh]
+        l_x_t = x_t[x_t <= ref_pcentery]
         if len(l_x_t) == 0:
             logger.debug('no peak under center')
             b1 = 0
         else:
             b1 = l_x_t.max()
-    return pcentery - wh + b1, pcentery - wh + b2, status
+
+    return ref_pcentery + b1, ref_pcentery + b2, status
