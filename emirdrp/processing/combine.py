@@ -60,11 +60,19 @@ def basic_processing(rinput, flow):
 def basic_processing_with_combination(rinput, flow,
                                       method=combine.mean,
                                       errors=True):
+    return basic_processing_with_combination_frames(rinput.obresult.frames,
+                                                    flow, method=method,
+                                                    errors=errors)
+
+
+def basic_processing_with_combination_frames(frames, flow,
+                                      method=combine.mean,
+                                      errors=True):
     odata = []
     cdata = []
     try:
         _logger.info('processing input images')
-        for frame in rinput.obresult.images:
+        for frame in frames:
             hdulist = frame.open()
             fname = hdulist.filename()
             if fname:
