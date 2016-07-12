@@ -74,7 +74,7 @@ class BarDetectionRecipe(EmirRecipe):
     positions7 = Product(ArrayType)
     positions9 = Product(ArrayType)
     DTU = Product(ArrayType)
-    IPA = Product(float)
+    ROTANG = Product(float)
     csupos = Product(ArrayType)
     csusens = Product(ArrayType)
     param_median_filter_size = Product(int)
@@ -96,7 +96,7 @@ class BarDetectionRecipe(EmirRecipe):
         self.set_base_headers(hdr)
 
         try:
-            ipa = hdr['IPA']
+            rotang = hdr['ROTANG']
             tsutc2 = hdr['TSUTC2']
             dtub, dtur = get_dtur_from_header(hdr)
             csupos = get_csup_from_header(hdr)
@@ -259,7 +259,7 @@ class BarDetectionRecipe(EmirRecipe):
                                     positions5=allpos[5],
                                     positions3=allpos[3],
                                     DTU=dtub,
-                                    IPA=ipa,
+                                    ROTANG=rotang,
                                     TSUTC2=tsutc2,
                                     csupos=csupos,
                                     csusens=csusens,

@@ -66,7 +66,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
     frame = Product(DataFrameType)
     slitstable = Product(ArrayType)
     DTU = Product(ArrayType)
-    IPA = Product(float)
+    ROTANG = Product(float)
     DETPA = Product(float)
     DTUPA = Product(float)
 
@@ -82,7 +82,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
         self.set_base_headers(hdr)
 
         try:
-            ipa = hdr['IPA']
+            rotang = hdr['ROTANG']
             detpa = hdr['DETPA']
             dtupa = hdr['DTUPA']
             dtub, dtur = get_dtur_from_header(hdr)
@@ -147,7 +147,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
         result = self.create_result(frame=hdulist,
                                     slitstable=table,
                                     DTU=dtub,
-                                    IPA=ipa,
+                                    ROTANG=rotang,
                                     DETPA=detpa,
                                     DTUPA=dtupa
                                     )
@@ -177,7 +177,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
     frame = Product(DataFrameType)
     slitstable = Product(ArrayType)
     DTU = Product(ArrayType)
-    IPA = Product(float)
+    ROTANG = Product(float)
     DETPA = Product(float)
     DTUPA = Product(float)
 
@@ -193,7 +193,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
         self.set_base_headers(hdr)
 
         try:
-            ipa = hdr['IPA']
+            rotang = hdr['ROTANG']
             detpa = hdr['DETPA']
             dtupa = hdr['DTUPA']
             dtub, dtur = get_dtur_from_header(hdr)
@@ -274,7 +274,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
 
         result = self.create_result(frame=hdulist, slitstable=table,
                                     DTU=dtub,
-                                    IPA=ipa,
+                                    ROTANG=rotang,
                                     DETPA=detpa,
                                     DTUPA=dtupa
                                     )

@@ -84,7 +84,7 @@ class TestMaskRecipe(EmirRecipe):
     DTU = Product(ArrayType)
     filter = Product(str)
     readmode = Product(str)
-    IPA = Product(float)
+    ROTANG = Product(float)
     DETPA = Product(float)
     DTUPA = Product(float)
     param_recenter = Product(bool)
@@ -106,7 +106,7 @@ class TestMaskRecipe(EmirRecipe):
         try:
             filtername = hdr['FILTER']
             readmode = hdr['READMODE']
-            ipa = hdr['IPA']
+            rotang = hdr['ROTANG']
             detpa = hdr['DETPA']
             dtupa = hdr['DTUPA']
             dtub, dtur = get_dtur_from_header(hdr)
@@ -212,7 +212,7 @@ class TestMaskRecipe(EmirRecipe):
                                     filter=filtername,
                                     DTU=dtub,
                                     readmode=readmode,
-                                    IPA=ipa,
+                                    ROTANG=rotang,
                                     DETPA=detpa,
                                     DTUPA=dtupa,
                                     param_recenter=rinput.recenter,
