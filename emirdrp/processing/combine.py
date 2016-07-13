@@ -137,7 +137,7 @@ def resize(frames, shape, offsetsp, finalshape, window=None):
     regions = []
     for frame, rel_offset in zip(frames, offsetsp):
         region, _ = subarray_match(finalshape, rel_offset, shape)
-        rframe = resize_hdul(frame, finalshape, region)
+        rframe = resize_hdul(frame.open(), finalshape, region)
         rframes.append(rframe)
         regions.append(region)
     return rframes, regions
