@@ -42,7 +42,8 @@ class EmirDataModel(DataModel):
             'grism': ('GRISM', 'undefined'),
             'filter': ('FILTER', 'undefined'),
             'obsmode': ('OBSMODE', 'undefined'),
-            'tstamp': ('TSTAMP', 'undefined')
+            'tstamp': ('TSTAMP', 'undefined'),
+            'skyadd': ('SKYADD', True)
         }
 
     def gather_info_dframe(self, img):
@@ -65,3 +66,7 @@ class EmirDataModel(DataModel):
         meta['adu_s'] = adu_s
 
         return meta
+
+    def do_sky_correction(self, img):
+        header = img['primary']
+        return header.get('SKYADD', True)
