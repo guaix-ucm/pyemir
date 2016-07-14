@@ -232,7 +232,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     cut = sign * arr_deriv[ypix, bstart:bend]
 
-    idxs = find_peaks_indexes(cut, threshold=th)
+    idxs = find_peaks_indexes(cut, window_width=3, threshold=th)
     logger.debug('found %d peaks over threshold %f', len(idxs), th)
 
     if len(idxs) == 0:
@@ -265,7 +265,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     collapsed = sign * region.mean(axis=0)
 
     # Fine tunning
-    idxs_t = find_peaks_indexes(collapsed, threshold=th)
+    idxs_t = find_peaks_indexes(collapsed, window_width=3,threshold=th)
     # Use only the peak nearest the original peak
     if len(idxs_t) == 0:
         logger.debug('no peaks after fine-tunning')
@@ -302,10 +302,10 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
     mm = arr_deriv_alt[slicey, xpos1:xpos2 + 1].mean(axis=-1)
 
     # Fine tunning
-    idxs_t = find_peaks_indexes(mm, threshold=threshold)
+    idxs_t = find_peaks_indexes(mm, window_width=3,threshold=threshold)
     x_t, y_t = refine_peaks(mm, idxs_t, window_width=wfit)
 
-    idxs_u = find_peaks_indexes(-mm, threshold=threshold)
+    idxs_u = find_peaks_indexes(-mm, window_width=3,threshold=threshold)
     x_u, y_u = refine_peaks(mm, idxs_u, window_width=wfit)
     # Peaks on the right
 
