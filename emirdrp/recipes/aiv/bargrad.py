@@ -199,8 +199,6 @@ class BarDetectionRecipe(EmirRecipe):
                     positions.append([rbarid, fits_row, fits_row, 1, 0, 3])
                     continue
 
-                import astropy.io.fits as fits
-                fits.writeto('array-%d.fits' % ks, arr_deriv, clobber=True)
                 # Left bar
                 logger.debug('measure left border (%d)', lbarid)
 
