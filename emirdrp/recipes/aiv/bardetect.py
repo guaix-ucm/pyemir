@@ -291,7 +291,6 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
 
 def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=5):
-    import matplotlib.pyplot as plt
 
     logger = logging.getLogger('emir.recipes.bardetect')
     pcentery = wc_to_pix_1d(centery)
@@ -301,12 +300,8 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
     ref_pcentery = pcentery - slicey.start
     mm = arr_deriv_alt[slicey, xpos1:xpos2 + 1].mean(axis=-1)
 
-    # Fine tunning
     idxs_t = find_peaks_indexes(mm, window_width=3,threshold=threshold)
-    x_t, y_t = refine_peaks(mm, idxs_t, window_width=wfit)
-
     idxs_u = find_peaks_indexes(-mm, window_width=3,threshold=threshold)
-    x_u, y_u = refine_peaks(mm, idxs_u, window_width=wfit)
     # Peaks on the right
 
     status = 0
@@ -317,13 +312,19 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
         status = 4
         logger.debug('no bottom border found')
     else:
-        # Use the closest peak to the reference
-        g_x_u = x_u[x_u >= ref_pcentery]
-        if len(g_x_u) == 0:
+        # Filter over reference
+        g_idxs_u = idxs_u[idxs_u >= ref_pcentery]
+        if len(g_idxs_u) == 0:
             logger.debug('no peak over center')
             b2 = 0
+            status = 4
         else:
-            b2 = g_x_u.min()
+            x_u, y_u = refine_peaks(-mm, g_idxs_u, window_width=3)
+            # Select the peak with max derivative
+            idmax = y_u.argmax()
+            b2 = x_u[idmax]
+            b2val = y_u[idmax]
+            logger.debug('main border in %f', b2)
 
     # peaks on the left
     npeaks_t = len(idxs_t)
@@ -331,14 +332,21 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
         # This is a problem, no peak on the left
         b1 = 0
         logger.debug('no top border found')
-        status = 4
+        status = 40 + status
     else:
-        # Use the closest peak to the reference
-        l_x_t = x_t[x_t <= ref_pcentery]
-        if len(l_x_t) == 0:
+        g_idxs_t = idxs_t[idxs_t <= ref_pcentery]
+        if len(g_idxs_t) == 0:
             logger.debug('no peak under center')
             b1 = 0
+            status = 40 + status
         else:
-            b1 = l_x_t.max()
+            x_t, y_t = refine_peaks(mm, g_idxs_t, window_width=3)
+            # Select the peak with max derivative
+
+            idmax = y_t.argmax()
+            b1 = x_t[idmax]
+            b1val = y_t[idmax]
+            logger.debug('second border in %f', b1)
+
 
     return ref_pcentery + b1, ref_pcentery + b2, status

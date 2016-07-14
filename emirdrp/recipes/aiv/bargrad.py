@@ -147,7 +147,7 @@ class BarDetectionRecipe(EmirRecipe):
         logger.debug('fit with %d points', wfit)
 
         # Minimum threshold
-        threshold = 3 * EMIR_RON
+        threshold = 5 * EMIR_RON
         # Savitsky and Golay (1964) filter to compute the X derivative
         # scipy >= xx has a savgol_filter function
         # for compatibility we do it manually
@@ -214,30 +214,25 @@ class BarDetectionRecipe(EmirRecipe):
                 #
                 if st == 0:
                     logger.debug('measure top-bottom borders')
-                    y1, y2, status = char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=wfit)
-                    if status == 4:
-                        # Update status
-                        centroid = y2
-                        if positions[-1][-1] == 0:
-                            positions[-1][-1] = status
-                        if positions[-2][-1] == 0:
-                            positions[-2][-1] = status
+                    y1, y2, statusy = char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=wfit)
+                    if statusy in [0, 40]:
+                        # Main border is detected
+                        positions[-1][1] = y2 + 1
+                        positions[-2][1] = y2 + 1
                     else:
-                        centroid = y2
+                        # Update status
+                        positions[-1][-1] = 4
+                        positions[-2][-1] = 4
                 else:
                     logger.debug('slit is not complete')
-                    y1, y2, status = 0, 0, st
-                    centroid = y2
+                    y1, y2 = 0, 0
 
                 # Update positions
-                positions[-1][1] = centroid + 1
-                positions[-2][1] = centroid + 1
+
                 logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-2])
                 logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-1])
 
                 if ks == 5:
-                    if status == 4:
-                        y1 = y2 = centroid + 1
                     slits[lbarid - 1] = [xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1]
                     # FITS coordinates
                     slits[lbarid - 1] += 1.0
