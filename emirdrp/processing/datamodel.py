@@ -68,5 +68,5 @@ class EmirDataModel(DataModel):
         return meta
 
     def do_sky_correction(self, img):
-        header = img['primary']
+        header = img['primary'].header
         return header.get('SKYADD', True)
