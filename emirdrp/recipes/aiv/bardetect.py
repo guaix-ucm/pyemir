@@ -290,7 +290,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     return centery, xl, fwhm_x, 0
 
 
-def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=5):
+def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=3):
 
     logger = logging.getLogger('emir.recipes.bardetect')
     pcentery = wc_to_pix_1d(centery)
@@ -319,12 +319,12 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
             b2 = 0
             status = 4
         else:
-            x_u, y_u = refine_peaks(-mm, g_idxs_u, window_width=3)
+            x_u, y_u = refine_peaks(-mm, g_idxs_u, window_width=wfit)
             # Select the peak with max derivative
             idmax = y_u.argmax()
             b2 = x_u[idmax]
             b2val = y_u[idmax]
-            logger.debug('main border in %f', b2)
+            logger.debug('main border in %f', slicey.start + b2)
 
     # peaks on the left
     npeaks_t = len(idxs_t)
@@ -340,13 +340,12 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
             b1 = 0
             status = 40 + status
         else:
-            x_t, y_t = refine_peaks(mm, g_idxs_t, window_width=3)
+            x_t, y_t = refine_peaks(mm, g_idxs_t, window_width=wfit)
             # Select the peak with max derivative
 
             idmax = y_t.argmax()
             b1 = x_t[idmax]
             b1val = y_t[idmax]
-            logger.debug('second border in %f', b1)
+            logger.debug('second border in %f', slicey.start + b1)
 
-
-    return ref_pcentery + b1, ref_pcentery + b2, status
+    return slicey.start + b1, slicey.start + b2, status
