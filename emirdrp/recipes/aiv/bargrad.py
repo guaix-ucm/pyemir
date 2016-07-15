@@ -75,6 +75,7 @@ class BarDetectionRecipe(EmirRecipe):
     positions9 = Product(ArrayType)
     DTU = Product(ArrayType)
     ROTANG = Product(float)
+    TSUTC1 = Product(float)
     csupos = Product(ArrayType)
     csusens = Product(ArrayType)
 
@@ -93,7 +94,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         try:
             rotang = hdr['ROTANG']
-            tsutc2 = hdr['TSUTC2']
+            tsutc1 = hdr['TSUTC1']
             dtub, dtur = get_dtur_from_header(hdr)
             csupos = get_csup_from_header(hdr)
             csusens = get_cs_from_header(hdr)
@@ -249,7 +250,7 @@ class BarDetectionRecipe(EmirRecipe):
                                     positions3=allpos[3],
                                     DTU=dtub,
                                     ROTANG=rotang,
-                                    TSUTC2=tsutc2,
+                                    TSUTC1=tsutc1,
                                     csupos=csupos,
                                     csusens=csusens,
                                     )
