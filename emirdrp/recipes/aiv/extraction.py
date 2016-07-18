@@ -265,7 +265,7 @@ class MaskSpectraExtractionRecipe(EmirRecipe):
     regions = Product(ArrayType)
     #slitstable = Product(ArrayType)
     #DTU = Product(ArrayType)
-    #IPA = Product(float)
+    #ROTANG = Product(float)
     #DETPA = Product(float)
     #DTUPA = Product(float)
 

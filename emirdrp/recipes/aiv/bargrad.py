@@ -32,7 +32,7 @@ from numpy.polynomial.polynomial import polyval
 from scipy.ndimage import convolve1d
 from scipy.ndimage.filters import median_filter
 
-from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
+from emirdrp.core import EmirRecipe, EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
 from emirdrp.products import CoordinateList2DType
 from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBadPixelMaskRequirement
@@ -41,7 +41,7 @@ from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
 from emirdrp.processing.combine import basic_processing_with_combination
-from .bardetect import char_bar_peak_l, char_bar_peak_r
+from .bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
 from .common import get_cs_from_header, get_csup_from_header
 from .common import get_dtur_from_header
 
@@ -63,23 +63,21 @@ class BarDetectionRecipe(EmirRecipe):
     median_filter_size = Parameter(5, 'Size of the median box')
     average_box_row_size = Parameter(7, 'Number of rows to average for fine centering (odd)')
     average_box_col_size = Parameter(21, 'Number of columns to extract for fine centering (odd)')
-    fit_peak_npoints = Parameter(7, 'Number of points to use for fitting the peak (odd)')
+    fit_peak_npoints = Parameter(3, 'Number of points to use for fitting the peak (odd)')
 
     # Recipe Products
     frame = Product(DataFrameType)
     # derivative = Product(DataFrameType)
+    slits = Product(ArrayType)
     positions3 = Product(ArrayType)
     positions5 = Product(ArrayType)
     positions7 = Product(ArrayType)
     positions9 = Product(ArrayType)
     DTU = Product(ArrayType)
-    IPA = Product(float)
+    ROTANG = Product(float)
+    TSUTC1 = Product(float)
     csupos = Product(ArrayType)
     csusens = Product(ArrayType)
-    param_median_filter_size = Product(int)
-    param_average_box_row_size  = Product(int)
-    param_average_box_col_size  = Product(int)
-    param_fit_peak_npoints  = Product(int)
 
     def run(self, rinput):
 
@@ -95,8 +93,8 @@ class BarDetectionRecipe(EmirRecipe):
         self.set_base_headers(hdr)
 
         try:
-            ipa = hdr['IPA']
-            tsutc2 = hdr['TSUTC2']
+            rotang = hdr['ROTANG']
+            tsutc1 = hdr['TSUTC1']
             dtub, dtur = get_dtur_from_header(hdr)
             csupos = get_csup_from_header(hdr)
             csusens = get_cs_from_header(hdr)
@@ -111,10 +109,18 @@ class BarDetectionRecipe(EmirRecipe):
 
         # Median filter of processed array (two times)
         mfilter_size = rinput.median_filter_size
-        logger.debug('median filtering, %d columns', mfilter_size)
+
+        logger.debug('median filtering X, %d columns', mfilter_size)
         arr_median = median_filter(arr, size=(1, mfilter_size))
-        logger.debug('median filtering, %d rows', mfilter_size)
+        logger.debug('median filtering X, %d rows', mfilter_size)
         arr_median = median_filter(arr_median, size=(mfilter_size, 1))
+
+        # Median filter of processed array (two times) in the other direction
+        # for Y coordinates
+        logger.debug('median filtering Y, %d rows', mfilter_size)
+        arr_median_alt = median_filter(arr, size=(mfilter_size, 1))
+        logger.debug('median filtering Y, %d columns', mfilter_size)
+        arr_median_alt = median_filter(arr_median_alt, size=(1, mfilter_size))
 
         xfac = dtur[0] / EMIR_PIXSCALE
         yfac = -dtur[1] / EMIR_PIXSCALE
@@ -142,25 +148,36 @@ class BarDetectionRecipe(EmirRecipe):
         logger.debug('fit with %d points', wfit)
 
         # Minimum threshold
-        threshold = 15
+        threshold = 5 * EMIR_RON
         # Savitsky and Golay (1964) filter to compute the X derivative
         # scipy >= xx has a savgol_filter function
         # for compatibility we do it manually
 
         allpos = {}
+        ypos3_kernel = None
+        slits = numpy.zeros((EMIR_NBARS, 8), dtype='float')
 
+        logger.info('start finding bars')
         for ks in [3, 5, 7, 9]:
             logger.debug('kernel size is %d', ks)
             # S and G kernel for derivative
             kw = ks * (ks*ks-1) / 12.0
             coeffs_are = -numpy.arange((1-ks)//2, (ks-1)//2 + 1) / kw
+            if ks == 3:
+                ypos3_kernel = coeffs_are
             logger.debug('kernel weights are %s', coeffs_are)
+
+            logger.debug('derive image in X direction')
             arr_deriv = convolve1d(arr_median, coeffs_are, axis=-1)
+            # Axis 0 is
+            #
+            logger.debug('derive image in Y direction (with kernel=3)')
+            arr_deriv_alt = convolve1d(arr_median_alt, ypos3_kernel, axis=0)
 
             positions = []
             for coords in barstab:
                 lbarid = int(coords[0])
-                rbarid = lbarid + 55
+                rbarid = lbarid + EMIR_NBARS
                 ref_y_coor = coords[1] + vec[1]
                 poly_coeffs = coords[2:]
                 prow = wc_to_pix_1d(ref_y_coor) - 1
@@ -176,80 +193,65 @@ class BarDetectionRecipe(EmirRecipe):
                 logger.debug('reference y position is Y %7.2f', ref_y_coor)
 
                 # if ref_y_coor is outlimits, skip this bar
-		        # ref_y_coor is in FITS format
+                # ref_y_coor is in FITS format
                 if (ref_y_coor >= 2047) or (ref_y_coor <= 1):
                     logger.debug('reference y position is outlimits, skipping')
                     positions.append([lbarid, fits_row, fits_row, 1, 0, 3])
                     positions.append([rbarid, fits_row, fits_row, 1, 0, 3])
                     continue
 
-                # centroid shape
-                # FIXME: hardcoded
-                centroid_shape = (15, 2)
-                # Find the position of each bar
-
                 # Left bar
+                logger.debug('measure left border (%d)', lbarid)
+
                 centery, xpos, fwhm, st = char_bar_peak_l(arr_deriv, prow, bstart, bend, threshold, center_of_bar, wx=wx, wy=wy, wfit=wfit)
-                # measure centroid in processed image
-                # create a box around (centery, xpos)
-                # 30 pixels height, 4 pixels width
-                centroidy, centroidx = self.centroid(arr, image_box((centery, xpos), arr.shape, centroid_shape))
-                
-                positions.append([lbarid, centroidy+1, fits_row, xpos+1, fwhm, st])
-                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',*positions[-1])
+                xpos1 = xpos
+                positions.append([lbarid, centery+1, fits_row, xpos+1, fwhm, st])
 
                 # Right bar
+                logger.debug('measure rigth border (%d)', rbarid)
                 centery, xpos, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold, center_of_bar, wx=wx, wy=wy, wfit=wfit)
-                # measure centroid in processed image
-                # create a box around (centery, xpos)
-                # 30 pixels height, 4 pixels width
-                centroidy, centroidx = self.centroid(arr, image_box((centery, xpos), arr.shape, centroid_shape))
-                positions.append([rbarid, centroidy+1, fits_row, xpos+1, fwhm, st])
-                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d',*positions[-1])
+                positions.append([rbarid, centery+1, fits_row, xpos+1, fwhm, st])
+                xpos2 = xpos
+                #
+                if st == 0:
+                    logger.debug('measure top-bottom borders')
+                    y1, y2, statusy = char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=wfit)
+                    if statusy in [0, 40]:
+                        # Main border is detected
+                        positions[-1][1] = y2 + 1
+                        positions[-2][1] = y2 + 1
+                    else:
+                        # Update status
+                        positions[-1][-1] = 4
+                        positions[-2][-1] = 4
+                else:
+                    logger.debug('slit is not complete')
+                    y1, y2 = 0, 0
+
+                # Update positions
+
+                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-2])
+                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-1])
+
+                if ks == 5:
+                    slits[lbarid - 1] = [xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1]
+                    # FITS coordinates
+                    slits[lbarid - 1] += 1.0
+                    logger.debug('inserting bars %d-%d into "slits"', lbarid, rbarid)
 
             allpos[ks] = numpy.asarray(positions, dtype='float') # GCS doesn't like lists of lists
 
         logger.debug('end finding bars')
-
         result = self.create_result(frame=hdulist,
-    #                                derivative=fits.PrimaryHDU(data=arr_deriv),
+                                    slits=slits,
                                     positions9=allpos[9],
                                     positions7=allpos[7],
                                     positions5=allpos[5],
                                     positions3=allpos[3],
                                     DTU=dtub,
-                                    IPA=ipa,
-                                    TSUTC2=tsutc2,
+                                    ROTANG=rotang,
+                                    TSUTC1=tsutc1,
                                     csupos=csupos,
                                     csusens=csusens,
-                                    param_median_filter_size=rinput.median_filter_size,
-                                    param_average_box_row_size=2*wy+1,
-                                    param_average_box_col_size=2*wx+1,
-                                    param_fit_peak_npoints=wfit
                                     )
         return result
-
-    def centroid(self, arr, region, threshold=0.0):
-        # extract raster image
-        sl = region
-        raster = arr[sl]
-
-        mask = raster >= threshold
-        if not numpy.any(mask):
-            # no values to compute centroid
-            return -1.0, -1.0
-
-        # Filter values under threshold
-        rr = numpy.where(mask, raster, 0.0)
-        norm = rr.sum()
-        # All points in thresholded raster are 0.0
-        if norm <= 0.0:
-            # no values to compute centroid
-            return -1.0, -1.0
-
-        fi, ci = numpy.indices(raster.shape)
-
-        fm = (rr * fi).sum() / norm
-        cm = (rr * ci).sum() / norm
-
-        return fm + sl[0].start, cm + sl[1].start

@@ -228,39 +228,36 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     # Fit the peak with these points
     # wfit = 5
 
-    logger = logging.getLogger('emir.recipes')
+    logger = logging.getLogger('emir.recipes.bardetect')
 
     cut = sign * arr_deriv[ypix, bstart:bend]
 
-    th = max(th, abs(cut.max() / 6.0), abs(cut.min() / 6.0))
-    logger.debug('internal th is %f', th)
-
-    idxs = find_peaks_indexes(cut, threshold=th)
+    idxs = find_peaks_indexes(cut, window_width=3, threshold=th)
+    logger.debug('found %d peaks over threshold %f', len(idxs), th)
 
     if len(idxs) == 0:
+        logger.debug('no peaks, exit')
         return 0, 0, 0, 1
 
-    # Characterize: use the peak that has the greates value in the derivative?
+    # Characterize: use the peak that has the greatest value in the derivative?
     pix_m = cut[idxs].argmax()
-
     centerx = idxs[pix_m]
-
+    logger.debug('select the peak with maximum derivative')
     # This function should return the center of 'barid'
     # when its position is 'x'
     # without information, the best guess is 'ypix'
     if center_of_bar is None:
         logger.debug('using reference value for center of bar')
-        def center_of_bar(x):
-            return ypix
+        centery = ypix
+    else:
+        centery = center_of_bar(centerx)
 
-    centery = center_of_bar(centerx)
     logger.debug('centery is %7.2f at position %7.2f', centery+1,  centerx+1)
-    # FIXME: hardcoded value
-    wy = 15
-    logger.debug('collapsing %d pixels', wy)
+    logger.debug('collapsing a %d x %d region', 2* wx, 2 * wy)
     #
     slicey = slice_create(centery, wy, start=1, stop=2047)
-    region = arr_deriv[slicey, bstart+centerx-wx:bstart+centerx+wx+1]
+    slicex = slice_create(bstart + centerx, wx, start=1, stop=2047)
+    region = arr_deriv[slicey, slicex]
     if region.size == 0:
         logger.debug('region to collapse is empty')
         return centery, 0, 0, 1
@@ -268,7 +265,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     collapsed = sign * region.mean(axis=0)
 
     # Fine tunning
-    idxs_t = find_peaks_indexes(collapsed, threshold=th)
+    idxs_t = find_peaks_indexes(collapsed, window_width=3,threshold=th)
     # Use only the peak nearest the original peak
     if len(idxs_t) == 0:
         logger.debug('no peaks after fine-tunning')
@@ -277,11 +274,10 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     dist_t = numpy.abs(idxs_t - wx)
     only_this = dist_t.argmin()
     idxs_p = numpy.atleast_1d(idxs_t[only_this])
-
     x_t, y_t = refine_peaks(collapsed, idxs_p, wfit)
 
     if len(x_t) == 0:
-        logger.debug('no peaks to refine')
+        logger.debug('no peaks to refine after fitting')
         return centery, 0, 0, 2
 
     if x_t[0] >= collapsed.shape[0]:
@@ -292,3 +288,64 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     xl = bstart + centerx - wx + x_t[0]
     return centery, xl, fwhm_x, 0
+
+
+def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=3):
+
+    logger = logging.getLogger('emir.recipes.bardetect')
+    pcentery = wc_to_pix_1d(centery)
+
+    slicey = slice_create(pcentery, wh, start=1, stop=2047)
+
+    ref_pcentery = pcentery - slicey.start
+    mm = arr_deriv_alt[slicey, xpos1:xpos2 + 1].mean(axis=-1)
+
+    idxs_t = find_peaks_indexes(mm, window_width=3,threshold=threshold)
+    idxs_u = find_peaks_indexes(-mm, window_width=3,threshold=threshold)
+    # Peaks on the right
+
+    status = 0
+    npeaks_u = len(idxs_u)
+    if npeaks_u == 0:
+        # This is a problem, no peak on the right
+        b2 = 0
+        status = 4
+        logger.debug('no bottom border found')
+    else:
+        # Filter over reference
+        g_idxs_u = idxs_u[idxs_u >= ref_pcentery]
+        if len(g_idxs_u) == 0:
+            logger.debug('no peak over center')
+            b2 = 0
+            status = 4
+        else:
+            x_u, y_u = refine_peaks(-mm, g_idxs_u, window_width=wfit)
+            # Select the peak with max derivative
+            idmax = y_u.argmax()
+            b2 = x_u[idmax]
+            b2val = y_u[idmax]
+            logger.debug('main border in %f', slicey.start + b2)
+
+    # peaks on the left
+    npeaks_t = len(idxs_t)
+    if npeaks_t == 0:
+        # This is a problem, no peak on the left
+        b1 = 0
+        logger.debug('no top border found')
+        status = 40 + status
+    else:
+        g_idxs_t = idxs_t[idxs_t <= ref_pcentery]
+        if len(g_idxs_t) == 0:
+            logger.debug('no peak under center')
+            b1 = 0
+            status = 40 + status
+        else:
+            x_t, y_t = refine_peaks(mm, g_idxs_t, window_width=wfit)
+            # Select the peak with max derivative
+
+            idmax = y_t.argmax()
+            b1 = x_t[idmax]
+            b1val = y_t[idmax]
+            logger.debug('second border in %f', slicey.start + b1)
+
+    return slicey.start + b1, slicey.start + b2, status

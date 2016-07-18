@@ -53,7 +53,7 @@ class StareImageBaseRecipe(EmirRecipe):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = MasterSkyRequirement()
+    master_sky = MasterSkyRequirement(optional=True)
 
     frame = Product(DataFrameType)
 

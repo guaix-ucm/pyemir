@@ -60,11 +60,19 @@ def basic_processing(rinput, flow):
 def basic_processing_with_combination(rinput, flow,
                                       method=combine.mean,
                                       errors=True):
+    return basic_processing_with_combination_frames(rinput.obresult.frames,
+                                                    flow, method=method,
+                                                    errors=errors)
+
+
+def basic_processing_with_combination_frames(frames, flow,
+                                      method=combine.mean,
+                                      errors=True):
     odata = []
     cdata = []
     try:
         _logger.info('processing input images')
-        for frame in rinput.obresult.images:
+        for frame in frames:
             hdulist = frame.open()
             fname = hdulist.filename()
             if fname:
@@ -129,7 +137,7 @@ def resize(frames, shape, offsetsp, finalshape, window=None):
     regions = []
     for frame, rel_offset in zip(frames, offsetsp):
         region, _ = subarray_match(finalshape, rel_offset, shape)
-        rframe = resize_hdul(frame, finalshape, region)
+        rframe = resize_hdul(frame.open(), finalshape, region)
         rframes.append(rframe)
         regions.append(region)
     return rframes, regions

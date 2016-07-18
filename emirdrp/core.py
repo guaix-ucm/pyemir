@@ -81,16 +81,18 @@ def get_corrector_b(rinput, meta):
 
 def get_corrector_s(rinput, meta):
     from numina.flow.processing import SkyCorrector
-    #from emirdrp.processing.badpixels import SkyCorrector
-    sky_info = meta['master_sky']
+    sky_info = meta.get('master_sky')
 
-    with rinput.master_sky.open() as msky_hdul:
-        _logger.info('loading sky')
-        _logger.debug('sky info: %s', sky_info)
-        msky = msky_hdul[0].data
-        sky_corrector = SkyCorrector(msky, datamodel=EmirDataModel())
+    if sky_info is None:
+        return IdNode()
+    else:
+        with rinput.master_sky.open() as msky_hdul:
+            _logger.info('loading sky')
+            _logger.debug('sky info: %s', sky_info)
+            msky = msky_hdul[0].data
+            sky_corrector = SkyCorrector(msky, datamodel=EmirDataModel())
 
-    return sky_corrector
+        return sky_corrector
 
 
 def get_corrector_f(rinput, meta):
@@ -198,3 +200,4 @@ EMIR_READ_MODES = ['simple', 'bias', 'single', 'cds', 'fowler', 'ramp']
 EMIR_PIXSCALE = 18.0
 EMIR_GAIN = 5.0 # ADU / e-
 EMIR_RON = 5.69 # ADU
+EMIR_NBARS = 55

@@ -214,22 +214,16 @@ modes:
   summary: Summary
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: d7854cf4-0379-4e7d-9b1f-e045784ce90e
-- date: 2014-12-10
-  description: Slit extraction in pinhole mask
-  key: TEST8
-  name: Test mask recipe
-  reference: test
-  status: DRAFT
-  summary: Summary
-  url: http://somegtc_url.es/emir/obsmode4.html
-  uuid: 649a0801-0bdd-4c9b-995d-4c86e2e3c302
+- key: TEST8
+  name: Multiflat
+  summary: Multiflat
+  description: Simultaneous flat in several bands
 - date: 2015-04-24
   description: Wavelength calibration from arc
   key: ARC_CALIBRATION
   name: Wavelength calibration
   reference: test
   status: DRAFT
-  summary: Summary
   url: http://somegtc_url.es/emir/obsmode4.html
   uuid: F8AE2344-A242-4695-AFD9-DB5EDCBF0DD6
 - date: 2015-05-07
@@ -273,6 +267,14 @@ modes:
   status: DRAFT
   summary: Summary of Dithered images
   url: http://somegtc_url.es/emir/obsmode4.html
+- key: TEST20
+  name: TEST12
+  summary: Spectroscopy ABBA
+  description: Spectroscopy ABBA
+- key: TEST21
+  name: TEST21
+  summary: Spectroscopy with nodding
+  description: Spectroscopy with nodding
 pipelines:
   default:
     recipes:
@@ -298,10 +300,12 @@ pipelines:
       TEST5: emirdrp.recipes.aiv.sky.TestSkyCorrectRecipe
       TEST6: emirdrp.recipes.aiv.pointsources.TestPointSourceRecipe
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
-      TEST8: emirdrp.recipes.aiv.maskn.TestMaskRecipe
+      TEST8: emirdrp.recipes.mtwflat.MultiTwilightFlatRecipe
       TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
       TEST10: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
       TEST11: emirdrp.recipes.aiv.extraction.CSUSpectraExtractionRecipe
       TEST12: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
+      TEST20: numina.core.utils.AlwaysSuccessRecipe
+      TEST21: numina.core.utils.AlwaysSuccessRecipe
     version: 1
