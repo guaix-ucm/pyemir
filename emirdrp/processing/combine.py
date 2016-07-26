@@ -22,6 +22,7 @@
 from __future__ import division
 #
 import logging
+import uuid
 
 import numpy
 from astropy.io import fits
@@ -96,6 +97,7 @@ def basic_processing_with_combination_frames(frames, flow,
         hdu = fits.PrimaryHDU(data[0], header=base_header)
         _logger.debug('update result header')
         hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.func_name)
+        hdu.header['EMIRUUID'] = uuid.uuid1().hex
         if errors:
             varhdu = fits.ImageHDU(data[1], name='VARIANCE')
             num = fits.ImageHDU(data[2], name='MAP')
@@ -220,6 +222,7 @@ def basic_processing_with_segmentation(rinput, flow,
 
         _logger.debug('update result header')
         hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.func_name)
+        hdu.header['EMIRUUID'] = uuid.uuid1().hex
         _logger.info("missing points, total: %d, fraction: %3.1f", points_no_data, points_no_data / data2[2].size)
 
         if errors:
