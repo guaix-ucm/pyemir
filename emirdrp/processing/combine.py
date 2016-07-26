@@ -143,6 +143,19 @@ def resize(frames, shape, offsetsp, finalshape, window=None):
     return rframes, regions
 
 
+def resize_hdulists(hdulists, shape, offsetsp, finalshape, window=None):
+    from numina.array import subarray_match
+    _logger.info('Resizing frames and masks')
+    rhdulist = []
+    regions = []
+    for hdulist, rel_offset in zip(hdulists, offsetsp):
+        region, _ = subarray_match(finalshape, rel_offset, shape)
+        rframe = resize_hdul(hdulist, finalshape, region)
+        rhdulist.append(rframe)
+        regions.append(region)
+    return rhdulist, regions
+
+
 def basic_processing_with_segmentation(rinput, flow,
                                           method=combine.mean,
                                           errors=True, bpm=None):
@@ -188,10 +201,10 @@ def basic_processing_with_segmentation(rinput, flow,
 
         _logger.info('Shape of resized array is %s', finalshape)
         # Resizing target frames
-        rframes, regions = resize(cdata, subpixshape, offsetsp, finalshape)
+        rhduls, regions = resize_hdulists(cdata, subpixshape, offsetsp, finalshape)
 
         _logger.info("stacking %d images, with offsets using '%s'", len(cdata), method.func_name)
-        data1 = method([d[0].data for d in rframes], dtype='float32')
+        data1 = method([d[0].data for d in rhduls], dtype='float32')
 
         segmap  = segmentation_combined(data1[0])
         # submasks
