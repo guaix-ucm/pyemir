@@ -215,7 +215,12 @@ class BarDetectionRecipe(EmirRecipe):
                 #
                 if st == 0:
                     logger.debug('measure top-bottom borders')
-                    y1, y2, statusy = char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=wfit)
+                    try:
+                        y1, y2, statusy = char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=wfit)
+                    except Exception as error:
+                        logger.warning('Error computing height: %s', error)
+                        statusy = 44
+
                     if statusy in [0, 40]:
                         # Main border is detected
                         positions[-1][1] = y2 + 1
