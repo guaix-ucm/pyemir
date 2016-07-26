@@ -19,6 +19,8 @@
 
 """Data products produced by the EMIR pipeline."""
 
+import uuid
+
 import numpy
 import yaml
 
@@ -62,7 +64,15 @@ emir_schema_description = {
 
 
 class EMIRImageProduct(DataFrameType, DataProductTag):
-    pass
+
+    def convert_out(self, obj):
+        newobj = super(EMIRImageProduct, self).convert_out(obj)
+        if newobj:
+            hdulist = newobj.open()
+            hdr = hdulist[0].header
+            if 'EMIRUUID' not in hdr:
+                hdr['EMIRUUID'] = uuid.uuid1().hex
+        return newobj
 
 
 class EMIRConfigurationType(InstrumentConfigurationType):
