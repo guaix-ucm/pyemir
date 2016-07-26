@@ -300,7 +300,7 @@ pipelines:
       TEST5: emirdrp.recipes.aiv.sky.TestSkyCorrectRecipe
       TEST6: emirdrp.recipes.aiv.pointsources.TestPointSourceRecipe
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
-      TEST8: emirdrp.recipes.mtwflat.MultiTwilightFlatRecipe
+      TEST8: emirdrp.recipes.auxiliary.mtwflat.MultiTwilightFlatRecipe
       TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
       TEST10: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
       TEST11: emirdrp.recipes.aiv.extraction.CSUSpectraExtractionRecipe
