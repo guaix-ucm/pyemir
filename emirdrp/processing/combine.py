@@ -268,10 +268,14 @@ def segmentation_combined(data, snr_detect=5.0, fwhm=4.0, npixels=15):
 
     thresh = snr_detect * bkg.globalrms
     data_s = data - bkg.back()
-    objects, segmap = sep.extract(data_s, thresh, minarea=npixels,
-                                  filter_kernel=kernel.array, segmentation_map=True,
-                                  mask=mask)
-    _logger.info('detected %d objects', len(objects))
+    try:
+        objects, segmap = sep.extract(data_s, thresh, minarea=npixels,
+                                      filter_kernel=kernel.array, segmentation_map=True,
+                                      mask=mask)
+        _logger.info('detected %d objects', len(objects))
+    except Exception as error:
+        _logger.warning("%s", error)
+        segmap = numpy.zeros_like(data_s, dtype='int')
     return segmap
 
 
