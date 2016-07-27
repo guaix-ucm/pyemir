@@ -239,7 +239,7 @@ def basic_processing_with_segmentation(rinput, flow,
     return result
 
 
-def segmentation_combined(data, snr_detect=5.0, fwhm=4.0, npixels=15):
+def segmentation_combined(data, snr_detect=10.0, fwhm=4.0, npixels=15):
     import sep
     from astropy.convolution import Gaussian2DKernel
     from astropy.stats import gaussian_fwhm_to_sigma
@@ -259,14 +259,18 @@ def segmentation_combined(data, snr_detect=5.0, fwhm=4.0, npixels=15):
     bkg = sep.Background(data)
 
     _logger.info('reference fwhm is %5.1f pixels', fwhm)
-    _logger.info('detect threshold, %3.1f over background', snr_detect)
+
     _logger.info('convolve with gaussian kernel, FWHM %3.1f pixels', fwhm)
     sigma = fwhm * gaussian_fwhm_to_sigma
     #
     kernel = Gaussian2DKernel(sigma)
     kernel.normalize()
 
+    _logger.info('background level is %5.1f', bkg.globalback)
+    _logger.info('background rms is %5.1f', bkg.globalrms)
+    _logger.info('detect threshold, %3.1f sigma over background', snr_detect)
     thresh = snr_detect * bkg.globalrms
+
     data_s = data - bkg.back()
     try:
         objects, segmap = sep.extract(data_s, thresh, minarea=npixels,
