@@ -22,6 +22,7 @@
 from __future__ import division
 #
 import logging
+import uuid
 
 import numpy
 from astropy.io import fits
@@ -96,6 +97,7 @@ def basic_processing_with_combination_frames(frames, flow,
         hdu = fits.PrimaryHDU(data[0], header=base_header)
         _logger.debug('update result header')
         hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.func_name)
+        hdu.header['EMIRUUID'] = uuid.uuid1().hex
         if errors:
             varhdu = fits.ImageHDU(data[1], name='VARIANCE')
             num = fits.ImageHDU(data[2], name='MAP')
@@ -143,6 +145,19 @@ def resize(frames, shape, offsetsp, finalshape, window=None):
     return rframes, regions
 
 
+def resize_hdulists(hdulists, shape, offsetsp, finalshape, window=None):
+    from numina.array import subarray_match
+    _logger.info('Resizing frames and masks')
+    rhdulist = []
+    regions = []
+    for hdulist, rel_offset in zip(hdulists, offsetsp):
+        region, _ = subarray_match(finalshape, rel_offset, shape)
+        rframe = resize_hdul(hdulist, finalshape, region)
+        rhdulist.append(rframe)
+        regions.append(region)
+    return rhdulist, regions
+
+
 def basic_processing_with_segmentation(rinput, flow,
                                           method=combine.mean,
                                           errors=True, bpm=None):
@@ -188,10 +203,10 @@ def basic_processing_with_segmentation(rinput, flow,
 
         _logger.info('Shape of resized array is %s', finalshape)
         # Resizing target frames
-        rframes, regions = resize(cdata, subpixshape, offsetsp, finalshape)
+        rhduls, regions = resize_hdulists(cdata, subpixshape, offsetsp, finalshape)
 
         _logger.info("stacking %d images, with offsets using '%s'", len(cdata), method.func_name)
-        data1 = method([d[0].data for d in rframes], dtype='float32')
+        data1 = method([d[0].data for d in rhduls], dtype='float32')
 
         segmap  = segmentation_combined(data1[0])
         # submasks
@@ -207,6 +222,7 @@ def basic_processing_with_segmentation(rinput, flow,
 
         _logger.debug('update result header')
         hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.func_name)
+        hdu.header['EMIRUUID'] = uuid.uuid1().hex
         _logger.info("missing points, total: %d, fraction: %3.1f", points_no_data, points_no_data / data2[2].size)
 
         if errors:
@@ -223,7 +239,7 @@ def basic_processing_with_segmentation(rinput, flow,
     return result
 
 
-def segmentation_combined(data, snr_detect=5.0, fwhm=4.0, npixels=15):
+def segmentation_combined(data, snr_detect=10.0, fwhm=4.0, npixels=15):
     import sep
     from astropy.convolution import Gaussian2DKernel
     from astropy.stats import gaussian_fwhm_to_sigma
@@ -243,19 +259,27 @@ def segmentation_combined(data, snr_detect=5.0, fwhm=4.0, npixels=15):
     bkg = sep.Background(data)
 
     _logger.info('reference fwhm is %5.1f pixels', fwhm)
-    _logger.info('detect threshold, %3.1f over background', snr_detect)
+
     _logger.info('convolve with gaussian kernel, FWHM %3.1f pixels', fwhm)
     sigma = fwhm * gaussian_fwhm_to_sigma
     #
     kernel = Gaussian2DKernel(sigma)
     kernel.normalize()
 
+    _logger.info('background level is %5.1f', bkg.globalback)
+    _logger.info('background rms is %5.1f', bkg.globalrms)
+    _logger.info('detect threshold, %3.1f sigma over background', snr_detect)
     thresh = snr_detect * bkg.globalrms
+
     data_s = data - bkg.back()
-    objects, segmap = sep.extract(data_s, thresh, minarea=npixels,
-                                  filter_kernel=kernel.array, segmentation_map=True,
-                                  mask=mask)
-    _logger.info('detected %d objects', len(objects))
+    try:
+        objects, segmap = sep.extract(data_s, thresh, minarea=npixels,
+                                      filter_kernel=kernel.array, segmentation_map=True,
+                                      mask=mask)
+        _logger.info('detected %d objects', len(objects))
+    except Exception as error:
+        _logger.warning("%s", error)
+        segmap = numpy.zeros_like(data_s, dtype='int')
     return segmap
 
 

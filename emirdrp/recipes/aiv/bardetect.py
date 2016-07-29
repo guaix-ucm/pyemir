@@ -321,10 +321,15 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
         else:
             x_u, y_u = refine_peaks(-mm, g_idxs_u, window_width=wfit)
             # Select the peak with max derivative
-            idmax = y_u.argmax()
-            b2 = x_u[idmax]
-            b2val = y_u[idmax]
-            logger.debug('main border in %f', slicey.start + b2)
+            if len(x_u) == 0 or len(y_u) == 0:
+                logger.warning("no 1st peak found after refine")
+                b2 = 0
+                status = 4
+            else:
+                idmax = y_u.argmax()
+                b2 = x_u[idmax]
+                b2val = y_u[idmax]
+                logger.debug('main border in %f', slicey.start + b2)
 
     # peaks on the left
     npeaks_t = len(idxs_t)
@@ -342,10 +347,14 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
         else:
             x_t, y_t = refine_peaks(mm, g_idxs_t, window_width=wfit)
             # Select the peak with max derivative
-
-            idmax = y_t.argmax()
-            b1 = x_t[idmax]
-            b1val = y_t[idmax]
-            logger.debug('second border in %f', slicey.start + b1)
+            if len(x_t) == 0 or len(y_t) == 0:
+                logger.warning("no 2nd peak found after refine")
+                b1 = 0
+                status = 40 + status
+            else:
+                idmax = y_t.argmax()
+                b1 = x_t[idmax]
+                b1val = y_t[idmax]
+                logger.debug('second border in %f', slicey.start + b1)
 
     return slicey.start + b1, slicey.start + b2, status

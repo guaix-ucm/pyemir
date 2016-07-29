@@ -46,6 +46,13 @@ class EmirDataModel(DataModel):
             'skyadd': ('SKYADD', True)
         }
 
+    def get_imgid(self, img):
+        hdr = self.get_header(img)
+        if 'EMIRUUID' in hdr:
+            return hdr['EMIRUUID']
+        else:
+            return super(EmirDataModel, self).get_imgid(img)
+
     def gather_info_dframe(self, img):
         with img.open() as hdulist:
             info = self.gather_info_hdu(hdulist)
