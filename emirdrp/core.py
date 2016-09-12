@@ -142,6 +142,8 @@ class EmirRecipe(BaseRecipe):
 
     qc = Product(QualityControlProduct, dest='qc')
 
+    logger = logging.getLogger('numina.recipes.emir')
+
     def __init__(self, version="1"):
         super(EmirRecipe, self).__init__(version=version)
 
@@ -174,14 +176,14 @@ class EmirRecipe(BaseRecipe):
         from numina.flow import SerialFlow
         # with BPM, bias, dark, flat and sky
         if emirdrp.ext.gtc.RUN_IN_GTC:
-            _logger.debug('running in GTC environment')
+            cls.logger.debug('running in GTC environment')
         else:
-            _logger.debug('running outside of GTC environment')
+            cls.logger.debug('running outside of GTC environment')
 
         meta = emirdrp.processing.info.gather_info(rinput)
-        _logger.debug('obresult info')
+        cls.logger.debug('obresult info')
         for entry in meta['obresult']:
-            _logger.debug('frame info is %s', entry)
+            cls.logger.debug('frame info is %s', entry)
         correctors = [getter(rinput, meta) for getter in getters]
 
         flow = SerialFlow(correctors)
