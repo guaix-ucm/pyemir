@@ -20,8 +20,8 @@
 """Twilight Flat Recipe for a list of frames in different filters"""
 
 
-import logging
-
+import numpy
+import astropy.io.fits as fits
 from numina.array.combine import median
 from numina.core import Product
 from numina.core.types import ListOfType
@@ -46,43 +46,40 @@ class MultiTwilightFlatRecipe(EmirRecipe):
     twflatframes = Product(ListOfType(MasterIntensityFlat))
 
     def run(self, rinput):
-        logger = logging.getLogger('numina.recipes.emir')
 
         results = []
-        logger.info('starting multiflat flat reduction')
+        self.logger.info('starting multiflat flat reduction')
 
         flow = self.init_filters(rinput)
 
         iinfo = gather_info_frames(rinput.obresult.frames)
         image_groups = {}
-        logger.info('group images by filter')
+        self.logger.info('group images by filter')
         for idx, info in enumerate(iinfo):
             filt = info['filter']
             if filt not in image_groups:
-                logger.debug('new filter %s', filt)
+                self.logger.debug('new filter %s', filt)
                 image_groups[filt] = []
             img = rinput.obresult.frames[idx]
-            logger.debug('image %s in group %s', img, filt)
+            self.logger.debug('image %s in group %s', img, filt)
             image_groups[filt].append(img)
 
         for filt, frames in image_groups.items():
-            logger.info('processing filter %s', filt)
+            self.logger.info('processing filter %s', filt)
 
             res = self.run_per_filter(frames, flow)
 
             results.append(res)
 
-        logger.info('end multiflat flat reduction')
+        self.logger.info('end multiflat flat reduction')
         result = self.create_result(twflatframes=results)
 
         return result
 
     def run_per_filter(self, frames, flow):
 
-        logger = logging.getLogger('numina.recipes.emir')
-
         errors = True
-        logger.debug('using errors: %s', errors)
+        self.logger.debug('using errors: %s', errors)
         hdulist = basic_processing_with_combination_frames(frames, flow,
                                                     method=median,
                                                     errors=errors)
@@ -90,13 +87,83 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         mm = hdulist[0].data.mean()
-        logger.info('mean value of flat is: %f', mm)
+        self.logger.info('mean value of flat is: %f', mm)
         hdr['CCDMEAN'] = mm
 
-        logger.debug('normalize image')
+        self.logger.debug('normalize image')
         hdulist[0].data /= mm
         if errors:
-            logger.debug('normalize VAR extension')
+            self.logger.debug('normalize VAR extension')
+            hdulist['variance'].data /= (mm * mm)
+
+        return hdulist
+
+    def run_per_filter_ramp(self, frames, saturation):
+        errors = False
+        nimages = len(frames)
+        if nimages == 0:
+            raise ValueError('len(images) == 0')
+
+        median_frames = numpy.empty((nimages,))
+        exptime_frames = []
+        utc_frames = []
+        # generate 3D cube
+        bshape = (2048, 2048)
+        flat_frames = numpy.empty((bshape[0], bshape[1], nimages))
+        for idx, frame in enumerate(frames):
+            image = frame.open()
+            flat_frames[:, :, idx] = image['primary'].data
+            exptime_frames.append(image[0].header['EXPTIME'])
+            median_frames[idx] = numpy.median(image['primary'].data)
+            utc_frames.append(image[0].header['UTC'])
+
+            self.logger.debug(
+                'image %d exptime %f median %f UTC %s',
+                idx, exptime_frames[idx],
+                median_frames[idx],
+                utc_frames[-1]
+            )
+
+        # filter saturated images
+        good_images = median_frames < saturation
+        ngood_images = good_images.sum()
+        if ngood_images < 2:
+            self.logger.warning('We have only %d good images', ngood_images)
+            # Reference image
+            ref_image = frames[0].open()
+            slope_scaled = numpy.ones(bshape) * exptime_frames[0]
+        else:
+            nsaturated = nimages - good_images.sum()
+            if nsaturated > 0:
+                self.logger.debug('we have %d images with median value over saturation (%f)', nsaturated , saturation)
+
+            m = flat_frames[:,:, good_images]
+            # Reshape array to obtain a 2D array
+            m_r = m.reshape((bshape[0] * bshape[1], ngood_images))
+            self.logger.debug('fitting slopes')
+            ll = numpy.polyfit(median_frames[good_images], m_r.T, deg=1)
+            slope = ll[0].reshape(bshape)
+            base = ll[1].reshape(bshape)
+
+            # First good frame
+            index_of_first_good = numpy.nonzero(good_images)[0][0]
+            ref_image = frames[index_of_first_good].open()
+            slope_scaled = slope * exptime_frames[index_of_first_good]
+
+        hdr = ref_image[0].header
+        self.set_base_headers(hdr)
+
+        hdu = fits.PrimaryHDU(data=slope_scaled, header=hdr)
+        hdulist = fits.HDUList(hdu)
+
+        mm = hdulist[0].data.mean()
+        self.logger.info('mean value of flat is: %f', mm)
+        hdr['CCDMEAN'] = mm
+
+        self.logger.debug('normalize image')
+        hdulist[0].data /= mm
+        if errors:
+            self.logger.debug('normalize VAR extension')
             hdulist['variance'].data /= (mm * mm)
 
         return hdulist
