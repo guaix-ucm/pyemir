@@ -51,6 +51,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         self.logger.info('starting multiflat flat reduction')
 
         flow = self.init_filters(rinput)
+        saturation = 45000.0
 
         iinfo = gather_info_frames(rinput.obresult.frames)
         image_groups = {}
@@ -67,7 +68,10 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         for filt, frames in image_groups.items():
             self.logger.info('processing filter %s', filt)
 
-            res = self.run_per_filter(frames, flow)
+            # Uncomment this line and comment the following
+            # to revert to non-ramp
+            # res = self.run_per_filter(frames, flow)
+            res = self.run_per_filter_ramp(frames, saturation=saturation)
 
             results.append(res)
 
@@ -135,7 +139,8 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         else:
             nsaturated = nimages - good_images.sum()
             if nsaturated > 0:
-                self.logger.debug('we have %d images with median value over saturation (%f)', nsaturated , saturation)
+                self.logger.debug('we have %d images with median value over saturation (%f)',
+                                  nsaturated , saturation)
 
             m = flat_frames[:,:, good_images]
             # Reshape array to obtain a 2D array
