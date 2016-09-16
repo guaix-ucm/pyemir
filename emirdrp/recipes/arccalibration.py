@@ -30,7 +30,6 @@ from numina.core.products import LinesCatalog
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import EmirRecipe
-from emirdrp.products import SlitsCatalog
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
@@ -47,7 +46,6 @@ class ArcCalibrationRecipe(EmirRecipe):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     lines_catalog = Requirement(LinesCatalog, "Catalog of lines")
-    slits_catalog= Requirement(SlitsCatalog, "Catalog of slits")
     polynomial_degree = Parameter(2, 'Polynomial degree of the arc calibration')
 
     polynomial_coeffs = Product(ArrayType)

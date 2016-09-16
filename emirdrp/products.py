@@ -29,7 +29,6 @@ from numina.core.products import ArrayNType
 from numina.core.products import DataProductTag
 from numina.core.requirements import InstrumentConfigurationType
 from numina.core import ValidationError
-from numina.array.wavecal.slitlet import Slitlet
 
 
 base_schema_description = {
@@ -244,26 +243,6 @@ class MSMPositions(DataProductType):
 class SourcesCatalog(DataProductType):
     def __init__(self):
         super(SourcesCatalog, self).__init__(ptype=list)
-
-
-class SlitsCatalog(DataProductType):
-    def __init__(self):
-        super(SlitsCatalog, self).__init__(ptype=list)
-
-    def __numina_load__(self, obj):
-
-        with open(obj, 'r') as fd:
-            slits_cat = yaml.load(fd)
-
-        slits_list = []
-        for slit in slits_cat:
-            bbox = slit['bbox']
-            slitdum = Slitlet(*bbox)
-            borders = slit['borders']
-            slitdum.set_nc_coeff_lower_boundary_pix(borders[0])
-            slitdum.set_nc_coeff_upper_boundary_pix(borders[1])
-            slits_list.append(slitdum)
-        return slits_list
 
 
 class CentroidsTableType(DataProductType):
