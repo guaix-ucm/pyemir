@@ -232,7 +232,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     cut = sign * arr_deriv[ypix, bstart:bend]
 
-    idxs = find_peaks_indexes(cut, window_width=3, threshold=th)
+    idxs = find_peaks_indexes(cut, window_width=3, threshold=th, fpeak=1)
     logger.debug('found %d peaks over threshold %f', len(idxs), th)
 
     if len(idxs) == 0:
@@ -241,7 +241,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     # Characterize: use the peak that has the greatest value in the derivative?
     pix_m = cut[idxs].argmax()
-    centerx = idxs[pix_m]
+    centerx = bstart + idxs[pix_m]
     logger.debug('select the peak with maximum derivative')
     # This function should return the center of 'barid'
     # when its position is 'x'
@@ -253,10 +253,27 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
         centery = center_of_bar(centerx)
 
     logger.debug('centery is %7.2f at position %7.2f', centery+1,  centerx+1)
-    logger.debug('collapsing a %d x %d region', 2* wx, 2 * wy)
+
+    # Refine at the computed center
+    xl, fwhm_x = refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, th, sign)
+
+    # Refine at fifferent positions along the slit
+    newrefine = []
+    for i in range(3):
+        res = refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, th, sign)
+        newrefine.append(res)
+
+    return centery, xl, fwhm_x, 0
+
+
+def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
+    # Refine values
+    logger = logging.getLogger('emir.recipes.bardetect')
+
+    logger.debug('collapsing a %d x %d region', 2 * wx, 2 * wy)
     #
     slicey = slice_create(centery, wy, start=1, stop=2047)
-    slicex = slice_create(bstart + centerx, wx, start=1, stop=2047)
+    slicex = slice_create(centerx, wx, start=1, stop=2047)
     region = arr_deriv[slicey, slicex]
     if region.size == 0:
         logger.debug('region to collapse is empty')
@@ -265,7 +282,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     collapsed = sign * region.mean(axis=0)
 
     # Fine tunning
-    idxs_t = find_peaks_indexes(collapsed, window_width=3,threshold=th)
+    idxs_t = find_peaks_indexes(collapsed, window_width=3, threshold=threshold)
     # Use only the peak nearest the original peak
     if len(idxs_t) == 0:
         logger.debug('no peaks after fine-tunning')
@@ -286,8 +303,8 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     _, fwhm_x = fmod.compute_fwhm_1d_simple(collapsed, x_t[0])
 
-    xl = bstart + centerx - wx + x_t[0]
-    return centery, xl, fwhm_x, 0
+    xl = centerx - wx + x_t[0]
+    return xl, fwhm_x
 
 
 def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=3):
