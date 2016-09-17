@@ -31,25 +31,22 @@ from numina.array import combine
 from numina.array import combine_shape
 #
 
+import emirdrp.processing.datamodel
 from emirdrp.processing.wcs import offsets_from_wcs
 
 
-_logger = logging.getLogger('numina.recipes.emir')
+_logger = logging.getLogger(__name__)
 
 
 def basic_processing(rinput, flow):
-
+    datamodel = emirdrp.processing.datamodel.EmirDataModel()
     cdata = []
 
     _logger.info('processing input images')
     for frame in rinput.obresult.images:
         hdulist = frame.open()
-        fname = hdulist.filename()
-        if fname:
-            _logger.info('input is %s', fname)
-        else:
-            _logger.info('input is %s', hdulist)
-
+        fname = datamodel.get_imgid(hdulist)
+        _logger.info('input is %s', fname)
         final = flow(hdulist)
         _logger.debug('output is input: %s', final is hdulist)
 
@@ -71,21 +68,16 @@ def basic_processing_with_combination_frames(frames, flow,
                                       errors=True):
     odata = []
     cdata = []
+    datamodel = emirdrp.processing.datamodel.EmirDataModel()
     try:
         _logger.info('processing input images')
         for frame in frames:
             hdulist = frame.open()
-            fname = hdulist.filename()
-            if fname:
-                _logger.info('input is %s', fname)
-            else:
-                _logger.info('input is %s', hdulist)
-
+            fname = datamodel.get_imgid(hdulist)
+            _logger.info('input is %s', fname)
             final = flow(hdulist)
             _logger.debug('output is input: %s', final is hdulist)
-
             cdata.append(final)
-
             # Files to be closed at the end
             odata.append(hdulist)
             if final is not hdulist:
@@ -100,6 +92,7 @@ def basic_processing_with_combination_frames(frames, flow,
         hdu.header['EMIRUUID'] = uuid.uuid1().hex
         # Headers of last image
         hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
+
         if errors:
             varhdu = fits.ImageHDU(data[1], name='VARIANCE')
             num = fits.ImageHDU(data[2], name='MAP')
@@ -166,16 +159,13 @@ def basic_processing_with_segmentation(rinput, flow,
 
     odata = []
     cdata = []
+    datamodel = emirdrp.processing.datamodel.EmirDataModel()
     try:
         _logger.info('processing input images')
         for frame in rinput.obresult.images:
             hdulist = frame.open()
-            fname = hdulist.filename()
-            if fname:
-                _logger.info('input is %s', fname)
-            else:
-                _logger.info('input is %s', hdulist)
-
+            fname = datamodel.get_imgid(hdulist)
+            _logger.info('input is %s', fname)
             final = flow(hdulist)
             _logger.debug('output is input: %s', final is hdulist)
 
@@ -188,8 +178,8 @@ def basic_processing_with_segmentation(rinput, flow,
 
         base_header = cdata[0][0].header.copy()
 
-        baseshape = (2048, 2048)
-        subpixshape = (2048, 2048)
+        baseshape = cdata[0].data.shape
+        subpixshape = cdata[0].data.shape
 
         _logger.info('Computing offsets from WCS information')
         refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
