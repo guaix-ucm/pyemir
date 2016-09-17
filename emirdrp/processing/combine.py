@@ -178,8 +178,8 @@ def basic_processing_with_segmentation(rinput, flow,
 
         base_header = cdata[0][0].header.copy()
 
-        baseshape = cdata[0].data.shape
-        subpixshape = cdata[0].data.shape
+        baseshape = cdata[0][0].data.shape
+        subpixshape = cdata[0][0].data.shape
 
         _logger.info('Computing offsets from WCS information')
         refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
@@ -200,7 +200,7 @@ def basic_processing_with_segmentation(rinput, flow,
         _logger.info("stacking %d images, with offsets using '%s'", len(cdata), method.func_name)
         data1 = method([d[0].data for d in rhduls], dtype='float32')
 
-        segmap  = segmentation_combined(data1[0])
+        segmap = segmentation_combined(data1[0])
         # submasks
         if bpm is None:
             masks = [(segmap[region] > 0) for region in regions]
