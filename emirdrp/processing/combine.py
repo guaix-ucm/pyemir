@@ -98,6 +98,8 @@ def basic_processing_with_combination_frames(frames, flow,
         _logger.debug('update result header')
         hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.func_name)
         hdu.header['EMIRUUID'] = uuid.uuid1().hex
+        # Headers of last image
+        hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
         if errors:
             varhdu = fits.ImageHDU(data[1], name='VARIANCE')
             num = fits.ImageHDU(data[2], name='MAP')
