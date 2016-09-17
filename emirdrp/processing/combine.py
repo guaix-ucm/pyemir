@@ -213,6 +213,7 @@ def basic_processing_with_segmentation(rinput, flow,
         points_no_data = (data2[2] == 0).sum()
 
         _logger.debug('update result header')
+        hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
         hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.func_name)
         hdu.header['EMIRUUID'] = uuid.uuid1().hex
         _logger.info("missing points, total: %d, fraction: %3.1f", points_no_data, points_no_data / data2[2].size)
