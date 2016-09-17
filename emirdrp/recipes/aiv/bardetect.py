@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -23,6 +23,7 @@ import logging
 
 import numpy
 
+import emirdrp.instrument.distortions as dist
 import scipy.ndimage.measurements as mes
 import scipy.ndimage.morphology as morph
 
@@ -210,23 +211,25 @@ def _locate_bar_gen(icut, epos, transform1, transform2):
     return epos_pix, epos_f, error
 
 
-def char_bar_peak_l(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=5):
+def char_bar_peak_l(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=3):
     return _char_bar_peak(arr_deriv, ypix, bstart, bend, th,
                           center_of_bar=center_of_bar, wx=wx, wy=wy, wfit=wfit, sign=1)
 
 
-def char_bar_peak_r(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=5):
+def char_bar_peak_r(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=3):
     return _char_bar_peak(arr_deriv, ypix, bstart, bend, th,
                           center_of_bar=center_of_bar, wx=wx, wy=wy, wfit=wfit, sign=-1)
 
 
-def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=5, sign=1):
+def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=3, sign=1):
 
     # extract a region to average
     # wy = 3
     # wx = 10
     # Fit the peak with these points
-    # wfit = 5
+    # wfit = 3
+
+    wy = 1
 
     logger = logging.getLogger('emir.recipes.bardetect')
 
@@ -259,11 +262,25 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     # Refine at fifferent positions along the slit
     newrefine = []
-    for i in range(3):
-        res = refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, th, sign)
+    offs = [-10, -5, 0, 5, 10]
+    for off in offs:
+        logger.debug('looping, measuring at %7.2f', centery + off + 1)
+        res = refine_bar_centroid(arr_deriv, centerx, centery + off, wx, wy, th, sign)
+        logger.debug('looping, measured values %7.2f %7.2f', res[0], res[1])
         newrefine.append(res)
 
-    return centery, xl, fwhm_x, 0
+    logger.debug('transform values from real to virtual')
+
+    # this goes in FITS pix coordinates, adding 1
+    xcoords_m = [r[0] + 1 for r in newrefine]
+    ycoords_m = [centery + off + 1 for off in offs]
+
+    xcoords_t, ycoords_t = dist.pvex(xcoords_m, ycoords_m)
+    logger.debug('virtual xcoords are: %s:', xcoords_t)
+    logger.debug('virtual ycoords are: %s:', ycoords_t)
+    avg_xl = numpy.mean(xcoords_t)
+
+    return centery, avg_xl, fwhm_x, 0
 
 
 def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
@@ -291,7 +308,7 @@ def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
     dist_t = numpy.abs(idxs_t - wx)
     only_this = dist_t.argmin()
     idxs_p = numpy.atleast_1d(idxs_t[only_this])
-    x_t, y_t = refine_peaks(collapsed, idxs_p, wfit)
+    x_t, y_t = refine_peaks(collapsed, idxs_p, window_width=3)
 
     if len(x_t) == 0:
         logger.debug('no peaks to refine after fitting')
