@@ -241,21 +241,24 @@ def basic_processing_with_segmentation(rinput, flow,
     return result
 
 
-def segmentation_combined(data, snr_detect=10.0, fwhm=4.0, npixels=15):
+def segmentation_combined(data, snr_detect=10.0, fwhm=4.0, npixels=15, mask_corners=False):
     import sep
     from astropy.convolution import Gaussian2DKernel
     from astropy.stats import gaussian_fwhm_to_sigma
 
     box_shape = [64, 64]
     _logger.info('point source detection2')
-    _logger.info('using internal mask to remove corners')
+
     # Corners
     mask = numpy.zeros_like(data, dtype='int32')
-    mask[2000:, 0:80] = 1
-    mask[2028:, 2000:] = 1
-    mask[:50, 1950:] = 1
-    mask[:100, :50] = 1
-    # Remove corner regions
+    if mask_corners:
+        # Remove corner regions
+        _logger.info('using internal mask to remove corners')
+        mask[2000:, 0:80] = 1
+        mask[2028:, 2000:] = 1
+        mask[:50, 1950:] = 1
+        mask[:100, :50] = 1
+
 
     _logger.info('compute background map, %s', box_shape)
     bkg = sep.Background(data)
