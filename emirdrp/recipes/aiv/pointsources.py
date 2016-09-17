@@ -44,7 +44,7 @@ from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
 from emirdrp.processing.combine import basic_processing_with_combination
-from .common import get_dtur_from_header
+import emirdrp.processing.datamodel as datamodel
 from .procedures import image_box2d
 
 
@@ -104,7 +104,7 @@ class TestPointSourceRecipe(EmirRecipe):
             rotang = hdr['ROTANG']
             detpa = hdr['DETPA']
             dtupa = hdr['DTUPA']
-            dtub, dtur = get_dtur_from_header(hdr)
+            dtub, dtur = datamodel.get_dtur_from_header(hdr)
         except KeyError as error:
             _logger.error(error)
             raise RecipeError(error)

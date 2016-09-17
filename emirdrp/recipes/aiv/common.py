@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2015 Universidad Complutense de Madrid
+# Copyright 2013-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -505,121 +505,6 @@ def normalize_raw(arr):
     # As images were positive, the range is 0,1
 
     return numpy.clip(arr / 65535.0, 0.0, 1.0)
-
-
-def get_dtur_from_header(hdr):
-
-    # get DTU things from header
-    _logger.info('getting DTU position from header')
-    xdtu = hdr['XDTU']
-    ydtu = hdr['YDTU']
-    zdtu = hdr['ZDTU']
-
-    # Defined even if not in the header
-    xdtuf = hdr.get('XDTU_F', 1.0)
-    ydtuf = hdr.get('YDTU_F', 1.0)
-    xdtu0 = hdr.get('XDTU_0', 0.0)
-    ydtu0 = hdr.get('YDTU_0', 0.0)
-    _logger.info('XDTU=%6.2f YDTU=%6.2f ZDTU=%6.2f', xdtu, ydtu, zdtu)
-    _logger.info('XDTU_F=%6.2f YDTU_F=%6.2f', xdtuf, ydtuf)
-    _logger.info('XDTU_0=%6.2f YDTU_0=%6.2f', xdtu0, ydtu0)
-
-    xdtur = (xdtu / xdtuf - xdtu0)
-    ydtur = (ydtu / ydtuf - ydtu0)
-    _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f', xdtur, ydtur)
-    dtu = [xdtu, ydtu, zdtu]
-    dtur = [xdtur, ydtur, zdtu]
-    return dtu, dtur
-
-
-def get_csup_from_header(hdr):
-
-    # CSUP keys
-    default = 0.0
-    first_idx = 1
-    last_idx = 110
-    _logger.info('getting CSUP keys from header')
-    values = []
-    for idx in range(first_idx, last_idx+1):
-        key = "CSUP{}".format(idx)
-        values.append(hdr.get(key, default))
-
-    return values
-
-
-def get_cs_from_header(hdr):
-
-    # CS keys
-    default = 0.0
-    first_idx = 0
-    last_idx = 439
-    _logger.info('getting CS keys from header')
-    values = []
-    for idx in range(first_idx, last_idx+1):
-        key = "CS_{}".format(idx)
-        values.append(hdr.get(key, default))
-
-    return values
-
-
-def create_dtu_wcs_header(hdr):
-
-    # get DTU things from header
-    xdtu = hdr['XDTU']
-    ydtu = hdr['YDTU']
-
-    # Defined even if not in the header
-    xdtuf = hdr.get('XDTU_F', 1.0)
-    ydtuf = hdr.get('YDTU_F', 1.0)
-    xdtu0 = hdr.get('XDTU_0', 0.0)
-    ydtu0 = hdr.get('YDTU_0', 0.0)
-
-    xdtur = (xdtu / xdtuf - xdtu0)
-    ydtur = (ydtu / ydtuf - ydtu0)
-
-    xfac = xdtur / EMIR_PIXSCALE
-    yfac = -ydtur / EMIR_PIXSCALE
-
-    # xout = xin + yfac
-    # yout = yin + xfac
-
-    dtuwcs = astropy.wcs.WCS(naxis=2)
-    dtuwcs.wcs.name = 'DTU WCS'
-    dtuwcs.wcs.crpix = [0, 0]
-    dtuwcs.wcs.cdelt = [1, 1]
-    dtuwcs.wcs.crval = [yfac, xfac]
-    dtuwcs.wcs.ctype = ['linear', 'linear']
-
-    return dtuwcs
-
-
-def create_dtu_wcs_header_um(hdr):
-
-    # get DTU things from header
-    xdtu = hdr['XDTU']
-    ydtu = hdr['YDTU']
-
-    # Defined even if not in the header
-    xdtuf = hdr.get('XDTU_F', 1.0)
-    ydtuf = hdr.get('YDTU_F', 1.0)
-    xdtu0 = hdr.get('XDTU_0', 0.0)
-    ydtu0 = hdr.get('YDTU_0', 0.0)
-
-    xdtur = (xdtu / xdtuf - xdtu0)
-    ydtur = (ydtu / ydtuf - ydtu0)
-
-    xfac = xdtur
-    yfac = -ydtur
-
-    dtuwcs = astropy.wcs.WCS(naxis=2)
-    dtuwcs.wcs.name = 'DTU WCS um'
-    dtuwcs.wcs.crpix = [0, 0]
-    dtuwcs.wcs.cdelt = [1, 1]
-    dtuwcs.wcs.crval = [yfac, xfac]
-    dtuwcs.wcs.ctype = ['linear', 'linear']
-    dtuwcs.wcs.cunit = ['um', 'um']
-
-    return dtuwcs
 
 
 def char_slit(data, regions, box_increase=3, slit_size_ratio=4.0):

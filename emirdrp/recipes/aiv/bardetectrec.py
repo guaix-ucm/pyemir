@@ -41,8 +41,7 @@ from emirdrp.requirements import MasterSkyRequirement
 from emirdrp.processing.combine import basic_processing_with_combination
 from .bardetect import find_position
 from .bardetect import locate_bar_l, locate_bar_r
-from .common import get_cs_from_header, get_csup_from_header
-from .common import get_dtur_from_header
+import emirdrp.processing.datamodel as datamodel
 from .common import normalize_raw
 
 
@@ -91,9 +90,9 @@ class BarDetectionRecipe(EmirRecipe):
 
         try:
             rotang = hdr['ROTANG']
-            dtub, dtur = get_dtur_from_header(hdr)
-            csupos = get_csup_from_header(hdr)
-            csusens = get_cs_from_header(hdr)
+            dtub, dtur = datamodel.get_dtur_from_header(hdr)
+            csupos = datamodel.get_csup_from_header(hdr)
+            csusens = datamodel.get_cs_from_header(hdr)
 
         except KeyError as error:
             logger.error(error)

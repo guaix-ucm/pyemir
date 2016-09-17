@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -69,55 +69,3 @@ class TargetAcquisitionRecipe(EmirRecipe):
 
     def run(self, rinput):
         return self.create_result(telescope_offset=TelescopeOffset())
-
-
-class MaskImagingRecipe(EmirRecipe):
-
-    """Acquire a target.
-
-    Mask image Recipe.
-
-    Recipe to process mask images.
-
-    **Observing modes:**
-
-      *  Mask imaging
-    """
-
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-
-    msm_positions = Product(MSMPositions)
-
-    def run(self, rinput):
-        return self.create_result(msm_positions=MSMPositions())
-
-
-class MaskCheckRecipe(EmirRecipe):
-
-    """
-    Acquire a target.
-
-    Recipe for the processing of multi-slit/long-slit check images.
-
-    **Observing modes:**
-
-        * MSM and LSM check
-
-    """
-
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-
-    msm_positions = Product(MSMPositions)
-    telescope_offset = Product(TelescopeOffset)
-
-    def run(self, rinput):
-        return self.create_result(msm_positions=MSMPositions(),
-                                  telescope_offset=TelescopeOffset())
