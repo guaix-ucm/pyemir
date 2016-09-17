@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -20,13 +20,17 @@
 """Typical requirements of recipes"""
 
 from numina.core import Parameter, Requirement
+from numina.core.requirements import ObservationResultRequirement
 
 from .products import MasterBias, MasterDark, MasterBadPixelMask
 from .products import MasterIntensityFlat
 from .products import MasterSpectralFlat
 from .products import MasterSky
 from .products import EMIRConfigurationType
-# from .products import SourcesCatalog
+
+
+# Expose this from numina for convenience
+EMIRObservationResultRequirement = ObservationResultRequirement
 
 
 class EMIRConfigurationRequirement(Requirement):

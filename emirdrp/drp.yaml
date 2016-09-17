@@ -305,6 +305,7 @@ pipelines:
       TEST10: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
       TEST11: emirdrp.recipes.aiv.extraction.CSUSpectraExtractionRecipe
       TEST12: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
+      TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINE_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
