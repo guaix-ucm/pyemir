@@ -17,21 +17,15 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Correct Bad Pixels in Image using a BPM image"""
+"""Datamodel for EMIR and related functions"""
 
 from __future__ import division
 
-import logging
-from numina.flow.datamodel import DataModel
+import numina.flow.datamodel
 
 
-_logger = logging.getLogger('numina.recipes.emir')
-
-
-class EmirDataModel(DataModel):
-    """Data model of EMIR.
-
-    Empty for the moment"""
+class EmirDataModel(numina.flow.datamodel.DataModel):
+    """Data model of EMIR."""
 
     def __init__(self):
         # Keys
@@ -50,6 +44,8 @@ class EmirDataModel(DataModel):
         hdr = self.get_header(img)
         if 'EMIRUUID' in hdr:
             return hdr['EMIRUUID']
+        elif 'TSUTC1' in hdr:
+            return hdr['TSUTC1']
         else:
             return super(EmirDataModel, self).get_imgid(img)
 
@@ -59,7 +55,6 @@ class EmirDataModel(DataModel):
         return info
 
     def gather_info_hdu(self, hdulist):
-        # READMODE is STRING
         meta = {}
         meta['n_ext'] = len(hdulist)
         extnames = [hdu.header.get('extname', '') for hdu in hdulist[1:]]
