@@ -237,7 +237,11 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         hdu = fits.PrimaryHDU(out[0], header=base_header)
         self.logger.debug('update result header')
         hdr = hdu.header
+        self.set_base_headers(hdr)
         hdr['IMGOBBL'] = 0
+        hdr['TSUTC2'] = data_hdul[-1][0].header['TSUTC2']
+        hdr['OBSMODE'] = 'DITHERED_IMAGE'
+        hdu.header['history'] = "Combined %d images using '%s'" % (len(data_arr_sr), 'mean')
         # Approximate solution
         hdr['CRPIX1'] += offsetsp[0][0]
         hdr['CRPIX2'] += offsetsp[0][1]
