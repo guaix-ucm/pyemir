@@ -110,7 +110,7 @@ def resize_array(data, finalshape, region, window=None,
     newdata[region] = finaldata
     # Conserve the total sum of the original data
     if conserve:
-        newdata[region] /= scale ** 2
+        newdata[region] =  newdata[region] / scale**2
     return newdata
 
 
@@ -183,14 +183,17 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         self.logger.info('Shape of resized array is %s', finalshape)
 
         # Resizing target frames
-
         data_arr_r, regions = resize_arrays([m[0].data for m in data_hdul], subpixshape, offsetsp, finalshape, fill=1)
+        for i in data_arr_r:
+            self.logger.debug("array has python shape %s", i.shape)
+
         self.logger.warning('BPM missing, use zeros instead')
         false_mask = numpy.zeros(baseshape, dtype='int16')
         self.logger.debug('resize bad pixel masks')
         mask_arr_r, _ = resize_arrays([false_mask for _ in data_arr_r], subpixshape, offsetsp, finalshape, fill=1)
         skyid = None
         if compute_sky:
+            self.logger.debug("compute sky")
             method = combine.mean
             bpm = None
             self.logger.info("stacking %d images, with offsets using '%s'", len(data_arr_r), method.func_name)
@@ -226,6 +229,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             data_arr_s = [m[0].data - sky_data[0] for m in data_hdul]
             data_arr_sr, _ = resize_arrays([f for f in data_arr_s], subpixshape, offsetsp, finalshape, fill=1)
         else:
+            self.logger.debug("not computing sky")
             sky_result = None
             data_arr_sr = data_arr_r
 
@@ -233,7 +237,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         refpix_final = refpix + offsetsp[0]
         self.logger.info('Position of refpixel in final image %s', refpix_final)
         out = combine.mean(data_arr_sr, masks=mask_arr_r, dtype='float32')
-
+        self.logger.debug("output has python shape %s", out[0].shape)
         hdu = fits.PrimaryHDU(out[0], header=base_header)
         self.logger.debug('update result header')
         hdr = hdu.header
@@ -258,5 +262,5 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             hdulist = fits.HDUList([hdu])
 
         result = self.create_result(frame=hdulist, sky=sky_result)
-
+        self.logger.info('end of dither recipe')
         return result
