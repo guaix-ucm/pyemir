@@ -43,9 +43,9 @@ class EmirDataModel(numina.flow.datamodel.DataModel):
     def get_imgid(self, img):
         hdr = self.get_header(img)
         if 'EMIRUUID' in hdr:
-            return hdr['EMIRUUID']
+            return 'uuid:{}'.format(hdr['EMIRUUID'])
         elif 'TSUTC1' in hdr:
-            return hdr['TSUTC1']
+            return 'tsutc:{:16.5f}'.format(hdr['TSUTC1'])
         else:
             return super(EmirDataModel, self).get_imgid(img)
 
