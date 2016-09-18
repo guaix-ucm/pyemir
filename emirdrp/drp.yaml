@@ -307,5 +307,5 @@ pipelines:
       TEST12: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
-      COMBINE_ABBA: numina.core.utils.AlwaysSuccessRecipe
+      COMBINE_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
     version: 1
