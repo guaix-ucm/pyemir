@@ -209,8 +209,11 @@ class EmirRecipe(BaseRecipe):
             cls.logger.debug('frame info is %s', entry)
         correctors = [getter(rinput, meta) for getter in getters]
 
-        flow = SerialFlow(correctors)
-
+        # FIXME: this should be handled by SerialFlow itself
+        if correctors:
+            flow = SerialFlow(correctors)
+        else:
+            flow = IdNode()
         return flow
 
     @classmethod
