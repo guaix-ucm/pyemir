@@ -41,6 +41,7 @@ from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
 from emirdrp.processing.combine import basic_processing_with_combination
+import emirdrp.instrument.distortions as dist
 from .bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
 from .common import get_cs_from_header, get_csup_from_header
 from .common import get_dtur_from_header
@@ -196,23 +197,30 @@ class BarDetectionRecipe(EmirRecipe):
                 # ref_y_coor is in FITS format
                 if (ref_y_coor >= 2047) or (ref_y_coor <= 1):
                     logger.debug('reference y position is outlimits, skipping')
-                    positions.append([lbarid, fits_row, fits_row, 1, 0, 3])
-                    positions.append([rbarid, fits_row, fits_row, 1, 0, 3])
+                    positions.append([lbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
+                    positions.append([rbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
                     continue
 
                 # Left bar
+                # Dont add +1 to virtual pixels
                 logger.debug('measure left border (%d)', lbarid)
 
-                centery, xpos, fwhm, st = char_bar_peak_l(arr_deriv, prow, bstart, bend, threshold,
-                                                          center_of_bar, wx=wx, wy=wy, wfit=wfit)
+                centery, centery_virt, xpos, xpos_virt, fwhm, st = char_bar_peak_l(arr_deriv,
+                                                                     prow, bstart, bend, threshold,
+                                                                     center_of_bar,
+                                                                     wx=wx, wy=wy, wfit=wfit)
                 xpos1 = xpos
-                positions.append([lbarid, centery+1, fits_row, xpos+1, fwhm, st])
+                insert1 = [lbarid, centery+1, centery_virt, fits_row, xpos+1, xpos_virt, fwhm, st]
+                positions.append(insert1)
 
                 # Right bar
+                # Dont add +1 to virtual pixels
                 logger.debug('measure rigth border (%d)', rbarid)
-                centery, xpos, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold,
+                centery, centery_virt, xpos, xpos_virt, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend,
+                                                                                   threshold,
                                                           center_of_bar, wx=wx, wy=wy, wfit=wfit)
-                positions.append([rbarid, centery+1, fits_row, xpos+1, fwhm, st])
+                insert2 = [rbarid, centery + 1, centery_virt, fits_row, xpos + 1, xpos_virt + 1, fwhm, st]
+                positions.append(insert2)
                 xpos2 = xpos
                 #
                 if st == 0:
@@ -220,6 +228,8 @@ class BarDetectionRecipe(EmirRecipe):
                     try:
                         y1, y2, statusy = char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold,
                                                           wh=35, wfit=wfit)
+                        _, y1_virt = dist.pvex(xpos + 1, y1)
+                        _, y2_virt = dist.pvex(xpos + 1, y2)
                     except Exception as error:
                         logger.warning('Error computing height: %s', error)
                         statusy = 44
@@ -228,6 +238,8 @@ class BarDetectionRecipe(EmirRecipe):
                         # Main border is detected
                         positions[-1][1] = y2 + 1
                         positions[-2][1] = y2 + 1
+                        positions[-1][2] = y2_virt
+                        positions[-2][2] = y2_virt
                     else:
                         # Update status
                         positions[-1][-1] = 4
@@ -238,8 +250,10 @@ class BarDetectionRecipe(EmirRecipe):
 
                 # Update positions
 
-                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-2])
-                logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-1])
+                msg = 'bar %d, centroid-y %9.4f centroid-y virt %9.4f, ' \
+                      'row %d, x-pos %9.4f x-pos virt %9.4f, FWHM %6.3f, status %d'
+                logger.debug(msg, *positions[-2])
+                logger.debug(msg, *positions[-1])
 
                 if ks == 5:
                     slits[lbarid - 1] = [xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1]

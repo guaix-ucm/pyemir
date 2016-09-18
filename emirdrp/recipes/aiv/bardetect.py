@@ -229,8 +229,6 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     # Fit the peak with these points
     # wfit = 3
 
-    wy = 1
-
     logger = logging.getLogger('emir.recipes.bardetect')
 
     cut = sign * arr_deriv[ypix, bstart:bend]
@@ -259,14 +257,23 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     # Refine at the computed center
     xl, fwhm_x = refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, th, sign)
+    logger.debug('measured values %7.2f (FWHM %7.2f)', xl, fwhm_x)
 
-    # Refine at fifferent positions along the slit
+    # Refine at different positions along the slit
     newrefine = []
-    offs = [-10, -5, 0, 5, 10]
+    wx = 5
+    wy = 1
+    step = 2 * wy + 1
+    offs = []
+    offs2 = range(-step, -10, -step)
+    offs.extend(reversed(offs2))
+    offs.extend(range(0, 10, step))
+    # This is basically to build a list of centers that dont overlap
+
     for off in offs:
-        logger.debug('looping, measuring at %7.2f', centery + off + 1)
+        logger.debug('looping, off %d, measuring at %7.2f', off, centery + off + 1)
         res = refine_bar_centroid(arr_deriv, centerx, centery + off, wx, wy, th, sign)
-        logger.debug('looping, measured values %7.2f %7.2f', res[0], res[1])
+        logger.debug('looping, measured values %7.2f (FWHM %7.2f)', res[0], res[1])
         newrefine.append(res)
 
     logger.debug('transform values from real to virtual')
@@ -276,22 +283,29 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     ycoords_m = [centery + off + 1 for off in offs]
 
     xcoords_t, ycoords_t = dist.pvex(xcoords_m, ycoords_m)
+    logger.debug('real xcoords are: %s:', xcoords_m)
+    logger.debug('real ycoords are: %s:', ycoords_m)
     logger.debug('virtual xcoords are: %s:', xcoords_t)
     logger.debug('virtual ycoords are: %s:', ycoords_t)
-    avg_xl = numpy.mean(xcoords_t)
+    avg_xl_virt = numpy.mean(xcoords_t)
+    logger.debug('reference real xcoord is: %s:', xl)
+    logger.debug('average virtual xcoord is: %s:', avg_xl_virt)
 
-    return centery, avg_xl, fwhm_x, 0
+    centerx_virt, centery_virt = dist.pvex(centerx + 1, centery + 1)
+
+    return centery, centery_virt, xl, avg_xl_virt, fwhm_x, 0
 
 
 def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
     # Refine values
     logger = logging.getLogger('emir.recipes.bardetect')
 
-    logger.debug('collapsing a %d x %d region', 2 * wx, 2 * wy)
+    logger.debug('collapsing a %d x %d region', 2 * wx + 1 , 2 * wy + 1)
     #
     slicey = slice_create(centery, wy, start=1, stop=2047)
     slicex = slice_create(centerx, wx, start=1, stop=2047)
     region = arr_deriv[slicey, slicex]
+
     if region.size == 0:
         logger.debug('region to collapse is empty')
         return centery, 0, 0, 1
@@ -328,7 +342,6 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
 
     logger = logging.getLogger('emir.recipes.bardetect')
     pcentery = wc_to_pix_1d(centery)
-
     slicey = slice_create(pcentery, wh, start=1, stop=2047)
 
     ref_pcentery = pcentery - slicey.start
