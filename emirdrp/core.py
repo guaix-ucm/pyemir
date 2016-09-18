@@ -128,7 +128,9 @@ def get_corrector_d(rinput, meta):
         _logger.info('loading %s', key)
         _logger.debug('%s info: %s', key, info)
         datac = hdul['primary'].data
-        corrector = CorrectorClass(datac, datamodel=datamodel)
+        corrector = CorrectorClass(datac,
+                                   calibid=datamodel.get_imgid(hdul),
+                                   datamodel=datamodel)
 
     return corrector
 
