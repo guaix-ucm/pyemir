@@ -50,7 +50,7 @@ def test_subs():
     obsresult.frames = [frames1, frames2, frames3, frames4]
 
     recipe = BaseABBARecipe()
-    rinput = BaseABBARecipe.RecipeInput(
+    rinput = recipe.create_input(
         obresult=obsresult,
         master_dark=numina.core.DataFrame(frame=create_frame_dark()),
         master_flat=numina.core.DataFrame(frame=create_frame_flat())
