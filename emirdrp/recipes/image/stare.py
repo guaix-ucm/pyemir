@@ -21,7 +21,7 @@
 Image mode recipes of EMIR
 """
 
-import logging
+import datetime
 
 from numina.array.combine import median
 from numina.core import Parameter
@@ -31,34 +31,40 @@ from numina.core.requirements import ObservationResultRequirement
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.products import SourcesCatalog
-from emirdrp.requirements import Catalog_Requirement
-from emirdrp.requirements import Extinction_Requirement
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterBiasRequirement
-from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.requirements import Offsets_Requirement
+import emirdrp.requirements as reqs
 from emirdrp.processing.combine import basic_processing_with_combination
+import emirdrp.processing.info as info
 from .shared import DirectImageCommon
 
-_logger = logging.getLogger('numina.recipes.emir')
+
+def timeit(method):
+    def timed_method(self, rinput):
+
+        time_start = datetime.datetime.utcnow()
+        result = method(self, rinput)
+        time_end = datetime.datetime.utcnow()
+        result.time_it(time_start, time_end)
+        return result
+
+    return timed_method
 
 
 class StareImageBaseRecipe(EmirRecipe):
     """Process images in Stare Image Mode"""
 
     obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = MasterSkyRequirement(optional=True)
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
+    master_sky = reqs.MasterSkyRequirement(optional=True)
 
     frame = Product(DataFrameType)
 
+    @timeit
     def run(self, rinput):
-        _logger.info('starting stare image reduction')
+        print(info.gather_info(rinput))
+        self.logger.info('starting stare image reduction')
 
         flow = self.init_filters(rinput)
 
@@ -67,7 +73,7 @@ class StareImageBaseRecipe(EmirRecipe):
         self.set_base_headers(hdr)
         # Update SEC to 0
         hdr['SEC'] = 0
-        _logger.info('end stare image reduction')
+        self.logger.info('end stare image reduction')
         result = self.create_result(frame=hdulist)
 
         return result
@@ -87,13 +93,13 @@ class StareImageRecipe(DirectImageCommon):
     """
 
     obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    extinction = Extinction_Requirement()
-    sources = Catalog_Requirement()
-    offsets = Offsets_Requirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
+    extinction = reqs.Extinction_Requirement()
+    sources = reqs.Catalog_Requirement()
+    offsets = reqs.Offsets_Requirement()
     iterations = Parameter(4, 'Iterations of the recipe')
 
     frame = Product(DataFrameType)
