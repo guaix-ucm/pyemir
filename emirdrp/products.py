@@ -62,7 +62,7 @@ emir_schema_description = {
     }
 
 
-class EMIRImageProduct(DataFrameType, DataProductTag):
+class EMIRImageProduct(DataProductTag, DataFrameType):
 
     def convert_out(self, obj):
         newobj = super(EMIRImageProduct, self).convert_out(obj)
