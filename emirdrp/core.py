@@ -23,10 +23,10 @@ import numpy
 
 from numina.flow.node import IdNode
 from numina.flow.processing import BadPixelCorrector
-from numina.core import BaseRecipe, Product, RecipeResult
+from numina.core import BaseRecipe, Product, RecipeResult, DataFrame
 from numina.core.products import QualityControlProduct
 
-from emirdrp.products import MasterBadPixelMask, MasterBias, MasterDark, MasterIntensityFlat, MasterSky
+import emirdrp.products as prods
 import emirdrp.ext.gtc
 import emirdrp.processing.info
 from emirdrp.processing.datamodel import EmirDataModel
@@ -138,7 +138,23 @@ def get_checker(rinput, meta):
     return Checker()
 
 
+class EmirRecipeResult(RecipeResult):
+
+    def time_it(self, time1, time2):
+        values = self.attrs()
+        for k, spec in self.stored().items():
+            value = values[k]
+            # Store for Images..
+            if isinstance(value, DataFrame):
+                import emirdrp.processing.datamodel
+                d = emirdrp.processing.datamodel.EmirDataModel()
+                hdul = value.open()
+                d.add_computation_time(hdul, time1, time2)
+
+
 class EmirRecipe(BaseRecipe):
+
+    RecipeResult = EmirRecipeResult
 
     qc = Product(QualityControlProduct, dest='qc')
 
@@ -149,7 +165,12 @@ class EmirRecipe(BaseRecipe):
 
     @classmethod
     def types_getter(cls):
-        imgtypes = [MasterBadPixelMask, MasterBias, MasterDark, MasterIntensityFlat, MasterSky]
+        imgtypes = [prods.MasterBadPixelMask,
+                    prods.MasterBias,
+                    prods.MasterDark,
+                    prods.MasterIntensityFlat,
+                    prods.MasterSky
+                    ]
         getters = [get_corrector_p, get_corrector_b, get_corrector_d,
                    [get_corrector_f, get_checker], get_corrector_s]
 

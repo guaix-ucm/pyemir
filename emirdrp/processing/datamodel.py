@@ -72,3 +72,8 @@ class EmirDataModel(numina.flow.datamodel.DataModel):
     def do_sky_correction(self, img):
         header = img['primary'].header
         return header.get('SKYADD', True)
+
+    def add_computation_time(self, img, time1, time2):
+        img[0].header['NUMUTC1'] = time1.isoformat()
+        img[0].header['NUMUTC2'] = time2.isoformat()
+        return img
