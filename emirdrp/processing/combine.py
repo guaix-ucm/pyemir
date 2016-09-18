@@ -91,14 +91,14 @@ def basic_processing_with_combination_frames(frames,
 
         base_header = cdata[0][0].header.copy()
         cnum = len(cdata)
-        _logger.info("stacking %d images using '%s'", cnum, method.func_name)
+        _logger.info("stacking %d images using '%s'", cnum, method.__name__)
         data = method([d[0].data for d in cdata], dtype='float32')
         hdu = fits.PrimaryHDU(data[0], header=base_header)
         _logger.debug('update result header')
         if prolog:
             _logger.debug('write prolog')
             hdu.header['history'] = prolog
-        hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method.func_name)
+        hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method.__name__)
         hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
         for img in cdata:
             hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
@@ -211,7 +211,7 @@ def basic_processing_with_segmentation(rinput, flow,
         # Resizing target frames
         rhduls, regions = resize_hdulists(cdata, subpixshape, offsetsp, finalshape)
 
-        _logger.info("stacking %d images, with offsets using '%s'", len(cdata), method.func_name)
+        _logger.info("stacking %d images, with offsets using '%s'", len(cdata), method.__name__)
         data1 = method([d[0].data for d in rhduls], dtype='float32')
 
         segmap = segmentation_combined(data1[0])
@@ -221,14 +221,14 @@ def basic_processing_with_segmentation(rinput, flow,
         else:
             masks = [((segmap[region] > 0) & bpm) for region in regions]
 
-        _logger.info("stacking %d images, with objects mask using '%s'", len(cdata), method.func_name)
+        _logger.info("stacking %d images, with objects mask using '%s'", len(cdata), method.__name__)
         data2 = method([d[0].data for d in cdata], masks=masks, dtype='float32')
         hdu = fits.PrimaryHDU(data2[0], header=base_header)
         points_no_data = (data2[2] == 0).sum()
 
         _logger.debug('update result header')
         hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
-        hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.func_name)
+        hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.__name__)
         hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
         hdu.header['EMIRUUID'] = uuid.uuid1().hex
         _logger.info("missing points, total: %d, fraction: %3.1f", points_no_data, points_no_data / data2[2].size)

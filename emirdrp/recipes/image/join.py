@@ -196,7 +196,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             self.logger.debug("compute sky")
             method = combine.mean
             bpm = None
-            self.logger.info("stacking %d images, with offsets using '%s'", len(data_arr_r), method.func_name)
+            self.logger.info("stacking %d images, with offsets using '%s'", len(data_arr_r), method.__name__)
             data1 = method(data_arr_r, masks=mask_arr_r, dtype='float32')
 
             segmap = segmentation_combined(data1[0])
@@ -206,7 +206,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             else:
                 omasks = [((segmap[region] > 0) & bpm) for region in regions]
 
-            self.logger.info("stacking %d images, with objects mask using '%s'", len(data_arr_r), method.func_name)
+            self.logger.info("stacking %d images, with objects mask using '%s'", len(data_arr_r), method.__name__)
 
             sky_data = method([m[0].data for m in data_hdul], masks=omasks, dtype='float32')
             hdu = fits.PrimaryHDU(sky_data[0], header=base_header)
@@ -215,7 +215,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             self.logger.debug('update result header')
             skyid= uuid.uuid1().hex
             hdu.header['EMIRUUID'] = skyid
-            hdu.header['history'] = "Combined %d images using '%s'" % (len(data_arr_r), method.func_name)
+            hdu.header['history'] = "Combined %d images using '%s'" % (len(data_arr_r), method.__name__)
             self.logger.info("missing points, total: %d, fraction: %3.1f", points_no_data, points_no_data / sky_data[2].size)
 
             if use_errors:
