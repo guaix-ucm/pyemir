@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -18,35 +18,19 @@
 #
 
 """
-Image mode recipes of EMIR
+Stare Image mode of EMIR
 """
 
-import datetime
-
+import astropy.io.fits as fits
 from numina.array.combine import median
-from numina.core import Parameter
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
-from emirdrp.products import SourcesCatalog
 import emirdrp.requirements as reqs
 from emirdrp.processing.combine import basic_processing_with_combination
-import emirdrp.processing.info as info
-from .shared import DirectImageCommon
-
-
-def timeit(method):
-    def timed_method(self, rinput):
-
-        time_start = datetime.datetime.utcnow()
-        result = method(self, rinput)
-        time_end = datetime.datetime.utcnow()
-        result.time_it(time_start, time_end)
-        return result
-
-    return timed_method
+import emirdrp.decorators
 
 
 class StareImageBaseRecipe(EmirRecipe):
@@ -61,9 +45,9 @@ class StareImageBaseRecipe(EmirRecipe):
 
     frame = Product(DataFrameType)
 
-    @timeit
+    @emirdrp.decorators.loginfo
+    @emirdrp.decorators.timeit
     def run(self, rinput):
-        print(info.gather_info(rinput))
         self.logger.info('starting stare image reduction')
 
         flow = self.init_filters(rinput)
@@ -73,42 +57,39 @@ class StareImageBaseRecipe(EmirRecipe):
         self.set_base_headers(hdr)
         # Update SEC to 0
         hdr['SEC'] = 0
+
+        if rinput.master_bpm:
+            hdul_bpm = rinput.master_bpm.open()
+            hdu_bpm = generate_bpm_hdu(hdul_bpm[0])
+        else:
+            hdu_bpm = generate_empty_bpm_hdu(hdulist[0])
+
+        # Append the BPM to the result
+        hdulist.append(hdu_bpm)
         self.logger.info('end stare image reduction')
         result = self.create_result(frame=hdulist)
 
         return result
 
 
-class StareImageRecipe(DirectImageCommon):
+def generate_bpm_hdu(hdu):
 
-    """
-    The effect of recording images of the sky in a given pointing
-    position of the TS
+    return generate_bpm_data(hdu.data, hdu.header)
 
 
-    **Observing modes:**
+def generate_empty_bpm_hdu(hdu):
+    import numpy
 
-        * Stare image
+    data = numpy.zeros_like(hdu.data, dtype='uint8')
+    return generate_bpm_data(data)
 
-    """
 
-    obresult = ObservationResultRequirement()
-    master_bpm = reqs.MasterBadPixelMaskRequirement()
-    master_bias = reqs.MasterBiasRequirement()
-    master_dark = reqs.MasterDarkRequirement()
-    master_flat = reqs.MasterIntensityFlatFieldRequirement()
-    extinction = reqs.Extinction_Requirement()
-    sources = reqs.Catalog_Requirement()
-    offsets = reqs.Offsets_Requirement()
-    iterations = Parameter(4, 'Iterations of the recipe')
+def generate_bpm_data(data, header=None):
 
-    frame = Product(DataFrameType)
-    catalog = Product(SourcesCatalog)
+    hdu_bpm = fits.ImageHDU(
+        data,
+        header=header
+    )
 
-    def run(self, recipe_input):
-
-        frame, catalog = self.process(recipe_input,
-                                      window=None, subpix=1,
-                                      stop_after=DirectImageCommon.PRERED)
-
-        return self.create_result(frame=frame, catalog=catalog)
+    hdu_bpm.header['EXTNAME'] = 'BPM'
+    return hdu_bpm
