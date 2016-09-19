@@ -21,6 +21,7 @@
 
 
 import numpy
+import numpy.polynomial.polynomial as nppol
 import astropy.io.fits as fits
 from numina.array.combine import median
 from numina.core import Product
@@ -145,10 +146,10 @@ class MultiTwilightFlatRecipe(EmirRecipe):
             m = flat_frames[:,:, good_images]
             # Reshape array to obtain a 2D array
             m_r = m.reshape((bshape[0] * bshape[1], ngood_images))
-            self.logger.debug('fitting slopes')
-            ll = numpy.polyfit(median_frames[good_images], m_r.T, deg=1)
-            slope = ll[0].reshape(bshape)
-            base = ll[1].reshape(bshape)
+            self.logger.debug('fitting slopes with mean-squares')
+            ll = nppol.polyfit(median_frames[good_images], m_r.T, deg=1)
+            slope = ll[1].reshape(bshape)
+            base = ll[0].reshape(bshape)
 
             # First good frame
             index_of_first_good = numpy.nonzero(good_images)[0][0]
