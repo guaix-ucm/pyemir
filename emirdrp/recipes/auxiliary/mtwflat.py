@@ -24,6 +24,7 @@ import numpy
 import numpy.polynomial.polynomial as nppol
 import astropy.io.fits as fits
 from numina.array.combine import median
+from numina.array.robustfit import fit_theil_sen
 from numina.core import Product
 from numina.core.types import ListOfType
 from numina.core.requirements import ObservationResultRequirement
@@ -146,8 +147,10 @@ class MultiTwilightFlatRecipe(EmirRecipe):
             m = flat_frames[:,:, good_images]
             # Reshape array to obtain a 2D array
             m_r = m.reshape((bshape[0] * bshape[1], ngood_images))
-            self.logger.debug('fitting slopes with mean-squares')
-            ll = nppol.polyfit(median_frames[good_images], m_r.T, deg=1)
+            self.logger.debug('fitting slopes with Theil-Sen')
+            # self.logger.debug('fitting slopes with mean-squares')
+            # ll = nppol.polyfit(median_frames[good_images], m_r.T, deg=1)
+            ll = fit_theil_sen(median_frames[good_images], m_r.T)
             slope = ll[1].reshape(bshape)
             base = ll[0].reshape(bshape)
 
