@@ -22,7 +22,11 @@
 from __future__ import division
 
 import numina.flow.datamodel
+import logging
+import emirdrp.core
+import astropy.wcs
 
+_logger = logging.getLogger(__name__)
 
 class EmirDataModel(numina.flow.datamodel.DataModel):
     """Data model of EMIR."""
