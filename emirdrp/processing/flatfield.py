@@ -33,18 +33,18 @@ _logger = logging.getLogger('numina.recipes.emir')
 class FlatFieldCorrector(Corrector):
     """A Node that corrects a frame from flat-field."""
 
-    def __init__(self, flatdata, datamodel=None, dtype='float32'):
+    def __init__(self, flatdata, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
         self.update_variance = False
 
         super(FlatFieldCorrector, self).__init__(
             datamodel=datamodel,
+            calibid=calibid,
             dtype=dtype)
 
         self.flatdata = flatdata
         self.flatdata[flatdata <= 0] = 1.0 # To avoid NaN
         self.flat_stats = flatdata.mean()
-        self.calibid = 'ID-of-calib-image'
 
     def run(self, img):
         import datetime
