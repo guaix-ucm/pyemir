@@ -20,6 +20,7 @@
 """Bar detection procedures for EMIR"""
 
 import logging
+import itertools
 
 import numpy
 
@@ -141,7 +142,6 @@ def position_half_h(pslit, cpix, backw=4):
     # height of the peak
     height = pslit[next_peak] - left_background
 
-
     half_height = left_background + 0.5 * height
 
     # Position at halg peak, linear interpolation
@@ -256,8 +256,13 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     logger.debug('centery is %7.2f at position %7.2f', centery+1,  centerx+1)
 
     # Refine at the computed center
-    xl, fwhm_x = refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, th, sign)
+    xl, fwhm_x, st = refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, th, sign)
     logger.debug('measured values %7.2f (FWHM %7.2f)', xl, fwhm_x)
+
+    if st != 0:
+        logger.debug('faillure refining bar centroid, go to next bar')
+        # Exiting now, can't refine the centroid
+        return centery, centery, xl, xl, fwhm_x, st
 
     # Refine at different positions along the slit
     newrefine = []
@@ -276,12 +281,20 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
         logger.debug('looping, measured values %7.2f (FWHM %7.2f)', res[0], res[1])
         newrefine.append(res)
 
-    logger.debug('transform values from real to virtual')
-
     # this goes in FITS pix coordinates, adding 1
-    xcoords_m = [r[0] + 1 for r in newrefine]
-    ycoords_m = [centery + off + 1 for off in offs]
+    # filter values with status != 0
+    valid_mt = [r[2] == 0 for r in newrefine]
+    xcoords_mt = [r[0] + 1 for r in newrefine]
+    ycoords_mt = [centery + off + 1 for off in offs]
 
+    ycoords_m = list(itertools.compress(ycoords_mt, valid_mt))
+    xcoords_m = list(itertools.compress(xcoords_mt, valid_mt))
+
+    if len(xcoords_m) == 0:
+        logger.debug('no valid values to refine')
+        return centery, centery, xl, xl, fwhm_x, 3
+
+    logger.debug('transform values from real to virtual')
     xcoords_t, ycoords_t = dist.pvex(xcoords_m, ycoords_m)
     logger.debug('real xcoords are: %s:', xcoords_m)
     logger.debug('real ycoords are: %s:', ycoords_m)
@@ -308,7 +321,7 @@ def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
 
     if region.size == 0:
         logger.debug('region to collapse is empty')
-        return centery, 0, 0, 1
+        return 0, 0, 1
 
     collapsed = sign * region.mean(axis=0)
 
@@ -317,7 +330,7 @@ def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
     # Use only the peak nearest the original peak
     if len(idxs_t) == 0:
         logger.debug('no peaks after fine-tunning')
-        return centery, 0, 0, 2
+        return 0, 0, 2
 
     dist_t = numpy.abs(idxs_t - wx)
     only_this = dist_t.argmin()
@@ -326,16 +339,16 @@ def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
 
     if len(x_t) == 0:
         logger.debug('no peaks to refine after fitting')
-        return centery, 0, 0, 2
+        return 0, 0, 2
 
     if x_t[0] >= collapsed.shape[0]:
         logger.debug('wrong position %d when refining', x_t[0])
-        return centery, 0, 0, 2
+        return 0, 0, 2
 
     _, fwhm_x = fmod.compute_fwhm_1d_simple(collapsed, x_t[0])
 
     xl = centerx - wx + x_t[0]
-    return xl, fwhm_x
+    return xl, fwhm_x, 0
 
 
 def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=3):
