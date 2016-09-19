@@ -32,6 +32,7 @@ def create_frame_flat():
     hdu.header['EMIRUUID'] = '2222222222222222222222222222222'
     return fits.HDUList([hdu])
 
+
 @pytest.mark.parametrize("nabba", [1,2,3,4])
 def test_coadd(nabba):
 
@@ -64,7 +65,6 @@ def test_coadd(nabba):
             master_flat=numina.core.DataFrame(frame=create_frame_flat())
         )
         result = recipe.run(rinput)
-        # result.spec_abba.frame[0].header['EMIRUUID'])
         results.append(result)
 
     obsresult = numina.core.ObservationResult()
@@ -84,12 +84,6 @@ def test_coadd(nabba):
 
 
 def test_coadd_empty():
-
-    expected_data = numpy.zeros((10, 10))
-    expected_data[5] = 4
-    expected_data[3] = -4
-
-    starttime = 1000000001.00034
 
     obsresult = numina.core.ObservationResult()
     obsresult.frames = []
