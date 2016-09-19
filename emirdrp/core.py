@@ -36,22 +36,31 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 
 def get_corrector_p(rinput, meta):
-    bpm_info = meta.get('master_bpm')
-    if bpm_info is not None:
-        with rinput.master_bpm.open() as hdul:
-            _logger.info('loading BPM')
-            _logger.debug('BPM image: %s', bpm_info)
-            mbpm = hdul[0].data
-            bpm_corrector = BadPixelCorrector(mbpm, datamodel=EmirDataModel())
-    else:
-        _logger.info('BPM not provided, ignored')
-        bpm_corrector = IdNode()
+    key = 'master_bpm'
+    info = meta.get(key)
+    datamodel = EmirDataModel()
+    corrector_class = BadPixelCorrector
 
-    return bpm_corrector
+    if info is not None:
+        inputval = getattr(rinput, key)
+        with inputval.open() as hdul:
+            _logger.info('loading "%s"', key)
+            _logger.debug('info: %s', info)
+            corrector = corrector_class(
+                hdul[0].data,
+                datamodel=datamodel,
+                calibid=datamodel.get_imgid(hdul)
+            )
+    else:
+        _logger.info('"%s" not provided, ignored', key)
+        corrector = IdNode()
+
+    return corrector
 
 
 def get_corrector_b(rinput, meta):
     from numina.flow.processing import BiasCorrector
+    datamodel = EmirDataModel()
     iinfo = meta['obresult']
     if iinfo:
         mode = iinfo[0]['readmode']
@@ -71,7 +80,11 @@ def get_corrector_b(rinput, meta):
             _logger.info('loading bias')
             _logger.debug('bias info: %s', bias_info)
             mbias = hdul[0].data
-            bias_corrector = BiasCorrector(mbias, datamodel=EmirDataModel())
+            bias_corrector = BiasCorrector(
+                mbias,
+                datamodel=datamodel,
+                calibid = datamodel.get_imgid(hdul)
+            )
     else:
         _logger.info('ignoring bias')
         bias_corrector = IdNode()
@@ -82,27 +95,30 @@ def get_corrector_b(rinput, meta):
 def get_corrector_s(rinput, meta):
     from numina.flow.processing import SkyCorrector
     sky_info = meta.get('master_sky')
+    datamodel = EmirDataModel()
 
     if sky_info is None:
         return IdNode()
     else:
-        with rinput.master_sky.open() as msky_hdul:
+        with rinput.master_sky.open() as hdul:
             _logger.info('loading sky')
             _logger.debug('sky info: %s', sky_info)
-            msky = msky_hdul[0].data
-            sky_corrector = SkyCorrector(msky, datamodel=EmirDataModel())
-
+            sky_corrector = SkyCorrector(
+                hdul[0].data,
+                datamodel=datamodel,
+                calibid=datamodel.get_imgid(hdul)
+            )
         return sky_corrector
 
 
 def get_corrector_f(rinput, meta):
     from emirdrp.processing.flatfield import FlatFieldCorrector
     flat_info = meta['master_flat']
-
-    with rinput.master_flat.open() as mflat_hdul:
+    datamodel = EmirDataModel()
+    with rinput.master_flat.open() as hdul:
         _logger.info('loading intensity flat')
         _logger.debug('flat info: %s', flat_info)
-        mflat = mflat_hdul[0].data
+        mflat = hdul[0].data
         # Check NaN and Ceros
         mask1 = mflat < 0
         mask2 = ~numpy.isfinite(mflat)
@@ -110,7 +126,9 @@ def get_corrector_f(rinput, meta):
             _logger.warning('flat has %d values below 0', mask1.sum())
         if numpy.any(mask2):
             _logger.warning('flat has %d NaN', mask2.sum())
-        flat_corrector = FlatFieldCorrector(mflat, datamodel=EmirDataModel())
+        flat_corrector = FlatFieldCorrector(mflat,
+                                            datamodel=datamodel,
+                                            calibid=datamodel.get_imgid(hdul))
 
     return flat_corrector
 
