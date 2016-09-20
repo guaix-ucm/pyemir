@@ -279,6 +279,10 @@ modes:
   name: Combined individual Long Slit ABBA
   summary: Combined individual Long Slit ABBA
   description: Combined individual Long Slit ABBA
+- key: SPEC_SKY
+  name: SPEC_SKY
+  summary: SPEC_SKY
+  description: SPEC_SKY
 pipelines:
   default:
     recipes:
@@ -310,6 +314,7 @@ pipelines:
       TEST11: emirdrp.recipes.aiv.extraction.CSUSpectraExtractionRecipe
       TEST12: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
       TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
+      SPEC_SKY: emirdrp.recipes.spec.sky.SkySpecRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
       STARE_SPECTRA: emirdrp.recipes.spec.stare.StareSpectraRecipe
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe

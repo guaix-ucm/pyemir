@@ -119,6 +119,10 @@ class MasterSky(EMIRImageProduct):
     pass
 
 
+class MasterSpecSky(EMIRImageProduct):
+    pass
+
+
 class MasterSpectralFlat(EMIRImageProduct):
     pass
 
