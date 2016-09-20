@@ -71,7 +71,8 @@ def get_corrector_b(rinput, meta):
             use_bias = False
             _logger.info('readmode is %s, bias not required', mode)
     else:
-        raise ValueError('cannot gather images info')
+        # raise ValueError('cannot gather images info')
+        use_bias = False
 
     # Loading calibrations
     if use_bias:
