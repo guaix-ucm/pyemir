@@ -50,7 +50,8 @@ class CoaddABBARecipe(EmirRecipe):
     @classmethod
     def build_recipe_input_gtc(cls, obsres, dal, pipeline='default'):
         cls.logger.debug('start recipe input builder')
-        stareImagesIds = obsres.stareImagesIds
+        print(dir(obsres))
+        stareImagesIds = obsres.stareSpectraIds
         cls.logger.debug('ABBA images IDS: ', stareImagesIds)
         stareImages = []
         for subresId in stareImagesIds:
