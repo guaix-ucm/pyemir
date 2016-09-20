@@ -25,7 +25,7 @@ Spectroscopy mode, Stare Spectra
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median
-
+import emirdrp.requirements as reqs
 from emirdrp.core import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
@@ -35,6 +35,10 @@ class StareSpectraRecipe(EmirRecipe):
     """Process images in Stare spectra mode"""
 
     obresult = ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterSpectralFlatFieldRequirement()
 
     stare = Product(prods.DataFrameType)
 

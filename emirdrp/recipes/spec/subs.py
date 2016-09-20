@@ -38,11 +38,6 @@ class BaseABBARecipe(EmirRecipe):
     """Process images in ABBA mode"""
 
     obresult = ObservationResultRequirement()
-    master_bpm = reqs.MasterBadPixelMaskRequirement()
-    master_bias = reqs.MasterBiasRequirement()
-    master_dark = reqs.MasterDarkRequirement()
-    master_flat = reqs.MasterSpectralFlatFieldRequirement()
-
     spec_abba = Product(prods.DataFrameType)
 
     def run(self, rinput):
