@@ -114,6 +114,8 @@ class BaseABBARecipe(EmirRecipe):
         hdu = fits.PrimaryHDU(data_array, header=base_header)
         self.set_base_headers(hdu.header)
         hdu.header['EMIRUUID'] = uuid.uuid1().hex
+        # Update obsmode in header
+        hdu.header['OBSMODE'] = 'LS_ABBA'
         # Headers of last image
         hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
         result = fits.HDUList([hdu])
