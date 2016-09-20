@@ -19,19 +19,6 @@ def create_frame(val=0, pos=3, keys=None):
     return fits.HDUList([hdu])
 
 
-def create_frame_dark():
-    data = numpy.zeros((10, 10))
-    hdu = fits.PrimaryHDU(data)
-    hdu.header['EMIRUUID'] = '11111111111111111111111111111111'
-    return fits.HDUList([hdu])
-
-
-def create_frame_flat():
-    data = numpy.ones((10, 10))
-    hdu = fits.PrimaryHDU(data)
-    hdu.header['EMIRUUID'] = '2222222222222222222222222222222'
-    return fits.HDUList([hdu])
-
 def test_subs():
 
     expected_data = numpy.zeros((10, 10))
@@ -52,15 +39,13 @@ def test_subs():
     recipe = BaseABBARecipe()
     rinput = recipe.create_input(
         obresult=obsresult,
-        master_dark=numina.core.DataFrame(frame=create_frame_dark()),
-        master_flat=numina.core.DataFrame(frame=create_frame_flat())
     )
     result = recipe.run(rinput)
 
     spec_abba_hdul = result.spec_abba.frame
     assert spec_abba_hdul[0].header['TSUTC1'] == 1000000001.00034
     assert spec_abba_hdul[0].header['TSUTC2'] == 1000000400.00034
-    assert 'NUM-DK' in spec_abba_hdul[0].header
+
     assert spec_abba_hdul[0].header['NUM-NCOM'] == 2
     assert numpy.allclose(expected_data, result.spec_abba.frame[0].data)
 
@@ -79,8 +64,6 @@ def test_subs_raise():
     recipe = BaseABBARecipe()
     rinput = BaseABBARecipe.RecipeInput(
         obresult=obsresult,
-        master_dark=numina.core.DataFrame(frame=create_frame_dark()),
-        master_flat=numina.core.DataFrame(frame=create_frame_flat())
     )
 
     with pytest.raises(numina.exceptions.RecipeError):
