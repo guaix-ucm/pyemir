@@ -29,7 +29,7 @@ import emirdrp.requirements as reqs
 from emirdrp.core import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
-
+import emirdrp.decorators
 
 class StareSpectraRecipe(EmirRecipe):
     """Process images in Stare spectra mode"""
@@ -42,6 +42,7 @@ class StareSpectraRecipe(EmirRecipe):
 
     stare = Product(prods.DataFrameType)
 
+    @emirdrp.decorators.loginfo
     def run(self, rinput):
         self.logger.info('starting stare spectra reduction')
 

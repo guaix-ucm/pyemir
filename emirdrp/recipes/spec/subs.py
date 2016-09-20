@@ -25,13 +25,12 @@ Spectroscopy mode, ABBA
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 import numina.exceptions
+import numina.core
 
 from emirdrp.core import EmirRecipe
 import emirdrp.products as prods
-import emirdrp.requirements as reqs
 import emirdrp.processing.datamodel
 from emirdrp.processing.combine import basic_processing
-import emirdrp.processing.info as info
 
 
 class BaseABBARecipe(EmirRecipe):
@@ -39,6 +38,27 @@ class BaseABBARecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
     spec_abba = Product(prods.DataFrameType)
+
+
+    @classmethod
+    def build_recipe_input(cls, obsres, dal, pipeline='default'):
+        return cls.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
+
+    @classmethod
+    def build_recipe_input_gtc(cls, obsres, dal, pipeline='default'):
+        cls.logger.debug('start recipe input builder')
+        stareImagesIds = obsres.stareImagesIds
+        cls.logger.debug('Stare Spectra images IDS: ', stareImagesIds)
+        stareImages = []
+        for subresId in stareImagesIds:
+            subres = dal.getRecipeResult(subresId)
+            stareImages.append(subres['elements']['frame'])
+
+        newOR = numina.core.ObservationResult()
+        newOR.frames = stareImages
+        newRI = cls.create_input(obresult=newOR)
+        cls.logger.debug('end recipe input builder')
+        return newRI
 
     def run(self, rinput):
         self.logger.info('starting spectroscopy ABBA reduction')
