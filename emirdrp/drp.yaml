@@ -311,7 +311,7 @@ pipelines:
       TEST12: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
       TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
-      STARE_SPECTRA: numina.core.utils.AlwaysSuccessRecipe
+      STARE_SPECTRA: emirdrp.recipes.spec.stare.StareSpectraRecipe
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
     version: 1
