@@ -267,14 +267,18 @@ modes:
   status: DRAFT
   summary: Summary of Dithered images
   url: http://somegtc_url.es/emir/obsmode4.html
+- key: STARE_SPECTRA
+  name: Stare Spectra
+  summary: Stare Spectra
+  description: Stare Spectra
 - key: LS_ABBA
   name: Long Slit ABBA
   summary: Spectroscopy ABBA
   description: Spectroscopy ABBA
-- key: COMBINE_ABBA
-  name: Combine individual Long Slit ABBA
-  summary: Combine individual Long Slit ABBA
-  description: Combine individual Long Slit ABBA
+- key: COMBINED_ABBA
+  name: Combined individual Long Slit ABBA
+  summary: Combined individual Long Slit ABBA
+  description: Combined individual Long Slit ABBA
 pipelines:
   default:
     recipes:
@@ -307,6 +311,7 @@ pipelines:
       TEST12: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
       TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
+      STARE_SPECTRA: numina.core.utils.AlwaysSuccessRecipe
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
-      COMBINE_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
+      COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
     version: 1

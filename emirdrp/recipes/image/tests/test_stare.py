@@ -78,7 +78,7 @@ def test_stare_with_bpm(nimages):
     hdulist = result.frame.open()
 
     assert 'BPM' in hdulist
-    
+
     hdu = hdulist[0]
     assert hdu.header['NUM-NCOM'] == nimages
     assert hdu.header['NUM-BPM'] == 'uuid:44444444444444444444444444444444'
