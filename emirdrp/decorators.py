@@ -22,7 +22,7 @@
 from __future__ import print_function
 
 import datetime
-
+from numina.core import DataFrame, ObservationResult
 import emirdrp.processing.info as info
 
 def timeit(method):
@@ -41,10 +41,21 @@ def timeit(method):
 
 def loginfo(method):
     """Log the contents of Recipe Input"""
+
+
     def loginfo_method(self, rinput):
 
-        metadata = info.gather_info(rinput)
-        print(metadata)
+        klass = rinput.__class__
+
+        for key in klass.stored():
+            val = getattr(rinput, key)
+            if isinstance(val, DataFrame):
+                self.logger.debug("DataFrame %s", info.gather_info_dframe(val))
+            elif isinstance(val, ObservationResult):
+                for f in val.images:
+                    self.logger.debug("OB DataFrame %s" , info.gather_info_dframe(f))
+            else:
+                pass
 
         result = method(self, rinput)
 

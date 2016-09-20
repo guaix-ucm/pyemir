@@ -30,7 +30,6 @@ def gather_info_dframe(dataframe):
 def gather_info_hdu(hdulist):
 
     _meta = {'readmode': ('READMODE', 'undefined'),
-             'bunit': ('BUNIT', 'ADU'),
              'texp': ('EXPTIME', None),
              'grism': ('GRISM', 'undefined'),
              'filter': ('FILTER', 'undefined'),
@@ -45,11 +44,6 @@ def gather_info_hdu(hdulist):
     meta['name_ext'] = ['PRIMARY'] + extnames
     for key, val in _meta.items():
         meta[key] = hdulist[0].header.get(val[0], val[1])
-
-    adu_s = False
-    if meta['bunit'].lower() == 'adu/s':
-        adu_s = True
-    meta['adu_s'] = adu_s
 
     return meta
 
