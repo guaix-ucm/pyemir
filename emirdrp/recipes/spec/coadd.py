@@ -52,11 +52,11 @@ class CoaddABBARecipe(EmirRecipe):
         cls.logger.debug('start recipe input builder')
         print(dir(obsres))
         stareImagesIds = obsres.stareSpectraIds
-        cls.logger.debug('ABBA images IDS: ', stareImagesIds)
+        cls.logger.debug('ABBA images IDS %s: ', stareImagesIds)
         stareImages = []
         for subresId in stareImagesIds:
             subres = dal.getRecipeResult(subresId)
-            stareImages.append(subres['elements']['frame'])
+            stareImages.append(subres['elements']['spec_abba'])
 
         newOR = numina.core.ObservationResult()
         newOR.frames = stareImages
