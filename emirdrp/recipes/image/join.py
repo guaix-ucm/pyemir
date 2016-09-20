@@ -17,20 +17,21 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Image recipes for EMIR for EMIR"""
+"""Dither Image recipe for EMIR"""
 
 from __future__ import division, print_function
 
-import logging
 
+import datetime
 import uuid
+
 import numpy
 from astropy.io import fits
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
 from numina.array import combine_shape
-from numina.array import resize_array
+from numina.array import resize_arrays
 from numina.core import ObservationResult
 from numina.flow.processing import SkyCorrector
 
@@ -38,80 +39,9 @@ from emirdrp.processing.wcs import offsets_from_wcs
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.ext.gtc import RUN_IN_GTC
-from emirdrp.processing.combine import resize
 from emirdrp.processing.combine import segmentation_combined
 from emirdrp.processing.datamodel import EmirDataModel
 
-
-_logger = logging.getLogger('numina.recipes.emir')
-
-
-def resize_hdul(hdul, newshape, region, extensions=None, window=None,
-                scale=1, fill=0.0, conserve=True):
-    from numina.frame import resize_hdu
-    if extensions is None:
-        extensions = [0]
-
-    nhdul = [None] * len(hdul)
-    for ext, hdu in enumerate(hdul):
-        if ext in extensions:
-            nhdul[ext] = resize_hdu(hdu, newshape,
-                                    region, fill=fill,
-                                    window=window,
-                                    scale=scale,
-                                    conserve=conserve)
-        else:
-            nhdul[ext] = hdu
-    return fits.HDUList(nhdul)
-
-
-
-def resize(frames, shape, offsetsp, finalshape, window=None, scale=1, step=0):
-    from numina.array import subarray_match
-    _logger.info('Resizing frames and masks')
-    rframes = []
-    regions = []
-    for frame, rel_offset in zip(frames, offsetsp):
-        region, _ = subarray_match(finalshape, rel_offset, shape)
-        rframe = resize_hdul(frame.open(), finalshape, region)
-        rframes.append(rframe)
-        regions.append(region)
-
-    return rframes, regions
-
-
-def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, conserve=True, fill=0.0):
-    from numina.array import subarray_match
-    _logger.info('Resizing arrays')
-    rarrays = []
-    regions = []
-    for array, rel_offset in zip(arrays, offsetsp):
-        region, _ = subarray_match(finalshape, rel_offset, shape)
-        newdata = resize_array(array, finalshape, region, window=window,
-                               fill=fill, scale=scale, conserve=conserve)
-        rarrays.append(newdata)
-        regions.append(region)
-    return rarrays, regions
-
-
-def resize_array(data, finalshape, region, window=None,
-                 scale=1, fill=0.0, conserve=True):
-    from numina.array import rebin_scale
-    if window is not None:
-        data = data[window]
-
-    if scale == 1:
-        finaldata = data
-    else:
-        finaldata = rebin_scale(data, scale)
-
-    newdata = numpy.empty(finalshape, dtype=data.dtype)
-    newdata.fill(fill)
-    newdata[region] = finaldata
-    # Conserve the total sum of the original data
-    if conserve:
-        newdata[region] =  newdata[region] / scale**2
-    return newdata
 
 
 class JoinDitheredImagesRecipe(EmirRecipe):
@@ -135,11 +65,15 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # FIXME: this method will work only in GTC
         # stareImagesIds = obsres['stareImagesIds']._v
         stareImagesIds = obsres.stareImagesIds
-        print('STARE IMAGES IDS: ', stareImagesIds)
+        cls.logger.info('obsres: %s', dir(obsres))
+        cls.logger.info('STARE IMAGES IDS: %s', stareImagesIds)
         stareImages = []
         for subresId in stareImagesIds:
             subres = dal.getRecipeResult(subresId)
-            stareImages.append(subres['elements']['frame'])
+            # This 'frame' is the name of the product in RecipeResult
+            # there is also a 'sky' field
+            elements = subres['elements']
+            stareImages.append(elements['frame'])
 
         newOR = ObservationResult()
         newOR.frames = stareImages
@@ -152,82 +86,82 @@ class JoinDitheredImagesRecipe(EmirRecipe):
     def run(self, rinput):
 
         use_errors = True
+        datamodel = EmirDataModel()
+        # Initial checks
         fframe = rinput.obresult.frames[0]
         img = fframe.open()
+        has_num_ext = 'NUM' in img
+        has_bpm_ext = 'BPM' in img
+        baseshape = img[0].shape
+        subpixshape = baseshape
         base_header = img[0].header
-        baseshape = img[0].data.shape
-
-        if 'NUM-SK' not in base_header:
-            compute_sky = True
-        else:
-            compute_sky = False
+        compute_sky = 'NUM-SK' not in base_header
 
         data_hdul = []
         for f in rinput.obresult.frames:
             img = f.open()
             data_hdul.append(img)
 
-        self.logger.info('Computing offsets from WCS information %d', len(data_hdul))
+        self.logger.info('Computing offsets from WCS information')
 
-        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
-        offsets_xy = offsets_from_wcs(rinput.obresult.frames, refpix)
-        self.logger.debug("offsets_xy %s", offsets_xy)
-        # Offsets in numpy order, swaping
-        offsets_fc = offsets_xy[:, ::-1]
-        offsets_fc_t = numpy.round(offsets_fc).astype('int')
+        finalshape, offsetsp, refpix = self.compute_offset_wcs(
+            rinput.obresult.frames,
+            baseshape,
+            subpixshape
+        )
 
-        self.logger.info('Computing relative offsets')
-        subpixshape = baseshape
-        finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
         self.logger.debug("Relative offsetsp %s", offsetsp)
         self.logger.info('Shape of resized array is %s', finalshape)
 
         # Resizing target frames
-        data_arr_r, regions = resize_arrays([m[0].data for m in data_hdul], subpixshape, offsetsp, finalshape, fill=1)
-        for i in data_arr_r:
-            self.logger.debug("array has python shape %s", i.shape)
+        data_arr_r, regions = resize_arrays(
+            [m[0].data for m in data_hdul],
+            subpixshape,
+            offsetsp,
+            finalshape,
+            fill=1
+        )
 
-        self.logger.warning('BPM missing, use zeros instead')
-        false_mask = numpy.zeros(baseshape, dtype='int16')
+        if has_num_ext:
+            self.logger.debug('Using NUM extension')
+            masks = [numpy.where(m['NUM'].data, 0, 1).astype('uint8') for m in data_hdul]
+        elif has_bpm_ext:
+            self.logger.debug('Using BPM extension')
+            masks = [m['BPM'].data for m in data_hdul]
+        else:
+            self.logger.warning('BPM missing, use zeros instead')
+            false_mask = numpy.zeros(baseshape, dtype='int16')
+            masks = [false_mask for _ in data_arr_r]
+
         self.logger.debug('resize bad pixel masks')
-        mask_arr_r, _ = resize_arrays([false_mask for _ in data_arr_r], subpixshape, offsetsp, finalshape, fill=1)
-        skyid = None
+        mask_arr_r, _ = resize_arrays(masks, subpixshape, offsetsp, finalshape, fill=1)
+
         if compute_sky:
             self.logger.debug("compute sky")
-            method = combine.mean
-            bpm = None
-            self.logger.info("stacking %d images, with offsets using '%s'", len(data_arr_r), method.__name__)
-            data1 = method(data_arr_r, masks=mask_arr_r, dtype='float32')
 
-            segmap = segmentation_combined(data1[0])
-            # submasks
-            if bpm is None:
-                omasks = [(segmap[region] > 0) for region in regions]
-            else:
-                omasks = [((segmap[region] > 0) & bpm) for region in regions]
+            omasks = self.compute_object_masks(data_arr_r, mask_arr_r, has_bpm_ext, regions, masks)
 
-            self.logger.info("stacking %d images, with objects mask using '%s'", len(data_arr_r), method.__name__)
-
-            sky_data = method([m[0].data for m in data_hdul], masks=omasks, dtype='float32')
-            hdu = fits.PrimaryHDU(sky_data[0], header=base_header)
-            points_no_data = (sky_data[2] == 0).sum()
-
-            self.logger.debug('update result header')
-            skyid= uuid.uuid1().hex
-            hdu.header['EMIRUUID'] = skyid
-            hdu.header['history'] = "Combined %d images using '%s'" % (len(data_arr_r), method.__name__)
-            self.logger.info("missing points, total: %d, fraction: %3.1f", points_no_data, points_no_data / sky_data[2].size)
-
-            if use_errors:
-                varhdu = fits.ImageHDU(sky_data[1], name='VARIANCE')
-                num = fits.ImageHDU(sky_data[2], name='MAP')
-                sky_result = fits.HDUList([hdu, varhdu, num])
-            else:
-                sky_result = fits.HDUList([hdu])
+            sky_result = self.compute_sky(data_hdul, omasks, base_header, use_errors)
+            sky_data = sky_result[0].data
+            self.logger.debug('sky image has shape %s', sky_data.shape)
 
             self.logger.info('sky correction in individual images')
-            data_arr_s = [m[0].data - sky_data[0] for m in data_hdul]
-            data_arr_sr, _ = resize_arrays([f for f in data_arr_s], subpixshape, offsetsp, finalshape, fill=1)
+            corrector = SkyCorrector(
+                sky_data,
+                datamodel,
+                calibid=datamodel.get_imgid(sky_result)
+            )
+            data_hdul_s = [corrector(m) for m in data_hdul]
+            #data_arr_s = [m[0].data - sky_data for m in data_hdul]
+            base_header = data_hdul_s[0][0].header
+            self.logger.info('resize sky-corrected images')
+            data_arr_sr, _ = resize_arrays(
+                [f[0].data for f in data_hdul_s],
+                subpixshape,
+                offsetsp,
+                finalshape,
+                fill=0
+            )
         else:
             self.logger.debug("not computing sky")
             sky_result = None
@@ -236,23 +170,29 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # Position of refpixel in final image
         refpix_final = refpix + offsetsp[0]
         self.logger.info('Position of refpixel in final image %s', refpix_final)
-        out = combine.mean(data_arr_sr, masks=mask_arr_r, dtype='float32')
-        self.logger.debug("output has python shape %s", out[0].shape)
+
+        self.logger.info('Combine target images (final)')
+        method = combine.mean
+        out = method(data_arr_sr, masks=mask_arr_r, dtype='float32')
+
+        self.logger.debug('create result image')
         hdu = fits.PrimaryHDU(out[0], header=base_header)
         self.logger.debug('update result header')
         hdr = hdu.header
         self.set_base_headers(hdr)
         hdr['IMGOBBL'] = 0
         hdr['TSUTC2'] = data_hdul[-1][0].header['TSUTC2']
+        # Update obsmode in header
         hdr['OBSMODE'] = 'DITHERED_IMAGE'
-        hdu.header['history'] = "Combined %d images using '%s'" % (len(data_arr_sr), 'mean')
-        # Approximate solution
+        hdu.header['history'] = "Combined %d images using '%s'" % (
+            len(data_hdul),
+            method.__name__
+        )
+        hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+        # Update WCS, approximate solution
         hdr['CRPIX1'] += offsetsp[0][0]
         hdr['CRPIX2'] += offsetsp[0][1]
 
-        if compute_sky:
-            hdr['NUM-SK'] = skyid
-            hdr['history'] = 'Sky subtraction with {}'.format(skyid)
         #
         if use_errors:
             varhdu = fits.ImageHDU(out[1], name='VARIANCE')
@@ -264,3 +204,71 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         result = self.create_result(frame=hdulist, sky=sky_result)
         self.logger.info('end of dither recipe')
         return result
+
+    def compute_offset_wcs(self, frames, baseshape, subpixshape):
+
+        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
+        offsets_xy = offsets_from_wcs(frames, refpix)
+        self.logger.debug("offsets_xy %s", offsets_xy)
+        # Offsets in numpy order, swaping
+        offsets_fc = offsets_xy[:, ::-1]
+        offsets_fc_t = numpy.round(offsets_fc).astype('int')
+
+        self.logger.info('Computing relative offsets')
+        finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
+
+        return finalshape, offsetsp, refpix
+
+    def compute_object_masks(self, data_arr_r, mask_arr_r, has_bpm_ext, regions, masks):
+
+        method = combine.mean
+
+        self.logger.info(
+            "initial stacking, %d images, with offsets using '%s'",
+            len(data_arr_r),
+            method.__name__
+        )
+        data1 = method(data_arr_r, masks=mask_arr_r, dtype='float32')
+
+        self.logger.info('obtain segmentation mask')
+        segmap = segmentation_combined(data1[0])
+        # submasks
+        if not has_bpm_ext:
+            omasks = [(segmap[region] > 0) for region in regions]
+        else:
+            omasks = [((segmap[region] > 0) & bpm) for region, bpm in zip(regions, masks)]
+
+        return omasks
+
+    def compute_sky(self, data_hdul, omasks, base_header, use_errors):
+        method = combine.mean
+
+        self.logger.info('recombine images with segmentation mask')
+        sky_data = method([m[0].data for m in data_hdul], masks=omasks, dtype='float32')
+
+        hdu = fits.PrimaryHDU(sky_data[0], header=base_header)
+        points_no_data = (sky_data[2] == 0).sum()
+
+        self.logger.debug('update created sky image result header')
+        skyid = uuid.uuid1().hex
+        hdu.header['EMIRUUID'] = skyid
+        hdu.header['history'] = "Combined {} images using '{}'".format(
+            len(data_hdul),
+            method.__name__
+        )
+
+        msg = "missing pixels, total: {}, fraction: {:3.1f}".format(
+            points_no_data,
+            points_no_data / sky_data[2].size
+        )
+        hdu.header['history'] = msg
+        self.logger.debug(msg)
+
+        if use_errors:
+            varhdu = fits.ImageHDU(sky_data[1], name='VARIANCE')
+            num = fits.ImageHDU(sky_data[2], name='MAP')
+            sky_result = fits.HDUList([hdu, varhdu, num])
+        else:
+            sky_result = fits.HDUList([hdu])
+
+        return sky_result
