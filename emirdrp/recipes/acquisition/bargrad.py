@@ -43,7 +43,7 @@ from emirdrp.requirements import MasterSkyRequirement
 from emirdrp.processing.combine import basic_processing_with_combination
 import emirdrp.processing.datamodel as datamodel
 import emirdrp.instrument.distortions as dist
-from .bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
+from emirdrp.recipes.aiv.bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
 
 
 class BarDetectionRecipe(EmirRecipe):

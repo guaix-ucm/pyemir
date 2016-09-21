@@ -310,9 +310,9 @@ pipelines:
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
       TEST8: emirdrp.recipes.auxiliary.mtwflat.MultiTwilightFlatRecipe
       TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
-      TEST10: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
+      TEST10: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe
       TEST11: emirdrp.recipes.aiv.extraction.CSUSpectraExtractionRecipe
-      TEST12: emirdrp.recipes.aiv.bargrad.BarDetectionRecipe
+      TEST12: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe
       TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       SPEC_SKY: emirdrp.recipes.spec.sky.SkySpecRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
