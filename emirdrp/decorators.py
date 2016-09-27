@@ -62,3 +62,18 @@ def loginfo(method):
         return result
 
     return loginfo_method
+
+
+def aggregate(method):
+
+    def agregate_method(self, rinput):
+
+        result = method(self, rinput)
+
+        aggregate_m = getattr(self, 'aggregate_result')
+
+        new_result = aggregate_m(self, result, rinput)
+
+        return new_result
+
+    return agregate_method

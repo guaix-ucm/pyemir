@@ -240,6 +240,9 @@ class EmirRecipe(BaseRecipe):
         getters = cls.load_getters()
         return cls.init_filters_generic(rinput, getters)
 
+    def agregate_result(self, result, rinput):
+        return result
+
 
 EMIR_BIAS_MODES = ['simple', 'bias', 'single']
 EMIR_READ_MODES = ['simple', 'bias', 'single', 'cds', 'fowler', 'ramp']

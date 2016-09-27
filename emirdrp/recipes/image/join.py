@@ -41,7 +41,7 @@ from emirdrp.products import DataFrameType
 from emirdrp.ext.gtc import RUN_IN_GTC
 from emirdrp.processing.combine import segmentation_combined
 from emirdrp.processing.datamodel import EmirDataModel
-
+import emirdrp.decorators
 
 
 class JoinDitheredImagesRecipe(EmirRecipe):
@@ -83,6 +83,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         newRI = cls.create_input(obresult=newOR)
         return newRI
 
+    @emirdrp.decorators.aggregate
+    @emirdrp.decorators.loginfo
     def run(self, rinput):
 
         use_errors = True
@@ -272,3 +274,6 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             sky_result = fits.HDUList([hdu])
 
         return sky_result
+
+    def aggregate(self, result, rinput):
+        pass
