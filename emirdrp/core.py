@@ -137,20 +137,21 @@ def get_corrector_f(rinput, meta):
 def get_corrector_d(rinput, meta):
     from numina.flow.processing import DarkCorrector
     key = 'master_dark'
-    CorrectorClass = DarkCorrector
     datamodel = EmirDataModel()
 
-    info = meta[key]
-    _logger.debug('datamodel is %s', datamodel)
+    corrector = get_corrector_gen(rinput, datamodel, DarkCorrector, key)
+    return corrector
+
+
+def get_corrector_gen(rinput, datamodel, CorrectorClass, key):
     req = getattr(rinput, key)
     with req.open() as hdul:
-        _logger.info('loading %s', key)
-        _logger.debug('%s info: %s', key, info)
         datac = hdul['primary'].data
-        corrector = CorrectorClass(datac,
-                                   calibid=datamodel.get_imgid(hdul),
-                                   datamodel=datamodel)
-
+        corrector = CorrectorClass(
+            datac,
+            calibid=datamodel.get_imgid(hdul),
+            datamodel=datamodel
+        )
     return corrector
 
 
@@ -227,12 +228,7 @@ class EmirRecipe(BaseRecipe):
         for entry in meta['obresult']:
             cls.logger.debug('frame info is %s', entry)
         correctors = [getter(rinput, meta) for getter in getters]
-
-        # FIXME: this should be handled by SerialFlow itself
-        if correctors:
-            flow = SerialFlow(correctors)
-        else:
-            flow = IdNode()
+        flow = SerialFlow(correctors)
         return flow
 
     @classmethod
@@ -240,7 +236,7 @@ class EmirRecipe(BaseRecipe):
         getters = cls.load_getters()
         return cls.init_filters_generic(rinput, getters)
 
-    def agregate_result(self, result, rinput):
+    def aggregate_result(self, result, rinput):
         return result
 
 

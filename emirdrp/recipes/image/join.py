@@ -27,7 +27,7 @@ import uuid
 
 import numpy
 from astropy.io import fits
-from numina.core import Product
+from numina.core import Product, RecipeError
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
 from numina.array import combine_shape
@@ -50,6 +50,9 @@ class JoinDitheredImagesRecipe(EmirRecipe):
     obresult = ObservationResultRequirement()
     frame = Product(DataFrameType)
     sky = Product(DataFrameType, optional=True)
+    #
+    # Accumulate Frame results
+    accum = Product(DataFrameType, optional=True)
 
     @classmethod
     def build_recipe_input(cls, obsres, dal, pipeline='default'):
@@ -83,9 +86,45 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         newRI = cls.create_input(obresult=newOR)
         return newRI
 
-    @emirdrp.decorators.aggregate
+    #@emirdrp.decorators.aggregate
     @emirdrp.decorators.loginfo
     def run(self, rinput):
+        partial_result = self.run_single(rinput)
+        new_result = self.aggregate_result(partial_result, rinput)
+        return new_result
+
+    def aggregate_result(self, partial_result, rinput):
+
+        obresult = rinput.obresult
+        # Check if this is our first run
+        naccum = getattr(obresult, 'naccum', 0)
+        accum = getattr(obresult, 'accum', None)
+
+        frame = partial_result.frame
+
+        if naccum == 0:
+            self.logger.debug('naccum is not set, do not accumulate')
+            return partial_result
+        elif naccum == 1:
+            self.logger.debug('round %d initialize accumulator', naccum)
+            newaccum = frame
+        elif naccum > 1:
+            self.logger.debug('round %d of accumulation', naccum)
+            newaccum = self.aggregate_frames(accum, frame, naccum)
+        else:
+            msg = 'naccum set to %d, invalid' % (naccum, )
+            self.logger.error(msg)
+            raise RecipeError(msg)
+
+        # Update partial result
+        partial_result.accum = newaccum
+
+        return partial_result
+
+    def aggregate_frames(self, accum, frame, naccum):
+        return self.aggregate2(accum, frame, naccum)
+
+    def run_single(self, rinput):
 
         use_errors = True
         datamodel = EmirDataModel()
@@ -141,7 +180,13 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         if compute_sky:
             self.logger.debug("compute sky")
 
-            omasks = self.compute_object_masks(data_arr_r, mask_arr_r, has_bpm_ext, regions, masks)
+            omasks = self.compute_object_masks(
+                data_arr_r,
+                mask_arr_r,
+                has_bpm_ext,
+                regions,
+                masks
+            )
 
             sky_result = self.compute_sky(data_hdul, omasks, base_header, use_errors)
             sky_data = sky_result[0].data
@@ -190,7 +235,14 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             len(data_hdul),
             method.__name__
         )
-        hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdu.header['history'] = 'Combination time {}'.format(
+            datetime.datetime.utcnow().isoformat()
+        )
+        # Update NUM-NCOM, sum of individual frames
+        ncom = 0
+        for hdul in data_hdul:
+            ncom += hdul[0].header['NUM-NCOM']
+        hdr['NUM-NCOM'] = ncom
         # Update WCS, approximate solution
         hdr['CRPIX1'] += offsetsp[0][0]
         hdr['CRPIX2'] += offsetsp[0][1]
@@ -275,5 +327,108 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         return sky_result
 
-    def aggregate(self, result, rinput):
-        pass
+    def aggregate2(self, img1, img2, naccum):
+        # FIXME, this is almost identical to run_single
+        frames = [img1, img2]
+        use_errors = True
+        datamodel = EmirDataModel()
+        # Initial checks
+        fframe = frames[0]
+        img = fframe.open()
+        has_num_ext = 'NUM' in img
+        has_bpm_ext = 'BPM' in img
+        baseshape = img[0].shape
+        subpixshape = baseshape
+        base_header = img[0].header
+        compute_sky = 'NUM-SK' not in base_header
+
+        data_hdul = []
+        for f in frames:
+            img = f.open()
+            data_hdul.append(img)
+
+        self.logger.info('Computing offsets from WCS information')
+
+        finalshape, offsetsp, refpix = self.compute_offset_wcs(
+            frames,
+            baseshape,
+            subpixshape
+        )
+
+        self.logger.debug("Relative offsetsp %s", offsetsp)
+        self.logger.info('Shape of resized array is %s', finalshape)
+
+        # Resizing target frames
+        data_arr_r, regions = resize_arrays(
+            [m[0].data for m in data_hdul],
+            subpixshape,
+            offsetsp,
+            finalshape,
+            fill=1
+        )
+
+        if has_num_ext:
+            self.logger.debug('Using NUM extension')
+            masks = [numpy.where(m['NUM'].data, 0, 1).astype('uint8') for m in data_hdul]
+        elif has_bpm_ext:
+            self.logger.debug('Using BPM extension')
+            masks = [m['BPM'].data for m in data_hdul]
+        else:
+            self.logger.warning('BPM missing, use zeros instead')
+            false_mask = numpy.zeros(baseshape, dtype='int16')
+            masks = [false_mask for _ in data_arr_r]
+
+        self.logger.debug('resize bad pixel masks')
+        mask_arr_r, _ = resize_arrays(masks, subpixshape, offsetsp, finalshape, fill=1)
+
+        self.logger.debug("not computing sky")
+        data_arr_sr = data_arr_r
+
+        # Position of refpixel in final image
+        refpix_final = refpix + offsetsp[0]
+        self.logger.info('Position of refpixel in final image %s', refpix_final)
+
+        self.logger.info('Combine target images (final, aggregate)')
+        self.logger.debug("weights for 'accum' and 'frame'")
+
+        weight_accum = 2 * (1 - 1.0 / naccum)
+        weight_frame = 2.0 / naccum
+        scales = [1.0 / weight_accum, 1.0 / weight_frame]
+        self.logger.debug("weights for 'accum' and 'frame', %s", scales)
+        method = combine.mean
+        out = method(data_arr_sr, masks=mask_arr_r, scales=scales, dtype='float32')
+
+        self.logger.debug('create result image')
+        hdu = fits.PrimaryHDU(out[0], header=base_header)
+        self.logger.debug('update result header')
+        hdr = hdu.header
+        self.set_base_headers(hdr)
+        hdr['IMGOBBL'] = 0
+        hdr['TSUTC2'] = data_hdul[-1][0].header['TSUTC2']
+        # Update obsmode in header
+        hdr['OBSMODE'] = 'DITHERED_IMAGE'
+        hdu.header['history'] = "Combined %d images using '%s'" % (
+            len(data_hdul),
+            method.__name__
+        )
+        hdu.header['history'] = 'Combination time {}'.format(
+            datetime.datetime.utcnow().isoformat()
+        )
+        # Update NUM-NCOM, sum of individual frames
+        ncom = 0
+        for hdul in data_hdul:
+            ncom += hdul[0].header['NUM-NCOM']
+        hdr['NUM-NCOM'] = ncom
+        # Update WCS, approximate solution
+        hdr['CRPIX1'] += offsetsp[0][0]
+        hdr['CRPIX2'] += offsetsp[0][1]
+
+        #
+        if use_errors:
+            varhdu = fits.ImageHDU(out[1], name='VARIANCE')
+            num = fits.ImageHDU(out[2], name='MAP')
+            hdulist = fits.HDUList([hdu, varhdu, num])
+        else:
+            hdulist = fits.HDUList([hdu])
+
+        return hdulist
