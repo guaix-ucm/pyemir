@@ -21,12 +21,17 @@
 Spectroscopy mode, ABBA
 """
 
+import datetime
 
-from numina.core import Product
+import numpy
+import astropy.io.fits as fits
+from numina.core import Product,RecipeError
 from numina.core.requirements import ObservationResultRequirement
 import numina.exceptions
 import numina.core
+from numina.array import combine
 
+import emirdrp.decorators
 from emirdrp.core import EmirRecipe
 import emirdrp.products as prods
 import emirdrp.processing.datamodel
@@ -39,6 +44,8 @@ class BaseABBARecipe(EmirRecipe):
     obresult = ObservationResultRequirement()
     spec_abba = Product(prods.DataFrameType)
 
+    # Accumulate 'spec_abba' results
+    accum = Product(prods.DataFrameType, optional=True)
 
     @classmethod
     def build_recipe_input(cls, obsres, dal, pipeline='default'):
@@ -47,7 +54,6 @@ class BaseABBARecipe(EmirRecipe):
     @classmethod
     def build_recipe_input_gtc(cls, obsres, dal, pipeline='default'):
         cls.logger.debug('start recipe input builder')
-        print(dir(obsres))
         stareImagesIds = obsres.stareSpectraIds
         cls.logger.debug('Stare Spectra images IDS: %s', stareImagesIds)
         stareImages = []
@@ -61,7 +67,14 @@ class BaseABBARecipe(EmirRecipe):
         cls.logger.debug('end recipe input builder')
         return newRI
 
+    #@emirdrp.decorators.aggregate
+    @emirdrp.decorators.loginfo
     def run(self, rinput):
+        partial_result = self.run_single(rinput)
+        new_result = self.aggregate_result(partial_result, rinput)
+        return new_result
+
+    def run_single(self, rinput):
         self.logger.info('starting spectroscopy ABBA reduction')
 
         flow = self.init_filters(rinput)
@@ -120,3 +133,117 @@ class BaseABBARecipe(EmirRecipe):
         hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
         result = fits.HDUList([hdu])
         return result
+
+    def create_accum_hdulist(self, cdata, data_array_n,
+                             method_name='unkwnow', use_errors=False):
+        import uuid
+
+        base_header = cdata[0][0].header.copy()
+        hdu = fits.PrimaryHDU(data_array_n[0], header=base_header)
+        hdr = hdu.header
+        self.set_base_headers(hdr)
+        hdu.header['EMIRUUID'] = uuid.uuid1().hex
+        hdr['IMGOBBL'] = 0
+        hdr['TSUTC2'] = cdata[-1][0].header['TSUTC2']
+
+        hdu.header['history'] = "Combined %d images using '%s'" % (
+            len(cdata),
+            method_name
+        )
+        #hdu.header['history'] = 'Combination time {}'.format(
+        #    datetime.datetime.utcnow().isoformat()
+        #)
+        # Update NUM-NCOM, sum of individual frames
+        ncom = 0
+        for hdul in cdata:
+            ncom += hdul[0].header['NUM-NCOM']
+        hdr['NUM-NCOM'] = ncom
+
+        #
+        if use_errors:
+            varhdu = fits.ImageHDU(data_array_n[1], name='VARIANCE')
+            num = fits.ImageHDU(data_array_n[2], name='MAP')
+            hdulist = fits.HDUList([hdu, varhdu, num])
+        else:
+            hdulist = fits.HDUList([hdu])
+
+        return hdulist
+
+    def aggregate_result(self, partial_result, rinput):
+        obresult = rinput.obresult
+        # Check if this is our first run
+        naccum = getattr(obresult, 'naccum', 0)
+        accum = getattr(obresult, 'accum', None)
+        # result to accumulate
+        result_key = 'spec_abba'
+        field_to_accum = getattr(partial_result, result_key)
+
+        if naccum == 0:
+            self.logger.debug('naccum is not set, do not accumulate')
+            return partial_result
+        elif naccum == 1:
+            self.logger.debug('round %d initialize accumulator', naccum)
+            newaccum = field_to_accum
+        elif naccum > 1:
+            self.logger.debug('round %d of accumulation', naccum)
+            newaccum = self.aggregate_frames(accum, field_to_accum, naccum)
+        else:
+            msg = 'naccum set to %d, invalid' % (naccum,)
+            self.logger.error(msg)
+            raise RecipeError(msg)
+
+        # Update partial result
+        partial_result.accum = newaccum
+
+        return partial_result
+
+    def aggregate_frames(self, accum, frame, naccum):
+        return self.aggregate2(accum, frame, naccum)
+
+    def aggregate2(self, img1, img2, naccum):
+
+        frames = [img1, img2]
+        use_errors = True
+        # Initial checks
+        fframe = frames[0]
+        # Ref image
+        img = fframe.open()
+        has_num_ext = 'NUM' in img
+        has_bpm_ext = 'BPM' in img
+        base_header = img[0].header
+        baseshape = img[0].shape
+
+        data_hdul = []
+        for f in frames:
+            img = f.open()
+            data_hdul.append(img)
+
+        if has_num_ext:
+            self.logger.debug('Using NUM extension')
+            masks = [numpy.where(m['NUM'].data, 0, 1).astype('uint8') for m in data_hdul]
+        elif has_bpm_ext:
+            self.logger.debug('Using BPM extension')
+            masks = [m['BPM'].data for m in data_hdul]
+        else:
+            self.logger.warning('BPM missing, use zeros instead')
+            false_mask = numpy.zeros(baseshape, dtype='int16')
+            masks = [false_mask for _ in data_hdul]
+
+        self.logger.info('Combine target images (final, aggregate)')
+
+        weight_accum = 2 * (1 - 1.0 / naccum)
+        weight_frame = 2.0 / naccum
+        self.logger.debug("weights for 'accum' and 'frame', %s", [weight_accum, weight_frame])
+        scales = [1.0 / weight_accum, 1.0 / weight_frame]
+        method = combine.mean
+        data_arr = [hdul[0].data for hdul in data_hdul]
+        out = method(data_arr, masks=masks, scales=scales, dtype='float32')
+
+        self.logger.debug('create result image')
+
+        return self.create_accum_hdulist(
+            data_hdul,
+            out,
+            method_name=method.__name__,
+            use_errors=False
+        )
