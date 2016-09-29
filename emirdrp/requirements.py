@@ -22,11 +22,7 @@
 from numina.core import Parameter, Requirement
 from numina.core.requirements import ObservationResultRequirement
 
-from .products import MasterBias, MasterDark, MasterBadPixelMask
-from .products import MasterIntensityFlat
-from .products import MasterSpectralFlat
-from .products import MasterSky
-from .products import EMIRConfigurationType
+import emirdrp.products as prods
 
 
 # Expose this from numina for convenience
@@ -38,7 +34,7 @@ class EMIRConfigurationRequirement(Requirement):
     def __init__(self):
 
         super(EMIRConfigurationRequirement,
-              self).__init__(EMIRConfigurationType,
+              self).__init__(prods.EMIRConfigurationType,
                              "EMIR Configuration"
                              )
 
@@ -54,7 +50,7 @@ class EMIRConfigurationRequirement(Requirement):
 class MasterBadPixelMaskRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterBadPixelMaskRequirement,
-              self).__init__(MasterBadPixelMask,
+              self).__init__(prods.MasterBadPixelMask,
                              'Master bad pixel mask',
                              optional=optional
                              )
@@ -63,7 +59,7 @@ class MasterBadPixelMaskRequirement(Requirement):
 class MasterBiasRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterBiasRequirement,
-              self).__init__(MasterBias,
+              self).__init__(prods.MasterBias,
                              'Master BIAS image',
                              optional=optional
                              )
@@ -72,25 +68,31 @@ class MasterBiasRequirement(Requirement):
 class MasterDarkRequirement(Requirement):
     def __init__(self):
         super(MasterDarkRequirement,
-              self).__init__(MasterDark, 'Master DARK image')
+              self).__init__(prods.MasterDark, 'Master DARK image')
 
 
 class MasterIntensityFlatFieldRequirement(Requirement):
     def __init__(self):
         super(MasterIntensityFlatFieldRequirement,
-              self).__init__(MasterIntensityFlat, 'Master intensity flatfield')
+              self).__init__(prods.MasterIntensityFlat, 'Master intensity flatfield')
 
 
 class MasterSpectralFlatFieldRequirement(Requirement):
     def __init__(self):
         super(MasterSpectralFlatFieldRequirement,
-              self).__init__(MasterSpectralFlat, 'Master spectral flatfield')
+              self).__init__(prods.MasterSpectralFlat, 'Master spectral flatfield')
 
 
 class MasterSkyRequirement(Requirement):
     def __init__(self, optional=False):
         super(MasterSkyRequirement,
-              self).__init__(MasterSky, 'Sky image for subtraction', optional=optional)
+              self).__init__(prods.MasterSky, 'Sky image for subtraction', optional=optional)
+
+
+class SpectralSkyRequirement(Requirement):
+    def __init__(self, optional=False):
+        super(SpectralSkyRequirement,
+              self).__init__(prods.SkySpectrum, 'Sky spectrum for subtraction', optional=optional)
 
 
 class Extinction_Requirement(Parameter):

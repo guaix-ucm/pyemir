@@ -191,10 +191,11 @@ class EmirRecipe(BaseRecipe):
                     prods.MasterBias,
                     prods.MasterDark,
                     prods.MasterIntensityFlat,
-                    prods.MasterSky
+                    prods.MasterSky,
+                    prods.SkySpectrum
                     ]
         getters = [get_corrector_p, get_corrector_b, get_corrector_d,
-                   [get_corrector_f, get_checker], get_corrector_s]
+                   [get_corrector_f, get_checker], get_corrector_s, get_corrector_s]
 
         return imgtypes, getters
 

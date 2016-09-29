@@ -119,7 +119,7 @@ class MasterSky(EMIRImageProduct):
     pass
 
 
-class MasterSpecSky(EMIRImageProduct):
+class SkySpectrum(EMIRImageProduct):
     pass
 
 
