@@ -30,12 +30,13 @@ from astropy.io import fits
 from numina.core import Product, RecipeError
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
-from numina.array import combine_shape
-from numina.array import resize_arrays
+from numina.array import combine_shape, combine_shapes
+from numina.array import resize_arrays, resize_arrays_alt
+from numina.array.utils import coor_to_pix
 from numina.core import ObservationResult
 from numina.flow.processing import SkyCorrector
 
-from emirdrp.processing.wcs import offsets_from_wcs
+from emirdrp.processing.wcs import offsets_from_wcs, reference_pix_from_wcs
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.ext.gtc import RUN_IN_GTC
@@ -273,6 +274,25 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         return finalshape, offsetsp, refpix
 
+    def compute_shapes_wcs(self, frames):
+
+        # Better near the center...
+        shapes = [frame.open()[0].shape for frame in frames]
+        ref_pix_xy_0 = (shapes[0][1] // 2, shapes[0][0] // 2)
+        #
+        ref_coor_xy = reference_pix_from_wcs(frames, ref_pix_xy_0)
+        # offsets_xy = offsets_from_wcs(frames, numpy.asarray([ref_pix_xy_0]))
+        # ll = [(-a[0]+ref_coor_xy[0][0], -a[1]+ref_coor_xy[0][1]) for a in ref_coor_xy]
+
+        self.logger.debug("ref_coor_xy %s", ref_coor_xy)
+        # Transform to pixels, integers
+        ref_pix_xy = [coor_to_pix(c, order='xy') for c in ref_coor_xy]
+
+        self.logger.info('Computing relative shapes')
+        finalshape, partialshapes, finalpix_xy = combine_shapes(shapes, ref_pix_xy, order='xy')
+
+        return finalshape, partialshapes, ref_pix_xy_0, finalpix_xy
+
     def compute_object_masks(self, data_arr_r, mask_arr_r, has_bpm_ext, regions, masks):
 
         method = combine.mean
@@ -335,12 +355,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # Initial checks
         fframe = frames[0]
         img = fframe.open()
-        has_num_ext = 'NUM' in img
-        has_bpm_ext = 'BPM' in img
-        baseshape = img[0].shape
-        subpixshape = baseshape
         base_header = img[0].header
-        compute_sky = 'NUM-SK' not in base_header
 
         data_hdul = []
         for f in frames:
@@ -349,44 +364,38 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         self.logger.info('Computing offsets from WCS information')
 
-        finalshape, offsetsp, refpix = self.compute_offset_wcs(
-            frames,
-            baseshape,
-            subpixshape
-        )
+        finalshape, partial_shapes, refpix_xy_0, refpix_final_xy = self.compute_shapes_wcs(frames)
 
-        self.logger.debug("Relative offsetsp %s", offsetsp)
         self.logger.info('Shape of resized array is %s', finalshape)
+        self.logger.debug("partial shapes %s", partial_shapes)
+
+        masks = []
+        self.logger.debug('Obtains masks')
+        for m in data_hdul:
+            if 'NUM' in m:
+                self.logger.debug('Using NUM extension as mask')
+                mask = numpy.where(m['NUM'].data, 0, 1).astype('uint8')
+            elif 'BPM' in m:
+
+                mask = m['BPM'].data
+            else:
+                self.logger.warning('BPM missing, use zeros instead')
+                mask = numpy.zeros_like(m[0].data)
+            masks.append(mask)
 
         # Resizing target frames
-        data_arr_r, regions = resize_arrays(
+        data_arr_r = resize_arrays_alt(
             [m[0].data for m in data_hdul],
-            subpixshape,
-            offsetsp,
+            partial_shapes,
             finalshape,
             fill=1
         )
 
-        if has_num_ext:
-            self.logger.debug('Using NUM extension')
-            masks = [numpy.where(m['NUM'].data, 0, 1).astype('uint8') for m in data_hdul]
-        elif has_bpm_ext:
-            self.logger.debug('Using BPM extension')
-            masks = [m['BPM'].data for m in data_hdul]
-        else:
-            self.logger.warning('BPM missing, use zeros instead')
-            false_mask = numpy.zeros(baseshape, dtype='int16')
-            masks = [false_mask for _ in data_arr_r]
-
         self.logger.debug('resize bad pixel masks')
-        mask_arr_r, _ = resize_arrays(masks, subpixshape, offsetsp, finalshape, fill=1)
+        mask_arr_r = resize_arrays_alt(masks, partial_shapes, finalshape, fill=1)
 
         self.logger.debug("not computing sky")
         data_arr_sr = data_arr_r
-
-        # Position of refpixel in final image
-        refpix_final = refpix + offsetsp[0]
-        self.logger.info('Position of refpixel in final image %s', refpix_final)
 
         self.logger.info('Combine target images (final, aggregate)')
         self.logger.debug("weights for 'accum' and 'frame'")
@@ -396,6 +405,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         scales = [1.0 / weight_accum, 1.0 / weight_frame]
         self.logger.debug("weights for 'accum' and 'frame', %s", scales)
         method = combine.mean
+
         out = method(data_arr_sr, masks=mask_arr_r, scales=scales, dtype='float32')
 
         self.logger.debug('create result image')
@@ -420,8 +430,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             ncom += hdul[0].header['NUM-NCOM']
         hdr['NUM-NCOM'] = ncom
         # Update WCS, approximate solution
-        hdr['CRPIX1'] += offsetsp[0][0]
-        hdr['CRPIX2'] += offsetsp[0][1]
+        hdr['CRPIX1'] += (refpix_final_xy[0] - refpix_xy_0[0])
+        hdr['CRPIX2'] += (refpix_final_xy[1] - refpix_xy_0[1])
 
         #
         if use_errors:
