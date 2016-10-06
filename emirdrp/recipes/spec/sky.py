@@ -41,7 +41,7 @@ class SkySpecRecipe(EmirRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
 
-    skyspec = Product(prods.MasterSpecSky)
+    skyspec = Product(prods.SkySpectrum)
 
 
     def run(self, rinput):
