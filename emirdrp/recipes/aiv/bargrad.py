@@ -24,7 +24,7 @@ from __future__ import division
 import logging
 
 import numpy
-from numina.array.utils import wc_to_pix_1d, image_box
+from numina.array.utils import coor_to_pix_1d, image_box
 from numina.core import Requirement, Product, Parameter, RecipeError
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
@@ -180,7 +180,7 @@ class BarDetectionRecipe(EmirRecipe):
                 rbarid = lbarid + EMIR_NBARS
                 ref_y_coor = coords[1] + vec[1]
                 poly_coeffs = coords[2:]
-                prow = wc_to_pix_1d(ref_y_coor) - 1
+                prow = coor_to_pix_1d(ref_y_coor) - 1
                 fits_row = prow + 1 # FITS pixel index
 
                 # A function that returns the center of the bar

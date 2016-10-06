@@ -30,7 +30,7 @@ import scipy.ndimage.morphology as morph
 
 from numina.array.utils import expand_region
 import numina.array.fwhm as fmod
-from numina.array.utils import wc_to_pix_1d
+from numina.array.utils import coor_to_pix_1d
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from numina.array.utils import slice_create
 
@@ -186,7 +186,7 @@ def locate_bar_r(icut, epos):
 def _locate_bar_gen(icut, epos, transform1, transform2):
     """Generic function for the fine position of the CSU"""
 
-    epos_pix = wc_to_pix_1d(epos)
+    epos_pix = coor_to_pix_1d(epos)
 
     # transform ->
     epos_pix_s = transform1(epos_pix)
@@ -354,7 +354,7 @@ def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
 def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=3):
 
     logger = logging.getLogger('emir.recipes.bardetect')
-    pcentery = wc_to_pix_1d(centery)
+    pcentery = coor_to_pix_1d(centery)
     slicey = slice_create(pcentery, wh, start=1, stop=2047)
 
     ref_pcentery = pcentery - slicey.start
