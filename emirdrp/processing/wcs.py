@@ -52,3 +52,32 @@ def offsets_from_wcs(frames, pixref):
             result[idx + 1] = -(pixval[0] - pixref[0])
 
     return result
+
+
+def reference_pix_from_wcs(frames, pixref, origin=1):
+    """Compute reference pixels between frames using WCS information.
+
+    The sky world coordinates are computed on *pixref* using
+    the WCS of the first frame in the sequence. Then, the
+    pixel coordinates of the reference sky world-coordinates
+    are computed for the rest of the frames.
+
+    The results is a list with the position of the reference pixel
+    in each image
+
+    """
+
+    result = []
+
+    with frames[0].open() as hdulist:
+        wcsh = wcs.WCS(hdulist[0].header)
+        skyref = wcsh.wcs_pix2world([pixref], origin)
+        result.append(pixref)
+
+    for idx, frame in enumerate(frames[1:]):
+        with frame.open() as hdulist:
+            wcsh = wcs.WCS(hdulist[0].header)
+            pixval = wcsh.wcs_world2pix(skyref, origin)
+            result.append(tuple(pixval[0]))
+
+    return result
