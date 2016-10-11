@@ -97,6 +97,8 @@ class BarDetectionRecipe(EmirRecipe):
             tsutc1 = hdr['TSUTC1']
             dtub, dtur = datamodel.get_dtur_from_header(hdr)
             csupos = datamodel.get_csup_from_header(hdr)
+            if len(csupos) != 2 * EMIR_NBARS:
+                raise RecipeError('Number of CSUPOS != 2 * NBARS')
             csusens = datamodel.get_cs_from_header(hdr)
 
         except KeyError as error:
@@ -175,11 +177,20 @@ class BarDetectionRecipe(EmirRecipe):
             arr_deriv_alt = convolve1d(arr_median_alt, ypos3_kernel, axis=0)
 
             positions = []
-            for coords in barstab:
-                lbarid = int(coords[0])
+            for params in barstab:
+                lbarid = int(params[0])
+                # CSUPOS for this bar
+                logger.debug('CSUPOS')
                 rbarid = lbarid + EMIR_NBARS
-                ref_y_coor = coords[1] + vec[1]
-                poly_coeffs = coords[2:]
+                current_csupos = csupos[lbarid - 1]
+                logger.debug('CSUPOS for bar %d is %f', lbarid, current_csupos)
+                ref_y_coor_virt = params[1] # Do I need to add vec[1]?
+                ref_x_coor_virt = params[2] + current_csupos * params[3]
+                # Transform to REAL..
+                ref_x_coor, ref_y_coor = dist.exvp(ref_x_coor_virt, ref_y_coor_virt)
+                # FIXME: check if DTU has to be applied
+                # ref_y_coor = ref_y_coor + vec[1]
+
                 prow = coor_to_pix_1d(ref_y_coor) - 1
                 fits_row = prow + 1 # FITS pixel index
 
@@ -187,10 +198,16 @@ class BarDetectionRecipe(EmirRecipe):
                 # given its X position
                 def center_of_bar(x):
                     # Pixel values are 0-based
-                    return polyval(x+1-vec[0], poly_coeffs) + vec[1] - 1
+                    # return ref_x_coor + vec[1] - 1
+                    # FIXME: check if DTU has to be applied
+                    return ref_x_coor - 1
 
                 logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
+                logger.debug('reference y virtual position is Y %7.2f', ref_y_coor_virt)
                 logger.debug('reference y position is Y %7.2f', ref_y_coor)
+
+                logger.debug('reference x virtual position is X %7.2f', ref_x_coor_virt)
+                logger.debug('reference x position is X %7.2f', ref_x_coor)
 
                 # if ref_y_coor is outlimits, skip this bar
                 # ref_y_coor is in FITS format
