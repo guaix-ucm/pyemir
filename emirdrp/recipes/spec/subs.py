@@ -61,8 +61,21 @@ class BaseABBARecipe(EmirRecipe):
             subres = dal.getRecipeResult(subresId)
             stareImages.append(subres['elements']['stare'])
 
+        naccum = obsres.naccum
+        cls.logger.info('naccum: %d', naccum)
+        if naccum != 1:  # if it is not the first dithering loop
+            cls.logger.info("SEARCHING LATEST RESULT LS_ABBA TO ACCUMULATE")
+            latest_result = dal.getLastRecipeResult("EMIR", "EMIR", "LS_ABBA")
+            accum_dither = latest_result['elements']['accum']
+            cls.logger.info("FOUND")
+        else:
+            cls.logger.info("NO ACCUMULATION LS_ABBA")
+            accum_dither = stareImages[0]
+
         newOR = numina.core.ObservationResult()
         newOR.frames = stareImages
+        newOR.naccum = naccum
+        newOR.accum = accum_dither
         newRI = cls.create_input(obresult=newOR)
         cls.logger.debug('end recipe input builder')
         return newRI
