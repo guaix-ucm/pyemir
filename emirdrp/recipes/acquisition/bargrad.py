@@ -198,9 +198,9 @@ class BarDetectionRecipe(EmirRecipe):
                 # given its X position
                 def center_of_bar(x):
                     # Pixel values are 0-based
-                    # return ref_x_coor + vec[1] - 1
+                    # return ref_y_coor + vec[1] - 1
                     # FIXME: check if DTU has to be applied
-                    return ref_x_coor - 1
+                    return ref_y_coor - 1
 
                 logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
                 logger.debug('reference y virtual position is Y %7.2f', ref_y_coor_virt)
