@@ -238,7 +238,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     if len(idxs) == 0:
         logger.debug('no peaks, exit')
-        return 0, 0, 0, 1
+        return 0, 0, 0, 0, 0, 1
 
     # Characterize: use the peak that has the greatest value in the derivative?
     pix_m = cut[idxs].argmax()
