@@ -270,9 +270,10 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     wy = 1
     step = 2 * wy + 1
     offs = []
-    offs2 = range(-step, -10, -step)
+    maxval = 18
+    offs2 = range(-step, -maxval, -step)
     offs.extend(reversed(offs2))
-    offs.extend(range(0, 10, step))
+    offs.extend(range(0, maxval, step))
     # This is basically to build a list of centers that dont overlap
 
     for off in offs:
