@@ -30,10 +30,7 @@ import numina.exceptions
 
 from emirdrp.core import EmirRecipe
 import emirdrp.products as prods
-import emirdrp.requirements as reqs
-import emirdrp.processing.datamodel
 from emirdrp.processing.combine import basic_processing_with_combination
-import emirdrp.processing.info as info
 
 
 class CoaddABBARecipe(EmirRecipe):
@@ -137,7 +134,7 @@ class CoaddRecipe(EmirRecipe):
         hdulist = basic_processing_with_combination(
             rinput,
             flow,
-            method=comb.mean,
+            method=combine.mean,
             prolog="Process Generic Coadd"
         )
 
