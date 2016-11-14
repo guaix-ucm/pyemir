@@ -1,0 +1,12 @@
+{
+ "description": "Default configuration",
+ "uuid": "225fcaf2-7f6f-49cc-972a-70fd0aee8e96",
+ "date_start": "2016-06-01",
+ "date_end": null,
+ "type": "instrument",
+ "name": "EMIR",
+ "components":
+  {
+     "detector": "1ac26dff-4c3f-43d8-a069-7470357120d6"
+  }
+}

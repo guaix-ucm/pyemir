@@ -1,29 +1,7 @@
 name: EMIR
 configurations:
-  alt:
-    detector:
-      channels: FULL
-      shape:
-      - 2048
-      - 2048
-    keywords:
-      airmass: AIRMASS
-      exposure: EXPTIME
-      imagetype: IMGTYP
-      juliandate: MJD-OBS
-    pipeline: alt
-  default:
-    detector:
-      channels: FULL
-      shape:
-      - 2048
-      - 2048
-    keywords:
-      airmass: AIRMASS
-      exposure: EXPTIME
-      imagetype: IMGTYP
-      juliandate: MJD-OBS
-    pipeline: default
+  values:
+  - 225fcaf2-7f6f-49cc-972a-70fd0aee8e96
 modes:
 - date: 2013-11-12
   description: A recipe that always fails
