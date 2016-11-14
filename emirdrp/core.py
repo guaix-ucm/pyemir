@@ -182,6 +182,8 @@ class EmirRecipe(BaseRecipe):
 
     logger = logging.getLogger('numina.recipes.emir')
 
+    datamodel = EmirDataModel()
+
     def __init__(self, version="1"):
         super(EmirRecipe, self).__init__(version=version)
 
