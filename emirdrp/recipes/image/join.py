@@ -128,7 +128,6 @@ class JoinDitheredImagesRecipe(EmirRecipe):
     def run_single(self, rinput):
 
         use_errors = True
-        datamodel = EmirDataModel()
         # Initial checks
         fframe = rinput.obresult.frames[0]
         img = fframe.open()
@@ -196,9 +195,14 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             self.logger.info('sky correction in individual images')
             corrector = SkyCorrector(
                 sky_data,
-                datamodel,
-                calibid=datamodel.get_imgid(sky_result)
+                self.datamodel,
+                calibid=self.datamodel.get_imgid(sky_result)
             )
+            # If we do not update keyword SKYADD
+            # there is no sky subtraction
+            for m in data_hdul:
+                m[0].header['SKYADD'] = True
+            # this is a little hackish
             data_hdul_s = [corrector(m) for m in data_hdul]
             #data_arr_s = [m[0].data - sky_data for m in data_hdul]
             base_header = data_hdul_s[0][0].header
