@@ -22,7 +22,7 @@ Stare Image mode of EMIR
 """
 
 import astropy.io.fits as fits
-from numina.array.combine import median
+from numina.array import combine
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
@@ -52,7 +52,11 @@ class StareImageBaseRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+        hdulist = basic_processing_with_combination(
+            rinput,
+            flow,
+            method=combine.median
+        )
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         # Update SEC to 0

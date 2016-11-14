@@ -220,7 +220,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         self.logger.info('Position of refpixel in final image %s', refpix_final)
 
         self.logger.info('Combine target images (final)')
-        method = combine.mean
+        method = combine.median
         out = method(data_arr_sr, masks=mask_arr_r, dtype='float32')
 
         self.logger.debug('create result image')
