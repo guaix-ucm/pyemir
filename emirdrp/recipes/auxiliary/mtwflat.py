@@ -78,9 +78,11 @@ class MultiTwilightFlatRecipe(EmirRecipe):
             # Uncomment this line and comment the following
             # to revert to non-ramp
             # res = self.run_per_filter(frames, flow)
-            res = self.run_per_filter_ramp(frames, saturation=saturation)
-
-            results.append(res)
+            try:
+                res = self.run_per_filter_ramp(frames, saturation=saturation)
+                results.append(res)
+            except ValueError:
+                self.logger.info('filter %s cannot be processed', filt)
 
         self.logger.info('end multiflat flat reduction')
         result = self.create_result(twflatframes=results)
@@ -108,7 +110,6 @@ class MultiTwilightFlatRecipe(EmirRecipe):
             hdulist['variance'].data /= (mm * mm)
 
         return hdulist
-
 
     def run_per_filter_ramp(self, frames, saturation, errors=False):
         imgs = [frame.open() for frame in frames]
@@ -144,7 +145,10 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         ngood_images = good_images.sum()
         slope_scaled_var = None
         slope_scaled_num = None
-        if ngood_images < 2:
+        if ngood_images == 0:
+            self.logger.warning('We have only %d good images', ngood_images)
+            raise ValueError('No images under saturation')
+        elif ngood_images < 2:
             self.logger.warning('We have only %d good images', ngood_images)
             # Reference image
             ref_image = imgs[0]
