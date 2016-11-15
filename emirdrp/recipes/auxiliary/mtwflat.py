@@ -165,7 +165,8 @@ class MultiTwilightFlatRecipe(EmirRecipe):
             self.logger.debug('fitting slopes with Theil-Sen')
             # self.logger.debug('fitting slopes with mean-squares')
             # ll = nppol.polyfit(median_frames[good_images], m_r.T, deg=1)
-            ll = fit_theil_sen(median_frames[good_images], m_r.T)
+            ll = self.filter_nsigma(median_frames[good_images], m_r.T)
+
             slope = ll[1].reshape(bshape)
             base = ll[0].reshape(bshape)
 
@@ -184,6 +185,40 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         result = self.compose_result(cdata, slope_scaled, errors, slope_scaled_var, slope_scaled_num)
 
         return result
+
+    def filter_nsigma(self, median_val, image_val, nsigma=10.0, nloop=1):
+        # Initial estimation
+        ll = fit_theil_sen(median_val, image_val)
+        ni = 0
+        self.logger.debug('initial estimation')
+        while ni < nloop:
+            # Prediction
+            self.logger.debug('loop %d', ni + 1)
+            base, slope = ll
+            image_val_pred = base + median_val[:,numpy.newaxis] * slope
+            image_diff = image_val - image_val_pred
+            # Compute MAD
+            mad = compute_mad(image_diff)
+            sigma_robust = nsigma * 1.4826 * mad
+            self.logger.debug('compute robust std deviation')
+            self.logger.debug(
+                'min %7.1f max %7.1f mean %7.1f',
+                sigma_robust.min(),
+                sigma_robust.max(),
+                sigma_robust.mean()
+            )
+            # Check values over sigma
+            mask_over = numpy.abs(image_diff) >= sigma_robust[:, numpy.newaxis]
+            self.logger.debug('values over sigma: %d', mask_over.sum())
+            # Insert expected values in image
+            # instead of masking
+            image_val[mask_over] = image_val_pred[mask_over]
+            #
+            self.logger.debug('Theil-Sen fit')
+            ll = fit_theil_sen(median_val, image_val)
+            ni += 1
+
+        return ll
 
     def compose_result(self, imgs, slope_scaled, errors=False, slope_scaled_var=None, slope_scaled_num=None):
 
@@ -224,3 +259,10 @@ class MultiTwilightFlatRecipe(EmirRecipe):
             result = fits.HDUList([hdu])
 
         return result
+
+
+def compute_mad(x):
+    m1 = numpy.median(x, axis=1)
+    m2 = numpy.abs(x - m1[:, numpy.newaxis])
+    mad = numpy.median(m2, axis=1)
+    return mad
