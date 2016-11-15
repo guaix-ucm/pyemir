@@ -5,7 +5,7 @@ sudo: false
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy scipy astropy=1.1" COVERAGE=true
+      env: DEPS="numpy scipy astropy=1.1" COVERAGE=false
     - python: "2.7"
       env: DEPS="numpy scipy astropy"
     - python: "3.5"
@@ -40,8 +40,6 @@ install:
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
-
-
 
 script: 
   - py.test emirdrp
