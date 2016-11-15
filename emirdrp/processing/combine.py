@@ -104,7 +104,7 @@ def basic_processing_with_combination_frames(frames,
             hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
         prevnum = base_header.get('NUM-NCOM', 1)
         hdu.header['NUM-NCOM'] = prevnum * cnum
-        hdu.header['EMIRUUID'] = uuid.uuid1().hex
+        hdu.header['UUID'] = uuid.uuid1().hex
         # Headers of last image
         hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
         if errors:
@@ -230,7 +230,7 @@ def basic_processing_with_segmentation(rinput, flow,
         hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
         hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.__name__)
         hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
-        hdu.header['EMIRUUID'] = uuid.uuid1().hex
+        hdu.header['UUID'] = uuid.uuid1().hex
         _logger.info("missing points, total: %d, fraction: %3.1f", points_no_data, points_no_data / data2[2].size)
 
         if errors:

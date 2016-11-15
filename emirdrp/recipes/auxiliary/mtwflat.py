@@ -20,6 +20,9 @@
 """Twilight Flat Recipe for a list of frames in different filters"""
 
 
+import uuid
+import datetime
+
 import numpy
 import numpy.polynomial.polynomial as nppol
 import astropy.io.fits as fits
@@ -52,7 +55,9 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         results = []
         self.logger.info('starting multiflat flat reduction')
 
-        flow = self.init_filters(rinput)
+        # Uncomment this line
+        # to revert to non-ramp
+        # flow = self.init_filters(rinput)
         saturation = 45000.0
 
         iinfo = gather_info_frames(rinput.obresult.frames)
@@ -104,9 +109,14 @@ class MultiTwilightFlatRecipe(EmirRecipe):
 
         return hdulist
 
-    def run_per_filter_ramp(self, frames, saturation):
-        errors = False
-        nimages = len(frames)
+
+    def run_per_filter_ramp(self, frames, saturation, errors=False):
+        imgs = [frame.open() for frame in frames]
+        self.run_img_per_filter_ramp(imgs, saturation, errors)
+
+    def run_img_per_filter_ramp(self, imgs, saturation, errors=False):
+
+        nimages = len(imgs)
         if nimages == 0:
             raise ValueError('len(images) == 0')
 
@@ -114,10 +124,9 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         exptime_frames = []
         utc_frames = []
         # generate 3D cube
-        bshape = (2048, 2048)
+        bshape = self.datamodel.shape
         flat_frames = numpy.empty((bshape[0], bshape[1], nimages))
-        for idx, frame in enumerate(frames):
-            image = frame.open()
+        for idx, image in enumerate(imgs):
             flat_frames[:, :, idx] = image['primary'].data
             exptime_frames.append(image[0].header['EXPTIME'])
             median_frames[idx] = numpy.median(image['primary'].data)
@@ -133,11 +142,17 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         # filter saturated images
         good_images = median_frames < saturation
         ngood_images = good_images.sum()
+        slope_scaled_var = None
+        slope_scaled_num = None
         if ngood_images < 2:
             self.logger.warning('We have only %d good images', ngood_images)
             # Reference image
-            ref_image = frames[0].open()
+            ref_image = imgs[0]
             slope_scaled = numpy.ones(bshape) * exptime_frames[0]
+
+            if errors:
+                slope_scaled_var = numpy.zeros_like(slope_scaled)
+                slope_scaled_num = numpy.zeros_like(slope_scaled, dtype='int16') + ngood_images
         else:
             nsaturated = nimages - good_images.sum()
             if nsaturated > 0:
@@ -156,23 +171,56 @@ class MultiTwilightFlatRecipe(EmirRecipe):
 
             # First good frame
             index_of_first_good = numpy.nonzero(good_images)[0][0]
-            ref_image = frames[index_of_first_good].open()
             slope_scaled = slope * exptime_frames[index_of_first_good]
+            if errors:
+                slope_scaled_var = numpy.zeros_like(slope_scaled)
+                slope_scaled_num = numpy.zeros_like(slope_scaled, dtype='int16') + ngood_images
 
-        hdr = ref_image[0].header
-        self.set_base_headers(hdr)
+        cdata = []
+        for idx, img in enumerate(imgs):
+            if good_images[idx]:
+                cdata.append(img)
 
-        hdu = fits.PrimaryHDU(data=slope_scaled, header=hdr)
-        hdulist = fits.HDUList(hdu)
+        result = self.compose_result(cdata, slope_scaled, errors, slope_scaled_var, slope_scaled_num)
 
-        mm = hdulist[0].data.mean()
+        return result
+
+    def compose_result(self, imgs, slope_scaled, errors=False, slope_scaled_var=None, slope_scaled_num=None):
+
+        self.logger.debug('update result header')
+        cnum = len(imgs)
+        method_name = 'Theil-Sen'
+        base_header = imgs[0].header
+        cdata = imgs
+
+        hdu = fits.PrimaryHDU(data=slope_scaled, header=base_header)
+        self.set_base_headers(hdu.header)
+
+        hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method_name)
+        hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+
+        for img in cdata:
+            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
+
+        prevnum = base_header.get('NUM-NCOM', 1)
+        hdu.header['NUM-NCOM'] = prevnum * cnum
+        hdu.header['UUID'] = uuid.uuid1().hex
+        # Headers of last image
+        hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
+        # TODO: use BPM to compute mean
+        mm = hdu.data.mean()
         self.logger.info('mean value of flat is: %f', mm)
-        hdr['CCDMEAN'] = mm
-
+        hdu.header['CCDMEAN'] = mm
         self.logger.debug('normalize image')
-        hdulist[0].data /= mm
-        if errors:
-            self.logger.debug('normalize VAR extension')
-            hdulist['variance'].data /= (mm * mm)
+        hdu.data /= mm
 
-        return hdulist
+        if errors:
+            varhdu = fits.ImageHDU(slope_scaled_var, name='VARIANCE')
+            num = fits.ImageHDU(slope_scaled_num, name='MAP')
+            self.logger.debug('normalize VAR extension')
+            varhdu.data /= (mm * mm)
+            result = fits.HDUList([hdu, varhdu, num])
+        else:
+            result = fits.HDUList([hdu])
+
+        return result

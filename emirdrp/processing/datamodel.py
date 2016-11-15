@@ -28,6 +28,7 @@ import astropy.wcs
 
 _logger = logging.getLogger(__name__)
 
+
 class EmirDataModel(numina.flow.datamodel.DataModel):
     """Data model of EMIR."""
 
@@ -35,18 +36,25 @@ class EmirDataModel(numina.flow.datamodel.DataModel):
         # Keys
         self._meta = {
             'readmode': ('READMODE', 'undefined'),
-            'bunit': ('BUNIT', 'ADU'),
             'texp': ('EXPTIME', None),
             'grism': ('GRISM', 'undefined'),
             'filter': ('FILTER', 'undefined'),
             'obsmode': ('OBSMODE', 'undefined'),
             'tstamp': ('TSTAMP', 'undefined'),
+            'uuid1': ('UUID', 'undefined'),
+            'uuid2': ('EMIRUUID', 'undefined'),
             'skyadd': ('SKYADD', True)
         }
 
+    @property
+    def shape(self):
+        return (2048, 2048)
+
     def get_imgid(self, img):
         hdr = self.get_header(img)
-        if 'EMIRUUID' in hdr:
+        if 'UUID' in hdr:
+            return 'uuid:{}'.format(hdr['UUID'])
+        elif 'EMIRUUID' in hdr:
             return 'uuid:{}'.format(hdr['EMIRUUID'])
         elif 'TSUTC1' in hdr:
             return 'tsutc:{:16.5f}'.format(hdr['TSUTC1'])
@@ -65,11 +73,6 @@ class EmirDataModel(numina.flow.datamodel.DataModel):
         meta['name_ext'] = ['PRIMARY'] + extnames
         for key, val in self._meta.items():
             meta[key] = hdulist[0].header.get(val[0], val[1])
-
-        adu_s = False
-        if meta['bunit'].lower() == 'adu/s':
-            adu_s = True
-        meta['adu_s'] = adu_s
 
         return meta
 
