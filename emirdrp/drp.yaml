@@ -299,6 +299,6 @@ pipelines:
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
     version: 1
 products:
-  - class: MasterBias
-    mode: Pepito
-    field: frame
+  - name: emirdrp.products.MasterBias
+    mode: IMAGE_BIAS
+    field: biasframe
