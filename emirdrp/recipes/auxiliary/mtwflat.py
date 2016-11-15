@@ -225,7 +225,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         self.logger.debug('update result header')
         cnum = len(imgs)
         method_name = 'Theil-Sen'
-        base_header = imgs[0].header
+        base_header = imgs[0][0].header
         cdata = imgs
 
         hdu = fits.PrimaryHDU(data=slope_scaled, header=base_header)

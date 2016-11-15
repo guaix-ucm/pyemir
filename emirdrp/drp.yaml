@@ -298,3 +298,7 @@ pipelines:
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
     version: 1
+products:
+  - class: MasterBias
+    mode: Pepito
+    field: frame
