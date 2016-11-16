@@ -32,7 +32,7 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
 from numina.array import combine_shape, combine_shapes
 from numina.array import resize_arrays, resize_arrays_alt
-from numina.array.utils import coor_to_pix
+from numina.array.utils import coor_to_pix, image_box2d
 from numina.core import ObservationResult
 from numina.flow.processing import SkyCorrector
 
@@ -41,7 +41,6 @@ from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.ext.gtc import RUN_IN_GTC
 from emirdrp.processing.combine import segmentation_combined
-from emirdrp.processing.datamodel import EmirDataModel
 import emirdrp.decorators
 
 
@@ -69,15 +68,17 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # FIXME: this method will work only in GTC
         # stareImagesIds = obsres['stareImagesIds']._v
         stareImagesIds = obsres.stareImagesIds
-        cls.logger.info('obsres: %s', dir(obsres))
+        cls.logger.info('obsres(%s): %s', type(obsres), dir(obsres))
         cls.logger.info('STARE IMAGES IDS: %s', stareImagesIds)
         stareImages = []
+        # Field to query the results
+        key_field = 'frame'
         for subresId in stareImagesIds:
             subres = dal.getRecipeResult(subresId)
             # This 'frame' is the name of the product in RecipeResult
             # there is also a 'sky' field
             elements = subres['elements']
-            stareImages.append(elements['frame'])
+            stareImages.append(elements[key_field])
 
         newOR = ObservationResult()
         newOR.frames = stareImages
@@ -127,21 +128,28 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
     def run_single(self, rinput):
 
-        use_errors = True
-        # Initial checks
-        fframe = rinput.obresult.frames[0]
-        img = fframe.open()
-        has_num_ext = 'NUM' in img
-        has_bpm_ext = 'BPM' in img
-        baseshape = img[0].shape
-        subpixshape = baseshape
-        base_header = img[0].header
-        compute_sky = 'NUM-SK' not in base_header
+        # Open all images
+        obresult = rinput.obresult
 
         data_hdul = []
-        for f in rinput.obresult.frames:
+        for f in obresult.frames:
             img = f.open()
             data_hdul.append(img)
+
+        use_errors = True
+        # Initial checks
+        baseimg = data_hdul[0]
+        has_num_ext = 'NUM' in baseimg
+        has_bpm_ext = 'BPM' in baseimg
+        baseshape = baseimg[0].shape
+        subpixshape = baseshape
+        base_header = baseimg[0].header
+        compute_sky = 'NUM-SK' not in base_header
+
+        self.logger.debug('base image is: %s', self.datamodel.get_imgid(img))
+        self.logger.debug('images have NUM extension: %s', has_num_ext)
+        self.logger.debug('images have BPM extension: %s', has_bpm_ext)
+        self.logger.debug('compute sky is needed: %s', compute_sky)
 
         self.logger.info('Computing offsets from WCS information')
 
@@ -163,12 +171,21 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             fill=1
         )
 
+        # self.logger.debug("Compute cross-correlation of images")
+        # # A square of 100x100 in the center of the image
+        # xref_cross = finalshape[1] // 2
+        # yref_cross = finalshape[0] // 2
+        # self.logger.debug("Reference position is %d  %d", xref_cross + 1, yref_cross + 1)
+        # region = image_box2d(xref_cross, yref_cross, finalshape, (100, 100))
+        # self.compute_offset_crosscor(data_arr_r, region)
+
         if has_num_ext:
             self.logger.debug('Using NUM extension')
-            masks = [numpy.where(m['NUM'].data, 0, 1).astype('uint8') for m in data_hdul]
+            masks = [numpy.where(m['NUM'].data, 0, 1).astype('int16') for m in data_hdul]
         elif has_bpm_ext:
             self.logger.debug('Using BPM extension')
-            masks = [m['BPM'].data for m in data_hdul]
+            #
+            masks = [numpy.where(m['BPM'].data, 1, 0).astype('int16') for m in data_hdul]
         else:
             self.logger.warning('BPM missing, use zeros instead')
             false_mask = numpy.zeros(baseshape, dtype='int16')
@@ -278,6 +295,14 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         return finalshape, offsetsp, refpix
 
+    def compute_offset_crosscor(self, arrs, region):
+        ref_arr = arrs[0]
+        arr1 = ref_arr[region]
+        for idx, arr in enumerate(arrs[1:]):
+            self.logger.debug('Cross-correlate image idx %d', idx)
+            arr2 = arr[region]
+
+
     def compute_shapes_wcs(self, frames):
 
         # Better near the center...
@@ -355,7 +380,6 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # FIXME, this is almost identical to run_single
         frames = [img1, img2]
         use_errors = True
-        datamodel = EmirDataModel()
         # Initial checks
         fframe = frames[0]
         img = fframe.open()
@@ -378,10 +402,10 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         for m in data_hdul:
             if 'NUM' in m:
                 self.logger.debug('Using NUM extension as mask')
-                mask = numpy.where(m['NUM'].data, 0, 1).astype('uint8')
+                mask = numpy.where(m['NUM'].data, 0, 1).astype('int16')
             elif 'BPM' in m:
-
-                mask = m['BPM'].data
+                self.logger.debug('Using BPM extension as mask')
+                mask = numpy.where(m['BPM'].data, 1, 0).astype('int16')
             else:
                 self.logger.warning('BPM missing, use zeros instead')
                 mask = numpy.zeros_like(m[0].data)
