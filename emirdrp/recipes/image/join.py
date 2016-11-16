@@ -37,6 +37,7 @@ from numina.core import ObservationResult
 from numina.flow.processing import SkyCorrector
 
 from emirdrp.processing.wcs import offsets_from_wcs, reference_pix_from_wcs
+from emirdrp.processing.corr import offsets_from_crosscor
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.ext.gtc import RUN_IN_GTC
@@ -171,13 +172,20 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             fill=1
         )
 
-        # self.logger.debug("Compute cross-correlation of images")
-        # # A square of 100x100 in the center of the image
-        # xref_cross = finalshape[1] // 2
-        # yref_cross = finalshape[0] // 2
-        # self.logger.debug("Reference position is %d  %d", xref_cross + 1, yref_cross + 1)
-        # region = image_box2d(xref_cross, yref_cross, finalshape, (100, 100))
-        # self.compute_offset_crosscor(data_arr_r, region)
+        try:
+            self.logger.debug("Compute cross-correlation of images")
+            # A square of 100x100 in the center of the image
+            xref_cross = finalshape[1] // 2
+            yref_cross = finalshape[0] // 2
+            box = 50
+            self.logger.debug("Reference position is %d  %d", xref_cross + 1, yref_cross + 1)
+            self.logger.debug("Reference regions is %d", 2 * box + 1)
+            region = image_box2d(xref_cross, yref_cross, finalshape, box)
+            finalshape2, offsetsp2 = self.compute_offset_crosscor(data_arr_r, region, finalshape)
+            self.logger.debug("Relative offsetsp (crosscorr) %s", offsetsp2)
+            self.logger.info('Shape of resized array (crosscorr) is %s', finalshape2)
+        except Exception as error:
+            self.logger.warning('Error during cross-correlation, %s', error)
 
         if has_num_ext:
             self.logger.debug('Using NUM extension')
@@ -295,13 +303,17 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         return finalshape, offsetsp, refpix
 
-    def compute_offset_crosscor(self, arrs, region):
-        ref_arr = arrs[0]
-        arr1 = ref_arr[region]
-        for idx, arr in enumerate(arrs[1:]):
-            self.logger.debug('Cross-correlate image idx %d', idx)
-            arr2 = arr[region]
+    def compute_offset_crosscor(self, arrs, region, subpixshape):
+        offsets_xy = offsets_from_crosscor(arrs, region, refine=True, order='xy')
+        self.logger.debug("offsets_xy cross-corr %s", offsets_xy)
+        # Offsets in numpy order, swaping
+        offsets_fc = offsets_xy[:, ::-1]
+        offsets_fc_t = numpy.round(offsets_fc).astype('int')
 
+        self.logger.info('Computing relative offsets from cross-corr')
+        finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
+
+        return finalshape, offsetsp
 
     def compute_shapes_wcs(self, frames):
 
@@ -354,7 +366,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         self.logger.debug('update created sky image result header')
         skyid = uuid.uuid1().hex
-        hdu.header['EMIRUUID'] = skyid
+        hdu.header['UUID'] = skyid
         hdu.header['history'] = "Combined {} images using '{}'".format(
             len(data_hdul),
             method.__name__
@@ -470,3 +482,10 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             hdulist = fits.HDUList([hdu])
 
         return hdulist
+
+    def offsets_from_crosscorr(self, arrs, region):
+        ref_arr = arrs[0]
+        arr1 = ref_arr[region]
+        for idx, arr in enumerate(arrs[1:]):
+            self.logger.debug('Cross-correlate image idx %d', idx)
+            arr2 = arr[region]
