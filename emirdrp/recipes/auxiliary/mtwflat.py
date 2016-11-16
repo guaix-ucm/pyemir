@@ -113,7 +113,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
 
     def run_per_filter_ramp(self, frames, saturation, errors=False):
         imgs = [frame.open() for frame in frames]
-        self.run_img_per_filter_ramp(imgs, saturation, errors)
+        return self.run_img_per_filter_ramp(imgs, saturation, errors)
 
     def run_img_per_filter_ramp(self, imgs, saturation, errors=False):
 
