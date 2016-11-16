@@ -21,10 +21,13 @@
 
 from __future__ import division
 
-import numina.flow.datamodel
 import logging
-import emirdrp.core
+
+import numina.flow.datamodel
 import astropy.wcs
+
+import emirdrp.instrument
+
 
 _logger = logging.getLogger(__name__)
 
@@ -156,8 +159,8 @@ def create_dtu_wcs_header(hdr):
     xdtur = (xdtu / xdtuf - xdtu0)
     ydtur = (ydtu / ydtuf - ydtu0)
 
-    xfac = xdtur / emirdrp.core.EMIR_PIXSCALE
-    yfac = -ydtur / emirdrp.core.EMIR_PIXSCALE
+    xfac = xdtur / emirdrp.instrument.EMIR_PIXSCALE
+    yfac = -ydtur / emirdrp.instrument.EMIR_PIXSCALE
 
     # xout = xin + yfac
     # yout = yin + xfac

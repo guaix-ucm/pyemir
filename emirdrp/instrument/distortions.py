@@ -1,7 +1,27 @@
+#
+# Copyright 2016 Universidad Complutense de Madrid
+#
+# This file is part of PyEmir
+#
+# PyEmir is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# PyEmir is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+
 import numpy
 
-# Platescale in radians
-PLATESCALE_RADS = (0.1944 * 1 / 3600.0) * numpy. pi / 180.0
+
+from . import EMIR_PLATESCALE_RADS
 
 
 def exvp(pos_x, pos_y):
@@ -10,7 +30,7 @@ def exvp(pos_x, pos_y):
     # convert virtual pixel to real pixel
     # convert world coordinate to pixel
     center = [1024.5, 1024.5]
-    cf  = PLATESCALE_RADS
+    cf  = EMIR_PLATESCALE_RADS
     pos_base_x = pos_x - center[0]
     pos_base_y = pos_y - center[1]
     ra = numpy.hypot(pos_base_x, pos_base_y)
@@ -32,7 +52,7 @@ def pvex(pos_x, pos_y):
     pos_y = numpy.asarray(pos_y)
 
     center = [1024.5, 1024.5]
-    cf  = PLATESCALE_RADS
+    cf  = EMIR_PLATESCALE_RADS
     pos_base_x = pos_x - center[0]
     pos_base_y = pos_y - center[1]
     ra = numpy.hypot(pos_base_x, pos_base_y)
