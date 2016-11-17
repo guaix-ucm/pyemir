@@ -22,11 +22,16 @@
 
 from __future__  import print_function
 
+import logging
 
 import numpy
 import scipy.signal
 import numina.array.imsurfit as imsurfit
 import numina.array.utils as utils
+import numina.array.stats as s
+
+
+_logger = logging.getLogger('numina.recipes.emir')
 
 
 def standarize(arr):
@@ -51,8 +56,15 @@ def vertex_of_quadratic(coeffs):
     return xm, ym
 
 
-def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order='ij'):
+def filter_region(arr, level=4):
+    median = numpy.median(arr)
+    std = s.robust_std(arr, debug=False)
 
+    return numpy.where(arr >=  median + level * std, arr, 0.0)
+
+
+def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order='ij'):
+    # import astropy.io.fits as fits
     # allowed values for order
     if order not in ['xy', 'ij']:
         raise ValueError("'order' must be either 'ij' or 'xy'")
@@ -60,20 +72,36 @@ def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order='ij'):
     result = numpy.zeros((len(arrs), 2))
     ref_array = arrs[0]
     shape = ref_array.shape
-    data1 = ref_array[region]
+    data1 = filter_region(ref_array[region])
     d1 = standarize(data1)
+    # fits.writeto('cutout_%d.fits' % 0, d1, clobber=True)
+
     dcenter = numpy.asarray(d1.shape) // 2
     # Correlate
+
     for idx, arr in enumerate(arrs[1:], 1):
 
-        data2 = arr[region]
+        data2 = filter_region(arr[region])
         d2 = standarize(data2)
-        corr = scipy.signal.correlate2d(d1, d2, mode='same', boundary='symm')
+        # fits.writeto('cutout_%d.fits' % idx, d2, clobber=True)
+        #corr = scipy.signal.correlate2d(d1, d2, mode='same', boundary='fill', fillvalue=fillvalue)
+        # correlation is equivalent to convolution with inverted image
+        corr = scipy.signal.fftconvolve(d1, d2[::-1, ::-1], mode='same')
         # normalize
         corr /= corr.max()
         # fits.writeto('corr_%d.fits' % idx, corr, clobber=True)
+        # fits.writeto('corr2_%d.fits' % idx, corr2 / corr2.max(), clobber=True)
         # Find peak in cross-cor
         maxindex = numpy.unravel_index(corr.argmax(), corr.shape)
+        # Check the peak is above n times the background
+        median_corr = numpy.median(corr)
+        std_corr = numpy.std(corr)
+        peakvalue = corr[maxindex]
+        threshold = median_corr + 5 * std_corr
+        _logger.debug('The peak value is %f, threshold %f', peakvalue, threshold)
+        if peakvalue < threshold:
+            # FIXME: No peak for fitting
+            continue
         baseoff = dcenter - numpy.asarray(maxindex)
         # Pixel (0,0) in reference corresponds to baseoff in image
         # print("Pixel (0,0) in reference corresponds to %s in image" % baseoff)
@@ -86,16 +114,20 @@ def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order='ij'):
             coeffs, = imsurfit.imsurfit(corr[region_ref], order=2)
             # coefss are a + b *x + c * y + d*x**2 + e * x* y + f * y**2
 
-            # get peak from coeffs
-            xm, ym = vertex_of_quadratic(coeffs)
-            # xm ym are offsets
+            try:
+                # get peak from coeffs
+                xm, ym = vertex_of_quadratic(coeffs)
+                # xm ym are offsets
 
-            if abs(xm) > 1 or abs(ym) > 1:
-                # probably bad fit
-                # dont apply
+                if abs(xm) > 1 or abs(ym) > 1:
+                    # probably bad fit
+                    # dont apply
+                    final = maxindex
+                else:
+                    final = maxindex + numpy.asarray([ym, xm])
+            except ValueError as error:
+                _logger.debug('Error fitting peak, %s', error)
                 final = maxindex
-            else:
-                final = maxindex + numpy.asarray([ym, xm])
         else:
             final = maxindex
 
