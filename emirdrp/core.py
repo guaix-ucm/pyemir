@@ -25,6 +25,7 @@ from numina.flow.node import IdNode
 from numina.flow.processing import BadPixelCorrector
 from numina.core import BaseRecipe, Product, RecipeResult, DataFrame
 from numina.core.products import QualityControlProduct
+from numina.core.qc import QC
 
 import emirdrp.products as prods
 import emirdrp.ext.gtc
@@ -178,7 +179,7 @@ class EmirRecipe(BaseRecipe):
 
     RecipeResult = EmirRecipeResult
 
-    qc = Product(QualityControlProduct, dest='qc')
+    qc = Product(QualityControlProduct, dest='qc', default=QC.GOOD)
 
     logger = logging.getLogger('numina.recipes.emir')
 
