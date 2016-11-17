@@ -261,8 +261,9 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         )
         # Update NUM-NCOM, sum of individual imagess
         ncom = 0
-        for hdul in data_hdul:
-            ncom += hdul[0].header.get('NUM-NCOM', 1)
+        for img in data_hdul:
+            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
+            ncom += img[0].header.get('NUM-NCOM', 1)
         hdr['NUM-NCOM'] = ncom
         # Update WCS, approximate solution
         hdr['CRPIX1'] += offsetsp[0][0]
@@ -363,6 +364,11 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             len(data_hdul),
             method.__name__
         )
+        hdu.header['history'] = 'Combination time {}'.format(
+            datetime.datetime.utcnow().isoformat()
+        )
+        for img in data_hdul:
+            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
 
         if use_errors:
             varhdu = fits.ImageHDU(sky_data[1], name='VARIANCE')
@@ -389,6 +395,11 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             len(data_hdul),
             method.__name__
         )
+        hdu.header['history'] = 'Combination time {}'.format(
+            datetime.datetime.utcnow().isoformat()
+        )
+        for img in data_hdul:
+            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
 
         msg = "missing pixels, total: {}, fraction: {:3.1f}".format(
             points_no_data,
@@ -485,7 +496,9 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # Update NUM-NCOM, sum of individual frames
         ncom = 0
         for img in imgs:
+            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
             ncom += img[0].header['NUM-NCOM']
+
         hdr['NUM-NCOM'] = ncom
         # Update WCS, approximate solution
         hdr['CRPIX1'] += (refpix_final_xy[0] - refpix_xy_0[0])
