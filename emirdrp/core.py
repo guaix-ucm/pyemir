@@ -185,8 +185,9 @@ class EmirRecipe(BaseRecipe):
 
     datamodel = EmirDataModel()
 
-    def __init__(self, version="1"):
-        super(EmirRecipe, self).__init__(version=version)
+    def save_intermediate_img(self, img, name):
+        if self.intermediate_results:
+            img.writeto(name, clobber=True)
 
     @classmethod
     def types_getter(cls):
