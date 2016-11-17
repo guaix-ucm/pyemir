@@ -180,7 +180,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             box = 50
             self.logger.debug("Reference position is %d  %d", xref_cross + 1, yref_cross + 1)
             self.logger.debug("Reference regions is %d", 2 * box + 1)
-            region = image_box2d(xref_cross, yref_cross, finalshape, box)
+            region = image_box2d(xref_cross, yref_cross, finalshape, (box, box))
             finalshape2, offsetsp2 = self.compute_offset_crosscor(data_arr_r, region, finalshape)
             self.logger.debug("Relative offsetsp (crosscorr) %s", offsetsp2)
             self.logger.info('Shape of resized array (crosscorr) is %s', finalshape2)
@@ -271,7 +271,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # Update NUM-NCOM, sum of individual frames
         ncom = 0
         for hdul in data_hdul:
-            ncom += hdul[0].header['NUM-NCOM']
+            ncom += hdul[0].header.get('NUM-NCOM', 1)
         hdr['NUM-NCOM'] = ncom
         # Update WCS, approximate solution
         hdr['CRPIX1'] += offsetsp[0][0]

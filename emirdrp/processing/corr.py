@@ -26,6 +26,7 @@ from __future__  import print_function
 import numpy
 import scipy.signal
 import numina.array.imsurfit as imsurfit
+import numina.array.utils as utils
 
 
 def standarize(arr):
@@ -108,33 +109,3 @@ def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order='ij'):
             result[idx] = refoff
 
     return result
-
-
-if __name__ == '__main__':
-
-    import scipy.ndimage
-    import numpy.random
-    import numina.array.utils as utils
-
-    def generate_img():
-        result = []
-        shape = (1000, 1000)
-        off = [(500, 500), (480, 490), (505, 500), (500, 500)]
-
-        for idx, o in enumerate(off):
-            data = numpy.zeros(shape) + 1000
-            data[o] = 50000
-            data = scipy.ndimage.gaussian_filter(data, 2.0)
-            data = numpy.random.normal(data, 30.0)
-            result.append(data)
-
-        return result
-
-    arrs = generate_img()
-
-    shape = arrs[0].shape
-    xref_cross = shape[1] // 2
-    yref_cross = shape[0] // 2
-    box = 50
-    region = utils.image_box2d(xref_cross, yref_cross, shape, (box, box))
-    print(offsets_from_crosscor(arrs, region, refine=False))
