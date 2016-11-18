@@ -177,21 +177,27 @@ class BarDetectionRecipe(EmirRecipe):
             arr_deriv_alt = convolve1d(arr_median_alt, ypos3_kernel, axis=0)
 
             positions = []
-            for params in barstab:
-                lbarid = int(params[0])
+            for idx in range(EMIR_NBARS):
+                params_l = barstab[idx]
+                params_r = barstab[idx + EMIR_NBARS]
+                lbarid = int(params_l[0])
                 # CSUPOS for this bar
-                logger.debug('CSUPOS')
+
                 rbarid = lbarid + EMIR_NBARS
-                current_csupos = csupos[lbarid - 1]
-                logger.debug('CSUPOS for bar %d is %f', lbarid, current_csupos)
-                ref_y_coor_virt = params[1] # Do I need to add vec[1]?
-                ref_x_coor_virt = params[2] + current_csupos * params[3]
+                current_csupos_l = csupos[lbarid - 1]
+                current_csupos_r = csupos[rbarid - 1]
+                logger.debug('CSUPOS for bar %d is %f', lbarid, current_csupos_l)
+                logger.debug('CSUPOS for bar %d is %f', rbarid, current_csupos_r)
+                ref_y_coor_virt = params_l[1] # Do I need to add vec[1]?
+                ref_x_l_coor_virt = params_l[3] + current_csupos_l * params_l[2]
+                ref_x_r_coor_virt = params_r[3] + current_csupos_r * params_r[2]
                 # Transform to REAL..
-                ref_x_coor, ref_y_coor = dist.exvp(ref_x_coor_virt, ref_y_coor_virt)
+                ref_x_l_coor, ref_y_l_coor = dist.exvp(ref_x_l_coor_virt, ref_y_coor_virt)
+                ref_x_r_coor, ref_y_r_coor = dist.exvp(ref_x_l_coor_virt, ref_y_coor_virt)
                 # FIXME: check if DTU has to be applied
                 # ref_y_coor = ref_y_coor + vec[1]
 
-                prow = coor_to_pix_1d(ref_y_coor) - 1
+                prow = coor_to_pix_1d(ref_y_l_coor) - 1
                 fits_row = prow + 1 # FITS pixel index
 
                 # A function that returns the center of the bar
@@ -200,19 +206,23 @@ class BarDetectionRecipe(EmirRecipe):
                     # Pixel values are 0-based
                     # return ref_y_coor + vec[1] - 1
                     # FIXME: check if DTU has to be applied
-                    return ref_y_coor - 1
+                    return ref_y_l_coor - 1
 
                 logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
-                logger.debug('reference y virtual position is Y %7.2f', ref_y_coor_virt)
-                logger.debug('reference y position is Y %7.2f', ref_y_coor)
-
-                logger.debug('reference x virtual position is X %7.2f', ref_x_coor_virt)
-                logger.debug('reference x position is X %7.2f', ref_x_coor)
-
+                logger.debug('ref Y virtual position is %7.2f', ref_y_coor_virt)
+                logger.debug('ref X virtual positions are %7.2f %7.2f', ref_x_l_coor_virt, ref_x_r_coor_virt)
+                logger.debug('ref X positions are %7.2f %7.2f', ref_x_l_coor, ref_x_r_coor)
+                logger.debug('ref Y positions are %7.2f %7.2f', ref_y_l_coor, ref_y_r_coor)
                 # if ref_y_coor is outlimits, skip this bar
                 # ref_y_coor is in FITS format
-                if (ref_y_coor >= 2047) or (ref_y_coor <= 1):
+                if (ref_y_l_coor >= 2047) or (ref_y_l_coor <= 1):
                     logger.debug('reference y position is outlimits, skipping')
+                    positions.append([lbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
+                    positions.append([rbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
+                    continue
+
+                if abs(ref_x_l_coor_virt - ref_x_r_coor_virt) < 2:
+                    logger.debug('slit is less than 2 virt pixels, skipping')
                     positions.append([lbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
                     positions.append([rbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
                     continue
