@@ -62,9 +62,6 @@ class TestPointSourceRecipe(EmirRecipe):
     master_flat = MasterIntensityFlatFieldRequirement()
     master_sky = MasterSkyRequirement()
 
-    pinhole_nominal_positions = Requirement(CoordinateList2DType,
-                                            'Nominal positions of the pinholes'
-                                            )
     shift_coordinates = Parameter(True, 'Use header information to'
                                   ' shift the pinhole positions from (0,0) '
                                   'to X_DTU, Y_DTU')
