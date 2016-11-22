@@ -81,8 +81,21 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             elements = subres['elements']
             stareImages.append(elements[key_field])
 
+        naccum = obsres.naccum
+        cls.logger.info('naccum: %d', naccum)
+        if naccum != 1:  # if it is not the first dithering loop
+            cls.logger.info("SEARCHING LATEST RESULT DITHERED_IMAGE TO ACCUMULATE")
+            latest_result = dal.getLastRecipeResult("EMIR", "EMIR", "DITHERED_IMAGE")
+            accum_dither = latest_result['elements']['accum']
+            cls.logger.info("FOUND")
+        else:
+            cls.logger.info("NO ACCUMULATION DITHERED_IMAGE")
+            accum_dither = stareImages[0]
+            
         newOR = ObservationResult()
         newOR.frames = stareImages
+        newOR.naccum = naccum
+        newOR.accum = accum_dither
         # obsres['obresult'] = newOR
         # print('Adding RI parameters ', obsres)
         # newRI = DitheredImageARecipeInput(**obsres)
