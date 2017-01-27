@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -25,7 +25,7 @@ import operator
 import six
 import numpy
 from astropy.io import fits
-from numina.util.sextractor import SExtractor
+from emirdrp.util.sextractor import SExtractor
 
 from .naming import name_skysub_proc
 

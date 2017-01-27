@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -48,10 +48,9 @@ from numina.frame import resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield
 from numina.array import subarray_match
 from numina.array.combine import flatcombine, median, quantileclip
-from numina.util.sextractor import SExtractor
-from numina.util.sextractor import open as sopen
-import numina.util.sexcatalog as sexcatalog
 
+from emirdrp.util.sextractor import SExtractor
+from emirdrp.util.sextractor import open as sopen
 from emirdrp.core import EmirRecipe
 from emirdrp.products import SourcesCatalog
 from emirdrp.instrument.channels import FULL
