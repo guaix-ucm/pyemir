@@ -1,18 +1,23 @@
 language: python
-cache: pip
 sudo: false
 
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy scipy astropy=1.1" COVERAGE=false
+      env: DEPS="numpy scipy astropy=1.1" COVERAGE=true
     - python: "2.7"
-      env: DEPS="numpy scipy astropy"
+      env: DEPS="numpy scipy astropy=1.2"
     - python: "3.5"
       env: DEPS="numpy scipy astropy=1.1"
     - python: "3.5"
-      env: DEPS="numpy scipy astropy"
+      env: DEPS="numpy scipy astropy=1.2"
 
+cache:
+  apt: true
+  pip: true
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/.local
 
 before_install:
   - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi
@@ -33,7 +38,7 @@ install:
     pyyaml matplotlib scikit-image>=0.12
   - source activate testenv
   - pip install sep
-  - pip install pytest-benchmark
+  - pip install pytest-benchmark pytest-cov
   - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
   - pip install photutils
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
@@ -42,8 +47,8 @@ install:
   - python setup.py build_ext --inplace
 
 script: 
-  - py.test emirdrp
-  - if [[ $COVERAGE == true ]]; then coverage run --source emirdrp -m py.test; fi
+  - py.test -s -v emirdrp
+  - if [[ $COVERAGE == true ]]; then py.test emirdrp --cov=emirdrp; fi
 
 after_success:
   - if [[ $COVERAGE == true ]]; then coveralls; fi
