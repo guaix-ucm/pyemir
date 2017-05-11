@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2016 Universidad Complutense de Madrid
+# Copyright 2014-2017 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -371,7 +371,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         hdu = fits.PrimaryHDU(sky_data[0], header=base_header)
 
         self.logger.debug('update created sky image result header')
-        skyid = uuid.uuid1().hex
+        skyid = str(uuid.uuid1())
         hdu.header['UUID'] = skyid
         hdu.header['history'] = "Combined {} images using '{}'".format(
             len(data_hdul),
@@ -402,7 +402,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         points_no_data = (sky_data[2] == 0).sum()
 
         self.logger.debug('update created sky image result header')
-        skyid = uuid.uuid1().hex
+        skyid = str(uuid.uuid1())
         hdu.header['UUID'] = skyid
         hdu.header['history'] = "Combined {} images using '{}'".format(
             len(data_hdul),

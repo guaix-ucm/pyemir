@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -70,7 +70,7 @@ class EMIRImageProduct(DataProductTag, DataFrameType):
             hdulist = newobj.open()
             hdr = hdulist[0].header
             if 'EMIRUUID' not in hdr:
-                hdr['EMIRUUID'] = uuid.uuid1().hex
+                hdr['EMIRUUID'] = str(uuid.uuid1())
         return newobj
 
 
