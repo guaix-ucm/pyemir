@@ -22,8 +22,8 @@
 import uuid
 
 import numpy
-import yaml
 
+from numina.ext.gtc import DF
 from numina.core import DataFrameType, DataProductType
 from numina.core.products import ArrayNType
 from numina.core.products import DataProductTag
@@ -237,7 +237,7 @@ class CoordinateList1DType(CoordinateListNType):
 class CoordinateList2DType(CoordinateListNType):
     def __init__(self, default=None):
         super(CoordinateList2DType, self).__init__(2, default=default)
-
+        self.add_dialect_info('gtc', DF.TYPE_DOUBLE_ARRAY2D)
 
 class MSMPositions(DataProductType):
     def __init__(self):
