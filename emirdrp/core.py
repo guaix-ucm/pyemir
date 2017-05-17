@@ -26,9 +26,9 @@ from numina.flow.processing import BadPixelCorrector
 from numina.core import BaseRecipe, Product, RecipeResult, DataFrame
 from numina.core.products import QualityControlProduct
 from numina.core.qc import QC
+import numina.ext.gtc
 
 import emirdrp.products as prods
-import emirdrp.ext.gtc
 import emirdrp.processing.info
 from emirdrp.processing.datamodel import EmirDataModel
 
@@ -223,7 +223,7 @@ class EmirRecipe(BaseRecipe):
     def init_filters_generic(cls, rinput, getters):
         from numina.flow import SerialFlow
         # with BPM, bias, dark, flat and sky
-        if emirdrp.ext.gtc.RUN_IN_GTC:
+        if numina.ext.gtc.check_gtc():
             cls.logger.debug('running in GTC environment')
         else:
             cls.logger.debug('running outside of GTC environment')

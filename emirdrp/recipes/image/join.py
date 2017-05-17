@@ -35,12 +35,12 @@ from numina.array import resize_arrays, resize_arrays_alt
 from numina.array.utils import coor_to_pix, image_box2d
 from numina.core import ObservationResult
 from numina.flow.processing import SkyCorrector
+import numina.ext.gtc 
 
 from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs_imgs
 from emirdrp.processing.corr import offsets_from_crosscor
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
-from emirdrp.ext.gtc import RUN_IN_GTC
 from emirdrp.processing.combine import segmentation_combined
 import emirdrp.decorators
 
@@ -57,7 +57,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
     @classmethod
     def build_recipe_input(cls, obsres, dal, pipeline='default'):
-        if RUN_IN_GTC:
+        if numina.ext.gtc.check_gtc():
             cls.logger.debug('Using GTC version of build_recipe_input in DitheredImages')
             return cls.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
         else:
