@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -179,7 +179,7 @@ class EmirRecipe(BaseRecipe):
 
     RecipeResult = EmirRecipeResult
 
-    qc = Product(QualityControlProduct, dest='qc', default=QC.GOOD)
+    qc = Product(QualityControlProduct, destination='qc', default=QC.GOOD)
 
     logger = logging.getLogger('numina.recipes.emir')
 
