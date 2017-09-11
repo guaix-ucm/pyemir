@@ -14,8 +14,5 @@ def test_recipes_are_defined():
 
     for pipeval in emir_drp.pipelines.values():
         for key, val in pipeval.recipes.items():
-            recipeClass = import_object(val)
-            assert issubclass(recipeClass, BaseRecipe)
-            # Asume that recipes in emirdrp inherit from EmirRecipe
-            if val.startswith('emirdrp'):
-                assert issubclass(recipeClass, EmirRecipe)
+            recipe = pipeval.get_recipe_object(key)
+            assert isinstance(recipe, BaseRecipe)
