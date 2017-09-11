@@ -202,11 +202,17 @@ class BarDetectionRecipe(EmirRecipe):
 
                 # A function that returns the center of the bar
                 # given its X position
-                def center_of_bar(x):
+                def center_of_bar_l(x):
                     # Pixel values are 0-based
                     # return ref_y_coor + vec[1] - 1
                     # FIXME: check if DTU has to be applied
                     return ref_y_l_coor - 1
+
+                def center_of_bar_r(x):
+                    # Pixel values are 0-based
+                    # return ref_y_coor + vec[1] - 1
+                    # FIXME: check if DTU has to be applied
+                    return ref_y_r_coor - 1
 
                 logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
                 logger.debug('ref Y virtual position is %7.2f', ref_y_coor_virt)
@@ -231,48 +237,29 @@ class BarDetectionRecipe(EmirRecipe):
                 # Dont add +1 to virtual pixels
                 logger.debug('measure left border (%d)', lbarid)
 
-                centery, centery_virt, xpos, xpos_virt, fwhm, st = char_bar_peak_l(arr_deriv,
+                centery, centery_virt, xpos1, xpos1_virt, fwhm, st = char_bar_peak_l(arr_deriv,
                                                                      prow, bstart, bend, threshold,
-                                                                     center_of_bar,
+                                                                     center_of_bar_l,
                                                                      wx=wx, wy=wy, wfit=wfit)
-                xpos1 = xpos
-                insert1 = [lbarid, centery+1, centery_virt, fits_row, xpos+1, xpos_virt, fwhm, st]
+
+                insert1 = [lbarid, centery+1, centery_virt, fits_row, xpos1+1, xpos1_virt, fwhm, st]
                 positions.append(insert1)
 
                 # Right bar
                 # Dont add +1 to virtual pixels
                 logger.debug('measure rigth border (%d)', rbarid)
-                centery, centery_virt, xpos, xpos_virt, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend,
-                                                                                   threshold,
-                                                          center_of_bar, wx=wx, wy=wy, wfit=wfit)
-                insert2 = [rbarid, centery + 1, centery_virt, fits_row, xpos + 1, xpos_virt + 1, fwhm, st]
+                centery, centery_virt, xpos2, xpos2_virt, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend,
+                                                                                     threshold,
+                                                          center_of_bar_l, wx=wx, wy=wy, wfit=wfit)
+                # This centery/centery_virt should be equal to ref_y_coor_virt
+                insert2 = [rbarid, centery + 1, centery_virt, fits_row, xpos2 + 1, xpos2_virt, fwhm, st]
                 positions.append(insert2)
-                xpos2 = xpos
-                #
-                if st == 0:
-                    logger.debug('measure top-bottom borders')
-                    try:
-                        y1, y2, statusy = char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold,
-                                                          wh=35, wfit=wfit)
-                        _, y1_virt = dist.pvex(xpos + 1, y1)
-                        _, y2_virt = dist.pvex(xpos + 1, y2)
-                    except Exception as error:
-                        logger.warning('Error computing height: %s', error)
-                        statusy = 44
 
-                    if statusy in [0, 40]:
-                        # Main border is detected
-                        positions[-1][1] = y2 + 1
-                        positions[-2][1] = y2 + 1
-                        positions[-1][2] = y2_virt
-                        positions[-2][2] = y2_virt
-                    else:
-                        # Update status
-                        positions[-1][-1] = 4
-                        positions[-2][-1] = 4
-                else:
-                    logger.debug('slit is not complete')
-                    y1, y2 = 0, 0
+                # FIXME: hardcoded value
+                y1_virt = ref_y_coor_virt - 16.242
+                y2_virt = ref_y_coor_virt + 16.242
+                y1 = dist.exvp(xpos1_virt + 1, y1_virt + 1)
+                y2 = dist.exvp(xpos2_virt + 1, y2_virt + 1)
 
                 # Update positions
 
