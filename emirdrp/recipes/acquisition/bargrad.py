@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -21,7 +21,6 @@
 
 from __future__ import division
 
-import logging
 
 import numpy
 from numina.array.utils import coor_to_pix_1d, image_box
@@ -34,7 +33,7 @@ from scipy.ndimage.filters import median_filter
 
 from emirdrp.core import EmirRecipe, EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
 from emirdrp.products import CoordinateList2DType
-from emirdrp.products import DataFrameType
+from emirdrp.products import DataFrameType, NominalPositions
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
@@ -57,7 +56,7 @@ class BarDetectionRecipe(EmirRecipe):
     master_flat = MasterIntensityFlatFieldRequirement()
     master_sky = MasterSkyRequirement()
 
-    bars_nominal_positions = Requirement(CoordinateList2DType,
+    bars_nominal_positions = Requirement(NominalPositions,
                                          'Nominal positions of the bars'
                                          )
     median_filter_size = Parameter(5, 'Size of the median box')
@@ -80,10 +79,7 @@ class BarDetectionRecipe(EmirRecipe):
     csusens = Product(ArrayType)
 
     def run(self, rinput):
-
-        logger = logging.getLogger('numina.recipes.emir')
-
-        logger.info('starting processing for bars detection')
+        self.logger.info('starting processing for bars detection')
 
         flow = self.init_filters(rinput)
 
@@ -91,6 +87,8 @@ class BarDetectionRecipe(EmirRecipe):
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
+
+        self.save_intermediate_img(hdulist, 'reduced_image.fits')
 
         try:
             rotang = hdr['ROTANG']
@@ -102,33 +100,68 @@ class BarDetectionRecipe(EmirRecipe):
             csusens = datamodel.get_cs_from_header(hdr)
 
         except KeyError as error:
-            logger.error(error)
+            self.logger.error(error)
             raise RecipeError(error)
 
-        logger.debug('finding bars')
+        self.logger.debug('start finding bars')
+        allpos, slits = self.find_bars(hdulist, rinput, csupos, dtur)
+        self.logger.debug('end finding bars')
+
+        if self.intermediate_results:
+            with open('ds9.reg', 'w') as ds9reg:
+                self.to_ds9_reg(ds9reg, slits)
+
+        result = self.create_result(frame=hdulist,
+                                    slits=slits,
+                                    positions9=allpos[9],
+                                    positions7=allpos[7],
+                                    positions5=allpos[5],
+                                    positions3=allpos[3],
+                                    DTU=dtub,
+                                    ROTANG=rotang,
+                                    TSUTC1=tsutc1,
+                                    csupos=csupos,
+                                    csusens=csusens,
+                                    )
+        return result
+
+    def median_filtering(self, hdulist, rinput):
+
         # Processed array
         arr = hdulist[0].data
 
         # Median filter of processed array (two times)
         mfilter_size = rinput.median_filter_size
 
-        logger.debug('median filtering X, %d columns', mfilter_size)
+        self.logger.debug('median filtering 1')
+        self.logger.debug('median filtering X, %d columns', mfilter_size)
         arr_median = median_filter(arr, size=(1, mfilter_size))
-        logger.debug('median filtering X, %d rows', mfilter_size)
+        self.logger.debug('median filtering X, %d rows', mfilter_size)
         arr_median = median_filter(arr_median, size=(mfilter_size, 1))
+        self.save_intermediate_array(arr_median, 'median_image.fits')
 
         # Median filter of processed array (two times) in the other direction
         # for Y coordinates
-        logger.debug('median filtering Y, %d rows', mfilter_size)
+        self.logger.debug('median filtering 2')
+        self.logger.debug('median filtering Y, %d rows', mfilter_size)
         arr_median_alt = median_filter(arr, size=(mfilter_size, 1))
-        logger.debug('median filtering Y, %d columns', mfilter_size)
+        self.logger.debug('median filtering Y, %d columns', mfilter_size)
         arr_median_alt = median_filter(arr_median_alt, size=(1, mfilter_size))
+        self.save_intermediate_array(arr_median_alt, 'median_image_alt.fits')
+
+        return arr_median, arr_median_alt
+
+    def find_bars(self, hdulist, rinput, csupos, dtur):
+
+        self.logger.debug('filtering image')
+        # Processed array
+        arr_median, arr_median_alt = self.median_filtering(hdulist, rinput)
 
         xfac = dtur[0] / EMIR_PIXSCALE
         yfac = -dtur[1] / EMIR_PIXSCALE
 
         vec = [yfac, xfac]
-        logger.debug('DTU shift is %s', vec)
+        self.logger.debug('DTU shift is %s', vec)
 
         # and the table of approx positions of the slits
         barstab = rinput.bars_nominal_positions
@@ -139,15 +172,15 @@ class BarDetectionRecipe(EmirRecipe):
         # These other parameters cab be tuned also
         bstart = 1
         bend = 2047
-        logger.debug('ignoring columns outside %d - %d',bstart, bend-1)
+        self.logger.debug('ignoring columns outside %d - %d',bstart, bend-1)
 
         # extract a region to average
         wy = (rinput.average_box_row_size // 2)
         wx = (rinput.average_box_col_size // 2)
-        logger.debug('extraction window is %d rows, %d cols',2*wy+1, 2*wx+1)
+        self.logger.debug('extraction window is %d rows, %d cols', 2*wy+1, 2*wx+1)
         # Fit the peak with these points
         wfit = 2 * (rinput.fit_peak_npoints // 2) + 1
-        logger.debug('fit with %d points', wfit)
+        self.logger.debug('fit with %d points', wfit)
 
         # Minimum threshold
         threshold = 5 * EMIR_RON
@@ -159,44 +192,46 @@ class BarDetectionRecipe(EmirRecipe):
         ypos3_kernel = None
         slits = numpy.zeros((EMIR_NBARS, 8), dtype='float')
 
-        logger.info('start finding bars')
+        self.logger.info('find peaks in derivative image')
         for ks in [3, 5, 7, 9]:
-            logger.debug('kernel size is %d', ks)
+            self.logger.debug('kernel size is %d', ks)
             # S and G kernel for derivative
             kw = ks * (ks*ks-1) / 12.0
             coeffs_are = -numpy.arange((1-ks)//2, (ks-1)//2 + 1) / kw
             if ks == 3:
                 ypos3_kernel = coeffs_are
-            logger.debug('kernel weights are %s', coeffs_are)
+            self.logger.debug('kernel weights are %s', coeffs_are)
 
-            logger.debug('derive image in X direction')
+            self.logger.debug('derive image in X direction')
             arr_deriv = convolve1d(arr_median, coeffs_are, axis=-1)
+            self.save_intermediate_array(arr_deriv, 'deriv_image_k%d.fits' % ks)
             # Axis 0 is
             #
-            logger.debug('derive image in Y direction (with kernel=3)')
-            arr_deriv_alt = convolve1d(arr_median_alt, ypos3_kernel, axis=0)
+            # self.logger.debug('derive image in Y direction (with kernel=3)')
+            # arr_deriv_alt = convolve1d(arr_median_alt, ypos3_kernel, axis=0)
 
             positions = []
+            self.logger.info('using bar parameters')
             for idx in range(EMIR_NBARS):
                 params_l = barstab[idx]
                 params_r = barstab[idx + EMIR_NBARS]
                 lbarid = int(params_l[0])
-                # CSUPOS for this bar
 
+                # CSUPOS for this bar
                 rbarid = lbarid + EMIR_NBARS
                 current_csupos_l = csupos[lbarid - 1]
                 current_csupos_r = csupos[rbarid - 1]
-                logger.debug('CSUPOS for bar %d is %f', lbarid, current_csupos_l)
-                logger.debug('CSUPOS for bar %d is %f', rbarid, current_csupos_r)
+                self.logger.debug('CSUPOS for bar %d is %f', lbarid, current_csupos_l)
+                self.logger.debug('CSUPOS for bar %d is %f', rbarid, current_csupos_r)
+
                 ref_y_coor_virt = params_l[1] # Do I need to add vec[1]?
                 ref_x_l_coor_virt = params_l[3] + current_csupos_l * params_l[2]
                 ref_x_r_coor_virt = params_r[3] + current_csupos_r * params_r[2]
                 # Transform to REAL..
                 ref_x_l_coor, ref_y_l_coor = dist.exvp(ref_x_l_coor_virt, ref_y_coor_virt)
-                ref_x_r_coor, ref_y_r_coor = dist.exvp(ref_x_l_coor_virt, ref_y_coor_virt)
+                ref_x_r_coor, ref_y_r_coor = dist.exvp(ref_x_r_coor_virt, ref_y_coor_virt)
                 # FIXME: check if DTU has to be applied
                 # ref_y_coor = ref_y_coor + vec[1]
-
                 prow = coor_to_pix_1d(ref_y_l_coor) - 1
                 fits_row = prow + 1 # FITS pixel index
 
@@ -214,41 +249,47 @@ class BarDetectionRecipe(EmirRecipe):
                     # FIXME: check if DTU has to be applied
                     return ref_y_r_coor - 1
 
-                logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
-                logger.debug('ref Y virtual position is %7.2f', ref_y_coor_virt)
-                logger.debug('ref X virtual positions are %7.2f %7.2f', ref_x_l_coor_virt, ref_x_r_coor_virt)
-                logger.debug('ref X positions are %7.2f %7.2f', ref_x_l_coor, ref_x_r_coor)
-                logger.debug('ref Y positions are %7.2f %7.2f', ref_y_l_coor, ref_y_r_coor)
+                self.logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
+                self.logger.debug('ref Y virtual position is %7.2f', ref_y_coor_virt)
+                self.logger.debug('ref X virtual positions are %7.2f %7.2f', ref_x_l_coor_virt, ref_x_r_coor_virt)
+                self.logger.debug('ref X positions are %7.2f %7.2f', ref_x_l_coor, ref_x_r_coor)
+                self.logger.debug('ref Y positions are %7.2f %7.2f', ref_y_l_coor, ref_y_r_coor)
                 # if ref_y_coor is outlimits, skip this bar
                 # ref_y_coor is in FITS format
                 if (ref_y_l_coor >= 2047) or (ref_y_l_coor <= 1):
-                    logger.debug('reference y position is outlimits, skipping')
+                    self.logger.debug('reference y position is outlimits, skipping')
                     positions.append([lbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
                     positions.append([rbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
                     continue
 
-                if abs(ref_x_l_coor_virt - ref_x_r_coor_virt) < 2:
-                    logger.debug('slit is less than 2 virt pixels, skipping')
+                # minimal width of the slit
+                minwidth = 0.9
+                if abs(ref_x_l_coor_virt - ref_x_r_coor_virt) < minwidth:
+                    self.logger.debug('slit is less than %d virt pixels, skipping', minwidth)
                     positions.append([lbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
                     positions.append([rbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
                     continue
 
                 # Left bar
                 # Dont add +1 to virtual pixels
-                logger.debug('measure left border (%d)', lbarid)
-
+                self.logger.debug('measure left border (%d)', lbarid)
+                regionw = 10
+                bstart1 = coor_to_pix_1d(ref_x_l_coor - regionw)
+                bend1 = coor_to_pix_1d(ref_x_l_coor + regionw) + 1
                 centery, centery_virt, xpos1, xpos1_virt, fwhm, st = char_bar_peak_l(arr_deriv,
-                                                                     prow, bstart, bend, threshold,
+                                                                     prow, bstart1, bend1, threshold,
                                                                      center_of_bar_l,
                                                                      wx=wx, wy=wy, wfit=wfit)
 
-                insert1 = [lbarid, centery+1, centery_virt, fits_row, xpos1+1, xpos1_virt, fwhm, st]
+                insert1 = [lbarid, centery + 1, centery_virt, fits_row, xpos1 + 1, xpos1_virt, fwhm, st]
                 positions.append(insert1)
 
                 # Right bar
                 # Dont add +1 to virtual pixels
-                logger.debug('measure rigth border (%d)', rbarid)
-                centery, centery_virt, xpos2, xpos2_virt, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend,
+                self.logger.debug('measure rigth border (%d)', rbarid)
+                bstart2 = coor_to_pix_1d(ref_x_r_coor - regionw)
+                bend2 = coor_to_pix_1d(ref_x_r_coor + regionw) + 1
+                centery, centery_virt, xpos2, xpos2_virt, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart2, bend2,
                                                                                      threshold,
                                                           center_of_bar_l, wx=wx, wy=wy, wfit=wfit)
                 # This centery/centery_virt should be equal to ref_y_coor_virt
@@ -258,35 +299,52 @@ class BarDetectionRecipe(EmirRecipe):
                 # FIXME: hardcoded value
                 y1_virt = ref_y_coor_virt - 16.242
                 y2_virt = ref_y_coor_virt + 16.242
-                y1 = dist.exvp(xpos1_virt + 1, y1_virt + 1)
-                y2 = dist.exvp(xpos2_virt + 1, y2_virt + 1)
+                _, y1 = dist.exvp(xpos1_virt + 1, y1_virt + 1)
+                _, y2 = dist.exvp(xpos2_virt + 1, y2_virt + 1)
 
                 # Update positions
 
                 msg = 'bar %d, centroid-y %9.4f centroid-y virt %9.4f, ' \
                       'row %d, x-pos %9.4f x-pos virt %9.4f, FWHM %6.3f, status %d'
-                logger.debug(msg, *positions[-2])
-                logger.debug(msg, *positions[-1])
+                self.logger.debug(msg, *positions[-2])
+                self.logger.debug(msg, *positions[-1])
 
                 if ks == 5:
-                    slits[lbarid - 1] = [xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1]
+                    slits[lbarid - 1] = numpy.array([xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1])
                     # FITS coordinates
                     slits[lbarid - 1] += 1.0
-                    logger.debug('inserting bars %d-%d into "slits"', lbarid, rbarid)
+                    self.logger.debug('inserting bars %d-%d into "slits"', lbarid, rbarid)
 
             allpos[ks] = numpy.asarray(positions, dtype='float') # GCS doesn't like lists of lists
 
-        logger.debug('end finding bars')
-        result = self.create_result(frame=hdulist,
-                                    slits=slits,
-                                    positions9=allpos[9],
-                                    positions7=allpos[7],
-                                    positions5=allpos[5],
-                                    positions3=allpos[3],
-                                    DTU=dtub,
-                                    ROTANG=rotang,
-                                    TSUTC1=tsutc1,
-                                    csupos=csupos,
-                                    csusens=csusens,
-                                    )
-        return result
+
+
+        return allpos, slits
+
+    def to_ds9_reg(self, ds9reg, slits):
+        """Transform fiber traces to ds9-region format.
+
+        Parameters
+        ----------
+        ds9reg : BinaryIO
+            Handle to output file name in ds9-region format.
+        """
+
+        # open output file and insert header
+
+        ds9reg.write('# Region file format: DS9 version 4.1\n')
+        ds9reg.write(
+            'global color=green dashlist=8 3 width=1 font="helvetica 10 '
+            'normal roman" select=1 highlite=1 dash=0 fixed=0 edit=1 '
+            'move=1 delete=1 include=1 source=1\n')
+        ds9reg.write('physical\n')
+
+        for idx, slit in enumerate(slits, 1):
+            xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1 = slit
+            xc = 0.5 * (xpos1 + xpos2) + 1
+            yc = 0.5 * (y1 + y2) + 1
+            xd = (xpos2 - xpos1)
+            yd = (y2 - y1)
+            ds9reg.write('box({0},{1},{2},{3},0)\n'.format(xc, yc, xd, yd))
+            ds9reg.write('# text({0},{1}) color=red text={{{2}}}\n'.format(xpos1 - 5, yc, idx))
+            ds9reg.write('# text({0},{1}) color=red text={{{2}}}\n'.format(xpos2 + 5, yc, idx + EMIR_NBARS))

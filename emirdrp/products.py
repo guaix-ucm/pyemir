@@ -239,6 +239,11 @@ class CoordinateList2DType(CoordinateListNType):
         super(CoordinateList2DType, self).__init__(2, default=default)
         self.add_dialect_info('gtc', DF.TYPE_DOUBLE_ARRAY2D)
 
+
+class NominalPositions(DataProductTag, CoordinateList2DType):
+    pass
+
+
 class MSMPositions(DataProductType):
     def __init__(self):
         super(MSMPositions, self).__init__(ptype=list)

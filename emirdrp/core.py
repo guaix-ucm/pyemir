@@ -176,18 +176,24 @@ class EmirRecipeResult(RecipeResult):
 
 
 class EmirRecipe(BaseRecipe):
+    """Base clase for all EMIR Recipes
 
+
+    Attributes
+    ----------
+    qc : QualityControl, result, QC.GOOD by default
+
+    logger :
+         recipe logger
+
+    datamodel : EmirDataModel
+
+    """
     RecipeResult = EmirRecipeResult
 
     qc = Product(QualityControlProduct, destination='qc', default=QC.GOOD)
-
     logger = logging.getLogger('numina.recipes.emir')
-
     datamodel = EmirDataModel()
-
-    def save_intermediate_img(self, img, name):
-        if self.intermediate_results:
-            img.writeto(name, clobber=True)
 
     @classmethod
     def types_getter(cls):
