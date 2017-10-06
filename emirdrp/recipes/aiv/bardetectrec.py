@@ -30,7 +30,9 @@ from numina.core.requirements import ObservationResultRequirement
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
+import emirdrp.datamodel as datamodel
 from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
+from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.products import CoordinateList2DType
 from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBadPixelMaskRequirement
@@ -38,10 +40,8 @@ from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.processing.combine import basic_processing_with_combination
 from .bardetect import find_position
 from .bardetect import locate_bar_l, locate_bar_r
-import emirdrp.processing.datamodel as datamodel
 from .common import normalize_raw
 
 

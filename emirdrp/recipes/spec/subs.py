@@ -21,20 +21,18 @@
 Spectroscopy mode, ABBA
 """
 
-import datetime
-
-import numpy
 import astropy.io.fits as fits
-from numina.core import Product,RecipeError
-from numina.core.requirements import ObservationResultRequirement
-import numina.exceptions
 import numina.core
+import numina.exceptions
+import numpy
 from numina.array import combine
+from numina.core import Product, RecipeError
+from numina.core.requirements import ObservationResultRequirement
 
+import emirdrp.datamodel
 import emirdrp.decorators
-from emirdrp.core import EmirRecipe
 import emirdrp.products as prods
-import emirdrp.processing.datamodel
+from emirdrp.core import EmirRecipe
 from emirdrp.processing.combine import basic_processing
 
 
@@ -124,7 +122,7 @@ class BaseABBARecipe(EmirRecipe):
         hdu = hdulist[0]
         hdu.header['history'] = "Processed ABBA"
         hdu.header['NUM-NCOM'] = (2, 'Number of combined frames')
-        dm = emirdrp.processing.datamodel.EmirDataModel()
+        dm = emirdrp.datamodel.EmirDataModel()
         for img, key in zip(images, ['A', 'B', 'B', 'A']):
             imgid = dm.get_imgid(img)
             hdu.header['history'] = "Image '{}' is '{}'".format(imgid, key)

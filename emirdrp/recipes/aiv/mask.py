@@ -29,7 +29,9 @@ from numina.core import Requirement, Product, Parameter
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 
+import emirdrp.datamodel as datamodel
 from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
+from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.products import CoordinateList2DType
 from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBadPixelMaskRequirement
@@ -37,8 +39,6 @@ from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.processing.combine import basic_processing_with_combination
-import emirdrp.processing.datamodel as datamodel
 from .common import pinhole_char, pinhole_char2
 
 _logger = logging.getLogger('numina.recipes.emir')

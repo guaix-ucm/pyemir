@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -23,7 +23,7 @@ from __future__ import division
 
 import logging
 
-import numina.flow.datamodel
+import numina.datamodel
 import astropy.wcs
 
 import emirdrp.instrument
@@ -32,7 +32,7 @@ import emirdrp.instrument
 _logger = logging.getLogger(__name__)
 
 
-class EmirDataModel(numina.flow.datamodel.DataModel):
+class EmirDataModel(numina.datamodel.DataModel):
     """Data model of EMIR."""
 
     def __init__(self):
@@ -48,6 +48,7 @@ class EmirDataModel(numina.flow.datamodel.DataModel):
             'uuid2': ('EMIRUUID', 'undefined'),
             'skyadd': ('SKYADD', True)
         }
+        super(EmirDataModel, self).__init__('EMIR')
 
     @property
     def shape(self):

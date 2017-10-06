@@ -2,7 +2,7 @@ name: EMIR
 configurations:
   values:
   - 225fcaf2-7f6f-49cc-972a-70fd0aee8e96
-datamodel: emirdrp.processing.datamodel.EmirDataModel
+datamodel: emirdrp.datamodel.EmirDataModel
 modes:
 - description: A recipe that always fails
   key: fail

@@ -21,28 +21,25 @@
 
 from __future__ import division
 
-
 import numpy
-from numina.array.utils import coor_to_pix_1d, image_box
+from numina.array.utils import coor_to_pix_1d
 from numina.core import Requirement, Product, Parameter, RecipeError
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
-from numpy.polynomial.polynomial import polyval
 from scipy.ndimage import convolve1d
 from scipy.ndimage.filters import median_filter
 
+import emirdrp.datamodel as datamodel
+import emirdrp.instrument.distortions as dist
 from emirdrp.core import EmirRecipe, EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
-from emirdrp.products import CoordinateList2DType
+from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.products import DataFrameType, NominalPositions
+from emirdrp.recipes.aiv.bardetect import char_bar_peak_l, char_bar_peak_r
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.processing.combine import basic_processing_with_combination
-import emirdrp.processing.datamodel as datamodel
-import emirdrp.instrument.distortions as dist
-from emirdrp.recipes.aiv.bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
 
 
 class BarDetectionRecipe(EmirRecipe):

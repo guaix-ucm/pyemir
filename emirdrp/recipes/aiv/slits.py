@@ -33,15 +33,15 @@ from scipy import ndimage
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
+import emirdrp.datamodel as datamodel
 from emirdrp.core import EmirRecipe
+from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.processing.combine import basic_processing_with_combination
-import emirdrp.processing.datamodel as datamodel
 from .common import normalize_raw, char_slit
 
 _logger = logging.getLogger('numina.recipes.emir')

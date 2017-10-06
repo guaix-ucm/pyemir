@@ -20,27 +20,27 @@
 """Combination routines"""
 
 from __future__ import division
+
+import datetime
 #
 import logging
 import uuid
-import datetime
 
 import numpy
 from astropy.io import fits
-
 from numina.array import combine
 from numina.array import combine_shape
-#
 
-import emirdrp.processing.datamodel
 from emirdrp.processing.wcs import offsets_from_wcs
+from emirdrp.datamodel import EmirDataModel
+#
 
 
 _logger = logging.getLogger(__name__)
 
 
 def basic_processing(rinput, flow):
-    datamodel = emirdrp.processing.datamodel.EmirDataModel()
+    datamodel = EmirDataModel()
     cdata = []
 
     _logger.info('processing input images')
@@ -74,7 +74,7 @@ def basic_processing_with_combination_frames(frames,
                                              ):
     odata = []
     cdata = []
-    datamodel = emirdrp.processing.datamodel.EmirDataModel()
+    datamodel = datamodel.EmirDataModel()
     try:
         _logger.info('processing input images')
         for frame in frames:
@@ -173,7 +173,7 @@ def basic_processing_with_segmentation(rinput, flow,
 
     odata = []
     cdata = []
-    datamodel = emirdrp.processing.datamodel.EmirDataModel()
+    datamodel = datamodel.EmirDataModel()
     try:
         _logger.info('processing input images')
         for frame in rinput.obresult.images:

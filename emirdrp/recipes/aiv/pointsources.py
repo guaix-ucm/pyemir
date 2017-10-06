@@ -29,24 +29,22 @@ import numpy
 from astropy.convolution import Gaussian2DKernel
 from astropy.stats import gaussian_fwhm_to_sigma
 from numina.array.fwhm import compute_fwhm_2d_simple
+from numina.core import Product, Parameter
 from numina.core import RecipeError
-from numina.core import Requirement, Product, Parameter
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from scipy.spatial import KDTree
 
+import emirdrp.datamodel as datamodel
 from emirdrp.core import EmirRecipe
-from emirdrp.products import CoordinateList2DType
+from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from emirdrp.processing.combine import basic_processing_with_combination
-import emirdrp.processing.datamodel as datamodel
 from .procedures import image_box2d
-
 
 _logger = logging.getLogger('numina.recipes.emir')
 

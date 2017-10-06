@@ -19,19 +19,18 @@
 
 import collections
 import logging
-import numpy
 
-from numina.flow.node import IdNode
-from numina.flow.processing import BadPixelCorrector
+import numina.ext.gtc
+import numpy
 from numina.core import BaseRecipe, Product, RecipeResult, DataFrame
 from numina.core.products import QualityControlProduct
 from numina.core.qc import QC
-import numina.ext.gtc
+from numina.flow.node import IdNode
+from numina.flow.processing import BadPixelCorrector
 
-import emirdrp.products as prods
 import emirdrp.processing.info
-from emirdrp.processing.datamodel import EmirDataModel
-
+import emirdrp.products as prods
+from emirdrp.datamodel import EmirDataModel
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -169,8 +168,7 @@ class EmirRecipeResult(RecipeResult):
             value = values[k]
             # Store for Images..
             if isinstance(value, DataFrame):
-                import emirdrp.processing.datamodel
-                d = emirdrp.processing.datamodel.EmirDataModel()
+                d = EmirDataModel()
                 hdul = value.open()
                 d.add_computation_time(hdul, time1, time2)
 

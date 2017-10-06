@@ -21,22 +21,20 @@
 
 from __future__ import division
 
-
 import numpy
-from numina.array.utils import wc_to_pix_1d, image_box
+from numina.array.utils import wc_to_pix_1d
 from numina.core import Requirement, Product, Parameter, RecipeError
 from numina.core.products import ArrayType
 from numpy.polynomial.polynomial import polyval
 from scipy.ndimage import convolve1d
 from scipy.ndimage.filters import median_filter
 
-from emirdrp.core import EmirRecipe, EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
+import emirdrp.datamodel as datamodel
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
+from emirdrp.core import EmirRecipe, EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
 from emirdrp.processing.combine import basic_processing_with_combination
-
 from emirdrp.recipes.aiv.bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
-import emirdrp.processing.datamodel as datamodel
 
 
 class MaskImagingRecipe(EmirRecipe):
