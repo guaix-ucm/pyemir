@@ -74,7 +74,7 @@ def basic_processing_with_combination_frames(frames,
                                              ):
     odata = []
     cdata = []
-    datamodel = datamodel.EmirDataModel()
+    datamodel = EmirDataModel()
     try:
         _logger.info('processing input images')
         for frame in frames:
@@ -173,7 +173,7 @@ def basic_processing_with_segmentation(rinput, flow,
 
     odata = []
     cdata = []
-    datamodel = datamodel.EmirDataModel()
+    datamodel = EmirDataModel()
     try:
         _logger.info('processing input images')
         for frame in rinput.obresult.images:
