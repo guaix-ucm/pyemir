@@ -1,6 +1,10 @@
 language: python
 sudo: false
 
+env:
+  global:
+    - MPLBACKEND=TkAgg
+
 matrix:
   include:
     - python: "2.7"
@@ -51,6 +55,12 @@ install:
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
+
+before_script:
+  # https://docs.travis-ci.com/user/gui-and-headless-browsers/#Using-xvfb-to-Run-Tests-That-Require-a-GUI
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
 
 script: 
   - py.test -s -v emirdrp
