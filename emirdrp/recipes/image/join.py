@@ -27,7 +27,7 @@ import uuid
 
 import numpy
 from astropy.io import fits
-from numina.core import Product, RecipeError
+from numina.core import Product, RecipeError, Requirement
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
 from numina.array import combine_shape, combine_shapes
@@ -35,7 +35,8 @@ from numina.array import resize_arrays, resize_arrays_alt
 from numina.array.utils import coor_to_pix, image_box2d
 from numina.core import ObservationResult
 from numina.flow.processing import SkyCorrector
-import numina.ext.gtc 
+import numina.ext.gtc
+from numina.core.query import Result
 
 from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs_imgs
 from emirdrp.processing.corr import offsets_from_crosscor
@@ -49,57 +50,64 @@ class JoinDitheredImagesRecipe(EmirRecipe):
     """Combine single exposures obtained in dithered mode"""
 
     obresult = ObservationResultRequirement()
+    accum_in = Requirement(DataFrameType,
+                           description='Accumulated result',
+                           optional=True,
+                           destination='accum',
+                           query_opts=Result('accum', node='prev')
+                           )
     frame = Product(DataFrameType)
     sky = Product(DataFrameType, optional=True)
     #
     # Accumulate Frame results
     accum = Product(DataFrameType, optional=True)
 
-    @classmethod
-    def build_recipe_input(cls, obsres, dal, pipeline='default'):
+    def build_recipe_input(self, obsres, dal, pipeline='default'):
         if numina.ext.gtc.check_gtc():
-            cls.logger.debug('Using GTC version of build_recipe_input in DitheredImages')
-            return cls.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
+            self.logger.debug('Using GTC version of build_recipe_input in DitheredImages')
+            return self.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
         else:
-            return super(JoinDitheredImagesRecipe, cls).build_recipe_input(obsres, dal, pipeline=pipeline)
+            return super(JoinDitheredImagesRecipe, self).build_recipe_input(obsres, dal)
 
-    @classmethod
-    def build_recipe_input_gtc(cls, obsres, dal, pipeline='default'):
-
+    def build_recipe_input_gtc(self, obsres, dal, pipeline='default'):
+        newOR = ObservationResult()
         # FIXME: this method will work only in GTC
         # stareImagesIds = obsres['stareImagesIds']._v
         stareImagesIds = obsres.stareImagesIds
-        cls.logger.info('obsres(%s): %s', type(obsres), dir(obsres))
-        cls.logger.info('STARE IMAGES IDS: %s', stareImagesIds)
+        obsres.children = stareImagesIds
+        self.logger.info('Submode result IDs: %s', obsres.children)
         stareImages = []
         # Field to query the results
         key_field = 'frame'
-        for subresId in stareImagesIds:
+        for subresId in obsres.children:
             subres = dal.getRecipeResult(subresId)
             # This 'frame' is the name of the product in RecipeResult
             # there is also a 'sky' field
             elements = subres['elements']
             stareImages.append(elements[key_field])
+        newOR.frames = stareImages
 
         naccum = obsres.naccum
-        cls.logger.info('naccum: %d', naccum)
+        self.logger.info('naccum: %d', naccum)
+        mode_field = "DITHERED_IMAGE"
+        key_field = 'accum'
         if naccum != 1:  # if it is not the first dithering loop
-            cls.logger.info("SEARCHING LATEST RESULT DITHERED_IMAGE TO ACCUMULATE")
-            latest_result = dal.getLastRecipeResult("EMIR", "EMIR", "DITHERED_IMAGE")
-            accum_dither = latest_result['elements']['accum']
-            cls.logger.info("FOUND")
+            self.logger.info("SEARCHING LATEST RESULT of %s", mode_field)
+            latest_result = dal.getLastRecipeResult("EMIR", "EMIR", mode_field)
+            elements = latest_result['elements']
+            accum_dither = elements[key_field]
+            self.logger.info("FOUND")
         else:
-            cls.logger.info("NO ACCUMULATION DITHERED_IMAGE")
+            self.logger.info("NO ACCUMULATION")
             accum_dither = stareImages[0]
-            
-        newOR = ObservationResult()
-        newOR.frames = stareImages
+
         newOR.naccum = naccum
         newOR.accum = accum_dither
+
         # obsres['obresult'] = newOR
         # print('Adding RI parameters ', obsres)
         # newRI = DitheredImageARecipeInput(**obsres)
-        newRI = cls.create_input(obresult=newOR)
+        newRI = self.create_input(obresult=newOR)
         return newRI
 
     #@emirdrp.decorators.aggregate
@@ -212,8 +220,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         if self.intermediate_results:
             self.logger.debug('save resized intermediate img')
             for idx, arr_r in enumerate(data_arr_sr):
-                img = fits.PrimaryHDU(arr_r)
-                self.save_intermediate_img(img, 'interm_%s.fits' % idx)
+                self.save_intermediate_array(arr_r, 'interm_%s.fits' % idx)
 
         try:
             self.logger.debug("Compute cross-correlation of images")

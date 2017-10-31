@@ -21,10 +21,12 @@
 Stare Image mode of EMIR
 """
 
+import numpy
 import astropy.io.fits as fits
 from numina.array import combine
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
+from numina.core.query import Ignore
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
@@ -45,6 +47,11 @@ class StareImageBaseRecipe(EmirRecipe):
 
     frame = Product(DataFrameType)
 
+    def __init__(self, *args, **kwargs):
+        super(StareImageBaseRecipe, self).__init__(*args, **kwargs)
+        if False:
+            self.query_options['master_sky'] = Ignore()
+
     @emirdrp.decorators.loginfo
     @emirdrp.decorators.timeit
     def run(self, rinput):
@@ -59,8 +66,6 @@ class StareImageBaseRecipe(EmirRecipe):
         )
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
-        # Update SEC to 0
-        hdr['SEC'] = 0
 
         if rinput.master_bpm:
             hdul_bpm = rinput.master_bpm.open()
@@ -75,21 +80,24 @@ class StareImageBaseRecipe(EmirRecipe):
 
         return result
 
+    def set_base_headers(self, hdr):
+        """Set metadata in FITS headers."""
+        hdr = super(StareImageBaseRecipe, self).set_base_headers(hdr)
+        # Update SEC to 0
+        hdr['SEC'] = 0
+        return hdr
+
 
 def generate_bpm_hdu(hdu):
-
     return generate_bpm_data(hdu.data, hdu.header)
 
 
 def generate_empty_bpm_hdu(hdu):
-    import numpy
-
     data = numpy.zeros_like(hdu.data, dtype='uint8')
     return generate_bpm_data(data)
 
 
 def generate_bpm_data(data, header=None):
-
     hdu_bpm = fits.ImageHDU(
         data,
         header=header
