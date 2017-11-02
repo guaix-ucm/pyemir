@@ -39,7 +39,7 @@ import numina.ext.gtc
 from numina.core.query import Result
 
 from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs_imgs
-from emirdrp.processing.corr import offsets_from_crosscor
+from emirdrp.processing.corr import offsets_from_crosscor, offsets_from_crosscor_regions
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.processing.combine import segmentation_combined
@@ -224,17 +224,10 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         try:
             self.logger.debug("Compute cross-correlation of images")
-            # A square of 100x100 in the center of the image
-            xref_cross = finalshape[1] // 2
-            yref_cross = finalshape[0] // 2
-            #
-            # xref_cross = 1100
-            # yref_cross = 1050
-            box = 200
-            self.logger.debug("Reference position is (x,y) %d  %d", xref_cross + 1, yref_cross + 1)
-            self.logger.debug("Reference regions size is %d", 2 * box + 1)
-            region = image_box2d(xref_cross, yref_cross, finalshape, (box, box))
-            finalshape2, offsetsp2 = self.compute_offset_crosscor(data_arr_sr, region, finalshape, refine=True)
+            regions = self.compute_regions(finalshape, box=200, corners=True)
+
+            finalshape2, offsetsp2 = self.compute_offset_crosscor_regions(
+                data_arr_sr, regions, finalshape, refine=True, tol=1)
             self.logger.debug("Relative offsetsp (crosscorr) %s", offsetsp2)
             self.logger.info('Shape of resized array (crosscorr) is %s', finalshape2)
         except Exception as error:
@@ -326,6 +319,20 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
 
         return finalshape, offsetsp
+
+
+    def compute_offset_crosscor_regions(self, arrs, regions, subpixshape, refine=False, tol=0.5):
+        offsets_xy = offsets_from_crosscor_regions(arrs, regions, refine=refine, order='xy', tol=tol)
+        self.logger.debug("offsets_xy cross-corr %s", offsets_xy)
+        # Offsets in numpy order, swaping
+        offsets_fc = offsets_xy[:, ::-1]
+        offsets_fc_t = numpy.round(offsets_fc).astype('int')
+
+        self.logger.info('Computing relative offsets from cross-corr')
+        finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
+
+        return finalshape, offsetsp
+
 
     def compute_shapes_wcs(self, imgs):
 
@@ -533,3 +540,27 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             hdulist = fits.HDUList([hdu])
 
         return hdulist
+
+    def compute_regions(self, finalshape, box=200, corners=True):
+        regions = []
+        # A square of 100x100 in the center of the image
+        xref_cross = finalshape[1] // 2
+        yref_cross = finalshape[0] // 2
+        #
+        self.logger.debug("Reference position is (x,y) %d  %d", xref_cross + 1, yref_cross + 1)
+        self.logger.debug("Reference regions size is %d", 2 * box + 1)
+        region = image_box2d(xref_cross, yref_cross, finalshape, (box, box))
+        regions.append(regions)
+        # corners
+        if corners:
+            xref_c = finalshape[1] // 4
+            yref_c = finalshape[0] // 4
+
+            for xi in [xref_c, 3 * xref_c]:
+                for yi in [yref_c, 3 * yref_c]:
+                    self.logger.debug("Reference position is (x,y) %d  %d", xi + 1, yi + 1)
+                    self.logger.debug("Reference regions size is %d", 2 * box + 1)
+                    region = image_box2d(xi, yi, finalshape, (box, box))
+                    regions.append(region)
+
+        return regions

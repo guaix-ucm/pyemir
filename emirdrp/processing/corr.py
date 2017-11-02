@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -25,6 +25,7 @@ from __future__  import print_function
 import logging
 
 import numpy
+import numpy.linalg
 import scipy.signal
 import numina.array.imsurfit as imsurfit
 import numina.array.utils as utils
@@ -60,7 +61,7 @@ def filter_region(arr, level=4):
     median = numpy.median(arr)
     std = s.robust_std(arr, debug=False)
 
-    return numpy.where(arr >=  median + level * std, arr, 0.0)
+    return numpy.where(arr >= median + level * std, arr, 0.0)
 
 
 def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order='ij'):
@@ -71,6 +72,49 @@ def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order='ij'):
 
     result = numpy.zeros((len(arrs), 2))
     ref_array = arrs[0]
+
+    for idx, arr in enumerate(arrs[1:], 1):
+
+        refoff = offset_from_crosscor(ref_array, arr, region,
+                                      refine=refine,
+                                      refine_box=refine_box,
+                                      order=order
+                                      )
+        result[idx] = refoff
+
+    return result
+
+
+def offsets_from_crosscor_regions(arrs, regions, refine=True, refine_box=3, order='ij', tol=0.5):
+    # import astropy.io.fits as fits
+    # allowed values for order
+    if order not in ['xy', 'ij']:
+        raise ValueError("'order' must be either 'ij' or 'xy'")
+
+    result = numpy.zeros((len(arrs), 2))
+    ref_array = arrs[0]
+
+    for idx, arr in enumerate(arrs[1:], 1):
+
+        refoff = offset_from_crosscor_regions(
+            ref_array, arr, regions,
+            refine=refine,
+            refine_box=refine_box,
+            order=order,
+            tol=tol
+        )
+        result[idx] = refoff
+
+    return result
+
+
+def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order='ij'):
+    # import astropy.io.fits as fits
+    # allowed values for order
+    if order not in ['xy', 'ij']:
+        raise ValueError("'order' must be either 'ij' or 'xy'")
+
+    ref_array = arr0
     shape = ref_array.shape
     data1 = filter_region(ref_array[region])
     d1 = standarize(data1)
@@ -79,65 +123,88 @@ def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order='ij'):
     dcenter = numpy.asarray(d1.shape) // 2
     # Correlate
 
-    for idx, arr in enumerate(arrs[1:], 1):
+    data2 = filter_region(arr1[region])
+    d2 = standarize(data2)
+    # fits.writeto('cutout_%d.fits' % idx, d2, clobber=True)
+    #corr = scipy.signal.correlate2d(d1, d2, mode='same', boundary='fill', fillvalue=fillvalue)
+    # correlation is equivalent to convolution with inverted image
+    corr = scipy.signal.fftconvolve(d1, d2[::-1, ::-1], mode='same')
+    # normalize
+    corr /= corr.max()
+    # fits.writeto('corr_%d.fits' % idx, corr, clobber=True)
+    # fits.writeto('corr2_%d.fits' % idx, corr2 / corr2.max(), clobber=True)
+    # Find peak in cross-cor
+    maxindex = numpy.unravel_index(corr.argmax(), corr.shape)
 
-        data2 = filter_region(arr[region])
-        d2 = standarize(data2)
-        # fits.writeto('cutout_%d.fits' % idx, d2, clobber=True)
-        #corr = scipy.signal.correlate2d(d1, d2, mode='same', boundary='fill', fillvalue=fillvalue)
-        # correlation is equivalent to convolution with inverted image
-        corr = scipy.signal.fftconvolve(d1, d2[::-1, ::-1], mode='same')
-        # normalize
-        corr /= corr.max()
-        # fits.writeto('corr_%d.fits' % idx, corr, clobber=True)
-        # fits.writeto('corr2_%d.fits' % idx, corr2 / corr2.max(), clobber=True)
-        # Find peak in cross-cor
-        maxindex = numpy.unravel_index(corr.argmax(), corr.shape)
-        # Check the peak is above n times the background
-        median_corr = numpy.median(corr)
-        std_corr = numpy.std(corr)
-        peakvalue = corr[maxindex]
-        threshold = median_corr + 5 * std_corr
-        _logger.debug('The peak value is %f, threshold %f', peakvalue, threshold)
-        if peakvalue < threshold:
-            # FIXME: No peak for fitting
-            continue
-        baseoff = dcenter - numpy.asarray(maxindex)
-        # Pixel (0,0) in reference corresponds to baseoff in image
-        # print("Pixel (0,0) in reference corresponds to %s in image" % baseoff)
+    # Check the peak is above n times the background
+    median_corr = numpy.median(corr)
+    std_corr = numpy.std(corr)
+    peakvalue = corr[maxindex]
+    threshold = median_corr + 5 * std_corr
+    _logger.debug('The peak value is %f, threshold %f', peakvalue, threshold)
+    if peakvalue < threshold:
+        raise ValueError('Peak below threshold')
 
-        if refine:
-            # Refine to subpixel
-            # Fit a 2D surface to the peak of the crosscorr
-            region_ref = utils.image_box(maxindex, shape, box=(refine_box, refine_box))
+    #baseoff = dcenter - numpy.asarray(maxindex)
+    # Pixel (0,0) in reference corresponds to baseoff in image
+    # print("Pixel (0,0) in reference corresponds to %s in image" % baseoff)
 
-            coeffs, = imsurfit.imsurfit(corr[region_ref], order=2)
-            # coefss are a + b *x + c * y + d*x**2 + e * x* y + f * y**2
+    if refine:
+        # Refine to subpixel
+        # Fit a 2D surface to the peak of the crosscorr
+        region_ref = utils.image_box(maxindex, shape, box=(refine_box, refine_box))
 
-            try:
-                # get peak from coeffs
-                xm, ym = vertex_of_quadratic(coeffs)
-                # xm ym are offsets
+        coeffs, = imsurfit.imsurfit(corr[region_ref], order=2)
+        # coefss are a + b *x + c * y + d*x**2 + e * x* y + f * y**2
 
-                if abs(xm) > 1 or abs(ym) > 1:
-                    # probably bad fit
-                    # dont apply
-                    final = maxindex
-                else:
-                    final = maxindex + numpy.asarray([ym, xm])
-            except ValueError as error:
-                _logger.debug('Error fitting peak, %s', error)
+        try:
+            # get peak from coeffs
+            xm, ym = vertex_of_quadratic(coeffs)
+            # xm ym are offsets
+
+            if abs(xm) > 1 or abs(ym) > 1:
+                # probably bad fit
+                # dont apply
                 final = maxindex
-        else:
+            else:
+                final = maxindex + numpy.asarray([ym, xm])
+        except ValueError as error:
+            _logger.debug('Error fitting peak, %s', error)
             final = maxindex
+    else:
+        final = maxindex
 
-        refoff = dcenter - final
-        # Pixel (0,0) in reference corresponds to baseoff in image
-        # print("Pixel (0,0) in reference corresponds to %s in image" % refoff)
-        # result xy
-        if order == 'xy':
-            result[idx] = refoff[::-1]
-        else:
-            result[idx] = refoff
+    refoff = dcenter - final
+    # Pixel (0,0) in reference corresponds to baseoff in image
+    # print("Pixel (0,0) in reference corresponds to %s in image" % refoff)
+    # result xy
+    if order == 'xy':
+        return refoff[::-1]
+    else:
+        return refoff
 
-    return result
+
+def offset_from_crosscor_regions(arr0, arr1, regions, refine=True, refine_box=3, order='ij', tol=0.5):
+
+    values = []
+    for region in regions:
+        try:
+            res = offset_from_crosscor(arr0, arr1, region, refine=refine, refine_box=refine_box,
+                                       order=order)
+            values.append(res)
+        except ValueError as error:
+            print('error in offset_from_crosscor_regions', error)
+
+    if len(values) == 0:
+        raise ValueError('No measurements to compute offset')
+
+    values = numpy.array(values)
+    med_c = numpy.median(values)
+    dis = numpy.linalg.norm(values - med_c, axis=1)
+    # filter values with dis > tol
+    mask = dis <= tol
+    # Compute mean
+    if numpy.any(mask):
+        return values[mask].mean(axis=0)
+    else:
+        raise ValueError('No measurements within tolerance')
