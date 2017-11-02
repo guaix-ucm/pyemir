@@ -189,17 +189,19 @@ def offset_from_crosscor_regions(arr0, arr1, regions, refine=True, refine_box=3,
     values = []
     for region in regions:
         try:
-            res = offset_from_crosscor(arr0, arr1, region, refine=refine, refine_box=refine_box,
+            res = offset_from_crosscor(arr0, arr1, region,
+                                       refine=refine,
+                                       refine_box=refine_box,
                                        order=order)
             values.append(res)
         except ValueError as error:
             print('error in offset_from_crosscor_regions', error)
 
     if len(values) == 0:
-        raise ValueError('No measurements to compute offset')
-
+        raise ValueError('No measurements to compute offset in any region')
     values = numpy.array(values)
-    med_c = numpy.median(values)
+    med_c = numpy.median(values, axis=0)
+
     dis = numpy.linalg.norm(values - med_c, axis=1)
     # filter values with dis > tol
     mask = dis <= tol
@@ -207,4 +209,4 @@ def offset_from_crosscor_regions(arr0, arr1, regions, refine=True, refine_box=3,
     if numpy.any(mask):
         return values[mask].mean(axis=0)
     else:
-        raise ValueError('No measurements within tolerance')
+        raise ValueError('No measurements within tolerance in any region')

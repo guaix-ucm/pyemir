@@ -261,10 +261,10 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         self.logger.debug('update result header')
         hdr = hdu.header
         self.set_base_headers(hdr)
-        hdr['IMGOBBL'] = 0
+
         hdr['TSUTC2'] = data_hdul[-1][0].header['TSUTC2']
         # Update obsmode in header
-        hdr['OBSMODE'] = 'DITHERED_IMAGE'
+
         hdu.header['history'] = "Combined %d images using '%s'" % (
             len(data_hdul),
             method.__name__
@@ -294,6 +294,13 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         self.logger.info('end of dither recipe')
         return result
 
+    def set_base_headers(self, hdr):
+        """Set metadata in FITS headers."""
+        hdr = super(JoinDitheredImagesRecipe, self).set_base_headers(hdr)
+        hdr['IMGOBBL'] = 0
+        hdr['OBSMODE'] = 'DITHERED_IMAGE'
+        return hdr
+
     def compute_offset_wcs_imgs(self, imgs, baseshape, subpixshape):
 
         refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
@@ -320,9 +327,11 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         return finalshape, offsetsp
 
-
     def compute_offset_crosscor_regions(self, arrs, regions, subpixshape, refine=False, tol=0.5):
-        offsets_xy = offsets_from_crosscor_regions(arrs, regions, refine=refine, order='xy', tol=tol)
+        offsets_xy = offsets_from_crosscor_regions(
+            arrs, regions,
+            refine=refine, order='xy', tol=tol
+        )
         self.logger.debug("offsets_xy cross-corr %s", offsets_xy)
         # Offsets in numpy order, swaping
         offsets_fc = offsets_xy[:, ::-1]
@@ -550,7 +559,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         self.logger.debug("Reference position is (x,y) %d  %d", xref_cross + 1, yref_cross + 1)
         self.logger.debug("Reference regions size is %d", 2 * box + 1)
         region = image_box2d(xref_cross, yref_cross, finalshape, (box, box))
-        regions.append(regions)
+        regions.append(region)
         # corners
         if corners:
             xref_c = finalshape[1] // 4
