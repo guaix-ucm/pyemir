@@ -199,7 +199,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         self.logger.info('Computing offsets from WCS information')
 
-        finalshape, offsetsp, refpix = self.compute_offset_wcs_imgs(
+        finalshape, offsetsp, refpix, offset_xy0 = self.compute_offset_wcs_imgs(
             data_hdul_s,
             baseshape,
             subpixshape
@@ -222,16 +222,45 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             for idx, arr_r in enumerate(data_arr_sr):
                 self.save_intermediate_array(arr_r, 'interm_%s.fits' % idx)
 
-        try:
-            self.logger.debug("Compute cross-correlation of images")
-            regions = self.compute_regions(finalshape, box=200, corners=True)
+        compute_cross_offsets = True
+        if compute_cross_offsets:
+            try:
+                self.logger.debug("Compute cross-correlation of images")
+                regions = self.compute_regions(finalshape, box=200, corners=True)
 
-            finalshape2, offsetsp2 = self.compute_offset_crosscor_regions(
-                data_arr_sr, regions, finalshape, refine=True, tol=1)
-            self.logger.debug("Relative offsetsp (crosscorr) %s", offsetsp2)
-            self.logger.info('Shape of resized array (crosscorr) is %s', finalshape2)
-        except Exception as error:
-            self.logger.warning('Error during cross-correlation, %s', error)
+                offsets_xy_c = self.compute_offset_xy_crosscor_regions(
+                    data_arr_sr, regions, refine=True, tol=1
+                )
+    #
+                # Combined offsets
+                # Offsets in numpy order, swaping
+                offsets_xy_t = offset_xy0 - offsets_xy_c
+                offsets_fc = offsets_xy_t[:, ::-1]
+                offsets_fc_t = numpy.round(offsets_fc).astype('int')
+                self.logger.debug('Total offsets: %s', offsets_xy_t)
+                self.logger.info('Computing relative offsets from cross-corr')
+                finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
+    #
+                self.logger.debug("Relative offsetsp (crosscorr) %s", offsetsp)
+                self.logger.info('Shape of resized array (crosscorr) is %s', finalshape)
+
+                # Resizing target imgs
+                self.logger.debug("Resize to final offsets")
+                data_arr_sr, regions = resize_arrays(
+                    [m[0].data for m in data_hdul_s],
+                    subpixshape,
+                    offsetsp,
+                    finalshape,
+                    fill=1
+                )
+
+                if self.intermediate_results:
+                    self.logger.debug('save resized intermediate2 img')
+                    for idx, arr_r in enumerate(data_arr_sr):
+                        self.save_intermediate_array(arr_r, 'interm2_%s.fits' % idx)
+
+            except Exception as error:
+                self.logger.warning('Error during cross-correlation, %s', error)
 
         if has_num_ext:
             self.logger.debug('Using NUM extension')
@@ -313,7 +342,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         self.logger.info('Computing relative offsets')
         finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
 
-        return finalshape, offsetsp, refpix
+        return finalshape, offsetsp, refpix, offsets_xy
 
     def compute_offset_crosscor(self, arrs, region, subpixshape, refine=False):
         offsets_xy = offsets_from_crosscor(arrs, region, refine=refine, order='xy')
@@ -325,7 +354,16 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         self.logger.info('Computing relative offsets from cross-corr')
         finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
 
-        return finalshape, offsetsp
+        return finalshape, offsetsp, offsets_xy
+
+    def compute_offset_xy_crosscor_regions(self, arrs, regions, refine=False, tol=0.5):
+        offsets_xy = offsets_from_crosscor_regions(
+            arrs, regions,
+            refine=refine, order='xy', tol=tol
+        )
+        self.logger.debug("offsets_xy cross-corr %s", offsets_xy)
+        # Offsets in numpy order, swaping
+        return offsets_xy
 
     def compute_offset_crosscor_regions(self, arrs, regions, subpixshape, refine=False, tol=0.5):
         offsets_xy = offsets_from_crosscor_regions(
@@ -340,7 +378,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         self.logger.info('Computing relative offsets from cross-corr')
         finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
 
-        return finalshape, offsetsp
+        return finalshape, offsetsp, offsets_xy
 
 
     def compute_shapes_wcs(self, imgs):
