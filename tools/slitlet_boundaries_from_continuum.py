@@ -492,17 +492,21 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser()
+
+    # positional arguments
     parser.add_argument("filename",
                         help="FITS file or txt file with list of FITS files",
                         type=argparse.FileType('r'))
-    parser.add_argument("grism",
+    parser.add_argument("--grism", required=True,
                         help="Grism name",
                         choices=EMIR_VALID_GRISMS)
-    parser.add_argument("filter",
+    parser.add_argument("--filter", required=True,
                         help="Filter name",
                         choices=EMIR_VALID_FILTERS)
-    parser.add_argument("tuple_slit_numbers",
+    parser.add_argument("--tuple_slit_numbers", required=True,
                         help="Tuple n1[,n2[,step]] to define slitlet numbers")
+
+    # optional arguments
     parser.add_argument("--first_time",
                         help="Generate new bounddict json file",
                         action="store_true")
@@ -514,6 +518,7 @@ def main(args=None):
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
+
     args = parser.parse_args()
 
     if args.echo:
