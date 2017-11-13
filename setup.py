@@ -42,6 +42,8 @@ setup(name='pyemir',
                   'tools.display_slitlet_arrangement:main',
               'pyemir_slitlet_boundaries_from_continuum = ' +
                   'tools.slitlet_boundaries_from_continuum:main',
+              'pyemir_overplot_bounddict = ' +
+                  'tools.overplot_bounddict:main',
               ],
       },
       classifiers=[
