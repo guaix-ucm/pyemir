@@ -38,8 +38,10 @@ setup(name='pyemir',
               'EMIR = emirdrp.loader:load_drp',
           ],
           'console_scripts': [
+              'pyemir_display_slitlet_arrangement = ' +
+                  'tools.display_slitlet_arrangement:main',
               'pyemir_slitlet_boundaries_from_continuum = ' +
-                  'tools.slitlet_boundaries_from_continuum:main'
+                  'tools.slitlet_boundaries_from_continuum:main',
               ],
       },
       classifiers=[
