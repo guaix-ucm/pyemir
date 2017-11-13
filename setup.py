@@ -33,11 +33,15 @@ setup(name='pyemir',
                         'matplotlib', 'six', 'photutils>=0.2',
                         'sep>0.5', 'scikit-image>=0.11'],
       zip_safe=False,
-      entry_points = {
-        'numina.pipeline.1': [
-            'EMIR = emirdrp.loader:load_drp',
-            ],
-        },
+      entry_points={
+          'numina.pipeline.1': [
+              'EMIR = emirdrp.loader:load_drp',
+          ],
+          'console_scripts': [
+              'pyemir_slitlet_boundaries_from_continuum = ' +
+                  'tools.slitlet_boundaries_from_continuum:main'
+              ],
+      },
       classifiers=[
                    "Programming Language :: Python :: 2.7",
                    'Development Status :: 3 - Alpha',

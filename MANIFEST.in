@@ -6,4 +6,5 @@ include emirdrp/instrument/*.txt
 include emirdrp/drp.yaml
 include emirdrp/simulation/*.dat
 recursive-include doc *
+include tools/*.py
 
