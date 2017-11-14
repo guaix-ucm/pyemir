@@ -95,22 +95,33 @@ class SlitletLimits(object):
                 raise ValueError("islitlet=" + str(islitlet) +
                                  " is outside valid range for grism " +
                                  str(grism) + " and filter " + str(spfilter))
+        elif grism == "H" and spfilter == "H":
+            if islitlet < 2 or islitlet > 54:
+                raise ValueError("islitlet=" + str(islitlet) +
+                                 " is outside valid range for grism " +
+                                 str(grism) + " and filter " + str(spfilter))
         else:
             raise ValueError("Minimum and maximum islitlet still undefined "
                              "for grism " + str(grism) +
                              " and filter " + str(spfilter))
 
         # expected boundaries of the rectangle enclosing the 2D image
+        coeff_bb_ns1 =  [-8.03677111e+01, 3.98169266e+01, -7.77949391e-02, \
+             9.00823598e-04]
+        delta_bb_ns2 = 84
+        # offset measured overplotting ds9_bounddict.reg (created with the
+        # script fit_boundaries) corresponding to grism J and filter J
+        # over the same slitlet configuration with the corresponding grism
+        # and filter setting
         if grism == "J" and spfilter == "J":
-            poly_bb_ns1 = np.polynomial.Polynomial(
-                [-8.03677111e+01,
-                 3.98169266e+01,
-                 -7.77949391e-02,
-                 9.00823598e-04])
-            delta_bb_ns2 = 84
+            offset_with_J_J = 0
+        elif grism == "H" and spfilter == "H":
+            offset_with_J_J = 3.0
         else:
             raise ValueError("Boundaries still undefined for grism " +
                              str(grism) + " and filter " + str(spfilter))
+        coeff_bb_ns1[0] += offset_with_J_J
+        poly_bb_ns1 = np.polynomial.Polynomial(coeff_bb_ns1)
         self.bb_nc1_orig = 1
         self.bb_nc2_orig = EMIR_NAXIS1
 
@@ -137,6 +148,11 @@ class SlitletLimits(object):
             if islitlet == 54:
                 self.xmin_upper_boundary_fit = 400
                 self.xmax_upper_boundary_fit = 1750
+        elif grism == "H" and spfilter == "H":
+            self.deg_boundary = 5
+            if islitlet == 54:
+                self.xmin_upper_boundary_fit = 600
+                self.xmax_upper_boundary_fit = 1600
         else:
             raise ValueError("Ranges to fit boundaries still undefined "
                              "for grism " + str(grism) +
