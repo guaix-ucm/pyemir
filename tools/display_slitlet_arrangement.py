@@ -18,6 +18,7 @@ from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
 def display_slitlet_arrangement(fileobj,
                                 bbox=None,
+                                adjust=None,
                                 geometry=None,
                                 debugplot=0):
     """Display slitlet arrangment from CSUP keywords in FITS header.
@@ -28,6 +29,9 @@ def display_slitlet_arrangement(fileobj,
         FITS file object.
     bbox : tuple of 4 floats
         If not None, values for xmin, xmax, ymin and ymax.
+    adjust : bool
+        Adjust X range according to minimum and maximum csu_bar_left
+        and csu_bar_right (note that this option is overriden by 'bbox')
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
@@ -109,7 +113,17 @@ def display_slitlet_arrangement(fileobj,
             mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         ax = fig.add_subplot(111)
         if bbox is None:
-            ax.set_xlim([0., 341.5])
+            if adjust:
+                xmin = min(csu_config.csu_bar_left)
+                xmax = max(csu_config.csu_bar_right)
+                dx = xmax - xmin
+                if dx == 0:
+                    dx = 1
+                xmin -= dx/20
+                xmax += dx/20
+                ax.set_xlim([xmin, xmax])
+            else:
+                ax.set_xlim([0., 341.5])
             ax.set_ylim([0, 56])
         else:
             ax.set_xlim([bbox[0], bbox[1]])
@@ -146,10 +160,15 @@ def main(args=None):
 
     # optional arguments
     parser.add_argument("--bbox",
-                        help="bounding box tuple xmin,xmax,ymin,"
-                             "ymax indicating plot limits")
+                        help="Bounding box tuple xmin,xmax,ymin,ymax "
+                             "indicating plot limits")
+    parser.add_argument("--adjust",
+                        help="Adjust X range according to minimum and maximum"
+                             " csu_bar_left and csu_bar_right (note that this "
+                             "option is overriden by --bbox",
+                        action='store_true')
     parser.add_argument("--geometry",
-                        help="tuple x,y,dx,dy",
+                        help="Tuple x,y,dx,dy indicating window geometry",
                         default="0,0,640,480")
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"
@@ -216,6 +235,7 @@ def main(args=None):
         csu_bar_left[ifile, :], csu_bar_right[ifile, :], \
         csu_bar_slit_center[ifile, :], csu_bar_slit_width[ifile, :] = \
             display_slitlet_arrangement(fileobj, bbox=bbox,
+                                        adjust=args.adjust,
                                         geometry=geometry,
                                         debugplot=args.debugplot)
 
