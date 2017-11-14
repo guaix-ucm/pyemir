@@ -939,7 +939,7 @@ def bound_params_from_dict(bound_param_dict):
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='fit_boundaries')
+    parser = argparse.ArgumentParser()
 
     # positional arguments
     parser.add_argument("bounddict",

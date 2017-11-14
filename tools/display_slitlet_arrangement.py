@@ -149,7 +149,7 @@ def display_slitlet_arrangement(fileobj,
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='display_slitlet_arrangement')
+    parser = argparse.ArgumentParser()
 
     # positional arguments
     parser.add_argument("filename",

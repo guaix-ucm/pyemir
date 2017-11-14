@@ -82,7 +82,7 @@ def get_boundaries(bounddict_file, slitlet_number):
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='overplot_bounddict')
+    parser = argparse.ArgumentParser()
 
     # positional arguments
     parser.add_argument("fitsfile",
