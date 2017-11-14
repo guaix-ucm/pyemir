@@ -8,19 +8,19 @@ env:
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy scipy astropy=1.1 photutils=0.3.1" COVERAGE=true
+      env: DEPS="numpy scipy astropy=1.1" COVERAGE=true PHOTUTILS="0.3.2"
     - python: "2.7"
-      env: DEPS="numpy scipy astropy=1.3 photutils=0.3.1"
+      env: DEPS="numpy scipy astropy=1.3" PHOTUTILS="0.3.2"
     - python: "2.7"
-      env: DEPS="numpy scipy astropy=2.0 photutils"
+      env: DEPS="numpy scipy astropy=2.0" PHOTUTILS="0.4"
     - python: "3.5"
-      env: DEPS="numpy scipy astropy=1.3 photutils=0.3.1"
+      env: DEPS="numpy scipy astropy=1.3" PHOTUTILS="0.3.2"
     - python: "3.5"
-      env: DEPS="numpy scipy astropy=2.0 photutils"
+      env: DEPS="numpy scipy astropy=2.0" PHOTUTILS="0.4"
     - python: "3.6"
-      env: DEPS="numpy scipy astropy=1.3 photutils=0.3.1"
+      env: DEPS="numpy scipy astropy=1.3" PHOTUTILS="0.3.2"
     - python: "3.6"
-      env: DEPS="numpy scipy astropy=2.0 photutils"
+      env: DEPS="numpy scipy astropy=2.0" PHOTUTILS="0.4"
 
 cache:
   apt: true
@@ -47,10 +47,10 @@ install:
     $DEPS pip pytest setuptools Cython six>=1.7 
     pyyaml matplotlib scikit-image>=0.12
   - source activate testenv
+  - conda install --yes -c astropy photutils=$PHOTUTILS
   - pip install sep
   - pip install pytest-benchmark pytest-cov
   - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
-  # - pip install photutils
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
   # Build in place so we can run tests
