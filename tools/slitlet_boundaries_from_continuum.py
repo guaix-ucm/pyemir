@@ -100,6 +100,11 @@ class SlitletLimits(object):
                 raise ValueError("islitlet=" + str(islitlet) +
                                  " is outside valid range for grism " +
                                  str(grism) + " and filter " + str(spfilter))
+        elif grism == "K" and spfilter == "Ksp":
+            if islitlet < 2 or islitlet > 54:
+                raise ValueError("islitlet=" + str(islitlet) +
+                                 " is outside valid range for grism " +
+                                 str(grism) + " and filter " + str(spfilter))
         else:
             raise ValueError("Minimum and maximum islitlet still undefined "
                              "for grism " + str(grism) +
@@ -116,6 +121,8 @@ class SlitletLimits(object):
         if grism == "J" and spfilter == "J":
             offset_with_J_J = 0
         elif grism == "H" and spfilter == "H":
+            offset_with_J_J = 3.0
+        elif grism == "K" and spfilter == "Ksp":
             offset_with_J_J = 3.0
         else:
             raise ValueError("Boundaries still undefined for grism " +
@@ -153,6 +160,11 @@ class SlitletLimits(object):
             if islitlet == 54:
                 self.xmin_upper_boundary_fit = 600
                 self.xmax_upper_boundary_fit = 1600
+        elif grism == "K" and spfilter == "Ksp":
+            self.deg_boundary = 5
+            if islitlet == 54:
+                self.xmin_upper_boundary_fit = 400
+                self.xmax_upper_boundary_fit = 1750
         else:
             raise ValueError("Ranges to fit boundaries still undefined "
                              "for grism " + str(grism) +
