@@ -124,7 +124,8 @@ def integrity_check(bounddict):
             else:
                 last_dtu_configuration = DtuConfiguration()
                 last_dtu_configuration.define_from_dictionary(tmp_dict)
-                if first_dtu_configuration != last_dtu_configuration:
+                if not first_dtu_configuration.closeto(last_dtu_configuration,
+                                                       abserror=0.5):
                     print("ERROR:")
                     print("grism...:", grism)
                     print("slitlet.:", tmp_slitlet)
@@ -983,6 +984,10 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
+    parser.add_argument("--tolerance",
+                        help="Tolerance for Nelder-Mead minimization process "
+                             "(default=1E-7)",
+                        type=float, default=1e-7)
     parser.add_argument("--numresolution",
                         help="Number of points/boundary (default=101)",
                         type=int, default=101)
@@ -1069,7 +1074,8 @@ def main(args=None):
             fcn_args=(args.parmodel, bounddict, args.numresolution,
                       islitlet_min, islitlet_max, args.debugplot)
         )
-        result = fitter.scalar_minimize(method='Nelder-Mead', tol=1E-7)
+        result = fitter.scalar_minimize(method='Nelder-Mead',
+                                        tol=args.tolerance)
         pickle.dump(result, open('dum.pickle', 'wb'))
 
     global_residual = fun_residuals(result.params, args.parmodel, bounddict,
@@ -1101,6 +1107,7 @@ def main(args=None):
             = "fitted boundary parameters"
         fitted_bound_param['meta-info']['function_evaluations'] = result.nfev
         fitted_bound_param['meta-info']['global_residual'] = global_residual
+        fitted_bound_param['meta-info']['tolerance'] = args.tolerance
         fitted_bound_param['meta-info']['origin'] = {}
         fitted_bound_param['meta-info']['origin']['bounddict_uuid'] = \
             bounddict['uuid']

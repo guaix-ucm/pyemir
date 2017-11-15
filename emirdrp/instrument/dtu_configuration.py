@@ -80,6 +80,34 @@ class DtuConfiguration(object):
         result = not self.__eq__(other)
         return result
 
+    def closeto(self, other, abserror):
+        """Check that all the members are equal within provided absolute error.
+
+        Parameters
+        ----------
+        other : DtuConfiguration object
+            DTU configuration instance to be compared with self.
+        abserror : float
+            Absolute maximum allowed error.
+
+        Returns
+        -------
+        result : bool
+            True is all members are within the specified maximum
+            absolute error
+
+        """
+
+        result = \
+            (self.defined == other.defined) and \
+            (abs(self.xdtu - other.xdtu) <= abserror) and \
+            (abs(self.ydtu - other.ydtu) <= abserror) and \
+            (abs(self.zdtu - other.zdtu) <= abserror) and \
+            (abs(self.xdtu_0 - other.xdtu_0) <= abserror) and \
+            (abs(self.ydtu_0 - other.ydtu_0) <= abserror) and \
+            (abs(self.zdtu_0 - other.zdtu_0) <= abserror)
+        return result
+
     def define_from_fits(self, fitsobj, extnum=0):
         """Define class members from header information in FITS file.
 
