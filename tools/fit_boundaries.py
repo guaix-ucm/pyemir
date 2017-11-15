@@ -17,6 +17,7 @@ from numina.array.ccd_line import SpectrumTrail
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 from emirdrp.core import EMIR_NBARS
+from emirdrp.instrument.dtu_configuration import DtuConfiguration
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
@@ -62,6 +63,9 @@ def integrity_check(bounddict):
                       range(1, EMIR_NBARS + 1)]
     read_slitlets = bounddict['contents'].keys()
     read_slitlets.sort()
+
+    first_dtu = True
+    first_dtu_configuration = None  # avoid PyCharm warning
 
     for tmp_slitlet in read_slitlets:
         if tmp_slitlet not in valid_slitlets:
@@ -111,6 +115,24 @@ def integrity_check(bounddict):
                     print("slitlet.:", tmp_slitlet)
                     print("date_obs:", tmp_dateobs)
                     raise ValueError("Expected key " + tmp_key + " not found")
+            if first_dtu:
+                first_dtu_configuration = DtuConfiguration()
+                first_dtu_configuration.define_from_dictionary(tmp_dict)
+                first_dtu = False
+            else:
+                last_dtu_configuration = DtuConfiguration()
+                last_dtu_configuration.define_from_dictionary(tmp_dict)
+                if first_dtu_configuration != last_dtu_configuration:
+                    print("ERROR:")
+                    print("grism...:", grism)
+                    print("slitlet.:", tmp_slitlet)
+                    print("date_obs:", tmp_dateobs)
+                    print("First DTU configuration..:\n\t",
+                          first_dtu_configuration)
+                    print("Last DTU configuration...:\n\t",
+                          last_dtu_configuration)
+                    raise ValueError("Unexpected DTU configuration")
+
     print("* Integrity check OK!")
 
 
@@ -956,7 +978,7 @@ def main(args=None):
                         choices=("multislit", "longslit"))
     parser.add_argument("--fitted_bound_param", required=True,
                         help="Output JSON with fitted boundary parameters",
-                        type=argparse.FileType('w'))
+                        type=argparse.FileType('x'))
 
     # optional arguments
     parser.add_argument("--numresolution",
