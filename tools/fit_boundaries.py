@@ -19,6 +19,8 @@ from numina.array.display.ximshow import ximshow
 from emirdrp.core import EMIR_NBARS
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 
+from arg_file_is_new import arg_file_is_new
+
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
@@ -978,7 +980,7 @@ def main(args=None):
                         choices=("multislit", "longslit"))
     parser.add_argument("--fitted_bound_param", required=True,
                         help="Output JSON with fitted boundary parameters",
-                        type=argparse.FileType('x'))
+                        type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
     parser.add_argument("--numresolution",

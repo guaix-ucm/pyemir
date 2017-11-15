@@ -9,6 +9,8 @@ import os
 import sys
 from uuid import uuid4
 
+from arg_file_is_new import arg_file_is_new
+
 from emirdrp.core import EMIR_NBARS
 
 
@@ -22,7 +24,7 @@ def main(args=None):
                         type=argparse.FileType('r'))
     parser.add_argument("--outfile", required=True,
                         help="Output merged JSON file",
-                        type=argparse.FileType('x'))
+                        type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
     parser.add_argument("--echo",
