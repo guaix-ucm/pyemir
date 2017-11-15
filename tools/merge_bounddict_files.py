@@ -22,7 +22,7 @@ def main(args=None):
                         type=argparse.FileType('r'))
     parser.add_argument("--outfile", required=True,
                         help="Output merged JSON file",
-                        type=argparse.FileType('w'))
+                        type=argparse.FileType('x'))
 
     # optional arguments
     parser.add_argument("--echo",
