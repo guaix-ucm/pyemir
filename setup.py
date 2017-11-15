@@ -42,6 +42,8 @@ setup(name='pyemir',
                   'tools.fit_boundaries:main',
               'pyemir_display_slitlet_arrangement = ' +
                   'tools.display_slitlet_arrangement:main',
+              'pyemir_merge_bounddict_files = ' +
+                  'tools.merge_bounddict_files:main',
               'pyemir_slitlet_boundaries_from_continuum = ' +
                   'tools.slitlet_boundaries_from_continuum:main',
               'pyemir_overplot_bounddict = ' +
