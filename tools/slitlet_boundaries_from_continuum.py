@@ -110,14 +110,19 @@ class SlitletLimits(object):
                 raise ValueError("islitlet=" + str(islitlet) +
                                  " is outside valid range for grism " +
                                  str(grism) + " and filter " + str(spfilter))
+        elif grism == "LR" and spfilter == "HK":
+            if islitlet < 4 or islitlet > 55:
+                raise ValueError("islitlet=" + str(islitlet) +
+                                 " is outside valid range for grism " +
+                                 str(grism) + " and filter " + str(spfilter))
         else:
             raise ValueError("Minimum and maximum islitlet still undefined "
                              "for grism " + str(grism) +
                              " and filter " + str(spfilter))
 
         # expected boundaries of the rectangle enclosing the 2D image
-        coeff_bb_ns1 =  [-8.03677111e+01, 3.98169266e+01, -7.77949391e-02, \
-             9.00823598e-04]
+        coeff_bb_ns1 =  [-8.03677111e+01, 3.98169266e+01, -7.77949391e-02,
+                         9.00823598e-04]
         delta_bb_ns2 = 84
         # offset measured overplotting ds9_bounddict.reg (created with the
         # script fit_boundaries) corresponding to grism J and filter J
@@ -130,6 +135,8 @@ class SlitletLimits(object):
         elif grism == "K" and spfilter == "Ksp":
             offset_with_J_J = 3.0
         elif grism == "LR" and spfilter == "YJ":
+            offset_with_J_J = -95.0
+        elif grism == "LR" and spfilter == "HK":
             offset_with_J_J = -95.0
         else:
             raise ValueError("Boundaries still undefined for grism " +
@@ -176,7 +183,12 @@ class SlitletLimits(object):
             self.deg_boundary = 5
             if islitlet == 4:
                 self.xmin_lower_boundary_fit = 300
-                #self.xmax_lower_boundary_fit = 1750
+                # self.xmax_lower_boundary_fit = 1750
+        elif grism == "LR" and spfilter == "HK":
+            self.deg_boundary = 5
+            if islitlet == 4:
+                self.xmin_lower_boundary_fit = 300
+                # self.xmax_lower_boundary_fit = 1750
         else:
             raise ValueError("Ranges to fit boundaries still undefined "
                              "for grism " + str(grism) +
@@ -256,6 +268,13 @@ def compute_slitlet_boundaries(
         print('>>> NAXIS1:', naxis1)
         print('>>> NAXIS2:', naxis2)
 
+
+    # ToDo: replace this by application of cosmetic defect mask!
+    for j in range(1024):
+        image2d[1024, j] = (image2d[1023, j] + image2d[1025, j]) / 2
+        image2d[1023, j + 1024] = (image2d[1022, j + 1024] +
+                                   image2d[1024, j + 1024]) / 2
+        
     # remove path from filename
     sfilename = os.path.basename(filename)
 
