@@ -40,6 +40,8 @@ def get_boundaries(bounddict_file, slitlet_number):
         Minimum abscissae for the upper boundary.
     xmax_upper : float
         Maximum abscissae for the upper boundary.
+    csu_bar_slit_center : float
+        CSU bar slit center (in mm)
 
     """
 
@@ -52,6 +54,7 @@ def get_boundaries(bounddict_file, slitlet_number):
     xmax_lower = None
     xmin_upper = None
     xmax_upper = None
+    csu_bar_slit_center = None
 
     # search the slitlet number in bounddict
     slitlet_label = "slitlet" + str(slitlet_number).zfill(2)
@@ -68,6 +71,7 @@ def get_boundaries(bounddict_file, slitlet_number):
             xmax_lower = tmp_dict['boundary_xmax_lower']
             xmin_upper = tmp_dict['boundary_xmin_upper']
             xmax_upper = tmp_dict['boundary_xmax_upper']
+            csu_bar_slit_center = tmp_dict['csu_bar_slit_center']
         else:
             raise ValueError("num_date_obs =", num_date_obs,
                              " (must be 1)")
@@ -77,7 +81,8 @@ def get_boundaries(bounddict_file, slitlet_number):
 
     # return result
     return pol_lower_boundary, pol_upper_boundary, \
-           xmin_lower, xmax_lower, xmin_upper, xmax_upper
+           xmin_lower, xmax_lower, xmin_upper, xmax_upper, \
+           csu_bar_slit_center
 
 
 def main(args=None):
@@ -167,7 +172,8 @@ def main(args=None):
     # overplot boundaries for each slitlet
     for slitlet_number in list_slitlets:
         pol_lower_boundary, pol_upper_boundary, \
-        xmin_lower, xmax_lower, xmin_upper, xmax_upper =  \
+        xmin_lower, xmax_lower, xmin_upper, xmax_upper,  \
+        csu_bar_slit_center = \
             get_boundaries(args.bounddict, slitlet_number)
         if (pol_lower_boundary is not None) and \
                 (pol_upper_boundary is not None):
@@ -181,7 +187,8 @@ def main(args=None):
             yc_lower = pol_lower_boundary(EMIR_NAXIS1 / 2 + 0.5)
             yc_upper = pol_upper_boundary(EMIR_NAXIS1 / 2 + 0.5)
             tmpcolor = ['r', 'b'][slitlet_number % 2]
-            ax.text(EMIR_NAXIS1 / 2 + 0.5, (yc_lower + yc_upper) / 2,
+            xcsu = EMIR_NAXIS1 * csu_bar_slit_center/341.5
+            ax.text(xcsu, (yc_lower + yc_upper) / 2,
                     str(slitlet_number),
                     fontsize=10, va='center', ha='center',
                     bbox=dict(boxstyle="round,pad=0.1",
