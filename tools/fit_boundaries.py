@@ -1083,13 +1083,15 @@ def main(args=None):
     report_fit(result.params, min_correl=0.5)
     pause_debugplot(args.debugplot)
 
-    # export resulting boundaries to ds9 region file
-    save_boundaries_from_params_ds9(result.params, args.parmodel,
-                                    list_islitlet,
-                                    list_islitlet,
-                                    list_csu_bar_slit_center,
-                                    uuid, grism, spfilter,
-                                    'ds9_fittedpar.reg')
+    # export resulting boundaries to ds9 region file for the longslit
+    # case (otherwise there is not a single csu_bar_slit_center)
+    if args.parmodel == "longslit":
+        save_boundaries_from_params_ds9(result.params, args.parmodel,
+                                        list_islitlet,
+                                        list_islitlet,
+                                        list_csu_bar_slit_center,
+                                        uuid, grism, spfilter,
+                                        'ds9_fittedpar.reg')
 
     if args.fitted_bound_param is not None:
         fitted_bound_param = deepcopy(init_bound_param)
@@ -1164,12 +1166,13 @@ def main(args=None):
             ax.set_title(args.bounddict.name)
         # boundaries from bounddict
         overplot_boundaries_from_bounddict(bounddict, ['r', 'b'])
-        # expected boundaries
-        overplot_boundaries_from_params(ax, result.params, args.parmodel,
-                                        list_islitlet,
-                                        list_islitlet,
-                                        list_csu_bar_slit_center,
-                                        ['m', 'c'], linetype='--')
+        # expected boundaries for the longslit case
+        if args.parmodel == "longslit":
+            overplot_boundaries_from_params(ax, result.params, args.parmodel,
+                                            list_islitlet,
+                                            list_islitlet,
+                                            list_csu_bar_slit_center,
+                                            ['m', 'c'], linetype='--')
         pause_debugplot(debugplot=args.debugplot, pltshow=True,
                         tight_layout=True)
 
