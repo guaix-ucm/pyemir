@@ -13,6 +13,7 @@ from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 
 from emirdrp.core import EMIR_NBARS
+from emirdrp.core import EMIR_NAXIS1
 
 
 def get_boundaries(bounddict_file, slitlet_number):
@@ -176,6 +177,17 @@ def main(args=None):
             xp = np.linspace(start=xmin_upper, stop=xmax_upper, num=1000)
             yp = pol_upper_boundary(xp)
             ax.plot(xp, yp, 'b-')
+            # slitlet label
+            yc_lower = pol_lower_boundary(EMIR_NAXIS1 / 2 + 0.5)
+            yc_upper = pol_upper_boundary(EMIR_NAXIS1 / 2 + 0.5)
+            tmpcolor = ['r', 'b'][slitlet_number % 2]
+            ax.text(EMIR_NAXIS1 / 2 + 0.5, (yc_lower + yc_upper) / 2,
+                    str(slitlet_number),
+                    fontsize=10, va='center', ha='center',
+                    bbox=dict(boxstyle="round,pad=0.1",
+                              fc="white", ec="grey"),
+                    color=tmpcolor, fontweight='bold',
+                    backgroundcolor='white')
 
     # show plot
     pause_debugplot(12, pltshow=True)
