@@ -18,6 +18,8 @@ from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 from emirdrp.core import EMIR_NBARS
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.instrument.dtu_configuration import average_dtu_configurations
+from emirdrp.instrument.dtu_configuration import maxdiff_dtu_configurations
 
 from arg_file_is_new import arg_file_is_new
 
@@ -38,13 +40,16 @@ EXPECTED_PARAMETER_LIST_EXTENDED = (
 FUNCTION_EVALUATIONS = 0
 
 
-def integrity_check(bounddict):
+def integrity_check(bounddict, max_dtu_offset):
     """Integrity check of 'bounddict' content.
 
     Parameters
     ----------
     bounddict : JSON structure
         Structure employed to store bounddict information.
+    max_dtu_offset : float
+        Maximum allowed difference in DTU location (mm) for each
+        parameter
 
     """
 
@@ -68,6 +73,7 @@ def integrity_check(bounddict):
 
     first_dtu = True
     first_dtu_configuration = None  # avoid PyCharm warning
+    list_dtu_configurations = []
 
     for tmp_slitlet in read_slitlets:
         if tmp_slitlet not in valid_slitlets:
@@ -121,11 +127,14 @@ def integrity_check(bounddict):
                 first_dtu_configuration = DtuConfiguration()
                 first_dtu_configuration.define_from_dictionary(tmp_dict)
                 first_dtu = False
+                list_dtu_configurations.append(first_dtu_configuration)
             else:
                 last_dtu_configuration = DtuConfiguration()
                 last_dtu_configuration.define_from_dictionary(tmp_dict)
-                if not first_dtu_configuration.closeto(last_dtu_configuration,
-                                                       abserror=0.5):
+                if not first_dtu_configuration.closeto(
+                        last_dtu_configuration,
+                        abserror=max_dtu_offset
+                ):
                     print("ERROR:")
                     print("grism...:", grism)
                     print("slitlet.:", tmp_slitlet)
@@ -135,8 +144,17 @@ def integrity_check(bounddict):
                     print("Last DTU configuration...:\n\t",
                           last_dtu_configuration)
                     raise ValueError("Unexpected DTU configuration")
+                list_dtu_configurations.append(last_dtu_configuration)
 
     print("* Integrity check OK!")
+
+    averaged_dtu_configuration = average_dtu_configurations(
+        list_dtu_configurations)
+    maxdiff_dtu_configuration = maxdiff_dtu_configurations(
+        list_dtu_configurations
+    )
+
+    return averaged_dtu_configuration, maxdiff_dtu_configuration
 
 
 def exvp_scalar(x, y, x0, y0, c2, c4, theta0, ff):
@@ -642,8 +660,7 @@ def overplot_boundaries_from_bounddict(bounddict, micolors, linetype='-'):
 
 
 def overplot_boundaries_from_params(ax, params, parmodel,
-                                    list_islitlet_lower,
-                                    list_islitlet_upper,
+                                    list_islitlet,
                                     list_csu_bar_slit_center,
                                     micolors, linetype='--'):
     """Overplot boundaries computed from fitted parameters.
@@ -658,15 +675,12 @@ def overplot_boundaries_from_params(ax, params, parmodel,
     parmodel : str
         Model to be assumed. Allowed values are 'longslit' and
         'multislit'.
-    list_islitlet_lower : list of integers
-        Slitlet numbers corresponding to the lower boundary of pseudo
-        longslits.
-    list_islitlet_upper : list of integers
-        Slitlet numbers corresponding to the upper bounday of pseudo
+    list_islitlet : list of integers
+        Slitlet numbers to be considered.
         longslits.
     list_csu_bar_slit_center : list of floats
-        CSU bar slit centers of the pseudo longslits.
-    micolors : list of char
+        CSU bar slit centers of the considered slitlets.
+    micolors : Python list
         List with two characters corresponding to alternating colors
         for odd and even slitlets.
     linetype : str
@@ -674,17 +688,15 @@ def overplot_boundaries_from_params(ax, params, parmodel,
 
     """
 
-    for islitlet_lower, islitlet_upper, csu_bar_slit_center in \
-            zip(list_islitlet_lower,
-                list_islitlet_upper,
-                list_csu_bar_slit_center):
-        tmpcolor = micolors[islitlet_lower % 2]
+    for islitlet, csu_bar_slit_center in \
+            zip(list_islitlet, list_csu_bar_slit_center):
+        tmpcolor = micolors[islitlet % 2]
         pol_lower_expected = expected_distorted_boundaries(
-            islitlet_lower, csu_bar_slit_center,
+            islitlet, csu_bar_slit_center,
             [0], params, parmodel, numpts=101, deg=5, debugplot=0
         )[0].poly_funct
         pol_upper_expected = expected_distorted_boundaries(
-            islitlet_upper, csu_bar_slit_center,
+            islitlet, csu_bar_slit_center,
             [1], params, parmodel, numpts=101, deg=5, debugplot=0
         )[0].poly_funct
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
@@ -695,22 +707,12 @@ def overplot_boundaries_from_params(ax, params, parmodel,
         # slitlet label
         yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
         yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
-        if islitlet_lower == islitlet_upper:
-            ax.text(EMIR_NAXIS1 / 2 + 0.5, (yc_lower + yc_upper) / 2,
-                    str(islitlet_lower),
-                    fontsize=10, va='center', ha='center',
-                    bbox=dict(boxstyle="round,pad=0.1",
-                              fc="white", ec="grey"),
-                    color=tmpcolor, fontweight='bold',
-                    backgroundcolor='white')
-        else:
-            ax.text(EMIR_NAXIS1 / 2 + 0.5, (yc_lower + yc_upper) / 2,
-                    str(islitlet_lower) + '-' + str(islitlet_upper),
-                    fontsize=10, va='center', ha='center',
-                    bbox=dict(boxstyle="round,pad=0.1",
-                              fc="white", ec="grey"),
-                    color=tmpcolor, fontweight='bold',
-                    backgroundcolor='white')
+        ax.text(EMIR_NAXIS1 / 2 + 0.5, (yc_lower + yc_upper) / 2,
+                str(islitlet),
+                fontsize=10, va='center', ha='center',
+                bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
+                color=tmpcolor, fontweight='bold',
+                backgroundcolor='white')
 
 
 def save_boundaries_from_bounddict_ds9(bounddict, ds9_filename, numpix=100):
@@ -802,8 +804,7 @@ def save_boundaries_from_bounddict_ds9(bounddict, ds9_filename, numpix=100):
 
 
 def save_boundaries_from_params_ds9(params, parmodel,
-                                    list_islitlet_lower,
-                                    list_islitlet_upper,
+                                    list_islitlet,
                                     list_csu_bar_slit_center,
                                     uuid, grism, spfilter,
                                     ds9_filename, numpix=100):
@@ -817,14 +818,10 @@ def save_boundaries_from_params_ds9(params, parmodel,
     parmodel : str
         Model to be assumed. Allowed values are 'longslit' and
         'multislit'.
-    list_islitlet_lower : list of integers
-        Slitlet numbers corresponding to the lower boundary of pseudo
-        longslits.
-    list_islitlet_upper : list of integers
-        Slitlet numbers corresponding to the upper bounday of pseudo
-        longslits.
+    list_islitlet : list (integers)
+        Slitlet numbers to be considered.
     list_csu_bar_slit_center : list of floats
-        CSU bar slit centers of the pseudo longslits.
+        CSU bar slit centers of the considered slitlets.
     uuid: int
         UUID corresponding to the bounddict file that has been employed
         to fit the parameters 'params'.
@@ -863,31 +860,26 @@ def save_boundaries_from_params_ds9(params, parmodel,
             parvalue = params[dumpar].value
             ds9_file.write('# {0}: {1}\n'.format(dumpar, parvalue))
 
-    for islitlet_lower, islitlet_upper, csu_bar_slit_center in \
-            zip(list_islitlet_lower,
-                list_islitlet_upper,
-                list_csu_bar_slit_center):
-        if islitlet_lower % 2 == 0:
+    for islitlet, csu_bar_slit_center in \
+            zip(list_islitlet, list_csu_bar_slit_center):
+        if islitlet % 2 == 0:
             colorbox = '#ff77ff'
         else:
             colorbox = '#4444ff'
 
         ds9_file.write(
-            '#\n# islitlet_lower.....: {0}\n'.format(islitlet_lower)
-        )
-        ds9_file.write(
-            '# islitlet_upper.....: {0}\n'.format(islitlet_upper)
+            '#\n# islitlet...........: {0}\n'.format(islitlet)
         )
         ds9_file.write(
             '# csu_bar_slit_center: {0}\n'.format(csu_bar_slit_center)
         )
         pol_lower_expected = expected_distorted_boundaries(
-            islitlet_lower, csu_bar_slit_center,
-            [0], params, parmodel, numpts=101, deg=5, debugplot=0
+            islitlet, csu_bar_slit_center, [0], params, parmodel,
+            numpts=101, deg=5, debugplot=0
         )[0].poly_funct
         pol_upper_expected = expected_distorted_boundaries(
-            islitlet_upper, csu_bar_slit_center,
-            [1], params, parmodel, numpts=101, deg=5, debugplot=0
+            islitlet, csu_bar_slit_center, [1], params, parmodel,
+            numpts=101, deg=5, debugplot=0
         )[0].poly_funct
         xdum = np.linspace(1, EMIR_NAXIS1, num=numpix)
         ydum = pol_lower_expected(xdum)
@@ -907,20 +899,12 @@ def save_boundaries_from_params_ds9(params, parmodel,
         # slitlet label
         yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
         yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
-        if islitlet_lower == islitlet_upper:
-            ds9_file.write('text {0} {1} {{{2}}} # color={3} '
-                           'font="helvetica 10 bold '
-                           'roman"\n'.format(EMIR_NAXIS1 / 2 + 0.5,
-                                             (yc_lower + yc_upper) / 2,
-                                             islitlet_lower,
-                                             colorbox))
-        else:
-            ds9_file.write('text {0} {1} {{{2}-{3}}} # color={4} '
-                           'font="helvetica 10 bold '
-                           'roman"\n'.format(EMIR_NAXIS1 / 2 + 0.5,
-                                            (yc_lower + yc_upper) / 2,
-                                             islitlet_lower, islitlet_upper,
-                                             colorbox))
+        ds9_file.write('text {0} {1} {{{2}}} # color={3} '
+                       'font="helvetica 10 bold '
+                       'roman"\n'.format(EMIR_NAXIS1 / 2 + 0.5,
+                                         (yc_lower + yc_upper) / 2,
+                                         islitlet,
+                                         colorbox))
 
     ds9_file.close()
 
@@ -988,6 +972,10 @@ def main(args=None):
                         help="Tolerance for Nelder-Mead minimization process "
                              "(default=1E-7)",
                         type=float, default=1e-7)
+    parser.add_argument("--maxDTUoffset",
+                        help="Maximum allowed difference in DTU location (mm)"
+                             "for each parameter (default=0.5)",
+                        type=float, default=0.5)
     parser.add_argument("--numresolution",
                         help="Number of points/boundary (default=101)",
                         type=int, default=101)
@@ -1018,7 +1006,8 @@ def main(args=None):
 
     # read bounddict file and check its contents
     bounddict = json.loads(open(args.bounddict.name).read())
-    integrity_check(bounddict)
+    averaged_dtu_configuration, maxdiff_dtu_configuration = \
+        integrity_check(bounddict, args.maxDTUoffset)
     save_boundaries_from_bounddict_ds9(bounddict, 'ds9_bounddict.reg')
     # save lists with individual slitlet number and csu_bar_slit_center value,
     # needed to save ds9 region file and plotting
@@ -1094,60 +1083,64 @@ def main(args=None):
     if args.parmodel == "longslit":
         save_boundaries_from_params_ds9(result.params, args.parmodel,
                                         list_islitlet,
-                                        list_islitlet,
                                         list_csu_bar_slit_center,
                                         uuid, grism, spfilter,
                                         'ds9_fittedpar.reg')
 
-    if args.fitted_bound_param is not None:
-        fitted_bound_param = deepcopy(init_bound_param)
-        fitted_bound_param['meta-info']['creation_date'] = \
-            datetime.now().isoformat()
-        fitted_bound_param['meta-info']['description'] \
-            = "fitted boundary parameters"
-        fitted_bound_param['meta-info']['function_evaluations'] = result.nfev
-        fitted_bound_param['meta-info']['global_residual'] = global_residual
-        fitted_bound_param['meta-info']['tolerance'] = args.tolerance
-        fitted_bound_param['meta-info']['origin'] = {}
-        fitted_bound_param['meta-info']['origin']['bounddict_uuid'] = \
-            bounddict['uuid']
-        fitted_bound_param['meta-info']['origin']['init_bound_param_uuid'] = \
-            init_bound_param['uuid']
-        fitted_bound_param['uuid'] = str(uuid4())
-        for mainpar in EXPECTED_PARAMETER_LIST:
-            if mainpar not in init_bound_param['contents'].keys():
-                raise ValueError('Parameter ' + mainpar +
-                                 ' not found in ' + args.init_bound_param.name)
-            if args.parmodel == "longslit":
-                fitted_bound_param['contents'][mainpar]['value'] = \
-                    result.params[mainpar].value
-                fitted_bound_param['contents'][mainpar]['initial'] = \
-                    params[mainpar].value
-                # compute median csu_bar_slit_center (only in longslit mode)
-                dumlist = []
-                for islitlet, csu_bar_slit_center in \
-                        zip(list_islitlet, list_csu_bar_slit_center):
-                    if islitlet_min <= islitlet <= islitlet_max:
-                        dumlist.append(csu_bar_slit_center)
-                median_csu_bar_slit_center = np.median(np.array(dumlist))
-                fitted_bound_param['meta-info']['median_csu_bar_slit_center']\
-                    = median_csu_bar_slit_center
-            else:
-                for subpar in ['a0s', 'a1s', 'a2s']:
-                    if subpar not in \
-                            init_bound_param['contents'][mainpar].keys():
-                        raise ValueError(
-                            'Subparameter ' + subpar + ' not found in ' +
-                            args.init_bound_param.name + ' under parameter ' +
-                            mainpar
-                        )
-                    cpar = mainpar + '_' + subpar
-                    fitted_bound_param['contents'][mainpar][subpar]['value']\
-                        = result.params[cpar].value
-                    fitted_bound_param['contents'][mainpar][subpar]['initial']\
-                        = params[cpar].value
-        with open(args.fitted_bound_param.name, 'w') as fstream:
-            json.dump(fitted_bound_param, fstream, indent=2, sort_keys=True)
+    fitted_bound_param = deepcopy(init_bound_param)
+    fitted_bound_param['meta-info']['creation_date'] = \
+        datetime.now().isoformat()
+    fitted_bound_param['meta-info']['description'] \
+        = "fitted boundary parameters"
+    fitted_bound_param['meta-info']['function_evaluations'] = result.nfev
+    fitted_bound_param['meta-info']['global_residual'] = global_residual
+    fitted_bound_param['meta-info']['numresolution'] = args.numresolution
+    fitted_bound_param['meta-info']['tolerance'] = args.tolerance
+    fitted_bound_param['meta-info']['maxDTUoffset'] = args.maxDTUoffset
+    fitted_bound_param['meta-info']['origin'] = {}
+    fitted_bound_param['meta-info']['origin']['bounddict_uuid'] = \
+        bounddict['uuid']
+    fitted_bound_param['meta-info']['origin']['init_bound_param_uuid'] = \
+        init_bound_param['uuid']
+    fitted_bound_param['dtu_configuration'] = \
+        averaged_dtu_configuration.outdict()
+    fitted_bound_param['dtu_configuration_maxdiff'] = \
+        maxdiff_dtu_configuration.outdict()
+    fitted_bound_param['uuid'] = str(uuid4())
+    for mainpar in EXPECTED_PARAMETER_LIST:
+        if mainpar not in init_bound_param['contents'].keys():
+            raise ValueError('Parameter ' + mainpar +
+                             ' not found in ' + args.init_bound_param.name)
+        if args.parmodel == "longslit":
+            fitted_bound_param['contents'][mainpar]['value'] = \
+                result.params[mainpar].value
+            fitted_bound_param['contents'][mainpar]['initial'] = \
+                params[mainpar].value
+            # compute median csu_bar_slit_center (only in longslit mode)
+            dumlist = []
+            for islitlet, csu_bar_slit_center in \
+                    zip(list_islitlet, list_csu_bar_slit_center):
+                if islitlet_min <= islitlet <= islitlet_max:
+                    dumlist.append(csu_bar_slit_center)
+            median_csu_bar_slit_center = np.median(np.array(dumlist))
+            fitted_bound_param['meta-info']['median_csu_bar_slit_center']\
+                = median_csu_bar_slit_center
+        else:
+            for subpar in ['a0s', 'a1s', 'a2s']:
+                if subpar not in \
+                        init_bound_param['contents'][mainpar].keys():
+                    raise ValueError(
+                        'Subparameter ' + subpar + ' not found in ' +
+                        args.init_bound_param.name + ' under parameter ' +
+                        mainpar
+                    )
+                cpar = mainpar + '_' + subpar
+                fitted_bound_param['contents'][mainpar][subpar]['value']\
+                    = result.params[cpar].value
+                fitted_bound_param['contents'][mainpar][subpar]['initial']\
+                    = params[cpar].value
+    with open(args.fitted_bound_param.name, 'w') as fstream:
+        json.dump(fitted_bound_param, fstream, indent=2, sort_keys=True)
 
     if args.debugplot % 10 != 0:
         fig = plt.figure()
@@ -1176,7 +1169,6 @@ def main(args=None):
         # expected boundaries for the longslit case
         if args.parmodel == "longslit":
             overplot_boundaries_from_params(ax, result.params, args.parmodel,
-                                            list_islitlet,
                                             list_islitlet,
                                             list_csu_bar_slit_center,
                                             ['m', 'c'], linetype='--')
