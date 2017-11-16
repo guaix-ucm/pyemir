@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import print_function
 
 from astropy.io import fits
+import numpy as np
 
 
 class DtuConfiguration(object):
@@ -127,12 +128,10 @@ class DtuConfiguration(object):
         hdulist.close()
 
         # define DTU variables
-        self.xdtu = image_header['xdtu']
-        self.ydtu = image_header['ydtu']
-        self.zdtu = image_header['zdtu']
-        self.xdtu_0 = image_header['xdtu_0']
-        self.ydtu_0 = image_header['ydtu_0']
-        self.zdtu_0 = image_header['zdtu_0']
+        list_of_members = self.__dict__.keys()
+        list_of_members.remove('defined')
+        for member in list_of_members:
+            self.__dict__[member] = image_header[member]
 
         # the attributes have been properly set
         self.defined = True
@@ -185,16 +184,82 @@ class DtuConfiguration(object):
         # the attributes have been properly set
         self.defined = True
 
-    def outdict(self):
+    def outdict(self, precision=3):
         """Return dictionary structure rounded to a given precision."""
 
-        outdict = {}
-        if self.defined:
-            outdict['xdtu'] = round(self.xdtu, 3)
-            outdict['ydtu'] = round(self.ydtu, 3)
-            outdict['zdtu'] = round(self.zdtu, 3)
-            outdict['xdtu_0'] = round(self.xdtu_0, 3)
-            outdict['ydtu_0'] = round(self.ydtu_0, 3)
-            outdict['zdtu_0'] = round(self.zdtu_0, 3)
-
+        outdict = self.__dict__.copy()
+        outdict.pop('defined')
+        for item in outdict:
+            outdict[item] = round(outdict[item], precision)
         return outdict
+
+
+def average_dtu_configurations(list_of_objects):
+    """Return DtuConfiguration instance with averaged values.
+
+    Parameters
+    ----------
+    list_of_objects : python list
+        List of DtuConfiguration instances to be averaged.
+
+    Returns
+    -------
+    result : DtuConfiguration instance
+        Object with averaged values.
+
+    """
+
+    result = DtuConfiguration()
+
+    if len(list_of_objects) == 0:
+        return result
+
+    list_of_members = result.__dict__.keys()
+    list_of_members.remove('defined')
+
+    # compute average of all the members of the class (except 'defined')
+    for member in list_of_members:
+        result.__dict__[member] = np.mean(
+            [tmp_dtu.__dict__[member] for tmp_dtu in list_of_objects]
+        )
+
+    result.defined = True
+
+    return result
+
+
+def maxdiff_dtu_configurations(list_of_objects):
+    """Return DtuConfiguration instance with maximum differences.
+
+    Parameters
+    ----------
+    list_of_objects : python list
+        List of DtuConfiguration instances to be averaged.
+
+    Returns
+    -------
+    result : DtuConfiguration instance
+        Object with averaged values.
+
+    """
+
+    result = DtuConfiguration()
+
+    if len(list_of_objects) == 0:
+        return result
+
+    list_of_members = result.__dict__.keys()
+    list_of_members.remove('defined')
+
+    # compute maximum difference for each member
+    for member in list_of_members:
+        tmp_array = np.array(
+            [tmp_dtu.__dict__[member] for tmp_dtu in list_of_objects]
+        )
+        minval = tmp_array.min()
+        maxval = tmp_array.max()
+        result.__dict__[member] = maxval - minval
+
+    result.defined = True
+
+    return result
