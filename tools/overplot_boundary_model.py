@@ -11,10 +11,11 @@ from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 
+from arg_file_is_new import arg_file_is_new
 from fit_boundaries import bound_params_from_dict
 from fit_boundaries import overplot_boundaries_from_params
+from fit_boundaries import save_boundaries_from_params_ds9
 
-from emirdrp.core import EMIR_NBARS
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
 
@@ -33,6 +34,9 @@ def main(args=None):
                         type=argparse.FileType('r'))
 
     # optional arguments
+    parser.add_argument("--ds9reg",
+                        help="Output ds9 region file",
+                        type=lambda x: arg_file_is_new(parser, x))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
                              " (default=12)",
@@ -97,6 +101,18 @@ def main(args=None):
         list_csu_bar_slit_center.append(
             csu_config.csu_bar_slit_center[islitlet - 1])
 
+    # generate output ds9 region file
+    if args.ds9reg is not None:
+        save_boundaries_from_params_ds9(
+            params=params,
+            parmodel=parmodel,
+            list_islitlet=list_islitlet,
+            list_csu_bar_slit_center=list_csu_bar_slit_center,
+            uuid=fittedpar_dict['uuid'],
+            grism=fittedpar_dict['tags']['grism'],
+            spfilter=fittedpar_dict['tags']['filter'],
+            ds9_filename=args.ds9reg.name
+        )
 
     # display full image
     if abs(args.debugplot) % 10 != 0:
