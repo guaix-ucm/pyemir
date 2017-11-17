@@ -961,7 +961,7 @@ def bound_params_from_dict(bound_param_dict):
             dumdict = bound_param_dict['contents'][mainpar]
             params.add(mainpar, value=dumdict["value"],
                        vary=dumdict["vary"])
-        else:
+        elif bound_param_dict['meta-info']['parmodel'] == 'multislit':
             for subpar in ['a0s', 'a1s', 'a2s']:
                 if subpar not in bound_param_dict['contents'][mainpar].keys():
                     raise ValueError('Subparameter ' + subpar + ' not found' +
@@ -970,6 +970,9 @@ def bound_params_from_dict(bound_param_dict):
                 dumdict = bound_param_dict['contents'][mainpar][subpar]
                 params.add(cpar, value=dumdict["value"],
                            vary=dumdict["vary"])
+        else:
+            print('parmodel: ', bound_param_dict['meta-info']['parmodel'])
+            raise ValueError('Unexpected parmodel')
     return params
 
 
