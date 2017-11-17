@@ -123,6 +123,26 @@ def integrity_check(bounddict, max_dtu_offset):
                     print("slitlet.:", tmp_slitlet)
                     print("date_obs:", tmp_dateobs)
                     raise ValueError("Expected key " + tmp_key + " not found")
+            if tmp_dict['boundary_xmax_lower'] <= \
+                    tmp_dict['boundary_xmin_lower']:
+                print("ERROR:")
+                print("grism...:", grism)
+                print("slitlet.:", tmp_slitlet)
+                print("date_obs:", tmp_dateobs)
+                print("boundary_xmin_lower", tmp_dict['boundary_xmin_lower'])
+                print("boundary_xmax_lower", tmp_dict['boundary_xmax_lower'])
+                raise ValueError("Unexpected boundary_xmax_lower <= "
+                                 "boundary_xmin_lower")
+            if tmp_dict['boundary_xmax_upper'] <= \
+                    tmp_dict['boundary_xmin_upper']:
+                print("ERROR:")
+                print("grism...:", grism)
+                print("slitlet.:", tmp_slitlet)
+                print("date_obs:", tmp_dateobs)
+                print("boundary_xmin_upper", tmp_dict['boundary_xmin_upper'])
+                print("boundary_xmax_upper", tmp_dict['boundary_xmax_upper'])
+                raise ValueError("Unexpected boundary_xmax_upper <= "
+                                 "boundary_xmin_upper")
             if first_dtu:
                 first_dtu_configuration = DtuConfiguration()
                 first_dtu_configuration.define_from_dictionary(tmp_dict)
@@ -528,7 +548,8 @@ def expected_distorted_frontiers(islitlet, csu_bar_slit_center,
     return list_frontiers
 
 
-def fun_residuals(params, parmodel, bounddict, numresolution,
+def fun_residuals(params, parmodel, bounddict,
+                  shrinking_factor, numresolution,
                   islitmin, islitmax, debugplot):
     """Function to be minimised.
 
@@ -542,6 +563,11 @@ def fun_residuals(params, parmodel, bounddict, numresolution,
         'multislit'.
     bounddict : JSON structure
         Structure employed to store bounddict information.
+    shrinking_factor : float
+        Fraction of the detected X range (specrtral) to be employed
+        in the fit. This must be a number verifying
+        0 < shrinking_factor <= 1. The resulting interval will be
+        centered within the original one.
     numresolution : int
         Number of points in which the X-range interval is subdivided
         before computing the residuals.
@@ -588,7 +614,8 @@ def fun_residuals(params, parmodel, bounddict, numresolution,
                 )
                 xmin_lower_bound = tmp_dict['boundary_xmin_lower']
                 xmax_lower_bound = tmp_dict['boundary_xmax_lower']
-                dx = (xmax_lower_bound - xmin_lower_bound) / 20
+                dx = (xmax_lower_bound - xmin_lower_bound) * \
+                     (1 - shrinking_factor) / 2
                 xdum_lower = np.linspace(xmin_lower_bound + dx,
                                          xmax_lower_bound - dx,
                                          num=numresolution)
@@ -602,7 +629,8 @@ def fun_residuals(params, parmodel, bounddict, numresolution,
                 )
                 xmin_upper_bound = tmp_dict['boundary_xmin_upper']
                 xmax_upper_bound = tmp_dict['boundary_xmax_upper']
-                dx = (xmax_upper_bound - xmin_upper_bound) / 20
+                dx = (xmax_lower_bound - xmin_lower_bound) * \
+                     (1 - shrinking_factor) / 2
                 xdum_upper = np.linspace(xmin_upper_bound + dx,
                                          xmax_upper_bound - dx,
                                          num=numresolution)
@@ -968,6 +996,11 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
+    parser.add_argument("--shrinking_factor",
+                        help="Effective reduction factor to be applied to "
+                             "the fitted X-axis (spectral) range, "
+                             "(default=0.9)",
+                        type=float, default=0.9)
     parser.add_argument("--tolerance",
                         help="Tolerance for Nelder-Mead minimization process "
                              "(default=1E-7)",
@@ -1000,9 +1033,14 @@ def main(args=None):
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
 
-    if args.background_image is not None and args.debugplot % 10 == 0:
-        raise ValueError("--background_image requires --debugplot value "
-                         "compatible with plotting")
+    if args.background_image is not None and args.debugplot % 11 == 0:
+        raise ValueError("--background_image requires "
+                         "--debugplot value compatible with "
+                         "plotting\n'")
+
+    if args.shrinking_factor <=0 or args.shrinking_factor > 1:
+        raise ValueError("Unexpected shriking factor: ",
+                         args.shrinking_factor, '\n')
 
     # read bounddict file and check its contents
     bounddict = json.loads(open(args.bounddict.name).read())
@@ -1035,8 +1073,12 @@ def main(args=None):
     grism_ = init_bound_param['tags']['grism']
     spfilter_ = init_bound_param['tags']['filter']
     if grism != grism_:
+        print("grism (JSON bounddict..):", grism)
+        print("grism (init_bound_param):", grism_)
         raise ValueError("grism mismatch")
     if spfilter != spfilter_:
+        print("filter (JSON bounddict..):", spfilter)
+        print("filter (init_bound_param):", spfilter_)
         raise ValueError("filter mismatch")
     islitlet_min = init_bound_param['tags']['islitlet_min']
     islitlet_max = init_bound_param['tags']['islitlet_max']
@@ -1060,7 +1102,8 @@ def main(args=None):
     else:
         fitter = Minimizer(
             fun_residuals, params,
-            fcn_args=(args.parmodel, bounddict, args.numresolution,
+            fcn_args=(args.parmodel, bounddict,
+                      args.shrinking_factor, args.numresolution,
                       islitlet_min, islitlet_max, args.debugplot)
         )
         result = fitter.scalar_minimize(method='Nelder-Mead',
