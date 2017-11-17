@@ -38,19 +38,19 @@ setup(name='pyemir',
               'EMIR = emirdrp.loader:load_drp',
           ],
           'console_scripts': [
-              'pyemir_apply_bpm = ' +
+              'pyemir-apply_bpm = ' +
                   'tools.apply_bpm:main',
-              'pyemir_fit_boundaries = ' +
+              'pyemir-fit_boundaries = ' +
                   'tools.fit_boundaries:main',
-              'pyemir_display_slitlet_arrangement = ' +
+              'pyemir-display_slitlet_arrangement = ' +
                   'tools.display_slitlet_arrangement:main',
-              'pyemir_merge_bounddict_files = ' +
+              'pyemir-merge_bounddict_files = ' +
                   'tools.merge_bounddict_files:main',
-              'pyemir_slitlet_boundaries_from_continuum = ' +
+              'pyemir-slitlet_boundaries_from_continuum = ' +
                   'tools.slitlet_boundaries_from_continuum:main',
-              'pyemir_overplot_boundary_model = ' +
+              'pyemir-overplot_boundary_model = ' +
                   'tools.overplot_boundary_model:main',
-              'pyemir_overplot_bounddict = ' +
+              'pyemir-overplot_bounddict = ' +
                   'tools.overplot_bounddict:main',
               ],
       },
