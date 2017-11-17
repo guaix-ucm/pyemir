@@ -690,7 +690,7 @@ def overplot_boundaries_from_bounddict(bounddict, micolors, linetype='-'):
 def overplot_boundaries_from_params(ax, params, parmodel,
                                     list_islitlet,
                                     list_csu_bar_slit_center,
-                                    micolors, linetype='--'):
+                                    micolors=('m', 'c'), linetype='--'):
     """Overplot boundaries computed from fitted parameters.
 
     Parameters
@@ -735,7 +735,8 @@ def overplot_boundaries_from_params(ax, params, parmodel,
         # slitlet label
         yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
         yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
-        ax.text(EMIR_NAXIS1 / 2 + 0.5, (yc_lower + yc_upper) / 2,
+        xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
+        ax.text(xcsu, (yc_lower + yc_upper) / 2,
                 str(islitlet),
                 fontsize=10, va='center', ha='center',
                 bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
@@ -1050,8 +1051,8 @@ def main(args=None):
     averaged_dtu_configuration, maxdiff_dtu_configuration = \
         integrity_check(bounddict, args.maxDTUoffset)
     save_boundaries_from_bounddict_ds9(bounddict, 'ds9_bounddict.reg')
-    # save lists with individual slitlet number and csu_bar_slit_center value,
-    # needed to save ds9 region file and plotting
+    # store lists with individual slitlet number and csu_bar_slit_center
+    # value, needed later to save the ds9 region file and for plotting
     list_islitlet = []
     list_csu_bar_slit_center = []
     read_slitlets = bounddict['contents'].keys()
@@ -1217,8 +1218,7 @@ def main(args=None):
         if args.parmodel == "longslit":
             overplot_boundaries_from_params(ax, result.params, args.parmodel,
                                             list_islitlet,
-                                            list_csu_bar_slit_center,
-                                            ['m', 'c'], linetype='--')
+                                            list_csu_bar_slit_center)
         pause_debugplot(debugplot=args.debugplot, pltshow=True,
                         tight_layout=True)
 
