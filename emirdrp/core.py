@@ -35,10 +35,9 @@ from emirdrp.datamodel import EmirDataModel
 _logger = logging.getLogger('numina.recipes.emir')
 
 
-def get_corrector_p(rinput, meta):
+def get_corrector_p(rinput, meta, datamodel):
     key = 'master_bpm'
     info = meta.get(key)
-    datamodel = EmirDataModel()
     corrector_class = BadPixelCorrector
 
     if info is not None:
@@ -58,9 +57,8 @@ def get_corrector_p(rinput, meta):
     return corrector
 
 
-def get_corrector_b(rinput, meta):
+def get_corrector_b(rinput, meta, datamodel):
     from numina.flow.processing import BiasCorrector
-    datamodel = EmirDataModel()
     iinfo = meta['obresult']
     if iinfo:
         mode = iinfo[0]['readmode']
@@ -93,10 +91,9 @@ def get_corrector_b(rinput, meta):
     return bias_corrector
 
 
-def get_corrector_s(rinput, meta):
+def get_corrector_s(rinput, meta, datamodel):
     from numina.flow.processing import SkyCorrector
     sky_info = meta.get('master_sky')
-    datamodel = EmirDataModel()
 
     if sky_info is None:
         return IdNode()
@@ -112,10 +109,9 @@ def get_corrector_s(rinput, meta):
         return sky_corrector
 
 
-def get_corrector_f(rinput, meta):
+def get_corrector_f(rinput, meta, datamodel):
     from emirdrp.processing.flatfield import FlatFieldCorrector
     flat_info = meta['master_flat']
-    datamodel = EmirDataModel()
     with rinput.master_flat.open() as hdul:
         _logger.info('loading intensity flat')
         _logger.debug('flat info: %s', flat_info)
@@ -134,10 +130,9 @@ def get_corrector_f(rinput, meta):
     return flat_corrector
 
 
-def get_corrector_d(rinput, meta):
+def get_corrector_d(rinput, meta, datamodel):
     from numina.flow.processing import DarkCorrector
     key = 'master_dark'
-    datamodel = EmirDataModel()
 
     corrector = get_corrector_gen(rinput, datamodel, DarkCorrector, key)
     return corrector
@@ -155,7 +150,7 @@ def get_corrector_gen(rinput, datamodel, CorrectorClass, key):
     return corrector
 
 
-def get_checker(rinput, meta):
+def get_checker(rinput, meta, datamodel):
     from emirdrp.processing.checkers import Checker
     return Checker()
 
@@ -236,7 +231,7 @@ class EmirRecipe(BaseRecipe):
         cls.logger.debug('obresult info')
         for entry in meta['obresult']:
             cls.logger.debug('frame info is %s', entry)
-        correctors = [getter(rinput, meta) for getter in getters]
+        correctors = [getter(rinput, meta, cls.datamodel) for getter in getters]
         flow = SerialFlow(correctors)
         return flow
 
