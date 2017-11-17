@@ -38,6 +38,8 @@ setup(name='pyemir',
               'EMIR = emirdrp.loader:load_drp',
           ],
           'console_scripts': [
+              'pyemir_apply_bpm = ' +
+                  'tools.apply_bpm:main',
               'pyemir_fit_boundaries = ' +
                   'tools.fit_boundaries:main',
               'pyemir_display_slitlet_arrangement = ' +
