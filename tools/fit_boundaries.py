@@ -1111,6 +1111,7 @@ def main(args=None):
         pickle.dump(result, open('dum.pickle', 'wb'))
 
     global_residual = fun_residuals(result.params, args.parmodel, bounddict,
+                                    args.shrinking_factor,
                                     args.numresolution,
                                     islitlet_min, islitlet_max,
                                     args.debugplot)
