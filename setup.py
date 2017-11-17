@@ -48,6 +48,8 @@ setup(name='pyemir',
                   'tools.merge_bounddict_files:main',
               'pyemir_slitlet_boundaries_from_continuum = ' +
                   'tools.slitlet_boundaries_from_continuum:main',
+              'pyemir_overplot_boundary_model = ' +
+                  'tools.overplot_boundary_model:main',
               'pyemir_overplot_bounddict = ' +
                   'tools.overplot_bounddict:main',
               ],
