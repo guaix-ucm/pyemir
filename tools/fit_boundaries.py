@@ -123,6 +123,26 @@ def integrity_check(bounddict, max_dtu_offset):
                     print("slitlet.:", tmp_slitlet)
                     print("date_obs:", tmp_dateobs)
                     raise ValueError("Expected key " + tmp_key + " not found")
+            if tmp_dict['boundary_xmax_lower'] <= \
+                    tmp_dict['boundary_xmin_lower']:
+                print("ERROR:")
+                print("grism...:", grism)
+                print("slitlet.:", tmp_slitlet)
+                print("date_obs:", tmp_dateobs)
+                print("boundary_xmin_lower", tmp_dict['boundary_xmin_lower'])
+                print("boundary_xmax_lower", tmp_dict['boundary_xmax_lower'])
+                raise ValueError("Unexpected boundary_xmax_lower <= "
+                                 "boundary_xmin_lower")
+            if tmp_dict['boundary_xmax_upper'] <= \
+                    tmp_dict['boundary_xmin_upper']:
+                print("ERROR:")
+                print("grism...:", grism)
+                print("slitlet.:", tmp_slitlet)
+                print("date_obs:", tmp_dateobs)
+                print("boundary_xmin_upper", tmp_dict['boundary_xmin_upper'])
+                print("boundary_xmax_upper", tmp_dict['boundary_xmax_upper'])
+                raise ValueError("Unexpected boundary_xmax_upper <= "
+                                 "boundary_xmin_upper")
             if first_dtu:
                 first_dtu_configuration = DtuConfiguration()
                 first_dtu_configuration.define_from_dictionary(tmp_dict)
@@ -401,7 +421,14 @@ def return_params(islitlet, csu_bar_slit_center, params, parmodel):
 def expected_distorted_boundaries(islitlet, csu_bar_slit_center,
                                   borderlist, params, parmodel,
                                   numpts, deg, debugplot=0):
-    """Return polynomial coefficients of expected distorted boundaries.
+    """Return expected SpectrumTrail instances associated to a given slitlet.
+
+    Several SpectrumTrail objects can be computed for the considered
+    slitlet. The parameter borderlist is a list of floats, ranging
+    from 0 to 1, indicating the spatial location of the spectrum trail
+    within the slitlet: 0 means the lower boundary and 1 corresponds
+    to the upper bounday. Any value in (0,1) will provide the
+    spectrum trail located in between accordingly.
 
     Parameters
     ----------
@@ -465,7 +492,7 @@ def expected_distorted_boundaries(islitlet, csu_bar_slit_center,
 def expected_distorted_frontiers(islitlet, csu_bar_slit_center,
                                  params, parmodel,
                                  numpts, deg, debugplot=0):
-    """Return polynomial coefficients of expected distorted frontiers.
+    """Return expected frontiers as a list with two SpectrumTrail instances.
 
     Note that the frontiers are computed as the polynomials that extend
     the slitlet region defined by its boundaries, encompassing half the
@@ -495,8 +522,8 @@ def expected_distorted_frontiers(islitlet, csu_bar_slit_center,
     Returns
     -------
     list_frontiers : list of SpectrumTrail objects
-        List containing the polynomials defining the two slitlet
-        frontiers (lower and upper, respectively).
+        List containing the two SpectrumTrail objects defining the
+        slitlet frontiers (lower and upper, respectively).
 
     """
 
@@ -528,7 +555,8 @@ def expected_distorted_frontiers(islitlet, csu_bar_slit_center,
     return list_frontiers
 
 
-def fun_residuals(params, parmodel, bounddict, numresolution,
+def fun_residuals(params, parmodel, bounddict,
+                  shrinking_factor, numresolution,
                   islitmin, islitmax, debugplot):
     """Function to be minimised.
 
@@ -542,6 +570,11 @@ def fun_residuals(params, parmodel, bounddict, numresolution,
         'multislit'.
     bounddict : JSON structure
         Structure employed to store bounddict information.
+    shrinking_factor : float
+        Fraction of the detected X range (specrtral) to be employed
+        in the fit. This must be a number verifying
+        0 < shrinking_factor <= 1. The resulting interval will be
+        centered within the original one.
     numresolution : int
         Number of points in which the X-range interval is subdivided
         before computing the residuals.
@@ -588,7 +621,8 @@ def fun_residuals(params, parmodel, bounddict, numresolution,
                 )
                 xmin_lower_bound = tmp_dict['boundary_xmin_lower']
                 xmax_lower_bound = tmp_dict['boundary_xmax_lower']
-                dx = (xmax_lower_bound - xmin_lower_bound) / 20
+                dx = (xmax_lower_bound - xmin_lower_bound) * \
+                     (1 - shrinking_factor) / 2
                 xdum_lower = np.linspace(xmin_lower_bound + dx,
                                          xmax_lower_bound - dx,
                                          num=numresolution)
@@ -602,7 +636,8 @@ def fun_residuals(params, parmodel, bounddict, numresolution,
                 )
                 xmin_upper_bound = tmp_dict['boundary_xmin_upper']
                 xmax_upper_bound = tmp_dict['boundary_xmax_upper']
-                dx = (xmax_upper_bound - xmin_upper_bound) / 20
+                dx = (xmax_lower_bound - xmin_lower_bound) * \
+                     (1 - shrinking_factor) / 2
                 xdum_upper = np.linspace(xmin_upper_bound + dx,
                                          xmax_upper_bound - dx,
                                          num=numresolution)
@@ -662,7 +697,8 @@ def overplot_boundaries_from_bounddict(bounddict, micolors, linetype='-'):
 def overplot_boundaries_from_params(ax, params, parmodel,
                                     list_islitlet,
                                     list_csu_bar_slit_center,
-                                    micolors, linetype='--'):
+                                    micolors=('m', 'c'), linetype='--',
+                                    labels=True):
     """Overplot boundaries computed from fitted parameters.
 
     Parameters
@@ -685,9 +721,23 @@ def overplot_boundaries_from_params(ax, params, parmodel,
         for odd and even slitlets.
     linetype : str
         Line type.
+    labels : bool
+        If True, display slilet label
+
+    Returns
+    -------
+    list_pol_lower_boundaries : python list
+        List of numpy.polynomial.Polynomial instances with the lower
+        polynomial boundaries computed for the requested slitlets.
+    list_pol_upper_boundaries : python list
+        List of numpy.polynomial.Polynomial instances with the upper
+        polynomial boundaries computed for the requested slitlets.
+
 
     """
 
+    list_pol_lower_boundaries = []
+    list_pol_upper_boundaries = []
     for islitlet, csu_bar_slit_center in \
             zip(list_islitlet, list_csu_bar_slit_center):
         tmpcolor = micolors[islitlet % 2]
@@ -695,24 +745,107 @@ def overplot_boundaries_from_params(ax, params, parmodel,
             islitlet, csu_bar_slit_center,
             [0], params, parmodel, numpts=101, deg=5, debugplot=0
         )[0].poly_funct
+        list_pol_lower_boundaries.append(pol_lower_expected)
         pol_upper_expected = expected_distorted_boundaries(
             islitlet, csu_bar_slit_center,
             [1], params, parmodel, numpts=101, deg=5, debugplot=0
         )[0].poly_funct
+        list_pol_upper_boundaries.append(pol_upper_expected)
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
         ydum = pol_lower_expected(xdum)
         plt.plot(xdum, ydum, tmpcolor + linetype)
         ydum = pol_upper_expected(xdum)
         plt.plot(xdum, ydum, tmpcolor + linetype)
-        # slitlet label
-        yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
-        yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
-        ax.text(EMIR_NAXIS1 / 2 + 0.5, (yc_lower + yc_upper) / 2,
-                str(islitlet),
-                fontsize=10, va='center', ha='center',
-                bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
-                color=tmpcolor, fontweight='bold',
-                backgroundcolor='white')
+        if labels:
+            # slitlet label
+            yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
+            yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
+            xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
+            ax.text(xcsu, (yc_lower + yc_upper) / 2,
+                    str(islitlet),
+                    fontsize=10, va='center', ha='center',
+                    bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
+                    color=tmpcolor, fontweight='bold',
+                    backgroundcolor='white')
+
+    # return lists with boundaries
+    return list_pol_lower_boundaries, list_pol_upper_boundaries
+
+
+def overplot_frontiers_from_params(ax, params, parmodel,
+                                   list_islitlet,
+                                   list_csu_bar_slit_center,
+                                   micolors=('m', 'c'), linetype='--',
+                                   labels=True):
+    """Overplot frontiers computed from fitted parameters.
+
+    Parameters
+    ----------
+    ax : matplotlib axes
+        Current plot axes.
+    params : :class:`~lmfit.parameter.Parameters`
+        Parameters to be employed in the prediction of the distorted
+        boundaries.
+    parmodel : str
+        Model to be assumed. Allowed values are 'longslit' and
+        'multislit'.
+    list_islitlet : list of integers
+        Slitlet numbers to be considered.
+        longslits.
+    list_csu_bar_slit_center : list of floats
+        CSU bar slit centers of the considered slitlets.
+    micolors : Python list
+        List with two characters corresponding to alternating colors
+        for odd and even slitlets.
+    linetype : str
+        Line type.
+    labels : bool
+        If True, display slilet label
+
+    Returns
+    -------
+    list_pol_lower_frontiers : python list
+        List of SpectrumTrail instances with the lower polynomial
+        frontiers computed for the requested slitlets.
+    list_pol_upper_frontiers : python list
+        List of SpectrumTrail instances with the upper polynomial
+        frontiers computed for the requested slitlets.
+
+
+    """
+
+    list_pol_lower_frontiers = []
+    list_pol_upper_frontiers = []
+    for islitlet, csu_bar_slit_center in \
+            zip(list_islitlet, list_csu_bar_slit_center):
+        tmpcolor = micolors[islitlet % 2]
+        list_expected_frontiers = expected_distorted_frontiers(
+            islitlet, csu_bar_slit_center,
+            params, parmodel, numpts=101, deg=5, debugplot=0
+        )
+        pol_lower_expected = list_expected_frontiers[0].poly_funct
+        list_pol_lower_frontiers.append(pol_lower_expected)
+        pol_upper_expected = list_expected_frontiers[1].poly_funct
+        list_pol_upper_frontiers.append(pol_upper_expected)
+        xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
+        ydum = pol_lower_expected(xdum)
+        plt.plot(xdum, ydum, tmpcolor + linetype)
+        ydum = pol_upper_expected(xdum)
+        plt.plot(xdum, ydum, tmpcolor + linetype)
+        if labels:
+            # slitlet label
+            yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
+            yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
+            xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
+            ax.text(xcsu, (yc_lower + yc_upper) / 2,
+                    str(islitlet),
+                    fontsize=10, va='center', ha='center',
+                    bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
+                    color=tmpcolor, fontweight='bold',
+                    backgroundcolor='white')
+
+    # return lists of SpectrumTrail boundaries
+    return list_pol_lower_frontiers, list_pol_upper_frontiers
 
 
 def save_boundaries_from_bounddict_ds9(bounddict, ds9_filename, numpix=100):
@@ -863,9 +996,9 @@ def save_boundaries_from_params_ds9(params, parmodel,
     for islitlet, csu_bar_slit_center in \
             zip(list_islitlet, list_csu_bar_slit_center):
         if islitlet % 2 == 0:
-            colorbox = '#ff77ff'
+            colorbox = '#ff00ff'  # '#ff77ff'
         else:
-            colorbox = '#4444ff'
+            colorbox = '#00ffff'  # '#4444ff'
 
         ds9_file.write(
             '#\n# islitlet...........: {0}\n'.format(islitlet)
@@ -881,6 +1014,110 @@ def save_boundaries_from_params_ds9(params, parmodel,
             islitlet, csu_bar_slit_center, [1], params, parmodel,
             numpts=101, deg=5, debugplot=0
         )[0].poly_funct
+        xdum = np.linspace(1, EMIR_NAXIS1, num=numpix)
+        ydum = pol_lower_expected(xdum)
+        for i in range(len(xdum)-1):
+            ds9_file.write(
+                'line {0} {1} {2} {3}'.format(xdum[i], ydum[i],
+                                              xdum[i+1], ydum[i+1])
+            )
+            ds9_file.write(' # color={0}\n'.format(colorbox))
+        ydum = pol_upper_expected(xdum)
+        for i in range(len(xdum)-1):
+            ds9_file.write(
+                'line {0} {1} {2} {3}'.format(xdum[i], ydum[i],
+                                              xdum[i+1], ydum[i+1])
+            )
+            ds9_file.write(' # color={0}\n'.format(colorbox))
+        # slitlet label
+        yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
+        yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
+        ds9_file.write('text {0} {1} {{{2}}} # color={3} '
+                       'font="helvetica 10 bold '
+                       'roman"\n'.format(EMIR_NAXIS1 / 2 + 0.5,
+                                         (yc_lower + yc_upper) / 2,
+                                         islitlet,
+                                         colorbox))
+
+    ds9_file.close()
+
+
+def save_frontiers_from_params_ds9(params, parmodel,
+                                   list_islitlet,
+                                   list_csu_bar_slit_center,
+                                   uuid, grism, spfilter,
+                                   ds9_filename, numpix=100):
+    """Export to ds9 region file the frontiers parametrised with params.
+
+    Parameters
+    ----------
+    params : :class:`~lmfit.parameter.Parameters`
+        Parameters to be employed in the prediction of the distorted
+        boundaries.
+    parmodel : str
+        Model to be assumed. Allowed values are 'longslit' and
+        'multislit'.
+    list_islitlet : list (integers)
+        Slitlet numbers to be considered.
+    list_csu_bar_slit_center : list of floats
+        CSU bar slit centers of the considered slitlets.
+    uuid: int
+        UUID corresponding to the bounddict file that has been employed
+        to fit the parameters 'params'.
+    grism : str
+        Employed grism.
+    spfilter : str
+        Employed filter.
+    ds9_filename : str
+        Output file name for the ds9 region file.
+    numpix : int
+        Number of points in which the X-range interval is subdivided
+        in order to save each boundary as a connected set of line
+        segments.
+
+    """
+
+    ds9_file = open(ds9_filename, 'w')
+
+    ds9_file.write('# Region file format: DS9 version 4.1\n')
+    ds9_file.write('global color=green dashlist=2 4 width=2 '
+                   'font="helvetica 10 normal roman" select=1 '
+                   'highlite=1 dash=1 fixed=0 edit=1 '
+                   'move=1 delete=1 include=1 source=1\n')
+    ds9_file.write('physical\n#\n')
+
+    ds9_file.write('#\n# uuid (boundict file): {0}\n'.format(uuid))
+    ds9_file.write('# filter..............: {0}\n'.format(spfilter))
+    ds9_file.write('# grism...............: {0}\n'.format(grism))
+
+    if parmodel == "longslit":
+        for dumpar in EXPECTED_PARAMETER_LIST:
+            parvalue = params[dumpar].value
+            ds9_file.write('# {0}: {1}\n'.format(dumpar, parvalue))
+    else:
+        for dumpar in EXPECTED_PARAMETER_LIST_EXTENDED:
+            parvalue = params[dumpar].value
+            ds9_file.write('# {0}: {1}\n'.format(dumpar, parvalue))
+
+    for islitlet, csu_bar_slit_center in \
+            zip(list_islitlet, list_csu_bar_slit_center):
+        if islitlet % 2 == 0:
+            colorbox = '#0000ff'  # '#ff77ff'
+        else:
+            colorbox = '#0000ff'  # '#4444ff'
+
+        ds9_file.write(
+            '#\n# islitlet...........: {0}\n'.format(islitlet)
+        )
+        ds9_file.write(
+            '# csu_bar_slit_center: {0}\n'.format(csu_bar_slit_center)
+        )
+        list_expected_frontiers = expected_distorted_frontiers(
+            islitlet, csu_bar_slit_center,
+            params, parmodel, numpts=101, deg=5, debugplot=0
+        )
+        pol_lower_expected = list_expected_frontiers[0].poly_funct
+        pol_upper_expected = list_expected_frontiers[1].poly_funct
         xdum = np.linspace(1, EMIR_NAXIS1, num=numpix)
         ydum = pol_lower_expected(xdum)
         for i in range(len(xdum)-1):
@@ -933,7 +1170,7 @@ def bound_params_from_dict(bound_param_dict):
             dumdict = bound_param_dict['contents'][mainpar]
             params.add(mainpar, value=dumdict["value"],
                        vary=dumdict["vary"])
-        else:
+        elif bound_param_dict['meta-info']['parmodel'] == 'multislit':
             for subpar in ['a0s', 'a1s', 'a2s']:
                 if subpar not in bound_param_dict['contents'][mainpar].keys():
                     raise ValueError('Subparameter ' + subpar + ' not found' +
@@ -942,6 +1179,9 @@ def bound_params_from_dict(bound_param_dict):
                 dumdict = bound_param_dict['contents'][mainpar][subpar]
                 params.add(cpar, value=dumdict["value"],
                            vary=dumdict["vary"])
+        else:
+            print('parmodel: ', bound_param_dict['meta-info']['parmodel'])
+            raise ValueError('Unexpected parmodel')
     return params
 
 
@@ -968,6 +1208,11 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
+    parser.add_argument("--shrinking_factor",
+                        help="Effective reduction factor to be applied to "
+                             "the fitted X-axis (spectral) range, "
+                             "(default=0.9)",
+                        type=float, default=0.9)
     parser.add_argument("--tolerance",
                         help="Tolerance for Nelder-Mead minimization process "
                              "(default=1E-7)",
@@ -1000,17 +1245,22 @@ def main(args=None):
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
 
-    if args.background_image is not None and args.debugplot % 10 == 0:
-        raise ValueError("--background_image requires --debugplot value "
-                         "compatible with plotting")
+    if args.background_image is not None and args.debugplot % 11 == 0:
+        raise ValueError("--background_image requires "
+                         "--debugplot value compatible with "
+                         "plotting\n'")
+
+    if args.shrinking_factor <=0 or args.shrinking_factor > 1:
+        raise ValueError("Unexpected shriking factor: ",
+                         args.shrinking_factor, '\n')
 
     # read bounddict file and check its contents
     bounddict = json.loads(open(args.bounddict.name).read())
     averaged_dtu_configuration, maxdiff_dtu_configuration = \
         integrity_check(bounddict, args.maxDTUoffset)
     save_boundaries_from_bounddict_ds9(bounddict, 'ds9_bounddict.reg')
-    # save lists with individual slitlet number and csu_bar_slit_center value,
-    # needed to save ds9 region file and plotting
+    # store lists with individual slitlet number and csu_bar_slit_center
+    # value, needed later to save the ds9 region file and for plotting
     list_islitlet = []
     list_csu_bar_slit_center = []
     read_slitlets = bounddict['contents'].keys()
@@ -1035,8 +1285,12 @@ def main(args=None):
     grism_ = init_bound_param['tags']['grism']
     spfilter_ = init_bound_param['tags']['filter']
     if grism != grism_:
+        print("grism (JSON bounddict..):", grism)
+        print("grism (init_bound_param):", grism_)
         raise ValueError("grism mismatch")
     if spfilter != spfilter_:
+        print("filter (JSON bounddict..):", spfilter)
+        print("filter (init_bound_param):", spfilter_)
         raise ValueError("filter mismatch")
     islitlet_min = init_bound_param['tags']['islitlet_min']
     islitlet_max = init_bound_param['tags']['islitlet_max']
@@ -1060,7 +1314,8 @@ def main(args=None):
     else:
         fitter = Minimizer(
             fun_residuals, params,
-            fcn_args=(args.parmodel, bounddict, args.numresolution,
+            fcn_args=(args.parmodel, bounddict,
+                      args.shrinking_factor, args.numresolution,
                       islitlet_min, islitlet_max, args.debugplot)
         )
         result = fitter.scalar_minimize(method='Nelder-Mead',
@@ -1068,6 +1323,7 @@ def main(args=None):
         pickle.dump(result, open('dum.pickle', 'wb'))
 
     global_residual = fun_residuals(result.params, args.parmodel, bounddict,
+                                    args.shrinking_factor,
                                     args.numresolution,
                                     islitlet_min, islitlet_max,
                                     args.debugplot)
@@ -1170,8 +1426,7 @@ def main(args=None):
         if args.parmodel == "longslit":
             overplot_boundaries_from_params(ax, result.params, args.parmodel,
                                             list_islitlet,
-                                            list_csu_bar_slit_center,
-                                            ['m', 'c'], linetype='--')
+                                            list_csu_bar_slit_center)
         pause_debugplot(debugplot=args.debugplot, pltshow=True,
                         tight_layout=True)
 
