@@ -16,6 +16,7 @@ from fit_boundaries import bound_params_from_dict
 from fit_boundaries import overplot_boundaries_from_params
 from fit_boundaries import overplot_frontiers_from_params
 from fit_boundaries import save_boundaries_from_params_ds9
+from fit_boundaries import save_frontiers_from_params_ds9
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
@@ -35,8 +36,11 @@ def main(args=None):
                         type=argparse.FileType('r'))
 
     # optional arguments
-    parser.add_argument("--ds9reg",
-                        help="Output ds9 region file",
+    parser.add_argument("--ds9reg_boundaries",
+                        help="Output ds9 region file with slitlet boundaries",
+                        type=lambda x: arg_file_is_new(parser, x))
+    parser.add_argument("--ds9reg_frontiers",
+                        help="Output ds9 region file with slitlet frontiers",
                         type=lambda x: arg_file_is_new(parser, x))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
@@ -102,8 +106,8 @@ def main(args=None):
         list_csu_bar_slit_center.append(
             csu_config.csu_bar_slit_center[islitlet - 1])
 
-    # generate output ds9 region file
-    if args.ds9reg is not None:
+    # generate output ds9 region file with slitlet boundaries
+    if args.ds9reg_boundaries is not None:
         save_boundaries_from_params_ds9(
             params=params,
             parmodel=parmodel,
@@ -112,7 +116,20 @@ def main(args=None):
             uuid=fittedpar_dict['uuid'],
             grism=fittedpar_dict['tags']['grism'],
             spfilter=fittedpar_dict['tags']['filter'],
-            ds9_filename=args.ds9reg.name
+            ds9_filename=args.ds9reg_boundaries.name
+        )
+
+    # generate output ds9 region file with slitlet frontiers
+    if args.ds9reg_frontiers is not None:
+        save_frontiers_from_params_ds9(
+            params=params,
+            parmodel=parmodel,
+            list_islitlet=list_islitlet,
+            list_csu_bar_slit_center=list_csu_bar_slit_center,
+            uuid=fittedpar_dict['uuid'],
+            grism=fittedpar_dict['tags']['grism'],
+            spfilter=fittedpar_dict['tags']['filter'],
+            ds9_filename=args.ds9reg_frontiers.name
         )
 
     # display full image

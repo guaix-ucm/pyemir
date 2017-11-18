@@ -819,15 +819,13 @@ def overplot_frontiers_from_params(ax, params, parmodel,
     for islitlet, csu_bar_slit_center in \
             zip(list_islitlet, list_csu_bar_slit_center):
         tmpcolor = micolors[islitlet % 2]
-        pol_lower_expected = expected_distorted_frontiers(
+        list_expected_frontiers = expected_distorted_frontiers(
             islitlet, csu_bar_slit_center,
             params, parmodel, numpts=101, deg=5, debugplot=0
-        )[0].poly_funct
+        )
+        pol_lower_expected = list_expected_frontiers[0].poly_funct
         list_pol_lower_frontiers.append(pol_lower_expected)
-        pol_upper_expected = expected_distorted_frontiers(
-            islitlet, csu_bar_slit_center,
-            params, parmodel, numpts=101, deg=5, debugplot=0
-        )[0].poly_funct
+        pol_upper_expected = list_expected_frontiers[1].poly_funct
         list_pol_upper_frontiers.append(pol_upper_expected)
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
         ydum = pol_lower_expected(xdum)
@@ -998,9 +996,9 @@ def save_boundaries_from_params_ds9(params, parmodel,
     for islitlet, csu_bar_slit_center in \
             zip(list_islitlet, list_csu_bar_slit_center):
         if islitlet % 2 == 0:
-            colorbox = '#ff77ff'
+            colorbox = '#ff00ff'  # '#ff77ff'
         else:
-            colorbox = '#4444ff'
+            colorbox = '#00ffff'  # '#4444ff'
 
         ds9_file.write(
             '#\n# islitlet...........: {0}\n'.format(islitlet)
@@ -1016,6 +1014,110 @@ def save_boundaries_from_params_ds9(params, parmodel,
             islitlet, csu_bar_slit_center, [1], params, parmodel,
             numpts=101, deg=5, debugplot=0
         )[0].poly_funct
+        xdum = np.linspace(1, EMIR_NAXIS1, num=numpix)
+        ydum = pol_lower_expected(xdum)
+        for i in range(len(xdum)-1):
+            ds9_file.write(
+                'line {0} {1} {2} {3}'.format(xdum[i], ydum[i],
+                                              xdum[i+1], ydum[i+1])
+            )
+            ds9_file.write(' # color={0}\n'.format(colorbox))
+        ydum = pol_upper_expected(xdum)
+        for i in range(len(xdum)-1):
+            ds9_file.write(
+                'line {0} {1} {2} {3}'.format(xdum[i], ydum[i],
+                                              xdum[i+1], ydum[i+1])
+            )
+            ds9_file.write(' # color={0}\n'.format(colorbox))
+        # slitlet label
+        yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
+        yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
+        ds9_file.write('text {0} {1} {{{2}}} # color={3} '
+                       'font="helvetica 10 bold '
+                       'roman"\n'.format(EMIR_NAXIS1 / 2 + 0.5,
+                                         (yc_lower + yc_upper) / 2,
+                                         islitlet,
+                                         colorbox))
+
+    ds9_file.close()
+
+
+def save_frontiers_from_params_ds9(params, parmodel,
+                                   list_islitlet,
+                                   list_csu_bar_slit_center,
+                                   uuid, grism, spfilter,
+                                   ds9_filename, numpix=100):
+    """Export to ds9 region file the frontiers parametrised with params.
+
+    Parameters
+    ----------
+    params : :class:`~lmfit.parameter.Parameters`
+        Parameters to be employed in the prediction of the distorted
+        boundaries.
+    parmodel : str
+        Model to be assumed. Allowed values are 'longslit' and
+        'multislit'.
+    list_islitlet : list (integers)
+        Slitlet numbers to be considered.
+    list_csu_bar_slit_center : list of floats
+        CSU bar slit centers of the considered slitlets.
+    uuid: int
+        UUID corresponding to the bounddict file that has been employed
+        to fit the parameters 'params'.
+    grism : str
+        Employed grism.
+    spfilter : str
+        Employed filter.
+    ds9_filename : str
+        Output file name for the ds9 region file.
+    numpix : int
+        Number of points in which the X-range interval is subdivided
+        in order to save each boundary as a connected set of line
+        segments.
+
+    """
+
+    ds9_file = open(ds9_filename, 'w')
+
+    ds9_file.write('# Region file format: DS9 version 4.1\n')
+    ds9_file.write('global color=green dashlist=2 4 width=2 '
+                   'font="helvetica 10 normal roman" select=1 '
+                   'highlite=1 dash=1 fixed=0 edit=1 '
+                   'move=1 delete=1 include=1 source=1\n')
+    ds9_file.write('physical\n#\n')
+
+    ds9_file.write('#\n# uuid (boundict file): {0}\n'.format(uuid))
+    ds9_file.write('# filter..............: {0}\n'.format(spfilter))
+    ds9_file.write('# grism...............: {0}\n'.format(grism))
+
+    if parmodel == "longslit":
+        for dumpar in EXPECTED_PARAMETER_LIST:
+            parvalue = params[dumpar].value
+            ds9_file.write('# {0}: {1}\n'.format(dumpar, parvalue))
+    else:
+        for dumpar in EXPECTED_PARAMETER_LIST_EXTENDED:
+            parvalue = params[dumpar].value
+            ds9_file.write('# {0}: {1}\n'.format(dumpar, parvalue))
+
+    for islitlet, csu_bar_slit_center in \
+            zip(list_islitlet, list_csu_bar_slit_center):
+        if islitlet % 2 == 0:
+            colorbox = '#0000ff'  # '#ff77ff'
+        else:
+            colorbox = '#0000ff'  # '#4444ff'
+
+        ds9_file.write(
+            '#\n# islitlet...........: {0}\n'.format(islitlet)
+        )
+        ds9_file.write(
+            '# csu_bar_slit_center: {0}\n'.format(csu_bar_slit_center)
+        )
+        list_expected_frontiers = expected_distorted_frontiers(
+            islitlet, csu_bar_slit_center,
+            params, parmodel, numpts=101, deg=5, debugplot=0
+        )
+        pol_lower_expected = list_expected_frontiers[0].poly_funct
+        pol_upper_expected = list_expected_frontiers[1].poly_funct
         xdum = np.linspace(1, EMIR_NAXIS1, num=numpix)
         ydum = pol_lower_expected(xdum)
         for i in range(len(xdum)-1):
