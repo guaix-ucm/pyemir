@@ -14,6 +14,7 @@ from emirdrp.instrument.csu_configuration import CsuConfiguration
 from arg_file_is_new import arg_file_is_new
 from fit_boundaries import bound_params_from_dict
 from fit_boundaries import overplot_boundaries_from_params
+from fit_boundaries import overplot_frontiers_from_params
 from fit_boundaries import save_boundaries_from_params_ds9
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
@@ -129,6 +130,17 @@ def main(args=None):
             parmodel=parmodel,
             list_islitlet=list_islitlet,
             list_csu_bar_slit_center=list_csu_bar_slit_center
+        )
+
+        # overplot frontiers
+        overplot_frontiers_from_params(
+            ax=ax,
+            params=params,
+            parmodel=parmodel,
+            list_islitlet=list_islitlet,
+            list_csu_bar_slit_center=list_csu_bar_slit_center,
+            micolors=('b', 'b'), linetype='-',
+            labels=False    # already displayed with the boundaries
         )
 
     # show plot

@@ -421,7 +421,14 @@ def return_params(islitlet, csu_bar_slit_center, params, parmodel):
 def expected_distorted_boundaries(islitlet, csu_bar_slit_center,
                                   borderlist, params, parmodel,
                                   numpts, deg, debugplot=0):
-    """Return polynomial coefficients of expected distorted boundaries.
+    """Return expected SpectrumTrail instances associated to a given slitlet.
+
+    Several SpectrumTrail objects can be computed for the considered
+    slitlet. The parameter borderlist is a list of floats, ranging
+    from 0 to 1, indicating the spatial location of the spectrum trail
+    within the slitlet: 0 means the lower boundary and 1 corresponds
+    to the upper bounday. Any value in (0,1) will provide the
+    spectrum trail located in between accordingly.
 
     Parameters
     ----------
@@ -485,7 +492,7 @@ def expected_distorted_boundaries(islitlet, csu_bar_slit_center,
 def expected_distorted_frontiers(islitlet, csu_bar_slit_center,
                                  params, parmodel,
                                  numpts, deg, debugplot=0):
-    """Return polynomial coefficients of expected distorted frontiers.
+    """Return expected frontiers as a list with two SpectrumTrail instances.
 
     Note that the frontiers are computed as the polynomials that extend
     the slitlet region defined by its boundaries, encompassing half the
@@ -515,8 +522,8 @@ def expected_distorted_frontiers(islitlet, csu_bar_slit_center,
     Returns
     -------
     list_frontiers : list of SpectrumTrail objects
-        List containing the polynomials defining the two slitlet
-        frontiers (lower and upper, respectively).
+        List containing the two SpectrumTrail objects defining the
+        slitlet frontiers (lower and upper, respectively).
 
     """
 
@@ -690,7 +697,8 @@ def overplot_boundaries_from_bounddict(bounddict, micolors, linetype='-'):
 def overplot_boundaries_from_params(ax, params, parmodel,
                                     list_islitlet,
                                     list_csu_bar_slit_center,
-                                    micolors=('m', 'c'), linetype='--'):
+                                    micolors=('m', 'c'), linetype='--',
+                                    labels=True):
     """Overplot boundaries computed from fitted parameters.
 
     Parameters
@@ -713,9 +721,23 @@ def overplot_boundaries_from_params(ax, params, parmodel,
         for odd and even slitlets.
     linetype : str
         Line type.
+    labels : bool
+        If True, display slilet label
+
+    Returns
+    -------
+    list_pol_lower_boundaries : python list
+        List of numpy.polynomial.Polynomial instances with the lower
+        polynomial boundaries computed for the requested slitlets.
+    list_pol_upper_boundaries : python list
+        List of numpy.polynomial.Polynomial instances with the upper
+        polynomial boundaries computed for the requested slitlets.
+
 
     """
 
+    list_pol_lower_boundaries = []
+    list_pol_upper_boundaries = []
     for islitlet, csu_bar_slit_center in \
             zip(list_islitlet, list_csu_bar_slit_center):
         tmpcolor = micolors[islitlet % 2]
@@ -723,25 +745,109 @@ def overplot_boundaries_from_params(ax, params, parmodel,
             islitlet, csu_bar_slit_center,
             [0], params, parmodel, numpts=101, deg=5, debugplot=0
         )[0].poly_funct
+        list_pol_lower_boundaries.append(pol_lower_expected)
         pol_upper_expected = expected_distorted_boundaries(
             islitlet, csu_bar_slit_center,
             [1], params, parmodel, numpts=101, deg=5, debugplot=0
         )[0].poly_funct
+        list_pol_upper_boundaries.append(pol_upper_expected)
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
         ydum = pol_lower_expected(xdum)
         plt.plot(xdum, ydum, tmpcolor + linetype)
         ydum = pol_upper_expected(xdum)
         plt.plot(xdum, ydum, tmpcolor + linetype)
-        # slitlet label
-        yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
-        yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
-        xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
-        ax.text(xcsu, (yc_lower + yc_upper) / 2,
-                str(islitlet),
-                fontsize=10, va='center', ha='center',
-                bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
-                color=tmpcolor, fontweight='bold',
-                backgroundcolor='white')
+        if labels:
+            # slitlet label
+            yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
+            yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
+            xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
+            ax.text(xcsu, (yc_lower + yc_upper) / 2,
+                    str(islitlet),
+                    fontsize=10, va='center', ha='center',
+                    bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
+                    color=tmpcolor, fontweight='bold',
+                    backgroundcolor='white')
+
+    # return lists with boundaries
+    return list_pol_lower_boundaries, list_pol_upper_boundaries
+
+
+def overplot_frontiers_from_params(ax, params, parmodel,
+                                   list_islitlet,
+                                   list_csu_bar_slit_center,
+                                   micolors=('m', 'c'), linetype='--',
+                                   labels=True):
+    """Overplot frontiers computed from fitted parameters.
+
+    Parameters
+    ----------
+    ax : matplotlib axes
+        Current plot axes.
+    params : :class:`~lmfit.parameter.Parameters`
+        Parameters to be employed in the prediction of the distorted
+        boundaries.
+    parmodel : str
+        Model to be assumed. Allowed values are 'longslit' and
+        'multislit'.
+    list_islitlet : list of integers
+        Slitlet numbers to be considered.
+        longslits.
+    list_csu_bar_slit_center : list of floats
+        CSU bar slit centers of the considered slitlets.
+    micolors : Python list
+        List with two characters corresponding to alternating colors
+        for odd and even slitlets.
+    linetype : str
+        Line type.
+    labels : bool
+        If True, display slilet label
+
+    Returns
+    -------
+    list_pol_lower_frontiers : python list
+        List of SpectrumTrail instances with the lower polynomial
+        frontiers computed for the requested slitlets.
+    list_pol_upper_frontiers : python list
+        List of SpectrumTrail instances with the upper polynomial
+        frontiers computed for the requested slitlets.
+
+
+    """
+
+    list_pol_lower_frontiers = []
+    list_pol_upper_frontiers = []
+    for islitlet, csu_bar_slit_center in \
+            zip(list_islitlet, list_csu_bar_slit_center):
+        tmpcolor = micolors[islitlet % 2]
+        pol_lower_expected = expected_distorted_frontiers(
+            islitlet, csu_bar_slit_center,
+            params, parmodel, numpts=101, deg=5, debugplot=0
+        )[0].poly_funct
+        list_pol_lower_frontiers.append(pol_lower_expected)
+        pol_upper_expected = expected_distorted_frontiers(
+            islitlet, csu_bar_slit_center,
+            params, parmodel, numpts=101, deg=5, debugplot=0
+        )[0].poly_funct
+        list_pol_upper_frontiers.append(pol_upper_expected)
+        xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
+        ydum = pol_lower_expected(xdum)
+        plt.plot(xdum, ydum, tmpcolor + linetype)
+        ydum = pol_upper_expected(xdum)
+        plt.plot(xdum, ydum, tmpcolor + linetype)
+        if labels:
+            # slitlet label
+            yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
+            yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
+            xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
+            ax.text(xcsu, (yc_lower + yc_upper) / 2,
+                    str(islitlet),
+                    fontsize=10, va='center', ha='center',
+                    bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
+                    color=tmpcolor, fontweight='bold',
+                    backgroundcolor='white')
+
+    # return lists of SpectrumTrail boundaries
+    return list_pol_lower_frontiers, list_pol_upper_frontiers
 
 
 def save_boundaries_from_bounddict_ds9(bounddict, ds9_filename, numpix=100):
