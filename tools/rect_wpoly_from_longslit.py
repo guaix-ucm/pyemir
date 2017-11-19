@@ -1211,6 +1211,27 @@ class Slitlet2D_LS_Arc(object):
         return sp0, fxpeaks
 
 
+def interpolate_bad_rows(image2d):
+    """Interpolate quadrant change in original frames.
+
+    Parameters
+    ----------
+    image2d : 2d numpy array
+        Initial image.
+    image2d_interpolated : 2d numpy array
+        Interpolated image.
+
+    """
+
+    image2d_interpolated = np.copy(image2d)
+    image2d_interpolated[1024, :1024] = ( image2d[1023, :1024] +
+                                          image2d[1025, :1024] ) /2
+    image2d_interpolated[1023, 1024:] = ( image2d[1022, 1024:] +
+                                          image2d[1024, 1024:] ) /2
+
+    return image2d_interpolated
+
+
 def main(args=None):
 
     # parse command-line options
@@ -1310,12 +1331,12 @@ def main(args=None):
 
     # read FITS image with odd-numbered slitlets
     hdulist_odd = fits.open(args.fitsfile_odd)
-    image2d_odd = hdulist_odd[0].data
+    image2d_odd = interpolate_bad_rows(hdulist_odd[0].data)
     hdulist_odd.close()
 
     # read FITS image with even-numbered slitlets
     hdulist_even = fits.open(args.fitsfile_even)
-    image2d_even = hdulist_even[0].data
+    image2d_even = interpolate_bad_rows(hdulist_even[0].data)
     hdulist_even.close()
 
     # read filter and grism names
