@@ -654,8 +654,16 @@ class Slitlet2D_LS_Arc(object):
             # define new ArcLine using a weighted fit
             # (note that it must be X vs Y)
             arc_line.fit(x=x_tmp, y=y_tmp, deg=1, w=w_tmp, y_vs_x=False)
-            # update list with identified ArcLines
-            self.list_arc_lines.append(arc_line)
+            if len(arc_line.poly_funct.coef) == 2:
+                # update list with identified ArcLines
+                self.list_arc_lines.append(arc_line)
+            else:
+                # ignore (sometimes the arc_line.fit returns a constant!)
+                pass
+
+        # recompute number_arc_lines just in case in the previous fits
+        # some lines have just given a zero degree polynomial
+        number_arc_lines = len(self.list_arc_lines)
 
         # remove arc lines with unexpected slopes
         yfit = np.array([self.list_arc_lines[k].poly_funct.coef[1]
