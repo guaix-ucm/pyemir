@@ -128,8 +128,8 @@ def main(args=None):
                         action="store_true")
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
-                             " (default=12)",
-                        type=int, default=12,
+                             " (default=0)",
+                        type=int, default=0,
                         choices=DEBUGPLOT_CODES)
     parser.add_argument("--echo",
                         help="Display full command line",

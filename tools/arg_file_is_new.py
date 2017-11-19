@@ -21,7 +21,7 @@ def arg_file_is_new(parser, arg):
 
     """
     if os.path.exists(arg):
-        parser.error("The file %s already exist and "
+        parser.error("\nThe file\n\"%s\"\nalready exist and "
                      "cannot be overwritten!" % arg)
     else:
         # return an open file handle
