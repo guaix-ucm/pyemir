@@ -6,7 +6,6 @@ from astropy.io import fits
 import sys
 
 from numina.array.bpm import process_bpm_median
-import numina.array._combine
 
 from arg_file_is_new import arg_file_is_new
 
