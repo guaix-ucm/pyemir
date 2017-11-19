@@ -73,6 +73,8 @@ def main(args=None):
 
     # save output FITS file
     hdulist_image.writeto(args.outfile)
+
+    # close original image
     hdulist_image.close()
 
 
