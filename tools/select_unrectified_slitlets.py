@@ -32,7 +32,7 @@ def list_slitlets_from_string(s, islitlet_min, islitlet_max):
     ----------
     s : string
         String defining the slitlets. The slitlets must be specify
-        as a set of n1[[,n2],step] tuples. If only n1 is provided,
+        as a set of n1[,n2[,step]] tuples. If only n1 is provided,
         the slitlet number n1 is considered. When n1 and n2 are given
         but step is missing, step=1 is assumed. Finally, when all
         n1, n2 and step are given, slitlets considered are those
@@ -115,8 +115,9 @@ def main(args=None):
                              "corresponding to the multislit model",
                         type=argparse.FileType('r'))
     parser.add_argument("--slitlets", required=True,
-                        help="Slitlet selection: string between doble "
-                             "quotes!",
+                        help="Slitlet selection: string between double "
+                             "quotes providing tuples of the form "
+                             "n1[,n2[,step]]",
                         type=str)
 
     # optional arguments
@@ -218,10 +219,13 @@ def main(args=None):
             n1, n2 = nscan_minmax_frontiers(y0_frontier_lower=y0_lower,
                                             y0_frontier_upper=y0_upper,
                                             resize=True)
+            # note that n1 and n2 are scans (ranging from 1 to NAXIS2)
             if args.maskonly:
-                image2d_output[n1:(n2 + 1), j] = np.repeat(1.0, n2 - n1 + 1)
+                image2d_output[(n1 - 1):n2, j] = np.repeat(
+                    [1.0], (n2 - n1 + 1)
+                )
             else:
-                image2d_output[n1:(n2 + 1), j] = image2d[n1:(n2 + 1), j]
+                image2d_output[(n1 - 1):n2, j] = image2d[(n1 - 1):n2, j]
 
     # update the array of the output file
     hdulist_image[0].data = image2d_output
