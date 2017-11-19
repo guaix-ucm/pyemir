@@ -14,6 +14,8 @@ from skimage import restoration
 import sys
 from uuid import uuid4
 
+from numina.array.ccd_line import ArcLine
+from numina.array.ccd_line import intersection_spectrail_arcline
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import \
     polfit_residuals_with_sigma_rejection
@@ -29,13 +31,12 @@ from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.array.wavecalib.peaks_spectrum import find_peaks_spectrum
 from numina.array.wavecalib.peaks_spectrum import refine_peaks_spectrum
 from numina.array.wavecalib.resample import resample_image2d_flux
-
-from numina.array.ccd_line import ArcLine
-from numina.array.ccd_line import intersection_spectrail_arcline
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.csu_configuration \
     import merge_odd_even_csu_configurations
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+
+from arg_file_is_new import arg_file_is_new
 from fit_boundaries import bound_params_from_dict
 from fit_boundaries import expected_distorted_boundaries
 from fit_boundaries import expected_distorted_frontiers
@@ -669,8 +670,12 @@ class Slitlet2D_LS_Arc(object):
 
         # fit slope versus x-coordinate of the intersection of the arc line
         # with the middle spectrum trail
+        if len(yfit) > 5:
+            degeff = 5
+        else:
+            degeff = len(yfit) - 1
         polydum, residum, rejected = polfit_residuals_with_sigma_rejection(
-            x=xfit, y=yfit, deg=5, times_sigma_reject=4.0,
+            x=xfit, y=yfit, deg=degeff, times_sigma_reject=4.0,
             xlabel='arc line center (islitlet #' + str(self.islitlet) + ')',
             ylabel='arc line slope', debugplot=0
         )
@@ -1226,7 +1231,7 @@ def main(args=None):
                         type=int)
     parser.add_argument("--out_json", required=True,
                         help="Output JSON file with results",
-                        type=argparse.FileType('w'))
+                        type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
     parser.add_argument("--critical_plots",
@@ -1235,11 +1240,11 @@ def main(args=None):
     parser.add_argument("--out_rect",
                         help="Rectified but not wavelength calibrated output "
                              "FITS file",
-                        type=argparse.FileType('w'))
+                        type=lambda x: arg_file_is_new(parser, x))
     parser.add_argument("--out_rectwv",
                         help="Rectified and wavelength calibrated output "
                              "FITS file",
-                        type=argparse.FileType('w'))
+                        type=lambda x: arg_file_is_new(parser, x))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"
                              " (default=0)",
