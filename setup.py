@@ -62,6 +62,8 @@ setup(name='pyemir',
                   'tools.overplot_boundary_model:main',
               'pyemir-overplot_bounddict = ' +
                   'tools.overplot_bounddict:main',
+              'pyemir-verify_rect_wpoly = ' +
+                  'tools.verify_rect_wpoly:main',
               ],
       },
       classifiers=[
