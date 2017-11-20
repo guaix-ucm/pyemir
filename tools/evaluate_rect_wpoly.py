@@ -11,6 +11,8 @@ from uuid import uuid4
 
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+
+from arg_file_is_new import arg_file_is_new
 from fit_boundaries import bound_params_from_dict
 from fit_boundaries import expected_distorted_boundaries
 from fit_boundaries import expected_distorted_frontiers
@@ -33,7 +35,7 @@ def main(args=None):
     parser.add_argument("--out_rect_wpoly", required=True,
                         help="Output JSON file with calibration computed for "
                              "the input FITS file",
-                        type=argparse.FileType('w'))
+                        type=lambda x: arg_file_is_new(parser, x))
     # optional arguments
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"

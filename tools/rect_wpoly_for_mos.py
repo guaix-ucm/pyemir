@@ -15,6 +15,8 @@ from numina.array.distortion import ncoef_fmap
 
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 
+from arg_file_is_new import arg_file_is_new
+
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
 
@@ -52,7 +54,7 @@ def main(args=None):
                         type=argparse.FileType('r'))
     parser.add_argument("--out_MOSlibrary", required=True,
                         help="Output JSON file with results",
-                        type=argparse.FileType('w'))
+                        type=lambda x: arg_file_is_new(parser, x))
     # optional arguments
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"
