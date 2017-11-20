@@ -46,6 +46,8 @@ setup(name='pyemir',
                   'tools.display_slitlet_arrangement:main',
               'pyemir-merge_bounddict_files = ' +
                   'tools.merge_bounddict_files:main',
+              'pyemir-rect_wpoly_for_mos = ' +
+                  'tools.rect_wpoly_for_mos:main',
               'pyemir-rect_wpoly_from_longslit = ' +
                   'tools.rect_wpoly_from_longslit:main',
               'pyemir-select_unrectified_slitlets = ' +
