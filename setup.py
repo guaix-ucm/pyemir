@@ -40,6 +40,8 @@ setup(name='pyemir',
           'console_scripts': [
               'pyemir-apply_bpm = ' +
                   'tools.apply_bpm:main',
+              'pyemir-apply_rect_wpoly = ' +
+                  'tools.apply_rect_wpoly:main',
               'pyemir-evaluate_rect_wpoly = ' +
                   'tools.evaluate_rect_wpoly:main',
               'pyemir-fit_boundaries = ' +
