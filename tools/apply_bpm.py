@@ -6,7 +6,6 @@ from astropy.io import fits
 import sys
 
 from numina.array.bpm import process_bpm_median
-import numina.array._combine
 
 from arg_file_is_new import arg_file_is_new
 
@@ -73,6 +72,8 @@ def main(args=None):
 
     # save output FITS file
     hdulist_image.writeto(args.outfile)
+
+    # close original image
     hdulist_image.close()
 
 

@@ -46,6 +46,10 @@ setup(name='pyemir',
                   'tools.display_slitlet_arrangement:main',
               'pyemir-merge_bounddict_files = ' +
                   'tools.merge_bounddict_files:main',
+              'pyemir-rect_wpoly_from_longslit = ' +
+                  'tools.rect_wpoly_from_longslit:main',
+              'pyemir-select_unrectified_slitlets = ' +
+                  'tools.select_unrectified_slitlets:main',
               'pyemir-slitlet_boundaries_from_continuum = ' +
                   'tools.slitlet_boundaries_from_continuum:main',
               'pyemir-overplot_boundary_model = ' +
