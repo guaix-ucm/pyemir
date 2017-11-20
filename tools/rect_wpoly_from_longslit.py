@@ -1223,6 +1223,7 @@ def interpolate_bad_rows(image2d):
 
     """
 
+    # ToDo: these numbers depend on EMIR_NAXIS1 and EMIR_NAXIS2
     image2d_interpolated = np.copy(image2d)
     image2d_interpolated[1024, :1024] = ( image2d[1023, :1024] +
                                           image2d[1025, :1024] ) /2
