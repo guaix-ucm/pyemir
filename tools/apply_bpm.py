@@ -46,35 +46,38 @@ def main(args=None):
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # read input FITS file
-    hdulist_image = fits.open(args.fitsfile, mode='readonly')
-    image_header = hdulist_image[0].header
-    image2d = hdulist_image[0].data
+    with fits.open(args.fitsfile, mode='readonly') as hdulist_image:
+        image2d_header = hdulist_image[0].header
+        image2d = hdulist_image[0].data
 
-    # protections
-    naxis1 = image_header['naxis1']
-    naxis2 = image_header['naxis2']
+        # protections
+        naxis1 = image2d_header['naxis1']
+        naxis2 = image2d_header['naxis2']
+        if image2d.shape != (naxis2, naxis1):
+            raise ValueError("Unexpected error with NAXIS1, NAXIS2")
+        if image2d.shape != (EMIR_NAXIS2, EMIR_NAXIS1):
+            raise ValueError("NAXIS1, NAXIS2 unexpected for EMIR detector")
 
-    if image2d.shape != (naxis2, naxis1):
-        raise ValueError("Unexpected error with NAXIS1, NAXIS2")
+        # read bad pixel mask
+        # (mask > 0: unmasked pixels; mask = 0: masked pixel)
+        with fits.open(args.bpm) as hdulist_bpm:
+            image2d_bpm_header = hdulist_bpm[0].header
+            image2d_bpm = hdulist_bpm[0].data
+            naxis1 = image2d_bpm_header['naxis1']
+            naxis2 = image2d_bpm_header['naxis2']
+            if image2d_bpm.shape != (naxis2, naxis1):
+                raise ValueError("Unexpected error with NAXIS1, NAXIS2")
+            if image2d_bpm.shape != (EMIR_NAXIS2, EMIR_NAXIS1):
+                raise ValueError("NAXIS1, NAXIS2 unexpected for EMIR detector")
 
-    if image2d.shape != (EMIR_NAXIS2, EMIR_NAXIS1):
-        raise ValueError("NAXIS1, NAXIS2 unexpected for EMIR detector")
+            # apply bad pixel mask
+            hdulist_image[0].data = process_bpm_median(
+                arr=image2d,
+                mask=image2d_bpm
+            )
 
-    # read bad pixel mask
-    hdulist_bpm = fits.open(args.bpm)
-    image_bpm = hdulist_bpm[0].data
-    hdulist_bpm.close()
-
-    # apply bad pixel mask
-    print('>>', image2d.mean(), image_bpm.mean())
-    hdulist_image[0].data = process_bpm_median(image2d, image_bpm)
-    print('>>', hdulist_image[0].data.mean(), image_bpm.mean())
-
-    # save output FITS file
-    hdulist_image.writeto(args.outfile)
-
-    # close original image
-    hdulist_image.close()
+        # save output FITS file
+        hdulist_image.writeto(args.outfile)
 
 
 if __name__ == "__main__":
