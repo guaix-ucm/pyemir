@@ -32,6 +32,7 @@ from astropy.visualization import SqrtStretch
 from astropy.visualization import PercentileInterval
 from astropy.visualization.mpl_normalize import ImageNormalize
 from scipy.spatial import KDTree as KDTree
+import sep
 
 import matplotlib as mpl
 from matplotlib.patches import Ellipse
@@ -137,11 +138,13 @@ class DirectImageCommon(EmirRecipe):
 
         numpy.seterr(divide='raise')
 
+        recipe_input = ri
         # FIXME: hardcoded instrument information
         keywords = {'airmass': 'AIRMASS',
                     'exposure': 'EXPTIME',
                     'imagetype': 'IMGTYP',
                     'juliandate': 'MJD-OBS',
+                    'tstamp': 'TSTAMP'
                     }
         baseshape = [2048, 2048]
         channels = FULL
@@ -167,31 +170,10 @@ class DirectImageCommon(EmirRecipe):
                 _logger.info('Basic processing')
 
                 # Basic processing
-
-                # FIXME: add this
-                # bpm = fits.getdata(ri.master_bpm)
-                # bpm_corrector = BadPixelCorrector(bpm)
-
-                if ri.master_bias:
-                    mbias = fits.getdata(ri.master_bias)
-                    bias_corrector = BiasCorrector(mbias)
-                else:
-                    bias_corrector = IdNode()
-
-                mdark = fits.getdata(ri.master_dark.label)
-                dark_corrector = DarkCorrector(mdark)
-
-                mflat = fits.getdata(ri.master_flat.label)
-                ff_corrector = FlatFieldCorrector(mflat)
-
-                basicflow = SerialFlow([  # bpm_corrector,
-                    bias_corrector,
-                    dark_corrector,
-                    ff_corrector
-                ])
+                basicflow = self.init_filters(recipe_input)
 
                 for frame in ri.obresult.frames:
-                    with fits.open(frame.label, mode='update') as hdulist:
+                    with frame.open() as hdulist:
                         hdulist = basicflow(hdulist)
 
                 if stop_after == state:
@@ -229,7 +211,7 @@ class DirectImageCommon(EmirRecipe):
                         frame.exposure = hdr[str(keywords['exposure'])]
                         # frame.baseshape = get_image_shape(hdr)
                         frame.airmass = hdr[str(keywords['airmass'])]
-                        frame.mjd = hdr[str(keywords['juliandate'])]
+                        frame.mjd = hdr[str(keywords['tstamp'])]
                     except KeyError as e:
                         raise KeyError("%s in frame %s" %
                                        (str(e), frame.label))
@@ -253,15 +235,19 @@ class DirectImageCommon(EmirRecipe):
                         frame.valid_sky = True
                         skyframes.append(frame)
 
-                labels = [frame.label for frame in targetframes]
+#                labels = [frame.label for frame in targetframes]
 
-                if ri.offsets is None:
-                    _logger.info('Computing offsets from WCS information')
-
-                    list_of_offsets = offsets_from_wcs(labels, refpix)
-                else:
+                if ri.offsets is not None:
                     _logger.info('Using offsets from parameters')
-                    list_of_offsets = numpy.asarray(ri.offsets)
+                    base_ref = numpy.asarray(ri.offsets)
+                    list_of_offsets= -(base_ref - base_ref[0])
+                else:
+                    _logger.info('Computing offsets from WCS information')
+                    list_of_offsets = offsets_from_wcs(targetframes, refpix)
+
+                # FIXME: Im using offsets in row/columns
+                # the values are provided in XY so flip-lr
+                list_of_offsets = numpy.fliplr(list_of_offsets)
 
                 # Insert pixel offsets between frames
                 for frame, off in zip(targetframes, list_of_offsets):
@@ -520,10 +506,10 @@ class DirectImageCommon(EmirRecipe):
         kdtree = KDTree(sarray)
 
         # 1 / minutes in a Julian day
-        MIN_TO_DAY = 0.000694444
+        SCALE = 60.0
         # max_time_sep = ri.sky_images_sep_time / 1440.0
         _dis, idxs = kdtree.query(tarray, k=nframes,
-                                  distance_upper_bound=maxsep * MIN_TO_DAY)
+                                  distance_upper_bound=maxsep * SCALE)
 
         nsky = len(sarray)
 
@@ -780,13 +766,22 @@ class DirectImageCommon(EmirRecipe):
                               framen, maskn, window, scale):
         _logger.info('Resizing frame %s, window=%s, subpix=%i', frame.label,
                      custom_region_to_str(window), scale)
-        resize_fits(frame.label, framen, finalshape, frame.valid_region,
-                    window=window, scale=scale)
+        hdul = frame.open()
+        baseshape = hdul[0].data.shape
+
+        # FIXME: Resize_fits saves the resized image in framen
+        resize_fits(hdul, framen, finalshape, frame.valid_region,
+                    window=window, scale=scale, dtype='float32')
 
         _logger.info('Resizing mask %s, subpix x%i', frame.label, scale)
         # We don't conserve the sum of the values of the frame here, just
         # expand the mask
-        resize_fits(frame.mask.label, maskn, finalshape, frame.valid_region,
+        if frame.mask is None:
+            self.logger.warning('BPM missing, use zeros instead')
+            false_mask = numpy.zeros(baseshape, dtype='int16')
+            hdum = fits.HDUList(fits.PrimaryHDU(false_mask))
+            frame.mask = DataFrame(frame=hdum)
+        resize_fits(frame.mask.open(), maskn, finalshape, frame.valid_region,
                     fill=1, window=window, scale=scale, conserve=False)
 
     def figure_init(self, shape):
@@ -1003,24 +998,12 @@ class DirectImageCommon(EmirRecipe):
         remove_border = True
 
         # sextractor takes care of bad pixels
-        sex = SExtractor()
-        sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
-        sex.config["CHECKIMAGE_NAME"] = name_segmask(step)
-        sex.config['VERBOSE_TYPE'] = 'QUIET'
-        sex.config['PIXEL_SCALE'] = 1
-        sex.config['BACK_TYPE'] = 'AUTO'
 
-        if seeing_fwhm is not None and seeing_fwhm > 0:
-            sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
 
-        sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
-        sex.config['PARAMETERS_LIST'].append('X_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('Y_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('A_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('B_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('THETA_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
+        #if seeing_fwhm is not None and seeing_fwhm > 0:
+        #    sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+
+
         if remove_border:
             weigthmap = 'weights4rms.fits'
 
@@ -1045,68 +1028,81 @@ class DirectImageCommon(EmirRecipe):
             # FIXME: this is a magic number
             # We ignore objects in regions where we have less
             # than 10% of the images
-            lower = sf_data[2].max() / 10
-            wm[wm < lower] = 0
-            fits.writeto(weigthmap, wm, clobber=True)
+            lower = sf_data[2].max() // 10
+            border = (wm < lower)
+            fits.writeto(weigthmap, border.astype('uint8'), clobber=True)
 
-            sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+            #sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             # FIXME: this is a magic number
             # sex.config['WEIGHT_THRESH'] = 50
-            sex.config['WEIGHT_IMAGE'] = weigthmap
+            #sex.config['WEIGHT_IMAGE'] = weigthmap
+        else:
+            border=None
 
         filename = 'result_i%0d.fits' % (step)
 
         # Lauch SExtractor on a FITS file
-        sex.run(filename)
+        #sex.run(filename)
 
-        # Plot objects
-        # FIXME, plot sextractor objects on top of image
-        patches = []
-        fwhms = []
-        nfirst = 0
-        catalog_f = sopen(sex.config['CATALOG_NAME'])
-        try:
-            star = catalog_f.readline()
-            while star:
-                flags = star['FLAGS']
-                # ignoring those objects with corrupted apertures
-                if flags & sexcatalog.CORRUPTED_APER:
-                    star = catalog_f.readline()
-                    continue
-                center = (star['X_IMAGE'], star['Y_IMAGE'])
-                wd = 10 * star['A_IMAGE']
-                hd = 10 * star['B_IMAGE']
-                color = 'red'
-                e = Ellipse(center, wd, hd, star['THETA_IMAGE'], color=color)
-                patches.append(e)
-                fwhms.append(star['FWHM_IMAGE'])
-                nfirst += 1
-                # FIXME Plot a ellipse
-                star = catalog_f.readline()
-        finally:
-            catalog_f.close()
+        data_res = fits.getdata(filename)
+        data_res = data_res.byteswap().newbyteorder()
+        bkg = sep.Background(data_res)
+        data_sub = data_res - bkg
 
-        p = PatchCollection(patches, alpha=0.4)
-        ax = self._figure.gca()
-        ax.add_collection(p)
-        self._figure.canvas.draw()
-        self._figure.savefig('figure-segmentation-overlay_%01d.png' % step)
+        _logger.info('Runing source extraction tor in %s', filename)
+        objects, objmask = sep.extract(data_sub, 1.5, err=bkg.globalrms,
+                              mask=border, segmentation_map=True)
+        fits.writeto(name_segmask(step), objmask, clobber=True)
 
-        self.figure_fwhm_histogram(fwhms, step=step)
+        # # Plot objects
+        # # FIXME, plot sextractor objects on top of image
+        # patches = []
+        # fwhms = []
+        # nfirst = 0
+        # catalog_f = sopen(sex.config['CATALOG_NAME'])
+        # try:
+        #     star = catalog_f.readline()
+        #     while star:
+        #         flags = star['FLAGS']
+        #         # ignoring those objects with corrupted apertures
+        #         if flags & sexcatalog.CORRUPTED_APER:
+        #             star = catalog_f.readline()
+        #             continue
+        #         center = (star['X_IMAGE'], star['Y_IMAGE'])
+        #         wd = 10 * star['A_IMAGE']
+        #         hd = 10 * star['B_IMAGE']
+        #         color = 'red'
+        #         e = Ellipse(center, wd, hd, star['THETA_IMAGE'], color=color)
+        #         patches.append(e)
+        #         fwhms.append(star['FWHM_IMAGE'])
+        #         nfirst += 1
+        #         # FIXME Plot a ellipse
+        #         star = catalog_f.readline()
+        # finally:
+        #     catalog_f.close()
+        #
+        # p = PatchCollection(patches, alpha=0.4)
+        # ax = self._figure.gca()
+        # ax.add_collection(p)
+        # self._figure.canvas.draw()
+        # self._figure.savefig('figure-segmentation-overlay_%01d.png' % step)
+        #
+        # self.figure_fwhm_histogram(fwhms, step=step)
+        #
+        # # mode with an histogram
+        # hist, edges = numpy.histogram(fwhms, 50)
+        # idx = hist.argmax()
+        #
+        # seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1])
+        # if seeing_fwhm <= 0:
+        #     _logger.warning(
+        #         'Seeing FHWM %f pixels is negative, reseting', seeing_fwhm)
+        #     seeing_fwhm = None
+        # else:
+        #     _logger.info('Seeing FHWM %f pixels (%f arcseconds)',
+        #                  seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
+        # objmask = fits.getdata(name_segmask(step))
 
-        # mode with an histogram
-        hist, edges = numpy.histogram(fwhms, 50)
-        idx = hist.argmax()
-
-        seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1])
-        if seeing_fwhm <= 0:
-            _logger.warning(
-                'Seeing FHWM %f pixels is negative, reseting', seeing_fwhm)
-            seeing_fwhm = None
-        else:
-            _logger.info('Seeing FHWM %f pixels (%f arcseconds)',
-                         seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
-        objmask = fits.getdata(name_segmask(step))
         return objmask, seeing_fwhm
 
     def figure_final_before_s(self, data):

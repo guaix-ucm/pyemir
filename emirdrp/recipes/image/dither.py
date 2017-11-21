@@ -22,19 +22,17 @@
 
 from numina.core import Parameter
 from numina.core import DataFrameType
-from numina.core import Product
+from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement
+from numina.core.query import Result
 
-from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import Extinction_Requirement
 from emirdrp.requirements import Offsets_Requirement
 from emirdrp.requirements import Catalog_Requirement
 from emirdrp.requirements import SkyImageSepTime_Requirement
 
-from emirdrp.products import SourcesCatalog
+from emirdrp.products import SourcesCatalog, CoordinateList2DType
 
 from .shared import DirectImageCommon
 
@@ -116,14 +114,16 @@ class DitheredImageRecipe(DirectImageCommon):
        A better calibration might be computed using available stars (TBD).
 
     """
-    obresult = ObservationResultRequirement()
+    obresult = ObservationResultRequirement(query_opts=Result('frame', node='children'))
     master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
     extinction = Extinction_Requirement()
     sources = Catalog_Requirement()
-    offsets = Offsets_Requirement()
+    #offsets = Offsets_Requirement()
+    offsets = Requirement(
+        CoordinateList2DType,
+        'List of pairs of offsets',
+        optional=True
+    )
 
     iterations = Parameter(4, 'Iterations of the recipe')
     sky_images = Parameter(
@@ -139,6 +139,8 @@ class DitheredImageRecipe(DirectImageCommon):
     catalog = Product(SourcesCatalog)
 
     def run(self, recipe_input):
+        print(recipe_input.obresult.frames)
+        print(recipe_input.obresult.results)
         frame, catalog = self.process(recipe_input, window=None, subpix=1,
                                       stop_after=DirectImageCommon.FULLRED)
 

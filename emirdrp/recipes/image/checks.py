@@ -25,9 +25,12 @@ import operator
 import six
 import numpy
 from astropy.io import fits
-from emirdrp.util.sextractor import SExtractor
+import sep
+import matplotlib.pyplot as plt
 
+from emirdrp.util.sextractor import SExtractor
 from .naming import name_skysub_proc
+
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -36,7 +39,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 
 def warn_action(img):
-    _logger.warn('Image %s has low flux in objects', img.baselabel)
+    _logger.warning('Image %s has low flux in objects', img.baselabel)
     img.valid_science = True
 
 
@@ -64,76 +67,81 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
     # Check photometry of few objects
     weigthmap = 'weights4rms.fits'
 
-    wmap = numpy.zeros_like(sf_data[0])
+    wmap = numpy.ones_like(sf_data[0], dtype='bool')
 
     # Center of the image
-    wmap[border:-border, border:-border] = 1
-    fits.writeto(weigthmap, wmap, clobber=True)
+    wmap[border:-border, border:-border] = 0
+    # fits.writeto(weigthmap, wmap.astype('uintt8'), clobber=True)
 
     basename = 'result_i%0d.fits' % (step)
-    sex = SExtractor()
-    sex.config['VERBOSE_TYPE'] = 'QUIET'
-    sex.config['PIXEL_SCALE'] = 1
-    sex.config['BACK_TYPE'] = 'AUTO'
-    if seeing_fwhm is not None:
-        sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
-    sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-    sex.config['WEIGHT_IMAGE'] = weigthmap
 
-    sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
-    sex.config['PARAMETERS_LIST'].append('FLUXERR_BEST')
-    sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
-    sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
+    data_res = fits.getdata(basename)
+    data_res = data_res.byteswap().newbyteorder()
+    bkg = sep.Background(data_res)
+    data_sub = data_res - bkg
 
-    sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % step
-    _logger.info('Runing sextractor in %s', basename)
-    sex.run('%s,%s' % (basename, basename))
+    _logger.info('Runing source extraction tor in %s', basename)
+    objects = sep.extract(data_sub, 1.5, err=bkg.globalrms, mask=wmap)
 
-    # Sort catalog by flux
-    catalog = sex.catalog()
-    catalog = sorted(
-        catalog, key=operator.itemgetter('FLUX_BEST'), reverse=True)
+    # if seeing_fwhm is not None:
+    #    sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+
+    # sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
+
+    # sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % step
+
+    LIMIT_AREA = 5000
+    idx_small = objects['npix'] < LIMIT_AREA
+    objects_small = objects[idx_small]
+    NKEEP = 15
+    idx_flux = objects_small['flux'].argsort()
+    objects_nth = objects_small[idx_flux][-NKEEP:]
 
     # set of indices of the N first objects
-    MAX_OBJS_I_KEEP = 3
-    OBJS_I_KEEP = min(MAX_OBJS_I_KEEP, len(catalog))
-
-    if OBJS_I_KEEP < 1:
-        _logger.warn('I cannot check photometry, no objects detected in frame')
-        return
-
-    indices = set(obj['NUMBER'] for obj in catalog[:OBJS_I_KEEP])
-
-    base = numpy.empty((len(frames), OBJS_I_KEEP))
-    error = numpy.empty((len(frames), OBJS_I_KEEP))
+    fluxes = []
+    errors = []
+    times = []
+    airmasses = []
 
     for idx, frame in enumerate(frames):
         imagename = name_skysub_proc(frame.baselabel, step)
 
-        sex.config['CATALOG_NAME'] = ('catalogue-%s-i%01d.cat' %
-                                      (frame.baselabel, step))
+        #sex.config['CATALOG_NAME'] = ('catalogue-%s-i%01d.cat' %
+        #                              (frame.baselabel, step))
 
         # Lauch SExtractor on a FITS file
         # om double image mode
         _logger.info('Runing sextractor in %s', imagename)
-        sex.run('%s,%s' % (basename, imagename))
-        catalog = sex.catalog()
+        with fits.open(imagename) as hdul:
+            header = hdul[0].header
+            airmasses.append(header['airmass'])
+            times.append(header['tstamp'])
+            data_i = hdul[0].data
+            data_i = data_i.byteswap().newbyteorder()
+            bkg_i = sep.Background(data_i)
+            data_sub_i = data_i - bkg_i
+        # objects_i = sep.extract(data_sub_i, 1.5, err=bkg_i.globalrms, mask=wmap)
+        flux_i, fluxerr_i, flag_i = sep.sum_circle(data_sub_i,
+                                                   objects_nth['x'], objects_nth['y'],
+                                                   3.0, err=bkg_i.globalrms)
+
 
         # Extinction correction
         excor = pow(10, -0.4 * frame.airmass * extinction)
-        fluxes = [obj['FLUX_BEST'] /
-                  excor for obj in catalog if obj['NUMBER'] in indices]
-        errors = [obj['FLUXERR_BEST'] /
-                  excor for obj in catalog if obj['NUMBER'] in indices]
 
-        base[idx] = fluxes
-        error[idx] = errors
+        flux_i = excor * flux_i
+        fluxerr_i = excor * fluxerr_i
+        fluxes.append(flux_i)
+        errors.append(fluxerr_i)
 
-    data = base / base[0]
-    err = error / base[0]  # sigma
-    w = 1 / err / err
+    fluxes_a = numpy.array(fluxes)
+    errors_a = numpy.array(errors)
+    fluxes_n = fluxes_a / fluxes_a[0]
+    errors_a = errors_a / fluxes_a[0]  # sigma
+    w = 1.0 / (errors_a) ** 2
+
     # weighted mean of the flux values
-    wdata = numpy.average(data, axis=1, weights=w)
+    wdata = numpy.average(fluxes_n, axis=1, weights=w)
     wsigma = 1 / numpy.sqrt(w.sum(axis=1))
 
     levels = check_photometry_levels
@@ -143,10 +151,14 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
     vals, (_, sigma) = check_photometry_categorize(
         x, wdata, levels, tags=actions)
     # n sigma level to plt
-    n = 3
+    nsig = 3
 
-    if figure is not None:
-        check_photometry_plot(figure, vals, wsigma, levels, n * sigma)
+    if True:
+        figure = plt.figure()
+        ax = figure.add_subplot(111)
+
+        plot_photometry_check(ax, vals, wsigma, check_photometry_levels, nsig * sigma)
+        plt.savefig('figure-relative-flux_i%01d.png' % step)
 
     for x, _, t in vals:
         try:
@@ -167,10 +179,10 @@ def check_photometry_categorize(x, y, levels, tags=None):
     ys = y.copy()
     ys.sort()
     # Mean of the upper half
-    m = ys[len(ys) / 2:].mean()
+    m = ys[len(ys) // 2:].mean()
     y /= m
     m = 1.0
-    s = ys[len(ys) / 2:].std()
+    s = ys[len(ys) // 2:].std()
     result = []
 
     if tags is None:
@@ -191,23 +203,23 @@ def check_photometry_categorize(x, y, levels, tags=None):
     return result, (m, s)
 
 
-def check_photometry_plot(figure, vals, errors, levels, nsigma, step=0):
-    x = list(six.moves.range(len(errors)))
-    figure.clf()
-    ax = figure.add_subplot(111)
+def plot_photometry_check(ax, vals, errors, levels, nsigma):
+    x = range(len(errors))
+
     ax.set_title('Relative flux of brightest object')
     for v, c in zip(vals, ['b', 'r', 'g', 'y']):
         ax.scatter(v[0], v[1], c=c)
         w = errors[v[0]]
-        ax.errorbar(v[0], v[1], yerr=w, fmt=None, c=c)
+        ax.errorbar(v[0], v[1], yerr=w, fmt='none', c=c)
 
     ax.plot([x[0], x[-1]], [1, 1], 'r--')
     ax.plot([x[0], x[-1]], [1 - nsigma, 1 - nsigma], 'b--')
     for f in levels:
         ax.plot([x[0], x[-1]], [f, f], 'g--')
 
-    figure.canvas.draw()
-    figure.savefig('figure-relative-flux_i%01d.png' % step)
+    return ax
+
+
 
 
 def check_position(images_info, sf_data, seeing_fwhm, step=0):
@@ -222,7 +234,7 @@ def check_position(images_info, sf_data, seeing_fwhm, step=0):
     # Center of the image
     border = 300
     wmap[border:-border, border:-border] = 1
-    fits.writeto(weigthmap, wmap, clobber=True)
+    fits.writeto(weigthmap, wmap.astype('uint8'), clobber=True)
 
     basename = 'result_i%0d.fits' % (step)
     sex = SExtractor()
