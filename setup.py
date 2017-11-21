@@ -42,12 +42,14 @@ setup(name='pyemir',
                   'tools.apply_bpm:main',
               'pyemir-apply_rect_wpoly = ' +
                   'tools.apply_rect_wpoly:main',
+              'pyemir-display_slitlet_arrangement = ' +
+                  'tools.display_slitlet_arrangement:main',
               'pyemir-evaluate_rect_wpoly = ' +
                   'tools.evaluate_rect_wpoly:main',
               'pyemir-fit_boundaries = ' +
                   'tools.fit_boundaries:main',
-              'pyemir-display_slitlet_arrangement = ' +
-                  'tools.display_slitlet_arrangement:main',
+              'pyemir-imath = ' +
+                  'tools.imath:main',
               'pyemir-merge_bounddict_files = ' +
                   'tools.merge_bounddict_files:main',
               'pyemir-rect_wpoly_for_mos = ' +
