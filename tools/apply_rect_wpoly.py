@@ -558,10 +558,26 @@ def main(args=None):
                 header[cprevious] = sltmin_current - 1
 
     # update wavelength calibration in FITS header
-    # ToDo: store values without deleting the original WCS information!
-    header['crpix1'] = crpix1_enlarged
-    header['crval1'] = crval1_enlarged
-    header['cdelt1'] = cdelt1_enlarged
+    header['ctype1'] = 'LAMBDA'
+    header['ctype2'] = 'PIXEL'
+    header['crpix1'] = (crpix1_enlarged, 'reference pixel')
+    header['crpix2'] = (1.0, 'reference pixel')
+    header['crval1'] = (crval1_enlarged, 'central wavelength at crpix1')
+    header['crval2'] = (1.0, 'central value at crpix2')
+    header['cdelt1'] = (cdelt1_enlarged, 'linear dispersion (Angstrom/pixel)')
+    header['cdelt2'] = (1.0, 'increment')
+    header['cunit1'] = ('angstroms', 'units along axis1')
+    header['cunit2'] = ('pixel', 'units along axis2')
+    header.remove('cd1_1')
+    header.remove('cd1_2')
+    header.remove('cd2_1')
+    header.remove('cd2_2')
+    header.remove('PCD1_1')
+    header.remove('PCD1_2')
+    header.remove('PCD2_1')
+    header.remove('PCD2_2')
+    header.remove('PCRPIX1')
+    header.remove('PCRPIX2')
 
     save_ndarray_to_fits(
         array=image2d_rectified_wv,
