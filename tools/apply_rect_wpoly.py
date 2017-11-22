@@ -412,6 +412,10 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
+    parser.add_argument("--ignore_DTUconf",
+                        help="Ignore DTU configurations differences between "
+                             "transformation and input image",
+                        action="store_true")
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"
                              " (default=0)",
@@ -464,7 +468,14 @@ def main(args=None):
     if dtu_conf_fitsfile != dtu_conf_jsonfile:
         print('DTU configuration (FITS file):\n\t', dtu_conf_fitsfile)
         print('DTU configuration (JSON file):\n\t', dtu_conf_jsonfile)
-        raise ValueError('Incompatible DTU configurations')
+        if args.ignore_DTUconf:
+            print('WARNING: DTU configuration differences found!')
+        else:
+            raise ValueError("DTU configurations do not match!")
+    else:
+        if abs(args.debugplot) >= 10:
+            print('>>> DTU Configuration match!')
+            print(dtu_conf_fitsfile)
 
     # read islitlet_min and islitlet_max from input JSON file
     islitlet_min = rect_wpoly_dict['tags']['islitlet_min']
