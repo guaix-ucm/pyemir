@@ -37,6 +37,10 @@ def main(args=None):
                              "the input FITS file",
                         type=lambda x: arg_file_is_new(parser, x))
     # optional arguments
+    parser.add_argument("--ignore_DTUconf",
+                        help="Ignore DTU configurations differences between "
+                             "model and input image",
+                        action="store_true")
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"
                              " (default=0)",
@@ -59,25 +63,27 @@ def main(args=None):
     # read the DTU configuration from the header of the input FITS file
     dtu_conf = DtuConfiguration()
     dtu_conf.define_from_fits(args.fitsfile)
-    if abs(args.debugplot) >= 10:
-        print(dtu_conf)
 
     # read calibration structure from JSON file
     rect_wpoly_dict = json.loads(open(args.rect_wpoly_MOSlibrary.name).read())
 
-    # check that the DTU configuration employed to obtain the calibration
-    # corresponds to the DTU configuration in the input FITS file
     dtu_conf_calib = DtuConfiguration()
     dtu_conf_calib.define_from_dictionary(rect_wpoly_dict['dtu_configuration'])
+    # check that the DTU configuration employed to obtain the calibration
+    # corresponds to the DTU configuration in the input FITS file
     if dtu_conf != dtu_conf_calib:
         print('>>> DTU configuration from FITS header:')
         print(dtu_conf)
         print('>>> DTU configuration from calibration JSON file:')
         print(dtu_conf_calib)
-        raise ValueError("DTU configurations do not match!")
-    if abs(args.debugplot) >= 10:
-        print('>>> DTU Configuration match!')
-        print(dtu_conf)
+        if args.ignore_DTUconf:
+            print('WARNING: DTU configuration differences found!')
+        else:
+            raise ValueError("DTU configurations do not match!")
+    else:
+        if abs(args.debugplot) >= 10:
+            print('>>> DTU Configuration match!')
+            print(dtu_conf)
 
     # read FITS image and its corresponding header
     hdulist = fits.open(args.fitsfile)

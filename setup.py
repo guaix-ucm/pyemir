@@ -42,6 +42,8 @@ setup(name='pyemir',
                   'tools.apply_bpm:main',
               'pyemir-apply_rect_wpoly = ' +
                   'tools.apply_rect_wpoly:main',
+              'pyemir-continuum_flatfield = ' +
+                  'tools.continuum_flatfield:main',
               'pyemir-display_slitlet_arrangement = ' +
                   'tools.display_slitlet_arrangement:main',
               'pyemir-evaluate_rect_wpoly = ' +
