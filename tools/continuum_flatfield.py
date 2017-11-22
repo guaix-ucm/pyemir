@@ -36,8 +36,12 @@ def main(args=None):
                         help="Input JSON file with rectification and "
                              "wavelength calibration coefficients",
                         type=argparse.FileType('r'))
-    parser.add_argument("--threshold_to_one", required=True,
+    parser.add_argument("--minimum_fraction", required=True,
                         help="Minimum allowed flatfielding value",
+                        type=float, default=0.01)
+    parser.add_argument("--minimum_value_in_output",
+                        help="Minimum value allowed in output file: pixels "
+                             "below this value are set to 1.0 (default=0.01)",
                         type=float, default=0.01)
     parser.add_argument("--nwindow_median", required=True,
                         help="Window size to smooth median spectrum in the "
@@ -169,7 +173,7 @@ def main(args=None):
         sp_median = ndimage.median_filter(sp_collapsed, args.nwindow_median,
                                           mode='nearest')
         ymax_spmedian = sp_median.max()
-        y_threshold = ymax_spmedian * args.threshold_to_one
+        y_threshold = ymax_spmedian * args.minimum_fraction
         sp_median[np.where(sp_median < y_threshold)] = 0.0
 
         if abs(args.debugplot) > 10:
@@ -222,6 +226,11 @@ def main(args=None):
             image2d_flatfielded[(n1 - 1):n2, j] = \
                 slitlet2d_norm[(nn1 - 1):nn2, j]
 
+    # set pixels below minimum value to 1.0
+    filtered = np.where(image2d_flatfielded < args.minimum_value_in_output)
+    image2d_flatfielded[filtered] = 1.0
+
+    # save output file
     save_ndarray_to_fits(
         array=image2d_flatfielded,
         file_name=args.outfile,
