@@ -657,11 +657,13 @@ def fun_residuals(params, parmodel, bounddict,
     return global_residual
 
 
-def overplot_boundaries_from_bounddict(bounddict, micolors, linetype='-'):
+def overplot_boundaries_from_bounddict(ax, bounddict, micolors, linetype='-'):
     """Overplot boundaries on current plot.
 
     Parameters
     ----------
+    ax : matplotlib axes
+        Current plot axes.
     bounddict : JSON structure
         Structure employed to store bounddict information.
     micolors : list of char
@@ -686,19 +688,19 @@ def overplot_boundaries_from_bounddict(bounddict, micolors, linetype='-'):
                 )
                 xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
                 ydum = pol_lower_measured(xdum)
-                plt.plot(xdum, ydum, tmpcolor + linetype)
+                ax.plot(xdum, ydum, tmpcolor + linetype)
                 pol_upper_measured = np.polynomial.Polynomial(
                     tmp_dict['boundary_coef_upper']
                 )
                 ydum = pol_upper_measured(xdum)
-                plt.plot(xdum, ydum, tmpcolor + linetype)
+                ax.plot(xdum, ydum, tmpcolor + linetype)
 
 
 def overplot_boundaries_from_params(ax, params, parmodel,
                                     list_islitlet,
                                     list_csu_bar_slit_center,
                                     micolors=('m', 'c'), linetype='--',
-                                    labels=True):
+                                    labels=True, alpha_fill=None):
     """Overplot boundaries computed from fitted parameters.
 
     Parameters
@@ -723,6 +725,8 @@ def overplot_boundaries_from_params(ax, params, parmodel,
         Line type.
     labels : bool
         If True, display slilet label
+    alpha_fill : float or None
+        Alpha factor to be employed to fill slitlet region.
 
     Returns
     -------
@@ -752,10 +756,13 @@ def overplot_boundaries_from_params(ax, params, parmodel,
         )[0].poly_funct
         list_pol_upper_boundaries.append(pol_upper_expected)
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
-        ydum = pol_lower_expected(xdum)
-        plt.plot(xdum, ydum, tmpcolor + linetype)
-        ydum = pol_upper_expected(xdum)
-        plt.plot(xdum, ydum, tmpcolor + linetype)
+        ydum1 = pol_lower_expected(xdum)
+        ax.plot(xdum, ydum1, tmpcolor + linetype)
+        ydum2 = pol_upper_expected(xdum)
+        ax.plot(xdum, ydum2, tmpcolor + linetype)
+        if alpha_fill is not None:
+            ax.fill_between(xdum, ydum1, ydum2,
+                            facecolor=tmpcolor, alpha=alpha_fill)
         if labels:
             # slitlet label
             yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
@@ -776,7 +783,7 @@ def overplot_frontiers_from_params(ax, params, parmodel,
                                    list_islitlet,
                                    list_csu_bar_slit_center,
                                    micolors=('m', 'c'), linetype='--',
-                                   labels=True):
+                                   labels=True, alpha_fill=None):
     """Overplot frontiers computed from fitted parameters.
 
     Parameters
@@ -801,6 +808,8 @@ def overplot_frontiers_from_params(ax, params, parmodel,
         Line type.
     labels : bool
         If True, display slilet label
+    alpha_fill : float or None
+        Alpha factor to be employed to fill slitlet region.
 
     Returns
     -------
@@ -828,10 +837,13 @@ def overplot_frontiers_from_params(ax, params, parmodel,
         pol_upper_expected = list_expected_frontiers[1].poly_funct
         list_pol_upper_frontiers.append(pol_upper_expected)
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
-        ydum = pol_lower_expected(xdum)
-        plt.plot(xdum, ydum, tmpcolor + linetype)
-        ydum = pol_upper_expected(xdum)
-        plt.plot(xdum, ydum, tmpcolor + linetype)
+        ydum1 = pol_lower_expected(xdum)
+        ax.plot(xdum, ydum1, tmpcolor + linetype)
+        ydum2 = pol_upper_expected(xdum)
+        ax.plot(xdum, ydum2, tmpcolor + linetype)
+        if alpha_fill is not None:
+            ax.fill_between(xdum, ydum1, ydum2,
+                            facecolor=tmpcolor, alpha=alpha_fill)
         if labels:
             # slitlet label
             yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
@@ -1421,7 +1433,7 @@ def main(args=None):
             ax.set_xlabel('Y axis (from 1 to NAXIS2)')
             ax.set_title(args.bounddict.name)
         # boundaries from bounddict
-        overplot_boundaries_from_bounddict(bounddict, ['r', 'b'])
+        overplot_boundaries_from_bounddict(ax, bounddict, ['r', 'b'])
         # expected boundaries for the longslit case
         if args.parmodel == "longslit":
             overplot_boundaries_from_params(ax, result.params, args.parmodel,
