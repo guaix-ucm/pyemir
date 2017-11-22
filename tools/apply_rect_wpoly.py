@@ -253,12 +253,12 @@ class Slitlet2D(object):
 
         Parameters
         ----------
-        image_2k2k : 2d numpy array, float
+        image_2k2k : numpy array
             Original image (dimensions EMIR_NAXIS1 * EMIR_NAXIS2)
 
         Returns
         -------
-        slitlet2d : 2d numpy array, float
+        slitlet2d : numpy array
             Image corresponding to the slitlet region defined by its
             bounding box.
 
@@ -280,21 +280,7 @@ class Slitlet2D(object):
 
         # display slitlet2d with boundaries and middle spectrum trail
         if abs(self.debugplot) in [21, 22]:
-            ax = ximshow(slitlet2d, title="Slitlet#" + str(self.islitlet),
-                         first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
-                         show=False)
-            xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
-            ylower = self.list_spectrails[0](xdum)
-            ax.plot(xdum, ylower, 'b-')
-            ymiddle = self.list_spectrails[1](xdum)
-            ax.plot(xdum, ymiddle, 'b--')
-            yupper = self.list_spectrails[2](xdum)
-            ax.plot(xdum, yupper, 'b-')
-            ylower_frontier = self.list_frontiers[0](xdum)
-            ax.plot(xdum, ylower_frontier, 'b:')
-            yupper_frontier = self.list_frontiers[1](xdum)
-            ax.plot(xdum, yupper_frontier, 'b:')
-            pause_debugplot(debugplot=self.debugplot, pltshow=True)
+            self.ximshow_unrectified(slitlet2d)
 
         # return slitlet image
         return slitlet2d
@@ -304,7 +290,7 @@ class Slitlet2D(object):
 
         Parameters
         ----------
-        slitlet2d : 2d numpy array, float
+        slitlet2d : numpy array
             Image containing the 2d slitlet image.
         resampling : int
             1: nearest neighbour, 2: flux preserving interpolation.
@@ -314,7 +300,7 @@ class Slitlet2D(object):
 
         Returns
         -------
-        slitlet2d_rect : 2d numpy array
+        slitlet2d_rect : numpy array
             Rectified slitlet image.
 
         """
@@ -345,25 +331,67 @@ class Slitlet2D(object):
         )
 
         if abs(self.debugplot % 10) != 0:
-            title = "Slitlet#" + str(self.islitlet) + " (rectify)"
-            ax = ximshow(slitlet2d_rect, title=title,
-                         first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
-                         show=False)
-            # grid with fitted transformation: spectrum trails
-            xx = np.arange(0, self.bb_nc2_orig - self.bb_nc1_orig + 1,
-                           dtype=np.float)
-            for spectrail in self.list_spectrails:
-                yy0 = spectrail(self.x0_reference)
-                yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
-                ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
-            for spectrail in self.list_frontiers:
-                yy0 = spectrail(self.x0_reference)
-                yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
-                ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b:")
-            # show plot
-            pause_debugplot(self.debugplot, pltshow=True)
+            if inverse:
+                self.ximshow_unrectified(slitlet2d_rect)
+            else:
+                self.ximshow_rectified(slitlet2d_rect)
 
         return slitlet2d_rect
+
+    def ximshow_unrectified(self, slitlet2d):
+        """Display unrectified image with spectrails and frontiers.
+
+        Parameters
+        ----------
+        slitlet2d : numpy array
+            Array containing the unrectified slitlet image.
+
+        """
+
+        title = "Slitlet#" + str(self.islitlet)
+        ax = ximshow(slitlet2d, title=title,
+                     first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
+                     show=False)
+        xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
+        ylower = self.list_spectrails[0](xdum)
+        ax.plot(xdum, ylower, 'b-')
+        ymiddle = self.list_spectrails[1](xdum)
+        ax.plot(xdum, ymiddle, 'b--')
+        yupper = self.list_spectrails[2](xdum)
+        ax.plot(xdum, yupper, 'b-')
+        ylower_frontier = self.list_frontiers[0](xdum)
+        ax.plot(xdum, ylower_frontier, 'b:')
+        yupper_frontier = self.list_frontiers[1](xdum)
+        ax.plot(xdum, yupper_frontier, 'b:')
+        pause_debugplot(debugplot=self.debugplot, pltshow=True)
+
+    def ximshow_rectified(self, slitlet2d_rect):
+        """Display rectified image with spectrails and frontiers.
+
+        Parameters
+        ----------
+        slitlet2d_rect : numpy array
+            Array containing the rectified slitlet image
+
+        """
+
+        title = "Slitlet#" + str(self.islitlet) + " (rectify)"
+        ax = ximshow(slitlet2d_rect, title=title,
+                     first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
+                     show=False)
+        # grid with fitted transformation: spectrum trails
+        xx = np.arange(0, self.bb_nc2_orig - self.bb_nc1_orig + 1,
+                       dtype=np.float)
+        for spectrail in self.list_spectrails:
+            yy0 = spectrail(self.x0_reference)
+            yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
+            ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
+        for spectrail in self.list_frontiers:
+            yy0 = spectrail(self.x0_reference)
+            yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
+            ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b:")
+        # show plot
+        pause_debugplot(self.debugplot, pltshow=True)
 
 
 def main(args=None):
