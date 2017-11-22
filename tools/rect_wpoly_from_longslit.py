@@ -1275,6 +1275,10 @@ def main(args=None):
                         help="Rectified and wavelength calibrated output "
                              "FITS file",
                         type=lambda x: arg_file_is_new(parser, x))
+    parser.add_argument("--out_coef_rect_wpoly",
+                        help="Output JSON file ready to be directly used for "
+                             "wavelength calibration",
+                        type=lambda x: arg_file_is_new(parser, x))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"
                              " (default=0)",
@@ -1824,7 +1828,7 @@ def main(args=None):
     outdict['meta-info']['creation_date'] = datetime.now().isoformat()
     outdict['meta-info']['description'] = \
         'wavelength calibration polynomials and rectification ' \
-        'coefficients for a particular longslit'
+        'coefficients for a particular longslit (suitable for MOS modeling)'
     outdict['meta-info']['recipe_name'] = 'undefined'
     outdict['meta-info']['origin'] = {}
     outdict['meta-info']['origin']['fitted_bound_param_uuid'] = \
@@ -1939,10 +1943,69 @@ def main(args=None):
         slitlet_label = "slitlet" + str(islitlet).zfill(2)
         outdict['contents'][slitlet_label] = tmp_dict
 
-    # save JSON file
+    # save JSON file needed to compute the MOS model
     with open(args.out_json.name, 'w') as fstream:
         json.dump(outdict, fstream, indent=2, sort_keys=True)
         print('>>> Saving file ' + args.out_json.name)
+
+    # save JSON file with coefficients ready to be directly used
+    if args.out_coef_rect_wpoly is not None:
+        coefdict = {}
+        coefdict['csu_configuration'] = csu_conf.outdict()
+        coefdict['instrument'] = 'EMIR'
+        coefdict['meta-info'] = {}
+        coefdict['meta-info']['creation_date'] = datetime.now().isoformat()
+        coefdict['meta-info']['description'] = \
+            'wavelength calibration polynomials and rectification ' \
+            'coefficients for a particular longslit (direct version)'
+        coefdict['meta-info']['recipe_name'] = 'undefined'
+        coefdict['meta-info']['origin'] = {}
+        coefdict['meta-info']['origin']['fitted_bound_param_uuid'] = \
+            fitted_bound_param['uuid']
+        coefdict['meta-info']['origin']['frames'] = {}
+        coefdict['meta-info']['origin']['frames']['odd_numbered_slits_uuid'] = \
+            'undefined'
+        coefdict['meta-info']['origin']['frames']['even_numbered_slits_uuid'] = \
+            'undefined'
+        coefdict['tags'] = {}
+        coefdict['tags']['grism'] = grism_name
+        coefdict['tags']['filter'] = filter_name
+        coefdict['tags']['islitlet_min'] = islitlet_min
+        coefdict['tags']['islitlet_max'] = islitlet_max
+        coefdict['dtu_configuration'] = dtu_conf.outdict()
+        coefdict['uuid'] = str(uuid4())
+        coefdict['contents'] = {}
+
+        for slt in measured_slitlets:
+            islitlet = slt.islitlet
+            slitlet_label = "slitlet" + str(islitlet).zfill(2)
+            coefdict['contents'][slitlet_label] = {}
+            tmp_dict = outdict['contents'][slitlet_label]
+            coefdict['contents'][slitlet_label]['frontier_lower'] = \
+                tmp_dict['frontier']['poly_coef_lower']
+            coefdict['contents'][slitlet_label]['frontier_upper'] = \
+                tmp_dict['frontier']['poly_coef_upper']
+            coefdict['contents'][slitlet_label]['spectrail_lower'] = \
+                tmp_dict['spectrail']['poly_coef_lower']
+            coefdict['contents'][slitlet_label]['spectrail_middle'] = \
+                tmp_dict['spectrail']['poly_coef_middle']
+            coefdict['contents'][slitlet_label]['spectrail_upper'] = \
+                tmp_dict['spectrail']['poly_coef_upper']
+            coefdict['contents'][slitlet_label]['ttd_aij'] = \
+                tmp_dict['ttd_aij']
+            coefdict['contents'][slitlet_label]['ttd_bij'] = \
+                tmp_dict['ttd_bij']
+            coefdict['contents'][slitlet_label]['tti_aij'] = \
+                tmp_dict['tti_aij']
+            coefdict['contents'][slitlet_label]['tti_bij'] = \
+                tmp_dict['tti_bij']
+            coefdict['contents'][slitlet_label]['wpoly_coeff'] = \
+                tmp_dict['wpoly_refined_coeff']
+
+
+        with open(args.out_coef_rect_wpoly.name, 'w') as fstream:
+            json.dump(coefdict, fstream, indent=2, sort_keys=True)
+            print('>>> Saving file ' + args.out_coef_rect_wpoly.name)
 
 
 if __name__ == "__main__":

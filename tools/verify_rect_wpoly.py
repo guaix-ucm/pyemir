@@ -221,6 +221,9 @@ def main(args=None):
                         print(">>> coef#" + str(idum) + ':  ', end='')
                         print("%+.8E  -->  %+.8E" % (decimal.Decimal(fdum[0]),
                                                      decimal.Decimal(fdum[1])))
+        else:
+            if abs(args.debugplot) >= 10:
+                print('>>> SKIPPING slitlet: number of lines < min_nlines')
         if args.debugplot < 0:
             plt.close()
 
