@@ -167,7 +167,7 @@ pipelines:
       IMAGE_FLAT: emirdrp.recipes.auxiliary.IntensityFlatRecipe
       IMAGE_SKY: emirdrp.recipes.auxiliary.DitherSkyRecipe
       DITHERED_IMAGE: emirdrp.recipes.image.join.JoinDitheredImagesRecipe
-      FULL_DITHERED_IMAGE: emirdrp.recipes.image.dither.DitheredImageRecipe
+      FULL_DITHERED_IMAGE: emirdrp.recipes.image.join.FullDitheredImagesRecipe
       MICRODITHERED_IMAGE: emirdrp.recipes.image.micro.MicroditheredImageRecipe
       MOSAICED_IMAGE: emirdrp.recipes.image.mosaic.MosaicRecipe
       NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.image.nodded.NBImageRecipe
