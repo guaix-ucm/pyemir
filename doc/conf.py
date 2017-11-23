@@ -28,6 +28,10 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+
+# This is required by autodoc to work
+sys.path.insert(0, os.path.abspath('../'))
+
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.pngmath',
               'sphinx.ext.coverage', 'sphinx.ext.intersphinx']
 
@@ -45,7 +49,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyEmir'
-copyright = u'2010-2015, Sergio Pascual, Nicolás Cardiel'
+copyright = u'2010-2017, Sergio Pascual, Nicolás Cardiel'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
