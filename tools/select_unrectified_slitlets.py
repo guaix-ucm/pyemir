@@ -101,6 +101,70 @@ def list_slitlets_from_string(s, islitlet_min, islitlet_max):
     return list_slitlets
 
 
+def select_unrectified_slitlet(image2d, islitlet, csu_bar_slit_center,
+                               params, parmodel, maskonly):
+    """Returns image with the indicated slitlet (zero anywhere else).
+
+    Parameters
+    ----------
+    image2d : numpy array
+        Initial image from which the slitlet data will be extracted.
+    islitlet : int
+        Slitlet number.
+    csu_bar_slit_center : float
+        CSU bar slit center.
+    params : :class:`~lmfit.parameter.Parameters`
+        Parameters to be employed in the prediction of the distorted
+        boundaries.
+    parmodel : str
+        Model to be assumed. Allowed values are 'longslit' and
+        'multislit'.
+    maskonly : bool
+        If True, returns simply a mask (1 in the slitlet region and
+        zero anywhere else.
+
+    Returns
+    -------
+    image2d_output : numpy array
+        2D image with the pixel information corresponding to the
+        selected slitlet and zero everywhere else.
+
+    """
+
+    # protection
+    if image2d.shape != (EMIR_NAXIS2, EMIR_NAXIS1):
+        raise ValueError("NAXIS1, NAXIS2 unexpected for EMIR detector")
+
+    # initialize image output
+    image2d_output = np.zeros_like(image2d)
+
+    # expected slitlet frontiers
+    list_expected_frontiers = expected_distorted_frontiers(
+        islitlet, csu_bar_slit_center,
+        params, parmodel, numpts=101, deg=5, debugplot=0
+    )
+    pol_lower_expected = list_expected_frontiers[0].poly_funct
+    pol_upper_expected = list_expected_frontiers[1].poly_funct
+
+    # main loop: compute for each channel the minimum and maximum scan
+    for j in range(EMIR_NAXIS1):
+        xchannel = j + 1
+        y0_lower = pol_lower_expected(xchannel)
+        y0_upper = pol_upper_expected(xchannel)
+        n1, n2 = nscan_minmax_frontiers(y0_frontier_lower=y0_lower,
+                                        y0_frontier_upper=y0_upper,
+                                        resize=True)
+        # note that n1 and n2 are scans (ranging from 1 to NAXIS2)
+        if maskonly:
+            image2d_output[(n1 - 1):n2, j] = np.repeat(
+                [1.0], (n2 - n1 + 1)
+            )
+        else:
+            image2d_output[(n1 - 1):n2, j] = image2d[(n1 - 1):n2, j]
+
+    return image2d_output
+
+
 def main(args=None):
 
     # parse command-line options
@@ -206,26 +270,15 @@ def main(args=None):
     # main loop
     for islitlet, csu_bar_slit_center in \
             zip(list_islitlet, list_csu_bar_slit_center):
-        list_expected_frontiers = expected_distorted_frontiers(
-            islitlet, csu_bar_slit_center,
-            params, parmodel, numpts=101, deg=5, debugplot=0
+        image2d_tmp = select_unrectified_slitlet(
+            image2d=image2d,
+            islitlet=islitlet,
+            csu_bar_slit_center=csu_bar_slit_center,
+            params=params,
+            parmodel=parmodel,
+            maskonly=args.maskonly
         )
-        pol_lower_expected = list_expected_frontiers[0].poly_funct
-        pol_upper_expected = list_expected_frontiers[1].poly_funct
-        for j in range(EMIR_NAXIS1):
-            xchannel = j + 1
-            y0_lower = pol_lower_expected(xchannel)
-            y0_upper = pol_upper_expected(xchannel)
-            n1, n2 = nscan_minmax_frontiers(y0_frontier_lower=y0_lower,
-                                            y0_frontier_upper=y0_upper,
-                                            resize=True)
-            # note that n1 and n2 are scans (ranging from 1 to NAXIS2)
-            if args.maskonly:
-                image2d_output[(n1 - 1):n2, j] = np.repeat(
-                    [1.0], (n2 - n1 + 1)
-                )
-            else:
-                image2d_output[(n1 - 1):n2, j] = image2d[(n1 - 1):n2, j]
+        image2d_output += image2d_tmp
 
     # update the array of the output file
     hdulist_image[0].data = image2d_output
