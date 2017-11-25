@@ -287,8 +287,7 @@ def compute_slitlet_boundaries(
     csu_config = CsuConfiguration.define_from_fits(filename)
 
     # read DTU configuration from FITS header
-    dtu_config = DtuConfiguration()
-    dtu_config.define_from_fits(filename)
+    dtu_config = DtuConfiguration.define_from_fits(filename)
 
     # read grism
     grism_in_header = image_header['grism']

@@ -54,7 +54,7 @@ class CsuConfiguration(object):
         return result
 
     @classmethod
-    def define_from_fits(selfcls, fitsobj, extnum=0):
+    def define_from_fits(cls, fitsobj, extnum=0):
         """Define class members from header information in FITS file.
 
         Parameters
@@ -70,10 +70,10 @@ class CsuConfiguration(object):
         # read input FITS file
         with fits.open(fitsobj) as hdulist:
             image_header = hdulist[extnum].header
-            return selfcls.define_from_header(image_header)
+            return cls.define_from_header(image_header)
 
     @classmethod
-    def define_from_header(selfcls, image_header):
+    def define_from_header(cls, image_header):
         """Define class members directly from FITS header.
 
         Parameters

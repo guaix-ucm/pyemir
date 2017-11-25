@@ -1298,8 +1298,7 @@ def main(args=None):
 
     # read the DTU configuration from the two initial FITS files and check
     # that both configurations are identical
-    dtu_conf = DtuConfiguration()
-    dtu_conf.define_from_fits(args.fitsfile)
+    dtu_conf = DtuConfiguration.define_from_fits(args.fitsfile)
     if abs(args.debugplot) >= 10:
         print(dtu_conf)
         pause_debugplot(args.debugplot)

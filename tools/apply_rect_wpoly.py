@@ -460,10 +460,8 @@ def main(args=None):
         print('>>> filter......:', filter_name)
 
     # check that the DTU configurations are compatible
-    dtu_conf_fitsfile = DtuConfiguration()
-    dtu_conf_fitsfile.define_from_fits(args.fitsfile)
-    dtu_conf_jsonfile = DtuConfiguration()
-    dtu_conf_jsonfile.define_from_dictionary(
+    dtu_conf_fitsfile = DtuConfiguration.define_from_fits(args.fitsfile)
+    dtu_conf_jsonfile = DtuConfiguration.define_from_dictionary(
         rect_wpoly_dict['dtu_configuration'])
     if dtu_conf_fitsfile != dtu_conf_jsonfile:
         print('DTU configuration (FITS file):\n\t', dtu_conf_fitsfile)

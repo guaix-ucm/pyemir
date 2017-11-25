@@ -144,13 +144,13 @@ def integrity_check(bounddict, max_dtu_offset):
                 raise ValueError("Unexpected boundary_xmax_upper <= "
                                  "boundary_xmin_upper")
             if first_dtu:
-                first_dtu_configuration = DtuConfiguration()
-                first_dtu_configuration.define_from_dictionary(tmp_dict)
+                first_dtu_configuration = \
+                    DtuConfiguration.define_from_dictionary(tmp_dict)
                 first_dtu = False
                 list_dtu_configurations.append(first_dtu_configuration)
             else:
-                last_dtu_configuration = DtuConfiguration()
-                last_dtu_configuration.define_from_dictionary(tmp_dict)
+                last_dtu_configuration = \
+                    DtuConfiguration.define_from_dictionary(tmp_dict)
                 if not first_dtu_configuration.closeto(
                         last_dtu_configuration,
                         abserror=max_dtu_offset
