@@ -32,8 +32,6 @@ from numina.array.wavecalib.peaks_spectrum import find_peaks_spectrum
 from numina.array.wavecalib.peaks_spectrum import refine_peaks_spectrum
 from numina.array.wavecalib.resample import resample_image2d_flux
 from emirdrp.instrument.csu_configuration import CsuConfiguration
-from emirdrp.instrument.csu_configuration \
-    import merge_odd_even_csu_configurations
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 
 from arg_file_is_new import arg_file_is_new
@@ -44,6 +42,7 @@ from nscan_minmax_frontiers import nscan_minmax_frontiers
 from rescale_array_to_z1z2 import rescale_array_to_z1z2
 from rescale_array_to_z1z2 import rescale_array_from_z1z2
 from save_ndarray_to_fits import save_ndarray_to_fits
+from select_unrectified_slitlets import select_unrectified_slitlet
 from set_wv_enlarged_parameters import set_wv_enlarged_parameters
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
@@ -227,10 +226,10 @@ class Slitlet2D_LS_Arc(object):
         self.islitlet = islitlet
 
         # csu configuration
-        self.csu_bar_left = csu_conf.csu_bar_left[islitlet - 1]
-        self.csu_bar_right = csu_conf.csu_bar_right[islitlet - 1]
-        self.csu_bar_slit_center = csu_conf.csu_bar_slit_center[islitlet - 1]
-        self.csu_bar_slit_width = csu_conf.csu_bar_slit_width[islitlet - 1]
+        self.csu_bar_left = csu_conf.csu_bar_left(islitlet)
+        self.csu_bar_right = csu_conf.csu_bar_right(islitlet)
+        self.csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
+        self.csu_bar_slit_width = csu_conf.csu_bar_slit_width(islitlet)
 
         # horizontal bounding box
         self.bb_nc1_orig = 1
@@ -1238,11 +1237,8 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(prog='wpoly_from_longslit')
     # required arguments
-    parser.add_argument("fitsfile_odd",
-                        help="FITS file with odd-numbered slitlets",
-                        type=argparse.FileType('r'))
-    parser.add_argument("fitsfile_even",
-                        help="FITS file with even-numbered slitlets",
+    parser.add_argument("fitsfile",
+                        help="Input FITS file with longslit data",
                         type=argparse.FileType('r'))
     parser.add_argument("--fitted_bound_param", required=True,
                         help="Input JSON with fitted boundary parameters",
@@ -1294,35 +1290,20 @@ def main(args=None):
 
     # ---
 
-    # read the CSU configuration from the two initial FITS files and merge
-    # the corresponding configurations in a single one containing the
-    # the information corresponding to the odd- and even-numbered slitlets
-    # accordingly
-    csu_conf_odd = CsuConfiguration()
-    csu_conf_odd.define_from_fits(args.fitsfile_odd)
-    csu_conf_even = CsuConfiguration()
-    csu_conf_even.define_from_fits(args.fitsfile_even)
-    csu_conf = merge_odd_even_csu_configurations(csu_conf_odd, csu_conf_even)
+    # read the CSU configuration from the initial FITS file
+    csu_conf = CsuConfiguration()
+    csu_conf.define_from_fits(args.fitsfile)
     if abs(args.debugplot) >= 10:
         print(csu_conf)
         pause_debugplot(args.debugplot)
 
     # read the DTU configuration from the two initial FITS files and check
     # that both configurations are identical
-    dtu_conf_odd = DtuConfiguration()
-    dtu_conf_odd.define_from_fits(args.fitsfile_odd)
-    dtu_conf_even = DtuConfiguration()
-    dtu_conf_even.define_from_fits(args.fitsfile_even)
-    if dtu_conf_odd == dtu_conf_even:
-        dtu_conf = deepcopy(dtu_conf_odd)
-        if abs(args.debugplot) >= 10:
-            print(dtu_conf)
-            pause_debugplot(args.debugplot)
-    else:
-        print("--> DTU config. odd-numbered slitlets:\n", dtu_conf_odd)
-        print("--> DTU config. even-numbered slitlets:\n", dtu_conf_even)
-        raise ValueError("DTU configuration from odd-numbered and "
-                         "even-numbered slitlets FITS files are different")
+    dtu_conf = DtuConfiguration()
+    dtu_conf.define_from_fits(args.fitsfile)
+    if abs(args.debugplot) >= 10:
+        print(dtu_conf)
+        pause_debugplot(args.debugplot)
 
     # read fitted boundary parameters
     fitted_bound_param = json.loads(open(args.fitted_bound_param.name).read())
@@ -1334,15 +1315,10 @@ def main(args=None):
         params.pretty_print()
         pause_debugplot(args.debugplot)
 
-    # read FITS image with odd-numbered slitlets
-    hdulist_odd = fits.open(args.fitsfile_odd)
-    image2d_odd = interpolate_bad_rows(hdulist_odd[0].data)
-    hdulist_odd.close()
-
-    # read FITS image with even-numbered slitlets
-    hdulist_even = fits.open(args.fitsfile_even)
-    image2d_even = interpolate_bad_rows(hdulist_even[0].data)
-    hdulist_even.close()
+    # read input FITS image
+    with fits.open(args.fitsfile) as hdulist:
+        image2d_header = hdulist[0].header
+        image2d = interpolate_bad_rows(hdulist[0].data)
 
     # read filter and grism names
     grism_name = fitted_bound_param['tags']['grism']
@@ -1351,6 +1327,14 @@ def main(args=None):
         raise ValueError('Unexpected filter_name:', filter_name)
     if grism_name not in EMIR_VALID_GRISMS:
         raise ValueError('Unexpected grism_name:', grism_name)
+    if filter_name != image2d_header['filter']:
+        print('Filter name (FITS file)..:', image2d_header['filter'])
+        print('Filter name (bound_param):', filter_name)
+        raise ValueError('Filter_name does not match')
+    if grism_name != image2d_header['grism']:
+        print('Grism name (FITS file)..:', image2d_header['grism'])
+        print('Grism name (bound_param):', grism_name)
+        raise ValueError('Grism_name does not match')
 
     # determine parameters according to grism+filter combination
     crpix1_enlarged, crval1_enlarged, cdelt1_enlarged, naxis1_enlarged = \
@@ -1360,24 +1344,24 @@ def main(args=None):
         islitlet_max = 54
         nbrightlines = [18]
     elif grism_name == "H" and filter_name == "H":
-        islitlet_min = 0
-        islitlet_max = 0
-        nbrightlines = [0]
+        islitlet_min = 2
+        islitlet_max = 54
+        nbrightlines = [15]
     elif grism_name == "K" and filter_name == "Ksp":
-        islitlet_min = 0
-        islitlet_max = 0
+        islitlet_min = 2
+        islitlet_max = 54
         nbrightlines = [0]
     elif grism_name == "LR" and filter_name == "YJ":
-        islitlet_min = 0
-        islitlet_max = 0
+        islitlet_min = 4
+        islitlet_max = 55
         nbrightlines = None
     elif grism_name == "LR" and filter_name == "HK":
-        islitlet_min = 0
-        islitlet_max = 0
+        islitlet_min = 4
+        islitlet_max = 55
         nbrightlines = None
     else:
-        print("filter_name..:", filter_name)
-        print("grism_name...:", grism_name)
+        print(">>> filter_name..:", filter_name)
+        print(">>> grism_name...:", grism_name)
         raise ValueError("invalid grism_name and filter_name combination")
 
     # list of slitlets to be computed
@@ -1437,10 +1421,15 @@ def main(args=None):
                                debugplot=args.debugplot)
 
         # extract 2D image corresponding to the selected slitlet
-        if islitlet % 2 == 0:
-            slitlet2d = slt.extract_slitlet2d(image2d_even)
-        else:
-            slitlet2d = slt.extract_slitlet2d(image2d_odd)
+        image2d_tmp = select_unrectified_slitlet(
+            image2d=image2d,
+            islitlet=islitlet,
+            csu_bar_slit_center=csu_conf.csu_bar_slit_center(islitlet),
+            params=params,
+            parmodel=parmodel,
+            maskonly=False
+        )
+        slitlet2d = slt.extract_slitlet2d(image2d_tmp)
 
         # subtract smooth background computed as follows:
         # - median collapsed spectrum of the whole slitlet2d
@@ -1691,10 +1680,16 @@ def main(args=None):
         )
 
         # extract original 2D image corresponding to the selected slitlet
-        if islitlet % 2 == 0:
-            slitlet2d = slt.extract_slitlet2d(image2d_even)
-        else:
-            slitlet2d = slt.extract_slitlet2d(image2d_odd)
+        # extract 2D image corresponding to the selected slitlet
+        image2d_tmp = select_unrectified_slitlet(
+            image2d=image2d,
+            islitlet=islitlet,
+            csu_bar_slit_center=csu_conf.csu_bar_slit_center(islitlet),
+            params=params,
+            parmodel=parmodel,
+            maskonly=False
+        )
+        slitlet2d = slt.extract_slitlet2d(image2d_tmp)
 
         # rectify image
         if slt.ttd_order is not None:
@@ -1962,11 +1957,7 @@ def main(args=None):
         coefdict['meta-info']['origin'] = {}
         coefdict['meta-info']['origin']['fitted_bound_param_uuid'] = \
             fitted_bound_param['uuid']
-        coefdict['meta-info']['origin']['frames'] = {}
-        coefdict['meta-info']['origin']['frames']['odd_numbered_slits_uuid'] = \
-            'undefined'
-        coefdict['meta-info']['origin']['frames']['even_numbered_slits_uuid'] = \
-            'undefined'
+        coefdict['meta-info']['origin']['frames'] = 'undefined'
         coefdict['tags'] = {}
         coefdict['tags']['grism'] = grism_name
         coefdict['tags']['filter'] = filter_name
@@ -2001,7 +1992,6 @@ def main(args=None):
                 tmp_dict['tti_bij']
             coefdict['contents'][slitlet_label]['wpoly_coeff'] = \
                 tmp_dict['wpoly_refined_coeff']
-
 
         with open(args.out_coef_rect_wpoly.name, 'w') as fstream:
             json.dump(coefdict, fstream, indent=2, sort_keys=True)

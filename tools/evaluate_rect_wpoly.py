@@ -148,7 +148,7 @@ def main(args=None):
         islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         # csu_bar_slit_center of current slitlet in initial FITS image
-        csu_bar_slit_center = csu_conf.csu_bar_slit_center[islitlet - 1]
+        csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
         # rectification coefficients interpolated at csu_bar_slit_center
         tmpdict = rect_wpoly_dict['contents'][cslitlet]
         # rectification coefficients
@@ -194,7 +194,7 @@ def main(args=None):
         islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         # csu_bar_slit_center of current slitlet in initial FITS image
-        csu_bar_slit_center = csu_conf.csu_bar_slit_center[islitlet - 1]
+        csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
         # compute spectrum trails (lower, middle and upper)
         list_spectrails = expected_distorted_boundaries(
             islitlet, csu_bar_slit_center,

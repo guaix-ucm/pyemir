@@ -514,7 +514,6 @@ def compute_slitlet_boundaries(
                 pause_debugplot(debugplot, pltshow=True)
 
         # update bounddict
-        i = islitlet - 1
         tmp_dict = {
             'boundary_coef_lower':
                 list_boundaries[0].poly_funct.coef.tolist(),
@@ -524,10 +523,10 @@ def compute_slitlet_boundaries(
                 list_boundaries[1].poly_funct.coef.tolist(),
             'boundary_xmin_upper': list_boundaries[1].xlower_line,
             'boundary_xmax_upper': list_boundaries[1].xupper_line,
-            'csu_bar_left': csu_config.csu_bar_left[i],
-            'csu_bar_right': csu_config.csu_bar_right[i],
-            'csu_bar_slit_center': csu_config.csu_bar_slit_center[i],
-            'csu_bar_slit_width': csu_config.csu_bar_slit_width[i],
+            'csu_bar_left': csu_config.csu_bar_left(islitlet),
+            'csu_bar_right': csu_config.csu_bar_right(islitlet),
+            'csu_bar_slit_center': csu_config.csu_bar_slit_center(islitlet),
+            'csu_bar_slit_width': csu_config.csu_bar_slit_width(islitlet),
             'rotang': rotang,
             'xdtu': dtu_config.xdtu,
             'ydtu': dtu_config.ydtu,

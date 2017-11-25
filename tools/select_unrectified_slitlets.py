@@ -262,7 +262,7 @@ def main(args=None):
     list_csu_bar_slit_center = []
     for islitlet in list_islitlet:
         list_csu_bar_slit_center.append(
-            csu_config.csu_bar_slit_center[islitlet - 1])
+            csu_config.csu_bar_slit_center(islitlet))
 
     # initialize output data array
     image2d_output = np.zeros((naxis2, naxis1))

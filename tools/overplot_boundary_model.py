@@ -104,7 +104,7 @@ def main(args=None):
     list_csu_bar_slit_center = []
     for islitlet in list_islitlet:
         list_csu_bar_slit_center.append(
-            csu_config.csu_bar_slit_center[islitlet - 1])
+            csu_config.csu_bar_slit_center(islitlet))
 
     # generate output ds9 region file with slitlet boundaries
     if args.ds9reg_boundaries is not None:

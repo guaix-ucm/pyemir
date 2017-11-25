@@ -41,7 +41,7 @@ def set_wv_enlarged_parameters(filter_name, grism_name):
         cdelt1_enlarged = 0.7575      # Angstroms/pixel
         naxis1_enlarged = 3400        # pixels
     elif grism_name == "H" and filter_name == "H":
-        crval1_enlarged = None  # 14000.0000  # Angstroms
+        crval1_enlarged = 14800.0000  # Angstroms
         cdelt1_enlarged = 1.2000      # Angstroms/pixel
         naxis1_enlarged = 3400        # pixels
     elif grism_name == "K" and filter_name == "Ksp":
