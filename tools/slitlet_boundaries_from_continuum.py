@@ -284,8 +284,7 @@ def compute_slitlet_boundaries(
         raise ValueError("INSTRUME keyword is not 'EMIR'!")
 
     # read CSU configuration from FITS header
-    csu_config = CsuConfiguration()
-    csu_config.define_from_fits(filename)
+    csu_config = CsuConfiguration.define_from_fits(filename)
 
     # read DTU configuration from FITS header
     dtu_config = DtuConfiguration()

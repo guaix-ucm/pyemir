@@ -255,8 +255,7 @@ def main(args=None):
     )
 
     # read CsuConfiguration object from FITS file
-    csu_config = CsuConfiguration()
-    csu_config.define_from_fits(args.fitsfile)
+    csu_config = CsuConfiguration.define_from_fits(args.fitsfile)
 
     # define csu_bar_slit_center associated to each slitlet
     list_csu_bar_slit_center = []

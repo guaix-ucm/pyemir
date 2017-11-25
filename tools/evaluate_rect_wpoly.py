@@ -55,8 +55,7 @@ def main(args=None):
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # read the CSU configuration from the header of the input FITS file
-    csu_conf = CsuConfiguration()
-    csu_conf.define_from_fits(args.fitsfile)
+    csu_conf = CsuConfiguration.define_from_fits(args.fitsfile)
     if abs(args.debugplot) >= 10:
         print(csu_conf)
 

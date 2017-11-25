@@ -1291,8 +1291,7 @@ def main(args=None):
     # ---
 
     # read the CSU configuration from the initial FITS file
-    csu_conf = CsuConfiguration()
-    csu_conf.define_from_fits(args.fitsfile)
+    csu_conf = CsuConfiguration.define_from_fits(args.fitsfile)
     if abs(args.debugplot) >= 10:
         print(csu_conf)
         pause_debugplot(args.debugplot)

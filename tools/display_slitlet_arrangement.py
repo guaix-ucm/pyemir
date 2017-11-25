@@ -66,8 +66,7 @@ def display_slitlet_arrangement(fileobj,
     rotang = image_header['rotang']
 
     # define slitlet arrangement
-    csu_config = CsuConfiguration()
-    csu_config.define_from_fits(fileobj)
+    csu_config = CsuConfiguration.define_from_fits(fileobj)
 
     # display arrangement
     if debugplot >= 10:

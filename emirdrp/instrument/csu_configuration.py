@@ -23,8 +23,6 @@ class CsuConfiguration(object):
     _csu_bar_slit_width : list of floats
         Slitlet width (mm), computed as the distance between the two
         bars defining the slitlet.
-    _defined : bool
-        Indicates whether the CSU parameters have been properly defined.
 
     """
 
@@ -33,7 +31,6 @@ class CsuConfiguration(object):
         self._csu_bar_right = None
         self._csu_bar_slit_center = None
         self._csu_bar_slit_width = None
-        self._defined = False
 
     def __str__(self):
         output = "<CsuConfiguration instance>\n"
@@ -41,26 +38,23 @@ class CsuConfiguration(object):
             ibar = i + 1
             strdum = "- [BAR{0:2d}] left, right, center, width: ".format(ibar)
             output += strdum
-            if self._defined:
-                strdum = "{0:7.3f} {1:7.3f} {2:7.3f} {3:7.3f}\n".format(
-                    self._csu_bar_left[i], self._csu_bar_right[i],
-                    self._csu_bar_slit_center[i], self._csu_bar_slit_width[i]
-                )
-                output += strdum
-            else:
-                output += 4 * "   None " + "\n"
+            strdum = "{0:7.3f} {1:7.3f} {2:7.3f} {3:7.3f}\n".format(
+                self._csu_bar_left[i], self._csu_bar_right[i],
+                self._csu_bar_slit_center[i], self._csu_bar_slit_width[i]
+            )
+            output += strdum
         return output
 
     def __eq__(self, other):
         result = \
-            (self._defined == other._defined) and \
             (self._csu_bar_left == other._csu_bar_left) and \
             (self._csu_bar_right == other._csu_bar_right) and \
             (self._csu_bar_slit_center == other._csu_bar_slit_center) and \
             (self._csu_bar_slit_width == other._csu_bar_slit_width)
         return result
 
-    def define_from_fits(self, fitsobj, extnum=0):
+    @classmethod
+    def define_from_fits(selfcls, fitsobj, extnum=0):
         """Define class members from header information in FITS file.
 
         Parameters
@@ -76,8 +70,22 @@ class CsuConfiguration(object):
         # read input FITS file
         with fits.open(fitsobj) as hdulist:
             image_header = hdulist[extnum].header
+            return selfcls.define_from_header(image_header)
 
-        # declare arrays to store configuration of CSU bars
+    @classmethod
+    def define_from_header(selfcls, image_header):
+        """Define class members directly from FITS header.
+
+        Parameters
+        ----------
+        image_header : instance of hdulist.header
+            Header content from a FITS file.
+
+        """
+
+        self = CsuConfiguration()
+
+        # declare lists to store configuration of CSU bars
         self._csu_bar_left = []
         self._csu_bar_right = []
         self._csu_bar_slit_center = []
@@ -103,8 +111,7 @@ class CsuConfiguration(object):
                 self._csu_bar_right[i] - self._csu_bar_left[i]
             )
 
-        # the attributes have been properly set
-        self._defined = True
+        return self
 
     def csu_bar_left(self, islitlet):
         """Return csu_bar_left for requested slitlet number."""
@@ -126,23 +133,22 @@ class CsuConfiguration(object):
 
         return self._csu_bar_slit_width[islitlet - 1]
 
-    def outdict(self):
+    def outdict(self, ndigits=3):
         """Return dictionary structure rounded to a given precision."""
 
         outdict = {}
-        if self._defined:
-            for i in range(EMIR_NBARS):
-                ibar = i + 1
-                cbar = 'slitlet' + str(ibar).zfill(2)
-                outdict[cbar] = {}
-                outdict[cbar]['_csu_bar_left'] = \
-                    round(self._csu_bar_left[i], 3)
-                outdict[cbar]['_csu_bar_right'] = \
-                    round(self._csu_bar_right[i], 3)
-                outdict[cbar]['_csu_bar_slit_center'] = \
-                    round(self._csu_bar_slit_center[i], 3)
-                outdict[cbar]['_csu_bar_slit_width'] = \
-                    round(self._csu_bar_slit_width[i], 3)
+        for i in range(EMIR_NBARS):
+            ibar = i + 1
+            cbar = 'slitlet' + str(ibar).zfill(2)
+            outdict[cbar] = {}
+            outdict[cbar]['_csu_bar_left'] = \
+                round(self._csu_bar_left[i], ndigits)
+            outdict[cbar]['_csu_bar_right'] = \
+                round(self._csu_bar_right[i], ndigits)
+            outdict[cbar]['_csu_bar_slit_center'] = \
+                round(self._csu_bar_slit_center[i], ndigits)
+            outdict[cbar]['_csu_bar_slit_width'] = \
+                round(self._csu_bar_slit_width[i], ndigits)
 
         return outdict
 
