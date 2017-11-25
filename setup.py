@@ -38,8 +38,6 @@ setup(name='pyemir',
               'EMIR = emirdrp.loader:load_drp',
           ],
           'console_scripts': [
-              'pyemir-apply_bpm = ' +
-                  'tools.apply_bpm:main',
               'pyemir-apply_rect_wpoly = ' +
                   'tools.apply_rect_wpoly:main',
               'pyemir-continuum_flatfield = ' +
