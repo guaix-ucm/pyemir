@@ -3,7 +3,6 @@ from __future__ import print_function
 
 import argparse
 from astropy.io import fits
-from copy import deepcopy
 from datetime import datetime
 import json
 from matplotlib.patches import Rectangle
@@ -414,12 +413,12 @@ class Slitlet2D_LS_Arc(object):
 
         Parameters
         ----------
-        image_2k2k : 2d numpy array, float
+        image_2k2k : numpy array
             Original image (dimensions EMIR_NAXIS1 * EMIR_NAXIS2)
 
         Returns
         -------
-        slitlet2d : 2d numpy array, float
+        slitlet2d : numpy array
             Image corresponding to the slitlet region defined by its
             bounding box.
 
@@ -473,7 +472,7 @@ class Slitlet2D_LS_Arc(object):
 
         Parameters
         ----------
-        slitlet2d : 2d numpy array, float
+        slitlet2d : numpy array
             Image containing the 2d slitlet image.
         times_sigma_threshold : float
             Times (robust) sigma above the median of the image to look
@@ -749,7 +748,7 @@ class Slitlet2D_LS_Arc(object):
 
         Parameters
         ----------
-        slitlet2d : 2d numpy array
+        slitlet2d : numpy array
             Slitlet image to be displayed with the computed boundaries
             and intersecting points overplotted. This argument is
             optional.
@@ -828,7 +827,7 @@ class Slitlet2D_LS_Arc(object):
         ----------
         order : int
             Order of the polynomial transformation.
-        slitlet2d : 2d numpy array
+        slitlet2d : numpy array
             Slitlet image to be displayed with the computed boundaries
             and intersecting points overplotted. This argument is
             optional.
@@ -917,7 +916,7 @@ class Slitlet2D_LS_Arc(object):
 
         Parameters
         ----------
-        slitlet2d : 2d numpy array, float
+        slitlet2d : numpy array
             Image containing the 2d slitlet image.
         resampling : int
             1: nearest neighbour, 2: flux preserving interpolation.
@@ -929,7 +928,7 @@ class Slitlet2D_LS_Arc(object):
 
         Returns
         -------
-        slitlet2d_rect : 2d numpy array
+        slitlet2d_rect : numpy array
             Rectified slitlet image.
 
         """
@@ -1030,7 +1029,7 @@ class Slitlet2D_LS_Arc(object):
 
         Parameters
         ----------
-        slitlet2d_rect : 2d numpy array
+        slitlet2d_rect : numpy array
             Rectified slitlet image.
         sigma_gaussian_filtering : float
             Sigma of the gaussian filter to be applied to the spectrum
@@ -1215,9 +1214,9 @@ def interpolate_bad_rows(image2d):
 
     Parameters
     ----------
-    image2d : 2d numpy array
+    image2d : numpy array
         Initial image.
-    image2d_interpolated : 2d numpy array
+    image2d_interpolated : numpy array
         Interpolated image.
 
     """
@@ -1341,6 +1340,16 @@ def main(args=None):
         islitlet_min = 2
         islitlet_max = 54
         nbrightlines = [18]
+        poly_crval1_linear = np.polynomial.Polynomial([
+            1.25137094e+04,
+            - 4.81553731e+00,
+            4.70039758e-04
+        ])
+        poly_cdelt1_linear = np.polynomial.Polynomial([
+            7.74133267e-01,
+            - 4.72423718e-05,
+            2.79842624e-08
+        ])
     elif grism_name == "H" and filter_name == "H":
         islitlet_min = 2
         islitlet_max = 54
