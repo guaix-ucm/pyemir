@@ -51,10 +51,10 @@ from emirdrp.core import EMIR_VALID_FILTERS
 from emirdrp.core import EMIR_VALID_GRISMS
 
 
-class Slitlet2D_LS_Arc(object):
-    """Slitlet2D_LS_Arc class definition.
+class Slitlet2dLongSlitArc(object):
+    """Slitlet2dLongSlitArc class definition.
 
-    Slitlet2D_LS_Arc: 2D slitlet class for Long-Slit Arc image
+    Slitlet2dLongSlitArc: 2D slitlet class for Long-Slit Arc image
 
     It is important to distinguish between boundaries (the slitlet
     region when useful information is available) and frontiers (which
@@ -111,15 +111,6 @@ class Slitlet2D_LS_Arc(object):
         X coordinate where the rectified y0_reference_middle is computed
         as the Y coordinate of the middle spectrum trail. The same value
         is used for all the available spectrum trails.
-    ilower_spectrail : int
-        Index indicating where the lower spectrail is stored within
-        list_spectrails.
-    imiddle_spectrail : int
-        Index indicating where the middle spectrail is stored within
-        list_spectrails.
-    iupper_spectrail : int
-        Index indicating where the upper spectrail is stored within
-        list_spectrails.
     list_spectrails: list of SpectrumTrail instances
         List of spectrum trails defined.
     list_frontiers: list of SpectrumTrail instances
@@ -194,15 +185,15 @@ class Slitlet2D_LS_Arc(object):
         rectification transformation coefficients b_ij interpolated
         with a smooth polynomial variation as a function of
         y0_reference_middle.
-    wpoly_initial : Polynomial instance
+    wpoly_initial : numpy.polynomial.Polynomial instance
         Initial wavelength calibration polynomial, providing the
         wavelength as a function of pixel number (running from 1 to
         NAXIS1).
-    wpoly_refined : Polynomial instance
+    wpoly_refined : numpy.polynomial.Polynomial instance
         Refined wavelength calibration polynomial, providing the
         wavelength as a function of pixel number (running from 1 to
         NAXIS1), or None (when the fit cannot be obtained).
-    wpoly_refined_modeled : Polynomial instance
+    wpoly_modeled : numpy.polynomial.Polynomial instance
         Refined and modeled wavelength calibration polynomial,
         providing the wavelength as a function of pixel number (running
         from 1 to NAXIS1), or None (when the fit cannot be obtained).
@@ -302,7 +293,7 @@ class Slitlet2D_LS_Arc(object):
         self.tti_bij_modeled = None
         self.wpoly_initial = None
         self.wpoly_refined = None
-        self.wpoly_modeledd = None
+        self.wpoly_modeled = None
         self.crval1_linear = None
         self.cdelt1_linear = None
 
@@ -310,10 +301,10 @@ class Slitlet2D_LS_Arc(object):
         self.debugplot = debugplot
 
     def __repr__(self):
-        """Define printable representation of a Slitlet2D_LS_Arc instance."""
+        """Printable representation of a Slitlet2dLongSlitArc instance."""
 
         # string with all the information
-        output = "<Slitlet2D_LS_Arc instance>\n" + \
+        output = "<Slitlet2dLongSlitArc instance>\n" + \
             "- islitlet....................: " + \
                  str(self.islitlet) + "\n" + \
             "- csu_bar_left................: " + \
@@ -1019,7 +1010,7 @@ class Slitlet2D_LS_Arc(object):
                                              times_sigma_threshold=5,
                                              minimum_threshold=None,
                                              npix_avoid_border=0,
-                                             nbrightlines=[0]):
+                                             nbrightlines=None):
         """Median spectrum and line peaks from rectified image.
 
         In order to avoid the line ghosts, the line peaks are identified
@@ -1050,16 +1041,19 @@ class Slitlet2D_LS_Arc(object):
             Number of pixels at the borders of the spectrum where peaks
             are not considered. If zero, the actual number will be
             given by nwinwidth_initial.
-        nbrightlines : int or list of integers
-            Maximum number of brightest lines to be employed in the
-            wavelength calibration. If this value is 0, all the detected
-            lines will be employed.
+        nbrightlines : list or None
+            List with maximum number of brightest lines to be employed
+            in the wavelength calibration. The length of the list
+            indicates the number of equal-size subintervals in the
+            wavelength calibration direction to be considered.
+            If this value is [0] or None, all the detected lines will be
+            employed.
 
         Returns
         -------
-        sp0 : 1d numpy array
+        sp0 : numpy array
             Median spectrum.
-        fxpeaks : 1d numpy array
+        fxpeaks : numpy array
             Refined location of arc lines (in array index scale).
 
         """
@@ -1153,7 +1147,9 @@ class Slitlet2D_LS_Arc(object):
             ixpeaks = ixpeaks[lok_ini * lok_end]
 
         # select a maximum number of brightest lines in each region
-        if len(nbrightlines) == 1 and nbrightlines[0] == 0:
+        if nbrightlines is None:
+            pass
+        elif len(nbrightlines) == 1 and nbrightlines[0] == 0:
             pass
         else:
             if abs(self.debugplot) >= 10:
@@ -1216,6 +1212,9 @@ def interpolate_bad_rows(image2d):
     ----------
     image2d : numpy array
         Initial image.
+
+    Returns
+    -------
     image2d_interpolated : numpy array
         Interpolated image.
 
@@ -1223,10 +1222,10 @@ def interpolate_bad_rows(image2d):
 
     # ToDo: these numbers depend on EMIR_NAXIS1 and EMIR_NAXIS2
     image2d_interpolated = np.copy(image2d)
-    image2d_interpolated[1024, :1024] = ( image2d[1023, :1024] +
-                                          image2d[1025, :1024] ) /2
-    image2d_interpolated[1023, 1024:] = ( image2d[1022, 1024:] +
-                                          image2d[1024, 1024:] ) /2
+    image2d_interpolated[1024, :1024] = (image2d[1023, :1024] +
+                                         image2d[1025, :1024]) / 2
+    image2d_interpolated[1023, 1024:] = (image2d[1022, 1024:] +
+                                          image2d[1024, 1024:]) / 2
 
     return image2d_interpolated
 
@@ -1259,6 +1258,12 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
+    parser.add_argument("--margin_npix",
+                        help="Number of pixels before and after expected "
+                             "wavelength calibrated spectrum to trim the "
+                             "wv_master table in the wavelength direction "
+                             "(default=50)",
+                        type=int, default=50)
     parser.add_argument("--critical_plots",
                         help="Display some critical plots",
                         action="store_true")
@@ -1274,6 +1279,9 @@ def main(args=None):
                         help="Output JSON file ready to be directly used for "
                              "wavelength calibration",
                         type=lambda x: arg_file_is_new(parser, x))
+    parser.add_argument("--geometry",
+                        help="tuple x,y,dx,dy (default 0,0,640,480)",
+                        default="0,0,640,480")
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"
                              " (default=0)",
@@ -1288,6 +1296,17 @@ def main(args=None):
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # ---
+
+    # geometry
+    if args.geometry is None:
+        geometry = None
+    else:
+        tmp_str = args.geometry.split(",")
+        x_geom = int(tmp_str[0])
+        y_geom = int(tmp_str[1])
+        dx_geom = int(tmp_str[2])
+        dy_geom = int(tmp_str[3])
+        geometry = x_geom, y_geom, dx_geom, dy_geom
 
     # read the CSU configuration from the initial FITS file
     csu_conf = CsuConfiguration.define_from_fits(args.fitsfile)
@@ -1335,22 +1354,12 @@ def main(args=None):
 
     # determine parameters according to grism+filter combination
     islitlet_min, islitlet_max, nbrightlines, \
-    crpix1_enlarged, crval1_enlarged, cdelt1_enlarged, naxis1_enlarged, \
-    poly_crval1_linear, poly_cdelt1_linear = \
-        set_wv_parameters(filter_name, grism_name)
+        crpix1_enlarged, crval1_enlarged, cdelt1_enlarged, naxis1_enlarged, \
+        poly_crval1_linear, poly_cdelt1_linear = \
+            set_wv_parameters(filter_name, grism_name)
 
     # list of slitlets to be computed
     list_slitlets = range(islitlet_min, islitlet_max + 1)
-
-    # expected wavelength coverage of the rectified image
-    crmin1_enlarged = \
-        crval1_enlarged + \
-        (1.0 - crpix1_enlarged) * \
-        cdelt1_enlarged  # Angstroms
-    crmax1_enlarged = \
-        crval1_enlarged + \
-        (naxis1_enlarged - crpix1_enlarged) * \
-        cdelt1_enlarged  # Angstroms
 
     # read master arc line wavelengths (only brightest lines)
     wv_master = read_wv_master_file(
@@ -1358,13 +1367,6 @@ def main(args=None):
         lines='brightest',
         debugplot=args.debugplot
     )
-    # clip master arc line list to expected wavelength range
-    lok1 = crmin1_enlarged <= wv_master
-    lok2 = wv_master <= crmax1_enlarged
-    lok = lok1 * lok2
-    wv_master = wv_master[lok]
-    if abs(args.debugplot) >= 10:
-        print("clipped wv_master:\n", wv_master)
 
     # read master arc line wavelengths (whole data set)
     wv_master_all = read_wv_master_file(
@@ -1372,11 +1374,6 @@ def main(args=None):
         lines='all',
         debugplot=args.debugplot
     )
-    # clip master arc line list to expected wavelength range
-    lok1 = crmin1_enlarged <= wv_master_all
-    lok2 = wv_master_all <= crmax1_enlarged
-    lok = lok1 * lok2
-    wv_master_all = wv_master_all[lok]
 
     # ---
 
@@ -1387,13 +1384,11 @@ def main(args=None):
 
     for islitlet in list_slitlets:
 
-        cout = '.'
-
-        # define Slitlet2D_LS_Arc object
-        slt = Slitlet2D_LS_Arc(islitlet=islitlet,
-                               params=params, parmodel=parmodel,
-                               csu_conf=csu_conf,
-                               debugplot=args.debugplot)
+        # define Slitlet2dLongSlitArc object
+        slt = Slitlet2dLongSlitArc(islitlet=islitlet,
+                                   params=params, parmodel=parmodel,
+                                   csu_conf=csu_conf,
+                                   debugplot=args.debugplot)
 
         # extract 2D image corresponding to the selected slitlet
         image2d_tmp = select_unrectified_slitlet(
@@ -1411,8 +1406,8 @@ def main(args=None):
         # - independent median filtering of the previous spectrum in the
         #   two halves in the spectral direction
         spmedian = np.median(slitlet2d, axis=0)
-        sp1 = medfilt(spmedian[:int(EMIR_NAXIS1/2)], 201)
-        sp2 = medfilt(spmedian[int(EMIR_NAXIS1/2):], 201)
+        sp1 = medfilt(spmedian[:int(EMIR_NAXIS1/2)], [201])
+        sp2 = medfilt(spmedian[int(EMIR_NAXIS1/2):], [201])
         spbackground = np.concatenate((sp1, sp2))
         slitlet2d -= spbackground
 
@@ -1446,12 +1441,30 @@ def main(args=None):
                 nbrightlines=nbrightlines
             )
 
+            # determine expected wavelength limits prior to the wavelength
+            # calibration
+            csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
+            crval1_linear = poly_crval1_linear(csu_bar_slit_center)
+            cdelt1_linear = poly_cdelt1_linear(csu_bar_slit_center)
+            expected_wvmin = crval1_linear - args.margin_npix * cdelt1_linear
+            naxis1_linear = sp_median.shape[0]
+            crvaln_linear = crval1_linear + (naxis1_linear - 1) * cdelt1_linear
+            expected_wvmax = crvaln_linear + args.margin_npix * cdelt1_linear
+
+            # clip initial master arc line list with bright lines to expected
+            # wavelength range
+            lok1 = expected_wvmin <= wv_master
+            lok2 = wv_master <= expected_wvmax
+            lok = lok1 * lok2
+            wv_master_eff = wv_master[lok]
+
             # perform initial wavelength calibration
             solution_wv = wvcal_spectrum(
                 sp=sp_median,
                 fxpeaks=fxpeaks,
                 poly_degree_wfit=args.poldeg_initial,
-                wv_master=wv_master,
+                wv_master=wv_master_eff,
+                geometry=geometry,
                 debugplot=slt.debugplot
             )
             # store initial wavelength calibration polynomial in current
@@ -1459,11 +1472,18 @@ def main(args=None):
             slt.wpoly_initial = np.polynomial.Polynomial(solution_wv.coeff)
             pause_debugplot(args.debugplot)
 
+            # clip initial master arc line list with all the lines to expected
+            # wavelength range
+            lok1 = expected_wvmin <= wv_master_all
+            lok2 = wv_master_all <= expected_wvmax
+            lok = lok1 * lok2
+            wv_master_all_eff = wv_master_all[lok]
+
             # refine wavelength calibration
             poly_refined, npoints_eff, residual_std = refine_arccalibration(
                 sp=sp_median,
                 poly_initial=slt.wpoly_initial,
-                wv_master=wv_master_all,
+                wv_master=wv_master_all_eff,
                 poldeg=args.poldeg_refined,
                 npix=1,
                 debugplot=slt.debugplot
@@ -1478,6 +1498,17 @@ def main(args=None):
             slt.crval1_linear = crmin1_linear
             slt.cdelt1_linear = \
                 (crmax1_linear - crmin1_linear) / (naxis1_linear - 1)
+
+            # check that the trimming of wv_master and wv_master_all has
+            # preserved the wavelength range [crmin1_linear, crmax1_linear]
+            if crmin1_linear < expected_wvmin:
+                print(">>> expected_wvmin:", expected_wvmin)
+                print(">>> crmin1_linear.:", crmin1_linear)
+                raise ValueError("Unexpected crmin1_linear < expected_wvmin")
+            if crmax1_linear > expected_wvmax:
+                print(">>> expected_wvmax:", expected_wvmax)
+                print(">>> crmax1_linear.:", crmax1_linear)
+                raise ValueError("Unexpected crmax1_linear > expected_wvmin")
 
             cout = '.'
 
