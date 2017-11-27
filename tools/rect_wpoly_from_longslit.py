@@ -42,7 +42,7 @@ from rescale_array_to_z1z2 import rescale_array_to_z1z2
 from rescale_array_to_z1z2 import rescale_array_from_z1z2
 from save_ndarray_to_fits import save_ndarray_to_fits
 from select_unrectified_slitlets import select_unrectified_slitlet
-from set_wv_enlarged_parameters import set_wv_enlarged_parameters
+from set_wv_parameters import set_wv_parameters
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_NAXIS1
@@ -1334,42 +1334,10 @@ def main(args=None):
         raise ValueError('Grism_name does not match')
 
     # determine parameters according to grism+filter combination
-    crpix1_enlarged, crval1_enlarged, cdelt1_enlarged, naxis1_enlarged = \
-        set_wv_enlarged_parameters(filter_name, grism_name)
-    if grism_name == "J" and filter_name == "J":
-        islitlet_min = 2
-        islitlet_max = 54
-        nbrightlines = [18]
-        poly_crval1_linear = np.polynomial.Polynomial([
-            1.25137094e+04,
-            - 4.81553731e+00,
-            4.70039758e-04
-        ])
-        poly_cdelt1_linear = np.polynomial.Polynomial([
-            7.74133267e-01,
-            - 4.72423718e-05,
-            2.79842624e-08
-        ])
-    elif grism_name == "H" and filter_name == "H":
-        islitlet_min = 2
-        islitlet_max = 54
-        nbrightlines = [15]
-    elif grism_name == "K" and filter_name == "Ksp":
-        islitlet_min = 2
-        islitlet_max = 54
-        nbrightlines = [0]
-    elif grism_name == "LR" and filter_name == "YJ":
-        islitlet_min = 4
-        islitlet_max = 55
-        nbrightlines = None
-    elif grism_name == "LR" and filter_name == "HK":
-        islitlet_min = 4
-        islitlet_max = 55
-        nbrightlines = None
-    else:
-        print(">>> filter_name..:", filter_name)
-        print(">>> grism_name...:", grism_name)
-        raise ValueError("invalid grism_name and filter_name combination")
+    islitlet_min, islitlet_max, nbrightlines, \
+    crpix1_enlarged, crval1_enlarged, cdelt1_enlarged, naxis1_enlarged, \
+    poly_crval1_linear, poly_cdelt1_linear = \
+        set_wv_parameters(filter_name, grism_name)
 
     # list of slitlets to be computed
     list_slitlets = range(islitlet_min, islitlet_max + 1)

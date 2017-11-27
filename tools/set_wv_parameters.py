@@ -1,11 +1,13 @@
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
+
 from emirdrp.core import EMIR_VALID_FILTERS
 from emirdrp.core import EMIR_VALID_GRISMS
 
 
-def set_wv_enlarged_parameters(filter_name, grism_name):
+def set_wv_parameters(filter_name, grism_name):
     """Set wavelength calibration parameters for rectified images.
 
     Parameters
@@ -17,6 +19,13 @@ def set_wv_enlarged_parameters(filter_name, grism_name):
 
     Returns
     -------
+    islitlet_min : int
+        Minimium slitlet number.
+    islitlet_max : int
+        Maximium slitlet number.
+    nbrightlines : python list
+        List of integers containing the number of brightlines to be
+        used in the initial wavelength calibration.
     crpix1_enlarged : float
         CRPIX1 value.
     crval1_enlarged : float
@@ -25,6 +34,12 @@ def set_wv_enlarged_parameters(filter_name, grism_name):
         CDELT1 value.
     naxis1_enlarged: int
         NAXIS1 value.
+    poly_crval1_linear : numpy.polynomial.Polynomial instance
+        Polynomial providing the value of CRVAL1_linear as a function
+        of csu_bar_slit_center.
+    poly_cdelt1_linear : numpy.polynomial.Polynomial instance
+        Polynomial providing the value of CDELT1_linear as a function
+        of csu_bar_slit_center.
 
     """
 
@@ -37,28 +52,63 @@ def set_wv_enlarged_parameters(filter_name, grism_name):
     # set parameters
     crpix1_enlarged = 1.0
     if grism_name == "J" and filter_name == "J":
+        islitlet_min = 2
+        islitlet_max = 54
+        nbrightlines = [18]
         crval1_enlarged = 11200.0000  # Angstroms
         cdelt1_enlarged = 0.77        # Angstroms/pixel
         naxis1_enlarged = 3400        # pixels
+        poly_crval1_linear = np.polynomial.Polynomial([
+            1.25137094e+04,
+            - 4.81553731e+00,
+            4.70039758e-04
+        ])
+        poly_cdelt1_linear = np.polynomial.Polynomial([
+            7.74133267e-01,
+            - 4.72423718e-05,
+            2.79842624e-08
+        ])
     elif grism_name == "H" and filter_name == "H":
+        islitlet_min = 2
+        islitlet_max = 54
+        nbrightlines = [15]
         crval1_enlarged = 14800.0000  # Angstroms
         cdelt1_enlarged = 1.2000      # Angstroms/pixel
         naxis1_enlarged = 3400        # pixels
+        poly_crval1_linear = None
+        poly_cdelt1_linear = None
     elif grism_name == "K" and filter_name == "Ksp":
+        islitlet_min = 2
+        islitlet_max = 54
+        nbrightlines = [0]
         crval1_enlarged = None  # 19000.0000  # Angstroms
         cdelt1_enlarged = 1.7000      # Angstroms/pixel
         naxis1_enlarged = 3400        # pixels
+        poly_crval1_linear = None
+        poly_cdelt1_linear = None
     elif grism_name == "LR" and filter_name == "YJ":
+        islitlet_min = 4
+        islitlet_max = 55
+        nbrightlines = None
         crval1_enlarged = None        # Angstroms
         cdelt1_enlarged = None        # Angstroms/pixel
         naxis1_enlarged = None        # pixels
+        poly_crval1_linear = None
+        poly_cdelt1_linear = None
     elif grism_name == "LR" and filter_name == "HK":
+        islitlet_min = 4
+        islitlet_max = 55
+        nbrightlines = None
         crval1_enlarged = None        # Angstroms
         cdelt1_enlarged = None        # Angstroms/pixel
         naxis1_enlarged = None        # pixels
+        poly_crval1_linear = None
+        poly_cdelt1_linear = None
     else:
         print("filter_name..:", filter_name)
         print("grism_name...:", grism_name)
         raise ValueError("invalid filter_name and grism_name combination")
 
-    return crpix1_enlarged, crval1_enlarged, cdelt1_enlarged, naxis1_enlarged
+    return islitlet_min, islitlet_max, nbrightlines, \
+           crpix1_enlarged, crval1_enlarged, cdelt1_enlarged, naxis1_enlarged,\
+           poly_crval1_linear, poly_cdelt1_linear
