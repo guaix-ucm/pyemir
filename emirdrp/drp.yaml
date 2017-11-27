@@ -161,6 +161,11 @@ modes:
   description: SPEC_SKY
 pipelines:
   default:
+    products:
+      MasterBias: emirdrp.products.MasterBias
+      MasterBadPixelMask: emirdrp.products.MasterBadPixelMask
+      MasterDark: emirdrp.products.MasterDark
+      MasterIntensityFlat: emirdrp.products.MasterIntensityFlat
     recipes:
       IMAGE_BIAS: emirdrp.recipes.auxiliary.BiasRecipe
       IMAGE_DARK: emirdrp.recipes.auxiliary.DarkRecipe
