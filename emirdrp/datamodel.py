@@ -27,7 +27,6 @@ import numina.datamodel
 import astropy.wcs
 
 import emirdrp.instrument
-from emirdrp.instrument.csu_configuration import CsuConfiguration
 
 
 _logger = logging.getLogger(__name__)
@@ -38,10 +37,10 @@ class EmirDataModel(numina.datamodel.DataModel):
 
     meta_dinfo_headers = [
         'readmode',
-        'texp',
+        'exptime',
         'grism',
         'filter',
-        'obsmode',
+        'mode',
         'tstamp',
         'uuid1',
         'uuid2',
@@ -50,14 +49,13 @@ class EmirDataModel(numina.datamodel.DataModel):
 
     def __init__(self):
         defaults = self.default_mappings()
+        # FIXME: this should be computed
         defaults['darktime'] = 'exptime'
 
         instrument_mappings = {
             'readmode': ('READMODE', 'undefined'),
-            'texp': ('EXPTIME', None),
             'grism': ('GRISM', 'undefined'),
             'filter': ('FILTER', 'undefined'),
-            'obsmode': ('OBSMODE', 'undefined'),
             'tstamp': ('TSTAMP', 'undefined'),
             'uuid1': ('UUID', 'undefined'),
             'uuid2': ('EMIRUUID', 'undefined'),
@@ -68,7 +66,7 @@ class EmirDataModel(numina.datamodel.DataModel):
 
         super(EmirDataModel, self).__init__(
             'EMIR',
-            instrument_mappings
+            defaults
         )
 
     @property
@@ -94,9 +92,6 @@ class EmirDataModel(numina.datamodel.DataModel):
         img[0].header['NUMUTC1'] = time1.isoformat()
         img[0].header['NUMUTC2'] = time2.isoformat()
         return img
-
-    def get_csuconf(self, img):
-        return CsuConfiguration.define_from_header(img[0].header)
 
 
 def get_dtur_from_header(hdr):
