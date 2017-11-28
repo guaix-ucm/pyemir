@@ -18,7 +18,7 @@ from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from nscan_minmax_frontiers import nscan_minmax_frontiers
 from rect_wpoly_for_mos import islitlet_progress
 from save_ndarray_to_fits import save_ndarray_to_fits
-from set_wv_enlarged_parameters import set_wv_enlarged_parameters
+from set_wv_parameters import set_wv_parameters
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
@@ -131,10 +131,10 @@ class Slitlet2D(object):
 
         # csu configuration
         tmpcsu = megadict['csu_configuration'][cslitlet]
-        self.csu_bar_left = tmpcsu['csu_bar_left']
-        self.csu_bar_right = tmpcsu['csu_bar_right']
-        self.csu_bar_slit_center = tmpcsu['csu_bar_slit_center']
-        self.csu_bar_slit_width = tmpcsu['csu_bar_slit_width']
+        self.csu_bar_left = tmpcsu['_csu_bar_left']
+        self.csu_bar_right = tmpcsu['_csu_bar_right']
+        self.csu_bar_slit_center = tmpcsu['_csu_bar_slit_center']
+        self.csu_bar_slit_width = tmpcsu['_csu_bar_slit_width']
 
         # horizontal bounding box
         self.bb_nc1_orig = 1
@@ -485,8 +485,11 @@ def main(args=None):
     # ---
 
     # relevant wavelength calibration parameters for rectified image
-    crpix1_enlarged, crval1_enlarged, cdelt1_enlarged, naxis1_enlarged = \
-        set_wv_enlarged_parameters(filter_name, grism_name)
+    wv_parameters = set_wv_parameters(filter_name, grism_name)
+    crpix1_enlarged = wv_parameters['crpix1_enlarged']
+    crval1_enlarged = wv_parameters['crval1_enlarged']
+    cdelt1_enlarged = wv_parameters['cdelt1_enlarged']
+    naxis1_enlarged = wv_parameters['naxis1_enlarged']
 
     # initialize rectified image
     image2d_rectified_wv = np.zeros((EMIR_NAXIS2, naxis1_enlarged))

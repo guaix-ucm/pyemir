@@ -940,7 +940,6 @@ class Slitlet2dLongSlitArc(object):
 
         # transformation to be employed (and direction)
         if transformation == 1:
-            order = self.ttd_order
             if inverse:
                 aij = self.tti_aij
                 bij = self.tti_bij
@@ -948,7 +947,6 @@ class Slitlet2dLongSlitArc(object):
                 aij = self.ttd_aij
                 bij = self.ttd_bij
         else:
-            order = self.ttd_order_modeled
             if inverse:
                 aij = self.tti_aij_modeled
                 bij = self.tti_bij_modeled
@@ -1353,10 +1351,16 @@ def main(args=None):
         raise ValueError('Grism_name does not match')
 
     # determine parameters according to grism+filter combination
-    islitlet_min, islitlet_max, nbrightlines, \
-        crpix1_enlarged, crval1_enlarged, cdelt1_enlarged, naxis1_enlarged, \
-        poly_crval1_linear, poly_cdelt1_linear = \
-            set_wv_parameters(filter_name, grism_name)
+    wv_parameters = set_wv_parameters(filter_name, grism_name)
+    crpix1_enlarged = wv_parameters['crpix1_enlarged']
+    crval1_enlarged = wv_parameters['crval1_enlarged']
+    cdelt1_enlarged = wv_parameters['cdelt1_enlarged']
+    naxis1_enlarged = wv_parameters['naxis1_enlarged']
+    islitlet_min = wv_parameters['islitlet_min']
+    islitlet_max = wv_parameters['islitlet_max']
+    nbrightlines = wv_parameters['nbrightlines']
+    poly_crval1_linear = wv_parameters['poly_crval1_linear']
+    poly_cdelt1_linear = wv_parameters['poly_cdelt1_linear']
 
     # list of slitlets to be computed
     list_slitlets = range(islitlet_min, islitlet_max + 1)
@@ -1672,15 +1676,15 @@ def main(args=None):
 
         if abs(args.debugplot) >= 10:
             print(slt)
-
-        if islitlet % 10 == 0:
-            cout = str(islitlet // 10)
         else:
-            cout = '.'
-        sys.stdout.write(cout)
-        if islitlet == list_slitlets[-1]:
-            sys.stdout.write('\n')
-        sys.stdout.flush()
+            if islitlet % 10 == 0:
+                cout = str(islitlet // 10)
+            else:
+                cout = '.'
+            sys.stdout.write(cout)
+            if islitlet == list_slitlets[-1]:
+                sys.stdout.write('\n')
+            sys.stdout.flush()
 
         # minimum and maximum useful scan (pixel in the spatial direction)
         # for the rectified slitlet
@@ -1690,7 +1694,6 @@ def main(args=None):
             resize=False
         )
 
-        # extract original 2D image corresponding to the selected slitlet
         # extract 2D image corresponding to the selected slitlet
         image2d_tmp = select_unrectified_slitlet(
             image2d=image2d,
