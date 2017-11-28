@@ -209,8 +209,8 @@ class Slitlet2dLongSlitArc(object):
 
     """
 
-    def __init__(self, islitlet, params, parmodel, csu_conf, ymargin=10,
-                 debugplot=0):
+    def __init__(self, islitlet, params, parmodel, csu_conf, ymargin,
+                 debugplot):
 
         # slitlet number
         self.islitlet = islitlet
@@ -266,8 +266,8 @@ class Slitlet2dLongSlitArc(object):
 
         # determine vertical bounding box
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
-        ylower = self.list_spectrails[self.i_lower_spectrail].poly_funct(xdum)
-        yupper = self.list_spectrails[self.i_upper_spectrail].poly_funct(xdum)
+        ylower = self.list_frontiers[0].poly_funct(xdum)
+        yupper = self.list_frontiers[1].poly_funct(xdum)
         self.bb_ns1_orig = int(ylower.min() + 0.5) - ymargin
         if self.bb_ns1_orig < 1:
             self.bb_ns1_orig = 1
@@ -1392,6 +1392,7 @@ def main(args=None):
         slt = Slitlet2dLongSlitArc(islitlet=islitlet,
                                    params=params, parmodel=parmodel,
                                    csu_conf=csu_conf,
+                                   ymargin=2,
                                    debugplot=args.debugplot)
 
         # extract 2D image corresponding to the selected slitlet
