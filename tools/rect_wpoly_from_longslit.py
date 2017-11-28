@@ -1480,12 +1480,16 @@ def main(args=None):
             wv_master_all_eff = wv_master_all[lok]
 
             # refine wavelength calibration
+            plottitle = args.fitsfile.name + \
+                        ' [slitlet#{}, refined]'.format(islitlet)
             poly_refined, npoints_eff, residual_std = refine_arccalibration(
                 sp=sp_median,
                 poly_initial=slt.wpoly_initial,
                 wv_master=wv_master_all_eff,
                 poldeg=args.poldeg_refined,
                 npix=1,
+                plottitle=plottitle,
+                geometry=geometry,
                 debugplot=slt.debugplot
             )
             # store refined wavelength calibration polynomial in current
@@ -1554,6 +1558,7 @@ def main(args=None):
             times_sigma_reject=5,
             xlabel='y0_rectified',
             ylabel='coeff[' + str(i) + ']',
+            title="Fit to refined wavelength calibration coefficients",
             debugplot=local_debugplot
         )
         list_poly.append(poly)
@@ -1730,6 +1735,8 @@ def main(args=None):
         if slt.wpoly_initial is not None:
             coeff_initial = slt.wpoly_initial.coef
         elif slt.wpoly_modeled is not None:
+            print("Warning slitlet#{}: using modeled instead of "
+                  "initial".format(islitlet))
             coeff_initial = slt.wpoly_modeled.coef
         else:
             raise ValueError("No wavelength calibration polynomial defined!")
@@ -1737,6 +1744,8 @@ def main(args=None):
         if slt.wpoly_refined is not None:
             coeff_refined = slt.wpoly_refined.coef
         elif slt.wpoly_modeled is not None:
+            print("Warning slitlet#{}: using modeled instead of "
+                  "refined".format(islitlet))
             coeff_refined = slt.wpoly_modeled.coef
         else:
             raise ValueError("No wavelength calibration polynomial defined!")
