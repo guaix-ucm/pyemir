@@ -743,8 +743,8 @@ from emirdrp.products import SourcesCatalog, CoordinateList2DType
 class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
     obresult = ObservationResultRequirement(query_opts=Result('frame', node='children'))
     master_bpm = MasterBadPixelMaskRequirement()
-    extinction = Extinction_Requirement()
-    sources = Catalog_Requirement()
+    # extinction = Extinction_Requirement()
+    # sources = Catalog_Requirement()
     # offsets = Offsets_Requirement()
     offsets = Requirement(
         CoordinateList2DType,
@@ -774,9 +774,15 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
 
         obresult = rinput.obresult
 
+        # just in case images are in result, instead of frames
+        if not obresult.frames:
+            frames = obresult.results
+        else:
+            frames = obresult.frames
+
         img_info = []
         data_hdul = []
-        for f in rinput.obresult.frames:
+        for f in frames:
             img = f.open()
             data_hdul.append(img)
             info = {}
