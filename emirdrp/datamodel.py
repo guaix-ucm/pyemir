@@ -59,7 +59,9 @@ class EmirDataModel(numina.datamodel.DataModel):
             'tstamp': ('TSTAMP', 'undefined'),
             'uuid1': ('UUID', 'undefined'),
             'uuid2': ('EMIRUUID', 'undefined'),
-            'skyadd': ('SKYADD', True)
+            'skyadd': ('SKYADD', True),
+            'insconf': lambda img: 'EMIR-v1',
+            'blckuuid': lambda img: None,
         }
 
         defaults.update(instrument_mappings)
