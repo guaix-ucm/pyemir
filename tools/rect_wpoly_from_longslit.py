@@ -1256,6 +1256,10 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
+    parser.add_argument("--remove_sp_background",
+                        help="Remove background spectrum prior to arc line "
+                             "detection",
+                        action="store_true")
     parser.add_argument("--margin_npix",
                         help="Number of pixels before and after expected "
                              "wavelength calibrated spectrum to trim the "
@@ -1412,11 +1416,14 @@ def main(args=None):
         # - median collapsed spectrum of the whole slitlet2d
         # - independent median filtering of the previous spectrum in the
         #   two halves in the spectral direction
-        spmedian = np.median(slitlet2d, axis=0)
-        sp1 = medfilt(spmedian[:int(EMIR_NAXIS1/2)], [201])
-        sp2 = medfilt(spmedian[int(EMIR_NAXIS1/2):], [201])
-        spbackground = np.concatenate((sp1, sp2))
-        slitlet2d -= spbackground
+        if args.remove_sp_background:
+            spmedian = np.median(slitlet2d, axis=0)
+            naxis1_tmp = spmedian.shape[0]
+            jmidpoint = naxis1_tmp // 2
+            sp1 = medfilt(spmedian[:jmidpoint], [201])
+            sp2 = medfilt(spmedian[jmidpoint:], [201])
+            spbackground = np.concatenate((sp1, sp2))
+            slitlet2d -= spbackground
 
         # locate unknown arc lines
         slt.locate_unknown_arc_lines(slitlet2d=slitlet2d)
