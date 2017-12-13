@@ -95,16 +95,18 @@ def main(args=None):
 
     # check consistency of grism, filter and DTU configuration
     json_first_longslit = json.loads(open(list_json_files[0].filename).read())
-    dtu_conf = DtuConfiguration()
-    dtu_conf.define_from_dictionary(json_first_longslit['dtu_configuration'])
+    dtu_conf = DtuConfiguration.define_from_dictionary(
+        json_first_longslit['dtu_configuration']
+    )
     filter_name = json_first_longslit['tags']['filter']
     grism_name = json_first_longslit['tags']['grism']
     islitlet_min = json_first_longslit['tags']['islitlet_min']
     islitlet_max = json_first_longslit['tags']['islitlet_max']
     for ifile in range(1, nfiles):
         json_tmp = json.loads(open(list_json_files[ifile].filename).read())
-        dtu_conf_tmp = DtuConfiguration()
-        dtu_conf_tmp.define_from_dictionary(json_tmp['dtu_configuration'])
+        dtu_conf_tmp = DtuConfiguration.define_from_dictionary(
+            json_tmp['dtu_configuration']
+        )
         filter_tmp = json_tmp['tags']['filter']
         grism_tmp = json_tmp['tags']['grism']
         islitlet_min_tmp = json_tmp['tags']['islitlet_min']
