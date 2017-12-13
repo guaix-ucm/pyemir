@@ -1520,13 +1520,15 @@ def main(args=None):
             # check that the trimming of wv_master and wv_master_all has
             # preserved the wavelength range [crmin1_linear, crmax1_linear]
             if crmin1_linear < expected_wvmin:
+                print(">>> islitlet: ", islitlet)
                 print(">>> expected_wvmin:", expected_wvmin)
                 print(">>> crmin1_linear.:", crmin1_linear)
-                raise ValueError("Unexpected crmin1_linear < expected_wvmin")
+                print(">>> WARNING: Unexpected crmin1_linear < expected_wvmin")
             if crmax1_linear > expected_wvmax:
+                print(">>> islitlet: ", islitlet)
                 print(">>> expected_wvmax:", expected_wvmax)
                 print(">>> crmax1_linear.:", crmax1_linear)
-                raise ValueError("Unexpected crmax1_linear > expected_wvmin")
+                print(">>> WARNING: Unexpected crmax1_linear > expected_wvmin")
 
             cout = '.'
 
