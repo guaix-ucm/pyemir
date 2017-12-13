@@ -1991,6 +1991,14 @@ def main(args=None):
             slitlet_label = "slitlet" + str(islitlet).zfill(2)
             coefdict['contents'][slitlet_label] = {}
             tmp_dict = outdict['contents'][slitlet_label]
+            coefdict['contents'][slitlet_label]['bb_nc1_orig'] = \
+                tmp_dict['bb_nc1_orig']
+            coefdict['contents'][slitlet_label]['bb_nc2_orig'] = \
+                tmp_dict['bb_nc2_orig']
+            coefdict['contents'][slitlet_label]['bb_ns1_orig'] = \
+                tmp_dict['bb_ns1_orig']
+            coefdict['contents'][slitlet_label]['bb_ns2_orig'] = \
+                tmp_dict['bb_ns2_orig']
             coefdict['contents'][slitlet_label]['frontier_lower'] = \
                 tmp_dict['frontier']['poly_coef_lower']
             coefdict['contents'][slitlet_label]['frontier_upper'] = \

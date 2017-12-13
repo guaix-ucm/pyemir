@@ -37,9 +37,6 @@ class Slitlet2D(object):
         Python dictionary storing the JSON input file where the
         the rectification and wavelength calibration transformations
         for a particular instrument configuration are stored.
-    ymargin : int
-        Extra number of pixels above and below the enclosing rectangle
-        that defines the slitlet bounding box.
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
@@ -124,7 +121,7 @@ class Slitlet2D(object):
 
     """
 
-    def __init__(self, islitlet, megadict, ymargin, debugplot):
+    def __init__(self, islitlet, megadict, debugplot):
         # slitlet number
         self.islitlet = islitlet
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
@@ -136,15 +133,17 @@ class Slitlet2D(object):
         self.csu_bar_slit_center = tmpcsu['_csu_bar_slit_center']
         self.csu_bar_slit_width = tmpcsu['_csu_bar_slit_width']
 
-        # horizontal bounding box
-        self.bb_nc1_orig = 1
-        self.bb_nc2_orig = EMIR_NAXIS1
+        # horizontal and vertical bounding box
+        tmpcontent = megadict['contents'][cslitlet]
+        self.bb_nc1_orig = tmpcontent['bb_nc1_orig']
+        self.bb_nc2_orig = tmpcontent['bb_nc2_orig']
+        self.bb_ns1_orig = tmpcontent['bb_ns1_orig']
+        self.bb_ns2_orig = tmpcontent['bb_ns2_orig']
 
         # reference abscissa
         self.x0_reference = float(EMIR_NAXIS1) / 2.0 + 0.5  # single float
 
         # list of spectrum trails (lower, middle, and upper)
-        tmpcontent = megadict['contents'][cslitlet]
         self.list_spectrails = []
         for idum, cdum in zip(range(3), ['lower', 'middle', 'upper']):
             coeff = tmpcontent['spectrail_' + cdum]
@@ -165,17 +164,6 @@ class Slitlet2D(object):
         # define frontier ordinates at x0_reference
         self.y0_frontier_lower = self.list_frontiers[0](self.x0_reference)
         self.y0_frontier_upper = self.list_frontiers[1](self.x0_reference)
-
-        # determine vertical bounding box
-        xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
-        ylower = self.list_frontiers[0](xdum)
-        yupper = self.list_frontiers[1](xdum)
-        self.bb_ns1_orig = int(ylower.min() + 0.5) - ymargin
-        if self.bb_ns1_orig < 1:
-            self.bb_ns1_orig = 1
-        self.bb_ns2_orig = int(yupper.max() + 0.5) + ymargin
-        if self.bb_ns2_orig > EMIR_NAXIS2:
-            self.bb_ns2_orig = EMIR_NAXIS2
 
         # Rectification coefficients
         self.ttd_aij = tmpcontent['ttd_aij']
@@ -502,7 +490,6 @@ def main(args=None):
         # define Slitlet2D object
         slt = Slitlet2D(islitlet=islitlet,
                         megadict=rect_wpoly_dict,
-                        ymargin=2,
                         debugplot=args.debugplot)
 
         if abs(args.debugplot) >= 10:
