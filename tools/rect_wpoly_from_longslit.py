@@ -1395,7 +1395,9 @@ def main(args=None):
                                    ymargin=2,
                                    debugplot=args.debugplot)
 
-        # extract 2D image corresponding to the selected slitlet
+        # extract 2D image corresponding to the selected slitlet, clipping
+        # the image beyond the unrectified slitlet (in order to isolate
+        # the arc lines of the current slitlet)
         image2d_tmp = select_unrectified_slitlet(
             image2d=image2d,
             islitlet=islitlet,
@@ -1695,16 +1697,10 @@ def main(args=None):
             resize=False
         )
 
-        # extract 2D image corresponding to the selected slitlet
-        image2d_tmp = select_unrectified_slitlet(
-            image2d=image2d,
-            islitlet=islitlet,
-            csu_bar_slit_center=csu_conf.csu_bar_slit_center(islitlet),
-            params=params,
-            parmodel=parmodel,
-            maskonly=False
-        )
-        slitlet2d = slt.extract_slitlet2d(image2d_tmp)
+        # extract 2D image corresponding to the selected slitlet: note that
+        # in this case we are not using select_unrectified_slitlets()
+        # because it introduces extra zero pixels in the slitlet frontiers
+        slitlet2d = slt.extract_slitlet2d(image2d)
 
         # rectify image
         if slt.ttd_order is not None:
