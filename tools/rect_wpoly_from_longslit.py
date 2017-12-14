@@ -73,9 +73,9 @@ class Slitlet2dLongSlitArc(object):
         'multislit'.
     csu_conf : CsuConfiguration object
         Instance of CsuConfiguration.
-    ymargin : int
+    ymargin_bb : int
         Extra number of pixels above and below the enclosing rectangle
-        that defines the slitlet bounding box.
+        defined by the slitlet frontiers.
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
@@ -95,6 +95,9 @@ class Slitlet2dLongSlitArc(object):
     csu_bar_slit_width : list of floats
         Slitlet width (mm), computed as the distance between the two
         bars defining the slitlet.
+    ymargin_bb : int
+        Extra number of pixels above and below the enclosing rectangle
+        defined by the slitlet frontiers.
     bb_nc1_orig : int
         Minimum X coordinate of the enclosing bounding box (in pixel
         units) in the original image.
@@ -209,7 +212,7 @@ class Slitlet2dLongSlitArc(object):
 
     """
 
-    def __init__(self, islitlet, params, parmodel, csu_conf, ymargin,
+    def __init__(self, islitlet, params, parmodel, csu_conf, ymargin_bb,
                  debugplot):
 
         # slitlet number
@@ -265,13 +268,14 @@ class Slitlet2dLongSlitArc(object):
         self.y0_frontier_upper = self.list_frontiers[1].y_rectified
 
         # determine vertical bounding box
+        self.ymargin_bb = ymargin_bb
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
         ylower = self.list_frontiers[0].poly_funct(xdum)
         yupper = self.list_frontiers[1].poly_funct(xdum)
-        self.bb_ns1_orig = int(ylower.min() + 0.5) - ymargin
+        self.bb_ns1_orig = int(ylower.min() + 0.5) - self.ymargin_bb
         if self.bb_ns1_orig < 1:
             self.bb_ns1_orig = 1
-        self.bb_ns2_orig = int(yupper.max() + 0.5) + ymargin
+        self.bb_ns2_orig = int(yupper.max() + 0.5) + self.ymargin_bb
         if self.bb_ns2_orig > EMIR_NAXIS2:
             self.bb_ns2_orig = EMIR_NAXIS2
 
@@ -1256,6 +1260,11 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
+    parser.add_argument("--ymargin_bb",
+                        help="Number of pixels above and below frontiers to "
+                             "determine the vertical bounding box of each "
+                             "undistorted slitlet (default=2)",
+                        type=int, default=2)
     parser.add_argument("--remove_sp_background",
                         help="Remove background spectrum prior to arc line "
                              "detection",
@@ -1400,7 +1409,7 @@ def main(args=None):
         slt = Slitlet2dLongSlitArc(islitlet=islitlet,
                                    params=params, parmodel=parmodel,
                                    csu_conf=csu_conf,
-                                   ymargin=2,
+                                   ymargin_bb=args.ymargin_bb,
                                    debugplot=args.debugplot)
 
         # extract 2D image corresponding to the selected slitlet, clipping
@@ -1927,6 +1936,7 @@ def main(args=None):
             'y0_reference_upper': slt.y0_reference_upper,
             'y0_frontier_lower': slt.y0_frontier_lower,
             'y0_frontier_upper': slt.y0_frontier_upper,
+            'ymargin_bb': slt.ymargin_bb,
             'bb_nc1_orig': slt.bb_nc1_orig,
             'bb_nc2_orig': slt.bb_nc2_orig,
             'bb_ns1_orig': slt.bb_ns1_orig,
@@ -2002,6 +2012,8 @@ def main(args=None):
             slitlet_label = "slitlet" + str(islitlet).zfill(2)
             coefdict['contents'][slitlet_label] = {}
             tmp_dict = outdict['contents'][slitlet_label]
+            coefdict['contents'][slitlet_label]['ymargin_bb'] = \
+                tmp_dict['ymargin_bb']
             coefdict['contents'][slitlet_label]['bb_nc1_orig'] = \
                 tmp_dict['bb_nc1_orig']
             coefdict['contents'][slitlet_label]['bb_nc2_orig'] = \
