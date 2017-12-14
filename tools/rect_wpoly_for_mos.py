@@ -132,6 +132,23 @@ def main(args=None):
             print(islitlet_max_tmp)
             raise ValueError("Unexpected different islitlet_max_found")
 
+    # check consistency of bounding boxes (bb_nc1_orig, bb_nc2_orig,
+    # bb_ns1_orig, and bb_ns2_orig) for each slitlet in all the files
+    for islitlet in range(islitlet_min, islitlet_max + 1):
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        for dumpar in ['nc1', 'nc2', 'ns1', 'ns2']:
+            par = 'bb_' + dumpar + '_orig'
+            value_initial = json_first_longslit['contents'][cslitlet][par]
+            for ifile in range(1, nfiles):
+                json_tmp = json.loads(open(list_json_files[ifile].filename).read())
+                value_tmp = json_tmp['contents'][cslitlet][par]
+                if value_initial != value_tmp:
+                    print(islitlet, value_initial, value_tmp)
+                    #print(value_tmp)
+                    #raise ValueError("Unexpected different " + par)
+                    print("Unexpected different " + par)
+
+
     # ---
 
     # Read and store all the longslit data
