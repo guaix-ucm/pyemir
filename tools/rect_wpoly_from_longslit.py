@@ -791,7 +791,7 @@ class Slitlet2dLongSlitArc(object):
         if abs(self.debugplot % 10) != 0 and slitlet2d is not None:
             # display image with zscale cuts
             title = "Slitlet#" + str(self.islitlet) + \
-                    " (xy_spectrail_arc_intersections, step #1)"
+                    " (xy_spectrail_arc_intersections)"
             ax = ximshow(slitlet2d, title=title,
                          first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
                          show=False)
@@ -1260,6 +1260,10 @@ def main(args=None):
                         help="Remove background spectrum prior to arc line "
                              "detection",
                         action="store_true")
+    parser.add_argument("--times_sigma_threshold",
+                        help="Times sigma above threshold to detect unknown"
+                             " arc lines (default=10)",
+                        type=float, default=10)
     parser.add_argument("--margin_npix",
                         help="Number of pixels before and after expected "
                              "wavelength calibrated spectrum to trim the "
@@ -1426,7 +1430,9 @@ def main(args=None):
             slitlet2d -= spbackground
 
         # locate unknown arc lines
-        slt.locate_unknown_arc_lines(slitlet2d=slitlet2d)
+        slt.locate_unknown_arc_lines(
+            slitlet2d=slitlet2d,
+            times_sigma_threshold=args.times_sigma_threshold)
 
         # continue working with current slitlet only if arc lines have
         # been detected
