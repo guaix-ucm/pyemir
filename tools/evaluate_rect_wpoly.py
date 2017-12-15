@@ -19,6 +19,8 @@ from fit_boundaries import expected_distorted_frontiers
 from rect_wpoly_for_mos import islitlet_progress
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
+from emirdrp.core import EMIR_NAXIS1
+from emirdrp.core import EMIR_NAXIS2
 
 
 def main(args=None):
@@ -213,6 +215,37 @@ def main(args=None):
         for idum, cdum in zip(range(2), ['lower', 'upper']):
             outdict['contents'][cslitlet]['frontier_' + cdum] = \
                 list_frontiers[idum].poly_funct.coef.tolist()
+
+    # store bounding box parameters for each slitlet
+    xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
+    for islitlet in range(islitlet_min, islitlet_max + 1):
+        islitlet_progress(islitlet, islitlet_max)
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        # parameters already available in the input JSON file
+        for par in ['bb_nc1_orig', 'bb_nc2_orig', 'ymargin_bb']:
+            outdict['contents'][cslitlet][par] = \
+                rect_wpoly_dict['contents'][cslitlet][par]
+        # estimate bb_ns1_orig and bb_ns2_orig using the already computed
+        # frontiers and the value of ymargin_bb, following the same approach
+        # employed in the script rect_wpoly_from_longslit; see
+        # Slitlet2dLongSlitArc.__init__()
+        poly_lower_frontier = np.polynomial.Polynomial(
+            outdict['contents'][cslitlet]['frontier_lower']
+        )
+        poly_upper_frontier = np.polynomial.Polynomial(
+            outdict['contents'][cslitlet]['frontier_upper']
+        )
+        ylower = poly_lower_frontier(xdum)
+        yupper = poly_upper_frontier(xdum)
+        ymargin_bb = rect_wpoly_dict['contents'][cslitlet]['ymargin_bb']
+        bb_ns1_orig = int(ylower.min() + 0.5) - ymargin_bb
+        if bb_ns1_orig < 1:
+            bb_ns1_orig = 1
+        bb_ns2_orig = int(yupper.max() + 0.5) + ymargin_bb
+        if bb_ns2_orig > EMIR_NAXIS2:
+            bb_ns2_orig = EMIR_NAXIS2
+        outdict['contents'][cslitlet]['bb_ns1_orig'] = bb_ns1_orig
+        outdict['contents'][cslitlet]['bb_ns2_orig'] = bb_ns2_orig
 
     # Save resulting JSON structure
     with open(args.out_rect_wpoly.name, 'w') as fstream:
