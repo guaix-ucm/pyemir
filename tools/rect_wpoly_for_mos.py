@@ -132,23 +132,25 @@ def main(args=None):
             print(islitlet_max_tmp)
             raise ValueError("Unexpected different islitlet_max_found")
 
-    # check consistency of bounding boxes (bb_nc1_orig, bb_nc2_orig,
-    # bb_ns1_orig, and bb_ns2_orig) for each slitlet in all the files
+    # check consistency of horizontal bounding box limits (bb_nc1_orig and
+    # bb_nc2_orig) and ymargin_bb, and store the values for each slitlet
+    dict_bb_param = {}
+    print("Checking horizontal bounding box limits and ymargin_bb:")
     for islitlet in range(islitlet_min, islitlet_max + 1):
+        islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
-        for dumpar in ['nc1', 'nc2', 'ns1', 'ns2']:
-            par = 'bb_' + dumpar + '_orig'
+        dict_bb_param[cslitlet] = {}
+        for par in ['bb_nc1_orig', 'bb_nc2_orig', 'ymargin_bb']:
             value_initial = json_first_longslit['contents'][cslitlet][par]
             for ifile in range(1, nfiles):
-                json_tmp = json.loads(open(list_json_files[ifile].filename).read())
+                json_tmp = json.loads(
+                    open(list_json_files[ifile].filename).read())
                 value_tmp = json_tmp['contents'][cslitlet][par]
                 if value_initial != value_tmp:
                     print(islitlet, value_initial, value_tmp)
-                    #print(value_tmp)
-                    #raise ValueError("Unexpected different " + par)
-                    print("Unexpected different " + par)
-
-
+                    print(value_tmp)
+                    raise ValueError("Unexpected different " + par)
+                dict_bb_param[cslitlet][par] = value_initial
     # ---
 
     # Read and store all the longslit data
@@ -177,8 +179,8 @@ def main(args=None):
     outdict['meta-info'] = {}
     outdict['meta-info']['creation_date'] = datetime.now().isoformat()
     outdict['meta-info']['description'] = \
-        'wavelength calibration polynomials and rectification ' \
-        'coefficients for MOS'
+        'rectification and wavelength calibration polynomial coefficients ' \
+        'as a function of csu_bar_slit_center for MOS'
     outdict['meta-info']['recipe_name'] = 'undefined'
     outdict['meta-info']['origin'] = {}
     outdict['meta-info']['origin']['wpoly_longslits'] = {}
@@ -194,6 +196,13 @@ def main(args=None):
     outdict['dtu_configuration'] = dtu_conf.outdict()
     outdict['uuid'] = str(uuid4())
     outdict['contents'] = {}
+
+    # include bb_nc1_orig, bb_nc2_orig and ymargin_bb for each slitlet
+    # (note that the values of bb_ns1_orig and bb_ns2_orig cannot be
+    # computed at this stage because they depend on csu_bar_slit_center)
+    for islitlet in range(islitlet_min, islitlet_max + 1):
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        outdict['contents'][cslitlet] = dict_bb_param[cslitlet]
 
     # check that order for rectification transformations is the same for all
     # the slitlets and longslit configurations
@@ -250,11 +259,11 @@ def main(args=None):
 
     # note: when aij and bij have not been computed, we use the modeled
     # version aij_modeled and bij_modeled
+    print("Interpolating rectification polynomial coefficients:")
     for islitlet in range(islitlet_min, islitlet_max + 1):
         if abs(args.debugplot) == 0:
             islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
-        outdict['contents'][cslitlet] = {}
         for keycoef in ['ttd_aij', 'ttd_bij', 'tti_aij', 'tti_bij']:
             list_cc_rect = []
             for icoef in range(ncoef_rect):
@@ -294,6 +303,7 @@ def main(args=None):
 
     # note: when wpoly_refined_coeff have not been computed, we use the
     # wpoly_modeled_coeff
+    print("Interpolating wavelength calibration polynomial coefficients:")
     for islitlet in range(islitlet_min, islitlet_max + 1):
         if abs(args.debugplot) == 0:
             islitlet_progress(islitlet, islitlet_max)
