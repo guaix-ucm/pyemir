@@ -50,6 +50,8 @@ setup(name='pyemir',
                   'tools.fit_boundaries:main',
               'pyemir-merge_bounddict_files = ' +
                   'tools.merge_bounddict_files:main',
+              'pyemir-rect_wpoly_coeff = ' +
+                  'tools.rect_wpoly_coeff:main',
               'pyemir-rect_wpoly_for_mos = ' +
                   'tools.rect_wpoly_for_mos:main',
               'pyemir-rect_wpoly_from_longslit = ' +
