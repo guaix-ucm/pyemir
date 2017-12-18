@@ -1639,6 +1639,11 @@ def main(args=None):
         if not args.longslit:
             raise ValueError("--out_rectwv option is only valid together "
                              "with --longslit")
+    if args.critical_plots:
+        if not args.longslit:
+            raise ValueError("--critical_plots option is only valid together "
+                             "with --longslit")
+
 
     # geometry
     if args.geometry is None:
