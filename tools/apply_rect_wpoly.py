@@ -146,7 +146,7 @@ class Slitlet2D(object):
         # list of spectrum trails (lower, middle, and upper)
         self.list_spectrails = []
         for idum, cdum in zip(range(3), ['lower', 'middle', 'upper']):
-            coeff = tmpcontent['spectrail_' + cdum]
+            coeff = tmpcontent['spectrail']['poly_coef_' + cdum]
             self.list_spectrails.append(np.polynomial.Polynomial(coeff))
 
         # define reference ordinates using lower, middle and upper spectrails
@@ -158,7 +158,7 @@ class Slitlet2D(object):
         # list of frontiers (lower and upper)
         self.list_frontiers = []
         for idum, cdum in zip(range(2), ['lower', 'upper']):
-            coeff = tmpcontent['frontier_' + cdum]
+            coeff = tmpcontent['frontier']['poly_coef_' + cdum]
             self.list_frontiers.append(np.polynomial.Polynomial(coeff))
 
         # define frontier ordinates at x0_reference
