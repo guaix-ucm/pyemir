@@ -51,7 +51,9 @@ setup(name='pyemir',
               'pyemir-merge_bounddict_files = ' +
                   'tools.merge_bounddict_files:main',
               'pyemir-rect_wpoly_coeff = ' +
-                  'tools.rect_wpoly_coeff:main',
+                'tools.rect_wpoly_coeff:main',
+              'pyemir-rect_wpoly_coeff_add_longslit_model = ' +
+                  'tools.rect_wpoly_coeff_add_longslit_model:main',
               'pyemir-rect_wpoly_for_mos = ' +
                   'tools.rect_wpoly_for_mos:main',
               'pyemir-rect_wpoly_from_longslit = ' +
