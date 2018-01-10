@@ -22,14 +22,12 @@ from numina.array.display.ximplotxy import ximplotxy
 from numina.array.display.ximshow import ximshow
 from numina.array.distortion import compute_distortion
 from numina.array.distortion import fmap
-from numina.array.distortion import ncoef_fmap
 from numina.array.distortion import rectify2d
 from numina.array.wavecalib.__main__ import read_wv_master_file
 from numina.array.wavecalib.__main__ import wvcal_spectrum
 from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.array.wavecalib.peaks_spectrum import find_peaks_spectrum
 from numina.array.wavecalib.peaks_spectrum import refine_peaks_spectrum
-from numina.array.wavecalib.resample import resample_image2d_flux
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 
@@ -37,10 +35,8 @@ from arg_file_is_new import arg_file_is_new
 from fit_boundaries import bound_params_from_dict
 from fit_boundaries import expected_distorted_boundaries
 from fit_boundaries import expected_distorted_frontiers
-from nscan_minmax_frontiers import nscan_minmax_frontiers
 from rescale_array_to_z1z2 import rescale_array_to_z1z2
 from rescale_array_to_z1z2 import rescale_array_from_z1z2
-from save_ndarray_to_fits import save_ndarray_to_fits
 from select_unrectified_slitlets import select_unrectified_slitlet
 from set_wv_parameters import set_wv_parameters
 
@@ -320,7 +316,7 @@ class Slitlet2dArc(object):
             "- x0_reference................: " + \
                  str(self.x0_reference) + "\n" + \
             "- y0_reference_lower..........: " + \
-                str(self.y0_reference_lower) + "\n" + \
+                 str(self.y0_reference_lower) + "\n" + \
             "- y0_reference_middle.........: " + \
                  str(self.y0_reference_middle) + "\n" + \
             "- y0_reference_upper..........: " + \
@@ -347,9 +343,9 @@ class Slitlet2dArc(object):
                  str(self.list_spectrails[self.i_upper_spectrail].poly_funct)\
                  + "\n" + \
             "- lower frontier_poly_funct...:\n\t" + \
-                str(self.list_frontiers[0].poly_funct) + "\n" + \
+                 str(self.list_frontiers[0].poly_funct) + "\n" + \
             "- upper frontier_poly_funct...:\n\t" + \
-                str(self.list_frontiers[1].poly_funct) + "\n"
+                 str(self.list_frontiers[1].poly_funct) + "\n"
 
         if self.list_arc_lines is None:
             number_arc_lines = None
@@ -826,16 +822,16 @@ class Slitlet2dArc(object):
         """
 
         # protections
-        if self.x_inter_orig is None or \
-                        self.y_inter_orig is None or \
-                        self.x_inter_rect is None or \
-                        self.y_inter_rect is None:
+        if self.x_inter_orig is None \
+                or self.y_inter_orig is None \
+                or self.x_inter_rect is None \
+                or self.y_inter_rect is None:
             raise ValueError('Intersection points not computed')
 
         npoints = len(self.x_inter_orig)
-        if len(self.y_inter_orig) != npoints or \
-            len(self.x_inter_rect) != npoints or \
-            len(self.y_inter_rect) != npoints:
+        if len(self.y_inter_orig) != npoints \
+                or len(self.x_inter_rect) != npoints \
+                or len(self.y_inter_rect) != npoints:
             raise ValueError('Unexpected different number of points')
 
         # IMPORTANT: correct coordinates from origin in order to manipulate
@@ -1039,7 +1035,7 @@ class Slitlet2dArc(object):
             Number of pixels at the borders of the spectrum where peaks
             are not considered. If zero, the actual number will be
             given by nwinwidth_initial.
-        nbrightlines : list or None
+        nbrightlines : list
             List with maximum number of brightest lines to be employed
             in the wavelength calibration. The length of the list
             indicates the number of equal-size subintervals in the
@@ -1311,8 +1307,7 @@ def main(args=None):
         print(csu_conf)
         pause_debugplot(args.debugplot)
 
-    # read the DTU configuration from the two initial FITS files and check
-    # that both configurations are identical
+    # read the DTU configuration from the initial FITS file
     dtu_conf = DtuConfiguration.define_from_fits(args.fitsfile)
     if abs(args.debugplot) >= 10:
         print(dtu_conf)
@@ -1351,10 +1346,6 @@ def main(args=None):
 
     # determine parameters according to grism+filter combination
     wv_parameters = set_wv_parameters(filter_name, grism_name)
-    crpix1_enlarged = wv_parameters['crpix1_enlarged']
-    crval1_enlarged = wv_parameters['crval1_enlarged']
-    cdelt1_enlarged = wv_parameters['cdelt1_enlarged']
-    naxis1_enlarged = wv_parameters['naxis1_enlarged']
     islitlet_min = wv_parameters['islitlet_min']
     islitlet_max = wv_parameters['islitlet_max']
     nbrightlines = wv_parameters['nbrightlines']
@@ -1388,11 +1379,14 @@ def main(args=None):
     for islitlet in list_slitlets:
 
         # define Slitlet2dArc object
-        slt = Slitlet2dArc(islitlet=islitlet,
-                                   params=params, parmodel=parmodel,
-                                   csu_conf=csu_conf,
-                                   ymargin_bb=args.ymargin_bb,
-                                   debugplot=args.debugplot)
+        slt = Slitlet2dArc(
+            islitlet=islitlet,
+            params=params,
+            parmodel=parmodel,
+            csu_conf=csu_conf,
+            ymargin_bb=args.ymargin_bb,
+            debugplot=args.debugplot
+        )
 
         # extract 2D image corresponding to the selected slitlet, clipping
         # the image beyond the unrectified slitlet (in order to isolate
