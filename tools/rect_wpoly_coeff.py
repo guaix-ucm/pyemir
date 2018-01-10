@@ -291,7 +291,7 @@ class Slitlet2dArc(object):
         self.crval1_linear = None
         self.cdelt1_linear = None
 
-        # undefined members use only in longslit mode
+        # undefined members to be updated with images in longslit mode
         self.ttd_order_longslitmodel = None
         self.ttd_aij_longslitmodel = None
         self.ttd_bij_longslitmodel = None
@@ -1228,333 +1228,10 @@ def interpolate_bad_rows(image2d):
     return image2d_interpolated
 
 
-def interpolate_longslit(image2d,
-                         list_slitlets,
-                         measured_slitlets,
-                         order_fmap,
-                         poldeg_refined,
-                         naxis1_enlarged,
-                         cdelt1_enlarged,
-                         crval1_enlarged,
-                         crpix1_enlarged,
-                         out_rect,
-                         out_rectwv,
-                         critical_plots,
-                         debugplot):
-    """Interpolate coefficients assuming longslit configuration.
-
-    Note that the results are directly returned as members of the
-    Slitlet2dArc instances.
-
-    Parameters
-    ----------
-    image2d : numpy array
-        Original 2D image.
-    list_slitlets : list
-        List of valid slitlet numbers.
-    measured_slitlets : list
-        List of Slitlet2dArc instances containing the information of
-        the slitlets with rectification and wavelength calibration
-        coefficients.
-    order_fmap : int
-        Order of the rectification transformation.
-    poldeg_refined : int
-        Polynomial degree for refined wavelength calibration.
-    naxis1_enlarged : int
-        NAXIS1 value for enlarged image.
-    cdelt1_enlarged : float
-        CDELT1 value for enlarged image.
-    crval1_enlarged : float
-        CRVAL1 value for enlarged image.
-    crpix1_enlarged : float
-        CRPIX1 value for enlarged image.
-    out_rect : string
-        File name for rectified FITS image (without wavelength
-        calibration). This file actually contains two images: the
-        rectified image in the first extension and the unrectified
-        image in the second extension.
-    out_rectwv : string
-        File name for rectified FITS image (with wavelength
-        calibration). This file actually contains two extensions,
-        each one computed with a different wavelength calibration
-        polynomial: fitted (either original or refined), and modeled.
-    critical_plots : bool
-        If True, interpolation plots are displayed independently of
-        the value of debugplot.
-    debugplot : int
-        Debugging level for messages and plots. For details see
-        'numina.array.display.pause_debugplot.py'.
-
-    """
-
-    # polynomial coefficients corresponding to the wavelength calibration
-    # step 1: compute variation of each coefficient as a function of
-    # y0_reference_middle of each slitlet
-    list_poly = []
-    local_debugplot = debugplot
-    if critical_plots:
-        local_debugplot = 12
-    for i in range(poldeg_refined + 1):
-        xp = []
-        yp = []
-        for slt in measured_slitlets:
-            if slt.wpoly is not None:
-                xp.append(slt.y0_reference_middle)
-                yp.append(slt.wpoly.coef[i])
-        poly, yres, reject = polfit_residuals_with_sigma_rejection(
-            x=np.array(xp),
-            y=np.array(yp),
-            deg=2,
-            times_sigma_reject=5,
-            xlabel='y0_rectified',
-            ylabel='coeff[' + str(i) + ']',
-            title="Fit to refined wavelength calibration coefficients",
-            debugplot=local_debugplot
-        )
-        list_poly.append(poly)
-    # step 2: use the variation of each polynomial coefficient with
-    # y0_reference_middle to infer the expected wavelength calibration
-    # polynomial for each rectifified slitlet
-    for slt in measured_slitlets:
-        y0_reference_middle = slt.y0_reference_middle
-        list_new_coeff = []
-        for i in range(poldeg_refined + 1):
-            new_coeff = list_poly[i](y0_reference_middle)
-            list_new_coeff.append(new_coeff)
-        slt.wpoly_longslitmodel = np.polynomial.Polynomial(list_new_coeff)
-
-    # ---
-
-    # rectification transformation coefficients aij and bij
-    # step 1: compute variation of each coefficient as a function of
-    # y0_reference_middle of each slitlet
-    list_poly_ttd_aij = []
-    list_poly_ttd_bij = []
-    list_poly_tti_aij = []
-    list_poly_tti_bij = []
-    ncoef_ttd = ncoef_fmap(order_fmap)
-    local_debugplot = debugplot
-    if critical_plots:
-        local_debugplot = 12
-    for i in range(ncoef_ttd):
-        xp = []
-        yp_ttd_aij = []
-        yp_ttd_bij = []
-        yp_tti_aij = []
-        yp_tti_bij = []
-        for slt in measured_slitlets:
-            if slt.ttd_aij is not None:
-                xp.append(slt.y0_reference_middle)
-                yp_ttd_aij.append(slt.ttd_aij[i])
-                yp_ttd_bij.append(slt.ttd_bij[i])
-                yp_tti_aij.append(slt.tti_aij[i])
-                yp_tti_bij.append(slt.tti_bij[i])
-        poly, yres, reject = polfit_residuals_with_sigma_rejection(
-            x=np.array(xp),
-            y=np.array(yp_ttd_aij),
-            deg=5,
-            times_sigma_reject=5,
-            xlabel='y0_rectified',
-            ylabel='ttd_aij[' + str(i) + ']',
-            debugplot=local_debugplot
-        )
-        list_poly_ttd_aij.append(poly)
-        poly, yres, reject = polfit_residuals_with_sigma_rejection(
-            x=np.array(xp),
-            y=np.array(yp_ttd_bij),
-            deg=5,
-            times_sigma_reject=5,
-            xlabel='y0_rectified',
-            ylabel='ttd_bij[' + str(i) + ']',
-            debugplot=local_debugplot
-        )
-        list_poly_ttd_bij.append(poly)
-        poly, yres, reject = polfit_residuals_with_sigma_rejection(
-            x=np.array(xp),
-            y=np.array(yp_tti_aij),
-            deg=5,
-            times_sigma_reject=5,
-            xlabel='y0_rectified',
-            ylabel='tti_aij[' + str(i) + ']',
-            debugplot=local_debugplot
-        )
-        list_poly_tti_aij.append(poly)
-        poly, yres, reject = polfit_residuals_with_sigma_rejection(
-            x=np.array(xp),
-            y=np.array(yp_tti_bij),
-            deg=5,
-            times_sigma_reject=5,
-            xlabel='y0_rectified',
-            ylabel='tti_bij[' + str(i) + ']',
-            debugplot=local_debugplot
-        )
-        list_poly_tti_bij.append(poly)
-    # step 2: use the variation of each coefficient with y0_reference_middle
-    # to infer the expected rectification transformation for each slitlet
-    for slt in measured_slitlets:
-        slt.ttd_order_longslitmodel = order_fmap
-        y0_reference_middle = slt.y0_reference_middle
-        slt.ttd_aij_longslitmodel = []
-        slt.ttd_bij_longslitmodel = []
-        slt.tti_aij_longslitmodel = []
-        slt.tti_bij_longslitmodel = []
-        for i in range(ncoef_ttd):
-            new_coeff = list_poly_ttd_aij[i](y0_reference_middle)
-            slt.ttd_aij_longslitmodel.append(new_coeff)
-            new_coeff = list_poly_ttd_bij[i](y0_reference_middle)
-            slt.ttd_bij_longslitmodel.append(new_coeff)
-            new_coeff = list_poly_tti_aij[i](y0_reference_middle)
-            slt.tti_aij_longslitmodel.append(new_coeff)
-            new_coeff = list_poly_tti_bij[i](y0_reference_middle)
-            slt.tti_bij_longslitmodel.append(new_coeff)
-
-    # ---
-
-    image2d_rectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
-    image2d_unrectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
-    image2d_rectified_wv = np.zeros((EMIR_NAXIS2, naxis1_enlarged))
-    image2d_rectified_wv_longslitmodel = \
-        np.zeros((EMIR_NAXIS2, naxis1_enlarged))
-
-    for slt in measured_slitlets:
-
-        islitlet = slt.islitlet
-
-        if abs(debugplot) >= 10:
-            print(slt)
-        else:
-            if islitlet % 10 == 0:
-                cout = str(islitlet // 10)
-            else:
-                cout = '.'
-            sys.stdout.write(cout)
-            if islitlet == list_slitlets[-1]:
-                sys.stdout.write('\n')
-            sys.stdout.flush()
-
-        # minimum and maximum useful scan (pixel in the spatial direction)
-        # for the rectified slitlet
-        nscan_min, nscan_max = nscan_minmax_frontiers(
-            slt.y0_frontier_lower,
-            slt.y0_frontier_upper,
-            resize=False
-        )
-
-        # extract 2D image corresponding to the selected slitlet: note that
-        # in this case we are not using select_unrectified_slitlets()
-        # because it introduces extra zero pixels in the slitlet frontiers
-        slitlet2d = slt.extract_slitlet2d(image2d)
-
-        # rectify image
-        if slt.ttd_order is not None:
-            transformation = 1
-        elif slt.ttd_order_longslitmodel is not None:
-            transformation = 2
-        else:
-            raise ValueError("No ttd transformation defined!")
-
-        slitlet2d_rect = slt.rectify(slitlet2d,
-                                     resampling=1,
-                                     transformation=transformation)
-
-        slitlet2d_unrect = slt.rectify(slitlet2d_rect,
-                                       resampling=1,
-                                       transformation=transformation,
-                                       inverse=True)
-
-        ii1 = nscan_min - slt.bb_ns1_orig
-        ii2 = nscan_max - slt.bb_ns1_orig + 1
-
-        j1 = slt.bb_nc1_orig - 1
-        j2 = slt.bb_nc2_orig
-        i1 = slt.bb_ns1_orig - 1 + ii1
-        i2 = i1 + ii2 - ii1
-
-        image2d_rectified[i1:i2, j1:j2] = slitlet2d_rect[ii1:ii2, :]
-        image2d_unrectified[i1:i2, j1:j2] = slitlet2d_unrect[ii1:ii2, :]
-
-        # wavelength calibration of rectified image
-
-        if slt.wpoly is not None:
-            coeff_initial = slt.wpoly.coef
-        elif slt.wpoly_longslitmodel is not None:
-            print("Warning slitlet#{}: using modeled instead of "
-                  "initial".format(islitlet))
-            coeff_initial = slt.wpoly_longslitmodel.coef
-        else:
-            raise ValueError("No wavelength calibration polynomial defined!")
-
-        if slt.wpoly_longslitmodel is not None:
-            coeff_longslitmodel = slt.wpoly_longslitmodel.coef
-        else:
-            raise ValueError("No wavelength calibration polynomial defined!")
-
-        slitlet2d_rect_wv = resample_image2d_flux(
-            image2d_orig=slitlet2d_rect,
-            naxis1=naxis1_enlarged,
-            cdelt1=cdelt1_enlarged,
-            crval1=crval1_enlarged,
-            crpix1=crpix1_enlarged,
-            coeff=coeff_initial
-        )
-        image2d_rectified_wv[i1:i2, :] = \
-            slitlet2d_rect_wv[ii1:ii2, :]
-
-        slitlet2d_rect_wv_longslitmodel = resample_image2d_flux(
-            image2d_orig=slitlet2d_rect,
-            naxis1=naxis1_enlarged,
-            cdelt1=cdelt1_enlarged,
-            crval1=crval1_enlarged,
-            crpix1=crpix1_enlarged,
-            coeff=coeff_longslitmodel
-        )
-        image2d_rectified_wv_longslitmodel[i1:i2, :] = \
-            slitlet2d_rect_wv_longslitmodel[ii1:ii2, :]
-
-    if abs(debugplot) % 10 != 0:
-        ximshow(image2d_rectified, debugplot=12)
-        ximshow(image2d_unrectified, debugplot=12)
-
-    if out_rect is not None:
-        # Save rectified (but not wavelength calibrated image) in first
-        # extension, while the second extension is employed to store
-        # the unrectified version of the previous one
-        save_ndarray_to_fits(
-            array=[image2d_rectified, image2d_unrectified],
-            file_name=out_rect,
-            cast_to_float=[True] * 2,
-            overwrite=True
-        )
-
-    if abs(debugplot) % 10 != 0:
-        ximshow(image2d_rectified_wv_longslitmodel, debugplot=12)
-
-    if out_rectwv is not None:
-        # Save each version of the rectified and wavelength calibrated image
-        # in a different extension of the output file, from the most to the
-        # least reliable method:
-        # 1) wpoly: the most reliable, computed with the maximun number of
-        #    arc lines
-        # 2) wpoly_longslitmodel: uncertain because we are using the model
-        #    that provides the variation of each wavelength calibration
-        #    polynomial coefficient as a function of the slitlet
-        list_of_arrays = [image2d_rectified_wv,
-                          image2d_rectified_wv_longslitmodel]
-        save_ndarray_to_fits(
-            array=list_of_arrays,
-            file_name=out_rectwv,
-            cast_to_float=[True] * 2,
-            crpix1=[crpix1_enlarged] * 2,
-            crval1=[crval1_enlarged] * 2,
-            cdelt1=[cdelt1_enlarged] * 2,
-            overwrite=True
-        )
-
-
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='wpoly_from_longslit')
+    parser = argparse.ArgumentParser()
     # required arguments
     parser.add_argument("fitsfile",
                         help="Input FITS file with longslit data",
@@ -1580,9 +1257,6 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
-    parser.add_argument("--longslit",
-                        help="Arc image corresponds to longslit mode",
-                        action="store_true")
     parser.add_argument("--ymargin_bb",
                         help="Number of pixels above and below frontiers to "
                              "determine the vertical bounding box of each "
@@ -1602,18 +1276,6 @@ def main(args=None):
                              "wv_master table in the wavelength direction "
                              "(default=50)",
                         type=int, default=50)
-    parser.add_argument("--critical_plots",
-                        help="Display some critical plots (for longslit mode "
-                             "only)",
-                        action="store_true")
-    parser.add_argument("--out_rect",
-                        help="Rectified but not wavelength calibrated output "
-                             "FITS file (for longslit mode only)",
-                        type=lambda x: arg_file_is_new(parser, x))
-    parser.add_argument("--out_rectwv",
-                        help="Rectified and wavelength calibrated output "
-                             "FITS file (for longslit mode only)",
-                        type=lambda x: arg_file_is_new(parser, x))
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
                         default="0,0,640,480")
@@ -1631,21 +1293,6 @@ def main(args=None):
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # ---
-
-    # protections
-    if args.out_rect is not None:
-        if not args.longslit:
-            raise ValueError("--out_rect option is only valid together "
-                             "with --longslit")
-    if args.out_rectwv is not None:
-        if not args.longslit:
-            raise ValueError("--out_rectwv option is only valid together "
-                             "with --longslit")
-    if args.critical_plots:
-        if not args.longslit:
-            raise ValueError("--critical_plots option is only valid together "
-                             "with --longslit")
-
 
     # geometry
     if args.geometry is None:
@@ -1904,26 +1551,6 @@ def main(args=None):
             sys.stdout.flush()
         else:
             pause_debugplot(args.debugplot)
-
-    # ---
-
-    # interpolate coefficients in longslit mode
-    if args.longslit:
-        interpolate_longslit(
-            image2d,
-            list_slitlets,
-            measured_slitlets,
-            args.order_fmap,
-            args.poldeg_refined,
-            naxis1_enlarged,
-            cdelt1_enlarged,
-            crval1_enlarged,
-            crpix1_enlarged,
-            args.out_rect,
-            args.out_rectwv,
-            args.critical_plots,
-            args.debugplot
-        )
 
     # ---
 
