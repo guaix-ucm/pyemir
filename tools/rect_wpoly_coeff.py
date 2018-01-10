@@ -164,26 +164,27 @@ class Slitlet2dArc(object):
     tti_bij : numpy array
         Polynomial coefficents corresponding to the inverse
         rectification transformation coefficients b_ij.
-    ttd_order_modeled : int or None
+    ttd_order_longslitmodel : int or None
         Polynomial order corresponding to the modeled direct
         rectification transformation. It is None until the coefficients
-        ttd_aij_modeled and ttd_bij_modeled have been computed.
-    ttd_aij_modeled : numpy array
+        ttd_aij_longslitmodel and ttd_bij_longslitmodel have been
+        computed.
+    ttd_aij_longslitmodel : numpy array
         Polynomial coefficents corresponding to the direct
         rectification transformation coefficients a_ij interpolated
         with a smooth polynomial variation as a function of
         y0_reference_middle.
-    ttd_bij_modeled : numpy array
+    ttd_bij_longslitmodel : numpy array
         Polynomial coefficents corresponding to the direct
         rectification transformation coefficients b_ij interpolated
         with a smooth polynomial variation as a function of
         y0_reference_middle.
-    tti_aij_modeled : numpy array
+    tti_aij_longslitmodel : numpy array
         Polynomial coefficents corresponding to the inverse
         rectification transformation coefficients a_ij interpolated
         with a smooth polynomial variation as a function of
         y0_reference_middle.
-    tti_bij_modeled : numpy array
+    tti_bij_longslitmodel : numpy array
         Polynomial coefficents corresponding to the inverse
         rectification transformation coefficients b_ij interpolated
         with a smooth polynomial variation as a function of
@@ -192,7 +193,7 @@ class Slitlet2dArc(object):
         Wavelength calibration polynomial, providing the
         wavelength as a function of pixel number (running from 1 to
         NAXIS1).
-    wpoly_modeled : numpy.polynomial.Polynomial instance
+    wpoly_longslitmodel : numpy.polynomial.Polynomial instance
         Refined and modeled wavelength calibration polynomial,
         providing the wavelength as a function of pixel number (running
         from 1 to NAXIS1), or None (when the fit cannot be obtained).
@@ -291,12 +292,12 @@ class Slitlet2dArc(object):
         self.cdelt1_linear = None
 
         # undefined members use only in longslit mode
-        self.ttd_order_modeled = None
-        self.ttd_aij_modeled = None
-        self.ttd_bij_modeled = None
-        self.tti_aij_modeled = None
-        self.tti_bij_modeled = None
-        self.wpoly_modeled = None
+        self.ttd_order_longslitmodel = None
+        self.ttd_aij_longslitmodel = None
+        self.ttd_bij_longslitmodel = None
+        self.tti_aij_longslitmodel = None
+        self.tti_bij_longslitmodel = None
+        self.wpoly_longslitmodel = None
 
         # debugplot
         self.debugplot = debugplot
@@ -372,28 +373,28 @@ class Slitlet2dArc(object):
                           str(dumval[0]) + ", ..., " + \
                           str(dumval[-1]) + "]\n"
         output += \
-            "- ttd_order..........: " + str(self.ttd_order) + "\n" + \
-            "- ttd_aij............:\n\t" + str(self.ttd_aij) + "\n" + \
-            "- ttd_bij............:\n\t" + str(self.ttd_bij) + "\n" + \
-            "- tti_aij............:\n\t" + str(self.tti_aij) + "\n" + \
-            "- tti_bij............:\n\t" + str(self.tti_bij) + "\n" + \
-            "- ttd_order_modeled..: " + \
-            str(self.ttd_order_modeled) + "\n" + \
-            "- ttd_aij_modeled....:\n\t" + \
-            str(self.ttd_aij_modeled) + "\n" + \
-            "- ttd_bij_modeled....:\n\t" + \
-            str(self.ttd_bij_modeled) + "\n" + \
-            "- tti_aij_modeled....:\n\t" + \
-            str(self.tti_aij_modeled) + "\n" + \
-            "- tti_bij_modeled....:\n\t" + \
-            str(self.tti_bij_modeled) + "\n" + \
-            "- wpoly..............:\n\t" + \
+            "- ttd_order..............: " + str(self.ttd_order) + "\n" + \
+            "- ttd_aij................:\n\t" + str(self.ttd_aij) + "\n" + \
+            "- ttd_bij................:\n\t" + str(self.ttd_bij) + "\n" + \
+            "- tti_aij................:\n\t" + str(self.tti_aij) + "\n" + \
+            "- tti_bij................:\n\t" + str(self.tti_bij) + "\n" + \
+            "- ttd_order_longslitmodel: " + \
+            str(self.ttd_order_longslitmodel) + "\n" + \
+            "- ttd_aij_longslitmodel..:\n\t" + \
+            str(self.ttd_aij_longslitmodel) + "\n" + \
+            "- ttd_bij_longslitmodel..:\n\t" + \
+            str(self.ttd_bij_longslitmodel) + "\n" + \
+            "- tti_aij_longslitmodel..:\n\t" + \
+            str(self.tti_aij_longslitmodel) + "\n" + \
+            "- tti_bij_longslitmodel..:\n\t" + \
+            str(self.tti_bij_longslitmodel) + "\n" + \
+            "- wpoly..................:\n\t" + \
             str(self.wpoly) + "\n" + \
-            "- wpoly_modeled......:\n\t" + \
-            str(self.wpoly_modeled) + "\n" + \
-            "- crval1_linear......: " + str(self.crval1_linear) + "\n" + \
-            "- cdelt1_linear......: " + str(self.cdelt1_linear) + "\n" + \
-            "- debugplot...................: " + \
+            "- wpoly_longslitmodel....:\n\t" + \
+            str(self.wpoly_longslitmodel) + "\n" + \
+            "- crval1_linear..........: " + str(self.crval1_linear) + "\n" + \
+            "- cdelt1_linear..........: " + str(self.cdelt1_linear) + "\n" + \
+            "- debugplot..............: " + \
             str(self.debugplot)
 
         return output
@@ -947,11 +948,11 @@ class Slitlet2dArc(object):
                 bij = self.ttd_bij
         else:
             if inverse:
-                aij = self.tti_aij_modeled
-                bij = self.tti_bij_modeled
+                aij = self.tti_aij_longslitmodel
+                bij = self.tti_bij_longslitmodel
             else:
-                aij = self.ttd_aij_modeled
-                bij = self.ttd_bij_modeled
+                aij = self.ttd_aij_longslitmodel
+                bij = self.ttd_bij_longslitmodel
 
         # rectify image
         slitlet2d_rect = rectify2d(
@@ -1320,7 +1321,7 @@ def interpolate_longslit(image2d,
         for i in range(poldeg_refined + 1):
             new_coeff = list_poly[i](y0_reference_middle)
             list_new_coeff.append(new_coeff)
-        slt.wpoly_modeled = np.polynomial.Polynomial(list_new_coeff)
+        slt.wpoly_longslitmodel = np.polynomial.Polynomial(list_new_coeff)
 
     # ---
 
@@ -1391,28 +1392,29 @@ def interpolate_longslit(image2d,
     # step 2: use the variation of each coefficient with y0_reference_middle
     # to infer the expected rectification transformation for each slitlet
     for slt in measured_slitlets:
-        slt.ttd_order_modeled = order_fmap
+        slt.ttd_order_longslitmodel = order_fmap
         y0_reference_middle = slt.y0_reference_middle
-        slt.ttd_aij_modeled = []
-        slt.ttd_bij_modeled = []
-        slt.tti_aij_modeled = []
-        slt.tti_bij_modeled = []
+        slt.ttd_aij_longslitmodel = []
+        slt.ttd_bij_longslitmodel = []
+        slt.tti_aij_longslitmodel = []
+        slt.tti_bij_longslitmodel = []
         for i in range(ncoef_ttd):
             new_coeff = list_poly_ttd_aij[i](y0_reference_middle)
-            slt.ttd_aij_modeled.append(new_coeff)
+            slt.ttd_aij_longslitmodel.append(new_coeff)
             new_coeff = list_poly_ttd_bij[i](y0_reference_middle)
-            slt.ttd_bij_modeled.append(new_coeff)
+            slt.ttd_bij_longslitmodel.append(new_coeff)
             new_coeff = list_poly_tti_aij[i](y0_reference_middle)
-            slt.tti_aij_modeled.append(new_coeff)
+            slt.tti_aij_longslitmodel.append(new_coeff)
             new_coeff = list_poly_tti_bij[i](y0_reference_middle)
-            slt.tti_bij_modeled.append(new_coeff)
+            slt.tti_bij_longslitmodel.append(new_coeff)
 
     # ---
 
     image2d_rectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
     image2d_unrectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
     image2d_rectified_wv = np.zeros((EMIR_NAXIS2, naxis1_enlarged))
-    image2d_rectified_wv_modeled = np.zeros((EMIR_NAXIS2, naxis1_enlarged))
+    image2d_rectified_wv_longslitmodel = \
+        np.zeros((EMIR_NAXIS2, naxis1_enlarged))
 
     for slt in measured_slitlets:
 
@@ -1446,7 +1448,7 @@ def interpolate_longslit(image2d,
         # rectify image
         if slt.ttd_order is not None:
             transformation = 1
-        elif slt.ttd_order_modeled is not None:
+        elif slt.ttd_order_longslitmodel is not None:
             transformation = 2
         else:
             raise ValueError("No ttd transformation defined!")
@@ -1475,15 +1477,15 @@ def interpolate_longslit(image2d,
 
         if slt.wpoly is not None:
             coeff_initial = slt.wpoly.coef
-        elif slt.wpoly_modeled is not None:
+        elif slt.wpoly_longslitmodel is not None:
             print("Warning slitlet#{}: using modeled instead of "
                   "initial".format(islitlet))
-            coeff_initial = slt.wpoly_modeled.coef
+            coeff_initial = slt.wpoly_longslitmodel.coef
         else:
             raise ValueError("No wavelength calibration polynomial defined!")
 
-        if slt.wpoly_modeled is not None:
-            coeff_modeled = slt.wpoly_modeled.coef
+        if slt.wpoly_longslitmodel is not None:
+            coeff_longslitmodel = slt.wpoly_longslitmodel.coef
         else:
             raise ValueError("No wavelength calibration polynomial defined!")
 
@@ -1498,16 +1500,16 @@ def interpolate_longslit(image2d,
         image2d_rectified_wv[i1:i2, :] = \
             slitlet2d_rect_wv[ii1:ii2, :]
 
-        slitlet2d_rect_wv_modeled = resample_image2d_flux(
+        slitlet2d_rect_wv_longslitmodel = resample_image2d_flux(
             image2d_orig=slitlet2d_rect,
             naxis1=naxis1_enlarged,
             cdelt1=cdelt1_enlarged,
             crval1=crval1_enlarged,
             crpix1=crpix1_enlarged,
-            coeff=coeff_modeled
+            coeff=coeff_longslitmodel
         )
-        image2d_rectified_wv_modeled[i1:i2, :] = \
-            slitlet2d_rect_wv_modeled[ii1:ii2, :]
+        image2d_rectified_wv_longslitmodel[i1:i2, :] = \
+            slitlet2d_rect_wv_longslitmodel[ii1:ii2, :]
 
     if abs(debugplot) % 10 != 0:
         ximshow(image2d_rectified, debugplot=12)
@@ -1525,7 +1527,7 @@ def interpolate_longslit(image2d,
         )
 
     if abs(debugplot) % 10 != 0:
-        ximshow(image2d_rectified_wv_modeled, debugplot=12)
+        ximshow(image2d_rectified_wv_longslitmodel, debugplot=12)
 
     if out_rectwv is not None:
         # Save each version of the rectified and wavelength calibrated image
@@ -1533,11 +1535,11 @@ def interpolate_longslit(image2d,
         # least reliable method:
         # 1) wpoly: the most reliable, computed with the maximun number of
         #    arc lines
-        # 2) wpoly_modeled: uncertain because we are using the model
+        # 2) wpoly_longslitmodel: uncertain because we are using the model
         #    that provides the variation of each wavelength calibration
         #    polynomial coefficient as a function of the slitlet
         list_of_arrays = [image2d_rectified_wv,
-                          image2d_rectified_wv_modeled]
+                          image2d_rectified_wv_longslitmodel]
         save_ndarray_to_fits(
             array=list_of_arrays,
             file_name=out_rectwv,
@@ -1959,15 +1961,15 @@ def main(args=None):
             wpoly_coeff = None
         else:
             wpoly_coeff = slt.wpoly.coef.tolist()
-        if slt.wpoly_modeled is None:
-            wpoly_modeled_coeff = None
+        if slt.wpoly_longslitmodel is None:
+            wpoly_longslitmodel_coeff = None
         else:
-            wpoly_modeled_coeff = slt.wpoly_modeled.coef.tolist()
+            wpoly_longslitmodel_coeff = slt.wpoly_longslitmodel.coef.tolist()
 
         # avoid similar error when creating a python list of coefficients
         # when the numpy array does not exist; note that this problem
-        # does not happen with tt?_aij_modeled and tt?_bij_modeled because
-        # the latter have already been created as native python lists
+        # does not happen with tt?_aij_longslitmodel and tt?_bij_longslitmodel
+        # because the latter have already been created as native python lists
         if slt.ttd_aij is None:
             ttd_aij = None
         else:
@@ -2025,13 +2027,13 @@ def main(args=None):
             'ttd_bij': ttd_bij,
             'tti_aij': tti_aij,
             'tti_bij': tti_bij,
-            'ttd_order_modeled': slt.ttd_order_modeled,
-            'ttd_aij_modeled': slt.ttd_aij_modeled,
-            'ttd_bij_modeled': slt.ttd_bij_modeled,
-            'tti_aij_modeled': slt.tti_aij_modeled,
-            'tti_bij_modeled': slt.tti_bij_modeled,
+            'ttd_order_longslitmodel': slt.ttd_order_longslitmodel,
+            'ttd_aij_longslitmodel': slt.ttd_aij_longslitmodel,
+            'ttd_bij_longslitmodel': slt.ttd_bij_longslitmodel,
+            'tti_aij_longslitmodel': slt.tti_aij_longslitmodel,
+            'tti_bij_longslitmodel': slt.tti_bij_longslitmodel,
             'wpoly_coeff': wpoly_coeff,
-            'wpoly_modeled_coeff': wpoly_modeled_coeff,
+            'wpoly_longslitmodel_coeff': wpoly_longslitmodel_coeff,
             'crval1_linear': slt.crval1_linear,
             'cdelt1_linear': slt.cdelt1_linear
         }
