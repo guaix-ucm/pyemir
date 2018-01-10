@@ -35,8 +35,10 @@ from arg_file_is_new import arg_file_is_new
 from fit_boundaries import bound_params_from_dict
 from fit_boundaries import expected_distorted_boundaries
 from fit_boundaries import expected_distorted_frontiers
+from nscan_minmax_frontiers import nscan_minmax_frontiers
 from rescale_array_to_z1z2 import rescale_array_to_z1z2
 from rescale_array_to_z1z2 import rescale_array_from_z1z2
+from save_ndarray_to_fits import save_ndarray_to_fits
 from select_unrectified_slitlets import select_unrectified_slitlet
 from set_wv_parameters import set_wv_parameters
 
@@ -1219,7 +1221,7 @@ def interpolate_bad_rows(image2d):
     image2d_interpolated[1024, :1024] = (image2d[1023, :1024] +
                                          image2d[1025, :1024]) / 2
     image2d_interpolated[1023, 1024:] = (image2d[1022, 1024:] +
-                                          image2d[1024, 1024:]) / 2
+                                         image2d[1024, 1024:]) / 2
 
     return image2d_interpolated
 
@@ -1272,6 +1274,10 @@ def main(args=None):
                              "wv_master table in the wavelength direction "
                              "(default=50)",
                         type=int, default=50)
+    parser.add_argument("--out_rect",
+                        help="Rectified but not wavelength calibrated output "
+                             "FITS file",
+                        type=lambda x: arg_file_is_new(parser, x))
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
                         default="0,0,640,480")
@@ -1667,6 +1673,84 @@ def main(args=None):
     with open(args.out_json.name, 'w') as fstream:
         json.dump(outdict, fstream, indent=2, sort_keys=True)
         print('>>> Saving file ' + args.out_json.name)
+
+    # ---
+
+    if args.out_rect is not None:
+
+        image2d_rectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
+        image2d_unrectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
+
+        for slt in measured_slitlets:
+
+            islitlet = slt.islitlet
+
+            if abs(args.debugplot) >= 10:
+                print(slt)
+            else:
+                if islitlet % 10 == 0:
+                    cout = str(islitlet // 10)
+                else:
+                    cout = '.'
+                sys.stdout.write(cout)
+                if islitlet == list_slitlets[-1]:
+                    sys.stdout.write('\n')
+                sys.stdout.flush()
+
+            # minimum and maximum useful scan (pixel in the spatial direction)
+            # for the rectified slitlet
+            nscan_min, nscan_max = nscan_minmax_frontiers(
+                slt.y0_frontier_lower,
+                slt.y0_frontier_upper,
+                resize=False
+            )
+
+            # extract 2D image corresponding to the selected slitlet: note that
+            # in this case we are not using select_unrectified_slitlets()
+            # because it introduces extra zero pixels in the slitlet frontiers
+            slitlet2d = slt.extract_slitlet2d(image2d)
+
+            # rectify image
+            if slt.ttd_order is not None:
+                transformation = 1
+            elif slt.ttd_order_longslitmodel is not None:
+                transformation = 2
+            else:
+                raise ValueError("No ttd transformation defined!")
+
+            slitlet2d_rect = slt.rectify(slitlet2d,
+                                         resampling=1,
+                                         transformation=transformation)
+
+            slitlet2d_unrect = slt.rectify(slitlet2d_rect,
+                                           resampling=1,
+                                           transformation=transformation,
+                                           inverse=True)
+
+            ii1 = nscan_min - slt.bb_ns1_orig
+            ii2 = nscan_max - slt.bb_ns1_orig + 1
+
+            j1 = slt.bb_nc1_orig - 1
+            j2 = slt.bb_nc2_orig
+            i1 = slt.bb_ns1_orig - 1 + ii1
+            i2 = i1 + ii2 - ii1
+
+            image2d_rectified[i1:i2, j1:j2] = slitlet2d_rect[ii1:ii2, :]
+            image2d_unrectified[i1:i2, j1:j2] = slitlet2d_unrect[ii1:ii2, :]
+
+        if abs(args.debugplot) % 10 != 0:
+            ximshow(image2d_rectified, debugplot=12)
+            ximshow(image2d_unrectified, debugplot=12)
+
+        # Save rectified (but not wavelength calibrated image) in first
+        # extension, while the second extension is employed to store
+        # the unrectified version of the previous one
+        save_ndarray_to_fits(
+            array=[image2d_rectified, image2d_unrectified],
+            file_name=args.out_rect,
+            cast_to_float=[True] * 2,
+            overwrite=True
+        )
 
 
 if __name__ == "__main__":
