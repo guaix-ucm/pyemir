@@ -56,8 +56,6 @@ setup(name='pyemir',
                   'tools.rect_wpoly_coeff_add_longslit_model:main',
               'pyemir-rect_wpoly_for_mos = ' +
                   'tools.rect_wpoly_for_mos:main',
-              'pyemir-rect_wpoly_from_longslit = ' +
-                  'tools.rect_wpoly_from_longslit:main',
               'pyemir-select_unrectified_slitlets = ' +
                   'tools.select_unrectified_slitlets:main',
               'pyemir-slitlet_boundaries_from_continuum = ' +
