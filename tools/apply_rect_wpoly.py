@@ -126,15 +126,15 @@ class Slitlet2D(object):
         self.islitlet = islitlet
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
 
+        tmpcontent = megadict['contents'][cslitlet]
+
         # csu configuration
-        tmpcsu = megadict['csu_configuration'][cslitlet]
-        self.csu_bar_left = tmpcsu['_csu_bar_left']
-        self.csu_bar_right = tmpcsu['_csu_bar_right']
-        self.csu_bar_slit_center = tmpcsu['_csu_bar_slit_center']
-        self.csu_bar_slit_width = tmpcsu['_csu_bar_slit_width']
+        self.csu_bar_left = tmpcontent['csu_bar_left']
+        self.csu_bar_right = tmpcontent['csu_bar_right']
+        self.csu_bar_slit_center = tmpcontent['csu_bar_slit_center']
+        self.csu_bar_slit_width = tmpcontent['csu_bar_slit_width']
 
         # horizontal and vertical bounding box
-        tmpcontent = megadict['contents'][cslitlet]
         self.bb_nc1_orig = tmpcontent['bb_nc1_orig']
         self.bb_nc2_orig = tmpcontent['bb_nc2_orig']
         self.bb_ns1_orig = tmpcontent['bb_ns1_orig']

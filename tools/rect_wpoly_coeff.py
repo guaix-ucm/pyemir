@@ -1573,7 +1573,6 @@ def main(args=None):
     outdict['tags']['islitlet_min'] = islitlet_min
     outdict['tags']['islitlet_max'] = islitlet_max
     outdict['dtu_configuration'] = dtu_conf.outdict()
-    outdict['csu_configuration'] = csu_conf.outdict()
     outdict['uuid'] = str(uuid4())
     outdict['contents'] = {}
 
