@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -211,17 +211,15 @@ def _locate_bar_gen(icut, epos, transform1, transform2):
     return epos_pix, epos_f, error
 
 
-def char_bar_peak_l(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=3):
-    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th,
-                          center_of_bar=center_of_bar, wx=wx, wy=wy, wfit=wfit, sign=1)
+def char_bar_peak_l(arr_deriv, ypix, bstart, bend, th, wx=10, wy=15, wfit=3):
+    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th, wx=wx, wy=wy, wfit=wfit, sign=1)
 
 
-def char_bar_peak_r(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=3):
-    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th,
-                          center_of_bar=center_of_bar, wx=wx, wy=wy, wfit=wfit, sign=-1)
+def char_bar_peak_r(arr_deriv, ypix, bstart, bend, th, wx=10, wy=15, wfit=3):
+    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th, wx=wx, wy=wy, wfit=wfit, sign=-1)
 
 
-def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10, wy=15, wfit=3, sign=1):
+def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, wx=10, wy=15, wfit=3, sign=1):
 
     # extract a region to average
     # wy = 3
@@ -231,7 +229,20 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
 
     logger = logging.getLogger('emir.recipes.bardetect')
 
-    cut = sign * arr_deriv[ypix, bstart:bend]
+    # Refine at different positions along the slit
+    newrefine = []
+    wx = 5
+    wy = 1
+    step = 2 * wy + 1
+    offs = []
+    maxval = 18
+    offs2 = range(-step, -maxval, -step)
+    offs.extend(reversed(offs2))
+    offs.extend(range(0, maxval, step))
+
+    yvpix = numpy.clip(ypix, 0, 2047)
+
+    cut = sign * arr_deriv[yvpix, bstart:bend]
 
     idxs = find_peaks_indexes(cut, window_width=3, threshold=th, fpeak=1)
     logger.debug('found %d peaks over threshold %f', len(idxs), th)
@@ -244,17 +255,9 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
     pix_m = cut[idxs].argmax()
     centerx = bstart + idxs[pix_m]
     logger.debug('select the peak with maximum derivative')
-    # This function should return the center of 'barid'
-    # when its position is 'x'
-    # without information, the best guess is 'ypix'
-    if center_of_bar is None:
-        logger.debug('using reference value for center of bar')
-        centery = ypix
-    else:
-        centery = center_of_bar(centerx)
 
+    centery = yvpix
     logger.debug('centery is %7.2f at position %7.2f', centery+1,  centerx+1)
-
     # Refine at the computed center
     xl, fwhm_x, st = refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, th, sign)
     logger.debug('measured values %7.2f (FWHM %7.2f)', xl, fwhm_x)
@@ -264,23 +267,15 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, center_of_bar=None, wx=10,
         # Exiting now, can't refine the centroid
         return centery, centery, xl, xl, fwhm_x, st
 
-    # Refine at different positions along the slit
-    newrefine = []
-    wx = 5
-    wy = 1
-    step = 2 * wy + 1
-    offs = []
-    maxval = 18
-    offs2 = range(-step, -maxval, -step)
-    offs.extend(reversed(offs2))
-    offs.extend(range(0, maxval, step))
     # This is basically to build a list of centers that dont overlap
-
     for off in offs:
-        logger.debug('looping, off %d, measuring at %7.2f', off, centery + off + 1)
-        res = refine_bar_centroid(arr_deriv, centerx, centery + off, wx, wy, th, sign)
-        logger.debug('looping, measured values %7.2f (FWHM %7.2f)', res[0], res[1])
-        newrefine.append(res)
+        if 0 <= centery + off <= 2047:
+            logger.debug('looping, off %d, measuring at %7.2f', off, centery + off + 1)
+            res = refine_bar_centroid(arr_deriv, centerx, centery + off, wx, wy, th, sign)
+            logger.debug('looping, measured values %7.2f (FWHM %7.2f)', res[0], res[1])
+            newrefine.append(res)
+        else:
+            logger.debug('looping, off %d, skipping position %7.2f', off, centery + off + 1)
 
     # this goes in FITS pix coordinates, adding 1
     # filter values with status != 0

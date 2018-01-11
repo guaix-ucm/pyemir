@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -122,13 +122,10 @@ class BarDetectionRecipe(EmirRecipe):
                                     )
         return result
 
-    def median_filtering(self, hdulist, rinput):
+    def median_filtering(self, hdulist, mfilter_size):
 
         # Processed array
         arr = hdulist[0].data
-
-        # Median filter of processed array (two times)
-        mfilter_size = rinput.median_filter_size
 
         self.logger.debug('median filtering 1')
         self.logger.debug('median filtering X, %d columns', mfilter_size)
@@ -152,7 +149,8 @@ class BarDetectionRecipe(EmirRecipe):
 
         self.logger.debug('filtering image')
         # Processed array
-        arr_median, arr_median_alt = self.median_filtering(hdulist, rinput)
+        arr_median, arr_median_alt = self.median_filtering(hdulist,
+                                                           rinput.median_filter_size)
 
         xfac = dtur[0] / EMIR_PIXSCALE
         yfac = -dtur[1] / EMIR_PIXSCALE
@@ -169,7 +167,7 @@ class BarDetectionRecipe(EmirRecipe):
         # These other parameters cab be tuned also
         bstart = 1
         bend = 2047
-        self.logger.debug('ignoring columns outside %d - %d',bstart, bend-1)
+        self.logger.debug('ignoring columns outside %d - %d', bstart, bend-1)
 
         # extract a region to average
         wy = (rinput.average_box_row_size // 2)
@@ -186,7 +184,6 @@ class BarDetectionRecipe(EmirRecipe):
         # for compatibility we do it manually
 
         allpos = {}
-        ypos3_kernel = None
         slits = numpy.zeros((EMIR_NBARS, 8), dtype='float')
 
         self.logger.info('find peaks in derivative image')
@@ -195,8 +192,6 @@ class BarDetectionRecipe(EmirRecipe):
             # S and G kernel for derivative
             kw = ks * (ks*ks-1) / 12.0
             coeffs_are = -numpy.arange((1-ks)//2, (ks-1)//2 + 1) / kw
-            if ks == 3:
-                ypos3_kernel = coeffs_are
             self.logger.debug('kernel weights are %s', coeffs_are)
 
             self.logger.debug('derive image in X direction')
@@ -232,20 +227,6 @@ class BarDetectionRecipe(EmirRecipe):
                 prow = coor_to_pix_1d(ref_y_l_coor) - 1
                 fits_row = prow + 1 # FITS pixel index
 
-                # A function that returns the center of the bar
-                # given its X position
-                def center_of_bar_l(x):
-                    # Pixel values are 0-based
-                    # return ref_y_coor + vec[1] - 1
-                    # FIXME: check if DTU has to be applied
-                    return ref_y_l_coor - 1
-
-                def center_of_bar_r(x):
-                    # Pixel values are 0-based
-                    # return ref_y_coor + vec[1] - 1
-                    # FIXME: check if DTU has to be applied
-                    return ref_y_r_coor - 1
-
                 self.logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
                 self.logger.debug('ref Y virtual position is %7.2f', ref_y_coor_virt)
                 self.logger.debug('ref X virtual positions are %7.2f %7.2f', ref_x_l_coor_virt, ref_x_r_coor_virt)
@@ -253,7 +234,7 @@ class BarDetectionRecipe(EmirRecipe):
                 self.logger.debug('ref Y positions are %7.2f %7.2f', ref_y_l_coor, ref_y_r_coor)
                 # if ref_y_coor is outlimits, skip this bar
                 # ref_y_coor is in FITS format
-                if (ref_y_l_coor >= 2047) or (ref_y_l_coor <= 1):
+                if (ref_y_l_coor >= 2047 + 16) or (ref_y_l_coor <= 1 - 16):
                     self.logger.debug('reference y position is outlimits, skipping')
                     positions.append([lbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
                     positions.append([rbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
@@ -275,7 +256,6 @@ class BarDetectionRecipe(EmirRecipe):
                 bend1 = coor_to_pix_1d(ref_x_l_coor + regionw) + 1
                 centery, centery_virt, xpos1, xpos1_virt, fwhm, st = char_bar_peak_l(arr_deriv,
                                                                      prow, bstart1, bend1, threshold,
-                                                                     center_of_bar_l,
                                                                      wx=wx, wy=wy, wfit=wfit)
 
                 insert1 = [lbarid, centery + 1, centery_virt, fits_row, xpos1 + 1, xpos1_virt, fwhm, st]
@@ -287,8 +267,7 @@ class BarDetectionRecipe(EmirRecipe):
                 bstart2 = coor_to_pix_1d(ref_x_r_coor - regionw)
                 bend2 = coor_to_pix_1d(ref_x_r_coor + regionw) + 1
                 centery, centery_virt, xpos2, xpos2_virt, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart2, bend2,
-                                                                                     threshold,
-                                                          center_of_bar_l, wx=wx, wy=wy, wfit=wfit)
+                                                                                     threshold, wx=wx, wy=wy, wfit=wfit)
                 # This centery/centery_virt should be equal to ref_y_coor_virt
                 insert2 = [rbarid, centery + 1, centery_virt, fits_row, xpos2 + 1, xpos2_virt, fwhm, st]
                 positions.append(insert2)
@@ -313,8 +292,6 @@ class BarDetectionRecipe(EmirRecipe):
                     self.logger.debug('inserting bars %d-%d into "slits"', lbarid, rbarid)
 
             allpos[ks] = numpy.asarray(positions, dtype='float') # GCS doesn't like lists of lists
-
-
 
         return allpos, slits
 
