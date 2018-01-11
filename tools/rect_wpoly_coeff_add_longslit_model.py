@@ -11,6 +11,8 @@ from uuid import uuid4
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import \
     polfit_residuals_with_sigma_rejection
+from numina.array.distortion import ncoef_fmap
+from numina.array.stats import summary
 
 from arg_file_is_new import arg_file_is_new
 from set_wv_parameters import set_wv_parameters
@@ -68,12 +70,6 @@ def main(args=None):
     # read input calibration structure from JSON file
     rect_wpoly_dict = json.loads(open(args.input_coef_rect_wpoly.name).read())
 
-    # read the CSU configuration
-    csu_conf = rect_wpoly_dict['csu_configuration']
-    if abs(args.debugplot) >= 10:
-        print(csu_conf)
-        pause_debugplot(args.debugplot)
-
     # read filter and grism names
     grism_name = rect_wpoly_dict['tags']['grism']
     filter_name = rect_wpoly_dict['tags']['filter']
@@ -92,6 +88,20 @@ def main(args=None):
 
     # ---
 
+    # check that the CSU configuration corresponds to longslit
+    csu_bar_slit_center_list = []
+    for islitlet in list_slitlets:
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        csu_bar_slit_center_list.append(
+            rect_wpoly_dict['contents'][cslitlet]['csu_bar_slit_center']
+        )
+    if abs(args.debugplot) >= 10:
+        print('* Checking csu_bar_slit_center values:')
+        summary(np.array(csu_bar_slit_center_list), debug=True)
+        pause_debugplot(args.debugplot)
+
+    # ---
+
     # polynomial coefficients corresponding to the wavelength calibration
 
     # step 0: determine poldeg_refined, checking that it is the same for
@@ -100,7 +110,7 @@ def main(args=None):
     for islitlet in list_slitlets:
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         poldeg_refined_list.append(
-            len(rect_wpoly_dict['contents'][cslitlet]['wpoly_coeff'])
+            len(rect_wpoly_dict['contents'][cslitlet]['wpoly_coeff']) - 1
         )
     # remove duplicates
     poldeg_refined_list = list(set(poldeg_refined_list))
@@ -146,10 +156,24 @@ def main(args=None):
             list_new_coeff.append(new_coeff)
         tmp_dict['wpoly_coeff_longslit_model'] = list_new_coeff
 
-    """
     # ---
 
     # rectification transformation coefficients aij and bij
+
+    # step 0: determine order_fmap, checking that it is the same for
+    # all the slitlets
+    order_fmap_list = []
+    for islitlet in list_slitlets:
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        order_fmap_list.append(
+            rect_wpoly_dict['contents'][cslitlet]['ttd_order']
+        )
+    # remove duplicates
+    order_fmap_list = list(set(order_fmap_list))
+    if len(order_fmap_list) != 1:
+        raise ValueError('Unexpected different order_fmap found')
+    order_fmap = order_fmap_list[0]
+
     # step 1: compute variation of each coefficient as a function of
     # y0_reference_middle of each slitlet
     list_poly_ttd_aij = []
@@ -163,13 +187,19 @@ def main(args=None):
         yp_ttd_bij = []
         yp_tti_aij = []
         yp_tti_bij = []
-        for slt in measured_slitlets:
-            if slt.ttd_aij is not None:
-                xp.append(slt.y0_reference_middle)
-                yp_ttd_aij.append(slt.ttd_aij[i])
-                yp_ttd_bij.append(slt.ttd_bij[i])
-                yp_tti_aij.append(slt.tti_aij[i])
-                yp_tti_bij.append(slt.tti_bij[i])
+        for islitlet in list_slitlets:
+            cslitlet = 'slitlet' + str(islitlet).zfill(2)
+            tmp_dict = rect_wpoly_dict['contents'][cslitlet]
+            ttd_aij = tmp_dict['ttd_aij']
+            ttd_bij = tmp_dict['ttd_bij']
+            tti_aij = tmp_dict['tti_aij']
+            tti_bij = tmp_dict['tti_bij']
+            if ttd_aij is not None:
+                xp.append(tmp_dict['y0_reference_middle'])
+                yp_ttd_aij.append(ttd_aij[i])
+                yp_ttd_bij.append(ttd_bij[i])
+                yp_tti_aij.append(tti_aij[i])
+                yp_tti_bij.append(tti_bij[i])
         poly, yres, reject = polfit_residuals_with_sigma_rejection(
             x=np.array(xp),
             y=np.array(yp_ttd_aij),
@@ -210,28 +240,37 @@ def main(args=None):
             debugplot=args.debugplot
         )
         list_poly_tti_bij.append(poly)
+
     # step 2: use the variation of each coefficient with y0_reference_middle
     # to infer the expected rectification transformation for each slitlet
-    for slt in measured_slitlets:
-        slt.ttd_order_longslit_model = order_fmap
-        y0_reference_middle = slt.y0_reference_middle
-        slt.ttd_aij_longslit_model = []
-        slt.ttd_bij_longslit_model = []
-        slt.tti_aij_longslit_model = []
-        slt.tti_bij_longslit_model = []
+    for islitlet in list_slitlets:
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        tmp_dict = rect_wpoly_dict['contents'][cslitlet]
+        y0_reference_middle = tmp_dict['y0_reference_middle']
+        tmp_dict['ttd_order_longslit_model'] = order_fmap
+        ttd_aij_longslit_model = []
+        ttd_bij_longslit_model = []
+        tti_aij_longslit_model = []
+        tti_bij_longslit_model = []
         for i in range(ncoef_ttd):
             new_coeff = list_poly_ttd_aij[i](y0_reference_middle)
-            slt.ttd_aij_longslit_model.append(new_coeff)
+            ttd_aij_longslit_model.append(new_coeff)
             new_coeff = list_poly_ttd_bij[i](y0_reference_middle)
-            slt.ttd_bij_longslit_model.append(new_coeff)
+            ttd_bij_longslit_model.append(new_coeff)
             new_coeff = list_poly_tti_aij[i](y0_reference_middle)
-            slt.tti_aij_longslit_model.append(new_coeff)
+            tti_aij_longslit_model.append(new_coeff)
             new_coeff = list_poly_tti_bij[i](y0_reference_middle)
-            slt.tti_bij_longslit_model.append(new_coeff)
+            tti_bij_longslit_model.append(new_coeff)
+        tmp_dict['ttd_aij_longslit_model'] = ttd_aij_longslit_model
+        tmp_dict['ttd_bij_longslit_model'] = ttd_bij_longslit_model
+        tmp_dict['tti_aij_longslit_model'] = tti_aij_longslit_model
+        tmp_dict['tti_bij_longslit_model'] = tti_bij_longslit_model
 
     # ---
-    """
 
+    # update origin info before overwriting initial uuid
+    rect_wpoly_dict['meta-info']['origin']['input_coef_rect_wpoly_uuid'] = \
+        rect_wpoly_dict['uuid']
     # update uuid and meta-info in output JSON structure
     rect_wpoly_dict['uuid'] = str(uuid4())
     rect_wpoly_dict['meta-info']['creation_date'] = datetime.now().isoformat()
@@ -243,7 +282,7 @@ def main(args=None):
     # save updated JSON file
     with open(args.output_coef_rect_wpoly.name, 'w') as fstream:
         json.dump(rect_wpoly_dict, fstream, indent=2, sort_keys=True)
-        print('>>> Saving file ' + args.output_coef_rect_wpoly)
+        print('>>> Saving file ' + args.output_coef_rect_wpoly.name)
 
 
 if __name__ == "__main__":
