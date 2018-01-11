@@ -139,6 +139,7 @@ def main(args=None):
             xlabel='y0_rectified',
             ylabel='coeff[' + str(i) + ']',
             title="Fit to refined wavelength calibration coefficients",
+            geometry=geometry,
             debugplot=args.debugplot
         )
         list_poly.append(poly)
@@ -207,6 +208,7 @@ def main(args=None):
             times_sigma_reject=5,
             xlabel='y0_rectified',
             ylabel='ttd_aij[' + str(i) + ']',
+            geometry=geometry,
             debugplot=args.debugplot
         )
         list_poly_ttd_aij.append(poly)
@@ -217,6 +219,7 @@ def main(args=None):
             times_sigma_reject=5,
             xlabel='y0_rectified',
             ylabel='ttd_bij[' + str(i) + ']',
+            geometry=geometry,
             debugplot=args.debugplot
         )
         list_poly_ttd_bij.append(poly)
@@ -227,6 +230,7 @@ def main(args=None):
             times_sigma_reject=5,
             xlabel='y0_rectified',
             ylabel='tti_aij[' + str(i) + ']',
+            geometry=geometry,
             debugplot=args.debugplot
         )
         list_poly_tti_aij.append(poly)
@@ -237,6 +241,7 @@ def main(args=None):
             times_sigma_reject=5,
             xlabel='y0_rectified',
             ylabel='tti_bij[' + str(i) + ']',
+            geometry=geometry,
             debugplot=args.debugplot
         )
         list_poly_tti_bij.append(poly)
