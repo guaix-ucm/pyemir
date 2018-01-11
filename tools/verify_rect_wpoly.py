@@ -17,6 +17,7 @@ from numina.array.wavecalib.check_wlcalib import check_wlcalib_sp
 from numina.array.wavecalib.check_wlcalib import update_poly_wlcalib
 
 from arg_file_is_new import arg_file_is_new
+from list_slitlets_from_string import list_slitlets_from_string
 from rect_wpoly_for_mos import islitlet_progress
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
@@ -44,6 +45,12 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
+    parser.add_argument("--slitlets",
+                        help="Slitlet selection: string between double "
+                             "quotes providing tuples of the form "
+                             "n1[,n2[,step]]  (if not specified, all the "
+                             "available slitlets are used)",
+                        type=str)
     parser.add_argument("--interactive",
                         help="Ask the user for confirmation before updating "
                              "the wavelength calibration polynomial",
@@ -135,9 +142,21 @@ def main(args=None):
 
     basefilename = os.path.basename(args.fitsfile.name)
 
+    # define slitlets to be employed
+    if args.slitlets is None:
+        list_slitlets = range(islitlet_min, islitlet_max + 1)
+    else:
+        list_slitlets = list_slitlets_from_string(
+            s=args.slitlets,
+            islitlet_min=islitlet_min,
+            islitlet_max=islitlet_max
+        )
+
     # main loop
-    for islitlet in range(islitlet_min, islitlet_max + 1):
-        if args.debugplot == 0 and not args.interactive:
+    for islitlet in list_slitlets:
+        if args.debugplot == 0 \
+                and not args.interactive\
+                and args.slitlets is None:
             islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         if abs(args.debugplot) >= 10:
