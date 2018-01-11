@@ -7,6 +7,7 @@ import decimal
 import json
 import numpy as np
 import os
+from scipy import ndimage
 import sys
 from uuid import uuid4
 
@@ -53,6 +54,11 @@ def main(args=None):
                         default=0, type=int)
     parser.add_argument("--threshold",
                         help="Minimum signal in the line peaks (default=0)",
+                        default=0, type=float)
+    parser.add_argument("--sigma_gaussian_filtering",
+                        help="Sigma of the gaussian filter to be applied to "
+                             "the spectrum in order to avoid problems with "
+                             "saturated lines",
                         default=0, type=float)
     parser.add_argument("--nwinwidth_initial",
                         help="Width of the window (pixels) where each peak "
@@ -147,6 +153,13 @@ def main(args=None):
             image2d_rectified_wv[sltmin:(sltmax + 1)],
             axis=0
         )
+
+        # gaussian filtering when requested (to avoid line saturation)
+        if args.sigma_gaussian_filtering > 0:
+            spmedian = ndimage.filters.gaussian_filter(
+                spmedian,
+                sigma=args.sigma_gaussian_filtering
+            )
 
         # check wavelength calibration
         polyres, ysummary, xyrfit = check_wlcalib_sp(
