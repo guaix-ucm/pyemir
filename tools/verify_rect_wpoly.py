@@ -12,6 +12,9 @@ import sys
 from uuid import uuid4
 
 from numina.array.display.matplotlib_qt import plt
+from numina.array.display.iofunctions import readi
+from numina.array.display.iofunctions import readf
+from numina.array.display.iofunctions import readc
 from numina.array.wavecalib.__main__ import read_wv_master_file
 from numina.array.wavecalib.check_wlcalib import check_wlcalib_sp
 from numina.array.wavecalib.check_wlcalib import update_poly_wlcalib
@@ -205,22 +208,16 @@ def main(args=None):
         if abs(args.debugplot) >= 10:
             print('>>> Npoints (total / used / removed)..:',
                   npoints_total, npoints_used, npoints_removed)
-        if npoints_used > args.min_nlines:
+        if npoints_used >= args.min_nlines:
             if args.interactive:
                 # include correction to initial wavelength calibration after
                 # confirmation by the user
                 print("Update wavelength calibration polynomial with "
                       "last fit:")
-                loop = True
-                while(loop):
-                    print("(y)es, (n)o, (u)ser defined correction polynomial "
-                          "[y]? ", end='')
-                    coption = sys.stdin.readline().strip()
-                    coption = coption.lower()
-                    if coption == '':
-                        coption = 'y'
-                    if coption in 'ynu':
-                        loop = False
+                coption = readc(
+                    "(y)es, (n)o, (u)ser defined correction polynomial",
+                    default='y', valid='ynu'
+                )
             else:
                 coption = 'y'
             if coption == 'y' or coption == 'u':
@@ -228,13 +225,12 @@ def main(args=None):
                 if coption == 'y':
                     coeff_residuals = polyres.coef
                 elif coption == 'u':
-                    print("Polynomial degree? ", end='')
-                    degcorr = int(sys.stdin.readline().strip())
+                    degcorr = readi("Polynomial degree", minval=0)
                     coeff_residuals = np.zeros(degcorr + 1)
                     for idum in range(degcorr + 1):
-                        print("Coefficient #" + str(idum) + "? ", end='')
-                        coeff_residuals[idum] = \
-                            float(sys.stdin.readline().strip())
+                        coeff_residuals[idum] = readf(
+                            "Coefficient #" + str(idum)
+                        )
                 else:
                     raise ValueError('Unexpected coption=' + str(coption))
 
@@ -243,7 +239,7 @@ def main(args=None):
                     coeff_residuals=coeff_residuals,
                     xyrfit=xyrfit,
                     naxis1=EMIR_NAXIS1,
-                    debugplot=0
+                    debugplot=12
                 ).tolist()
                 rect_wpoly_dict['contents'][cslitlet]['wpoly_coeff'] = \
                     wpoly_coeff_updated
