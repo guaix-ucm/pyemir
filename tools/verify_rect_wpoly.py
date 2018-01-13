@@ -3,7 +3,6 @@ from __future__ import print_function
 
 import argparse
 import astropy.io.fits as fits
-import decimal
 import json
 import numpy as np
 import os
@@ -12,12 +11,8 @@ import sys
 from uuid import uuid4
 
 from numina.array.display.matplotlib_qt import plt
-from numina.array.display.iofunctions import readi
-from numina.array.display.iofunctions import readf
-from numina.array.display.iofunctions import readc
 from numina.array.wavecalib.__main__ import read_wv_master_file
 from numina.array.wavecalib.check_wlcalib import check_wlcalib_sp
-from numina.array.wavecalib.check_wlcalib import update_poly_wlcalib
 
 from arg_file_is_new import arg_file_is_new
 from list_slitlets_from_string import list_slitlets_from_string
@@ -184,12 +179,16 @@ def main(args=None):
             )
 
         # check wavelength calibration
-        polyres, ysummary, xyrfit = check_wlcalib_sp(
+        wpoly_coeff_updated = check_wlcalib_sp(
             sp=spmedian,
             crpix1=crpix1_enlarged,
             crval1=crval1_enlarged,
             cdelt1=cdelt1_enlarged,
             wv_master=wv_master_all,
+            coeff_ini=rect_wpoly_dict['contents'][cslitlet]['wpoly_coeff'],
+            naxis1_ini=EMIR_NAXIS1,
+            min_nlines_to_refine=args.min_nlines,
+            interactive=args.interactive,
             threshold=args.threshold,
             nwinwidth_initial=args.nwinwidth_initial,
             nwinwidth_refined=args.nwinwidth_refined,
@@ -198,60 +197,13 @@ def main(args=None):
             times_sigma_reject=args.times_sigma_reject,
             use_r=args.use_r,
             title=basefilename + ' [slitlet #' + str(islitlet).zfill(2) + ']',
-            full=True,
             geometry=geometry,
             debugplot=abs(args.debugplot))
 
-        npoints_total = len(xyrfit[0])
-        npoints_removed = sum(xyrfit[2])
-        npoints_used = npoints_total - npoints_removed
-        if abs(args.debugplot) >= 10:
-            print('>>> Npoints (total / used / removed)..:',
-                  npoints_total, npoints_used, npoints_removed)
-        if npoints_used >= args.min_nlines:
-            if args.interactive:
-                # include correction to initial wavelength calibration after
-                # confirmation by the user
-                print("Update wavelength calibration polynomial with "
-                      "last fit:")
-                coption = readc(
-                    "(y)es, (n)o, (u)ser defined correction polynomial",
-                    default='y', valid='ynu'
-                )
-            else:
-                coption = 'y'
-            if coption == 'y' or coption == 'u':
-                wpoly_coeff = rect_wpoly_dict['contents'][cslitlet]['wpoly_coeff']
-                if coption == 'y':
-                    coeff_residuals = polyres.coef
-                elif coption == 'u':
-                    degcorr = readi("Polynomial degree", minval=0)
-                    coeff_residuals = np.zeros(degcorr + 1)
-                    for idum in range(degcorr + 1):
-                        coeff_residuals[idum] = readf(
-                            "Coefficient #" + str(idum)
-                        )
-                else:
-                    raise ValueError('Unexpected coption=' + str(coption))
+        if wpoly_coeff_updated is not None:
+            rect_wpoly_dict['contents'][cslitlet]['wpoly_coeff'] = \
+                wpoly_coeff_updated.tolist()
 
-                wpoly_coeff_updated = update_poly_wlcalib(
-                    coeff_ini=wpoly_coeff,
-                    coeff_residuals=coeff_residuals,
-                    xyrfit=xyrfit,
-                    naxis1=EMIR_NAXIS1,
-                    debugplot=12
-                ).tolist()
-                rect_wpoly_dict['contents'][cslitlet]['wpoly_coeff'] = \
-                    wpoly_coeff_updated
-                if abs(args.debugplot) >= 10:
-                    for idum, fdum in \
-                            enumerate(zip(wpoly_coeff, wpoly_coeff_updated)):
-                        print(">>> coef#" + str(idum) + ':  ', end='')
-                        print("%+.8E  -->  %+.8E" % (decimal.Decimal(fdum[0]),
-                                                     decimal.Decimal(fdum[1])))
-        else:
-            if abs(args.debugplot) >= 10:
-                print('>>> SKIPPING slitlet: number of lines < min_nlines')
         if args.debugplot < 0:
             plt.close()
 
