@@ -10,7 +10,7 @@ from scipy import ndimage
 import sys
 from uuid import uuid4
 
-from numina.array.display.matplotlib_qt import plt
+from numina.array.display.iofunctions import readc
 from numina.array.wavecalib.__main__ import read_wv_master_file
 from numina.array.wavecalib.check_wlcalib import check_wlcalib_sp
 
@@ -24,7 +24,7 @@ from emirdrp.core import EMIR_NAXIS1
 
 def main(args=None):
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='verify_rect_wpoly')
+    parser = argparse.ArgumentParser()
 
     # positional parameters
     parser.add_argument("fitsfile",
@@ -197,15 +197,22 @@ def main(args=None):
             times_sigma_reject=args.times_sigma_reject,
             use_r=args.use_r,
             title=basefilename + ' [slitlet #' + str(islitlet).zfill(2) + ']',
+            remove_null_borders=True,
             geometry=geometry,
-            debugplot=abs(args.debugplot))
+            debugplot=args.debugplot)
 
         if wpoly_coeff_updated is not None:
             rect_wpoly_dict['contents'][cslitlet]['wpoly_coeff'] = \
                 wpoly_coeff_updated.tolist()
 
-        if args.debugplot < 0:
-            plt.close()
+        if args.interactive:
+            ccont = readc('Continue to next slitlet (y/n)',
+                          default='y', valid='yn')
+        else:
+            ccont = 'y'
+
+        if ccont != 'y':
+            break
 
     # update uuid for verified JSON structure
     rect_wpoly_dict['uuid'] = str(uuid4())
