@@ -89,6 +89,9 @@ def main(args=None):
     parser.add_argument("--use_r",
                         help="Perform additional statistical analysis with R",
                         action="store_true")
+    parser.add_argument("--remove_null_borders",
+                        help="Remove leading and trailing zeros in spectrum",
+                        action="store_true")
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
                         default="0,0,640,480")
@@ -197,7 +200,7 @@ def main(args=None):
             times_sigma_reject=args.times_sigma_reject,
             use_r=args.use_r,
             title=basefilename + ' [slitlet #' + str(islitlet).zfill(2) + ']',
-            remove_null_borders=True,
+            remove_null_borders=args.remove_null_borders,
             geometry=geometry,
             debugplot=args.debugplot)
 
