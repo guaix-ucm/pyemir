@@ -1283,6 +1283,12 @@ def main(args=None):
     parser.add_argument("--threshold_wv",
                         help="Minimum signal in the line peaks (default=0)",
                         default=0, type=float)
+    parser.add_argument("--sigma_gaussian_filtering",
+                        help="Sigma of the gaussian filter to be applied to "
+                             "the spectrum in order to avoid problems with "
+                             "saturated lines in the wavelength calibration "
+                             "process",
+                        default=0, type=float)
     parser.add_argument("--out_rect",
                         help="Rectified but not wavelength calibrated output "
                              "FITS file",
@@ -1292,6 +1298,9 @@ def main(args=None):
                              "spectra employed to derive the wavelength "
                              "calibration",
                         type=lambda x: arg_file_is_new(parser, x))
+    parser.add_argument("--ylogscale",
+                        help="Display spectrum signal in logarithmic units",
+                        action="store_true")
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
                         default="0,0,640,480")
@@ -1461,7 +1470,7 @@ def main(args=None):
             # median spectrum and line peaks from rectified image
             sp_median, fxpeaks = slt.median_spectrum_from_rectified_image(
                 slitlet2d_rect,
-                sigma_gaussian_filtering=2,
+                sigma_gaussian_filtering=args.sigma_gaussian_filtering,
                 nwinwidth_initial=5,
                 nwinwidth_refined=5,
                 times_sigma_threshold=5,
@@ -1522,6 +1531,7 @@ def main(args=None):
                     interactive=args.interactive,
                     threshold=args.threshold_wv,
                     plottitle=plottitle,
+                    ylogscale=args.ylogscale,
                     geometry=geometry,
                     debugplot=slt.debugplot
                 )
