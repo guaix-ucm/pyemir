@@ -1522,7 +1522,7 @@ def main(args=None):
             if args.poldeg_refined > 0:
                 plottitle = args.fitsfile.name + \
                             ' [slitlet#{}, refined]'.format(islitlet)
-                poly_refined = refine_arccalibration(
+                poly_refined, yres_summary = refine_arccalibration(
                     sp=sp_median,
                     poly_initial=slt.wpoly,
                     wv_master=wv_master_all_eff,
