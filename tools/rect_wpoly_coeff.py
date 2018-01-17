@@ -45,6 +45,7 @@ from set_wv_parameters import set_wv_parameters
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
+from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_VALID_FILTERS
 from emirdrp.core import EMIR_VALID_GRISMS
 
@@ -1230,6 +1231,7 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser()
+
     # required arguments
     parser.add_argument("fitsfile",
                         help="Input FITS file with longslit data",
@@ -1284,6 +1286,11 @@ def main(args=None):
     parser.add_argument("--out_rect",
                         help="Rectified but not wavelength calibrated output "
                              "FITS file",
+                        type=lambda x: arg_file_is_new(parser, x))
+    parser.add_argument("--out_55sp",
+                        help="FITS file containing the set of averaged "
+                             "spectra employed to derive the wavelength "
+                             "calibration",
                         type=lambda x: arg_file_is_new(parser, x))
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
@@ -1384,6 +1391,8 @@ def main(args=None):
 
     # ---
 
+    image2d_55sp = np.zeros((EMIR_NBARS, EMIR_NAXIS1))
+
     # compute rectification transformation and wavelength calibration
     # polynomials
 
@@ -1459,6 +1468,8 @@ def main(args=None):
                 npix_avoid_border=6,
                 nbrightlines=nbrightlines
             )
+
+            image2d_55sp[islitlet - 1, :] = sp_median
 
             # determine expected wavelength limits prior to the wavelength
             # calibration
@@ -1559,6 +1570,18 @@ def main(args=None):
             sys.stdout.flush()
         else:
             pause_debugplot(args.debugplot)
+
+    # ---
+
+    # Save image with collapsed spectra employed to determine the
+    # wavelength calibration
+    if args.out_55sp is not None:
+        save_ndarray_to_fits(
+            array=image2d_55sp,
+            file_name=args.out_55sp,
+            cast_to_float=True,
+            overwrite=True
+        )
 
     # ---
 
