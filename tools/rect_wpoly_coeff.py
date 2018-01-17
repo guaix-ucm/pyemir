@@ -1255,6 +1255,10 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
+    parser.add_argument("--interactive",
+                        help="Ask the user for confirmation before updating "
+                             "the wavelength calibration polynomial",
+                        action="store_true")
     parser.add_argument("--ymargin_bb",
                         help="Number of pixels above and below frontiers to "
                              "determine the vertical bounding box of each "
@@ -1274,6 +1278,9 @@ def main(args=None):
                              "wv_master table in the wavelength direction "
                              "(default=50)",
                         type=int, default=50)
+    parser.add_argument("--threshold_wv",
+                        help="Minimum signal in the line peaks (default=0)",
+                        default=0, type=float)
     parser.add_argument("--out_rect",
                         help="Rectified but not wavelength calibrated output "
                              "FITS file",
@@ -1495,17 +1502,18 @@ def main(args=None):
             if args.poldeg_refined > 0:
                 plottitle = args.fitsfile.name + \
                             ' [slitlet#{}, refined]'.format(islitlet)
-                poly_refined, npoints_eff, residual_std = \
-                    refine_arccalibration(
-                        sp=sp_median,
-                        poly_initial=slt.wpoly,
-                        wv_master=wv_master_all_eff,
-                        poldeg=args.poldeg_refined,
-                        npix=1,
-                        plottitle=plottitle,
-                        geometry=geometry,
-                        debugplot=slt.debugplot
-                    )
+                poly_refined = refine_arccalibration(
+                    sp=sp_median,
+                    poly_initial=slt.wpoly,
+                    wv_master=wv_master_all_eff,
+                    poldeg=args.poldeg_refined,
+                    ntimes_match_wv=1,
+                    interactive=args.interactive,
+                    threshold=args.threshold_wv,
+                    plottitle=plottitle,
+                    geometry=geometry,
+                    debugplot=slt.debugplot
+                )
                 # store refined wavelength calibration polynomial in current
                 # slitlet instance
                 slt.wpoly = poly_refined
