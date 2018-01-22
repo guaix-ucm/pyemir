@@ -229,18 +229,29 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, wx=10, wy=15, wfit=3, sign
 
     logger = logging.getLogger('emir.recipes.bardetect')
 
+    yvpix = numpy.clip(ypix, 0, 2047)
+
     # Refine at different positions along the slit
     newrefine = []
     wx = 5
     wy = 1
     step = 2 * wy + 1
+    # visibility
+    #
+    intv1 = [0, 2047]
+    intv2 = [yvpix - 18, yvpix + 18]
+    logger.debug('overlaping interval %s', intv2)
+
+    bar_overlap = overlap(intv1, intv2)
+    logger.debug('bar overlaping %f', bar_overlap)
     offs = []
-    maxval = 18
+    if bar_overlap < 10:
+        maxval = 18
+    else:
+        maxval = 12
     offs2 = range(-step, -maxval, -step)
     offs.extend(reversed(offs2))
     offs.extend(range(0, maxval, step))
-
-    yvpix = numpy.clip(ypix, 0, 2047)
 
     cut = sign * arr_deriv[yvpix, bstart:bend]
 
@@ -414,3 +425,8 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
                 logger.debug('second border in %f', slicey.start + b1)
 
     return slicey.start + b1, slicey.start + b2, status
+
+
+def overlap(intv1, intv2):
+    """Overlaping of two intervals"""
+    return max(0, min(intv1[1], intv2[1]) - max(intv1[0], intv2[0]))
