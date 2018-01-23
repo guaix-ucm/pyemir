@@ -404,6 +404,10 @@ def main(args=None):
                         help="Ignore DTU configurations differences between "
                              "transformation and input image",
                         action="store_true")
+    parser.add_argument("--outfile_rectified_only",
+                        help="Output FITS file with rectified image (not"
+                             "wavelength calibrated)",
+                        type=lambda x: arg_file_is_new(parser, x))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"
                              " (default=0)",
@@ -472,14 +476,67 @@ def main(args=None):
 
     # ---
 
-    # relevant wavelength calibration parameters for rectified image
+    if args.outfile_rectified_only is not None:
+        image2d_rectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
+        image2d_unrectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
+
+        for islitlet in range(islitlet_min, islitlet_max + 1):
+            if args.debugplot == 0:
+                islitlet_progress(islitlet, islitlet_max)
+
+            # define Slitlet2D object
+            slt = Slitlet2D(islitlet=islitlet,
+                            megadict=rect_wpoly_dict,
+                            debugplot=args.debugplot)
+
+            # minimum and maximum useful scan (pixel in the spatial direction)
+            # for the rectified slitlet
+            nscan_min, nscan_max = nscan_minmax_frontiers(
+                slt.y0_frontier_lower,
+                slt.y0_frontier_upper,
+                resize=False
+            )
+            # extract 2D image corresponding to the selected slitlet: note that
+            # in this case we are not using select_unrectified_slitlets()
+            # because it introduces extra zero pixels in the slitlet frontiers
+            slitlet2d = slt.extract_slitlet2d(image2d)
+
+            # rectify image
+            slitlet2d_rect = slt.rectify(slitlet2d,
+                                         resampling=1)
+            slitlet2d_unrect = slt.rectify(slitlet2d_rect,
+                                           resampling=1,
+                                           inverse=True)
+
+            ii1 = nscan_min - slt.bb_ns1_orig
+            ii2 = nscan_max - slt.bb_ns1_orig + 1
+
+            j1 = slt.bb_nc1_orig - 1
+            j2 = slt.bb_nc2_orig
+            i1 = slt.bb_ns1_orig - 1 + ii1
+            i2 = i1 + ii2 - ii1
+
+            image2d_rectified[i1:i2, j1:j2] = slitlet2d_rect[ii1:ii2, :]
+            image2d_unrectified[i1:i2, j1:j2] = slitlet2d_unrect[ii1:ii2, :]
+
+        save_ndarray_to_fits(
+            array=[image2d_rectified, image2d_unrectified],
+            file_name=args.outfile_rectified_only,
+            cast_to_float=[True] * 2,
+            overwrite=True
+        )
+
+    # ---
+
+    # relevant wavelength calibration parameters for rectified and wavelength
+    # calibrated image
     wv_parameters = set_wv_parameters(filter_name, grism_name)
     crpix1_enlarged = wv_parameters['crpix1_enlarged']
     crval1_enlarged = wv_parameters['crval1_enlarged']
     cdelt1_enlarged = wv_parameters['cdelt1_enlarged']
     naxis1_enlarged = wv_parameters['naxis1_enlarged']
 
-    # initialize rectified image
+    # initialize rectified and wavelength calibrated image
     image2d_rectified_wv = np.zeros((EMIR_NAXIS2, naxis1_enlarged))
 
     # main loop
