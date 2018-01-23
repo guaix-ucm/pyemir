@@ -19,6 +19,7 @@ from fit_boundaries import expected_distorted_frontiers
 from rect_wpoly_for_mos import islitlet_progress
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
+from numina.array.distortion import order_fmap
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
 
@@ -123,8 +124,8 @@ def main(args=None):
     outdict['meta-info'] = {}
     outdict['meta-info']['creation_date'] = datetime.now().isoformat()
     outdict['meta-info']['description'] = \
-        'wavelength calibration polynomials and rectification ' \
-        'coefficients for a particular FITS file'
+        'computation of rectification and wavelength calibration polynomial ' \
+        'coefficients for a particular CSU configuration from a MOS model '
     outdict['meta-info']['recipe_name'] = 'undefined'
     outdict['meta-info']['origin'] = {}
     outdict['meta-info']['origin']['fits_frame_uuid'] = 'TBD'
@@ -138,7 +139,6 @@ def main(args=None):
     outdict['tags']['islitlet_min'] = islitlet_min
     outdict['tags']['islitlet_max'] = islitlet_max
     outdict['dtu_configuration'] = dtu_conf.outdict()
-    outdict['csu_configuration'] = csu_conf.outdict()
     outdict['uuid'] = str(uuid4())
     outdict['contents'] = {}
 
@@ -153,6 +153,7 @@ def main(args=None):
         tmpdict = rect_wpoly_dict['contents'][cslitlet]
         # rectification coefficients
         ncoef = len(tmpdict['ttd_aij'])
+        ttd_order = order_fmap(ncoef)
         ttd_aij = np.zeros(ncoef)
         ttd_bij = np.zeros(ncoef)
         tti_aij = np.zeros(ncoef)
@@ -176,11 +177,35 @@ def main(args=None):
             wpoly_coeff[icoef] = tmppol(csu_bar_slit_center)
         # store solution in output JSON structure
         outdict['contents'][cslitlet] = {}
+        outdict['contents'][cslitlet]['ttd_order'] = ttd_order
+        outdict['contents'][cslitlet]['ttd_order_longslit_model'] = None
         outdict['contents'][cslitlet]['ttd_aij'] = ttd_aij.tolist()
+        outdict['contents'][cslitlet]['ttd_aij_longslit_model'] = None
         outdict['contents'][cslitlet]['ttd_bij'] = ttd_bij.tolist()
+        outdict['contents'][cslitlet]['ttd_bij_longslit_model'] = None
         outdict['contents'][cslitlet]['tti_aij'] = tti_aij.tolist()
+        outdict['contents'][cslitlet]['tti_aij_longslit_model'] = None
         outdict['contents'][cslitlet]['tti_bij'] = tti_bij.tolist()
+        outdict['contents'][cslitlet]['tti_bij_longslit_model'] = None
         outdict['contents'][cslitlet]['wpoly_coeff'] = wpoly_coeff.tolist()
+        outdict['contents'][cslitlet]['wpoly_coeff_longslit_model'] = None
+        # update cdelt1_linear and crval1_linear
+        wpoly_function = np.polynomial.Polynomial(wpoly_coeff)
+        crmin1_linear = wpoly_function(1)
+        crmax1_linear = wpoly_function(EMIR_NAXIS1)
+        cdelt1_linear = (crmax1_linear - crmin1_linear) / (EMIR_NAXIS1 - 1)
+        crval1_linear = crmin1_linear
+        outdict['contents'][cslitlet]['crval1_linear'] = crval1_linear
+        outdict['contents'][cslitlet]['cdelt1_linear'] = cdelt1_linear
+        # update CSU keywords
+        outdict['contents'][cslitlet]['csu_bar_left'] = \
+            csu_conf.csu_bar_left(islitlet)
+        outdict['contents'][cslitlet]['csu_bar_right'] = \
+            csu_conf.csu_bar_right(islitlet)
+        outdict['contents'][cslitlet]['csu_bar_slit_center'] = \
+            csu_conf.csu_bar_slit_center(islitlet)
+        outdict['contents'][cslitlet]['csu_bar_slit_width'] = \
+            csu_conf.csu_bar_slit_width(islitlet)
 
     # for each slitlet compute spectrum trails and frontiers using the
     # fitted boundary parameters
@@ -195,6 +220,9 @@ def main(args=None):
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         # csu_bar_slit_center of current slitlet in initial FITS image
         csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
+        # compute and store x0_reference value
+        x0_reference = float(EMIR_NAXIS1) / 2.0 + 0.5
+        outdict['contents'][cslitlet]['x0_reference'] = x0_reference
         # compute spectrum trails (lower, middle and upper)
         list_spectrails = expected_distorted_boundaries(
             islitlet, csu_bar_slit_center,
@@ -202,9 +230,12 @@ def main(args=None):
             numpts=101, deg=5, debugplot=0
         )
         # store spectrails in output JSON file
+        outdict['contents'][cslitlet]['spectrail'] = {}
         for idum, cdum in zip(range(3), ['lower', 'middle', 'upper']):
-            outdict['contents'][cslitlet]['spectrail_' + cdum] = \
+            outdict['contents'][cslitlet]['spectrail']['poly_coef_' + cdum] = \
                 list_spectrails[idum].poly_funct.coef.tolist()
+            outdict['contents'][cslitlet]['y0_reference_' + cdum] = \
+                list_spectrails[idum].poly_funct(x0_reference)
         # compute frontiers (lower, upper)
         list_frontiers = expected_distorted_frontiers(
             islitlet, csu_bar_slit_center,
@@ -212,9 +243,12 @@ def main(args=None):
             numpts=101, deg=5, debugplot=0
         )
         # store frontiers in output JSON
+        outdict['contents'][cslitlet]['frontier'] = {}
         for idum, cdum in zip(range(2), ['lower', 'upper']):
-            outdict['contents'][cslitlet]['frontier_' + cdum] = \
+            outdict['contents'][cslitlet]['frontier']['poly_coef_' + cdum] = \
                 list_frontiers[idum].poly_funct.coef.tolist()
+            outdict['contents'][cslitlet]['y0_frontier_' + cdum] = \
+                list_frontiers[idum].poly_funct(x0_reference)
 
     # store bounding box parameters for each slitlet
     xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
@@ -230,10 +264,10 @@ def main(args=None):
         # employed in the script rect_wpoly_from_longslit; see
         # Slitlet2dLongSlitArc.__init__()
         poly_lower_frontier = np.polynomial.Polynomial(
-            outdict['contents'][cslitlet]['frontier_lower']
+            outdict['contents'][cslitlet]['frontier']['poly_coef_lower']
         )
         poly_upper_frontier = np.polynomial.Polynomial(
-            outdict['contents'][cslitlet]['frontier_upper']
+            outdict['contents'][cslitlet]['frontier']['poly_coef_upper']
         )
         ylower = poly_lower_frontier(xdum)
         yupper = poly_upper_frontier(xdum)
