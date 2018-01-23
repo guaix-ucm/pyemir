@@ -214,7 +214,7 @@ def main(args=None):
             ttd_order = tmpdict[cslitlet]['ttd_order']
             if ttd_order is not None:
                 order_check_list.append(ttd_order)
-            ttd_order_modeled = tmpdict[cslitlet]['ttd_order_modeled']
+            ttd_order_modeled = tmpdict[cslitlet]['ttd_order_longslit_model']
             order_check_list.append(ttd_order_modeled)
     # remove duplicates in list
     order_no_duplicates = list(set(order_check_list))
@@ -258,7 +258,7 @@ def main(args=None):
     # Interpolate rectification polynomial coefficients
 
     # note: when aij and bij have not been computed, we use the modeled
-    # version aij_modeled and bij_modeled
+    # version aij_longslit_model and bij_longslit_model
     print("Interpolating rectification polynomial coefficients:")
     for islitlet in range(islitlet_min, islitlet_max + 1):
         if abs(args.debugplot) == 0:
@@ -277,11 +277,16 @@ def main(args=None):
                     if cij is not None:
                         list_cij.append(cij[icoef])
                     else:
-                        cij_modeled = tmpdict[keycoef + '_modeled']
+                        cij_modeled = tmpdict[keycoef + '_longslit_model']
                         if cij_modeled is None:
                             raise ValueError("Unexpected cij_modeled=None!")
                         else:
                             list_cij.append(cij_modeled[icoef])
+                        if abs(args.debugplot)  >= 10:
+                            print("Warning: using " + keycoef +
+                                  "_longslit_model for " + cslitlet +
+                                  " in file " +
+                                  list_json_files[ifile].filename)
                 poly, yres, reject = polfit_residuals_with_sigma_rejection(
                     x=np.array(list_csu_bar_slit_center),
                     y=np.array(list_cij),
@@ -301,8 +306,8 @@ def main(args=None):
 
     # Interpolate wavelength calibration polynomial coefficients
 
-    # note: when wpoly_refined_coeff have not been computed, we use the
-    # wpoly_modeled_coeff
+    # note: when wpoly_coeff have not been computed, we use the
+    # wpoly_coeff_longslit_model
     print("Interpolating wavelength calibration polynomial coefficients:")
     for islitlet in range(islitlet_min, islitlet_max + 1):
         if abs(args.debugplot) == 0:
@@ -316,22 +321,27 @@ def main(args=None):
                 tmpdict = list_json_longslits[ifile]['contents'][cslitlet]
                 csu_bar_slit_center = tmpdict['csu_bar_slit_center']
                 list_csu_bar_slit_center.append(csu_bar_slit_center)
-                cij = tmpdict['wpoly_refined_coeff']
+                cij = tmpdict['wpoly_coeff']
                 if cij is not None:
                     list_cij.append(cij[icoef])
                 else:
-                    cij_modeled = tmpdict['wpoly_modeled_coeff']
+                    cij_modeled = tmpdict['wpoly_coeff_longslit_model']
                     if cij_modeled is None:
                         raise ValueError("Unexpected cij_modeled=None!")
                     else:
                         list_cij.append(cij_modeled[icoef])
+                    if abs(args.debugplot) >= 10:
+                        print("Warning: using wpoly_coeff_longslit_model" +
+                              " for " + cslitlet +
+                              " in file " +
+                              list_json_files[ifile].filename)
             poly, yres, reject = polfit_residuals_with_sigma_rejection(
                 x=np.array(list_csu_bar_slit_center),
                 y=np.array(list_cij),
                 deg=2,
                 times_sigma_reject=5,
                 xlabel='csu_bar_slit_center',
-                ylabel='wpoly_coef' + '[' + str(icoef) + ']',
+                ylabel='wpoly_coeff' + '[' + str(icoef) + ']',
                 title=cslitlet,
                 debugplot=args.debugplot
             )
