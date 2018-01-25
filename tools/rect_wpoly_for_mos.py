@@ -221,10 +221,10 @@ def main(args=None):
     if len(order_no_duplicates) != 1:
         print('order_no_duplicates:', order_no_duplicates)
         raise ValueError('tdd_order is not constant!')
-    order = int(order_no_duplicates[0])
-    ncoef_rect = ncoef_fmap(order)
+    ttd_order = int(order_no_duplicates[0])
+    ncoef_rect = ncoef_fmap(ttd_order)
     if abs(args.debugplot) >= 10:
-        print('>>> ttd_order....:', order)
+        print('>>> ttd_order....:', ttd_order)
         print('>>> ncoef_rect...:', ncoef_rect)
 
     # check that polynomial degree in frontiers and spectrails are the same
@@ -246,7 +246,7 @@ def main(args=None):
     # remove duplicates in list
     poldeg_no_duplicates = list(set(poldeg_check_list))
     if len(poldeg_no_duplicates) != 1:
-        print('poldeg_no_duplicates:', order_no_duplicates)
+        print('poldeg_no_duplicates:', poldeg_no_duplicates)
         raise ValueError('poldeg is not constant in frontiers and '
                          'spectrails!')
     poldeg = int(poldeg_no_duplicates[0])
@@ -280,6 +280,7 @@ def main(args=None):
         if abs(args.debugplot) == 0:
             islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        outdict['contents'][cslitlet]['ttd_order'] = ttd_order
         for keycoef in ['ttd_aij', 'ttd_bij', 'tti_aij', 'tti_bij']:
             for icoef in range(ncoef_rect):
                 ccoef = str(icoef).zfill(2)
@@ -314,6 +315,7 @@ def main(args=None):
         if abs(args.debugplot) == 0:
             islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        outdict['contents'][cslitlet]['wpoly_degree'] = poldeg
         for icoef in range(poldeg + 1):
             ccoef = str(icoef).zfill(2)
             list_cij = []
