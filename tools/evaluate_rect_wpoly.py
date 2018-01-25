@@ -6,6 +6,7 @@ from astropy.io import fits
 from datetime import datetime
 import json
 import numpy as np
+from scipy.interpolate import interp1d
 import sys
 from uuid import uuid4
 
@@ -18,6 +19,7 @@ from fit_boundaries import expected_distorted_boundaries
 from fit_boundaries import expected_distorted_frontiers
 from rect_wpoly_for_mos import islitlet_progress
 
+from numina.array.distortion import ncoef_fmap
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from numina.array.distortion import order_fmap
 from emirdrp.core import EMIR_NAXIS1
@@ -32,8 +34,8 @@ def main(args=None):
                         help="Input FITS file",
                         type=argparse.FileType('r'))
     parser.add_argument("--rect_wpoly_MOSlibrary", required=True,
-                        help="Input JSON file with rectification and "
-                             "wavelength calibration coefficients",
+                        help="Input JSON file with library of rectification "
+                             "and wavelength calibration coefficients",
                         type=argparse.FileType('r'))
     parser.add_argument("--out_rect_wpoly", required=True,
                         help="Output JSON file with calibration computed for "
@@ -147,48 +149,49 @@ def main(args=None):
     for islitlet in range(islitlet_min, islitlet_max + 1):
         islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
+
         # csu_bar_slit_center of current slitlet in initial FITS image
         csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
-        # rectification coefficients interpolated at csu_bar_slit_center
+
+        # input data structure
         tmpdict = rect_wpoly_dict['contents'][cslitlet]
+        list_csu_bar_slit_center = tmpdict['list_csu_bar_slit_center']
+
         # rectification coefficients
-        ncoef = len(tmpdict['ttd_aij'])
-        ttd_order = order_fmap(ncoef)
-        ttd_aij = np.zeros(ncoef)
-        ttd_bij = np.zeros(ncoef)
-        tti_aij = np.zeros(ncoef)
-        tti_bij = np.zeros(ncoef)
-        for icoef in range(ncoef):
-            scoef = str(icoef)
-            tmppol = np.polynomial.Polynomial(tmpdict['ttd_aij'][scoef])
-            ttd_aij[icoef] = tmppol(csu_bar_slit_center)
-            tmppol = np.polynomial.Polynomial(tmpdict['ttd_bij'][scoef])
-            ttd_bij[icoef] = tmppol(csu_bar_slit_center)
-            tmppol = np.polynomial.Polynomial(tmpdict['tti_aij'][scoef])
-            tti_aij[icoef] = tmppol(csu_bar_slit_center)
-            tmppol = np.polynomial.Polynomial(tmpdict['tti_bij'][scoef])
-            tti_bij[icoef] = tmppol(csu_bar_slit_center)
-        # wavelength calibration coefficients
-        ncoef = len(tmpdict['wpoly_coeff'])
-        wpoly_coeff = np.zeros(ncoef)
-        for icoef in range(ncoef):
-            scoef = str(icoef)
-            tmppol = np.polynomial.Polynomial(tmpdict['wpoly_coeff'][scoef])
-            wpoly_coeff[icoef] = tmppol(csu_bar_slit_center)
-        # store solution in output JSON structure
+        ttd_order = tmpdict['ttd_order']
+        ncoef = ncoef_fmap(ttd_order)
         outdict['contents'][cslitlet] = {}
         outdict['contents'][cslitlet]['ttd_order'] = ttd_order
         outdict['contents'][cslitlet]['ttd_order_longslit_model'] = None
-        outdict['contents'][cslitlet]['ttd_aij'] = ttd_aij.tolist()
-        outdict['contents'][cslitlet]['ttd_aij_longslit_model'] = None
-        outdict['contents'][cslitlet]['ttd_bij'] = ttd_bij.tolist()
-        outdict['contents'][cslitlet]['ttd_bij_longslit_model'] = None
-        outdict['contents'][cslitlet]['tti_aij'] = tti_aij.tolist()
-        outdict['contents'][cslitlet]['tti_aij_longslit_model'] = None
-        outdict['contents'][cslitlet]['tti_bij'] = tti_bij.tolist()
-        outdict['contents'][cslitlet]['tti_bij_longslit_model'] = None
-        outdict['contents'][cslitlet]['wpoly_coeff'] = wpoly_coeff.tolist()
+        for keycoef in ['ttd_aij', 'ttd_bij', 'tti_aij', 'tti_bij']:
+            coef_out = []
+            for icoef in range(ncoef):
+                ccoef = str(icoef).zfill(2)
+                list_cij = tmpdict['list_' + keycoef + '_' + ccoef]
+                funinterp_coef = interp1d(list_csu_bar_slit_center,
+                                          list_cij,
+                                          kind='linear')
+                # note: funinterp_coef expects a numpy array
+                dum = funinterp_coef([csu_bar_slit_center])
+                coef_out.append(dum[0])
+            outdict['contents'][cslitlet][keycoef] = coef_out
+            outdict['contents'][cslitlet][keycoef + '_longslit_model'] = None
+
+        # wavelength calibration coefficients
+        ncoef = tmpdict['wpoly_degree'] + 1
+        wpoly_coeff = []
+        for icoef in range(ncoef):
+            ccoef = str(icoef).zfill(2)
+            list_cij = tmpdict['list_wpoly_coeff_' + ccoef]
+            funinterp_coef = interp1d(list_csu_bar_slit_center,
+                                      list_cij,
+                                      kind='linear')
+            # note: funinterp_coef expects a numpy array
+            dum = funinterp_coef([csu_bar_slit_center])
+            wpoly_coeff.append(dum[0])
+        outdict['contents'][cslitlet]['wpoly_coeff'] = wpoly_coeff
         outdict['contents'][cslitlet]['wpoly_coeff_longslit_model'] = None
+
         # update cdelt1_linear and crval1_linear
         wpoly_function = np.polynomial.Polynomial(wpoly_coeff)
         crmin1_linear = wpoly_function(1)
@@ -197,6 +200,7 @@ def main(args=None):
         crval1_linear = crmin1_linear
         outdict['contents'][cslitlet]['crval1_linear'] = crval1_linear
         outdict['contents'][cslitlet]['cdelt1_linear'] = cdelt1_linear
+
         # update CSU keywords
         outdict['contents'][cslitlet]['csu_bar_left'] = \
             csu_conf.csu_bar_left(islitlet)
