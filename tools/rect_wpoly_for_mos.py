@@ -255,24 +255,37 @@ def main(args=None):
 
     # ---
 
-    # Interpolate rectification polynomial coefficients
+    # csu_bar_slit_center values for each slitlet
+    print("CSU_bar_slit_center values:")
+    for islitlet in range(islitlet_min, islitlet_max + 1):
+        if abs(args.debugplot) == 0:
+            islitlet_progress(islitlet, islitlet_max)
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        list_csu_bar_slit_center = []
+        for ifile in range(nfiles):
+            tmpdict = list_json_longslits[ifile]['contents'][cslitlet]
+            csu_bar_slit_center = tmpdict['csu_bar_slit_center']
+            list_csu_bar_slit_center.append(csu_bar_slit_center)
+        outdict['contents'][cslitlet]['list_csu_bar_slit_center'] = \
+            list_csu_bar_slit_center
+
+    # ---
+
+    # rectification polynomial coefficients
 
     # note: when aij and bij have not been computed, we use the modeled
     # version aij_longslit_model and bij_longslit_model
-    print("Interpolating rectification polynomial coefficients:")
+    print("Rectification polynomial coefficients:")
     for islitlet in range(islitlet_min, islitlet_max + 1):
         if abs(args.debugplot) == 0:
             islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         for keycoef in ['ttd_aij', 'ttd_bij', 'tti_aij', 'tti_bij']:
-            list_cc_rect = []
             for icoef in range(ncoef_rect):
-                list_csu_bar_slit_center = []
+                ccoef = str(icoef).zfill(2)
                 list_cij = []
                 for ifile in range(nfiles):
                     tmpdict = list_json_longslits[ifile]['contents'][cslitlet]
-                    csu_bar_slit_center = tmpdict['csu_bar_slit_center']
-                    list_csu_bar_slit_center.append(csu_bar_slit_center)
                     cij = tmpdict[keycoef]
                     if cij is not None:
                         list_cij.append(cij[icoef])
@@ -287,40 +300,25 @@ def main(args=None):
                                   "_longslit_model for " + cslitlet +
                                   " in file " +
                                   list_json_files[ifile].filename)
-                poly, yres, reject = polfit_residuals_with_sigma_rejection(
-                    x=np.array(list_csu_bar_slit_center),
-                    y=np.array(list_cij),
-                    deg=2,
-                    times_sigma_reject=5,
-                    xlabel='csu_bar_slit_center',
-                    ylabel=keycoef + '[' + str(icoef) + ']',
-                    title=cslitlet,
-                    debugplot=args.debugplot
-                )
-                list_cc_rect.append(poly.coef.tolist())
-            outdict['contents'][cslitlet][keycoef] = {}
-            for k, tmpcoef in enumerate(list_cc_rect):
-                outdict['contents'][cslitlet][keycoef][k] = tmpcoef
+                outdict['contents'][cslitlet]['list_' + keycoef + '_' + ccoef] \
+                    = list_cij
 
     # ---
 
-    # Interpolate wavelength calibration polynomial coefficients
+    # wavelength calibration polynomial coefficients
 
     # note: when wpoly_coeff have not been computed, we use the
     # wpoly_coeff_longslit_model
-    print("Interpolating wavelength calibration polynomial coefficients:")
+    print("Wavelength calibration polynomial coefficients:")
     for islitlet in range(islitlet_min, islitlet_max + 1):
         if abs(args.debugplot) == 0:
             islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
-        list_cc_rect = []
         for icoef in range(poldeg + 1):
-            list_csu_bar_slit_center = []
+            ccoef = str(icoef).zfill(2)
             list_cij = []
             for ifile in range(nfiles):
                 tmpdict = list_json_longslits[ifile]['contents'][cslitlet]
-                csu_bar_slit_center = tmpdict['csu_bar_slit_center']
-                list_csu_bar_slit_center.append(csu_bar_slit_center)
                 cij = tmpdict['wpoly_coeff']
                 if cij is not None:
                     list_cij.append(cij[icoef])
@@ -335,20 +333,8 @@ def main(args=None):
                               " for " + cslitlet +
                               " in file " +
                               list_json_files[ifile].filename)
-            poly, yres, reject = polfit_residuals_with_sigma_rejection(
-                x=np.array(list_csu_bar_slit_center),
-                y=np.array(list_cij),
-                deg=2,
-                times_sigma_reject=5,
-                xlabel='csu_bar_slit_center',
-                ylabel='wpoly_coeff' + '[' + str(icoef) + ']',
-                title=cslitlet,
-                debugplot=args.debugplot
-            )
-            list_cc_rect.append(poly.coef.tolist())
-        outdict['contents'][cslitlet]['wpoly_coeff'] = {}
-        for k, tmpcoef in enumerate(list_cc_rect):
-            outdict['contents'][cslitlet]['wpoly_coeff'][k] = tmpcoef
+            outdict['contents'][cslitlet]['list_wpoly_coeff_' + ccoef] = \
+                list_cij
 
     # ---
 
