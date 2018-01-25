@@ -141,7 +141,7 @@ class Slitlet2D(object):
         self.bb_ns2_orig = tmpcontent['bb_ns2_orig']
 
         # reference abscissa
-        self.x0_reference = float(EMIR_NAXIS1) / 2.0 + 0.5  # single float
+        self.x0_reference = tmpcontent['x0_reference']
 
         # list of spectrum trails (lower, middle, and upper)
         self.list_spectrails = []
@@ -151,9 +151,9 @@ class Slitlet2D(object):
 
         # define reference ordinates using lower, middle and upper spectrails
         # evaluated at x0_reference
-        self.y0_reference_lower = self.list_spectrails[0](self.x0_reference)
-        self.y0_reference_middle = self.list_spectrails[1](self.x0_reference)
-        self.y0_reference_upper = self.list_spectrails[2](self.x0_reference)
+        self.y0_reference_lower = tmpcontent['y0_reference_lower']
+        self.y0_reference_middle = tmpcontent['y0_reference_middle']
+        self.y0_reference_upper = tmpcontent['y0_reference_upper']
 
         # list of frontiers (lower and upper)
         self.list_frontiers = []
@@ -162,8 +162,8 @@ class Slitlet2D(object):
             self.list_frontiers.append(np.polynomial.Polynomial(coeff))
 
         # define frontier ordinates at x0_reference
-        self.y0_frontier_lower = self.list_frontiers[0](self.x0_reference)
-        self.y0_frontier_upper = self.list_frontiers[1](self.x0_reference)
+        self.y0_frontier_lower = tmpcontent['y0_frontier_lower']
+        self.y0_frontier_upper = tmpcontent['y0_frontier_upper']
 
         # Rectification coefficients
         self.ttd_aij = tmpcontent['ttd_aij']
