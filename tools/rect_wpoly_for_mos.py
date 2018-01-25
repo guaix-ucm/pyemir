@@ -4,13 +4,10 @@ from __future__ import print_function
 import argparse
 from datetime import datetime
 import json
-import numpy as np
 import sys
 from uuid import uuid4
 
 from numina.array.display.fileinfo import list_fileinfo_from_txt
-from numina.array.display.polfit_residuals import \
-    polfit_residuals_with_sigma_rejection
 from numina.array.distortion import ncoef_fmap
 
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
