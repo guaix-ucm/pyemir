@@ -1280,6 +1280,10 @@ def main(args=None):
                              "wv_master table in the wavelength direction "
                              "(default=50)",
                         type=int, default=50)
+    parser.add_argument("--nbrightlines",
+                        help="tuple with number of brightlines to "
+                             "be employed in the initial wavelength "
+                             "calibration (e.g. \"10,5,4\")")
     parser.add_argument("--threshold_wv",
                         help="Minimum signal in the line peaks (default=0)",
                         default=0, type=float)
@@ -1377,7 +1381,10 @@ def main(args=None):
     wv_parameters = set_wv_parameters(filter_name, grism_name)
     islitlet_min = wv_parameters['islitlet_min']
     islitlet_max = wv_parameters['islitlet_max']
-    nbrightlines = wv_parameters['nbrightlines']
+    if args.nbrightlines is None:
+        nbrightlines = wv_parameters['nbrightlines']
+    else:
+        nbrightlines = [int(idum) for idum in args.nbrightlines.split(',')]
     poly_crval1_linear = wv_parameters['poly_crval1_linear']
     poly_cdelt1_linear = wv_parameters['poly_cdelt1_linear']
 
