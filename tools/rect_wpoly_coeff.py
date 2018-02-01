@@ -1405,6 +1405,14 @@ def main(args=None):
         debugplot=args.debugplot
     )
 
+    # check that the arc lines in the master file are properly sorted
+    # in ascending order
+    for i in range(len(wv_master_all) - 1):
+        if wv_master_all[i] >= wv_master_all[i+1]:
+            print('>>> wavelengths: ', wv_master_all[i], wv_master_all[i+1])
+            raise ValueError("Arc lines are not properly sorted in master "
+                             "file:\n" + args.wv_master_file)
+
     # ---
 
     image2d_55sp = np.zeros((EMIR_NBARS, EMIR_NAXIS1))
