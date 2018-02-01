@@ -1518,6 +1518,8 @@ def main(args=None):
                 fxpeaks=fxpeaks,
                 poly_degree_wfit=args.poldeg_initial,
                 wv_master=wv_master_eff,
+                wv_ini_search=expected_wvmin,
+                wv_end_search=expected_wvmax,
                 geometry=geometry,
                 debugplot=slt.debugplot
             )
