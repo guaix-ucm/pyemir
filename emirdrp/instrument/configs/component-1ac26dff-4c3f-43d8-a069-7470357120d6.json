@@ -1,0 +1,15 @@
+{
+ "name": "detector",
+ "type": "component",
+ "description": "Detector configuration",
+ "uuid": "1ac26dff-4c3f-43d8-a069-7470357120d6",
+ "date_start": "2014-1-1",
+ "date_end": null,
+ "configurations": {
+   "channels": {
+    "depends": [
+    ],
+    "values": "FULL"
+   }
+  }
+}

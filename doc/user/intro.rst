@@ -15,12 +15,16 @@ be able to be installed and work properly:
  - `setuptools <http://peak.telecommunity.com/DevCenter/setuptools>`_
  - `numpy <http://numpy.scipy.org/>`_
  - `scipy <http://www.scipy.org>`_
- - `astropy <http://www.astropy.org>`_
- - `matplotlib <http://matplotlib.sourceforge.net/>`_
- - `numdisplay <http://stsdas.stsci.edu/numdisplay/>`_
+ - `astropy <http://www.astropy.org>`_ >= 1.1
+ - `matplotlib <http://matplotlib.org/>`_
+ - `six <https://six.readthedocs.io//>`_
+ - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.15
+ - `photutils <https://photutils.readthedocs.io/en/stable/>`_
+ - `sep <https://github.com/kbarbary/sep>`_
+ - `scikit-image <http://scikit-image.org/>`_
 
 Additional packages are optionally required:
- - `nose <http://somethingaboutorange.com/mrl/projects/nose>`_ to run the tests
+ - `pytest <http://pytest.org>`_ to run the tests
  - `sphinx`_ to build the documentation
 
 Webpage: https://guaix.fis.ucm.es/projects/emir
@@ -31,7 +35,7 @@ Stable version
 --------------
 
 The latest stable version of PyEmir can be downloaded from  
-ftp://astrax.fis.ucm.es/pub/software/emir/
+https://pypi.python.org/pypi/pyemir
 
 To install PyEmir, use the standard installation procedure:::
 
@@ -48,14 +52,42 @@ can be checked with:::
 Development version
 -------------------
 
+
 The development version can be checked out with:::
 
-    $ hg clone https://guaix.fis.ucm.es/hg/pyemir
+    $ git clone https://github.com/guaix-ucm/pyemir.git
 
 And then installed following the standard procedure:::
 
     $ cd pyemir
     $ python setup.py install
+
+Using conda
+***********
+
+Install and configure conda. Then install the dependencies (you can create an environment):::
+
+    $ conda create --name emir python=3
+    $ source activate emir
+    $ (emir) conda install numpy scipy astropy matplotlib six scikit-image
+    $ (emir) conda install -c astropy photutils
+    $ (emir) conda install cython pyyaml
+
+The latest development version of the emirdrp source code can be retrieved
+using git. In addition, we will need the latest version of numina:::
+
+    $ git clone https://github.com/guaix-ucm/numina.git
+    $ git clone https://github.com/guaix-ucm/pyemir.git
+
+Then, to build and install emirdrp:::
+
+    $ (emir) cd numina
+    $ (emir) python setup.py build
+    $ (emir) python setup.py install
+    $ (emir) cd ../emirdrp
+    $ (emir) python setup.py build
+    $ (emir) python setup.py install
+
 
 Building the documentation
 ---------------------------

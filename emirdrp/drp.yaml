@@ -1,0 +1,207 @@
+name: EMIR
+configurations:
+  values:
+  - 225fcaf2-7f6f-49cc-972a-70fd0aee8e96
+datamodel: emirdrp.datamodel.EmirDataModel
+modes:
+- description: A recipe that always fails
+  key: fail
+  name: Fail
+  summary: A recipe that always fails
+  uuid: a7cf7b82-e527-4d53-ad7a-3dae009a1b4e
+- description: Recipe to process bias images
+  key: IMAGE_BIAS
+  name: Bias Image
+  summary: Recipe to process bias images
+  uuid: a7ea9c0c-76a6-4609-8413-0157102ec284
+- description: Lines and mode lines
+  key: IMAGE_DARK
+  name: Dark current Image
+  summary: Summary of Dark current Image
+  uuid: 5b15db30-7774-4823-9645-e8ca27a866af
+- description: Lines and mode lines
+  key: IMAGE_FLAT
+  name: Intensity Flat-Field
+  summary: Summary of Intensity Flat-Field
+  uuid: bd22b260-38f9-427f-bbfd-c7767dc51e33
+- description: Lines and mode lines
+  key: STARE_IMAGE
+  name: Stare Image
+  summary: Summary of Stare Image
+  uuid: 0325bcf1-ab5c-4946-a797-e341d8f82e0d
+- description: Lines and mode lines
+  key: NODDED_BEAM_SWITCHED_IMAGE
+  name: Nodded/Beam-switched images
+  summary: Summary of Nodded/Beam-switched images
+  uuid: 2e9bf628-962d-4c12-b203-1a488325ac5c
+- description: Lines and mode lines
+  key: DITHERED_IMAGE
+  name: Dithered images
+  summary: Summary of Dithered images
+  uuid: 3675a7b5-7455-492e-947a-2e607c388d1c
+- description: Lines and mode lines
+  key: MICRODITHERED_IMAGE
+  name: Micro-dithered images
+  summary: Summary of Micro-dithered images
+  uuid: 8553b9cc-7564-469d-b230-be44051eeb90
+- description: Lines and mode lines
+  key: MOSAICED_IMAGE
+  name: Mosaiced images
+  summary: Summary of Mosaiced images
+  uuid: ec9229d9-4c77-43a8-9dc0-77afd532e673
+- description: Lines and mode lines
+  key: gain_mode1
+  name: Gain Mode1
+  summary: Summary of GainMode1
+  uuid: ec9229d9-4c77-43a8-9dc0-77afd532e674
+- description: Lines and mode lines
+  key: cosmetics
+  name: Cosmetics
+  summary: Summary of GainMode1
+  uuid: 63f13bf6-b821-4c3d-9eee-32f6f924844b
+- description: Lines and mode lines
+  key: dark_current
+  name: DarkCurrent
+  recipe: emirdrp.recipes.aiv.DarkCurrentRecipe
+  summary: Summary of DarkCurrent
+  uuid: acd1de1e-bc5f-4948-965e-d7f5b8f637b9
+- description: A Simple Bias recipe for testing
+  key: simple_bias
+  name: Simple Bias
+  summary: Summary of Simple Bias
+- description: Does nothing
+  key: TEST0
+  name: Test success
+  summary: Summary
+  uuid: a251e55a-ab05-4109-8717-1018b6c9dbbd
+- description: Bias correct
+  key: TEST1
+  name: Test Bias Correct
+  summary: Summary
+  uuid: 3847286a-e39e-419b-89bd-d53555a9043c
+- description: Dark correct
+  key: TEST2
+  name: Test Dark Correct
+  summary: Summary
+  uuid: 4d92f7cd-3127-4fb4-a40c-758d565d9ca9 
+- description: Flat correct
+  key: TEST3
+  name: Test Flat Correct
+  summary: Summary
+  uuid: bd30730a-29ca-4b3c-a494-f95b4ce668b6
+- description: Sky subtracction
+  key: TEST5
+  name: Test sky subtraction
+  summary: Summary
+  uuid: ac94be00-92ed-43d1-94f8-0bd8a6b3deef
+- description: Flat correct
+  key: TEST6
+  name: Test pinhole extraction
+  summary: Summary
+  uuid: 8dfef954-d3f8-4f7f-9a5a-87609ddbfb41
+- description: Simple sky background
+  key: IMAGE_SKY
+  name: Test pinhole extraction
+  summary: Summary
+  uuid: 449d0f1f-2122-4cfd-8bc2-14e073ac1551
+- description: Slit extraction in pinhole mask
+  key: TEST7
+  name: Test slit extraction
+  summary: Summary
+  uuid: d7854cf4-0379-4e7d-9b1f-e045784ce90e
+- key: TEST8
+  name: Multiflat
+  summary: Multiflat
+  description: Simultaneous flat in several bands
+- description: Wavelength calibration from arc
+  key: ARC_CALIBRATION
+  name: Wavelength calibration
+  uuid: F8AE2344-A242-4695-AFD9-DB5EDCBF0DD6
+- description: Extracts spectra of the slits in the AIV mask
+  key: TEST9
+  name: Slit-mask spectra extraction
+  summary: Summary
+  uuid: 40f353e8-42ae-4187-9487-0fd81531d774
+- description: Extracts spectra of the slits in the AIV mask
+  key: TEST9
+  name: Slit-mask spectra extraction
+  summary: Summary
+  uuid: 40f353e8-42ae-4187-9487-0fd81531d774
+- description: Positions of the CSU bars
+  key: TEST10
+  name: Bar detection
+  summary: Positions of the CSU bars
+- description: Extraction of spectra
+  key: TEST11
+  name: TEST11
+  summary: Extraction of spectra
+- description: Alternative positions of the CSU bars
+  key: TEST12
+  name: TEST12
+  summary: Positions of CSU bars
+- description: Lines and mode lines
+  key: FULL_DITHERED_IMAGE
+  name: Dithered images
+  summary: Summary of Dithered images
+- key: STARE_SPECTRA
+  name: Stare Spectra
+  summary: Stare Spectra
+  description: Stare Spectra
+- key: LS_ABBA
+  name: Long Slit ABBA
+  summary: Spectroscopy ABBA
+  description: Spectroscopy ABBA
+- key: COMBINED_ABBA
+  name: Combined individual Long Slit ABBA
+  summary: Combined individual Long Slit ABBA
+  description: Combined individual Long Slit ABBA
+- key: SPEC_SKY
+  name: SPEC_SKY
+  summary: SPEC_SKY
+  description: SPEC_SKY
+pipelines:
+  default:
+    products:
+      MasterBias: emirdrp.products.MasterBias
+      MasterBadPixelMask: emirdrp.products.MasterBadPixelMask
+      MasterDark: emirdrp.products.MasterDark
+      MasterIntensityFlat: emirdrp.products.MasterIntensityFlat
+    recipes:
+      IMAGE_BIAS: emirdrp.recipes.auxiliary.BiasRecipe
+      IMAGE_DARK: emirdrp.recipes.auxiliary.DarkRecipe
+      IMAGE_FLAT: emirdrp.recipes.auxiliary.IntensityFlatRecipe
+      IMAGE_SKY: emirdrp.recipes.auxiliary.DitherSkyRecipe
+      DITHERED_IMAGE: emirdrp.recipes.image.join.JoinDitheredImagesRecipe
+      FULL_DITHERED_IMAGE: emirdrp.recipes.image.join.FullDitheredImagesRecipe
+      MICRODITHERED_IMAGE: emirdrp.recipes.image.micro.MicroditheredImageRecipe
+      MOSAICED_IMAGE: emirdrp.recipes.image.mosaic.MosaicRecipe
+      NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.image.nodded.NBImageRecipe
+      STARE_IMAGE: emirdrp.recipes.image.stare.StareImageBaseRecipe
+      fail: numina.core.utils.AlwaysFailRecipe
+      gain_mode1: emirdrp.recipes.engineering.GainRecipe1
+      cosmetics: emirdrp.recipes.engineering.CosmeticsRecipe
+      simple_bias: emirdrp.recipes.aiv.SimpleBiasRecipe
+      TEST0: numina.core.utils.AlwaysSuccessRecipe
+      TEST1: emirdrp.recipes.aiv.TestBiasCorrectRecipe
+      TEST2: emirdrp.recipes.aiv.TestDarkCorrectRecipe
+      TEST3: emirdrp.recipes.aiv.TestFlatCorrectRecipe
+      TEST4: emirdrp.recipes.aiv.TestFlatCorrectRecipe
+      TEST5: emirdrp.recipes.aiv.sky.TestSkyCorrectRecipe
+      TEST6: emirdrp.recipes.aiv.pointsources.TestPointSourceRecipe
+      TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
+      TEST8: emirdrp.recipes.auxiliary.mtwflat.MultiTwilightFlatRecipe
+      TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
+      TEST10: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe
+      TEST11: emirdrp.recipes.aiv.extraction.CSUSpectraExtractionRecipe
+      TEST12: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe
+      TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
+      SPEC_SKY: emirdrp.recipes.spec.sky.SkySpecRecipe
+      ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
+      STARE_SPECTRA: emirdrp.recipes.spec.stare.StareSpectraRecipe
+      LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
+      COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
+    version: 1
+products:
+  - name: emirdrp.products.MasterBias
+    mode: IMAGE_BIAS
+    field: biasframe

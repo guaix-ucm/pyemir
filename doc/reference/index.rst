@@ -24,7 +24,6 @@ PyEmir Reference
    dataproducts
    instrument
    simulation
-   simulator
 
    
 Indices and tables
