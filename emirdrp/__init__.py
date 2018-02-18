@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -17,11 +17,11 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''The EMIR Data Reduction Pipeline'''
+"""The EMIR Data Reduction Pipeline"""
 
 import logging
 
-__version__ = '0.9.dev1'
+__version__ = '0.9'
 
 
 # Top level NullHandler

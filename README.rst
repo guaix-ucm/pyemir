@@ -23,8 +23,11 @@ be able to be installed and work properly:
  - numpy (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
  - astropy (http://www.astropy.org/)
- - numina (https://github.com/guaix-ucm/numina)
+ - numina >=0.15(https://github.com/guaix-ucm/numina)
  - photutils >=0.1 (https://github.com/astropy/photutils)
+ - sep (https://github.com/kbarbary/sep)
+ - scikit-image (http://scikit-image.org/)
+ - lmfit (http://lmfit.github.io/lmfit-py/)
 
 EMIR is a wide-field, near-infrared, multi-object spectrograph proposed 
 for the Nasmyth focus of GTC. It will allow observers to obtain from tens to 
