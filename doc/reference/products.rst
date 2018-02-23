@@ -1,8 +1,8 @@
-
-:mod:`emirdrp.dataproducts` --- Data products of the EMIR pipeline
+===================================================================
+:mod:`emirdrp.products` --- Data products of the EMIR pipeline
 ===================================================================
 
-.. module:: emirdrp.dataproducts
+.. module:: emirdrp.products
    :synopsis:  Data products of the EMIR pipeline
 
 .. class:: FrameDataProduct

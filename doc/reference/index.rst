@@ -15,15 +15,22 @@ PyEmir Reference
    is not organized, and several aspects of PyEmir are not yet covered
    sufficient detail.
 
-.. module:: emir
+.. module:: emirdrp
 
 .. toctree::
    :maxdepth: 2
 
+   core
+   datamodel
    recipes
-   dataproducts
+   products
    instrument
-   simulation
+   processing
+   requirements
+   preprocess
+   decorators
+
+
 
    
 Indices and tables
