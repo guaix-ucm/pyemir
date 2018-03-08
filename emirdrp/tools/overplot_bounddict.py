@@ -59,7 +59,7 @@ def get_boundaries(bounddict_file, slitlet_number):
     # search the slitlet number in bounddict
     slitlet_label = "slitlet" + str(slitlet_number).zfill(2)
     if slitlet_label in bounddict['contents'].keys():
-        list_date_obs = bounddict['contents'][slitlet_label].keys()
+        list_date_obs = list(bounddict['contents'][slitlet_label].keys())
         list_date_obs.sort()
         num_date_obs = len(list_date_obs)
         if num_date_obs == 1:

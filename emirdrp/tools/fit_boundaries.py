@@ -68,7 +68,7 @@ def integrity_check(bounddict, max_dtu_offset):
 
     valid_slitlets = ["slitlet" + str(i).zfill(2) for i in
                       range(1, EMIR_NBARS + 1)]
-    read_slitlets = bounddict['contents'].keys()
+    read_slitlets = list(bounddict['contents'].keys())
     read_slitlets.sort()
 
     first_dtu = True
@@ -79,7 +79,7 @@ def integrity_check(bounddict, max_dtu_offset):
         if tmp_slitlet not in valid_slitlets:
             raise ValueError("Unexpected slitlet key: " + tmp_slitlet)
         # for each slitlet, check valid DATE-OBS (ISO 8601)
-        read_dateobs = bounddict['contents'][tmp_slitlet].keys()
+        read_dateobs = list(bounddict['contents'][tmp_slitlet].keys())
         read_dateobs.sort()
         for tmp_dateobs in read_dateobs:
             try:
@@ -597,12 +597,12 @@ def fun_residuals(params, parmodel, bounddict,
     global_residual = 0.0
     nsummed = 0
 
-    read_slitlets = bounddict['contents'].keys()
+    read_slitlets = list(bounddict['contents'].keys())
     # read_slitlets.sort()  # this is not really necessary
     for tmp_slitlet in read_slitlets:
         islitlet = int(tmp_slitlet[7:])
         if islitmin <= islitlet <= islitmax:
-            read_dateobs = bounddict['contents'][tmp_slitlet].keys()
+            read_dateobs = list(bounddict['contents'][tmp_slitlet].keys())
             # read_dateobs.sort()  # this is not really necessary
             for tmp_dateobs in read_dateobs:
                 tmp_dict = bounddict['contents'][tmp_slitlet][tmp_dateobs]
@@ -678,7 +678,7 @@ def overplot_boundaries_from_bounddict(ax, bounddict, micolors, linetype='-'):
         tmpcolor = micolors[islitlet % 2]
         tmp_slitlet = 'slitlet' + str(islitlet).zfill(2)
         if tmp_slitlet in bounddict['contents'].keys():
-            read_dateobs = bounddict['contents'][tmp_slitlet].keys()
+            read_dateobs = list(bounddict['contents'][tmp_slitlet].keys())
             read_dateobs.sort()
             for tmp_dateobs in read_dateobs:
                 tmp_dict = bounddict['contents'][tmp_slitlet][tmp_dateobs]
@@ -898,7 +898,7 @@ def save_boundaries_from_bounddict_ds9(bounddict, ds9_filename, numpix=100):
         tmp_slitlet = 'slitlet' + str(islitlet).zfill(2)
         if tmp_slitlet in bounddict['contents'].keys():
             ds9_file.write('#\n# islitlet: {0}\n'.format(tmp_slitlet))
-            read_dateobs = bounddict['contents'][tmp_slitlet].keys()
+            read_dateobs = list(bounddict['contents'][tmp_slitlet].keys())
             read_dateobs.sort()
             for tmp_dateobs in read_dateobs:
                 ds9_file.write('#\n# date-obs: {0}\n'.format(tmp_dateobs))
@@ -1275,12 +1275,12 @@ def main(args=None):
     # value, needed later to save the ds9 region file and for plotting
     list_islitlet = []
     list_csu_bar_slit_center = []
-    read_slitlets = bounddict['contents'].keys()
+    read_slitlets = list(bounddict['contents'].keys())
     read_slitlets.sort()
     for tmp_slitlet in read_slitlets:
         islitlet = int(tmp_slitlet[7:])
         list_islitlet.append(islitlet)
-        read_dateobs = bounddict['contents'][tmp_slitlet].keys()
+        read_dateobs = list(bounddict['contents'][tmp_slitlet].keys())
         read_dateobs.sort()
         for tmp_dateobs in read_dateobs:
             tmp_dict = bounddict['contents'][tmp_slitlet][tmp_dateobs]
