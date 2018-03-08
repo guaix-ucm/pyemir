@@ -1206,10 +1206,10 @@ def main(args=None):
     parser.add_argument("bounddict",
                         help="Input JSON boundary file with fits to "
                              "continuum-lamp exposures",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
     parser.add_argument("--init_bound_param", required=True,
                         help="Input JSON with initial boundary parameters",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
     parser.add_argument("--parmodel", required=True,
                         help="Parameter model: multislit (default) or "
                              "longslit",
@@ -1239,7 +1239,7 @@ def main(args=None):
     parser.add_argument("--background_image",
                         help="Optional FITS image to display as background "
                              "image",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--pickle_input",
                         help="Use previous pickle file instead of carrying "
                              "out the minimisation procces",

@@ -552,7 +552,7 @@ def main(args=None):
     # positional arguments
     parser.add_argument("filename",
                         help="FITS file or txt file with list of FITS files",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--grism", required=True,
                         help="Grism name",
                         choices=EMIR_VALID_GRISMS)
@@ -627,14 +627,17 @@ def main(args=None):
         if not os.path.isfile(bounddict_file):
             raise ValueError("File " + bounddict_file + " not found!")
         else:
-            bounddict = json.loads(open(bounddict_file).read())
+            bounddict = json.loads(open(bounddict_file, mode='rt').read())
             print('>>> Initializing bounddict from previous file:')
             print(bounddict_file)
 
     # if input file is a txt file, assume it is a list of FITS files
     filename = args.filename.name
     if filename[-4:] == ".txt":
-        with open(filename) as f:
+        # since the input filename has been opened with argparse in binary
+        # mode, it is necessary to close it and open it in text mode
+        args.filename.close()
+        with open(filename, mode='rt') as f:
             file_content = f.read().splitlines()
         list_fits_files = []
         for line in file_content:
@@ -662,7 +665,7 @@ def main(args=None):
 
     # save new version of bounddict
     # print(json.dumps(bounddict, indent=4, sort_keys=True))
-    with open(bounddict_file, 'w') as fstream:
+    with open(bounddict_file, 'wt') as fstream:
         json.dump(bounddict, fstream, indent=2, sort_keys=True)
         print('>>> Saving file ' + bounddict_file)
 

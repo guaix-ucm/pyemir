@@ -32,11 +32,11 @@ def main(args=None):
     # required arguments
     parser.add_argument("fitsfile",
                         help="Input FITS file",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--rect_wpoly_MOSlibrary", required=True,
                         help="Input JSON file with library of rectification "
                              "and wavelength calibration coefficients",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
     parser.add_argument("--out_rect_wpoly", required=True,
                         help="Output JSON file with calibration computed for "
                              "the input FITS file",

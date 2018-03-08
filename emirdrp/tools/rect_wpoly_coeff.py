@@ -1235,10 +1235,10 @@ def main(args=None):
     # required arguments
     parser.add_argument("fitsfile",
                         help="Input FITS file with longslit data",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--fitted_bound_param", required=True,
                         help="Input JSON with fitted boundary parameters",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
     parser.add_argument("--order_fmap", required=True,
                         help="Order of the 2D rectification transformation "
                              "(default=2)",

@@ -48,7 +48,7 @@ def main(args=None):
                              "longslit data")
     parser.add_argument("--fitted_bound_param", required=True,
                         help="Input JSON with fitted boundary parameters",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
     parser.add_argument("--out_MOSlibrary", required=True,
                         help="Output JSON file with results",
                         type=lambda x: arg_file_is_new(parser, x))

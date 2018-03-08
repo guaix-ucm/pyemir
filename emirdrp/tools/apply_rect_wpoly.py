@@ -389,11 +389,11 @@ def main(args=None):
     # required arguments
     parser.add_argument("fitsfile",
                         help="Input FITS file",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--coef_rect_wpoly", required=True,
                         help="Input JSON file with rectification and "
                              "wavelength calibration coefficients",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
     parser.add_argument("--outfile", required=True,
                         help="Output FITS file with rectified and "
                              "wavelength calibrated image",

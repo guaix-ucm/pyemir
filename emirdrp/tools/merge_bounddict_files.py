@@ -21,7 +21,7 @@ def main(args=None):
     # positional arguments
     parser.add_argument("filename",
                         help="TXT with list of bounddict files",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
     parser.add_argument("--outfile", required=True,
                         help="Output merged JSON file",
                         type=lambda x: arg_file_is_new(parser, x))

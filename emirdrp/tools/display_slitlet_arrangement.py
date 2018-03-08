@@ -156,7 +156,7 @@ def main(args=None):
     parser.add_argument("filename",
                         help="FITS files (wildcards accepted) or single TXT "
                              "file with list of FITS files",
-                        type=argparse.FileType('r'),
+                        type=argparse.FileType('rb'),
                         nargs='+')
 
     # optional arguments
@@ -207,14 +207,18 @@ def main(args=None):
     # if input file is a single txt file, assume it is a list of FITS files
     if len(args.filename) == 1:
         if args.filename[0].name[-4:] == ".txt":
-            file_content = args.filename[0].read().splitlines()
+            # since the input filename has been opened with argparse in binary
+            # mode, it is necessary to close it and open it in text mode
+            args.filename[0].close()
+            with open(args.filename[0].name, mode='rt') as f:
+                file_content = f.read().splitlines()
             for line in file_content:
                 if len(line) > 0:
                     if line[0] != '#':
                         tmpfile = line.split()[0]
                         if not os.path.isfile(tmpfile):
                             raise ValueError("File " + tmpfile + " not found!")
-                        list_fits_file_objects.append(open(tmpfile, 'r'))
+                        list_fits_file_objects.append(open(tmpfile, 'rb'))
         else:
             list_fits_file_objects = [args.filename[0]]
     else:

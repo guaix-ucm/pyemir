@@ -31,7 +31,7 @@ def main(args=None):
                         help="Input JSON file with rectification and "
                              "wavelength calibration polynomials "
                              "corresponding to a longslit observation",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
     parser.add_argument("--output_coef_rect_wpoly", required=True,
                         help="Output JSON file with updated longslit_model "
                              "coefficients",

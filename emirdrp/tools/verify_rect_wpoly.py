@@ -29,14 +29,14 @@ def main(args=None):
     # positional parameters
     parser.add_argument("fitsfile",
                         help="Rectified and wavelength calibrated FITS image",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--coef_rect_wpoly", required=True,
                         help="Initial JSON file with rectification and "
                              "wavelength calibration coefficients",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
     parser.add_argument("--wv_master_file", required=True,
                         help="TXT file containing wavelengths",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
     parser.add_argument("--verified_coef_rect_wpoly", required=True,
                         help="Output JSON file with improved wavelength "
                              "calibration",

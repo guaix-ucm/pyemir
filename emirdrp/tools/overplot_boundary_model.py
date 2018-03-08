@@ -29,11 +29,11 @@ def main(args=None):
     # positional arguments
     parser.add_argument("fitsfile",
                         help="FITS file name to be displayed",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--fitted_bound_param", required=True,
                         help="JSON file with fitted boundary coefficients "
                              "corresponding to the multislit model",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
 
     # optional arguments
     parser.add_argument("--ds9reg_boundaries",
