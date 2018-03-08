@@ -121,13 +121,13 @@ def display_slitlet_arrangement(fileobj,
                     dx = 1
                 xmin -= dx/20
                 xmax += dx/20
-                ax.set_xlim([xmin, xmax])
+                ax.set_xlim(xmin, xmax)
             else:
-                ax.set_xlim([0., 341.5])
-            ax.set_ylim([0, 56])
+                ax.set_xlim(0., 341.5)
+            ax.set_ylim(0, 56)
         else:
-            ax.set_xlim([bbox[0], bbox[1]])
-            ax.set_ylim([bbox[2], bbox[3]])
+            ax.set_xlim(bbox[0], bbox[1])
+            ax.set_ylim(bbox[2], bbox[3])
         ax.set_xlabel('csu_bar_position (mm)')
         ax.set_ylabel('slit number')
         for i in range(EMIR_NBARS):

@@ -184,7 +184,7 @@ def main(args=None):
             ax.plot([1, naxis1_slitlet2d], 2*[y_threshold],
                     label='threshold')
             ax.legend()
-            ax.set_ylim([-0.05*ymax_spmedian, 1.05*ymax_spmedian])
+            ax.set_ylim(-0.05*ymax_spmedian, 1.05*ymax_spmedian)
             pause_debugplot(args.debugplot,
                             pltshow=True, tight_layout=True)
 

@@ -1427,8 +1427,8 @@ def main(args=None):
                          show=False)
         else:
             ax = fig.add_subplot(111)
-            ax.set_xlim([-0.5, EMIR_NAXIS1 + 0.5])
-            ax.set_ylim([-0.5, EMIR_NAXIS2 + 0.5])
+            ax.set_xlim(-0.5, EMIR_NAXIS1 + 0.5)
+            ax.set_ylim(-0.5, EMIR_NAXIS2 + 0.5)
             ax.set_xlabel('X axis (from 1 to NAXIS1)')
             ax.set_xlabel('Y axis (from 1 to NAXIS2)')
             ax.set_title(args.bounddict.name)
