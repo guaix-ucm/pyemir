@@ -14,9 +14,9 @@ from numina.array.display.iofunctions import readc
 from numina.array.wavecalib.__main__ import read_wv_master_file
 from numina.array.wavecalib.check_wlcalib import check_wlcalib_sp
 
-from arg_file_is_new import arg_file_is_new
-from list_slitlets_from_string import list_slitlets_from_string
-from rect_wpoly_for_mos import islitlet_progress
+from .arg_file_is_new import arg_file_is_new
+from .list_slitlets_from_string import list_slitlets_from_string
+from .rect_wpoly_for_mos import islitlet_progress
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_NAXIS1

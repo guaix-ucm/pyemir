@@ -39,33 +39,33 @@ setup(name='pyemir',
           ],
           'console_scripts': [
               'pyemir-apply_rect_wpoly = ' +
-                  'tools.apply_rect_wpoly:main',
+                  'emirdrp.tools.apply_rect_wpoly:main',
               'pyemir-continuum_flatfield = ' +
-                  'tools.continuum_flatfield:main',
+                  'emirdrp.tools.continuum_flatfield:main',
               'pyemir-display_slitlet_arrangement = ' +
-                  'tools.display_slitlet_arrangement:main',
+                  'emirdrp.tools.display_slitlet_arrangement:main',
               'pyemir-evaluate_rect_wpoly = ' +
-                  'tools.evaluate_rect_wpoly:main',
+                  'emirdrp.tools.evaluate_rect_wpoly:main',
               'pyemir-fit_boundaries = ' +
-                  'tools.fit_boundaries:main',
+                  'emirdrp.tools.fit_boundaries:main',
               'pyemir-merge_bounddict_files = ' +
-                  'tools.merge_bounddict_files:main',
+                  'emirdrp.tools.merge_bounddict_files:main',
               'pyemir-rect_wpoly_coeff = ' +
-                'tools.rect_wpoly_coeff:main',
+                  'emirdrp.tools.rect_wpoly_coeff:main',
               'pyemir-rect_wpoly_coeff_add_longslit_model = ' +
-                  'tools.rect_wpoly_coeff_add_longslit_model:main',
+                  'emirdrp.tools.rect_wpoly_coeff_add_longslit_model:main',
               'pyemir-rect_wpoly_for_mos = ' +
-                  'tools.rect_wpoly_for_mos:main',
+                  'emirdrp.tools.rect_wpoly_for_mos:main',
               'pyemir-select_unrectified_slitlets = ' +
-                  'tools.select_unrectified_slitlets:main',
+                  'emirdrp.tools.select_unrectified_slitlets:main',
               'pyemir-slitlet_boundaries_from_continuum = ' +
-                  'tools.slitlet_boundaries_from_continuum:main',
+                  'emirdrp.tools.slitlet_boundaries_from_continuum:main',
               'pyemir-overplot_boundary_model = ' +
-                  'tools.overplot_boundary_model:main',
+                  'emirdrp.tools.overplot_boundary_model:main',
               'pyemir-overplot_bounddict = ' +
-                  'tools.overplot_bounddict:main',
+                  'emirdrp.tools.overplot_bounddict:main',
               'pyemir-verify_rect_wpoly = ' +
-                  'tools.verify_rect_wpoly:main',
+                  'emirdrp.tools.verify_rect_wpoly:main',
               ],
       },
       classifiers=[

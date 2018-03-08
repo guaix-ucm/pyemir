@@ -14,8 +14,8 @@ from numina.array.display.polfit_residuals import \
 from numina.array.distortion import ncoef_fmap
 from numina.array.stats import summary
 
-from arg_file_is_new import arg_file_is_new
-from set_wv_parameters import set_wv_parameters
+from .arg_file_is_new import arg_file_is_new
+from .set_wv_parameters import set_wv_parameters
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_VALID_FILTERS

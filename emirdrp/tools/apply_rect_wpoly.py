@@ -13,12 +13,12 @@ from numina.array.distortion import order_fmap
 from numina.array.distortion import rectify2d
 from numina.array.wavecalib.resample import resample_image2d_flux
 
-from arg_file_is_new import arg_file_is_new
+from .arg_file_is_new import arg_file_is_new
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
-from nscan_minmax_frontiers import nscan_minmax_frontiers
-from rect_wpoly_for_mos import islitlet_progress
-from save_ndarray_to_fits import save_ndarray_to_fits
-from set_wv_parameters import set_wv_parameters
+from .nscan_minmax_frontiers import nscan_minmax_frontiers
+from .rect_wpoly_for_mos import islitlet_progress
+from .save_ndarray_to_fits import save_ndarray_to_fits
+from .set_wv_parameters import set_wv_parameters
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2

@@ -11,12 +11,12 @@ import sys
 from numina.array.display.ximplotxy import ximplotxy
 from numina.array.display.pause_debugplot import pause_debugplot
 
-from apply_rect_wpoly import Slitlet2D
-from arg_file_is_new import arg_file_is_new
+from .apply_rect_wpoly import Slitlet2D
+from .arg_file_is_new import arg_file_is_new
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
-from nscan_minmax_frontiers import nscan_minmax_frontiers
-from rect_wpoly_for_mos import islitlet_progress
-from save_ndarray_to_fits import save_ndarray_to_fits
+from .nscan_minmax_frontiers import nscan_minmax_frontiers
+from .rect_wpoly_for_mos import islitlet_progress
+from .save_ndarray_to_fits import save_ndarray_to_fits
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2

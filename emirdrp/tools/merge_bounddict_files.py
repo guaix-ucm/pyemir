@@ -9,7 +9,7 @@ import os
 import sys
 from uuid import uuid4
 
-from arg_file_is_new import arg_file_is_new
+from .arg_file_is_new import arg_file_is_new
 
 from emirdrp.core import EMIR_NBARS
 

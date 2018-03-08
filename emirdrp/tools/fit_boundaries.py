@@ -21,7 +21,7 @@ from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.instrument.dtu_configuration import average_dtu_configurations
 from emirdrp.instrument.dtu_configuration import maxdiff_dtu_configurations
 
-from arg_file_is_new import arg_file_is_new
+from .arg_file_is_new import arg_file_is_new
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
