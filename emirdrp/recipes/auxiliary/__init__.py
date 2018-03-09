@@ -291,6 +291,7 @@ class DitherSkyRecipe(EmirRecipe):
 
 
 class SpectralFlatRecipe(EmirRecipe):
+    """Recipe to process data taken in intensity flat-field mode."""
 
     master_bpm = MasterBadPixelMaskRequirement()
     obresult = ObservationResultRequirement()
