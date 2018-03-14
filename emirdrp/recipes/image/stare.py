@@ -27,6 +27,7 @@ from numina.array import combine
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.query import Ignore
+from numina.core.recipes import timeit
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
@@ -53,7 +54,7 @@ class StareImageBaseRecipe(EmirRecipe):
             self.query_options['master_sky'] = Ignore()
 
     @emirdrp.decorators.loginfo
-    @emirdrp.decorators.timeit
+    @timeit
     def run(self, rinput):
         self.logger.info('starting stare image reduction')
 

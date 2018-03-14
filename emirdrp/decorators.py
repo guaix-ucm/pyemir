@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -21,22 +21,8 @@
 
 from __future__ import print_function
 
-import datetime
 from numina.core import DataFrame, ObservationResult
 import emirdrp.processing.info as info
-
-def timeit(method):
-    """Measure the time used by the recipe"""
-    def timed_method(self, rinput):
-
-        time_start = datetime.datetime.utcnow()
-        result = method(self, rinput)
-        time_end = datetime.datetime.utcnow()
-        result.time_it(time_start, time_end)
-        self.logger.info('total time measured')
-        return result
-
-    return timed_method
 
 
 def loginfo(method):
