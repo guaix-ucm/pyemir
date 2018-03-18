@@ -24,6 +24,7 @@ from . import EMIR_PLATESCALE_RADS
 
 
 def exvp(pos_x, pos_y):
+    """Convert virtual pixel to real pixel"""
     pos_x = numpy.asarray(pos_x)
     pos_y = numpy.asarray(pos_y)
     # convert virtual pixel to real pixel
@@ -45,6 +46,7 @@ def exvp(pos_x, pos_y):
 
 
 def pvex(pos_x, pos_y):
+    """Convert real pixel to virtual pixel"""
     # convert real pixel to virtual pixel.
     # convert pixel to world coordinate
     pos_x = numpy.asarray(pos_x)
