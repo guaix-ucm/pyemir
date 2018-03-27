@@ -23,7 +23,7 @@ from __future__ import division
 
 import logging
 
-from numina.array.utils import wc_to_pix_1d
+from numina.array.utils import coor_to_pix_1d
 from numina.core import Requirement, Product, Parameter, RecipeError
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
@@ -40,8 +40,8 @@ from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.requirements import MasterSkyRequirement
-from .bardetect import find_position
-from .bardetect import locate_bar_l, locate_bar_r
+from emirdrp.processing.bardetect import find_position
+from emirdrp.processing.bardetect import locate_bar_l, locate_bar_r
 from .common import normalize_raw
 
 
@@ -152,7 +152,7 @@ class BarDetectionRecipe(EmirRecipe):
             lbarid = int(coords[0])
             rbarid = lbarid + 55
             ref_y_coor = coords[2] + vec[1]
-            prow = wc_to_pix_1d(ref_y_coor) - 1
+            prow = coor_to_pix_1d(ref_y_coor) - 1
             fits_row = prow + 1 # FITS pixel index
 
             logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)

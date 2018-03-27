@@ -25,7 +25,7 @@ from scipy.ndimage.filters import median_filter
 
 import emirdrp.instrument.distortions as dist
 from emirdrp.core import EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
-from emirdrp.recipes.aiv.bardetect import char_bar_peak_l, char_bar_peak_r
+from emirdrp.processing.bardetect import char_bar_peak_l, char_bar_peak_r
 
 
 def median_filtering(hdulist, mfilter_size):

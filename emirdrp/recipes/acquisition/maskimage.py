@@ -34,7 +34,7 @@ import emirdrp.products as prods
 import emirdrp.requirements as reqs
 from emirdrp.core import EmirRecipe, EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
 from emirdrp.processing.combine import basic_processing_with_combination
-from emirdrp.recipes.aiv.bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
+from emirdrp.processing.bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
 
 
 class MaskImagingRecipe(EmirRecipe):

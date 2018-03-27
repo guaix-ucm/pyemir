@@ -2,8 +2,8 @@
 import pytest
 import numpy
 
-from ..bardetect import calc_fwhm
-from ..bardetect import find_position
+from emirdrp.processing.bardetect import calc_fwhm
+from emirdrp.processing.bardetect import find_position
 
 @pytest.mark.parametrize("axis, result", [(0,7), (1, 16)])
 def test_calc_fwhm(axis, result):
