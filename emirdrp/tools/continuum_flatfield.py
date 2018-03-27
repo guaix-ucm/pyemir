@@ -68,7 +68,7 @@ def main(args=None):
                         type=int)
     parser.add_argument("--outfile", required=True,
                         help="Output FITS file",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
 
     # optional arguments
     parser.add_argument("--ignore_DTUconf",

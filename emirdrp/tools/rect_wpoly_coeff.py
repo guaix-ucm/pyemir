@@ -1315,12 +1315,12 @@ def main(args=None):
     parser.add_argument("--out_rect",
                         help="Rectified but not wavelength calibrated output "
                              "FITS file",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
     parser.add_argument("--out_55sp",
                         help="FITS file containing the set of averaged "
                              "spectra employed to derive the wavelength "
                              "calibration",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
     parser.add_argument("--ylogscale",
                         help="Display spectrum signal in logarithmic units",
                         action="store_true")

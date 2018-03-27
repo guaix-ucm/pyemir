@@ -130,7 +130,7 @@ def main(args=None):
     # optional arguments
     parser.add_argument("--outfile",
                         help="Output FITS file name",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
     parser.add_argument("--maskonly",
                         help="Generate mask for the indicated slitlets",
                         action="store_true")

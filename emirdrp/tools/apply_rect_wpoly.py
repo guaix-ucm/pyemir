@@ -416,7 +416,7 @@ def main(args=None):
     parser.add_argument("--outfile", required=True,
                         help="Output FITS file with rectified and "
                              "wavelength calibrated image",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
 
     # optional arguments
     parser.add_argument("--ignore_DTUconf",
@@ -424,9 +424,9 @@ def main(args=None):
                              "transformation and input image",
                         action="store_true")
     parser.add_argument("--outfile_rectified_only",
-                        help="Output FITS file with rectified image (not"
-                             "wavelength calibrated)",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        help="Output FITS file with rectified image (without "
+                             "wavelength calibration!)",
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"
                              " (default=0)",

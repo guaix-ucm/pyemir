@@ -23,7 +23,7 @@ from __future__ import print_function
 import os
 
 
-def arg_file_is_new(parser, arg):
+def arg_file_is_new(parser, arg, mode='w'):
     """Auxiliary function to give an error if the file already exists.
 
     Parameters
@@ -32,6 +32,9 @@ def arg_file_is_new(parser, arg):
         Instance of argparse.ArgumentParser()
     arg : string
         File name.
+    mode : string
+        Optional string that specifies the mode in which the file is
+        opened.
 
     Returns
     -------
@@ -44,5 +47,5 @@ def arg_file_is_new(parser, arg):
                      "cannot be overwritten!" % arg)
     else:
         # return an open file handle
-        handler = open(arg, 'w')
+        handler = open(arg, mode=mode)
         return handler
