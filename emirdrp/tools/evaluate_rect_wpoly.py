@@ -176,6 +176,20 @@ def main(args=None):
         tmpdict = rect_wpoly_dict['contents'][cslitlet]
         list_csu_bar_slit_center = tmpdict['list_csu_bar_slit_center']
 
+        # check extrapolations
+        if csu_bar_slit_center < min(list_csu_bar_slit_center):
+            print('\nWARNING: extrapolating table with ' + cslitlet)
+            print('         minimum tabulated value:',
+                  min(list_csu_bar_slit_center))
+            print('         sought value...........:',
+                  csu_bar_slit_center)
+        if csu_bar_slit_center > max(list_csu_bar_slit_center):
+            print('WARNING: extrapolating table')
+            print('         maximum tabulated value:',
+                  max(list_csu_bar_slit_center))
+            print('         sought value...........:',
+                  csu_bar_slit_center)
+
         # rectification coefficients
         ttd_order = tmpdict['ttd_order']
         ncoef = ncoef_fmap(ttd_order)
@@ -189,7 +203,8 @@ def main(args=None):
                 list_cij = tmpdict['list_' + keycoef + '_' + ccoef]
                 funinterp_coef = interp1d(list_csu_bar_slit_center,
                                           list_cij,
-                                          kind='linear')
+                                          kind='linear',
+                                          fill_value='extrapolate')
                 # note: funinterp_coef expects a numpy array
                 dum = funinterp_coef([csu_bar_slit_center])
                 coef_out.append(dum[0])
@@ -204,7 +219,8 @@ def main(args=None):
             list_cij = tmpdict['list_wpoly_coeff_' + ccoef]
             funinterp_coef = interp1d(list_csu_bar_slit_center,
                                       list_cij,
-                                      kind='linear')
+                                      kind='linear',
+                                      fill_value='extrapolate')
             # note: funinterp_coef expects a numpy array
             dum = funinterp_coef([csu_bar_slit_center])
             wpoly_coeff.append(dum[0])
