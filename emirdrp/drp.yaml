@@ -139,6 +139,10 @@ modes:
   key: TEST12
   name: TEST12
   summary: Positions of CSU bars
+- key: TEST13
+  name: TEST13
+  summary: Mask Check
+  description: Acquire and check mask
 - description: Lines and mode lines
   key: FULL_DITHERED_IMAGE
   name: Dithered images
