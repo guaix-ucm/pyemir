@@ -404,7 +404,11 @@ class Slitlet2D(object):
 
 def main(args=None):
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='apply_rect_wpoly')
+    parser = argparse.ArgumentParser(
+        description='description: apply rectification and wavelength '
+                    'calibration polynomials for the CSU configuration of a '
+                    'particular image'
+    )
 
     # required arguments
     parser.add_argument("fitsfile",

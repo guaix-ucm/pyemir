@@ -48,7 +48,12 @@ from emirdrp.core import EMIR_NAXIS2
 
 def main(args=None):
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='evaluate_rect_wpoly')
+    parser = argparse.ArgumentParser(
+        description='description: evaluate rectification and wavelength '
+                    'calibration polynomials for the CSU configuration of a '
+                    'particular image'
+    )
+
     # required arguments
     parser.add_argument("fitsfile",
                         help="Input FITS file",

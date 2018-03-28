@@ -44,7 +44,9 @@ from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='description: overplot boundary model over FITS image'
+    )
 
     # positional arguments
     parser.add_argument("fitsfile",
@@ -179,8 +181,8 @@ def main(args=None):
             labels=False    # already displayed with the boundaries
         )
 
-    # show plot
-    pause_debugplot(12, pltshow=True)
+        # show plot
+        pause_debugplot(12, pltshow=True)
 
 
 if __name__ == "__main__":

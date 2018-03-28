@@ -169,7 +169,9 @@ def display_slitlet_arrangement(fileobj,
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='description: display arrangement of EMIR CSU bars'
+    )
 
     # positional arguments
     parser.add_argument("filename",
