@@ -184,7 +184,7 @@ def main(args=None):
             print('         sought value...........:',
                   csu_bar_slit_center)
         if csu_bar_slit_center > max(list_csu_bar_slit_center):
-            print('WARNING: extrapolating table')
+            print('\nWARNING: extrapolating table with ' + cslitlet)
             print('         maximum tabulated value:',
                   max(list_csu_bar_slit_center))
             print('         sought value...........:',

@@ -154,7 +154,6 @@ def main(args=None):
         # define Slitlet2D object
         slt = Slitlet2D(islitlet=islitlet,
                         megadict=rect_wpoly_dict,
-                        ymargin=2,
                         debugplot=args.debugplot)
 
         if abs(args.debugplot) >= 10:
@@ -186,9 +185,18 @@ def main(args=None):
         # median spectrum
         sp_collapsed = np.median(slitlet2d_rect[ii1:(ii2 + 1), :], axis=0)
 
-        # smooth median spectrum along the spectral direction
-        sp_median = ndimage.median_filter(sp_collapsed, args.nwindow_median,
-                                          mode='nearest')
+        # smooth median spectrum along the spectral direction (the process
+        # is carried out separately for the two halves in order to avoid
+        # unexpected changes in the center of the detector)
+        sp_median1 = ndimage.median_filter(sp_collapsed[:EMIR_NAXIS1//2],
+                                           args.nwindow_median,
+                                           mode='reflect')
+        sp_median2 = ndimage.median_filter(sp_collapsed[EMIR_NAXIS1//2:],
+                                           args.nwindow_median,
+                                           mode='reflect')
+        sp_median = np.concatenate((sp_median1, sp_median2))
+        #sp_median = ndimage.median_filter(sp_collapsed, args.nwindow_median,
+        #                                  mode='nearest')
         ymax_spmedian = sp_median.max()
         y_threshold = ymax_spmedian * args.minimum_fraction
         sp_median[np.where(sp_median < y_threshold)] = 0.0
