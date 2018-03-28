@@ -31,9 +31,8 @@ from numina.array.distortion import ncoef_fmap
 
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 
-from .arg_file_is_new import arg_file_is_new
-
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
+from numina.tools.arg_file_is_new import arg_file_is_new
 
 
 def islitlet_progress(islitlet, islitlet_max):

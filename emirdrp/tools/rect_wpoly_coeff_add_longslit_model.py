@@ -32,8 +32,8 @@ from numina.array.display.polfit_residuals import \
     polfit_residuals_with_sigma_rejection
 from numina.array.distortion import ncoef_fmap
 from numina.array.stats import summary
+from numina.tools.arg_file_is_new import arg_file_is_new
 
-from .arg_file_is_new import arg_file_is_new
 from .set_wv_parameters import set_wv_parameters
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES

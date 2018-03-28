@@ -28,9 +28,10 @@ import sys
 
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
+from numina.tools.arg_file_is_new import arg_file_is_new
+
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 
-from .arg_file_is_new import arg_file_is_new
 from .fit_boundaries import bound_params_from_dict
 from .fit_boundaries import overplot_boundaries_from_params
 from .fit_boundaries import overplot_frontiers_from_params

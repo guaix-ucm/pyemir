@@ -32,8 +32,8 @@ from uuid import uuid4
 from numina.array.display.iofunctions import readc
 from numina.array.wavecalib.__main__ import read_wv_master_file
 from numina.array.wavecalib.check_wlcalib import check_wlcalib_sp
+from numina.tools.arg_file_is_new import arg_file_is_new
 
-from .arg_file_is_new import arg_file_is_new
 from .list_slitlets_from_string import list_slitlets_from_string
 from .rect_wpoly_for_mos import islitlet_progress
 

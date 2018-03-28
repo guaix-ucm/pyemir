@@ -50,7 +50,6 @@ from numina.array.wavecalib.peaks_spectrum import refine_peaks_spectrum
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 
-from .arg_file_is_new import arg_file_is_new
 from .fit_boundaries import bound_params_from_dict
 from .fit_boundaries import expected_distorted_boundaries
 from .fit_boundaries import expected_distorted_frontiers
@@ -62,6 +61,7 @@ from .select_unrectified_slitlets import select_unrectified_slitlet
 from .set_wv_parameters import set_wv_parameters
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
+from numina.tools.arg_file_is_new import arg_file_is_new
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
 from emirdrp.core import EMIR_NBARS
