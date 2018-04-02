@@ -141,7 +141,7 @@ class MaskCheckRecipe(EmirRecipe):
             with open('ds9.reg', 'w') as ds9reg:
                 slits_to_ds9_reg(ds9reg, slits)
             numpy.savetxt('slits.txt', slits)
-        add_to_header(hdulist[0].header)
+
         off, angle, qc = compute_off_rotation(hdulist, slits, logger=self.logger)
         off_arc = [o * EMIR_PLATESCALE for o in off]
         self.logger.info('offset %s (pix), rotang %6.3f (deg)', off, angle)
@@ -431,6 +431,7 @@ def comp_centroid(data, region, debug_plot=True, plot_reference=None, logger=Non
         plt.show()
     maxflux = objects[iadx]
     return maxflux['x'], maxflux['y']
+
 
 def add_to_header(hdr):
 
