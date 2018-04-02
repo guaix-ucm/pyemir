@@ -30,7 +30,7 @@ setup(name='pyemir',
       test_suite="emirdrp.tests",
       install_requires=['setuptools', 'numpy', 'scipy',
                         'numina>=0.15', 'astropy>=1.1',
-                        'enum34;python_version<"3.4"'
+                        'enum34;python_version<"3.4"',
                         'matplotlib', 'six', 'photutils>=0.2',
                         'sep>0.5', 'scikit-image>=0.11', 'lmfit'],
       zip_safe=False,
