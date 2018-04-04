@@ -3,20 +3,9 @@
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
-
 
 from __future__ import division
 
@@ -30,7 +19,8 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 import sep
-from numina.array.utils import coor_to_pix_1d
+
+from numina.array.bbox import BoundingBox
 from numina.array.offrot import fit_offset_and_rotation
 from numina.core import Requirement, Product, Parameter, RecipeError
 from numina.core.products import ArrayType
@@ -299,11 +289,11 @@ class LogicalSlit(object):
 
         # bars must be paired
         for l, r in zip(lbars_ids, rbars_ids):
-            if (r != l + EMIR_NBARS):
+            if r != l + EMIR_NBARS:
                 raise ValueError('not paired {} and {}'.format(l, r))
 
         for a, b in zip(lbars_ids, lbars_ids[1:]):
-            if (b != a + 1):
+            if b != a + 1:
                 raise ValueError('not contiguous {} and {}'.format(a, b))
 
         self.lbars_ids = lbars_ids
@@ -318,7 +308,7 @@ class LogicalSlit(object):
         bbox_x1 = min(self.lbars.values(), key=lambda obk: obk.xpos).xpos
         bbox_x2 = max(self.rbars.values(), key=lambda obk: obk.xpos).xpos
 
-        self.bbox_int = [coor_to_pix_1d(w) for w in [bbox_x1, bbox_x2, bbox_y1, bbox_y2]]
+        self.bbox_int = BoundingBox.from_coordinates(bbox_x1, bbox_x2, bbox_y1, bbox_y2)
 
     def bbox(self):
         return self.bbox_int
@@ -342,11 +332,10 @@ def compute_off_rotation(hdulist, slits, logger=None):
     ref_slits = [slit for slit in conf.slits.values() if slit.target_type is TargetType.REFERENCE]
     logger.info('we have %s reference slits', len(ref_slits))
 
-    p1 = [] # Reference positions
-    q1 = [] # Measured positions
+    p1 = []  # Reference positions
+    q1 = []  # Measured positions
     for slit_lg in ref_slits:
-        bbox = slit_lg.bbox()
-        region = np.s_[bbox[2]:bbox[3] + 1, bbox[0]:bbox[1] + 1]
+        region = slit_lg.bbox().slice
         res = comp_centroid(data, region, debug_plot=False, plot_reference=slit_lg.target_coordinates)
         if res is None:
             logger.warning('no object found in slit %s, skipping', slit_lg.idx)
