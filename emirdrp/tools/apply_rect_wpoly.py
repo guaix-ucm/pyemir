@@ -424,6 +424,11 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x, mode='wb'))
 
     # optional arguments
+    parser.add_argument("--resampling",
+                        help="Resampling method: 1 -> nearest neighbor "
+                             "(default), 2 -> linear interpolation",
+                        default=1, type=int,
+                        choices=(1, 2))
     parser.add_argument("--ignore_DTUconf",
                         help="Ignore DTU configurations differences between "
                              "transformation and input image",
@@ -527,9 +532,9 @@ def main(args=None):
 
             # rectify image
             slitlet2d_rect = slt.rectify(slitlet2d,
-                                         resampling=1)
+                                         resampling=args.resampling)
             slitlet2d_unrect = slt.rectify(slitlet2d_rect,
-                                           resampling=1,
+                                           resampling=args.resampling,
                                            inverse=True)
 
             ii1 = nscan_min - slt.bb_ns1_orig
@@ -564,9 +569,11 @@ def main(args=None):
     image2d_rectified_wv = np.zeros((EMIR_NAXIS2, naxis1_enlarged))
 
     # main loop
+    import time  # TODO: remove this
     for islitlet in range(islitlet_min, islitlet_max + 1):
         if args.debugplot == 0:
             islitlet_progress(islitlet, islitlet_max)
+            print(time.ctime())
 
         # define Slitlet2D object
         slt = Slitlet2D(islitlet=islitlet,
@@ -580,7 +587,7 @@ def main(args=None):
         slitlet2d = slt.extract_slitlet2d(image2d)
 
         # rectify slitlet
-        slitlet2d_rect = slt.rectify(slitlet2d, resampling=1)
+        slitlet2d_rect = slt.rectify(slitlet2d, resampling=args.resampling)
 
         # wavelength calibration of the rectifed slitlet
         slitlet2d_rect_wv = resample_image2d_flux(
