@@ -569,11 +569,14 @@ def main(args=None):
     image2d_rectified_wv = np.zeros((EMIR_NAXIS2, naxis1_enlarged))
 
     # main loop
-    import time  # TODO: remove this
+    import time  # TODO: remove this and print(time.ctime()) below
     for islitlet in range(islitlet_min, islitlet_max + 1):
         if args.debugplot == 0:
+            if islitlet == islitlet_min:
+                print(time.ctime())
             islitlet_progress(islitlet, islitlet_max)
-            print(time.ctime())
+            if islitlet == islitlet_max:
+                print(time.ctime())
 
         # define Slitlet2D object
         slt = Slitlet2D(islitlet=islitlet,
