@@ -425,9 +425,9 @@ def main(args=None):
 
     # optional arguments
     parser.add_argument("--resampling",
-                        help="Resampling method: 1 -> nearest neighbor "
-                             "(default), 2 -> linear interpolation",
-                        default=1, type=int,
+                        help="Resampling method: 1 -> nearest neighbor, "
+                             "2 -> linear interpolation (default)",
+                        default=2, type=int,
                         choices=(1, 2))
     parser.add_argument("--ignore_DTUconf",
                         help="Ignore DTU configurations differences between "
