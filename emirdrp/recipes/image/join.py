@@ -37,7 +37,7 @@ from numina.array.utils import coor_to_pix, image_box2d
 from numina.core import ObservationResult
 from numina.flow.processing import SkyCorrector
 import numina.ext.gtc
-from numina.core.query import Result
+from numina.core.query import ResultOf
 import sep
 
 from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs_imgs
@@ -56,7 +56,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
                            description='Accumulated result',
                            optional=True,
                            destination='accum',
-                           query_opts=Result('accum', node='prev')
+                           query_opts=ResultOf('accum', node='prev')
                            )
     frame = Product(DataFrameType)
     sky = Product(DataFrameType, optional=True)
@@ -729,7 +729,7 @@ from numina.core import Parameter
 from numina.core import DataFrameType
 from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.query import Result
+from numina.core.query import ResultOf
 from numina.array import fixpix2
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import Extinction_Requirement
@@ -741,7 +741,7 @@ from emirdrp.products import SourcesCatalog, CoordinateList2DType
 
 
 class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
-    obresult = ObservationResultRequirement(query_opts=Result('frame', node='children'))
+    obresult = ObservationResultRequirement(query_opts=ResultOf('frame', node='children'))
     master_bpm = MasterBadPixelMaskRequirement()
     # extinction = Extinction_Requirement()
     # sources = Catalog_Requirement()
