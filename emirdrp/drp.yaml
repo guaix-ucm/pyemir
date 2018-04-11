@@ -175,6 +175,22 @@ pipelines:
       MasterDark: emirdrp.products.MasterDark
       MasterIntensityFlat: emirdrp.products.MasterIntensityFlat
       MasterSpectralFlat: emirdrp.products.MasterSpectralFlat
+    provides:
+      - name: MasterDark
+        mode: IMAGE_DARK
+        field: darkframe
+      - name: MasterIntensityFlat
+        mode: IMAGE_FLAT
+        field: flatframe
+      - name: MasterSpectralFlat
+        mode: SPECTRAL_FLAT
+        field: flatframe
+      - name: MasterSky
+        mode: IMAGE_SKY
+        field: skyframe
+      - name: SkySpectrum
+        mode: SPEC_SKY
+        field: skyspec
     recipes:
       IMAGE_BIAS: emirdrp.recipes.auxiliary.BiasRecipe
       IMAGE_DARK: emirdrp.recipes.auxiliary.DarkRecipe

@@ -35,7 +35,7 @@ from emirdrp.processing.info import gather_info_frames
 from emirdrp.products import ChannelLevelStatistics
 from emirdrp.products import ChannelLevelStatisticsType
 from emirdrp.products import MasterBias, MasterDark
-from emirdrp.products import MasterIntensityFlat
+from emirdrp.products import MasterIntensityFlat, MasterSky
 from emirdrp.products import SlitTransmissionCalibration
 from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
 from emirdrp.requirements import MasterBadPixelMaskRequirement
@@ -235,7 +235,7 @@ class SimpleSkyRecipe(EmirRecipe):
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
 
-    skyframe = Product(MasterIntensityFlat)
+    skyframe = Product(MasterSky)
 
 
     def run(self, rinput):
@@ -266,7 +266,7 @@ class DitherSkyRecipe(EmirRecipe):
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
 
-    skyframe = Product(MasterIntensityFlat)
+    skyframe = Product(MasterSky)
 
 
     def run(self, rinput):
