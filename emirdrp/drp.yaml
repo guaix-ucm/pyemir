@@ -176,6 +176,9 @@ pipelines:
       MasterIntensityFlat: emirdrp.products.MasterIntensityFlat
       MasterSpectralFlat: emirdrp.products.MasterSpectralFlat
     provides:
+      - name: MasterBias
+        mode: IMAGE_BIAS
+        field: biasframe
       - name: MasterDark
         mode: IMAGE_DARK
         field: darkframe
