@@ -155,7 +155,7 @@ pipelines:
     provides:
       - name: MasterBadPixelMask
         mode: cosmetics
-        field: biasframe
+        field: maskframe
       - name: MasterBias
         mode: IMAGE_BIAS
         field: biasframe
@@ -210,7 +210,3 @@ pipelines:
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
     version: 1
-products:
-  - name: emirdrp.products.MasterBias
-    mode: IMAGE_BIAS
-    field: biasframe

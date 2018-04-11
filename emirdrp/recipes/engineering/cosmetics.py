@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2016 Universidad Complutense de Madrid
+# Copyright 2010-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -41,7 +41,7 @@ from numina.flow.node import IdNode
 from numina.flow import SerialFlow
 
 from emirdrp.core import EmirRecipe
-from emirdrp.products import MasterBias, MasterDark
+from emirdrp.products import MasterBias, MasterDark, MasterBadPixelMask
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -86,8 +86,8 @@ class CosmeticsRecipe(EmirRecipe):
         4.0, 'Values above this sigma level are flagged as hot pixels')
     maxiter = Parameter(30, 'Maximum number of iterations')
 
-    ratio = Product(DataFrameType)
-    mask = Product(DataFrameType)
+    ratioframe = Product(DataFrameType)
+    maskframe = Product(MasterBadPixelMask)
 
     def run(self, rinput):
 
@@ -216,5 +216,5 @@ class CosmeticsRecipe(EmirRecipe):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         maskhdl = fits.HDUList([maskhdu])
 
-        res = self.create_result(ratio=ratiohdl, mask=maskhdl)
+        res = self.create_result(ratioframe=ratiohdl, maskframe=maskhdl)
         return res
