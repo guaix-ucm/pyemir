@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2017 Universidad Complutense de Madrid
+# Copyright 2014-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -48,11 +48,65 @@ from emirdrp.processing.combine import segmentation_combined
 import emirdrp.decorators
 
 
+class ObservationResultRequirementJoin(ObservationResultRequirement):
+    def query(self, dal, obsres, options=None):
+        if numina.ext.gtc.check_gtc():
+            return self.query_gtc(dal, obsres, options)
+        else:
+            return super(ObservationResultRequirementJoin, self).query(dal, obsres, options)
+
+    def query_gtc(self, dal, obsres, options=None):
+        # FIXME: this method will work only in GTC
+        # stareImagesIds = obsres['stareImagesIds']._v
+        id_field = "stareImagesIds"
+        dest_field = 'frames'
+        dest_type = list
+        key_field = 'frame'
+
+        result_ids = getattr(obsres, id_field)
+        # Field to query the results
+        if not hasattr(obsres, dest_field):
+            setattr(obsres, dest_field, dest_type())
+        dest_obj = getattr(obsres, dest_field)
+
+        for subresId in result_ids:
+            subres = dal.getRecipeResult(subresId)
+            # This 'frame' is the name of the product in RecipeResult
+            # there is also a 'sky' field
+            elements = subres['elements']
+            # FIXME, only valid for list
+            dest_obj.append(elements[key_field])
+        return obsres
+
+
+class RequirementAccum(Requirement):
+    def query(self, dal, obsres, options=None):
+        if numina.ext.gtc.check_gtc():
+            #self.logger.debug('Using GTC version of build_recipe_input in DitheredImages')
+            return self.query_gtc(dal, obsres, options)
+        else:
+            return super(RequirementAccum, self).query(dal, obsres, options)
+
+    def query_gtc(self, dal, obsres, options=None):
+        naccum = obsres.naccum
+        mode_field = "DITHERED_IMAGE"
+        key_field = 'accum'
+        if naccum != 1:  # if it is not the first dithering loop
+            latest_result = dal.getLastRecipeResult("EMIR", "EMIR", mode_field)
+            elements = latest_result['elements']
+            accum_dither = elements[key_field]
+        else:
+            accum_dither = None
+
+        obsres.accum = accum_dither
+        return accum_dither
+
+
 class JoinDitheredImagesRecipe(EmirRecipe):
     """Combine single exposures obtained in dithered mode"""
 
-    obresult = ObservationResultRequirement()
-    accum_in = Requirement(DataFrameType,
+    obresult = ObservationResultRequirementJoin()
+    accum_in = RequirementAccum(DataFrameType,
                            description='Accumulated result',
                            optional=True,
                            destination='accum',
@@ -63,54 +117,6 @@ class JoinDitheredImagesRecipe(EmirRecipe):
     #
     # Accumulate Frame results
     accum = Product(DataFrameType, optional=True)
-
-    def build_recipe_input(self, obsres, dal, pipeline='default'):
-        if numina.ext.gtc.check_gtc():
-            self.logger.debug('Using GTC version of build_recipe_input in DitheredImages')
-            return self.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
-        else:
-            return super(JoinDitheredImagesRecipe, self).build_recipe_input(obsres, dal)
-
-    def build_recipe_input_gtc(self, obsres, dal, pipeline='default'):
-        newOR = ObservationResult()
-        # FIXME: this method will work only in GTC
-        # stareImagesIds = obsres['stareImagesIds']._v
-        stareImagesIds = obsres.stareImagesIds
-        obsres.children = stareImagesIds
-        self.logger.info('Submode result IDs: %s', obsres.children)
-        stareImages = []
-        # Field to query the results
-        key_field = 'frame'
-        for subresId in obsres.children:
-            subres = dal.getRecipeResult(subresId)
-            # This 'frame' is the name of the product in RecipeResult
-            # there is also a 'sky' field
-            elements = subres['elements']
-            stareImages.append(elements[key_field])
-        newOR.frames = stareImages
-
-        naccum = obsres.naccum
-        self.logger.info('naccum: %d', naccum)
-        mode_field = "DITHERED_IMAGE"
-        key_field = 'accum'
-        if naccum != 1:  # if it is not the first dithering loop
-            self.logger.info("SEARCHING LATEST RESULT of %s", mode_field)
-            latest_result = dal.getLastRecipeResult("EMIR", "EMIR", mode_field)
-            elements = latest_result['elements']
-            accum_dither = elements[key_field]
-            self.logger.info("FOUND")
-        else:
-            self.logger.info("NO ACCUMULATION")
-            accum_dither = stareImages[0]
-
-        newOR.naccum = naccum
-        newOR.accum = accum_dither
-
-        # obsres['obresult'] = newOR
-        # print('Adding RI parameters ', obsres)
-        # newRI = DitheredImageARecipeInput(**obsres)
-        newRI = self.create_input(obresult=newOR)
-        return newRI
 
     #@emirdrp.decorators.aggregate
     @emirdrp.decorators.loginfo
