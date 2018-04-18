@@ -88,18 +88,12 @@ class RequirementAccum(Requirement):
     def query_gtc(self, dal, obsres, options=None):
         if isinstance(self.query_opts, ResultOf):
             resultof = self.query_opts
-            naccum = obsres.naccum
-            mode_field = resultof.mode
-            key_field = resultof.attr
-            if naccum != 1:  # if it is not the first dithering loop
-                latest_result = dal.getLastRecipeResult("EMIR", "EMIR", mode_field)
-                elements = latest_result['elements']
-                accum_dither = elements[key_field]
-            else:
-                accum_dither = None
 
-            obsres.accum = accum_dither
-            return accum_dither
+            val = dal.search_result_relative(self.dest, obsres,
+                                             resultof)
+            # FIXME: this is not needed
+            obsres.accum = val.content
+            return val.content
         else:
             return super(RequirementAccum, self).query(dal, obsres, options)
 
