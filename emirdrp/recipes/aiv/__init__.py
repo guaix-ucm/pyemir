@@ -93,7 +93,7 @@ class TestBiasCorrectRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
         hdu = basic_processing_with_combination(rinput, flow, method=median)
-        hdr = hdu.header
+        hdr = hdu[0].header
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdulist = fits.HDUList([hdu])
