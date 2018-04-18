@@ -68,7 +68,7 @@ class ObservationResultRequirementJoin(ObservationResultRequirement):
                 setattr(obsres, dest_field, dest_type())
 
             dest_obj = getattr(obsres, dest_field)
-            val = dal.search_result_relative(self.dest, obsres,
+            val = dal.search_result_relative(self.dest, self.type, obsres,
                                              resultof)
 
             for r in val:
@@ -89,8 +89,8 @@ class RequirementAccum(Requirement):
         if isinstance(self.query_opts, ResultOf):
             resultof = self.query_opts
 
-            val = dal.search_result_relative(self.dest, obsres,
-                                             resultof)
+            val = dal.search_result_relative(self.dest, self.type, obsres,
+                                             result_desc=resultof)
             # FIXME: this is not needed
             obsres.accum = val.content
             return val.content
