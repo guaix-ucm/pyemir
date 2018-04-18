@@ -39,6 +39,7 @@ class StareSpectraRecipe(EmirRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
+    master_rectwv = reqs.MasterRectWaveRequirement()
     master_sky = reqs.SpectralSkyRequirement(optional=True)
 
     stare = Product(prods.DataFrameType)

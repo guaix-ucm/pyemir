@@ -29,6 +29,7 @@ from numina.core.products import ArrayNType
 from numina.core.products import DataProductTag
 from numina.core.requirements import InstrumentConfigurationType
 from numina.core import ValidationError
+import numina.types.structured
 
 
 base_schema_description = {
@@ -293,3 +294,52 @@ class ChannelLevelStatisticsType(DataProductType):
 class LinesCatalog(DataProductType):
     def __init__(self):
         super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
+
+
+class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
+    """Rectification and Wavelength Calibration Library Product
+    """
+    def __init__(self, instrument='unknown'):
+        super(MasterRectWave, self).__init__(instrument)
+        self.total_slitlets = 0
+        self.missing_slitlets = []
+        self.contents = []
+
+    @classmethod
+    def define_from_dictionary(cls, instrument,
+                               nbars, grism_name, filter_name, dict):
+        self = MasterRectWave(instrument=instrument)
+        self.tags = {
+            'grism': grism_name,
+            'filter': filter_name
+        }
+        self.total_slitlets = nbars
+        for i in range(nbars):
+            islitlet = i + 1
+            cslitlet = 'slitlet' + str(islitlet).zfill(2)
+            if cslitlet in dict:
+                val = {'islitlet': islitlet}
+                val.update(dict[cslitlet])
+                self.contents.append(val)
+            else:
+                self.missing_slitlets.append(islitlet)
+        return self
+
+    def __getstate__(self):
+        state = super(MasterRectWave, self).__getstate__()
+
+        keys = ['total_slitlets', 'missing_slitlets']
+        for key in keys:
+            state[key] = self.__dict__[key]
+
+        state['contents'] = self.contents.copy()
+        return state
+
+    def __setstate__(self, state):
+        super(MasterRectWave, self).__setstate__(state)
+
+        keys = ['total_slitlets', 'missing_slitlets']
+        for key in keys:
+            self.__dict__[key] = state[key]
+
+        self.contents = state['contents'].copy()

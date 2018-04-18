@@ -83,6 +83,12 @@ class MasterSpectralFlatFieldRequirement(Requirement):
               self).__init__(prods.MasterSpectralFlat, 'Master spectral flatfield')
 
 
+class MasterRectWaveRequirement(Requirement):
+    def __init__(self):
+        super(MasterRectWaveRequirement,
+              self).__init__(prods.MasterRectWave, 'Master rect. and wave. calibration')
+
+
 class MasterSkyRequirement(Requirement):
     def __init__(self, optional=False):
         super(MasterSkyRequirement,

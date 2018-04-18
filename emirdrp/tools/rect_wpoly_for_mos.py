@@ -28,11 +28,13 @@ from uuid import uuid4
 
 from numina.array.display.fileinfo import list_fileinfo_from_txt
 from numina.array.distortion import ncoef_fmap
+from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.products import MasterRectWave
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
-from numina.tools.arg_file_is_new import arg_file_is_new
+from emirdrp.core import EMIR_NBARS
 
 
 def islitlet_progress(islitlet, islitlet_max):
@@ -296,6 +298,7 @@ def main(args=None):
             islitlet_progress(islitlet, islitlet_max)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         outdict['contents'][cslitlet]['ttd_order'] = ttd_order
+        outdict['contents'][cslitlet]['ncoef_rect'] = ncoef_rect
         for keycoef in ['ttd_aij', 'ttd_bij', 'tti_aij', 'tti_bij']:
             for icoef in range(ncoef_rect):
                 ccoef = str(icoef).zfill(2)
@@ -355,10 +358,45 @@ def main(args=None):
 
     # ---
 
+    # ToDo: remove the following code
+    # OBSOLETE
+    #
     # Save resulting JSON structure
-    with open(args.out_MOSlibrary.name, 'w') as fstream:
+    '''
+    with open(args.out_MOSlibrary.name + '_old', 'w') as fstream:
         json.dump(outdict, fstream, indent=2, sort_keys=True)
-        print('>>> Saving file ' + args.out_MOSlibrary.name)
+        print('>>> Saving file ' + args.out_MOSlibrary.name + '_old')
+    '''
+
+    #import emirdrp.datamodel
+    #import numina.core.oresult
+
+    #datamodel = emirdrp.datamodel.EmirDataModel()
+    #obresult = numina.core.oresult.ObservationResult()
+    #obresult.instrument = 'EMIR'
+    #obresult.mode = 'DUMMY'
+
+    master_rectwv = MasterRectWave.define_from_dictionary(
+        instrument='EMIR',
+        nbars=EMIR_NBARS,
+        grism_name=grism_name,
+        filter_name=filter_name,
+        dict=outdict['contents']
+    )
+    #obresult_meta = obresult.metadata_with(datamodel)
+    #master_rectwv.update_metadata_origin(obresult_meta)
+    master_rectwv.writeto(args.out_MOSlibrary.name)
+    print('>>> Saving file ' + args.out_MOSlibrary.name)
+    # ToDo: remove the following code
+    # double check that __getstate__ and __setstate__ work properly
+    master_rectwv_bis = MasterRectWave(instrument='EMIR')
+    master_rectwv_bis.__setstate__(master_rectwv.__getstate__())
+    master_rectwv_bis.writeto(args.out_MOSlibrary.name + '_bis')
+    with open(args.out_MOSlibrary.name, 'r') as f:
+        state = json.load(f)
+    master_rectwv_bis2 = MasterRectWave(instrument='EMIR')
+    master_rectwv_bis2.__setstate__(state)
+    master_rectwv_bis2.writeto(args.out_MOSlibrary.name + '_bis2')
 
 
 if __name__ == "__main__":
