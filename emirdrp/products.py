@@ -301,29 +301,13 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
     """
     def __init__(self, instrument='unknown'):
         super(MasterRectWave, self).__init__(instrument)
+        self.tags = {
+            'grism': "unknown",
+            'filter': "unknown"
+        }
         self.total_slitlets = 0
         self.missing_slitlets = []
         self.contents = []
-
-    @classmethod
-    def define_from_dictionary(cls, instrument,
-                               nbars, grism_name, filter_name, dict):
-        self = MasterRectWave(instrument=instrument)
-        self.tags = {
-            'grism': grism_name,
-            'filter': filter_name
-        }
-        self.total_slitlets = nbars
-        for i in range(nbars):
-            islitlet = i + 1
-            cslitlet = 'slitlet' + str(islitlet).zfill(2)
-            if cslitlet in dict:
-                val = {'islitlet': islitlet}
-                val.update(dict[cslitlet])
-                self.contents.append(val)
-            else:
-                self.missing_slitlets.append(islitlet)
-        return self
 
     def __getstate__(self):
         state = super(MasterRectWave, self).__getstate__()

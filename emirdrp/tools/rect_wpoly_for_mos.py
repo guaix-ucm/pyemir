@@ -29,6 +29,7 @@ from uuid import uuid4
 from numina.array.display.fileinfo import list_fileinfo_from_txt
 from numina.array.distortion import ncoef_fmap
 from numina.tools.arg_file_is_new import arg_file_is_new
+import numina.types.qc
 
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import MasterRectWave
@@ -358,9 +359,7 @@ def main(args=None):
 
     # ---
 
-    # ToDo: remove the following code
     # OBSOLETE
-    #
     # Save resulting JSON structure
     '''
     with open(args.out_MOSlibrary.name + '_old', 'w') as fstream:
@@ -368,35 +367,41 @@ def main(args=None):
         print('>>> Saving file ' + args.out_MOSlibrary.name + '_old')
     '''
 
-    #import emirdrp.datamodel
-    #import numina.core.oresult
+    # --
 
-    #datamodel = emirdrp.datamodel.EmirDataModel()
-    #obresult = numina.core.oresult.ObservationResult()
-    #obresult.instrument = 'EMIR'
-    #obresult.mode = 'DUMMY'
-
-    master_rectwv = MasterRectWave.define_from_dictionary(
-        instrument='EMIR',
-        nbars=EMIR_NBARS,
-        grism_name=grism_name,
-        filter_name=filter_name,
-        dict=outdict['contents']
-    )
-    #obresult_meta = obresult.metadata_with(datamodel)
-    #master_rectwv.update_metadata_origin(obresult_meta)
+    # Create object of type MasterRectWave with library of coefficients
+    # for rectification and wavelength calibration
+    master_rectwv = MasterRectWave(instrument='EMIR')
+    master_rectwv.quality_control = numina.types.qc.QC.GOOD
+    master_rectwv.tags['grism'] = grism_name
+    master_rectwv.tags['filter'] = filter_name
+    master_rectwv.total_slitlets = EMIR_NBARS
+    master_rectwv.meta_info['origin'] = {
+        'longslit_frames': ['uuid:' + list_json_longslits[ifile]['uuid']
+                            for ifile in range(nfiles)]
+    }
+    for i in range(EMIR_NBARS):
+        islitlet = i + 1
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        if cslitlet in outdict['contents']:
+            dumdict = {'islitlet': islitlet}
+            dumdict.update(outdict['contents'][cslitlet])
+            master_rectwv.contents.append(dumdict)
+        else:
+            master_rectwv.missing_slitlets.append(islitlet)
     master_rectwv.writeto(args.out_MOSlibrary.name)
     print('>>> Saving file ' + args.out_MOSlibrary.name)
-    # ToDo: remove the following code
-    # double check that __getstate__ and __setstate__ work properly
+    # debugging __getstate__ and __setstate__
+    '''
+    # 1) concatenate __getstate__ and __setstate__
     master_rectwv_bis = MasterRectWave(instrument='EMIR')
     master_rectwv_bis.__setstate__(master_rectwv.__getstate__())
     master_rectwv_bis.writeto(args.out_MOSlibrary.name + '_bis')
-    with open(args.out_MOSlibrary.name, 'r') as f:
-        state = json.load(f)
-    master_rectwv_bis2 = MasterRectWave(instrument='EMIR')
-    master_rectwv_bis2.__setstate__(state)
+    # 2) load data from JSON file and save again in a different JSON file
+    master_rectwv_bis2 = MasterRectWave._datatype_load(
+        args.out_MOSlibrary.name)
     master_rectwv_bis2.writeto(args.out_MOSlibrary.name + '_bis2')
+    '''
 
 
 if __name__ == "__main__":
