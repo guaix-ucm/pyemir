@@ -56,11 +56,8 @@ class ObservationResultRequirementJoin(ObservationResultRequirement):
             return super(ObservationResultRequirementJoin, self).query(dal, obsres, options)
 
     def query_gtc(self, dal, obsres, options=None):
-        resultof = ResultOf('STARE_IMAGE.frame',
-                            node='children',
-                            id_field="stareImagesIds")
 
-        if isinstance(resultof, ResultOf):
+        if isinstance(self.query_opts, ResultOf):
             dest_field = 'frames'
             dest_type = list
             # Field to insert the results
@@ -69,7 +66,7 @@ class ObservationResultRequirementJoin(ObservationResultRequirement):
 
             dest_obj = getattr(obsres, dest_field)
             val = dal.search_result_relative(self.dest, self.type, obsres,
-                                             resultof)
+                                             self.query_opts)
 
             for r in val:
                 dest_obj.append(r.content)
@@ -80,7 +77,6 @@ class ObservationResultRequirementJoin(ObservationResultRequirement):
 class RequirementAccum(Requirement):
     def query(self, dal, obsres, options=None):
         if numina.ext.gtc.check_gtc():
-            #self.logger.debug('Using GTC version of build_recipe_input in DitheredImages')
             return self.query_gtc(dal, obsres, options)
         else:
             return super(RequirementAccum, self).query(dal, obsres, options)
@@ -91,8 +87,6 @@ class RequirementAccum(Requirement):
 
             val = dal.search_result_relative(self.dest, self.type, obsres,
                                              result_desc=resultof)
-            # FIXME: this is not needed
-            obsres.accum = val.content
             return val.content
         else:
             return super(RequirementAccum, self).query(dal, obsres, options)
@@ -101,8 +95,9 @@ class RequirementAccum(Requirement):
 class JoinDitheredImagesRecipe(EmirRecipe):
     """Combine single exposures obtained in dithered mode"""
 
-    obresult = ObservationResultRequirementJoin()
-    accum_in = RequirementAccum(DataFrameType,
+    obresult = ObservationResultRequirementJoin(query_opts=ResultOf(
+        'STARE_IMAGE.frame', node='children', id_field="stareImagesIds"))
+    accum_in = Requirement(DataFrameType,
                            description='Accumulated result',
                            optional=True,
                            destination='accum',
@@ -125,24 +120,17 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         obresult = rinput.obresult
         # Check if this is our first run
-        naccum = getattr(obresult, 'naccum', 0)
-        accum = getattr(obresult, 'accum', None)
+        naccum = getattr(obresult, 'naccum', 1)
+        accum = rinput.accum
 
         frame = partial_result.frame
 
-        if naccum == 0:
-            self.logger.debug('naccum is not set, do not accumulate')
-            return partial_result
-        elif naccum == 1:
+        if accum is None:
             self.logger.debug('round %d initialize accumulator', naccum)
             newaccum = frame
-        elif naccum > 1:
+        else:
             self.logger.debug('round %d of accumulation', naccum)
             newaccum = self.aggregate_frames(accum, frame, naccum)
-        else:
-            msg = 'naccum set to %d, invalid' % (naccum, )
-            self.logger.error(msg)
-            raise RecipeError(msg)
 
         # Update partial result
         partial_result.accum = newaccum
