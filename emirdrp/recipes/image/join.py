@@ -56,26 +56,24 @@ class ObservationResultRequirementJoin(ObservationResultRequirement):
             return super(ObservationResultRequirementJoin, self).query(dal, obsres, options)
 
     def query_gtc(self, dal, obsres, options=None):
-        # FIXME: this method will work only in GTC
-        # stareImagesIds = obsres['stareImagesIds']._v
-        id_field = "stareImagesIds"
-        dest_field = 'frames'
-        dest_type = list
-        key_field = 'frame'
+        resultof = ResultOf('STARE_IMAGE.frame',
+                            node='children',
+                            id_field="stareImagesIds")
 
-        result_ids = getattr(obsres, id_field)
-        # Field to query the results
-        if not hasattr(obsres, dest_field):
-            setattr(obsres, dest_field, dest_type())
-        dest_obj = getattr(obsres, dest_field)
+        if isinstance(resultof, ResultOf):
+            dest_field = 'frames'
+            dest_type = list
+            # Field to insert the results
+            if not hasattr(obsres, dest_field):
+                setattr(obsres, dest_field, dest_type())
 
-        for subresId in result_ids:
-            subres = dal.getRecipeResult(subresId)
-            # This 'frame' is the name of the product in RecipeResult
-            # there is also a 'sky' field
-            elements = subres['elements']
-            # FIXME, only valid for list
-            dest_obj.append(elements[key_field])
+            dest_obj = getattr(obsres, dest_field)
+            val = dal.search_result_relative(self.dest, obsres,
+                                             resultof)
+
+            for r in val:
+                dest_obj.append(r.content)
+
         return obsres
 
 
@@ -88,18 +86,22 @@ class RequirementAccum(Requirement):
             return super(RequirementAccum, self).query(dal, obsres, options)
 
     def query_gtc(self, dal, obsres, options=None):
-        naccum = obsres.naccum
-        mode_field = "DITHERED_IMAGE"
-        key_field = 'accum'
-        if naccum != 1:  # if it is not the first dithering loop
-            latest_result = dal.getLastRecipeResult("EMIR", "EMIR", mode_field)
-            elements = latest_result['elements']
-            accum_dither = elements[key_field]
-        else:
-            accum_dither = None
+        if isinstance(self.query_opts, ResultOf):
+            resultof = self.query_opts
+            naccum = obsres.naccum
+            mode_field = resultof.mode
+            key_field = resultof.attr
+            if naccum != 1:  # if it is not the first dithering loop
+                latest_result = dal.getLastRecipeResult("EMIR", "EMIR", mode_field)
+                elements = latest_result['elements']
+                accum_dither = elements[key_field]
+            else:
+                accum_dither = None
 
-        obsres.accum = accum_dither
-        return accum_dither
+            obsres.accum = accum_dither
+            return accum_dither
+        else:
+            return super(RequirementAccum, self).query(dal, obsres, options)
 
 
 class JoinDitheredImagesRecipe(EmirRecipe):
@@ -110,7 +112,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
                            description='Accumulated result',
                            optional=True,
                            destination='accum',
-                           query_opts=ResultOf('accum', node='prev')
+                           query_opts=ResultOf('DITHERED_IMAGE.accum', node='prev')
                            )
     frame = Product(DataFrameType)
     sky = Product(DataFrameType, optional=True)
