@@ -1330,6 +1330,9 @@ def main(args=None):
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
                         default="0,0,640,480")
+    parser.add_argument("--pdffile",
+                        help="output PDF file name",
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting & debugging options"
                              " (default=0)",
@@ -1344,6 +1347,15 @@ def main(args=None):
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # ---
+
+    # read pdffile
+    if args.pdffile is not None:
+        if args.interactive:
+            raise ValueError('--interactive is not compatible with --pdffile')
+        from matplotlib.backends.backend_pdf import PdfPages
+        pdf = PdfPages(args.pdffile.name)
+    else:
+        pdf = None
 
     # geometry
     if args.geometry is None:
@@ -1572,6 +1584,7 @@ def main(args=None):
                     plottitle=plottitle,
                     ylogscale=args.ylogscale,
                     geometry=geometry,
+                    pdf=pdf,
                     debugplot=slt.debugplot
                 )
                 # store refined wavelength calibration polynomial in current
@@ -1871,6 +1884,9 @@ def main(args=None):
             cast_to_float=[True] * 2,
             overwrite=True
         )
+
+    if pdf is not None:
+        pdf.close()
 
 
 if __name__ == "__main__":
