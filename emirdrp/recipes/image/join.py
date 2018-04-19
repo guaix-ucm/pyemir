@@ -34,9 +34,7 @@ from numina.array import combine_shape, combine_shapes
 from numina.array.combine import flatcombine, median, quantileclip
 from numina.array import resize_arrays, resize_arrays_alt
 from numina.array.utils import coor_to_pix, image_box2d
-from numina.core import ObservationResult
 from numina.flow.processing import SkyCorrector
-import numina.ext.gtc
 from numina.core.query import ResultOf
 import sep
 
@@ -48,54 +46,10 @@ from emirdrp.processing.combine import segmentation_combined
 import emirdrp.decorators
 
 
-class ObservationResultRequirementJoin(ObservationResultRequirement):
-    def query(self, dal, obsres, options=None):
-        if numina.ext.gtc.check_gtc():
-            return self.query_gtc(dal, obsres, options)
-        else:
-            return super(ObservationResultRequirementJoin, self).query(dal, obsres, options)
-
-    def query_gtc(self, dal, obsres, options=None):
-
-        if isinstance(self.query_opts, ResultOf):
-            dest_field = 'frames'
-            dest_type = list
-            # Field to insert the results
-            if not hasattr(obsres, dest_field):
-                setattr(obsres, dest_field, dest_type())
-
-            dest_obj = getattr(obsres, dest_field)
-            val = dal.search_result_relative(self.dest, self.type, obsres,
-                                             self.query_opts)
-
-            for r in val:
-                dest_obj.append(r.content)
-
-        return obsres
-
-
-class RequirementAccum(Requirement):
-    def query(self, dal, obsres, options=None):
-        if numina.ext.gtc.check_gtc():
-            return self.query_gtc(dal, obsres, options)
-        else:
-            return super(RequirementAccum, self).query(dal, obsres, options)
-
-    def query_gtc(self, dal, obsres, options=None):
-        if isinstance(self.query_opts, ResultOf):
-            resultof = self.query_opts
-
-            val = dal.search_result_relative(self.dest, self.type, obsres,
-                                             result_desc=resultof)
-            return val.content
-        else:
-            return super(RequirementAccum, self).query(dal, obsres, options)
-
-
 class JoinDitheredImagesRecipe(EmirRecipe):
     """Combine single exposures obtained in dithered mode"""
 
-    obresult = ObservationResultRequirementJoin(query_opts=ResultOf(
+    obresult = ObservationResultRequirement(query_opts=ResultOf(
         'STARE_IMAGE.frame', node='children', id_field="stareImagesIds"))
     accum_in = Requirement(DataFrameType,
                            description='Accumulated result',
