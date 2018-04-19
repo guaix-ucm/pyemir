@@ -327,3 +327,36 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
             self.__dict__[key] = state[key]
 
         self.contents = state['contents'].copy()
+
+
+class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
+    """Rectification and Wavelength Calibration Coefficients
+    """
+    def __init__(self, instrument='unknown'):
+        super(RectWaveCoeff, self).__init__(instrument)
+        self.tags = {
+            'grism': "unknown",
+            'filter': "unknown"
+        }
+        self.total_slitlets = 0
+        self.missing_slitlets = []
+        self.contents = []
+
+    def __getstate__(self):
+        state = super(RectWaveCoeff, self).__getstate__()
+
+        keys = ['total_slitlets', 'missing_slitlets']
+        for key in keys:
+            state[key] = self.__dict__[key]
+
+        state['contents'] = self.contents.copy()
+        return state
+
+    def __setstate__(self, state):
+        super(RectWaveCoeff, self).__setstate__(state)
+
+        keys = ['total_slitlets', 'missing_slitlets']
+        for key in keys:
+            self.__dict__[key] = state[key]
+
+        self.contents = state['contents'].copy()

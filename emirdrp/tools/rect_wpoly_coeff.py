@@ -47,8 +47,10 @@ from numina.array.wavecalib.__main__ import wvcal_spectrum
 from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.array.wavecalib.peaks_spectrum import find_peaks_spectrum
 from numina.array.wavecalib.peaks_spectrum import refine_peaks_spectrum
+import numina.types.qc
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.products import RectWaveCoeff
 
 from .fit_boundaries import bound_params_from_dict
 from .fit_boundaries import expected_distorted_boundaries
@@ -1125,8 +1127,9 @@ class Slitlet2dArc(object):
             print("median...........:", q50)
             print("robuts std.......:", sigma_g)
             print("threshold........:", threshold)
-        if minimum_threshold > threshold:
-            threshold = minimum_threshold
+        if minimum_threshold is not None:
+            if minimum_threshold > threshold:
+                threshold = minimum_threshold
         if abs(self.debugplot) >= 10:
             print("minimum threshold:", minimum_threshold)
             print("final threshold..:", threshold)
@@ -1498,7 +1501,7 @@ def main(args=None):
 
             # rectify image
             slitlet2d_rect = slt.rectify(slitlet2d,
-                                         resampling=1,
+                                         resampling=2,
                                          transformation=1)
 
             # median spectrum and line peaks from rectified image
@@ -1746,10 +1749,50 @@ def main(args=None):
         slitlet_label = "slitlet" + str(islitlet).zfill(2)
         outdict['contents'][slitlet_label] = tmp_dict
 
+    # ---
+
+    # OBSOLETE
+    '''
     # save JSON file needed to compute the MOS model
     with open(args.out_json.name, 'w') as fstream:
         json.dump(outdict, fstream, indent=2, sort_keys=True)
         print('>>> Saving file ' + args.out_json.name)
+    '''
+
+    # ---
+
+    # Create object of type RectWaveCoeff with coefficients for
+    # rectification and wavelength calibration
+    rectwv_coeff = RectWaveCoeff(instrument='EMIR')
+    rectwv_coeff.quality_control = numina.types.qc.QC.GOOD
+    rectwv_coeff.tags['grism'] = grism_name
+    rectwv_coeff.tags['filter'] = filter_name
+    rectwv_coeff.meta_info['dtu_configuration'] = outdict['dtu_configuration']
+    rectwv_coeff.total_slitlets = EMIR_NBARS
+    for i in range(EMIR_NBARS):
+        islitlet = i + 1
+        dumdict = {'islitlet': islitlet}
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        if cslitlet in outdict['contents']:
+            dumdict.update(outdict['contents'][cslitlet])
+        else:
+            dumdict.update({
+                'ttd_order': 0
+            })
+            rectwv_coeff.missing_slitlets.append(islitlet)
+        rectwv_coeff.contents.append(dumdict)
+    rectwv_coeff.writeto(args.out_json.name)
+    print('>>> Saving file ' + args.out_json.name)
+    # debugging __getstate__ and __setstate__
+    if False:
+        # 1) concatenate __getstate__ and __setstate__
+        rectwv_coeff_bis = RectWaveCoeff(instrument='EMIR')
+        rectwv_coeff_bis.__setstate__(rectwv_coeff.__getstate__())
+        rectwv_coeff_bis.writeto(args.out_json.name + '_bis')
+        # 2) load data from JSON file and save again in a different JSON file
+        rectwv_coeff_bis2 = RectWaveCoeff._datatype_load(
+            args.out_json.name)
+        rectwv_coeff_bis2.writeto(args.out_json.name + '_bis2')
 
     # ---
 
@@ -1796,11 +1839,11 @@ def main(args=None):
                 raise ValueError("No ttd transformation defined!")
 
             slitlet2d_rect = slt.rectify(slitlet2d,
-                                         resampling=1,
+                                         resampling=2,
                                          transformation=transformation)
 
             slitlet2d_unrect = slt.rectify(slitlet2d_rect,
-                                           resampling=1,
+                                           resampling=2,
                                            transformation=transformation,
                                            inverse=True)
 
