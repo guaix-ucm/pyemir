@@ -79,7 +79,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         frame = partial_result.frame
 
-        if accum is None:
+        if naccum >= 1 or accum is None:
             self.logger.debug('round %d initialize accumulator', naccum)
             newaccum = frame
         else:
