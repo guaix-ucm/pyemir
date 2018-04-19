@@ -375,6 +375,9 @@ def main(args=None):
     master_rectwv.quality_control = numina.types.qc.QC.GOOD
     master_rectwv.tags['grism'] = grism_name
     master_rectwv.tags['filter'] = filter_name
+    master_rectwv.meta_info['dtu_configuration'] = outdict['dtu_configuration']
+    master_rectwv.meta_info['fitted_bound_param'] = \
+        outdict['fitted_bound_param']['contents']
     master_rectwv.total_slitlets = EMIR_NBARS
     master_rectwv.meta_info['origin'] = {
         'longslit_frames': ['uuid:' + list_json_longslits[ifile]['uuid']
@@ -382,13 +385,22 @@ def main(args=None):
     }
     for i in range(EMIR_NBARS):
         islitlet = i + 1
+        dumdict = {'islitlet': islitlet}
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         if cslitlet in outdict['contents']:
-            dumdict = {'islitlet': islitlet}
             dumdict.update(outdict['contents'][cslitlet])
-            master_rectwv.contents.append(dumdict)
         else:
+            dumdict.update({
+                'bb_nc1_orig': 0,
+                'bb_nc2_orig': 0,
+                'ymargin_bb': 0,
+                'list_csu_bar_slit_center': [],
+                'ttd_order': 0,
+                'ncoef_rect': 0,
+                'wpolydegree': 0
+            })
             master_rectwv.missing_slitlets.append(islitlet)
+        master_rectwv.contents.append(dumdict)
     master_rectwv.writeto(args.out_MOSlibrary.name)
     print('>>> Saving file ' + args.out_MOSlibrary.name)
     # debugging __getstate__ and __setstate__
