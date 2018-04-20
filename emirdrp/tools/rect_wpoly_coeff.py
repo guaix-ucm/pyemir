@@ -51,6 +51,7 @@ import numina.types.qc
 from numina.tools.test_setstate_getstate import test_setstate_getstate
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.products import RefinedBoundaryModelParam
 from emirdrp.products import RectWaveCoeff
 
 from .fit_boundaries import bound_params_from_dict
@@ -1382,9 +1383,10 @@ def main(args=None):
         pause_debugplot(args.debugplot)
 
     # read fitted boundary parameters
-    fitted_bound_param = json.loads(open(args.fitted_bound_param.name).read())
-    parmodel = fitted_bound_param['meta-info']['parmodel']
-    params = bound_params_from_dict(fitted_bound_param)
+    fitted_bound_param = RefinedBoundaryModelParam._datatype_load(
+        args.fitted_bound_param.name)
+    parmodel = fitted_bound_param.meta_info['parmodel']
+    params = bound_params_from_dict(fitted_bound_param.__getstate__())
     if abs(args.debugplot) >= 10:
         print('-' * 83)
         print('* FITTED BOUND PARAMETERS')
@@ -1397,8 +1399,8 @@ def main(args=None):
         image2d = interpolate_bad_rows(hdulist[0].data)
 
     # read filter and grism names
-    grism_name = fitted_bound_param['tags']['grism']
-    filter_name = fitted_bound_param['tags']['filter']
+    grism_name = fitted_bound_param.tags['grism']
+    filter_name = fitted_bound_param.tags['filter']
     if filter_name not in EMIR_VALID_FILTERS:
         raise ValueError('Unexpected filter_name:', filter_name)
     if grism_name not in EMIR_VALID_GRISMS:
@@ -1659,7 +1661,7 @@ def main(args=None):
     outdict['meta-info']['recipe_name'] = 'undefined'
     outdict['meta-info']['origin'] = {}
     outdict['meta-info']['origin']['fitted_bound_param_uuid'] = \
-        fitted_bound_param['uuid']
+        fitted_bound_param.uuid
     outdict['meta-info']['origin']['arc_image_uuid'] = 'undefined'
     outdict['tags'] = {}
     outdict['tags']['grism'] = grism_name
