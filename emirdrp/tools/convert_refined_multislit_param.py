@@ -25,6 +25,7 @@ import json
 import sys
 
 from numina.tools.arg_file_is_new import arg_file_is_new
+from numina.tools.test_setstate_getstate import test_setstate_getstate
 import numina.types.qc
 from emirdrp.products import RefinedBoundaryModelParam
 
@@ -79,7 +80,7 @@ def main(args=None):
     refined_boundary_model.quality_control = numina.types.qc.QC.GOOD
     refined_boundary_model.writeto(args.output_json.name)
     # debugging __getstate__ and __setstate__
-    refined_boundary_model._autotest('EMIR', args.output_json.name)
+    # test_setstate_getstate(refined_boundary_model, args.output_json.name)
 
 
 if __name__ == "__main__":
