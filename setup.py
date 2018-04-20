@@ -43,6 +43,8 @@ setup(name='pyemir',
                   'emirdrp.tools.apply_rect_wpoly:main',
               'pyemir-continuum_flatfield = ' +
                   'emirdrp.tools.continuum_flatfield:main',
+              'pyemir-convert_refined_multislit_param = ' +
+                  'emirdrp.tools.convert_refined_multislit_param:main',
               'pyemir-display_slitlet_arrangement = ' +
                   'emirdrp.tools.display_slitlet_arrangement:main',
               'pyemir-evaluate_rect_wpoly = ' +

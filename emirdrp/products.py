@@ -296,37 +296,34 @@ class LinesCatalog(DataProductType):
         super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
 
 
-class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
-    """Rectification and Wavelength Calibration Library Product
+class RefinedBoundaryModelParam(numina.types.structured.BaseStructuredCalibration):
+    """Refined parameters of MOS model
     """
     def __init__(self, instrument='unknown'):
-        super(MasterRectWave, self).__init__(instrument)
+        super(RefinedBoundaryModelParam, self).__init__(instrument)
         self.tags = {
             'grism': "unknown",
             'filter': "unknown"
         }
-        self.total_slitlets = 0
-        self.missing_slitlets = []
         self.contents = []
 
     def __getstate__(self):
-        state = super(MasterRectWave, self).__getstate__()
-
-        keys = ['total_slitlets', 'missing_slitlets']
-        for key in keys:
-            state[key] = self.__dict__[key]
-
+        state = super(RefinedBoundaryModelParam, self).__getstate__()
         state['contents'] = self.contents.copy()
         return state
 
     def __setstate__(self, state):
-        super(MasterRectWave, self).__setstate__(state)
-
-        keys = ['total_slitlets', 'missing_slitlets']
-        for key in keys:
-            self.__dict__[key] = state[key]
-
+        super(RefinedBoundaryModelParam, self).__setstate__(state)
         self.contents = state['contents'].copy()
+
+    def _autotest(self, instrument, json_file_name):
+        # concatenate __getstate__ and __setstate__
+        tmpobject = RefinedBoundaryModelParam(instrument=instrument)
+        tmpobject.__setstate__(self.__getstate__())
+        tmpobject.writeto(json_file_name + '_bis')
+        # load data from input JSON file and save them again
+        tmpobject2 = RefinedBoundaryModelParam._datatype_load(json_file_name)
+        tmpobject2.writeto(json_file_name + '_bis2')
 
 
 class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
@@ -354,6 +351,39 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
 
     def __setstate__(self, state):
         super(RectWaveCoeff, self).__setstate__(state)
+
+        keys = ['total_slitlets', 'missing_slitlets']
+        for key in keys:
+            self.__dict__[key] = state[key]
+
+        self.contents = state['contents'].copy()
+
+
+class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
+    """Rectification and Wavelength Calibration Library Product
+    """
+    def __init__(self, instrument='unknown'):
+        super(MasterRectWave, self).__init__(instrument)
+        self.tags = {
+            'grism': "unknown",
+            'filter': "unknown"
+        }
+        self.total_slitlets = 0
+        self.missing_slitlets = []
+        self.contents = []
+
+    def __getstate__(self):
+        state = super(MasterRectWave, self).__getstate__()
+
+        keys = ['total_slitlets', 'missing_slitlets']
+        for key in keys:
+            state[key] = self.__dict__[key]
+
+        state['contents'] = self.contents.copy()
+        return state
+
+    def __setstate__(self, state):
+        super(MasterRectWave, self).__setstate__(state)
 
         keys = ['total_slitlets', 'missing_slitlets']
         for key in keys:
