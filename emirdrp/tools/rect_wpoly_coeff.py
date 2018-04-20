@@ -48,6 +48,7 @@ from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.array.wavecalib.peaks_spectrum import find_peaks_spectrum
 from numina.array.wavecalib.peaks_spectrum import refine_peaks_spectrum
 import numina.types.qc
+from numina.tools.test_setstate_getstate import test_setstate_getstate
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import RectWaveCoeff
@@ -1797,15 +1798,7 @@ def main(args=None):
     rectwv_coeff.writeto(args.out_json.name)
     print('>>> Saving file ' + args.out_json.name)
     # debugging __getstate__ and __setstate__
-    if False:
-        # 1) concatenate __getstate__ and __setstate__
-        rectwv_coeff_bis = RectWaveCoeff(instrument='EMIR')
-        rectwv_coeff_bis.__setstate__(rectwv_coeff.__getstate__())
-        rectwv_coeff_bis.writeto(args.out_json.name + '_bis')
-        # 2) load data from JSON file and save again in a different JSON file
-        rectwv_coeff_bis2 = RectWaveCoeff._datatype_load(
-            args.out_json.name)
-        rectwv_coeff_bis2.writeto(args.out_json.name + '_bis2')
+    # test_setstate_getstate(rectwv_coeff, args.out_json)
 
     # ---
 

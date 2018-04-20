@@ -29,6 +29,7 @@ from uuid import uuid4
 from numina.array.display.fileinfo import list_fileinfo_from_txt
 from numina.array.distortion import ncoef_fmap
 from numina.tools.arg_file_is_new import arg_file_is_new
+from numina.tools.test_setstate_getstate import test_setstate_getstate
 import numina.types.qc
 
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
@@ -404,15 +405,7 @@ def main(args=None):
     master_rectwv.writeto(args.out_MOSlibrary.name)
     print('>>> Saving file ' + args.out_MOSlibrary.name)
     # debugging __getstate__ and __setstate__
-    if False:
-        # 1) concatenate __getstate__ and __setstate__
-        master_rectwv_bis = MasterRectWave(instrument='EMIR')
-        master_rectwv_bis.__setstate__(master_rectwv.__getstate__())
-        master_rectwv_bis.writeto(args.out_MOSlibrary.name + '_bis')
-        # 2) load data from JSON file and save again in a different JSON file
-        master_rectwv_bis2 = MasterRectWave._datatype_load(
-            args.out_MOSlibrary.name)
-        master_rectwv_bis2.writeto(args.out_MOSlibrary.name + '_bis2')
+    # test_setstate_getstate(master_rectwv, args.out_MOSlibrary.name)
 
 
 if __name__ == "__main__":
