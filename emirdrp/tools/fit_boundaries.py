@@ -72,11 +72,11 @@ def integrity_check(bounddict, max_dtu_offset):
 
     """
 
-    if 'meta-info' not in bounddict.keys():
-        raise ValueError('"meta-info" not found in JSON file')
-    if 'description' not in bounddict['meta-info'].keys():
+    if 'meta_info' not in bounddict.keys():
+        raise ValueError('"meta_info" not found in JSON file')
+    if 'description' not in bounddict['meta_info'].keys():
         raise ValueError('"description" not found in JSON file')
-    if bounddict['meta-info']['description'] != \
+    if bounddict['meta_info']['description'] != \
             'slitlet boundaries from fits to continuum-lamp exposures':
         raise ValueError('Unexpected "description" in JSON file')
 
@@ -1197,11 +1197,11 @@ def bound_params_from_dict(bound_param_dict):
     for mainpar in EXPECTED_PARAMETER_LIST:
         if mainpar not in bound_param_dict['contents'].keys():
             raise ValueError('Parameter ' + mainpar + ' not found!')
-        if bound_param_dict['meta-info']['parmodel'] == "longslit":
+        if bound_param_dict['meta_info']['parmodel'] == "longslit":
             dumdict = bound_param_dict['contents'][mainpar]
             params.add(mainpar, value=dumdict["value"],
                        vary=dumdict["vary"])
-        elif bound_param_dict['meta-info']['parmodel'] == 'multislit':
+        elif bound_param_dict['meta_info']['parmodel'] == 'multislit':
             for subpar in ['a0s', 'a1s', 'a2s']:
                 if subpar not in bound_param_dict['contents'][mainpar].keys():
                     raise ValueError('Subparameter ' + subpar + ' not found' +
@@ -1211,7 +1211,7 @@ def bound_params_from_dict(bound_param_dict):
                 params.add(cpar, value=dumdict["value"],
                            vary=dumdict["vary"])
         else:
-            print('parmodel: ', bound_param_dict['meta-info']['parmodel'])
+            print('parmodel: ', bound_param_dict['meta_info']['parmodel'])
             raise ValueError('Unexpected parmodel')
     return params
 
@@ -1326,7 +1326,7 @@ def main(args=None):
     islitlet_min = init_bound_param['tags']['islitlet_min']
     islitlet_max = init_bound_param['tags']['islitlet_max']
     # check that parameter model is correct
-    parmodel_ = init_bound_param['meta-info']['parmodel']
+    parmodel_ = init_bound_param['meta_info']['parmodel']
     if args.parmodel != parmodel_:
         raise ValueError("Unexpected parmodel: ", parmodel_,
                          " in file ", args.init_bound_param.name)
@@ -1375,19 +1375,19 @@ def main(args=None):
                                         'ds9_fittedpar.reg')
 
     fitted_bound_param = deepcopy(init_bound_param)
-    fitted_bound_param['meta-info']['creation_date'] = \
+    fitted_bound_param['meta_info']['creation_date'] = \
         datetime.now().isoformat()
-    fitted_bound_param['meta-info']['description'] \
+    fitted_bound_param['meta_info']['description'] \
         = "fitted boundary parameters"
-    fitted_bound_param['meta-info']['function_evaluations'] = result.nfev
-    fitted_bound_param['meta-info']['global_residual'] = global_residual
-    fitted_bound_param['meta-info']['numresolution'] = args.numresolution
-    fitted_bound_param['meta-info']['tolerance'] = args.tolerance
-    fitted_bound_param['meta-info']['maxDTUoffset'] = args.maxDTUoffset
-    fitted_bound_param['meta-info']['origin'] = {}
-    fitted_bound_param['meta-info']['origin']['bounddict_uuid'] = \
+    fitted_bound_param['meta_info']['function_evaluations'] = result.nfev
+    fitted_bound_param['meta_info']['global_residual'] = global_residual
+    fitted_bound_param['meta_info']['numresolution'] = args.numresolution
+    fitted_bound_param['meta_info']['tolerance'] = args.tolerance
+    fitted_bound_param['meta_info']['maxDTUoffset'] = args.maxDTUoffset
+    fitted_bound_param['meta_info']['origin'] = {}
+    fitted_bound_param['meta_info']['origin']['bounddict_uuid'] = \
         bounddict['uuid']
-    fitted_bound_param['meta-info']['origin']['init_bound_param_uuid'] = \
+    fitted_bound_param['meta_info']['origin']['init_bound_param_uuid'] = \
         init_bound_param['uuid']
     fitted_bound_param['dtu_configuration'] = \
         averaged_dtu_configuration.outdict()
@@ -1410,7 +1410,7 @@ def main(args=None):
                 if islitlet_min <= islitlet <= islitlet_max:
                     dumlist.append(csu_bar_slit_center)
             median_csu_bar_slit_center = np.median(np.array(dumlist))
-            fitted_bound_param['meta-info']['median_csu_bar_slit_center']\
+            fitted_bound_param['meta_info']['median_csu_bar_slit_center']\
                 = median_csu_bar_slit_center
         else:
             for subpar in ['a0s', 'a1s', 'a2s']:

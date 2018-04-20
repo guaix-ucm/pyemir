@@ -72,11 +72,11 @@ def main(args=None):
         input_json['dtu_configuration_maxdiff']
     for item in ['function_evaluations', 'global_residual', 'maxDTUoffset',
                  'numresolution', 'parmodel', 'tolerance']:
-        refined_boundary_model.meta_info[item] = input_json['meta-info'][item]
+        refined_boundary_model.meta_info[item] = input_json['meta_info'][item]
     refined_boundary_model.meta_info['origin']['bounddict'] = \
-        'uuid:' + input_json['meta-info']['origin']['bounddict_uuid']
+        'uuid:' + input_json['meta_info']['origin']['bounddict_uuid']
     refined_boundary_model.meta_info['origin']['init_bound_param'] = \
-        'uuid:' + input_json['meta-info']['origin']['init_bound_param_uuid']
+        'uuid:' + input_json['meta_info']['origin']['init_bound_param_uuid']
     refined_boundary_model.quality_control = numina.types.qc.QC.GOOD
     refined_boundary_model.writeto(args.output_json.name)
     # debugging __getstate__ and __setstate__
