@@ -374,8 +374,12 @@ def main(args=None):
     master_rectwv.tags['grism'] = grism_name
     master_rectwv.tags['filter'] = filter_name
     master_rectwv.meta_info['dtu_configuration'] = outdict['dtu_configuration']
-    master_rectwv.meta_info['refined_boundary_model'] = \
+    master_rectwv.meta_info['refined_boundary_model'] = {
+        'parmodel': refined_boundary_model.meta_info['parmodel']
+    }
+    master_rectwv.meta_info['refined_boundary_model'].update(
         outdict['refined_boundary_model']['contents']
+    )
     master_rectwv.total_slitlets = EMIR_NBARS
     master_rectwv.meta_info['origin'] = {
         'bound_param': 'uuid' + refined_boundary_model.uuid,
