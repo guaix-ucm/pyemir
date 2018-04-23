@@ -378,6 +378,7 @@ def main(args=None):
         outdict['refined_boundary_model']['contents']
     master_rectwv.total_slitlets = EMIR_NBARS
     master_rectwv.meta_info['origin'] = {
+        'bound_param': 'uuid' + refined_boundary_model.uuid,
         'longslit_frames': ['uuid:' + list_coef_rect_wpoly[ifile].uuid
                             for ifile in range(nfiles)]
     }
