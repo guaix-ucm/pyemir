@@ -28,7 +28,7 @@ from uuid import uuid4
 from numina.array.display.fileinfo import list_fileinfo_from_txt
 from numina.array.distortion import ncoef_fmap
 from numina.tools.arg_file_is_new import arg_file_is_new
-from numina.tools.test_setstate_getstate import test_setstate_getstate
+from numina.tools.check_setstate_getstate import check_setstate_getstate
 import numina.types.qc
 
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
@@ -406,7 +406,7 @@ def main(args=None):
     master_rectwv.writeto(args.out_MOSlibrary.name)
     print('>>> Saving file ' + args.out_MOSlibrary.name)
     # debugging __getstate__ and __setstate__
-    # test_setstate_getstate(master_rectwv, args.out_MOSlibrary.name)
+    # check_setstate_getstate(master_rectwv, args.out_MOSlibrary.name)
 
 
 if __name__ == "__main__":

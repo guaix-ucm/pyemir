@@ -48,7 +48,7 @@ from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.array.wavecalib.peaks_spectrum import find_peaks_spectrum
 from numina.array.wavecalib.peaks_spectrum import refine_peaks_spectrum
 import numina.types.qc
-from numina.tools.test_setstate_getstate import test_setstate_getstate
+from numina.tools.check_setstate_getstate import check_setstate_getstate
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import RefinedBoundaryModelParam
@@ -1802,7 +1802,7 @@ def main(args=None):
     rectwv_coeff.writeto(args.out_json.name)
     print('>>> Saving file ' + args.out_json.name)
     # debugging __getstate__ and __setstate__
-    # test_setstate_getstate(rectwv_coeff, args.out_json.name)
+    # check_setstate_getstate(rectwv_coeff, args.out_json.name)
 
     # ---
 

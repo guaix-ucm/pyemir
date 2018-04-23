@@ -33,7 +33,7 @@ from numina.array.display.polfit_residuals import \
 from numina.array.distortion import ncoef_fmap
 from numina.array.stats import summary
 from numina.tools.arg_file_is_new import arg_file_is_new
-from numina.tools.test_setstate_getstate import test_setstate_getstate
+from numina.tools.check_setstate_getstate import check_setstate_getstate
 
 from emirdrp.products import RectWaveCoeff
 from emirdrp.tools.set_wv_parameters import set_wv_parameters
@@ -301,7 +301,7 @@ def main(args=None):
     coef_rect_wpoly.writeto(args.output_coef_rect_wpoly.name)
     print('>>> Saving file ' + args.output_coef_rect_wpoly.name)
     # debugging __getstate__ and __setstate__
-    # test_setstate_getstate(coef_rect_wpoly, args.output_coef_rect_wpoly.name)
+    # check_setstate_getstate(coef_rect_wpoly, args.output_coef_rect_wpoly.name)
 
 
 if __name__ == "__main__":

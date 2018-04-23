@@ -39,7 +39,7 @@ from .rect_wpoly_for_mos import islitlet_progress
 from numina.array.distortion import ncoef_fmap
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from numina.tools.arg_file_is_new import arg_file_is_new
-from numina.tools.test_setstate_getstate import test_setstate_getstate
+from numina.tools.check_setstate_getstate import check_setstate_getstate
 import numina.types.qc
 
 from emirdrp.products import RectWaveCoeff
@@ -370,7 +370,7 @@ def main(args=None):
     rectwv_coeff.writeto(args.out_rect_wpoly.name)
     print('>>> Saving file ' + args.out_rect_wpoly.name)
     # debugging __getstate__ and __setstate__
-    # test_setstate_getstate(rectwv_coeff, args.out_rect_wpoly.name)
+    # check_setstate_getstate(rectwv_coeff, args.out_rect_wpoly.name)
 
 
 if __name__ == "__main__":
