@@ -22,7 +22,6 @@ from __future__ import print_function
 
 import argparse
 from astropy.io import fits
-import json
 import numpy as np
 import sys
 
@@ -34,12 +33,14 @@ from numina.array.wavecalib.resample import resample_image2d_flux
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.products import RectWaveCoeff
 
 from .nscan_minmax_frontiers import nscan_minmax_frontiers
 from .rect_wpoly_for_mos import islitlet_progress
 from .save_ndarray_to_fits import save_ndarray_to_fits
 from .set_wv_parameters import set_wv_parameters
 
+from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
 
@@ -53,8 +54,8 @@ class Slitlet2D(object):
     ----------
     islitlet : int
         Slitlet number.
-    megadict : dictionary
-        Python dictionary storing the JSON input file where the
+    coef_rect_wpoly : instance of RectWaveCoeff
+        Object storing the JSON input file where the
         the rectification and wavelength calibration transformations
         for a particular instrument configuration are stored.
     debugplot : int
@@ -141,12 +142,11 @@ class Slitlet2D(object):
 
     """
 
-    def __init__(self, islitlet, megadict, debugplot):
+    def __init__(self, islitlet, coef_rect_wpoly, debugplot):
         # slitlet number
         self.islitlet = islitlet
-        cslitlet = 'slitlet' + str(islitlet).zfill(2)
 
-        tmpcontent = megadict['contents'][cslitlet]
+        tmpcontent = coef_rect_wpoly.contents[islitlet-1]
 
         # csu configuration
         self.csu_bar_left = tmpcontent['csu_bar_left']
@@ -451,7 +451,8 @@ def main(args=None):
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # read calibration structure from JSON file
-    rect_wpoly_dict = json.loads(open(args.coef_rect_wpoly.name).read())
+    coef_rect_wpoly = RectWaveCoeff._datatype_load(
+        args.coef_rect_wpoly.name)
 
     # read FITS image and its corresponding header
     hdulist = fits.open(args.fitsfile)
@@ -471,10 +472,10 @@ def main(args=None):
 
     # check that the input FITS file grism and filter match
     filter_name = header['filter']
-    if filter_name != rect_wpoly_dict['tags']['filter']:
+    if filter_name != coef_rect_wpoly.tags['filter']:
         raise ValueError("Filter name does not match!")
     grism_name = header['grism']
-    if grism_name != rect_wpoly_dict['tags']['grism']:
+    if grism_name != coef_rect_wpoly.tags['grism']:
         raise ValueError("Filter name does not match!")
     if abs(args.debugplot) >= 10:
         print('>>> grism.......:', grism_name)
@@ -483,7 +484,7 @@ def main(args=None):
     # check that the DTU configurations are compatible
     dtu_conf_fitsfile = DtuConfiguration.define_from_fits(args.fitsfile)
     dtu_conf_jsonfile = DtuConfiguration.define_from_dictionary(
-        rect_wpoly_dict['dtu_configuration'])
+        coef_rect_wpoly.meta_info['dtu_configuration'])
     if dtu_conf_fitsfile != dtu_conf_jsonfile:
         print('DTU configuration (FITS file):\n\t', dtu_conf_fitsfile)
         print('DTU configuration (JSON file):\n\t', dtu_conf_jsonfile)
@@ -497,11 +498,11 @@ def main(args=None):
             print(dtu_conf_fitsfile)
 
     # read islitlet_min and islitlet_max from input JSON file
-    islitlet_min = rect_wpoly_dict['tags']['islitlet_min']
-    islitlet_max = rect_wpoly_dict['tags']['islitlet_max']
+    list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
+    for idel in coef_rect_wpoly.missing_slitlets:
+        list_valid_islitlets.remove(idel)
     if abs(args.debugplot) >= 10:
-        print('>>> islitlet_min:', islitlet_min)
-        print('>>> islitlet_max:', islitlet_max)
+        print('>>> valid slitlet numbers:\n', list_valid_islitlets)
 
     # ---
 
@@ -509,13 +510,13 @@ def main(args=None):
         image2d_rectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
         image2d_unrectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
 
-        for islitlet in range(islitlet_min, islitlet_max + 1):
+        for islitlet in list_valid_islitlets:
             if args.debugplot == 0:
-                islitlet_progress(islitlet, islitlet_max)
+                islitlet_progress(islitlet, EMIR_NBARS)
 
             # define Slitlet2D object
             slt = Slitlet2D(islitlet=islitlet,
-                            megadict=rect_wpoly_dict,
+                            coef_rect_wpoly=coef_rect_wpoly,
                             debugplot=args.debugplot)
 
             # minimum and maximum useful scan (pixel in the spatial direction)
@@ -570,17 +571,18 @@ def main(args=None):
 
     # main loop
     import time  # TODO: remove this and print(time.ctime()) below
-    for islitlet in range(islitlet_min, islitlet_max + 1):
+    for islitlet in list_valid_islitlets:
         if args.debugplot == 0:
-            if islitlet == islitlet_min:
+            if islitlet == list_valid_islitlets[0]:
                 print(time.ctime())
-            islitlet_progress(islitlet, islitlet_max)
-            if islitlet == islitlet_max:
+            islitlet_progress(islitlet, EMIR_NBARS)
+            if islitlet == list_valid_islitlets[-1]:
+                print(' ')
                 print(time.ctime())
 
         # define Slitlet2D object
         slt = Slitlet2D(islitlet=islitlet,
-                        megadict=rect_wpoly_dict,
+                        coef_rect_wpoly=coef_rect_wpoly,
                         debugplot=args.debugplot)
 
         if abs(args.debugplot) >= 10:
@@ -622,7 +624,7 @@ def main(args=None):
     # modify upper limit of previous slitlet in case of overlapping:
     # note that the overlapped scans have been overwritten with the
     # information from the current slitlet!
-    for islitlet in range(islitlet_min, islitlet_max + 1):
+    for islitlet in list_valid_islitlets:
         cprevious = 'SLTMAX' + str(islitlet - 1).zfill(2)
         if cprevious in header.keys():
             sltmax_previous = header[cprevious]
