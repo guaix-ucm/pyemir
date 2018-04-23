@@ -33,10 +33,13 @@ from numina.array.display.polfit_residuals import \
 from numina.array.distortion import ncoef_fmap
 from numina.array.stats import summary
 from numina.tools.arg_file_is_new import arg_file_is_new
+from numina.tools.test_setstate_getstate import test_setstate_getstate
 
-from .set_wv_parameters import set_wv_parameters
+from emirdrp.products import RectWaveCoeff
+from emirdrp.tools.set_wv_parameters import set_wv_parameters
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
+from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_VALID_FILTERS
 from emirdrp.core import EMIR_VALID_GRISMS
 
@@ -54,7 +57,7 @@ def main(args=None):
     parser.add_argument("--output_coef_rect_wpoly", required=True,
                         help="Output JSON file with updated longslit_model "
                              "coefficients",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wt'))
 
     # optional arguments
     parser.add_argument("--geometry",
@@ -87,11 +90,12 @@ def main(args=None):
         geometry = x_geom, y_geom, dx_geom, dy_geom
 
     # read input calibration structure from JSON file
-    rect_wpoly_dict = json.loads(open(args.input_coef_rect_wpoly.name).read())
+    coef_rect_wpoly = RectWaveCoeff._datatype_load(
+        args.input_coef_rect_wpoly.name)
 
     # read filter and grism names
-    grism_name = rect_wpoly_dict['tags']['grism']
-    filter_name = rect_wpoly_dict['tags']['filter']
+    grism_name = coef_rect_wpoly.tags['grism']
+    filter_name = coef_rect_wpoly.tags['filter']
     if filter_name not in EMIR_VALID_FILTERS:
         raise ValueError('Unexpected filter_name:', filter_name)
     if grism_name not in EMIR_VALID_GRISMS:
@@ -103,16 +107,19 @@ def main(args=None):
     islitlet_max = wv_parameters['islitlet_max']
 
     # list of slitlets to be computed
-    list_slitlets = range(islitlet_min, islitlet_max + 1)
+    list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
+    for idel in coef_rect_wpoly.missing_slitlets:
+        list_valid_islitlets.remove(idel)
+    if abs(args.debugplot) >= 10:
+        print('>>> valid slitlet numbers:\n', list_valid_islitlets)
 
     # ---
 
     # check that the CSU configuration corresponds to longslit
     csu_bar_slit_center_list = []
-    for islitlet in list_slitlets:
-        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+    for islitlet in list_valid_islitlets:
         csu_bar_slit_center_list.append(
-            rect_wpoly_dict['contents'][cslitlet]['csu_bar_slit_center']
+            coef_rect_wpoly.contents[islitlet - 1]['csu_bar_slit_center']
         )
     if abs(args.debugplot) >= 10:
         print('* Checking csu_bar_slit_center values:')
@@ -126,10 +133,9 @@ def main(args=None):
     # step 0: determine poldeg_refined, checking that it is the same for
     # all the slitlets
     poldeg_refined_list = []
-    for islitlet in list_slitlets:
-        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+    for islitlet in list_valid_islitlets:
         poldeg_refined_list.append(
-            len(rect_wpoly_dict['contents'][cslitlet]['wpoly_coeff']) - 1
+            len(coef_rect_wpoly.contents[islitlet - 1]['wpoly_coeff']) - 1
         )
     # remove duplicates
     poldeg_refined_list = list(set(poldeg_refined_list))
@@ -143,9 +149,8 @@ def main(args=None):
     for i in range(poldeg_refined + 1):
         xp = []
         yp = []
-        for islitlet in list_slitlets:
-            cslitlet = 'slitlet' + str(islitlet).zfill(2)
-            tmp_dict = rect_wpoly_dict['contents'][cslitlet]
+        for islitlet in list_valid_islitlets:
+            tmp_dict = coef_rect_wpoly.contents[islitlet - 1]
             wpoly_coeff = tmp_dict['wpoly_coeff']
             if wpoly_coeff is not None:
                 xp.append(tmp_dict['y0_reference_middle'])
@@ -166,9 +171,8 @@ def main(args=None):
     # step 2: use the variation of each polynomial coefficient with
     # y0_reference_middle to infer the expected wavelength calibration
     # polynomial for each rectifified slitlet
-    for islitlet in list_slitlets:
-        cslitlet = 'slitlet' + str(islitlet).zfill(2)
-        tmp_dict = rect_wpoly_dict['contents'][cslitlet]
+    for islitlet in list_valid_islitlets:
+        tmp_dict = coef_rect_wpoly.contents[islitlet - 1]
         y0_reference_middle = tmp_dict['y0_reference_middle']
         list_new_coeff = []
         for i in range(poldeg_refined + 1):
@@ -183,10 +187,9 @@ def main(args=None):
     # step 0: determine order_fmap, checking that it is the same for
     # all the slitlets
     order_fmap_list = []
-    for islitlet in list_slitlets:
-        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+    for islitlet in list_valid_islitlets:
         order_fmap_list.append(
-            rect_wpoly_dict['contents'][cslitlet]['ttd_order']
+            coef_rect_wpoly.contents[islitlet - 1]['ttd_order']
         )
     # remove duplicates
     order_fmap_list = list(set(order_fmap_list))
@@ -207,9 +210,8 @@ def main(args=None):
         yp_ttd_bij = []
         yp_tti_aij = []
         yp_tti_bij = []
-        for islitlet in list_slitlets:
-            cslitlet = 'slitlet' + str(islitlet).zfill(2)
-            tmp_dict = rect_wpoly_dict['contents'][cslitlet]
+        for islitlet in list_valid_islitlets:
+            tmp_dict = coef_rect_wpoly.contents[islitlet - 1]
             ttd_aij = tmp_dict['ttd_aij']
             ttd_bij = tmp_dict['ttd_bij']
             tti_aij = tmp_dict['tti_aij']
@@ -267,9 +269,8 @@ def main(args=None):
 
     # step 2: use the variation of each coefficient with y0_reference_middle
     # to infer the expected rectification transformation for each slitlet
-    for islitlet in list_slitlets:
-        cslitlet = 'slitlet' + str(islitlet).zfill(2)
-        tmp_dict = rect_wpoly_dict['contents'][cslitlet]
+    for islitlet in list_valid_islitlets:
+        tmp_dict = coef_rect_wpoly.contents[islitlet - 1]
         y0_reference_middle = tmp_dict['y0_reference_middle']
         tmp_dict['ttd_order_longslit_model'] = order_fmap
         ttd_aij_longslit_model = []
@@ -292,21 +293,15 @@ def main(args=None):
 
     # ---
 
-    # update origin info before overwriting initial uuid
-    rect_wpoly_dict['meta-info']['origin']['input_coef_rect_wpoly_uuid'] = \
-        rect_wpoly_dict['uuid']
     # update uuid and meta-info in output JSON structure
-    rect_wpoly_dict['uuid'] = str(uuid4())
-    rect_wpoly_dict['meta-info']['creation_date'] = datetime.now().isoformat()
-    rect_wpoly_dict['meta-info']['description'] = \
-        'interpolation of rectification and wavelength calibration ' \
-        'polynomial coefficients for a particular CSU configuration ' \
-        'using a longslit model'
+    coef_rect_wpoly.uuid = str(uuid4())
+    coef_rect_wpoly.meta_info['creation_date'] = datetime.now().isoformat()
 
     # save updated JSON file
-    with open(args.output_coef_rect_wpoly.name, 'w') as fstream:
-        json.dump(rect_wpoly_dict, fstream, indent=2, sort_keys=True)
-        print('>>> Saving file ' + args.output_coef_rect_wpoly.name)
+    coef_rect_wpoly.writeto(args.output_coef_rect_wpoly.name)
+    print('>>> Saving file ' + args.output_coef_rect_wpoly.name)
+    # debugging __getstate__ and __setstate__
+    # test_setstate_getstate(coef_rect_wpoly, args.output_coef_rect_wpoly.name)
 
 
 if __name__ == "__main__":

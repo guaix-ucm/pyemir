@@ -1800,7 +1800,7 @@ def main(args=None):
     rectwv_coeff.writeto(args.out_json.name)
     print('>>> Saving file ' + args.out_json.name)
     # debugging __getstate__ and __setstate__
-    # test_setstate_getstate(rectwv_coeff, args.out_json)
+    # test_setstate_getstate(rectwv_coeff, args.out_json.name)
 
     # ---
 
