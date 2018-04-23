@@ -23,7 +23,6 @@ from __future__ import print_function
 import argparse
 from astropy.io import fits
 from datetime import datetime
-import json
 import numpy as np
 from scipy.interpolate import interp1d
 import sys
@@ -371,7 +370,7 @@ def main(args=None):
     rectwv_coeff.writeto(args.out_rect_wpoly.name)
     print('>>> Saving file ' + args.out_rect_wpoly.name)
     # debugging __getstate__ and __setstate__
-    test_setstate_getstate(rectwv_coeff, args.out_rect_wpoly.name)
+    # test_setstate_getstate(rectwv_coeff, args.out_rect_wpoly.name)
 
 
 if __name__ == "__main__":

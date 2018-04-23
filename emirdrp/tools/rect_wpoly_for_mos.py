@@ -22,7 +22,6 @@ from __future__ import print_function
 
 import argparse
 from datetime import datetime
-import json
 import sys
 from uuid import uuid4
 
@@ -312,13 +311,13 @@ def main(args=None):
                             raise ValueError("Unexpected cij_modeled=None!")
                         else:
                             list_cij.append(cij_modeled[icoef])
-                        if abs(args.debugplot)  >= 10:
+                        if abs(args.debugplot) >= 10:
                             print("Warning: using " + keycoef +
                                   "_longslit_model for " + cslitlet +
                                   " in file " +
                                   list_json_files[ifile].filename)
-                outdict['contents'][cslitlet]['list_' + keycoef + '_' + ccoef] \
-                    = list_cij
+                cdum = 'list_' + keycoef + '_' + ccoef
+                outdict['contents'][cslitlet][cdum] = list_cij
     print('OK!')
 
     # ---
