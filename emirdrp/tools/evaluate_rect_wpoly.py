@@ -39,11 +39,16 @@ from .rect_wpoly_for_mos import islitlet_progress
 
 from numina.array.distortion import ncoef_fmap
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
-from numina.array.distortion import order_fmap
 from numina.tools.arg_file_is_new import arg_file_is_new
+from numina.tools.test_setstate_getstate import test_setstate_getstate
+import numina.types.qc
+
+from emirdrp.products import RectWaveCoeff
+from emirdrp.products import MasterRectWave
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
+from emirdrp.core import EMIR_NBARS
 
 
 def main(args=None):
@@ -65,7 +70,7 @@ def main(args=None):
     parser.add_argument("--out_rect_wpoly", required=True,
                         help="Output JSON file with calibration computed for "
                              "the input FITS file",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wt'))
     # optional arguments
     parser.add_argument("--ignore_DTUconf",
                         help="Ignore DTU configurations differences between "
@@ -92,11 +97,12 @@ def main(args=None):
     # read the DTU configuration from the header of the input FITS file
     dtu_conf = DtuConfiguration.define_from_fits(args.fitsfile)
 
-    # read calibration structure from JSON file
-    rect_wpoly_dict = json.loads(open(args.rect_wpoly_MOSlibrary.name).read())
+    # read master calibration structure from JSON file
+    master_rectwv = MasterRectWave._datatype_load(
+        args.rect_wpoly_MOSlibrary.name)
 
     dtu_conf_calib = DtuConfiguration.define_from_dictionary(
-        rect_wpoly_dict['dtu_configuration'])
+        master_rectwv.meta_info['dtu_configuration'])
     # check that the DTU configuration employed to obtain the calibration
     # corresponds to the DTU configuration in the input FITS file
     if dtu_conf != dtu_conf_calib:
@@ -129,21 +135,21 @@ def main(args=None):
 
     # check that the input FITS file grism and filter match
     filter_name = header['filter']
-    if filter_name != rect_wpoly_dict['tags']['filter']:
+    if filter_name != master_rectwv.tags['filter']:
         raise ValueError("Filter name does not match!")
     grism_name = header['grism']
-    if grism_name != rect_wpoly_dict['tags']['grism']:
+    if grism_name != master_rectwv.tags['grism']:
         raise ValueError("Filter name does not match!")
     if abs(args.debugplot) >= 10:
         print('>>> grism.......:', grism_name)
         print('>>> filter......:', filter_name)
 
-    # read islitlet_min and islitlet_max from input JSON file
-    islitlet_min = rect_wpoly_dict['tags']['islitlet_min']
-    islitlet_max = rect_wpoly_dict['tags']['islitlet_max']
+    # valid slitlet numbers
+    list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
+    for idel in master_rectwv.missing_slitlets:
+        list_valid_islitlets.remove(idel)
     if abs(args.debugplot) >= 10:
-        print('>>> islitlet_min:', islitlet_min)
-        print('>>> islitlet_max:', islitlet_max)
+        print('>>> valid slitlet numbers:', list_valid_islitlets)
 
     # Initialize structure to save results into an ouptut JSON file
     outdict = {}
@@ -157,29 +163,27 @@ def main(args=None):
     outdict['meta-info']['origin'] = {}
     outdict['meta-info']['origin']['fits_frame_uuid'] = 'TBD'
     outdict['meta-info']['origin']['rect_wpoly_mos_uuid'] = \
-        rect_wpoly_dict['uuid']
+        master_rectwv.uuid
     outdict['meta-info']['origin']['fitted_boundary_param_uuid'] = \
-        rect_wpoly_dict['fitted_bound_param']['uuid']
+        master_rectwv.meta_info['origin']['bound_param']
     outdict['tags'] = {}
     outdict['tags']['grism'] = grism_name
     outdict['tags']['filter'] = filter_name
-    outdict['tags']['islitlet_min'] = islitlet_min
-    outdict['tags']['islitlet_max'] = islitlet_max
     outdict['dtu_configuration'] = dtu_conf.outdict()
     outdict['uuid'] = str(uuid4())
     outdict['contents'] = {}
 
     # compute rectification and wavelength calibration coefficients for each
     # slitlet according to its csu_bar_slit_center value
-    for islitlet in range(islitlet_min, islitlet_max + 1):
-        islitlet_progress(islitlet, islitlet_max)
+    for islitlet in list_valid_islitlets:
+        islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
 
         # csu_bar_slit_center of current slitlet in initial FITS image
         csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
 
         # input data structure
-        tmpdict = rect_wpoly_dict['contents'][cslitlet]
+        tmpdict = master_rectwv.contents[islitlet - 1]
         list_csu_bar_slit_center = tmpdict['list_csu_bar_slit_center']
 
         # check extrapolations
@@ -251,17 +255,21 @@ def main(args=None):
             csu_conf.csu_bar_slit_center(islitlet)
         outdict['contents'][cslitlet]['csu_bar_slit_width'] = \
             csu_conf.csu_bar_slit_width(islitlet)
+    print('OK!')
 
     # for each slitlet compute spectrum trails and frontiers using the
     # fitted boundary parameters
-    fitted_bound_param = rect_wpoly_dict['fitted_bound_param']
-    parmodel = fitted_bound_param['meta-info']['parmodel']
-    params = bound_params_from_dict(fitted_bound_param)
+    fitted_bound_param_json = {
+        'contents': master_rectwv.meta_info['refined_boundary_model']
+    }
+    parmodel = fitted_bound_param_json['contents']['parmodel']
+    fitted_bound_param_json.update({'meta_info': {'parmodel': parmodel}})
+    params = bound_params_from_dict(fitted_bound_param_json)
     if abs(args.debugplot) >= 10:
         print('* Fitted boundary parameters:')
         params.pretty_print()
-    for islitlet in range(islitlet_min, islitlet_max + 1):
-        islitlet_progress(islitlet, islitlet_max)
+    for islitlet in list_valid_islitlets:
+        islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         # csu_bar_slit_center of current slitlet in initial FITS image
         csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
@@ -294,16 +302,17 @@ def main(args=None):
                 list_frontiers[idum].poly_funct.coef.tolist()
             outdict['contents'][cslitlet]['y0_frontier_' + cdum] = \
                 list_frontiers[idum].poly_funct(x0_reference)
+    print('OK!')
 
     # store bounding box parameters for each slitlet
     xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
-    for islitlet in range(islitlet_min, islitlet_max + 1):
-        islitlet_progress(islitlet, islitlet_max)
+    for islitlet in list_valid_islitlets:
+        islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         # parameters already available in the input JSON file
         for par in ['bb_nc1_orig', 'bb_nc2_orig', 'ymargin_bb']:
             outdict['contents'][cslitlet][par] = \
-                rect_wpoly_dict['contents'][cslitlet][par]
+                master_rectwv.contents[islitlet - 1][par]
         # estimate bb_ns1_orig and bb_ns2_orig using the already computed
         # frontiers and the value of ymargin_bb, following the same approach
         # employed in the script rect_wpoly_from_longslit; see
@@ -316,7 +325,7 @@ def main(args=None):
         )
         ylower = poly_lower_frontier(xdum)
         yupper = poly_upper_frontier(xdum)
-        ymargin_bb = rect_wpoly_dict['contents'][cslitlet]['ymargin_bb']
+        ymargin_bb = master_rectwv.contents[islitlet - 1]['ymargin_bb']
         bb_ns1_orig = int(ylower.min() + 0.5) - ymargin_bb
         if bb_ns1_orig < 1:
             bb_ns1_orig = 1
@@ -325,11 +334,44 @@ def main(args=None):
             bb_ns2_orig = EMIR_NAXIS2
         outdict['contents'][cslitlet]['bb_ns1_orig'] = bb_ns1_orig
         outdict['contents'][cslitlet]['bb_ns2_orig'] = bb_ns2_orig
+    print('OK!')
 
+    # OBSOLETE
+    '''
     # Save resulting JSON structure
     with open(args.out_rect_wpoly.name, 'w') as fstream:
         json.dump(outdict, fstream, indent=2, sort_keys=True)
         print('>>> Saving file ' + args.out_rect_wpoly.name)
+    '''
+
+    # ---
+
+    # Create object of type RectWaveCoeff with coefficients for
+    # rectification and wavelength calibration
+    rectwv_coeff = RectWaveCoeff(instrument='EMIR')
+    rectwv_coeff.quality_control = numina.types.qc.QC.GOOD
+    rectwv_coeff.tags['grism'] = grism_name
+    rectwv_coeff.tags['filter'] = filter_name
+    rectwv_coeff.meta_info['origin']['bound_param'] = \
+        master_rectwv.meta_info['origin']['bound_param']
+    rectwv_coeff.meta_info['dtu_configuration'] = outdict['dtu_configuration']
+    rectwv_coeff.total_slitlets = EMIR_NBARS
+    for i in range(EMIR_NBARS):
+        islitlet = i + 1
+        dumdict = {'islitlet': islitlet}
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        if cslitlet in outdict['contents']:
+            dumdict.update(outdict['contents'][cslitlet])
+        else:
+            dumdict.update({
+                'ttd_order': 0
+            })
+            rectwv_coeff.missing_slitlets.append(islitlet)
+        rectwv_coeff.contents.append(dumdict)
+    rectwv_coeff.writeto(args.out_rect_wpoly.name)
+    print('>>> Saving file ' + args.out_rect_wpoly.name)
+    # debugging __getstate__ and __setstate__
+    test_setstate_getstate(rectwv_coeff, args.out_rect_wpoly.name)
 
 
 if __name__ == "__main__":
