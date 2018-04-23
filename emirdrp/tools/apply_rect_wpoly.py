@@ -497,7 +497,7 @@ def main(args=None):
             print('>>> DTU Configuration match!')
             print(dtu_conf_fitsfile)
 
-    # read islitlet_min and islitlet_max from input JSON file
+    # valid slitlet numbers
     list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
     for idel in coef_rect_wpoly.missing_slitlets:
         list_valid_islitlets.remove(idel)

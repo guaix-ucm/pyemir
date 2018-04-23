@@ -31,14 +31,16 @@ from numina.array.display.ximplotxy import ximplotxy
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.tools.arg_file_is_new import arg_file_is_new
 
-from .apply_rect_wpoly import Slitlet2D
+from emirdrp.tools.apply_rect_wpoly import Slitlet2D
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
-from .nscan_minmax_frontiers import nscan_minmax_frontiers
-from .rect_wpoly_for_mos import islitlet_progress
-from .save_ndarray_to_fits import save_ndarray_to_fits
+from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
+from emirdrp.tools.rect_wpoly_for_mos import islitlet_progress
+from emirdrp.tools.save_ndarray_to_fits import save_ndarray_to_fits
+from emirdrp.products import RectWaveCoeff
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
+from emirdrp.core import EMIR_NBARS
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
@@ -71,6 +73,11 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x, mode='wb'))
 
     # optional arguments
+    parser.add_argument("--resampling",
+                        help="Resampling method: 1 -> nearest neighbor, "
+                             "2 -> linear interpolation (default)",
+                        default=2, type=int,
+                        choices=(1, 2))
     parser.add_argument("--ignore_DTUconf",
                         help="Ignore DTU configurations differences between "
                              "model and input image",
@@ -89,7 +96,8 @@ def main(args=None):
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # read calibration structure from JSON file
-    rect_wpoly_dict = json.loads(open(args.coef_rect_wpoly.name).read())
+    # read calibration structure from JSON file
+    coef_rect_wpoly = RectWaveCoeff._datatype_load(args.coef_rect_wpoly.name)
 
     # read FITS image and its corresponding header
     hdulist = fits.open(args.fitsfile)
@@ -109,10 +117,10 @@ def main(args=None):
 
     # check that the input FITS file grism and filter match
     filter_name = header['filter']
-    if filter_name != rect_wpoly_dict['tags']['filter']:
+    if filter_name != coef_rect_wpoly.tags['filter']:
         raise ValueError("Filter name does not match!")
     grism_name = header['grism']
-    if grism_name != rect_wpoly_dict['tags']['grism']:
+    if grism_name != coef_rect_wpoly.tags['grism']:
         raise ValueError("Filter name does not match!")
     if abs(args.debugplot) >= 10:
         print('>>> grism.......:', grism_name)
@@ -121,7 +129,7 @@ def main(args=None):
     # check that the DTU configurations are compatible
     dtu_conf_fitsfile = DtuConfiguration.define_from_fits(args.fitsfile)
     dtu_conf_jsonfile = DtuConfiguration.define_from_dictionary(
-        rect_wpoly_dict['dtu_configuration'])
+        coef_rect_wpoly.meta_info['dtu_configuration'])
     if dtu_conf_fitsfile != dtu_conf_jsonfile:
         print('DTU configuration (FITS file):\n\t', dtu_conf_fitsfile)
         print('DTU configuration (JSON file):\n\t', dtu_conf_jsonfile)
@@ -134,12 +142,12 @@ def main(args=None):
             print('>>> DTU Configuration match!')
             print(dtu_conf_fitsfile)
 
-    # read islitlet_min and islitlet_max from input JSON file
-    islitlet_min = rect_wpoly_dict['tags']['islitlet_min']
-    islitlet_max = rect_wpoly_dict['tags']['islitlet_max']
+    # valid slitlet numbers
+    list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
+    for idel in coef_rect_wpoly.missing_slitlets:
+        list_valid_islitlets.remove(idel)
     if abs(args.debugplot) >= 10:
-        print('>>> islitlet_min:', islitlet_min)
-        print('>>> islitlet_max:', islitlet_max)
+        print('>>> valid slitlet numbers:\n', list_valid_islitlets)
 
     # ---
 
@@ -147,13 +155,13 @@ def main(args=None):
     image2d_flatfielded = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
 
     # main loop
-    for islitlet in range(islitlet_min, islitlet_max + 1):
+    for islitlet in list_valid_islitlets:
         if args.debugplot == 0:
-            islitlet_progress(islitlet, islitlet_max)
+            islitlet_progress(islitlet, EMIR_NBARS)
 
         # define Slitlet2D object
         slt = Slitlet2D(islitlet=islitlet,
-                        megadict=rect_wpoly_dict,
+                        coef_rect_wpoly=coef_rect_wpoly,
                         debugplot=args.debugplot)
 
         if abs(args.debugplot) >= 10:
@@ -163,7 +171,10 @@ def main(args=None):
         slitlet2d = slt.extract_slitlet2d(image2d)
 
         # rectify slitlet
-        slitlet2d_rect = slt.rectify(slitlet2d, resampling=1)
+        slitlet2d_rect = slt.rectify(
+            slitlet2d,
+            resampling=args.resampling
+        )
         naxis2_slitlet2d, naxis1_slitlet2d = slitlet2d_rect.shape
 
         if naxis1_slitlet2d != EMIR_NAXIS1:
@@ -212,9 +223,11 @@ def main(args=None):
             slt.ximshow_rectified(slitlet2d_rect_spmedian)
 
         # unrectified image
-        slitlet2d_unrect_spmedian = slt.rectify(slitlet2d_rect_spmedian,
-                                                resampling=1,
-                                                inverse=True)
+        slitlet2d_unrect_spmedian = slt.rectify(
+            slitlet2d_rect_spmedian,
+            resampling=args.resampling,
+            inverse=True
+        )
 
         # normalize initial slitlet image (avoid division by zero)
         slitlet2d_norm = np.zeros_like(slitlet2d)
@@ -241,6 +254,8 @@ def main(args=None):
             nn2 = n2 - slt.bb_ns1_orig + 1
             image2d_flatfielded[(n1 - 1):n2, j] = \
                 slitlet2d_norm[(nn1 - 1):nn2, j]
+    if args.debugplot == 0:
+        print('OK!')
 
     # set pixels below minimum value to 1.0
     filtered = np.where(image2d_flatfielded < args.minimum_value_in_output)
