@@ -33,6 +33,8 @@ from numina.tools.test_setstate_getstate import test_setstate_getstate
 import numina.types.qc
 
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.products import RefinedBoundaryModelParam
+from emirdrp.products import RectWaveCoeff
 from emirdrp.products import MasterRectWave
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
@@ -102,98 +104,95 @@ def main(args=None):
 
     # read fitted boundary parameters and check that all the longslit JSON
     # files have been computed using the same fitted boundary parameters
-    fitted_bound_param = json.loads(open(args.fitted_bound_param.name).read())
-    fitted_bound_param_uuid = fitted_bound_param['uuid']
+    refined_boundary_model = RefinedBoundaryModelParam._datatype_load(
+        args.fitted_bound_param.name)
     for ifile in range(nfiles):
-        json_tmp = json.loads(open(list_json_files[ifile].filename).read())
-        uuid_tmp = json_tmp['meta-info']['origin']['fitted_bound_param_uuid']
-        if uuid_tmp != fitted_bound_param_uuid:
-            print('Expected uuid:', fitted_bound_param_uuid)
-            print('uuid for islitlet #' + str(ifile) + ": " + uuid_tmp)
+        coef_rect_wpoly = RectWaveCoeff._datatype_load(
+            list_json_files[ifile].filename)
+        uuid_tmp = coef_rect_wpoly.meta_info['origin']['bound_param']
+        if uuid_tmp[4:] != refined_boundary_model.uuid:
+            print('Expected uuid:', refined_boundary_model.uuid)
+            print('uuid for ifile #' + str(ifile + 1) + ": " + uuid_tmp)
             raise ValueError("Fitted boundary parameter uuid's do not match")
 
-    # check consistency of grism, filter and DTU configuration
-    json_first_longslit = json.loads(open(list_json_files[0].filename).read())
+    # check consistency of grism, filter, DTU configuration and list of
+    # valid slitlets
+    coef_rect_wpoly_first_longslit = RectWaveCoeff._datatype_load(
+        list_json_files[0].filename)
+    filter_name = coef_rect_wpoly_first_longslit.tags['filter']
+    grism_name = coef_rect_wpoly_first_longslit.tags['grism']
     dtu_conf = DtuConfiguration.define_from_dictionary(
-        json_first_longslit['dtu_configuration']
+        coef_rect_wpoly_first_longslit.meta_info['dtu_configuration']
     )
-    filter_name = json_first_longslit['tags']['filter']
-    grism_name = json_first_longslit['tags']['grism']
-    islitlet_min = json_first_longslit['tags']['islitlet_min']
-    islitlet_max = json_first_longslit['tags']['islitlet_max']
+    list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
+    for idel in coef_rect_wpoly_first_longslit.missing_slitlets:
+        list_valid_islitlets.remove(idel)
     for ifile in range(1, nfiles):
-        json_tmp = json.loads(open(list_json_files[ifile].filename).read())
-        dtu_conf_tmp = DtuConfiguration.define_from_dictionary(
-            json_tmp['dtu_configuration']
-        )
-        filter_tmp = json_tmp['tags']['filter']
-        grism_tmp = json_tmp['tags']['grism']
-        islitlet_min_tmp = json_tmp['tags']['islitlet_min']
-        islitlet_max_tmp = json_tmp['tags']['islitlet_max']
-        if dtu_conf != dtu_conf_tmp:
-            print(dtu_conf)
-            print(dtu_conf_tmp)
-            raise ValueError("Unexpected different DTU configurations found")
+        coef_rect_wpoly = RectWaveCoeff._datatype_load(
+            list_json_files[ifile].filename)
+        filter_tmp = coef_rect_wpoly.tags['filter']
         if filter_name != filter_tmp:
             print(filter_name)
             print(filter_tmp)
             raise ValueError("Unexpected different filter found")
+        grism_tmp = coef_rect_wpoly.tags['grism']
         if grism_name != grism_tmp:
             print(grism_name)
             print(grism_tmp)
             raise ValueError("Unexpected different grism found")
-        if islitlet_min != islitlet_min_tmp:
-            print(islitlet_min)
-            print(islitlet_min_tmp)
-            raise ValueError("Unexpected different islitlet_min_found")
-        if islitlet_max != islitlet_max_tmp:
-            print(islitlet_max)
-            print(islitlet_max_tmp)
-            raise ValueError("Unexpected different islitlet_max_found")
+        coef_rect_wpoly = RectWaveCoeff._datatype_load(
+            list_json_files[ifile].filename)
+        dtu_conf_tmp = DtuConfiguration.define_from_dictionary(
+            coef_rect_wpoly.meta_info['dtu_configuration']
+        )
+        if dtu_conf != dtu_conf_tmp:
+            print(dtu_conf)
+            print(dtu_conf_tmp)
+            raise ValueError("Unexpected different DTU configurations found")
+        list_valid_islitlets_tmp = list(range(1, EMIR_NBARS + 1))
+        for idel in coef_rect_wpoly.missing_slitlets:
+            list_valid_islitlets_tmp.remove(idel)
+        if list_valid_islitlets != list_valid_islitlets_tmp:
+            print(list_valid_islitlets)
+            print(list_valid_islitlets_tmp)
+            raise ValueError("Unexpected different list of valid slitlets")
 
     # check consistency of horizontal bounding box limits (bb_nc1_orig and
     # bb_nc2_orig) and ymargin_bb, and store the values for each slitlet
     dict_bb_param = {}
     print("Checking horizontal bounding box limits and ymargin_bb:")
-    for islitlet in range(islitlet_min, islitlet_max + 1):
-        islitlet_progress(islitlet, islitlet_max)
+    for islitlet in list_valid_islitlets:
+        islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         dict_bb_param[cslitlet] = {}
         for par in ['bb_nc1_orig', 'bb_nc2_orig', 'ymargin_bb']:
-            value_initial = json_first_longslit['contents'][cslitlet][par]
+            value_initial = \
+                coef_rect_wpoly_first_longslit.contents[islitlet - 1][par]
             for ifile in range(1, nfiles):
-                json_tmp = json.loads(
-                    open(list_json_files[ifile].filename).read())
-                value_tmp = json_tmp['contents'][cslitlet][par]
+                coef_rect_wpoly = RectWaveCoeff._datatype_load(
+                    list_json_files[ifile].filename)
+                value_tmp = coef_rect_wpoly.contents[islitlet - 1][par]
                 if value_initial != value_tmp:
                     print(islitlet, value_initial, value_tmp)
                     print(value_tmp)
                     raise ValueError("Unexpected different " + par)
                 dict_bb_param[cslitlet][par] = value_initial
+    print('OK!')
+
     # ---
 
     # Read and store all the longslit data
-    list_json_longslits = []
+    list_coef_rect_wpoly = []
     for ifile in range(nfiles):
-        json_tmp = json.loads(open(list_json_files[ifile].filename).read())
-        list_json_longslits.append(json_tmp)
-
-    # ---
-
-    # Check that all the expected slitlets are defined
-
-    for ifile in range(nfiles):
-        tmpdict = list_json_longslits[ifile]['contents']
-        for islitlet in range(islitlet_min, islitlet_max + 1):
-            cslitlet = 'slitlet' + str(islitlet).zfill(2)
-            if cslitlet not in tmpdict:
-                raise ValueError(cslitlet + " not found!")
+        coef_rect_wpoly = RectWaveCoeff._datatype_load(
+            list_json_files[ifile].filename)
+        list_coef_rect_wpoly.append(coef_rect_wpoly)
 
     # ---
 
     # Initialize structure to save results into an ouptut JSON file
     outdict = {}
-    outdict['fitted_bound_param'] = fitted_bound_param
+    outdict['refined_boundary_model'] = refined_boundary_model.__getstate__()
     outdict['instrument'] = 'EMIR'
     outdict['meta-info'] = {}
     outdict['meta-info']['creation_date'] = datetime.now().isoformat()
@@ -206,12 +205,10 @@ def main(args=None):
     for ifile in range(nfiles):
         cdum = 'longslit_' + str(ifile + 1).zfill(3) + '_uuid'
         outdict['meta-info']['origin']['wpoly_longslits'][cdum] = \
-            list_json_longslits[ifile]['uuid']
+            list_coef_rect_wpoly[ifile].uuid
     outdict['tags'] = {}
     outdict['tags']['grism'] = grism_name
     outdict['tags']['filter'] = filter_name
-    outdict['tags']['islitlet_min'] = islitlet_min
-    outdict['tags']['islitlet_max'] = islitlet_max
     outdict['dtu_configuration'] = dtu_conf.outdict()
     outdict['uuid'] = str(uuid4())
     outdict['contents'] = {}
@@ -219,7 +216,7 @@ def main(args=None):
     # include bb_nc1_orig, bb_nc2_orig and ymargin_bb for each slitlet
     # (note that the values of bb_ns1_orig and bb_ns2_orig cannot be
     # computed at this stage because they depend on csu_bar_slit_center)
-    for islitlet in range(islitlet_min, islitlet_max + 1):
+    for islitlet in list_valid_islitlets:
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         outdict['contents'][cslitlet] = dict_bb_param[cslitlet]
 
@@ -227,13 +224,13 @@ def main(args=None):
     # the slitlets and longslit configurations
     order_check_list = []
     for ifile in range(nfiles):
-        tmpdict = list_json_longslits[ifile]['contents']
-        for islitlet in range(islitlet_min, islitlet_max + 1):
-            cslitlet = 'slitlet' + str(islitlet).zfill(2)
-            ttd_order = tmpdict[cslitlet]['ttd_order']
+        tmpdict = list_coef_rect_wpoly[ifile].contents
+        for islitlet in list_valid_islitlets:
+            ttd_order = tmpdict[islitlet - 1]['ttd_order']
             if ttd_order is not None:
                 order_check_list.append(ttd_order)
-            ttd_order_modeled = tmpdict[cslitlet]['ttd_order_longslit_model']
+            ttd_order_modeled = \
+                tmpdict[islitlet - 1]['ttd_order_longslit_model']
             order_check_list.append(ttd_order_modeled)
     # remove duplicates in list
     order_no_duplicates = list(set(order_check_list))
@@ -249,18 +246,17 @@ def main(args=None):
     # check that polynomial degree in frontiers and spectrails are the same
     poldeg_check_list = []
     for ifile in range(nfiles):
-        tmpdict = list_json_longslits[ifile]['contents']
-        for islitlet in range(islitlet_min, islitlet_max + 1):
-            cslitlet = 'slitlet' + str(islitlet).zfill(2)
-            tmppoly = tmpdict[cslitlet]['frontier']['poly_coef_lower']
+        tmpdict = list_coef_rect_wpoly[ifile].contents
+        for islitlet in list_valid_islitlets:
+            tmppoly = tmpdict[islitlet - 1]['frontier']['poly_coef_lower']
             poldeg_check_list.append(len(tmppoly) - 1)
-            tmppoly = tmpdict[cslitlet]['frontier']['poly_coef_upper']
+            tmppoly = tmpdict[islitlet - 1]['frontier']['poly_coef_upper']
             poldeg_check_list.append(len(tmppoly) - 1)
-            tmppoly = tmpdict[cslitlet]['spectrail']['poly_coef_lower']
+            tmppoly = tmpdict[islitlet - 1]['spectrail']['poly_coef_lower']
             poldeg_check_list.append(len(tmppoly) - 1)
-            tmppoly = tmpdict[cslitlet]['spectrail']['poly_coef_middle']
+            tmppoly = tmpdict[islitlet - 1]['spectrail']['poly_coef_middle']
             poldeg_check_list.append(len(tmppoly) - 1)
-            tmppoly = tmpdict[cslitlet]['spectrail']['poly_coef_upper']
+            tmppoly = tmpdict[islitlet - 1]['spectrail']['poly_coef_upper']
             poldeg_check_list.append(len(tmppoly) - 1)
     # remove duplicates in list
     poldeg_no_duplicates = list(set(poldeg_check_list))
@@ -276,17 +272,17 @@ def main(args=None):
 
     # csu_bar_slit_center values for each slitlet
     print("CSU_bar_slit_center values:")
-    for islitlet in range(islitlet_min, islitlet_max + 1):
-        if abs(args.debugplot) == 0:
-            islitlet_progress(islitlet, islitlet_max)
+    for islitlet in list_valid_islitlets:
+        islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         list_csu_bar_slit_center = []
         for ifile in range(nfiles):
-            tmpdict = list_json_longslits[ifile]['contents'][cslitlet]
+            tmpdict = list_coef_rect_wpoly[ifile].contents[islitlet - 1]
             csu_bar_slit_center = tmpdict['csu_bar_slit_center']
             list_csu_bar_slit_center.append(csu_bar_slit_center)
         outdict['contents'][cslitlet]['list_csu_bar_slit_center'] = \
             list_csu_bar_slit_center
+    print('OK!')
 
     # ---
 
@@ -295,9 +291,8 @@ def main(args=None):
     # note: when aij and bij have not been computed, we use the modeled
     # version aij_longslit_model and bij_longslit_model
     print("Rectification polynomial coefficients:")
-    for islitlet in range(islitlet_min, islitlet_max + 1):
-        if abs(args.debugplot) == 0:
-            islitlet_progress(islitlet, islitlet_max)
+    for islitlet in list_valid_islitlets:
+        islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         outdict['contents'][cslitlet]['ttd_order'] = ttd_order
         outdict['contents'][cslitlet]['ncoef_rect'] = ncoef_rect
@@ -306,7 +301,8 @@ def main(args=None):
                 ccoef = str(icoef).zfill(2)
                 list_cij = []
                 for ifile in range(nfiles):
-                    tmpdict = list_json_longslits[ifile]['contents'][cslitlet]
+                    tmpdict = \
+                        list_coef_rect_wpoly[ifile].contents[islitlet - 1]
                     cij = tmpdict[keycoef]
                     if cij is not None:
                         list_cij.append(cij[icoef])
@@ -323,6 +319,7 @@ def main(args=None):
                                   list_json_files[ifile].filename)
                 outdict['contents'][cslitlet]['list_' + keycoef + '_' + ccoef] \
                     = list_cij
+    print('OK!')
 
     # ---
 
@@ -331,16 +328,15 @@ def main(args=None):
     # note: when wpoly_coeff have not been computed, we use the
     # wpoly_coeff_longslit_model
     print("Wavelength calibration polynomial coefficients:")
-    for islitlet in range(islitlet_min, islitlet_max + 1):
-        if abs(args.debugplot) == 0:
-            islitlet_progress(islitlet, islitlet_max)
+    for islitlet in list_valid_islitlets:
+        islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         outdict['contents'][cslitlet]['wpoly_degree'] = poldeg
         for icoef in range(poldeg + 1):
             ccoef = str(icoef).zfill(2)
             list_cij = []
             for ifile in range(nfiles):
-                tmpdict = list_json_longslits[ifile]['contents'][cslitlet]
+                tmpdict = list_coef_rect_wpoly[ifile].contents[islitlet - 1]
                 cij = tmpdict['wpoly_coeff']
                 if cij is not None:
                     list_cij.append(cij[icoef])
@@ -357,6 +353,7 @@ def main(args=None):
                               list_json_files[ifile].filename)
             outdict['contents'][cslitlet]['list_wpoly_coeff_' + ccoef] = \
                 list_cij
+    print('OK!')
 
     # ---
 
@@ -377,11 +374,11 @@ def main(args=None):
     master_rectwv.tags['grism'] = grism_name
     master_rectwv.tags['filter'] = filter_name
     master_rectwv.meta_info['dtu_configuration'] = outdict['dtu_configuration']
-    master_rectwv.meta_info['fitted_bound_param'] = \
-        outdict['fitted_bound_param']['contents']
+    master_rectwv.meta_info['refined_boundary_model'] = \
+        outdict['refined_boundary_model']['contents']
     master_rectwv.total_slitlets = EMIR_NBARS
     master_rectwv.meta_info['origin'] = {
-        'longslit_frames': ['uuid:' + list_json_longslits[ifile]['uuid']
+        'longslit_frames': ['uuid:' + list_coef_rect_wpoly[ifile].uuid
                             for ifile in range(nfiles)]
     }
     for i in range(EMIR_NBARS):
