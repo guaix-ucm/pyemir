@@ -1783,6 +1783,8 @@ def main(args=None):
     rectwv_coeff.quality_control = numina.types.qc.QC.GOOD
     rectwv_coeff.tags['grism'] = grism_name
     rectwv_coeff.tags['filter'] = filter_name
+    rectwv_coeff.meta_info['origin']['bound_param'] = \
+        'uuid' + fitted_bound_param.uuid
     rectwv_coeff.meta_info['dtu_configuration'] = outdict['dtu_configuration']
     rectwv_coeff.total_slitlets = EMIR_NBARS
     for i in range(EMIR_NBARS):
