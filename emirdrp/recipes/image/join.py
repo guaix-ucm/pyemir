@@ -26,24 +26,24 @@ import datetime
 import uuid
 
 import numpy
+import sep
 from astropy.io import fits
 from numina.core import Product, RecipeError, Requirement
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
 from numina.array import combine_shape, combine_shapes
-from numina.array.combine import flatcombine, median, quantileclip
 from numina.array import resize_arrays, resize_arrays_alt
+from numina.array.combine import flatcombine, median, quantileclip
 from numina.array.utils import coor_to_pix, image_box2d
-from numina.flow.processing import SkyCorrector
+import numina.processing as proc
 from numina.core.query import ResultOf
-import sep
 
+import emirdrp.decorators
 from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs_imgs
 from emirdrp.processing.corr import offsets_from_crosscor, offsets_from_crosscor_regions
 from emirdrp.core import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.processing.combine import segmentation_combined
-import emirdrp.decorators
 
 
 class JoinDitheredImagesRecipe(EmirRecipe):
@@ -129,7 +129,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             self.logger.debug('sky image has shape %s', sky_data.shape)
 
             self.logger.info('sky correction in individual images')
-            corrector = SkyCorrector(
+            corrector = proc.SkyCorrector(
                 sky_data,
                 self.datamodel,
                 calibid=self.datamodel.get_imgid(sky_result)
@@ -761,7 +761,7 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
             self.logger.debug('sky image has shape %s', sky_data.shape)
 
             self.logger.info('sky correction in individual images')
-            corrector = SkyCorrector(
+            corrector = proc.SkyCorrector(
                 sky_data,
                 self.datamodel,
                 calibid=self.datamodel.get_imgid(sky_result)

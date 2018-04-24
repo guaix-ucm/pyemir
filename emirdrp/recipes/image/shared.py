@@ -40,10 +40,6 @@ from matplotlib.collections import PatchCollection
 
 from numina import __version__
 from numina.core import DataFrame, RecipeError
-from numina.flow import SerialFlow
-from numina.flow.node import IdNode
-from numina.flow.processing import BiasCorrector, FlatFieldCorrector
-from numina.flow.processing import DarkCorrector
 from numina.array import fixpix2
 from numina.frame import resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield

@@ -34,14 +34,15 @@ from numina.core import Product
 from numina.core import DataFrameType
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 from numina.core.requirements import ObservationResultRequirement
-from emirdrp.requirements import MasterBadPixelMaskRequirement
 from numina.core.requirements import InstrumentConfigurationRequirement
-from numina.flow.processing import BiasCorrector, DarkCorrector
-from numina.flow.node import IdNode
-from numina.flow import SerialFlow
+import numina.util.flow
+import numina.util.node
+import numina.processing as proc
 
 from emirdrp.core import EmirRecipe
 from emirdrp.products import MasterBias, MasterDark, MasterBadPixelMask
+from emirdrp.requirements import MasterBadPixelMaskRequirement
+
 
 _logger = logging.getLogger('numina.recipes.emir')
 
@@ -114,17 +115,17 @@ class CosmeticsRecipe(EmirRecipe):
             if readmode.lower() in ['simple', 'bias']:
                 _logger.info('loading bias')
                 mbias = hdul[0].data
-                bias_corrector = BiasCorrector(mbias)
+                bias_corrector = proc.BiasCorrector(mbias)
             else:
                 _logger.info('ignoring bias')
-                bias_corrector = IdNode()
+                bias_corrector = numina.util.node.IdNode()
 
         with rinput.master_dark.open() as mdark_hdul:
             _logger.info('loading dark')
             mdark = mdark_hdul[0].data
-            dark_corrector = DarkCorrector(mdark)
+            dark_corrector = proc.DarkCorrector(mdark)
 
-        flow = SerialFlow([bias_corrector, dark_corrector])
+        flow = numina.util.flow.SerialFlow([bias_corrector, dark_corrector])
 
         _logger.info('processing flat #1')
         with rinput.obresult.frames[0].open() as hdul:

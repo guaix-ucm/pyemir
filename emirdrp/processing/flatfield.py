@@ -25,12 +25,13 @@ from __future__ import division
 import logging
 
 import numpy
-from numina.flow.processing import Corrector
-
-_logger = logging.getLogger('numina.recipes.emir')
+import numina.processing as proc
 
 
-class FlatFieldCorrector(Corrector):
+_logger = logging.getLogger(__name__)
+
+
+class FlatFieldCorrector(proc.Corrector):
     """A Node that corrects a frame from flat-field."""
 
     def __init__(self, flatdata, datamodel=None, calibid='calibid-unknown', dtype='float32'):

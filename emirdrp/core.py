@@ -1,20 +1,10 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 import collections
@@ -25,8 +15,10 @@ import numpy
 from numina.core import BaseRecipe, Product, RecipeResult, DataFrame
 from numina.core.products import QualityControlProduct
 from numina.core.qc import QC
-from numina.flow.node import IdNode
-from numina.flow.processing import BadPixelCorrector
+import numina.util.node
+import numina.util.flow
+import numina.processing as proc
+
 
 import emirdrp.processing.info
 import emirdrp.products as prods
@@ -38,7 +30,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 def get_corrector_p(rinput, meta, datamodel):
     key = 'master_bpm'
     info = meta.get(key)
-    corrector_class = BadPixelCorrector
+    corrector_class = proc.BadPixelCorrector
 
     if info is not None:
         inputval = getattr(rinput, key)
@@ -52,13 +44,12 @@ def get_corrector_p(rinput, meta, datamodel):
             )
     else:
         _logger.info('"%s" not provided, ignored', key)
-        corrector = IdNode()
+        corrector = numina.util.node.IdNode()
 
     return corrector
 
 
 def get_corrector_b(rinput, meta, datamodel):
-    from numina.flow.processing import BiasCorrector
     iinfo = meta['obresult']
     if iinfo:
         mode = iinfo[0]['readmode']
@@ -79,29 +70,28 @@ def get_corrector_b(rinput, meta, datamodel):
             _logger.info('loading bias')
             _logger.debug('bias info: %s', bias_info)
             mbias = hdul[0].data
-            bias_corrector = BiasCorrector(
+            bias_corrector = proc.BiasCorrector(
                 mbias,
                 datamodel=datamodel,
                 calibid = datamodel.get_imgid(hdul)
             )
     else:
         _logger.info('ignoring bias')
-        bias_corrector = IdNode()
+        bias_corrector = numina.util.node.IdNode()
 
     return bias_corrector
 
 
 def get_corrector_s(rinput, meta, datamodel):
-    from numina.flow.processing import SkyCorrector
     sky_info = meta.get('master_sky')
 
     if sky_info is None:
-        return IdNode()
+        return numina.util.node.IdNode()
     else:
         with rinput.master_sky.open() as hdul:
             _logger.info('loading sky')
             _logger.debug('sky info: %s', sky_info)
-            sky_corrector = SkyCorrector(
+            sky_corrector = proc.SkyCorrector(
                 hdul[0].data,
                 datamodel=datamodel,
                 calibid=datamodel.get_imgid(hdul)
@@ -131,10 +121,9 @@ def get_corrector_f(rinput, meta, datamodel):
 
 
 def get_corrector_d(rinput, meta, datamodel):
-    from numina.flow.processing import DarkCorrector
     key = 'master_dark'
 
-    corrector = get_corrector_gen(rinput, datamodel, DarkCorrector, key)
+    corrector = get_corrector_gen(rinput, datamodel, proc.DarkCorrector, key)
     return corrector
 
 
@@ -220,7 +209,6 @@ class EmirRecipe(BaseRecipe):
 
     @classmethod
     def init_filters_generic(cls, rinput, getters):
-        from numina.flow import SerialFlow
         # with BPM, bias, dark, flat and sky
         if numina.ext.gtc.check_gtc():
             cls.logger.debug('running in GTC environment')
@@ -232,7 +220,7 @@ class EmirRecipe(BaseRecipe):
         for entry in meta['obresult']:
             cls.logger.debug('frame info is %s', entry)
         correctors = [getter(rinput, meta, cls.datamodel) for getter in getters]
-        flow = SerialFlow(correctors)
+        flow = numina.util.flow.SerialFlow(correctors)
         return flow
 
     @classmethod
