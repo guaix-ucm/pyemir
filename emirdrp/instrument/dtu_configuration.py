@@ -75,14 +75,16 @@ class DtuConfiguration(object):
         # number employed in __str__() function above to print out member
         # values
         ndig = 3
-        result = \
-            (round(self.xdtu, ndig) == round(other.xdtu, ndig)) and \
-            (round(self.ydtu, ndig) == round(other.ydtu, ndig)) and \
-            (round(self.zdtu, ndig) == round(other.zdtu, ndig)) and \
-            (round(self.xdtu_0, ndig) == round(other.xdtu_0, ndig)) and \
-            (round(self.ydtu_0, ndig) == round(other.ydtu_0, ndig)) and \
-            (round(self.zdtu_0, ndig) == round(other.zdtu_0, ndig))
-        return result
+        if isinstance(other, DtuConfiguration):
+            result = \
+                (round(self.xdtu, ndig) == round(other.xdtu, ndig)) and \
+                (round(self.ydtu, ndig) == round(other.ydtu, ndig)) and \
+                (round(self.zdtu, ndig) == round(other.zdtu, ndig)) and \
+                (round(self.xdtu_0, ndig) == round(other.xdtu_0, ndig)) and \
+                (round(self.ydtu_0, ndig) == round(other.ydtu_0, ndig)) and \
+                (round(self.zdtu_0, ndig) == round(other.zdtu_0, ndig))
+            return result
+        return NotImplemented
 
     def __ne__(self, other):
         result = not self.__eq__(other)

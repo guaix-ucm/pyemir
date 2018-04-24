@@ -65,12 +65,14 @@ class CsuConfiguration(object):
         return output
 
     def __eq__(self, other):
-        result = \
-            (self._csu_bar_left == other._csu_bar_left) and \
-            (self._csu_bar_right == other._csu_bar_right) and \
-            (self._csu_bar_slit_center == other._csu_bar_slit_center) and \
-            (self._csu_bar_slit_width == other._csu_bar_slit_width)
-        return result
+        if isinstance(other, CsuConfiguration):
+            result = \
+                (self._csu_bar_left == other._csu_bar_left) and \
+                (self._csu_bar_right == other._csu_bar_right) and \
+                (self._csu_bar_slit_center == other._csu_bar_slit_center) and \
+                (self._csu_bar_slit_width == other._csu_bar_slit_width)
+            return result
+        return NotImplemented
 
     @classmethod
     def define_from_fits(cls, fitsobj, extnum=0):
