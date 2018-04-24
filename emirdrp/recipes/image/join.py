@@ -79,7 +79,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         frame = partial_result.frame
 
-        if naccum >= 1 or accum is None:
+        if 0 <= naccum <= 1  or accum is None:
             self.logger.debug('round %d initialize accumulator', naccum)
             newaccum = frame
         else:
@@ -322,7 +322,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         hdu.header['history'] = 'Combination time {}'.format(
             datetime.datetime.utcnow().isoformat()
         )
-        # Update NUM-NCOM, sum of individual imagess
+        # Update NUM-NCOM, sum of individual images
         ncom = 0
         for img in data_hdul:
             hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
