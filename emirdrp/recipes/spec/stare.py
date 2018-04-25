@@ -22,7 +22,7 @@ Spectroscopy mode, Stare Spectra
 """
 
 
-from numina.core import Product
+from numina.core import Result
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median
 import emirdrp.requirements as reqs
@@ -42,7 +42,7 @@ class StareSpectraRecipe(EmirRecipe):
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
     master_sky = reqs.SpectralSkyRequirement(optional=True)
 
-    stare = Product(prods.DataFrameType)
+    stare = Result(prods.DataFrameType)
 
     @emirdrp.decorators.loginfo
     def run(self, rinput):
@@ -73,8 +73,8 @@ class StareSpectraWaveRecipe(EmirRecipe):
     master_rectwv = reqs.MasterRectWaveRequirement()
     master_sky = reqs.SpectralSkyRequirement(optional=True)
 
-    reduced_image = Product(prods.DataFrameType)
-    stare = Product(prods.DataFrameType)
+    reduced_image = Result(prods.DataFrameType)
+    stare = Result(prods.DataFrameType)
 
     @emirdrp.decorators.loginfo
     def run(self, rinput):
