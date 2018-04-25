@@ -101,6 +101,8 @@ class StareSpectraWaveRecipe(EmirRecipe):
             reduced_image,
             rinput.master_rectwv
         )
+        # save as JSON file in work directory
+        self.save_structured_as_json(rectwv_coeff, 'rectwv_coeff.json')
 
         # save results in results directory
         self.logger.info('end stare spectra reduction')
