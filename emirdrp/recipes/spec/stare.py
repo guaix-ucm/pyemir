@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -29,6 +29,7 @@ import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
+from emirdrp.processing.wavecal import rect_wavecal
 import emirdrp.decorators
 
 class StareSpectraRecipe(EmirRecipe):
@@ -39,7 +40,6 @@ class StareSpectraRecipe(EmirRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
-    # master_rectwv = reqs.MasterRectWaveRequirement()
     master_sky = reqs.SpectralSkyRequirement(optional=True)
 
     stare = Product(prods.DataFrameType)
@@ -50,7 +50,8 @@ class StareSpectraRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+        hdulist = basic_processing_with_combination(rinput, flow,
+                                                    method=median)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         # Update SEC to 0
@@ -59,3 +60,52 @@ class StareSpectraRecipe(EmirRecipe):
         self.logger.info('end stare spectra reduction')
         result = self.create_result(stare=hdulist)
         return result
+
+
+class StareSpectraWaveRecipe(EmirRecipe):
+    """Process images in Stare spectra mode with wavelength calibration"""
+
+    obresult = ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterSpectralFlatFieldRequirement()
+    master_rectwv = reqs.MasterRectWaveRequirement()
+    master_sky = reqs.SpectralSkyRequirement(optional=True)
+
+    reduced_image = Product(prods.DataFrameType)
+    stare = Product(prods.DataFrameType)
+
+    @emirdrp.decorators.loginfo
+    def run(self, rinput):
+        self.logger.info('starting stare spectra reduction')
+
+        self.logger.info(rinput.master_rectwv)
+
+        # build object to proceed with bpm, bias, dark and flat
+        flow = self.init_filters(rinput)
+
+        # apply bpm, bias, dark and flat
+        reduced_image = basic_processing_with_combination(rinput, flow,
+                                                          method=median)
+        # update header con additional info
+        hdr = reduced_image[0].header
+        self.set_base_headers(hdr)
+
+        # save intermediate image in work directory
+        self.save_intermediate_img(reduced_image, 'reduced_image.fits')
+
+        # rectification and wavelength calibration
+        stare_image = rect_wavecal(reduced_image, rinput.master_rectwv)
+
+        # save results in results directory
+        self.logger.info('end stare spectra reduction')
+        result = self.create_result(reduced_image=reduced_image,
+                                    stare=reduced_image)
+        return result
+
+    def set_base_headers(self, hdr):
+        newhdr = super(StareSpectraWaveRecipe, self).set_base_headers(hdr)
+        # Update SEC to 0
+        newhdr['SEC'] = 0
+        return newhdr

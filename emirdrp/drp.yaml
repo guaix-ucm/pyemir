@@ -130,6 +130,10 @@ modes:
   name: Stare Spectra
   summary: Stare Spectra
   description: Stare Spectra
+- key: STARE_SPECTRA_WAVE
+  name: Stare Spectra with Wavelength Calibration
+  summary: Stare Spectra with Wavelength Calibration
+  description: Stare Spectra with Wavelength Calibration
 - key: LS_ABBA
   name: Long Slit ABBA
   summary: Spectroscopy ABBA
@@ -209,6 +213,7 @@ pipelines:
       SPEC_SKY: emirdrp.recipes.spec.sky.SkySpecRecipe
       ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
       STARE_SPECTRA: emirdrp.recipes.spec.stare.StareSpectraRecipe
+      STARE_SPECTRA_WAVE: emirdrp.recipes.spec.stare.StareSpectraWaveRecipe
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
     version: 1
