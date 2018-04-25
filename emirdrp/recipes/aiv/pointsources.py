@@ -36,7 +36,7 @@ from numina.core.requirements import ObservationResultRequirement
 from scipy.spatial import KDTree
 
 import emirdrp.datamodel as datamodel
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBadPixelMaskRequirement

@@ -29,7 +29,7 @@ from numina.core.products import ArrayType
 from numina.core.products import LinesCatalog
 from numina.core.requirements import ObservationResultRequirement
 
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement
 from emirdrp.requirements import MasterDarkRequirement

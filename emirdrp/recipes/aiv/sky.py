@@ -25,7 +25,7 @@ from numina.array.combine import median
 from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement
 
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.products import DataFrameType, MasterIntensityFlat
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement

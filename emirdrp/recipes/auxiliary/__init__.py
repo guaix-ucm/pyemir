@@ -30,7 +30,7 @@ from numina.core.requirements import ObservationResultRequirement
 
 import emirdrp.instrument.channels as allchannels
 from emirdrp.core import EMIR_BIAS_MODES
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.info import gather_info_frames
 from emirdrp.products import ChannelLevelStatistics
 from emirdrp.products import ChannelLevelStatisticsType

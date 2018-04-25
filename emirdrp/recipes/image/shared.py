@@ -48,7 +48,7 @@ from numina.array.combine import flatcombine, median, quantileclip
 
 from emirdrp.util.sextractor import SExtractor
 from emirdrp.util.sextractor import open as sopen
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.products import SourcesCatalog
 from emirdrp.instrument.channels import FULL
 from emirdrp.processing.wcs import offsets_from_wcs

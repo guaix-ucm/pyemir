@@ -33,7 +33,7 @@ from numina.core.types import ListOfType
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.processing.info import gather_info_frames
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.products import MasterIntensityFlat
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement

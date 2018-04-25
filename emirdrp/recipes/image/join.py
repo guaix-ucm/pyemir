@@ -41,7 +41,7 @@ from numina.core.query import ResultOf
 import emirdrp.decorators
 from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs_imgs
 from emirdrp.processing.corr import offsets_from_crosscor, offsets_from_crosscor_regions
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.processing.combine import segmentation_combined
 

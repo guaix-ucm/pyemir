@@ -28,7 +28,7 @@ from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 import numina.exceptions
 
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
 

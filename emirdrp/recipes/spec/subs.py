@@ -32,7 +32,7 @@ from numina.core.requirements import ObservationResultRequirement
 import emirdrp.datamodel
 import emirdrp.decorators
 import emirdrp.products as prods
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.combine import basic_processing
 
 

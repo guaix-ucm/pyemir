@@ -29,7 +29,7 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.core.query import Ignore
 from numina.core.recipes import timeit
 
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.products import DataFrameType
 import emirdrp.requirements as reqs
 from emirdrp.processing.combine import basic_processing_with_combination

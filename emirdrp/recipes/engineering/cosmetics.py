@@ -39,7 +39,7 @@ import numina.util.flow
 import numina.util.node
 import numina.processing as proc
 
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.products import MasterBias, MasterDark, MasterBadPixelMask
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 

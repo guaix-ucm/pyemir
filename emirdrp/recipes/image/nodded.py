@@ -26,7 +26,7 @@ from numina.core import define_input, define_result
 from numina.core import Product, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 
-from emirdrp.core import RecipeResult
+from emirdrp.core.recipe import EmirRecipeResult as RecipeResult
 from emirdrp.products import SourcesCatalog
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement

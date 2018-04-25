@@ -3,7 +3,7 @@ from numina.core import import_object
 from numina.core import BaseRecipe
 
 from ..loader import load_drp
-from ..core import EmirRecipe
+from ..core.recipe import EmirRecipe
 
 
 def test_recipes_are_defined():

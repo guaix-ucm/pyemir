@@ -24,7 +24,7 @@ from numina.core import Parameter
 from numina.core import DataFrameType, Product
 from numina.core.requirements import ObservationResultRequirement
 
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 
 from emirdrp.products import DTU_XY_Calibration, DTU_Z_Calibration
 from emirdrp.products import DTUFlexureCalibration

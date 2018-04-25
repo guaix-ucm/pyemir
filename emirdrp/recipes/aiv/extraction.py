@@ -29,7 +29,7 @@ from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from scipy.ndimage.filters import median_filter, generic_filter
 
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.products import DataFrameType
 from emirdrp.requirements import MasterBadPixelMaskRequirement
 from emirdrp.requirements import MasterBiasRequirement

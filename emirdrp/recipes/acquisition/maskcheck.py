@@ -28,7 +28,8 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.types.qc import QC
 
 import emirdrp.datamodel as datamodel
-from emirdrp.core import EmirRecipe, EMIR_NBARS, EMIR_PLATESCALE
+from emirdrp.core import EMIR_NBARS, EMIR_PLATESCALE
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.bars import slits_to_ds9_reg, find_bars
 from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.products import DataFrameType, NominalPositions
