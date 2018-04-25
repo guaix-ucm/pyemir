@@ -29,7 +29,7 @@ import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
-from emirdrp.processing.wavecal import rect_wavecal
+from emirdrp.processing.wavecal import evaluate_rect_wpoly
 import emirdrp.decorators
 
 class StareSpectraRecipe(EmirRecipe):
@@ -95,8 +95,12 @@ class StareSpectraWaveRecipe(EmirRecipe):
         # save intermediate image in work directory
         self.save_intermediate_img(reduced_image, 'reduced_image.fits')
 
-        # rectification and wavelength calibration
-        stare_image = rect_wavecal(reduced_image, rinput.master_rectwv)
+        # RectWaveCoeff object with rectification and wavelength calibration
+        # coefficients for the particular CSU configuration
+        rectwv_coeff = evaluate_rect_wpoly(
+            reduced_image,
+            rinput.master_rectwv
+        )
 
         # save results in results directory
         self.logger.info('end stare spectra reduction')

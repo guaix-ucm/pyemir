@@ -138,7 +138,7 @@ def main(args=None):
         raise ValueError("Filter name does not match!")
     grism_name = header['grism']
     if grism_name != master_rectwv.tags['grism']:
-        raise ValueError("Filter name does not match!")
+        raise ValueError("Grism name does not match!")
     if abs(args.debugplot) >= 10:
         print('>>> grism.......:', grism_name)
         print('>>> filter......:', filter_name)
