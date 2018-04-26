@@ -1808,12 +1808,12 @@ def rectwv_coeff_from_arc_image(reduced_image,
                                 args_margin_npix=50,
                                 args_poldeg_initial=3,
                                 args_poldeg_refined=5,
-                                args_interactive=True,
+                                args_interactive=False,
                                 args_threshold_wv=0,
                                 args_ylogscale=False,
                                 args_pdf=None,
                                 args_geometry=(0,0,640,480),
-                                debugplot=10):
+                                debugplot=0):
     """Evaluate rect.+wavecal. coefficients from arc image
 
     Parameters
@@ -2733,8 +2733,10 @@ def apply_rectwv_coeff(reduced_image, rectwv_coeff,
     header.remove('PCRPIX2')
     header['history'] = 'Boundary parameters uuid:' + \
                         rectwv_coeff.meta_info['origin']['bound_param'][4:]
-    header['history'] = 'MasterRectWave uuid:' + \
-                        rectwv_coeff.meta_info['origin']['master_rectwv'][4:]
+    if 'master_rectwv' in rectwv_coeff.meta_info['origin']:
+        header['history'] = \
+            'MasterRectWave uuid:' + \
+            rectwv_coeff.meta_info['origin']['master_rectwv'][4:]
     header['history'] = 'RectWaveCoeff uuid:' + rectwv_coeff.uuid
     header['history'] = 'Rectification and wavelength calibration time ' \
                         + datetime.now().isoformat()
