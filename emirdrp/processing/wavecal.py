@@ -598,7 +598,7 @@ def nscan_minmax_frontiers(y0_frontier_lower, y0_frontier_upper,
     return nscan_min, nscan_max
 
 
-def evaluate_rectwv_coeff_from_mos_library(reduced_image, master_rectwv,
+def rectwv_coeff_from_mos_library(reduced_image, master_rectwv,
                                            ignore_DTUconf=True):
     """Evaluate rect.+wavecal. coefficients from MOS library
 

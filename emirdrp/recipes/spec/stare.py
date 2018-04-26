@@ -29,7 +29,7 @@ import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
-from emirdrp.processing.wavecal import evaluate_rectwv_coeff_from_mos_library
+from emirdrp.processing.wavecal import rectwv_coeff_from_mos_library
 from emirdrp.processing.wavecal import apply_rectwv_coeff
 import emirdrp.decorators
 
@@ -99,7 +99,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
 
         # RectWaveCoeff object with rectification and wavelength calibration
         # coefficients for the particular CSU configuration
-        rectwv_coeff = evaluate_rectwv_coeff_from_mos_library(
+        rectwv_coeff = rectwv_coeff_from_mos_library(
             reduced_image,
             rinput.master_rectwv
         )
