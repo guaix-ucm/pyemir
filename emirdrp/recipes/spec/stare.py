@@ -29,7 +29,7 @@ import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
-from emirdrp.processing.wavecal import evaluate_rectwv_coeff
+from emirdrp.processing.wavecal import evaluate_rectwv_coeff_from_mos_library
 from emirdrp.processing.wavecal import apply_rectwv_coeff
 import emirdrp.decorators
 
@@ -65,7 +65,7 @@ class StareSpectraRecipe(EmirRecipe):
 
 
 class StareSpectraWaveRecipe(EmirRecipe):
-    """Process images in Stare spectra mode with wavelength calibration"""
+    """Process images in Stare spectra mode applying wavelength calibration"""
 
     obresult = ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
@@ -80,7 +80,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
 
     @emirdrp.decorators.loginfo
     def run(self, rinput):
-        self.logger.info('starting stare spectra reduction')
+        self.logger.info('starting rect.+wavecal. reduction of stare spectra')
 
         self.logger.info(rinput.master_rectwv)
 
@@ -99,7 +99,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
 
         # RectWaveCoeff object with rectification and wavelength calibration
         # coefficients for the particular CSU configuration
-        rectwv_coeff = evaluate_rectwv_coeff(
+        rectwv_coeff = evaluate_rectwv_coeff_from_mos_library(
             reduced_image,
             rinput.master_rectwv
         )
