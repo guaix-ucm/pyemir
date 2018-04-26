@@ -66,7 +66,7 @@ def main(args=None):
                         help="Input JSON file with library of rectification "
                              "and wavelength calibration coefficients",
                         type=argparse.FileType('rt'))
-    parser.add_argument("--out_rect_wpoly", required=True,
+    parser.add_argument("--out_rectwv_coeff", required=True,
                         help="Output JSON file with calibration computed for "
                              "the input FITS file",
                         type=lambda x: arg_file_is_new(parser, x, mode='wt'))
@@ -338,9 +338,9 @@ def main(args=None):
     # OBSOLETE
     '''
     # Save resulting JSON structure
-    with open(args.out_rect_wpoly.name, 'w') as fstream:
+    with open(args.out_rectwv_coeff.name, 'w') as fstream:
         json.dump(outdict, fstream, indent=2, sort_keys=True)
-        print('>>> Saving file ' + args.out_rect_wpoly.name)
+        print('>>> Saving file ' + args.out_rectwv_coeff.name)
     '''
 
     # ---
@@ -367,10 +367,10 @@ def main(args=None):
             })
             rectwv_coeff.missing_slitlets.append(islitlet)
         rectwv_coeff.contents.append(dumdict)
-    rectwv_coeff.writeto(args.out_rect_wpoly.name)
-    print('>>> Saving file ' + args.out_rect_wpoly.name)
+    rectwv_coeff.writeto(args.out_rectwv_coeff.name)
+    print('>>> Saving file ' + args.out_rectwv_coeff.name)
     # debugging __getstate__ and __setstate__
-    # check_setstate_getstate(rectwv_coeff, args.out_rect_wpoly.name)
+    # check_setstate_getstate(rectwv_coeff, args.out_rectwv_coeff.name)
 
 
 if __name__ == "__main__":
