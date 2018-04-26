@@ -32,11 +32,11 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 
-from .fit_boundaries import bound_params_from_dict
-from .fit_boundaries import overplot_boundaries_from_params
-from .fit_boundaries import overplot_frontiers_from_params
-from .fit_boundaries import save_boundaries_from_params_ds9
-from .fit_boundaries import save_frontiers_from_params_ds9
+from emirdrp.tools.fit_boundaries import bound_params_from_dict
+from emirdrp.tools.fit_boundaries import overplot_boundaries_from_params
+from emirdrp.tools.fit_boundaries import overplot_frontiers_from_params
+from emirdrp.tools.fit_boundaries import save_boundaries_from_params_ds9
+from emirdrp.tools.fit_boundaries import save_frontiers_from_params_ds9
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 

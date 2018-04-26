@@ -27,7 +27,8 @@ from numina.ext.gtc import DF
 from numina.core import DataFrameType, DataProductType
 from numina.core.products import ArrayNType
 from numina.core.products import DataProductTag
-from numina.core.requirements import InstrumentConfigurationType
+from numina.types.obsresult import InstrumentConfigurationType
+#from numina.core.requirements import InstrumentConfigurationType
 from numina.core import ValidationError
 import numina.types.structured
 
@@ -315,15 +316,6 @@ class RefinedBoundaryModelParam(numina.types.structured.BaseStructuredCalibratio
     def __setstate__(self, state):
         super(RefinedBoundaryModelParam, self).__setstate__(state)
         self.contents = state['contents'].copy()
-
-    def _autotest(self, instrument, json_file_name):
-        # concatenate __getstate__ and __setstate__
-        tmpobject = RefinedBoundaryModelParam(instrument=instrument)
-        tmpobject.__setstate__(self.__getstate__())
-        tmpobject.writeto(json_file_name + '_bis')
-        # load data from input JSON file and save them again
-        tmpobject2 = RefinedBoundaryModelParam._datatype_load(json_file_name)
-        tmpobject2.writeto(json_file_name + '_bis2')
 
 
 class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):

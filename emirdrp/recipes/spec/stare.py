@@ -110,7 +110,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
         stare_image = apply_rectwv_coeff(reduced_image, rectwv_coeff)
 
         # save results in results directory
-        self.logger.info('end stare spectra reduction')
+        self.logger.info('end rect.+wavecal. reduction of stare spectra')
         result = self.create_result(reduced_image=reduced_image,
                                     stare=stare_image)
         return result

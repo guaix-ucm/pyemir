@@ -83,10 +83,16 @@ class MasterSpectralFlatFieldRequirement(Requirement):
               self).__init__(prods.MasterSpectralFlat, 'Master spectral flatfield')
 
 
+class RefinedBoundaryModelParamRequirement(Requirement):
+    def __init__(self):
+        super(RefinedBoundaryModelParamRequirement,
+              self).__init__(prods.RefinedBoundaryModelParam, 'Refined boundary model')
+
+
 class MasterRectWaveRequirement(Requirement):
     def __init__(self):
         super(MasterRectWaveRequirement,
-              self).__init__(prods.MasterRectWave, 'Master rect. and wave. calibration')
+              self).__init__(prods.MasterRectWave, 'Master rectification+wavelength library')
 
 
 class MasterSkyRequirement(Requirement):

@@ -91,13 +91,14 @@ modes:
   key: TEST7
   name: Test slit extraction
   summary: Summary
-- key: TEST8
+- description: Simultaneous flat in several bands
+  key: TEST8
   name: Multiflat
   summary: Multiflat
-  description: Simultaneous flat in several bands
 - description: Wavelength calibration from arc
   key: ARC_CALIBRATION
-  name: Wavelength calibration
+  name: Wavelength calibration from arc
+  summary: Wavelength calibration from arc
 - description: Extracts spectra of the slits in the AIV mask
   key: TEST9
   name: Slit-mask spectra extraction
@@ -211,7 +212,7 @@ pipelines:
       TEST12: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe
       TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       SPEC_SKY: emirdrp.recipes.spec.sky.SkySpecRecipe
-      ARC_CALIBRATION: emirdrp.recipes.arccalibration.ArcCalibrationRecipe
+      ARC_CALIBRATION: emirdrp.recipes.calibration.arc.ArcCalibrationRecipe
       STARE_SPECTRA: emirdrp.recipes.spec.stare.StareSpectraRecipe
       STARE_SPECTRA_WAVE: emirdrp.recipes.spec.stare.StareSpectraWaveRecipe
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe

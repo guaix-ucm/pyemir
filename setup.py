@@ -47,14 +47,14 @@ setup(name='pyemir',
                   'emirdrp.tools.convert_refined_multislit_param:main',
               'pyemir-display_slitlet_arrangement = ' +
                   'emirdrp.tools.display_slitlet_arrangement:main',
-              'pyemir-evaluate_rect_wpoly = ' +
-                  'emirdrp.tools.evaluate_rect_wpoly:main',
+              'pyemir-rectwv_coeff_from_mos_library = ' +
+                  'emirdrp.tools.rectwv_coeff_from_mos_library:main',
               'pyemir-fit_boundaries = ' +
                   'emirdrp.tools.fit_boundaries:main',
               'pyemir-merge_bounddict_files = ' +
                   'emirdrp.tools.merge_bounddict_files:main',
-              'pyemir-rect_wpoly_coeff = ' +
-                  'emirdrp.tools.rect_wpoly_coeff:main',
+              'pyemir-rectwv_coeff_from_arc_image = ' +
+                  'emirdrp.tools.rectwv_coeff_from_arc_image:main',
               'pyemir-rect_wpoly_coeff_add_longslit_model = ' +
                   'emirdrp.tools.rect_wpoly_coeff_add_longslit_model:main',
               'pyemir-rect_wpoly_for_mos = ' +
