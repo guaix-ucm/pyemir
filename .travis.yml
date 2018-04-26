@@ -48,7 +48,7 @@ install:
     pyyaml matplotlib scikit-image>=0.12
   - source activate testenv
   - conda install --yes -c astropy photutils=$PHOTUTILS
-  - pip install sep
+  - pip install sep lmfit
   - pip install pytest-benchmark pytest-cov
   - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
