@@ -32,7 +32,7 @@ from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import RectWaveCoeff
 from emirdrp.processing.wavecal import Slitlet2D
 from emirdrp.processing.wavecal import set_wv_parameters
-from emirdrp.processing.wavecal import nscan_minmax_frontiers
+from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
 
 from .rect_wpoly_for_mos import islitlet_progress
 from .save_ndarray_to_fits import save_ndarray_to_fits

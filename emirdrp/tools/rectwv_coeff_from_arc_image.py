@@ -37,14 +37,13 @@ import numina.types.qc
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.processing.wavecal import set_wv_parameters
-from emirdrp.processing.wavecal import nscan_minmax_frontiers
 from emirdrp.processing.wavecal import Slitlet2dArc
 from emirdrp.products import RefinedBoundaryModelParam
 from emirdrp.products import RectWaveCoeff
-
+from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
 from emirdrp.tools.fit_boundaries import bound_params_from_dict
-from .save_ndarray_to_fits import save_ndarray_to_fits
-from .select_unrectified_slitlets import select_unrectified_slitlet
+from emirdrp.tools.save_ndarray_to_fits import save_ndarray_to_fits
+from emirdrp.tools.select_unrectified_slitlets import select_unrectified_slitlet
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from numina.tools.arg_file_is_new import arg_file_is_new
