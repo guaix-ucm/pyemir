@@ -22,7 +22,7 @@
 
 from numina.core import Parameter
 from numina.core import RecipeInput
-from numina.core import define_input, define_result
+from numina.core.recipeinout import define_input, define_result
 from numina.core import Product, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 

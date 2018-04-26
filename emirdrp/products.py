@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -25,12 +25,11 @@ import numpy
 
 from numina.ext.gtc import DF
 from numina.core import DataFrameType, DataProductType
-from numina.core.products import ArrayNType
-from numina.core.products import DataProductTag
-from numina.types.obsresult import InstrumentConfigurationType
-#from numina.core.requirements import InstrumentConfigurationType
-from numina.core import ValidationError
+import numina.types.array as arrtype
+import numina.exceptions
+import numina.types.product as prodtypes
 import numina.types.structured
+import numina.types.obsresult as obtypes
 
 
 base_schema_description = {
@@ -64,7 +63,7 @@ emir_schema_description = {
     }
 
 
-class EMIRImageProduct(DataProductTag, DataFrameType):
+class EMIRImageProduct(prodtypes.DataProductMixin, DataFrameType):
 
     def convert_out(self, obj):
         newobj = super(EMIRImageProduct, self).convert_out(obj)
@@ -76,7 +75,7 @@ class EMIRImageProduct(DataProductTag, DataFrameType):
         return newobj
 
 
-class EMIRConfigurationType(InstrumentConfigurationType):
+class EMIRConfigurationType(obtypes.InstrumentConfigurationType):
 
     def validate(self, value):
         super(EMIRConfigurationType, self).validate(value)
@@ -213,7 +212,7 @@ class TelescopeOffset(DataProductType):
         super(TelescopeOffset, self).__init__(ptype=float)
 
 
-class CoordinateListNType(ArrayNType):
+class CoordinateListNType(arrtype.ArrayNType):
     def __init__(self, dimensions, default=None):
         super(CoordinateListNType,
               self).__init__(dimensions,
@@ -222,13 +221,15 @@ class CoordinateListNType(ArrayNType):
     def validate(self, obj):
         ndims = len(obj.shape)
         if ndims != 2:
-            raise ValidationError('%r is not a valid %r' %
-                                  (obj, self.__class__.__name__)
-                                  )
+            raise numina.exceptions.ValidationError(
+                '%r is not a valid %r' %
+                (obj, self.__class__.__name__)
+            )
         if obj.shape[1] != self.N:
-            raise ValidationError('%r is not a valid %r' %
-                                  (obj, self.__class__.__name__)
-                                  )
+            raise numina.exceptions.ValidationError(
+                '%r is not a valid %r' %
+                (obj, self.__class__.__name__)
+            )
 
 
 class CoordinateList1DType(CoordinateListNType):
@@ -242,7 +243,7 @@ class CoordinateList2DType(CoordinateListNType):
         self.add_dialect_info('gtc', DF.TYPE_DOUBLE_ARRAY2D)
 
 
-class NominalPositions(DataProductTag, CoordinateList2DType):
+class NominalPositions(prodtypes.DataProductMixin, CoordinateList2DType):
     pass
 
 
