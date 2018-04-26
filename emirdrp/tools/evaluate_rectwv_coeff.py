@@ -353,6 +353,8 @@ def main(args=None):
     rectwv_coeff.tags['filter'] = filter_name
     rectwv_coeff.meta_info['origin']['bound_param'] = \
         master_rectwv.meta_info['origin']['bound_param']
+    rectwv_coeff.meta_info['origin']['master_rectwv'] = \
+        'uuid' + master_rectwv.uuid
     rectwv_coeff.meta_info['dtu_configuration'] = outdict['dtu_configuration']
     rectwv_coeff.total_slitlets = EMIR_NBARS
     for i in range(EMIR_NBARS):

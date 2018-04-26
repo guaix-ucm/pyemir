@@ -862,6 +862,8 @@ def evaluate_rectwv_coeff(reduced_image, master_rectwv,
     rectwv_coeff.tags['filter'] = filter_name
     rectwv_coeff.meta_info['origin']['bound_param'] = \
         master_rectwv.meta_info['origin']['bound_param']
+    rectwv_coeff.meta_info['origin']['master_rectwv'] = \
+        'uuid' + master_rectwv.uuid
     rectwv_coeff.meta_info['dtu_configuration'] = outdict['dtu_configuration']
     rectwv_coeff.total_slitlets = EMIR_NBARS
     for i in range(EMIR_NBARS):
@@ -1039,16 +1041,20 @@ def apply_rectwv_coeff(reduced_image, rectwv_coeff,
 
     logger.info('Updating image header')
     # update wavelength calibration in FITS header
-    header['ctype1'] = 'LAMBDA'
-    header['ctype2'] = 'PIXEL'
+    header.remove('crval1')
+    header.remove('crpix1')
+    header.remove('crval2')
+    header.remove('crpix2')
     header['crpix1'] = (crpix1_enlarged, 'reference pixel')
-    header['crpix2'] = (1.0, 'reference pixel')
     header['crval1'] = (crval1_enlarged, 'central wavelength at crpix1')
-    header['crval2'] = (1.0, 'central value at crpix2')
     header['cdelt1'] = (cdelt1_enlarged, 'linear dispersion (Angstrom/pixel)')
+    header['cunit1'] = ('Angstrom', 'units along axis1')
+    header['ctype1'] = 'WAVELENGTH'
+    header['crpix2'] = (0.0, 'reference pixel')
+    header['crval2'] = (0.0, 'central value at crpix2')
     header['cdelt2'] = (1.0, 'increment')
-    header['cunit1'] = ('angstroms', 'units along axis1')
-    header['cunit2'] = ('pixel', 'units along axis2')
+    header['ctype2'] = 'PIXEL'
+    header['cunit2'] = ('Pixel', 'units along axis2')
     header.remove('cd1_1')
     header.remove('cd1_2')
     header.remove('cd2_1')
@@ -1059,6 +1065,13 @@ def apply_rectwv_coeff(reduced_image, rectwv_coeff,
     header.remove('PCD2_2')
     header.remove('PCRPIX1')
     header.remove('PCRPIX2')
+    header['history'] = 'Boundary parameters uuid:' + \
+                        rectwv_coeff.meta_info['origin']['bound_param'][4:]
+    header['history'] = 'MasterRectWave uuid:' + \
+                        rectwv_coeff.meta_info['origin']['master_rectwv'][4:]
+    header['history'] = 'RectWaveCoeff uuid:' + rectwv_coeff.uuid
+    header['history'] = 'Rectification and wavelength calibration time ' \
+                        + datetime.now().isoformat()
 
     logger.info('Generating rectified and wavelength calibrated image')
 
