@@ -31,7 +31,7 @@ from numina.array.display.ximplotxy import ximplotxy
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.tools.arg_file_is_new import arg_file_is_new
 
-from emirdrp.tools.apply_rect_wpoly import Slitlet2D
+from emirdrp.processing.wavecal import Slitlet2D
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
 from emirdrp.tools.rect_wpoly_for_mos import islitlet_progress
@@ -161,7 +161,7 @@ def main(args=None):
 
         # define Slitlet2D object
         slt = Slitlet2D(islitlet=islitlet,
-                        coef_rect_wpoly=coef_rect_wpoly,
+                        rectwv_coeff=coef_rect_wpoly,
                         debugplot=args.debugplot)
 
         if abs(args.debugplot) >= 10:
