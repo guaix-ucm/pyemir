@@ -33,7 +33,7 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.processing.wavecal import Slitlet2D
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
-from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
+from emirdrp.processing.wavecal import nscan_minmax_frontiers
 from emirdrp.tools.rect_wpoly_for_mos import islitlet_progress
 from emirdrp.tools.save_ndarray_to_fits import save_ndarray_to_fits
 from emirdrp.products import RectWaveCoeff

@@ -31,11 +31,11 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import RectWaveCoeff
 from emirdrp.processing.wavecal import Slitlet2D
+from emirdrp.processing.wavecal import set_wv_parameters
+from emirdrp.processing.wavecal import nscan_minmax_frontiers
 
-from .nscan_minmax_frontiers import nscan_minmax_frontiers
 from .rect_wpoly_for_mos import islitlet_progress
 from .save_ndarray_to_fits import save_ndarray_to_fits
-from .set_wv_parameters import set_wv_parameters
 
 from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_NAXIS1

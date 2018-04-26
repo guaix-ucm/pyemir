@@ -51,18 +51,18 @@ import numina.types.qc
 from numina.tools.check_setstate_getstate import check_setstate_getstate
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.processing.wavecal import set_wv_parameters
+from emirdrp.processing.wavecal import nscan_minmax_frontiers
 from emirdrp.products import RefinedBoundaryModelParam
 from emirdrp.products import RectWaveCoeff
 
 from .fit_boundaries import bound_params_from_dict
 from .fit_boundaries import expected_distorted_boundaries
 from .fit_boundaries import expected_distorted_frontiers
-from .nscan_minmax_frontiers import nscan_minmax_frontiers
 from .rescale_array_to_z1z2 import rescale_array_to_z1z2
 from .rescale_array_to_z1z2 import rescale_array_from_z1z2
 from .save_ndarray_to_fits import save_ndarray_to_fits
 from .select_unrectified_slitlets import select_unrectified_slitlet
-from .set_wv_parameters import set_wv_parameters
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from numina.tools.arg_file_is_new import arg_file_is_new
@@ -102,7 +102,7 @@ class Slitlet2dArc(object):
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
 
-    Attributes
+   Attributes
     ----------
     islitlet : int
         Slitlet number.

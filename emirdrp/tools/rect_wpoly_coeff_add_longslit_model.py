@@ -35,8 +35,8 @@ from numina.array.stats import summary
 from numina.tools.arg_file_is_new import arg_file_is_new
 from numina.tools.check_setstate_getstate import check_setstate_getstate
 
+from emirdrp.processing.wavecal import set_wv_parameters
 from emirdrp.products import RectWaveCoeff
-from emirdrp.tools.set_wv_parameters import set_wv_parameters
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_NBARS

@@ -31,13 +31,13 @@ from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 from numina.tools.arg_file_is_new import arg_file_is_new
 from emirdrp.instrument.csu_configuration import CsuConfiguration
+from emirdrp.processing.wavecal import nscan_minmax_frontiers
 
 from .fit_boundaries import bound_params_from_dict
 from .fit_boundaries import expected_distorted_frontiers
 from .fit_boundaries import overplot_boundaries_from_params
 from .fit_boundaries import overplot_frontiers_from_params
 from .list_slitlets_from_string import list_slitlets_from_string
-from .nscan_minmax_frontiers import nscan_minmax_frontiers
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_NAXIS1
