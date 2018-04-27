@@ -31,8 +31,8 @@ from numina.types.linescatalog import LinesCatalog
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.decorators
 from emirdrp.processing.combine import basic_processing_with_combination
-from emirdrp.processing.wavecal import apply_rectwv_coeff
-from emirdrp.processing.wavecal import rectwv_coeff_from_arc_image
+from emirdrp.processing.wavecal.rectwv import apply_rectwv_coeff
+from emirdrp.processing.wavecal.rectwv import rectwv_coeff_from_arc_image
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 
