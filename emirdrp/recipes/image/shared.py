@@ -39,12 +39,13 @@ from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 
 from numina import __version__
-from numina.core import DataFrame, RecipeError
+from numina.core import DataFrame
 from numina.array import fixpix2
 from numina.frame import resize_fits, custom_region_to_str
 from numina.array import combine_shape, correct_flatfield
 from numina.array import subarray_match
 from numina.array.combine import flatcombine, median, quantileclip
+from numina.exceptions import RecipeError
 
 from emirdrp.util.sextractor import SExtractor
 from emirdrp.util.sextractor import open as sopen

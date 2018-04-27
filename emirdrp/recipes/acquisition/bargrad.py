@@ -21,7 +21,8 @@
 
 from __future__ import division
 
-from numina.core import Requirement, Product, Parameter, RecipeError
+from numina.core import Requirement, Product, Parameter
+from numina.exceptions import RecipeError
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 

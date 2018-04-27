@@ -26,7 +26,7 @@ import logging
 import numpy
 import six
 from numina.core import Product, Parameter
-from numina.core import RecipeError
+from numina.exceptions import RecipeError
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from scipy import ndimage

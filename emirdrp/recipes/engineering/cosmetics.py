@@ -29,7 +29,7 @@ from astropy.io import fits
 
 from numina import __version__
 from numina.core import Parameter, Requirement
-from numina.core import RecipeError
+from numina.exceptions import RecipeError
 from numina.core import Product
 from numina.core import DataFrameType
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT

@@ -25,7 +25,7 @@ import numpy
 from numina.array.combine import median
 from numina.core import DataFrame
 from numina.core import Product
-from numina.core import RecipeError
+from numina.exceptions import RecipeError
 from numina.core.requirements import ObservationResultRequirement
 
 import emirdrp.instrument.channels as allchannels

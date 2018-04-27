@@ -26,7 +26,8 @@ import numina.core
 import numina.exceptions
 import numpy
 from numina.array import combine
-from numina.core import Product, RecipeError
+from numina.core import Product
+from numina.exceptions import RecipeError
 from numina.core.requirements import ObservationResultRequirement
 
 import emirdrp.datamodel

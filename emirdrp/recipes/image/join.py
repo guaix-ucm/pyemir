@@ -28,7 +28,7 @@ import uuid
 import numpy
 import sep
 from astropy.io import fits
-from numina.core import Product, RecipeError, Requirement
+from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
 from numina.array import combine_shape, combine_shapes
@@ -37,6 +37,7 @@ from numina.array.combine import flatcombine, median, quantileclip
 from numina.array.utils import coor_to_pix, image_box2d
 import numina.processing as proc
 from numina.core.query import ResultOf
+from numina.exceptions import RecipeError
 
 import emirdrp.decorators
 from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs_imgs

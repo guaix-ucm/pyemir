@@ -22,7 +22,8 @@ import sep
 
 from numina.array.bbox import BoundingBox
 from numina.array.offrot import fit_offset_and_rotation
-from numina.core import Requirement, Product, Parameter, RecipeError
+from numina.core import Requirement, Product, Parameter
+from numina.exceptions import RecipeError
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.types.qc import QC
