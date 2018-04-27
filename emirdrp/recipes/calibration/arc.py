@@ -24,7 +24,7 @@ Arc calibration Recipe for EMIR
 from __future__ import division, print_function
 
 from numina.array.combine import median
-from numina.core import Requirement, Parameter, Result
+from numina.core import Requirement, Result
 from numina.core.requirements import ObservationResultRequirement
 from numina.types.linescatalog import LinesCatalog
 
@@ -32,7 +32,8 @@ from emirdrp.core.recipe import EmirRecipe
 import emirdrp.decorators
 from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.processing.wavecal.rectwv import apply_rectwv_coeff
-from emirdrp.processing.wavecal.rectwv import rectwv_coeff_from_arc_image
+from emirdrp.processing.wavecal.rectwv_coeff_from_arc_image \
+    import rectwv_coeff_from_arc_image
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 

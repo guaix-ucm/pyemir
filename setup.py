@@ -54,7 +54,7 @@ setup(name='pyemir',
               'pyemir-merge_bounddict_files = ' +
                   'emirdrp.tools.merge_bounddict_files:main',
               'pyemir-rectwv_coeff_from_arc_image = ' +
-                  'emirdrp.tools.rectwv_coeff_from_arc_image:main',
+                  'emirdrp.processing.wavecal.rectwv_coeff_from_arc_image:main',
               'pyemir-rect_wpoly_coeff_add_longslit_model = ' +
                   'emirdrp.tools.rect_wpoly_coeff_add_longslit_model:main',
               'pyemir-rect_wpoly_for_mos = ' +
