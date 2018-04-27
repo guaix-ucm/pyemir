@@ -29,8 +29,8 @@ import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
-from emirdrp.processing.wavecal import rectwv_coeff_from_mos_library
-from emirdrp.processing.wavecal import apply_rectwv_coeff
+from emirdrp.processing.wavecal.rectwv import rectwv_coeff_from_mos_library
+from emirdrp.processing.wavecal.rectwv import apply_rectwv_coeff
 import emirdrp.decorators
 
 
