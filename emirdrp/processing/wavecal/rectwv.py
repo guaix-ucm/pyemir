@@ -108,6 +108,11 @@ def rectwv_coeff_from_arc_image(reduced_image,
 
     logger = logging.getLogger(__name__)
 
+    # protections
+    if args_interactive and args_pdf is not None:
+        logger.error('--interactive and --pdf are incompatible options')
+        raise ValueError('--interactive and --pdf are incompatible options')
+
     # header and data array
     header = reduced_image[0].header
     image2d = reduced_image[0].data
@@ -358,18 +363,8 @@ def rectwv_coeff_from_arc_image(reduced_image,
 
     # ---
 
-    # ToDo: return out_55sp ???
-    '''
-    # Save image with collapsed spectra employed to determine the
-    # wavelength calibration
-    if args.out_55sp is not None:
-        save_ndarray_to_fits(
-            array=image2d_55sp,
-            file_name=args.out_55sp,
-            cast_to_float=True,
-            overwrite=True
-        )
-    '''
+    # generate FITS file structure with 55 spectra corresponding to the
+    # median spectrum for each slitlet
     reduced_55sp = fits.PrimaryHDU(data=image2d_55sp)
     reduced_55sp.header['crpix1'] = (0.0, 'reference pixel')
     reduced_55sp.header['crval1'] = (0.0, 'central value at crpix2')
@@ -543,8 +538,9 @@ def rectwv_coeff_from_arc_image(reduced_image,
     return rectwv_coeff, reduced_55sp
 
 
-def rectwv_coeff_from_mos_library(reduced_image, master_rectwv,
-                                           ignore_DTUconf=True):
+def rectwv_coeff_from_mos_library(reduced_image,
+                                  master_rectwv,
+                                  ignore_dtu_configuration=True):
     """Evaluate rect.+wavecal. coefficients from MOS library
 
     Parameters
@@ -558,7 +554,7 @@ def rectwv_coeff_from_mos_library(reduced_image, master_rectwv,
         to generate an instance of RectWaveCoeff with the rectification
         and wavelength calibration coefficients for the particular
         CSU configuration.
-    ignore_DTUconf : bool
+    ignore_dtu_configuration : bool
         If True, ignore differences in DTU configuration.
 
     Returns
@@ -593,7 +589,7 @@ def rectwv_coeff_from_mos_library(reduced_image, master_rectwv,
         logger.info(dtu_conf)
         logger.info('DTU configuration from master calibration:')
         logger.info(dtu_conf_calib)
-        if ignore_DTUconf:
+        if ignore_dtu_configuration:
             logger.warning('DTU configuration differences found!')
         else:
             raise ValueError("DTU configurations do not match!")
@@ -834,7 +830,7 @@ def rectwv_coeff_from_mos_library(reduced_image, master_rectwv,
 
 
 def apply_rectwv_coeff(reduced_image, rectwv_coeff,
-                       resampling=2, ignore_DTUconf=True,
+                       resampling=2, ignore_dtu_configuration=True,
                        debugplot=0):
     """Compute rectification and wavelength calibration coefficients.
 
@@ -848,7 +844,7 @@ def apply_rectwv_coeff(reduced_image, rectwv_coeff,
             particular CSU configuration.
         resampling : int
             1: nearest neighbour, 2: flux preserving interpolation.
-        ignore_DTUconf : bool
+        ignore_dtu_configuration : bool
             If True, ignore differences in DTU configuration.
         debugplot : int
             Debugging level for messages and plots. For details see
@@ -892,7 +888,7 @@ def apply_rectwv_coeff(reduced_image, rectwv_coeff,
         logger.info(dtu_conf)
         logger.info('DTU configuration from master calibration:')
         logger.info(dtu_conf_calib)
-        if ignore_DTUconf:
+        if ignore_dtu_configuration:
             logger.warning('DTU configuration differences found!')
         else:
             raise ValueError("DTU configurations do not match!")

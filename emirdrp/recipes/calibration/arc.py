@@ -69,8 +69,10 @@ class ArcCalibrationRecipe(EmirRecipe):
         # save intermediate image in work directory
         self.save_intermediate_img(reduced_image, 'reduced_image.fits')
 
-        # RectWaveCoeff object with rectification and wavelength calibration
-        # coefficients for the particular CSU configuration of the arc image
+        # RectWaveCoeff object (with rectification and wavelength calibration
+        # coefficients for the particular CSU configuration of the arc image)
+        # and HDUList object with the FITS image corresponding to 55 median
+        # spectra of each slitlet
         rectwv_coeff, reduced_55sp = rectwv_coeff_from_arc_image(
             reduced_image,
             rinput.bound_param,
