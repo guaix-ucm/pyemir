@@ -99,6 +99,10 @@ def rectwv_coeff_from_arc_image(reduced_image,
     rectwv_coeff : RectWaveCoeff instance
         Rectification and wavelength calibration coefficients for the
         particular CSU configuration of the input arc image.
+    reduced_55sp : HDUList object
+        Image with 55 spectra corresponding to the median spectrum for
+        each slitlet, employed to derived the wavelength calibration
+        polynomial.
 
     """
 
@@ -366,6 +370,17 @@ def rectwv_coeff_from_arc_image(reduced_image,
             overwrite=True
         )
     '''
+    reduced_55sp = fits.PrimaryHDU(data=image2d_55sp)
+    reduced_55sp.header['crpix1'] = (0.0, 'reference pixel')
+    reduced_55sp.header['crval1'] = (0.0, 'central value at crpix2')
+    reduced_55sp.header['cdelt1'] = (1.0, 'increment')
+    reduced_55sp.header['ctype1'] = 'PIXEL'
+    reduced_55sp.header['cunit1'] = ('Pixel', 'units along axis2')
+    reduced_55sp.header['crpix2'] = (0.0, 'reference pixel')
+    reduced_55sp.header['crval2'] = (0.0, 'central value at crpix2')
+    reduced_55sp.header['cdelt2'] = (1.0, 'increment')
+    reduced_55sp.header['ctype2'] = 'PIXEL'
+    reduced_55sp.header['cunit2'] = ('Pixel', 'units along axis2')
 
     # ---
 
@@ -525,7 +540,7 @@ def rectwv_coeff_from_arc_image(reduced_image,
     logger.info('Generating RectWaveCoeff object with uuid=' +
                 rectwv_coeff.uuid)
 
-    return rectwv_coeff
+    return rectwv_coeff, reduced_55sp
 
 
 def rectwv_coeff_from_mos_library(reduced_image, master_rectwv,

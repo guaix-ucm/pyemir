@@ -48,8 +48,9 @@ class ArcCalibrationRecipe(EmirRecipe):
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
 
     reduced_image = Result(prods.DataFrameType)
-    reduced_arc = Result(prods.DataFrameType)
     rectwv_coeff = Result(prods.RectWaveCoeff)
+    reduced_55sp = Result(prods.DataFrameType)
+    reduced_arc = Result(prods.DataFrameType)
 
     @emirdrp.decorators.loginfo
     def run(self, rinput):
@@ -70,7 +71,7 @@ class ArcCalibrationRecipe(EmirRecipe):
 
         # RectWaveCoeff object with rectification and wavelength calibration
         # coefficients for the particular CSU configuration of the arc image
-        rectwv_coeff = rectwv_coeff_from_arc_image(
+        rectwv_coeff, reduced_55sp = rectwv_coeff_from_arc_image(
             reduced_image,
             rinput.bound_param,
             rinput.lines_catalog,
@@ -82,8 +83,9 @@ class ArcCalibrationRecipe(EmirRecipe):
         # save results in result directory
         self.logger.info('end rect.+wavecal. reduction of arc spectra')
         result = self.create_result(reduced_image=reduced_image,
-                                    reduced_arc=reduced_arc,
-                                    rectwv_coeff=rectwv_coeff)
+                                    rectwv_coeff=rectwv_coeff,
+                                    reduced_55sp=reduced_55sp,
+                                    reduced_arc=reduced_arc)
         return result
 
     def set_base_headers(self, hdr):
