@@ -39,6 +39,8 @@ setup(name='pyemir',
               'EMIR = emirdrp.loader:load_drp',
           ],
           'console_scripts': [
+              'pyemir-apply_rectification_only = ' +
+                  'emirdrp.tools.apply_rectification_only:main',
               'pyemir-apply_rectwv_coeff = ' +
                   'emirdrp.processing.wavecal.apply_rectwv_coeff:main',
               'pyemir-continuum_flatfield = ' +
