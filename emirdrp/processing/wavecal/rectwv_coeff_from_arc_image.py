@@ -37,9 +37,9 @@ from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.tools.arg_file_is_new import arg_file_is_new
 import numina.types.qc
 
-from emirdrp.products import RefinedBoundaryModelParam
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.products import RefinedBoundaryModelParam
 from emirdrp.products import RectWaveCoeff
 from emirdrp.tools.fit_boundaries import bound_params_from_dict
 from emirdrp.tools.select_unrectified_slitlets import \
@@ -148,8 +148,8 @@ def rectwv_coeff_from_arc_image(reduced_image,
     poly_cdelt1_linear = wv_parameters['poly_cdelt1_linear']
 
     # list of slitlets to be computed
-    list_slitlets = list(range(islitlet_min, islitlet_max + 1))
-    print('list_slitlets:\n', list_slitlets)
+    logger.info('list_slitlets: [' + str(islitlet_min) + ',... ' +
+                str(islitlet_max) + ']')
 
     # read master arc line wavelengths (only brightest lines)
     wv_master = read_wv_master_from_array(
@@ -165,7 +165,9 @@ def rectwv_coeff_from_arc_image(reduced_image,
     # in ascending order
     for i in range(len(wv_master_all) - 1):
         if wv_master_all[i] >= wv_master_all[i + 1]:
-            print('>>> wavelengths: ', wv_master_all[i], wv_master_all[i + 1])
+            logger.error('>>> wavelengths: ' +
+                         str(wv_master_all[i]) + '  ' +
+                         str(wv_master_all[i+1]))
             raise ValueError('Arc lines are not sorted in master file')
 
     # ---
@@ -177,181 +179,190 @@ def rectwv_coeff_from_arc_image(reduced_image,
 
     measured_slitlets = []
 
-    for islitlet in list_slitlets:
+    cout = '0'
+    for islitlet in range(1, EMIR_NBARS + 1):
 
-        # define Slitlet2dArc object
-        slt = Slitlet2dArc(
-            islitlet=islitlet,
-            params=params,
-            parmodel=parmodel,
-            csu_conf=csu_conf,
-            ymargin_bb=args_ymargin_bb,
-            debugplot=debugplot
-        )
+        if islitlet_min <= islitlet <= islitlet_max:
 
-        # extract 2D image corresponding to the selected slitlet, clipping
-        # the image beyond the unrectified slitlet (in order to isolate
-        # the arc lines of the current slitlet; otherwise there are problems
-        # with arc lines from neighbour slitlets)
-        image2d_tmp = select_unrectified_slitlet(
-            image2d=image2d,
-            islitlet=islitlet,
-            csu_bar_slit_center=csu_conf.csu_bar_slit_center(islitlet),
-            params=params,
-            parmodel=parmodel,
-            maskonly=False
-        )
-        slitlet2d = slt.extract_slitlet2d(image2d_tmp)
-
-        # subtract smooth background computed as follows:
-        # - median collapsed spectrum of the whole slitlet2d
-        # - independent median filtering of the previous spectrum in the
-        #   two halves in the spectral direction
-        if args_remove_sp_background:
-            spmedian = np.median(slitlet2d, axis=0)
-            naxis1_tmp = spmedian.shape[0]
-            jmidpoint = naxis1_tmp // 2
-            sp1 = medfilt(spmedian[:jmidpoint], [201])
-            sp2 = medfilt(spmedian[jmidpoint:], [201])
-            spbackground = np.concatenate((sp1, sp2))
-            slitlet2d -= spbackground
-
-        # locate unknown arc lines
-        slt.locate_unknown_arc_lines(
-            slitlet2d=slitlet2d,
-            times_sigma_threshold=args_times_sigma_threshold)
-
-        # continue working with current slitlet only if arc lines have
-        # been detected
-        if slt.list_arc_lines is not None:
-
-            # compute intersections between spectrum trails and arc lines
-            slt.xy_spectrail_arc_intersections(slitlet2d=slitlet2d)
-
-            # compute rectification transformation
-            slt.estimate_tt_to_rectify(order=args_order_fmap,
-                                       slitlet2d=slitlet2d)
-
-            # rectify image
-            slitlet2d_rect = slt.rectify(slitlet2d,
-                                         resampling=2,
-                                         transformation=1)
-
-            # median spectrum and line peaks from rectified image
-            sp_median, fxpeaks = slt.median_spectrum_from_rectified_image(
-                slitlet2d_rect,
-                sigma_gaussian_filtering=args_sigma_gaussian_filtering,
-                nwinwidth_initial=5,
-                nwinwidth_refined=5,
-                times_sigma_threshold=5,
-                npix_avoid_border=6,
-                nbrightlines=nbrightlines
+            # define Slitlet2dArc object
+            slt = Slitlet2dArc(
+                islitlet=islitlet,
+                params=params,
+                parmodel=parmodel,
+                csu_conf=csu_conf,
+                ymargin_bb=args_ymargin_bb,
+                debugplot=debugplot
             )
 
-            image2d_55sp[islitlet - 1, :] = sp_median
-
-            # determine expected wavelength limits prior to the wavelength
-            # calibration
-            csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
-            crval1_linear = poly_crval1_linear(csu_bar_slit_center)
-            cdelt1_linear = poly_cdelt1_linear(csu_bar_slit_center)
-            expected_wvmin = crval1_linear - args_margin_npix * cdelt1_linear
-            naxis1_linear = sp_median.shape[0]
-            crvaln_linear = crval1_linear + (naxis1_linear - 1) * cdelt1_linear
-            expected_wvmax = crvaln_linear + args_margin_npix * cdelt1_linear
-
-            # clip initial master arc line list with bright lines to expected
-            # wavelength range
-            lok1 = expected_wvmin <= wv_master
-            lok2 = wv_master <= expected_wvmax
-            lok = lok1 * lok2
-            wv_master_eff = wv_master[lok]
-
-            # perform initial wavelength calibration
-            solution_wv = wvcal_spectrum(
-                sp=sp_median,
-                fxpeaks=fxpeaks,
-                poly_degree_wfit=args_poldeg_initial,
-                wv_master=wv_master_eff,
-                wv_ini_search=expected_wvmin,
-                wv_end_search=expected_wvmax,
-                geometry=args_geometry,
-                debugplot=slt.debugplot
+            # extract 2D image corresponding to the selected slitlet, clipping
+            # the image beyond the unrectified slitlet (in order to isolate
+            # the arc lines of the current slitlet; otherwise there are
+            # problems with arc lines from neighbour slitlets)
+            image2d_tmp = select_unrectified_slitlet(
+                image2d=image2d,
+                islitlet=islitlet,
+                csu_bar_slit_center=csu_conf.csu_bar_slit_center(islitlet),
+                params=params,
+                parmodel=parmodel,
+                maskonly=False
             )
-            # store initial wavelength calibration polynomial in current
-            # slitlet instance
-            slt.wpoly = np.polynomial.Polynomial(solution_wv.coeff)
-            pause_debugplot(debugplot)
+            slitlet2d = slt.extract_slitlet2d(image2d_tmp)
 
-            # clip initial master arc line list with all the lines to expected
-            # wavelength range
-            lok1 = expected_wvmin <= wv_master_all
-            lok2 = wv_master_all <= expected_wvmax
-            lok = lok1 * lok2
-            wv_master_all_eff = wv_master_all[lok]
+            # subtract smooth background computed as follows:
+            # - median collapsed spectrum of the whole slitlet2d
+            # - independent median filtering of the previous spectrum in the
+            #   two halves in the spectral direction
+            if args_remove_sp_background:
+                spmedian = np.median(slitlet2d, axis=0)
+                naxis1_tmp = spmedian.shape[0]
+                jmidpoint = naxis1_tmp // 2
+                sp1 = medfilt(spmedian[:jmidpoint], [201])
+                sp2 = medfilt(spmedian[jmidpoint:], [201])
+                spbackground = np.concatenate((sp1, sp2))
+                slitlet2d -= spbackground
 
-            # refine wavelength calibration
-            if args_poldeg_refined > 0:
-                plottitle = '[slitlet#{}, refined]'.format(islitlet)
-                poly_refined, yres_summary = refine_arccalibration(
+            # locate unknown arc lines
+            slt.locate_unknown_arc_lines(
+                slitlet2d=slitlet2d,
+                times_sigma_threshold=args_times_sigma_threshold)
+
+            # continue working with current slitlet only if arc lines have
+            # been detected
+            if slt.list_arc_lines is not None:
+
+                # compute intersections between spectrum trails and arc lines
+                slt.xy_spectrail_arc_intersections(slitlet2d=slitlet2d)
+
+                # compute rectification transformation
+                slt.estimate_tt_to_rectify(order=args_order_fmap,
+                                           slitlet2d=slitlet2d)
+
+                # rectify image
+                slitlet2d_rect = slt.rectify(slitlet2d,
+                                             resampling=2,
+                                             transformation=1)
+
+                # median spectrum and line peaks from rectified image
+                sp_median, fxpeaks = slt.median_spectrum_from_rectified_image(
+                    slitlet2d_rect,
+                    sigma_gaussian_filtering=args_sigma_gaussian_filtering,
+                    nwinwidth_initial=5,
+                    nwinwidth_refined=5,
+                    times_sigma_threshold=5,
+                    npix_avoid_border=6,
+                    nbrightlines=nbrightlines
+                )
+
+                image2d_55sp[islitlet - 1, :] = sp_median
+
+                # determine expected wavelength limits prior to the wavelength
+                # calibration
+                csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
+                crval1_linear = poly_crval1_linear(csu_bar_slit_center)
+                cdelt1_linear = poly_cdelt1_linear(csu_bar_slit_center)
+                expected_wvmin = crval1_linear - \
+                                 args_margin_npix * cdelt1_linear
+                naxis1_linear = sp_median.shape[0]
+                crvaln_linear = crval1_linear + \
+                                (naxis1_linear - 1) * cdelt1_linear
+                expected_wvmax = crvaln_linear + \
+                                 args_margin_npix * cdelt1_linear
+
+                # clip initial master arc line list with bright lines to
+                # the expected wavelength range
+                lok1 = expected_wvmin <= wv_master
+                lok2 = wv_master <= expected_wvmax
+                lok = lok1 * lok2
+                wv_master_eff = wv_master[lok]
+
+                # perform initial wavelength calibration
+                solution_wv = wvcal_spectrum(
                     sp=sp_median,
-                    poly_initial=slt.wpoly,
-                    wv_master=wv_master_all_eff,
-                    poldeg=args_poldeg_refined,
-                    ntimes_match_wv=1,
-                    interactive=args_interactive,
-                    threshold=args_threshold_wv,
-                    plottitle=plottitle,
-                    ylogscale=args_ylogscale,
+                    fxpeaks=fxpeaks,
+                    poly_degree_wfit=args_poldeg_initial,
+                    wv_master=wv_master_eff,
+                    wv_ini_search=expected_wvmin,
+                    wv_end_search=expected_wvmax,
                     geometry=args_geometry,
-                    pdf=args_pdf,
                     debugplot=slt.debugplot
                 )
-                # store refined wavelength calibration polynomial in current
+                # store initial wavelength calibration polynomial in current
                 # slitlet instance
-                slt.wpoly = poly_refined
+                slt.wpoly = np.polynomial.Polynomial(solution_wv.coeff)
+                pause_debugplot(debugplot)
 
-            # compute approximate linear values for CRVAL1 and CDELT1
-            naxis1_linear = sp_median.shape[0]
-            crmin1_linear = slt.wpoly(1)
-            crmax1_linear = slt.wpoly(naxis1_linear)
-            slt.crval1_linear = crmin1_linear
-            slt.cdelt1_linear = \
-                (crmax1_linear - crmin1_linear) / (naxis1_linear - 1)
+                # clip initial master arc line list with all the lines to
+                # the expected wavelength range
+                lok1 = expected_wvmin <= wv_master_all
+                lok2 = wv_master_all <= expected_wvmax
+                lok = lok1 * lok2
+                wv_master_all_eff = wv_master_all[lok]
 
-            # check that the trimming of wv_master and wv_master_all has
-            # preserved the wavelength range [crmin1_linear, crmax1_linear]
-            if crmin1_linear < expected_wvmin:
-                print(">>> islitlet: ", islitlet)
-                print(">>> expected_wvmin:", expected_wvmin)
-                print(">>> crmin1_linear.:", crmin1_linear)
-                print(">>> WARNING: Unexpected crmin1_linear < expected_wvmin")
-            if crmax1_linear > expected_wvmax:
-                print(">>> islitlet: ", islitlet)
-                print(">>> expected_wvmax:", expected_wvmax)
-                print(">>> crmax1_linear.:", crmax1_linear)
-                print(">>> WARNING: Unexpected crmax1_linear > expected_wvmin")
+                # refine wavelength calibration
+                if args_poldeg_refined > 0:
+                    plottitle = '[slitlet#{}, refined]'.format(islitlet)
+                    poly_refined, yres_summary = refine_arccalibration(
+                        sp=sp_median,
+                        poly_initial=slt.wpoly,
+                        wv_master=wv_master_all_eff,
+                        poldeg=args_poldeg_refined,
+                        ntimes_match_wv=1,
+                        interactive=args_interactive,
+                        threshold=args_threshold_wv,
+                        plottitle=plottitle,
+                        ylogscale=args_ylogscale,
+                        geometry=args_geometry,
+                        pdf=args_pdf,
+                        debugplot=slt.debugplot
+                    )
+                    # store refined wavelength calibration polynomial in
+                    # current slitlet instance
+                    slt.wpoly = poly_refined
 
-            cout = '.'
+                # compute approximate linear values for CRVAL1 and CDELT1
+                naxis1_linear = sp_median.shape[0]
+                crmin1_linear = slt.wpoly(1)
+                crmax1_linear = slt.wpoly(naxis1_linear)
+                slt.crval1_linear = crmin1_linear
+                slt.cdelt1_linear = \
+                    (crmax1_linear - crmin1_linear) / (naxis1_linear - 1)
 
-        else:
+                # check that the trimming of wv_master and wv_master_all has
+                # preserved the wavelength range [crmin1_linear, crmax1_linear]
+                if crmin1_linear < expected_wvmin:
+                    logger.warning(">>> islitlet: " +str(islitlet))
+                    logger.warning("expected_wvmin: " + str(expected_wvmin))
+                    logger.warning("crmin1_linear.: " + str(crmin1_linear))
+                    logger.warning("WARNING: Unexpected crmin1_linear < "
+                                   "expected_wvmin")
+                if crmax1_linear > expected_wvmax:
+                    logger.warning(">>> islitlet: " +str(islitlet))
+                    logger.warning("expected_wvmax: " + str(expected_wvmax))
+                    logger.warning("crmax1_linear.: " + str(crmax1_linear))
+                    logger.warning("WARNING: Unexpected crmax1_linear > "
+                                   "expected_wvmax")
 
-            cout = 'x'
+                cout += '.'
 
-        # store current slitlet in list of measured slitlets
-        measured_slitlets.append(slt)
+            else:
 
-        if debugplot == 0:
+                cout += 'x'
+
+            # store current slitlet in list of measured slitlets
+            measured_slitlets.append(slt)
+
             if islitlet % 10 == 0:
                 if cout != 'x':
                     cout = str(islitlet // 10)
-            sys.stdout.write(cout)
-            # print(slt)
-            if islitlet == list_slitlets[-1]:
-                sys.stdout.write('\n')
-            sys.stdout.flush()
+
+            if debugplot != 0:
+                pause_debugplot(debugplot)
+
         else:
-            pause_debugplot(debugplot)
+
+            cout += 'i'
+
+        logger.info(cout)
 
     # ---
 

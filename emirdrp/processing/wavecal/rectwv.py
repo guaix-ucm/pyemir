@@ -412,7 +412,7 @@ def apply_rectwv_coeff(reduced_image, rectwv_coeff,
     list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
     for idel in rectwv_coeff.missing_slitlets:
         list_valid_islitlets.remove(idel)
-    logger.debug('Valid slitlet numbers: ' + str(list_valid_islitlets))
+    logger.debug('Valid slitlet numbers:\n' + str(list_valid_islitlets))
 
     # ---
 
