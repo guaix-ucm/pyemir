@@ -39,8 +39,8 @@ setup(name='pyemir',
               'EMIR = emirdrp.loader:load_drp',
           ],
           'console_scripts': [
-              'pyemir-apply_rect_wpoly = ' +
-                  'emirdrp.tools.apply_rect_wpoly:main',
+              'pyemir-apply_rectwv_coeff = ' +
+                  'emirdrp.processing.wavecal.apply_rectwv_coeff:main',
               'pyemir-continuum_flatfield = ' +
                   'emirdrp.tools.continuum_flatfield:main',
               'pyemir-convert_refined_multislit_param = ' +

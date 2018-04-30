@@ -29,7 +29,6 @@ from scipy.signal import medfilt
 import sys
 from uuid import uuid4
 
-from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.wavecalib.__main__ import read_wv_master_from_array
 from numina.array.wavecalib.__main__ import wvcal_spectrum
@@ -48,6 +47,7 @@ from emirdrp.tools.select_unrectified_slitlets import \
 from .set_wv_parameters import set_wv_parameters
 from .slitlet2darc import Slitlet2dArc
 
+from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NBARS
 
@@ -687,7 +687,7 @@ def main(args=None):
         debugplot=0
     )
 
-    # Save image with collapsed spectra employed to determine the
+    # save image with collapsed spectra employed to determine the
     # wavelength calibration
     if args.out_55sp is not None:
         reduced_55sp.writeto(args.out_55sp, overwrite=True)
