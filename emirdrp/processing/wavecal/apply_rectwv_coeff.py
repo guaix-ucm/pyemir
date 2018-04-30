@@ -131,7 +131,7 @@ def apply_rectwv_coeff(reduced_image,
     image2d_rectwv = np.zeros((EMIR_NAXIS2, naxis1_enlarged))
 
     # main loop
-    logger.info('Computing rectification and wavelength calibration')
+    logger.info('Applying rectification and wavelength calibration')
     for islitlet in list_valid_islitlets:
         if abs(debugplot) >= 10:
             if islitlet == list_valid_islitlets[0]:

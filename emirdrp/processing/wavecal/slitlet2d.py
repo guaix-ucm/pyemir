@@ -190,54 +190,60 @@ class Slitlet2D(object):
 
         # string with all the information
         output = "<Slilet2D instance>\n" + \
-            "- islitlet...........: " + \
+                 "- islitlet..................: " + \
                  str(self.islitlet) + "\n" + \
-            "- csu_bar_left.......: " + \
+                 "- csu_bar_left..............: " + \
                  str(self.csu_bar_left) + "\n" + \
-            "- csu_bar_right......: " + \
+                 "- csu_bar_right.............: " + \
                  str(self.csu_bar_right) + "\n" + \
-            "- csu_bar_slit_center: " + \
+                 "- csu_bar_slit_center.......: " + \
                  str(self.csu_bar_slit_center) + "\n" + \
-            "- csu_bar_slit_width.: " + \
+                 "- csu_bar_slit_width........: " + \
                  str(self.csu_bar_slit_width) + "\n" + \
-            "- x0_reference.......: " + \
+                 "- x0_reference..............: " + \
                  str(self.x0_reference) + "\n" + \
-            "- y0_reference_lower.: " + \
+                 "- y0_reference_lower........: " + \
                  str(self.y0_reference_lower) + "\n" + \
-            "- y0_reference_middle: " + \
+                 "- y0_reference_middle.......: " + \
                  str(self.y0_reference_middle) + "\n" + \
-            "- y0_reference_upper.: " + \
+                 "- y0_reference_upper........: " + \
                  str(self.y0_reference_upper) + "\n" + \
-            "- y0_frontier_lower..: " + \
+                 "- y0_frontier_lower.........: " + \
                  str(self.y0_frontier_lower) + "\n" + \
-            "- y0_frontier_upper..: " + \
+                 "- y0_frontier_upper.........: " + \
                  str(self.y0_frontier_upper) + "\n" + \
-            "- bb_nc1_orig........: " + \
+                 "- bb_nc1_orig...............: " + \
                  str(self.bb_nc1_orig) + "\n" + \
-            "- bb_nc2_orig........: " + \
+                 "- bb_nc2_orig...............: " + \
                  str(self.bb_nc2_orig) + "\n" + \
-            "- bb_ns1_orig........: " + \
+                 "- bb_ns1_orig...............: " + \
                  str(self.bb_ns1_orig) + "\n" + \
-            "- bb_ns2_orig........: " + \
+                 "- bb_ns2_orig...............: " + \
                  str(self.bb_ns2_orig) + "\n" + \
-            "- lower spectrail....:\n\t" + \
+                 "- lower spectrail...........:\n\t" + \
                  str(self.list_spectrails[0]) + "\n" + \
-            "- middle spectrail...:\n\t" + \
+                 "- middle spectrail..........:\n\t" + \
                  str(self.list_spectrails[1]) + "\n" + \
-            "- upper spectrail....:\n\t" + \
+                 "- upper spectrail...........:\n\t" + \
                  str(self.list_spectrails[2]) + "\n" + \
-            "- lower frontier.....:\n\t" + \
+                 "- lower frontier............:\n\t" + \
                  str(self.list_frontiers[0]) + "\n" + \
-            "- upper frontier.....:\n\t" + \
+                 "- upper frontier............:\n\t" + \
                  str(self.list_frontiers[1]) + "\n" + \
-            "- ttd_order..........: " + str(self.ttd_order) + "\n" + \
-            "- ttd_aij............:\n\t" + str(self.ttd_aij) + "\n" + \
-            "- ttd_bij............:\n\t" + str(self.ttd_bij) + "\n" + \
-            "- tti_aij............:\n\t" + str(self.tti_aij) + "\n" + \
-            "- tti_bij............:\n\t" + str(self.tti_bij) + "\n" + \
-            "- wpoly..............:\n\t" + str(self.wpoly) + "\n" + \
-            "- debugplot...................: " + \
-            str(self.debugplot)
+                 "- ttd_order.................: " + \
+                 str(self.ttd_order) + "\n" + \
+                 "- ttd_aij...................:\n\t" + \
+                 str(self.ttd_aij) + "\n" + \
+                 "- ttd_bij...................:\n\t" + \
+                 str(self.ttd_bij) + "\n" + \
+                 "- tti_aij...................:\n\t" + \
+                 str(self.tti_aij) + "\n" + \
+                 "- tti_bij...................:\n\t" + \
+                 str(self.tti_bij) + "\n" + \
+                 "- wpoly.....................:\n\t" + \
+                 str(self.wpoly) + "\n" + \
+                 "- debugplot.................: " + \
+                 str(self.debugplot)
 
         return output
 
