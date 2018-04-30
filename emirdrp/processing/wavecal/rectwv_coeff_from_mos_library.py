@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -17,139 +17,121 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import division
-from __future__ import print_function
+"""
+Rectification and wavelength calibration polynomials from empirical library
+"""
+
+from __future__ import division, print_function
 
 import argparse
 from astropy.io import fits
 from datetime import datetime
+import logging
 import numpy as np
 from scipy.interpolate import interp1d
 import sys
 from uuid import uuid4
 
-from emirdrp.instrument.csu_configuration import CsuConfiguration
-from emirdrp.instrument.dtu_configuration import DtuConfiguration
-
-from emirdrp.tools.fit_boundaries import bound_params_from_dict
-from emirdrp.tools.fit_boundaries import expected_distorted_boundaries
-from emirdrp.tools.fit_boundaries import expected_distorted_frontiers
-from .rect_wpoly_for_mos import islitlet_progress
-
 from numina.array.distortion import ncoef_fmap
-from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from numina.tools.arg_file_is_new import arg_file_is_new
 import numina.types.qc
 
-from emirdrp.products import RectWaveCoeff
+from emirdrp.instrument.csu_configuration import CsuConfiguration
+from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import MasterRectWave
+from emirdrp.products import RectWaveCoeff
+from emirdrp.tools.fit_boundaries import bound_params_from_dict
+from emirdrp.tools.fit_boundaries import expected_distorted_boundaries
+from emirdrp.tools.fit_boundaries import expected_distorted_frontiers
 
+from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
 from emirdrp.core import EMIR_NBARS
 
 
-def main(args=None):
-    # parse command-line options
-    parser = argparse.ArgumentParser(
-        description='description: evaluate rectification and wavelength '
-                    'calibration polynomials for the CSU configuration of a '
-                    'particular image'
-    )
+def rectwv_coeff_from_mos_library(reduced_image,
+                                  master_rectwv,
+                                  ignore_dtu_configuration=True,
+                                  debugplot=0):
+    """Evaluate rect.+wavecal. coefficients from MOS library
 
-    # required arguments
-    parser.add_argument("fitsfile",
-                        help="Input FITS file",
-                        type=argparse.FileType('rb'))
-    parser.add_argument("--rect_wpoly_MOSlibrary", required=True,
-                        help="Input JSON file with library of rectification "
-                             "and wavelength calibration coefficients",
-                        type=argparse.FileType('rt'))
-    parser.add_argument("--out_rectwv_coeff", required=True,
-                        help="Output JSON file with calibration computed for "
-                             "the input FITS file",
-                        type=lambda x: arg_file_is_new(parser, x, mode='wt'))
-    # optional arguments
-    parser.add_argument("--ignore_DTUconf",
-                        help="Ignore DTU configurations differences between "
-                             "model and input image",
-                        action="store_true")
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting & debugging options"
-                             " (default=0)",
-                        default=0, type=int,
-                        choices=DEBUGPLOT_CODES)
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
-    args = parser.parse_args(args)
+    Parameters
+    ----------
+    reduced_image : HDUList object
+        Image with preliminary basic reduction: bpm, bias, dark and
+        flatfield.
+    master_rectwv : MasterRectWave instance
+        Rectification and Wavelength Calibrartion Library product.
+        Contains the library of polynomial coefficients necessary
+        to generate an instance of RectWaveCoeff with the rectification
+        and wavelength calibration coefficients for the particular
+        CSU configuration.
+    ignore_dtu_configuration : bool
+        If True, ignore differences in DTU configuration.
+    debugplot : int
+        Debugging level for messages and plots. For details see
+        'numina.array.display.pause_debugplot.py'.
 
-    if args.echo:
-        print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
+    Returns
+    -------
+    rectwv_coeff : RectWaveCoeff instance
+        Rectification and wavelength calibration coefficients for the
+        particular CSU configuration.
 
-    # read the CSU configuration from the header of the input FITS file
-    csu_conf = CsuConfiguration.define_from_fits(args.fitsfile)
-    if abs(args.debugplot) >= 10:
-        print(csu_conf)
+    """
 
-    # read the DTU configuration from the header of the input FITS file
-    dtu_conf = DtuConfiguration.define_from_fits(args.fitsfile)
+    logger = logging.getLogger(__name__)
 
-    # read master calibration structure from JSON file
-    master_rectwv = MasterRectWave._datatype_load(
-        args.rect_wpoly_MOSlibrary.name)
+    # header
+    header = reduced_image[0].header
 
+    # read the CSU configuration from the image header
+    csu_conf = CsuConfiguration.define_from_header(header)
+    logger.debug(csu_conf)
+
+    # read the DTU configuration from the image header
+    dtu_conf = DtuConfiguration.define_from_header(header)
+    logger.debug(dtu_conf)
+
+    # retrieve DTU configuration from MasterRectWave object
     dtu_conf_calib = DtuConfiguration.define_from_dictionary(
-        master_rectwv.meta_info['dtu_configuration'])
+        master_rectwv.meta_info['dtu_configuration']
+    )
     # check that the DTU configuration employed to obtain the calibration
     # corresponds to the DTU configuration in the input FITS file
     if dtu_conf != dtu_conf_calib:
-        print('>>> DTU configuration from FITS header:')
-        print(dtu_conf)
-        print('>>> DTU configuration from calibration JSON file:')
-        print(dtu_conf_calib)
-        if args.ignore_DTUconf:
-            print('WARNING: DTU configuration differences found!')
+        logger.info('DTU configuration from image header:')
+        logger.info(dtu_conf)
+        logger.info('DTU configuration from master calibration:')
+        logger.info(dtu_conf_calib)
+        if ignore_dtu_configuration:
+            logger.warning('DTU configuration differences found!')
         else:
             raise ValueError("DTU configurations do not match!")
     else:
-        if abs(args.debugplot) >= 10:
-            print('>>> DTU Configuration match!')
-            print(dtu_conf)
+        logger.info('DTU configuration match!')
 
-    # read FITS image and its corresponding header
-    hdulist = fits.open(args.fitsfile)
-    header = hdulist[0].header
-    image2d = hdulist[0].data
-    hdulist.close()
-
-    # protections
-    naxis2, naxis1 = image2d.shape
-    if naxis1 != header['naxis1'] or naxis2 != header['naxis2']:
-        print('Something is wrong with NAXIS1 and/or NAXIS2')
-    if abs(args.debugplot) >= 10:
-        print('>>> NAXIS1:', naxis1)
-        print('>>> NAXIS2:', naxis2)
-
-    # check that the input FITS file grism and filter match
+    # check grism and filter
     filter_name = header['filter']
+    logger.debug('Filter: ' + filter_name)
     if filter_name != master_rectwv.tags['filter']:
-        raise ValueError("Filter name does not match!")
+        raise ValueError('Filter name does not match!')
     grism_name = header['grism']
+    logger.debug('Grism: ' + grism_name)
     if grism_name != master_rectwv.tags['grism']:
-        raise ValueError("Grism name does not match!")
-    if abs(args.debugplot) >= 10:
-        print('>>> grism.......:', grism_name)
-        print('>>> filter......:', filter_name)
+        raise ValueError('Grism name does not match!')
 
     # valid slitlet numbers
     list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
     for idel in master_rectwv.missing_slitlets:
         list_valid_islitlets.remove(idel)
-    if abs(args.debugplot) >= 10:
-        print('>>> valid slitlet numbers:', list_valid_islitlets)
+    logger.debug('valid slitlet numbers: ' + str(list_valid_islitlets))
 
-    # Initialize structure to save results into an ouptut JSON file
+    # initialize intermediate dictionary with relevant information
+    # (note: this dictionary corresponds to an old structure employed to
+    # store the information in a JSON file; this is no longer necessary,
+    # but here we reuse that dictionary for convenience)
     outdict = {}
     outdict['instrument'] = 'EMIR'
     outdict['meta-info'] = {}
@@ -174,7 +156,6 @@ def main(args=None):
     # compute rectification and wavelength calibration coefficients for each
     # slitlet according to its csu_bar_slit_center value
     for islitlet in list_valid_islitlets:
-        islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
 
         # csu_bar_slit_center of current slitlet in initial FITS image
@@ -186,17 +167,17 @@ def main(args=None):
 
         # check extrapolations
         if csu_bar_slit_center < min(list_csu_bar_slit_center):
-            print('\nWARNING: extrapolating table with ' + cslitlet)
-            print('         minimum tabulated value:',
-                  min(list_csu_bar_slit_center))
-            print('         sought value...........:',
-                  csu_bar_slit_center)
+            logger.warning('extrapolating table with ' + cslitlet)
+            logger.warning('minimum tabulated value: ' +
+                           str(min(list_csu_bar_slit_center)))
+            logger.warning('sought value...........: ' +
+                           str(csu_bar_slit_center))
         if csu_bar_slit_center > max(list_csu_bar_slit_center):
-            print('\nWARNING: extrapolating table with ' + cslitlet)
-            print('         maximum tabulated value:',
-                  max(list_csu_bar_slit_center))
-            print('         sought value...........:',
-                  csu_bar_slit_center)
+            logger.warning('extrapolating table with ' + cslitlet)
+            logger.warning('maximum tabulated value: ' +
+                           str(max(list_csu_bar_slit_center)))
+            logger.warning('sought value...........: ' +
+                           str(csu_bar_slit_center))
 
         # rectification coefficients
         ttd_order = tmpdict['ttd_order']
@@ -253,7 +234,6 @@ def main(args=None):
             csu_conf.csu_bar_slit_center(islitlet)
         outdict['contents'][cslitlet]['csu_bar_slit_width'] = \
             csu_conf.csu_bar_slit_width(islitlet)
-    print('OK!')
 
     # for each slitlet compute spectrum trails and frontiers using the
     # fitted boundary parameters
@@ -263,11 +243,9 @@ def main(args=None):
     parmodel = fitted_bound_param_json['contents']['parmodel']
     fitted_bound_param_json.update({'meta_info': {'parmodel': parmodel}})
     params = bound_params_from_dict(fitted_bound_param_json)
-    if abs(args.debugplot) >= 10:
-        print('* Fitted boundary parameters:')
-        params.pretty_print()
+    logger.debug('Fitted boundary parameters:')
+    logger.debug(params.pretty_print())
     for islitlet in list_valid_islitlets:
-        islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         # csu_bar_slit_center of current slitlet in initial FITS image
         csu_bar_slit_center = csu_conf.csu_bar_slit_center(islitlet)
@@ -300,12 +278,10 @@ def main(args=None):
                 list_frontiers[idum].poly_funct.coef.tolist()
             outdict['contents'][cslitlet]['y0_frontier_' + cdum] = \
                 list_frontiers[idum].poly_funct(x0_reference)
-    print('OK!')
 
     # store bounding box parameters for each slitlet
     xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
     for islitlet in list_valid_islitlets:
-        islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         # parameters already available in the input JSON file
         for par in ['bb_nc1_orig', 'bb_nc2_orig', 'ymargin_bb']:
@@ -332,15 +308,6 @@ def main(args=None):
             bb_ns2_orig = EMIR_NAXIS2
         outdict['contents'][cslitlet]['bb_ns1_orig'] = bb_ns1_orig
         outdict['contents'][cslitlet]['bb_ns2_orig'] = bb_ns2_orig
-    print('OK!')
-
-    # OBSOLETE
-    '''
-    # Save resulting JSON structure
-    with open(args.out_rectwv_coeff.name, 'w') as fstream:
-        json.dump(outdict, fstream, indent=2, sort_keys=True)
-        print('>>> Saving file ' + args.out_rectwv_coeff.name)
-    '''
 
     # ---
 
@@ -368,10 +335,76 @@ def main(args=None):
             })
             rectwv_coeff.missing_slitlets.append(islitlet)
         rectwv_coeff.contents.append(dumdict)
-    rectwv_coeff.writeto(args.out_rectwv_coeff.name)
-    print('>>> Saving file ' + args.out_rectwv_coeff.name)
     # debugging __getstate__ and __setstate__
-    # check_setstate_getstate(rectwv_coeff, args.out_rectwv_coeff.name)
+    # rectwv_coeff.writeto(args.out_rect_wpoly.name)
+    # print('>>> Saving file ' + args.out_rect_wpoly.name)
+    # check_setstate_getstate(rectwv_coeff, args.out_rect_wpoly.name)
+    logger.info('Generating RectWaveCoeff object with uuid=' +
+                rectwv_coeff.uuid)
+
+    return rectwv_coeff
+
+
+def main(args=None):
+    # parse command-line options
+    parser = argparse.ArgumentParser(
+        description='description: evaluate rectification and wavelength '
+                    'calibration polynomials for the CSU configuration of a '
+                    'particular image'
+    )
+
+    # required arguments
+    parser.add_argument("fitsfile",
+                        help="Input FITS file",
+                        type=argparse.FileType('rb'))
+    parser.add_argument("--rect_wpoly_MOSlibrary", required=True,
+                        help="Input JSON file with library of rectification "
+                             "and wavelength calibration coefficients",
+                        type=argparse.FileType('rt'))
+    parser.add_argument("--out_json", required=True,
+                        help="Output JSON file with calibration computed for "
+                             "the input FITS file",
+                        type=lambda x: arg_file_is_new(parser, x, mode='wt'))
+    # optional arguments
+    parser.add_argument("--ignore_dtu_configuration",
+                        help="Ignore DTU configurations differences between "
+                             "model and input image",
+                        action="store_true")
+    parser.add_argument("--debugplot",
+                        help="Integer indicating plotting & debugging options"
+                             " (default=0)",
+                        default=0, type=int,
+                        choices=DEBUGPLOT_CODES)
+    parser.add_argument("--echo",
+                        help="Display full command line",
+                        action="store_true")
+    args = parser.parse_args(args)
+
+    if args.echo:
+        print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
+
+    # ---
+
+    # generate HDUList object
+    hdulist = fits.open(args.fitsfile)
+
+    # generate MasterRectWave object
+    master_rectwv = MasterRectWave._datatype_load(
+        args.rect_wpoly_MOSlibrary.name)
+
+    # compute rectification and wavelength calibration coefficients
+    rectwv_coeff = rectwv_coeff_from_mos_library(
+        hdulist,
+        master_rectwv,
+        ignore_dtu_configuration=args.ignore_dtu_configuration,
+        debugplot=args.debugplot
+    )
+
+    # save RectWaveCoeff object into JSON file
+    rectwv_coeff.writeto(args.out_json.name)
+    print('>>> Saving file ' + args.out_json.name)
+    # debugging __getstate__ and __setstate__
+    # check_setstate_getstate(rectwv_coeff, args.out_json.name)
 
 
 if __name__ == "__main__":

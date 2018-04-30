@@ -49,18 +49,18 @@ setup(name='pyemir',
                   'emirdrp.tools.convert_refined_multislit_param:main',
               'pyemir-display_slitlet_arrangement = ' +
                   'emirdrp.tools.display_slitlet_arrangement:main',
-              'pyemir-rectwv_coeff_from_mos_library = ' +
-                  'emirdrp.tools.rectwv_coeff_from_mos_library:main',
               'pyemir-fit_boundaries = ' +
                   'emirdrp.tools.fit_boundaries:main',
               'pyemir-merge_bounddict_files = ' +
                   'emirdrp.tools.merge_bounddict_files:main',
-              'pyemir-rectwv_coeff_from_arc_image = ' +
-                  'emirdrp.processing.wavecal.rectwv_coeff_from_arc_image:main',
               'pyemir-rect_wpoly_coeff_add_longslit_model = ' +
                   'emirdrp.tools.rect_wpoly_coeff_add_longslit_model:main',
               'pyemir-rect_wpoly_for_mos = ' +
                   'emirdrp.tools.rect_wpoly_for_mos:main',
+              'pyemir-rectwv_coeff_from_arc_image = ' +
+                  'emirdrp.processing.wavecal.rectwv_coeff_from_arc_image:main',
+              'pyemir-rectwv_coeff_from_mos_library = ' +
+                  'emirdrp.processing.wavecal.rectwv_coeff_from_mos_library:main',
               'pyemir-select_unrectified_slitlets = ' +
                   'emirdrp.tools.select_unrectified_slitlets:main',
               'pyemir-slitlet_boundaries_from_continuum = ' +

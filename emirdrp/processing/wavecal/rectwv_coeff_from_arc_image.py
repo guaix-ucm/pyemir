@@ -17,6 +17,10 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Rectification and wavelength calibration polynomials from arc image
+"""
+
 from __future__ import division
 from __future__ import print_function
 
@@ -544,7 +548,10 @@ def rectwv_coeff_from_arc_image(reduced_image,
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='description: determine rectification and wavelength '
+                    'calibration polynomials from arc image'
+    )
 
     # required arguments
     parser.add_argument("fitsfile",
@@ -656,12 +663,12 @@ def main(args=None):
         dy_geom = int(tmp_str[3])
         geometry = x_geom, y_geom, dx_geom, dy_geom
 
+    # generate HDUList object
+    hdulist = fits.open(args.fitsfile)
+
     # generate RefinedBoundaryModelParam object
     bound_param = RefinedBoundaryModelParam._datatype_load(
         args.bound_param.name)
-
-    # generate HDUList object
-    hdulist = fits.open(args.fitsfile)
 
     # generate lines_catalog
     lines_catalog = np.genfromtxt(args.wv_master_file)
