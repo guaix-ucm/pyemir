@@ -108,7 +108,10 @@ class StareSpectraWaveRecipe(EmirRecipe):
         self.save_structured_as_json(rectwv_coeff, 'rectwv_coeff.json')
 
         # apply rectification and wavelength calibration
-        stare_image = apply_rectwv_coeff(reduced_image, rectwv_coeff)
+        stare_image = apply_rectwv_coeff(
+            reduced_image,
+            rectwv_coeff
+        )
 
         # save results in results directory
         self.logger.info('end rect.+wavecal. reduction of stare spectra')
