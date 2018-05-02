@@ -179,25 +179,8 @@ def apply_rectwv_coeff(reduced_image,
         header['minslt' + str(islitlet).zfill(2)] = slt.iminslt
         header['maxslt' + str(islitlet).zfill(2)] = slt.imaxslt
 
-    # modify upper limit of previous slitlet in case of overlapping:
-    # note that the overlapped scans have been overwritten with the
-    # information from the current slitlet!
-    for islitlet in list_valid_islitlets:
-        cprevious = 'SLTMAX' + str(islitlet - 1).zfill(2)
-        if cprevious in header.keys():
-            sltmax_previous = header[cprevious]
-            cslitlet = 'SLTMIN' + str(islitlet).zfill(2)
-            sltmin_current = header[cslitlet]
-            if sltmax_previous >= sltmin_current:
-                print('WARNING: ' + cslitlet + '=' +
-                      str(sltmin_current).zfill(4) +
-                      ' overlaps with ' + cprevious + '=' +
-                      str(sltmax_previous).zfill(4) + ' ==> ' + cslitlet +
-                      ' set to ' + str(sltmin_current - 1).zfill(4))
-                header[cprevious] = sltmin_current - 1
-
-    logger.info('Updating image header')
     # update wavelength calibration in FITS header
+    logger.info('Updating image header')
     header.remove('crval1')
     header.remove('crpix1')
     header.remove('crval2')
