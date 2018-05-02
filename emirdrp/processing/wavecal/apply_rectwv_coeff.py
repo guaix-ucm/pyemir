@@ -1,4 +1,4 @@
-
+#
 # Copyright 2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
@@ -33,7 +33,6 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import RectWaveCoeff
-from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
 
 from .islitlet_progress import islitlet_progress
 from .set_wv_parameters import set_wv_parameters
