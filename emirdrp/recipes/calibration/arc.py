@@ -34,6 +34,7 @@ from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff
 from emirdrp.processing.wavecal.rectwv_coeff_from_arc_image \
     import rectwv_coeff_from_arc_image
+from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 
@@ -79,6 +80,10 @@ class ArcCalibrationRecipe(EmirRecipe):
             rinput.bound_param,
             rinput.lines_catalog,
         )
+
+        # generate associated ds9 region files and save them in work directory
+        if self.intermediate_results:
+            save_four_ds9(rectwv_coeff)
 
         # apply rectification and wavelength calibration
         reduced_arc = apply_rectwv_coeff(reduced_image, rectwv_coeff)

@@ -34,6 +34,48 @@ from emirdrp.core import EMIR_NAXIS1_ENLARGED
 from emirdrp.core import EMIR_NBARS
 
 
+def save_ds9(output, filename):
+    """Save ds9 region output info filename.
+
+    Parameters
+    ----------
+    output : str
+        String containing the full output to be exported as a ds9 region
+        file.
+    filename : str
+        Output file name.
+
+    """
+
+    ds9_file = open(filename, 'wt')
+    ds9_file.write(output)
+    ds9_file.close()
+
+
+def save_four_ds9(recwv_coeff):
+    """Save the 4 possible ds9 region files.
+
+    Parameters
+    ----------
+    rectwv_coeff : RectWaveCoeff instance
+        Rectification and wavelength calibration coefficients for the
+        particular CSU configuration.
+
+    """
+
+    for limits, rectified, suffix in zip(
+        ['frontiers', 'frontiers', 'boundaries', 'boundaries'],
+        [False, True, False, True],
+        ['rawimage', 'rectified', 'rawimage', 'rectified']
+    ):
+        output = rectwv_coeff_to_ds9(rectwv_coeff=recwv_coeff,
+                                     limits=limits,
+                                     rectified=rectified)
+        filename = 'ds9_' + limits + '_' + suffix + '.reg'
+        print(filename)
+        save_ds9(output, filename)
+
+
 def rectwv_coeff_to_ds9(rectwv_coeff,
                         limits=None,
                         rectified=False,
@@ -204,9 +246,8 @@ def main(args=None):
                                  limits=args.limits,
                                  rectified=args.rectified)
 
-    ds9_file = open(args.outfile.name, 'wt')
-    ds9_file.write(output)
-    ds9_file.close()
+    save_ds9(output, args.outfile.name)
+    save_four_ds9(rectwv_coeff)
 
 
 if __name__ == "__main__":
