@@ -23,6 +23,7 @@ from __future__ import division, print_function
 
 import numpy as np
 
+from emirdrp.core import EMIR_NAXIS1_ENLARGED
 from emirdrp.core import EMIR_VALID_FILTERS
 from emirdrp.core import EMIR_VALID_GRISMS
 
@@ -88,7 +89,7 @@ def set_wv_parameters(filter_name, grism_name):
         ])
         wv_parameters['crval1_enlarged'] = 11200.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 0.77        # Angstroms/pixel
-        wv_parameters['naxis1_enlarged'] = 3400        # pixels
+        wv_parameters['naxis1_enlarged'] = EMIR_NAXIS1_ENLARGED  # pixels
     elif grism_name == "H" and filter_name == "H":
         wv_parameters['islitlet_min'] = 2
         wv_parameters['islitlet_max'] = 54
@@ -105,7 +106,7 @@ def set_wv_parameters(filter_name, grism_name):
         ])
         wv_parameters['crval1_enlarged'] = 14500.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 1.2200      # Angstroms/pixel
-        wv_parameters['naxis1_enlarged'] = 3400        # pixels
+        wv_parameters['naxis1_enlarged'] = EMIR_NAXIS1_ENLARGED  # pixels
     elif grism_name == "K" and filter_name == "Ksp":
         wv_parameters['islitlet_min'] = 2
         wv_parameters['islitlet_max'] = 54
@@ -122,7 +123,7 @@ def set_wv_parameters(filter_name, grism_name):
         ])
         wv_parameters['crval1_enlarged'] = 19100.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 1.7300      # Angstroms/pixel
-        wv_parameters['naxis1_enlarged'] = 3400        # pixels
+        wv_parameters['naxis1_enlarged'] = EMIR_NAXIS1_ENLARGED  # pixels
     elif grism_name == "LR" and filter_name == "YJ":
         wv_parameters['islitlet_min'] = 4
         wv_parameters['islitlet_max'] = 55
