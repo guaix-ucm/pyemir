@@ -185,6 +185,10 @@ class Slitlet2dArc(object):
         Slope of the relation y_expected = a + b * y_measured
         that transforms the measured ordinate into the expected ordinate
         of the rectified image.
+    min_row_rectified : int
+        Minimum useful row (starting from zero) of the rectified slitlet.
+    max_row_rectified : int
+        Maximum useful row (starting from zero) of the rectified slitlet.
     x_inter_orig : 1d numpy array, float
         X coordinates of the intersection points of arc lines with
         spectrum trails in the original image.
@@ -354,6 +358,19 @@ class Slitlet2dArc(object):
             ydummid - (self.bb_ns1_orig + self.bb_ns2_orig) / 2.0)
         self.corr_yrect_a -= ioffset
 
+        # minimum and maximum row in the rectified slitlet encompassing
+        # EMIR_NPIXPERSLIT_RECTIFIED pixels
+        # a) scan number (in pixels, from 1 to NAXIS2)
+        xdum1 = self.corr_yrect_a + \
+                self.corr_yrect_b * self.y0_frontier_lower
+        xdum2 = self.corr_yrect_a + \
+                self.corr_yrect_b * self.y0_frontier_upper
+        # b) row number (starting from zero)
+        self.min_row_rectified = \
+            int((round(xdum1 * 10) + 5) / 10) - self.bb_ns1_orig
+        self.max_row_rectified = \
+            int((round(xdum2 * 10) - 5) / 10) - self.bb_ns1_orig
+
         # place holder for still undefined class members
         self.list_arc_lines = None
         self.x_inter_orig = None
@@ -412,6 +429,10 @@ class Slitlet2dArc(object):
                  str(self.corr_yrect_a) + \
                  "- corr_yrect_b................: " + \
                  str(self.corr_yrect_b) + \
+                 "- min_row_rectified...........: " + \
+                 str(self.min_row_rectified) + \
+                 "- max_row_rectified...........: " + \
+                 str(self.max_row_rectified) + \
                  "- bb_nc1_orig.................: " + \
                  str(self.bb_nc1_orig) + "\n" + \
                  "- bb_nc2_orig.................: " + \

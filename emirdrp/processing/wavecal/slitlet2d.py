@@ -30,6 +30,7 @@ from numina.array.distortion import rectify2d
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
+from emirdrp.core import EMIR_NPIXPERSLIT_RECTIFIED
 
 
 class Slitlet2D(object):
@@ -101,6 +102,28 @@ class Slitlet2D(object):
     y0_frontier_upper: float
         Y coordinate corresponding to the upper frontier computed at
         x0_reference.
+    y0_frontier_lower_expected: float
+        Expected Y coordinate corresponding to the lower frontier
+        computed at x0_reference in the rectified image.
+    y0_frontier_upper_expected: float
+        Expected Y coordinate corresponding to the upper frontier
+        computed at x0_reference in the rectified image.
+    corr_yrect_a : float
+        Intercept of the relation y_expected = a + b * y_measured
+        that transforms the measured ordinate into the expected ordinate
+        of the rectified image.
+    corr_yrect_b : float
+        Slope of the relation y_expected = a + b * y_measured
+        that transforms the measured ordinate into the expected ordinate
+        of the rectified image.
+    min_row_rectified : int
+        Minimum useful row (starting from zero) of the rectified slitlet.
+    max_row_rectified : int
+        Maximum useful row (starting from zero) of the rectified slitlet.
+    iminslt : int
+        Minimum useful scan in output full 2d rectified image.
+    imaxslt : int
+        Maximum useful scan in output full 2d rectified image.
     ttd_order : int or None
         Polynomial order corresponding to the rectification
         transformation.
@@ -170,6 +193,21 @@ class Slitlet2D(object):
         self.y0_frontier_lower = tmpcontent['y0_frontier_lower']
         self.y0_frontier_upper = tmpcontent['y0_frontier_upper']
 
+        # define expected frontier ordinates at x0_reference and
+        # associated linear transformation
+        self.y0_frontier_lower_expected = \
+            tmpcontent['y0_frontier_lower_expected']
+        self.y0_frontier_upper_expected = \
+            tmpcontent['y0_frontier_upper_expected']
+        self.corr_yrect_a = tmpcontent['corr_yrect_a']
+        self.corr_yrect_b = tmpcontent['corr_yrect_b']
+        self.min_row_rectified = tmpcontent['min_row_rectified']
+        self.max_row_rectified = tmpcontent['max_row_rectified']
+
+        # define useful scan region in output rectified image
+        self.iminslt = (islitlet - 1) * EMIR_NPIXPERSLIT_RECTIFIED + 1
+        self.imaxslt = islitlet * EMIR_NPIXPERSLIT_RECTIFIED
+
         # Rectification coefficients
         self.ttd_aij = tmpcontent['ttd_aij']
         self.ttd_bij = tmpcontent['ttd_bij']
@@ -212,6 +250,22 @@ class Slitlet2D(object):
                  str(self.y0_frontier_lower) + "\n" + \
                  "- y0_frontier_upper.........: " + \
                  str(self.y0_frontier_upper) + "\n" + \
+                 "- y0_frontier_lower_expected: " + \
+                 str(self.y0_frontier_lower_expected) + "\n" + \
+                 "- y0_frontier_upper_expected: " + \
+                 str(self.y0_frontier_upper_expected) + "\n" + \
+                 "- corr_yrect_a................: " + \
+                 str(self.corr_yrect_a) + \
+                 "- corr_yrect_b................: " + \
+                 str(self.corr_yrect_b) + \
+                 "- min_row_rectified...........: " + \
+                 str(self.min_row_rectified) + \
+                 "- max_row_rectified...........: " + \
+                 str(self.max_row_rectified) + \
+                 "- iminslt.....................: " + \
+                 str(self.iminslt) + \
+                 "- imaxslt.....................: " + \
+                 str(self.imaxslt) + \
                  "- bb_nc1_orig...............: " + \
                  str(self.bb_nc1_orig) + "\n" + \
                  "- bb_nc2_orig...............: " + \
@@ -382,11 +436,13 @@ class Slitlet2D(object):
         xx = np.arange(0, self.bb_nc2_orig - self.bb_nc1_orig + 1,
                        dtype=np.float)
         for spectrail in self.list_spectrails:
-            yy0 = spectrail(self.x0_reference)
+            yy0 = self.corr_yrect_a + \
+                  self.corr_yrect_b * spectrail(self.x0_reference)
             yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
             ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
         for spectrail in self.list_frontiers:
-            yy0 = spectrail(self.x0_reference)
+            yy0 = self.corr_yrect_a +\
+                  self.corr_yrect_b * spectrail(self.x0_reference)
             yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
             ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b:")
         # show plot

@@ -40,8 +40,9 @@ from .set_wv_parameters import set_wv_parameters
 from .slitlet2d import Slitlet2D
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
-from emirdrp.core import EMIR_NAXIS2
 from emirdrp.core import EMIR_NBARS
+from emirdrp.core import EMIR_NPIXPERSLIT_RECTIFIED
+
 
 def apply_rectwv_coeff(reduced_image,
                        rectwv_coeff,
@@ -128,7 +129,8 @@ def apply_rectwv_coeff(reduced_image,
     naxis1_enlarged = wv_parameters['naxis1_enlarged']
 
     # initialize rectified and wavelength calibrated image
-    image2d_rectwv = np.zeros((EMIR_NAXIS2, naxis1_enlarged))
+    naxis2_enlarged = EMIR_NBARS * EMIR_NPIXPERSLIT_RECTIFIED
+    image2d_rectwv = np.zeros((naxis2_enlarged, naxis1_enlarged))
 
     # main loop
     logger.info('Applying rectification and wavelength calibration')
@@ -162,22 +164,20 @@ def apply_rectwv_coeff(reduced_image,
             coeff=slt.wpoly
         )
 
-        # minimum and maximum useful scan (pixel in the spatial direction)
-        # for the rectified slitlet
-        nscan_min, nscan_max = nscan_minmax_frontiers(
-            slt.y0_frontier_lower,
-            slt.y0_frontier_upper,
-            resize=False
-        )
-        ii1 = nscan_min - slt.bb_ns1_orig
-        ii2 = nscan_max - slt.bb_ns1_orig + 1
-        i1 = slt.bb_ns1_orig - 1 + ii1
-        i2 = i1 + ii2 - ii1
+        # minimum and maximum useful row in the full 2d rectified image
+        # (starting from 0)
+        i1 = slt.iminslt - 1
+        i2 = slt.imaxslt
+
+        # minimum and maximum scan in the rectified slitlet
+        # (in pixels, from 1 to NAXIS2)
+        ii1 = slt.min_row_rectified
+        ii2 = slt.max_row_rectified + 1
         image2d_rectwv[i1:i2, :] = slitlet2d_rect_wv[ii1:ii2, :]
 
         # include scan range in FITS header
-        header['sltmin' + str(islitlet).zfill(2)] = i1
-        header['sltmax' + str(islitlet).zfill(2)] = i2 - 1
+        header['minslt' + str(islitlet).zfill(2)] = slt.iminslt
+        header['maxslt' + str(islitlet).zfill(2)] = slt.imaxslt
 
     # modify upper limit of previous slitlet in case of overlapping:
     # note that the overlapped scans have been overwritten with the
