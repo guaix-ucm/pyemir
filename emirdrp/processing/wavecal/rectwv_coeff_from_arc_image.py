@@ -472,6 +472,12 @@ def rectwv_coeff_from_arc_image(reduced_image,
                 'y0_reference_lower': slt.y0_reference_lower,
                 'y0_reference_middle': slt.y0_reference_middle,
                 'y0_reference_upper': slt.y0_reference_upper,
+                'y0_reference_lower_expected':
+                    slt.y0_reference_lower_expected,
+                'y0_reference_middle_expected':
+                    slt.y0_reference_middle_expected,
+                'y0_reference_upper_expected':
+                    slt.y0_reference_upper_expected,
                 'y0_frontier_lower': slt.y0_frontier_lower,
                 'y0_frontier_upper': slt.y0_frontier_upper,
                 'y0_frontier_lower_expected': slt.y0_frontier_lower_expected,

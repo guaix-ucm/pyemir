@@ -171,6 +171,15 @@ class Slitlet2dArc(object):
     y0_frontier_upper: float
         Y coordinate corresponding to the upper frontier computed at
         x0_reference.
+    y0_reference_lower_expected: float
+        Expected Y coordinate corresponding to the lower boundary
+        computed at x0_reference in the rectified image.
+    y0_reference_middle_expected: float
+        Expected Y coordinate corresponding to the middle boundary
+        computed at x0_reference in the rectified image.
+    y0_reference_upper_expected: float
+        Expected Y coordinate corresponding to the upper boundary
+        computed at x0_reference in the rectified image.
     y0_frontier_lower_expected: float
         Expected Y coordinate corresponding to the lower frontier
         computed at x0_reference in the rectified image.
@@ -353,6 +362,15 @@ class Slitlet2dArc(object):
         ydum2 = self.y0_frontier_upper_expected
         self.corr_yrect_b = (ydum2 - ydum1) / (xdum2 - xdum1)
         self.corr_yrect_a = ydum1 - self.corr_yrect_b * xdum1
+        # compute expected location of rectified boundaries
+        self.y0_reference_lower_expected = \
+            self.corr_yrect_a + self.corr_yrect_b * self.y0_reference_lower
+        self.y0_reference_middle_expected = \
+            self.corr_yrect_a + self.corr_yrect_b * self.y0_reference_middle
+        self.y0_reference_upper_expected = \
+            self.corr_yrect_a + self.corr_yrect_b * self.y0_reference_upper
+        # shift transformation to center the rectified slitlet within the
+        # slitlet bounding box
         ydummid = (ydum1 + ydum2) / 2
         ioffset = int(
             ydummid - (self.bb_ns1_orig + self.bb_ns2_orig) / 2.0)
