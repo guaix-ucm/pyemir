@@ -47,6 +47,43 @@ from .rescale_array_z1z2 import rescale_array_from_z1z2
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
+from emirdrp.core import EMIR_NPIXPERSLIT_RECTIFIED
+
+
+def expected_y0_lower_frontier(islitlet):
+    """Expected ordinate of lower frontier in rectified image.
+
+    Parameters
+    ----------
+    islitlet : int
+        Slitlet number.
+
+    Returns
+    ----------
+    y0_lower : float
+        Ordinate value.
+    """
+
+    y0_lower =  0.5 + float((islitlet - 1) * EMIR_NPIXPERSLIT_RECTIFIED)
+    return y0_lower
+
+
+def expected_y0_upper_frontier(islitlet):
+    """Expected ordinate of upper frontier in rectified image.
+
+    Parameters
+    ----------
+    islitlet : int
+        Slitlet number.
+
+    Returns
+    ----------
+    y0_upper : float
+        Ordinate value.
+    """
+
+    y0_upper =  float((islitlet) * EMIR_NPIXPERSLIT_RECTIFIED) + 0.5
+    return y0_upper
 
 
 class Slitlet2dArc(object):
@@ -63,17 +100,17 @@ class Slitlet2dArc(object):
     ----------
     islitlet : int
         Slitlet number.
-    params : :class:`~lmfit.parameter.Parameters`
-        Parameters to be employed in the prediction of the distorted
-        boundaries.
-    parmodel : str
-        Model to be assumed. Allowed values are 'longslit' and
-        'multislit'.
     csu_conf : CsuConfiguration object
         Instance of CsuConfiguration.
     ymargin_bb : int
         Extra number of pixels above and below the enclosing rectangle
         defined by the slitlet frontiers.
+    params : :class:`~lmfit.parameter.Parameters` or None
+        Parameters to be employed in the prediction of the distorted
+        boundaries.
+    parmodel : str or None
+        Model to be assumed. Allowed values are 'longslit' and
+        'multislit'.
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
@@ -134,6 +171,20 @@ class Slitlet2dArc(object):
     y0_frontier_upper: float
         Y coordinate corresponding to the upper frontier computed at
         x0_reference.
+    y0_frontier_lower_expected: float
+        Expected Y coordinate corresponding to the lower frontier
+        computed at x0_reference in the rectified image.
+    y0_frontier_upper_expected: float
+        Expected Y coordinate corresponding to the upper frontier
+        computed at x0_reference in the rectified image.
+    corr_yrect_a : float
+        Intercept of the relation y_expected = a + b * y_measured
+        that transforms the measured ordinate into the expected ordinate
+        of the rectified image.
+    corr_yrect_b : float
+        Slope of the relation y_expected = a + b * y_measured
+        that transforms the measured ordinate into the expected ordinate
+        of the rectified image.
     x_inter_orig : 1d numpy array, float
         X coordinates of the intersection points of arc lines with
         spectrum trails in the original image.
@@ -207,11 +258,16 @@ class Slitlet2dArc(object):
 
     """
 
-    def __init__(self, islitlet, params, parmodel, csu_conf, ymargin_bb,
-                 debugplot):
+    def __init__(self, islitlet,
+                 csu_conf, ymargin_bb,
+                 params=None, parmodel=None,
+                 debugplot=0):
 
         # slitlet number
         self.islitlet = islitlet
+
+        # debugplot
+        self.debugplot = debugplot
 
         # csu configuration
         self.csu_bar_left = csu_conf.csu_bar_left(islitlet)
@@ -225,6 +281,17 @@ class Slitlet2dArc(object):
 
         # reference abscissa
         self.x0_reference = float(EMIR_NAXIS1) / 2.0 + 0.5  # single float
+
+        # define expected frontier ordinates at x0_reference for the rectified
+        # image imposing the vertical length of the slitlet to be constant
+        # and equal to EMIR_NPIXPERSLIT_RECTIFIED
+        self.y0_frontier_lower_expected = expected_y0_lower_frontier(
+            islitlet)
+        self.y0_frontier_upper_expected = expected_y0_upper_frontier(
+            islitlet)
+
+        if params is None:
+            return
 
         # compute spectrum trails and store in which order they are computed
         self.i_lower_spectrail = 0
@@ -274,7 +341,20 @@ class Slitlet2dArc(object):
         if self.bb_ns2_orig > EMIR_NAXIS2:
             self.bb_ns2_orig = EMIR_NAXIS2
 
-        # place holder for still undefined members
+        # compute linear transformation to place the rectified slitlet at
+        # the center of the current slitlet bounding box
+        xdum1 = self.y0_frontier_lower
+        ydum1 = self.y0_frontier_lower_expected
+        xdum2 = self.y0_frontier_upper
+        ydum2 = self.y0_frontier_upper_expected
+        self.corr_yrect_b = (ydum2 - ydum1) / (xdum2 - xdum1)
+        self.corr_yrect_a = ydum1 - self.corr_yrect_b * xdum1
+        ydummid = (ydum1 + ydum2) / 2
+        ioffset = int(
+            ydummid - (self.bb_ns1_orig + self.bb_ns2_orig) / 2.0)
+        self.corr_yrect_a -= ioffset
+
+        # place holder for still undefined class members
         self.list_arc_lines = None
         self.x_inter_orig = None
         self.y_inter_orig = None
@@ -297,56 +377,61 @@ class Slitlet2dArc(object):
         self.tti_bij_longslit_model = None
         self.wpoly_longslit_model = None
 
-        # debugplot
-        self.debugplot = debugplot
-
     def __repr__(self):
         """Printable representation of a Slitlet2dArc instance."""
 
         # string with all the information
         output = "<Slitlet2dArc instance>\n" + \
-            "- islitlet....................: " + \
+                 "- islitlet....................: " + \
                  str(self.islitlet) + "\n" + \
-            "- csu_bar_left................: " + \
+                 "- csu_bar_left................: " + \
                  str(self.csu_bar_left) + "\n" + \
-            "- csu_bar_right...............: " + \
+                 "- csu_bar_right...............: " + \
                  str(self.csu_bar_right) + "\n" + \
-            "- csu_bar_slit_center.........: " + \
+                 "- csu_bar_slit_center.........: " + \
                  str(self.csu_bar_slit_center) + "\n" + \
-            "- csu_bar_slit_width..........: " + \
+                 "- csu_bar_slit_width..........: " + \
                  str(self.csu_bar_slit_width) + "\n" + \
-            "- x0_reference................: " + \
+                 "- x0_reference................: " + \
                  str(self.x0_reference) + "\n" + \
-            "- y0_reference_lower..........: " + \
+                 "- y0_reference_lower..........: " + \
                  str(self.y0_reference_lower) + "\n" + \
-            "- y0_reference_middle.........: " + \
+                 "- y0_reference_middle.........: " + \
                  str(self.y0_reference_middle) + "\n" + \
-            "- y0_reference_upper..........: " + \
+                 "- y0_reference_upper..........: " + \
                  str(self.y0_reference_upper) + "\n" + \
-            "- y0_frontier_lower..........: " + \
+                 "- y0_frontier_lower..........: " + \
                  str(self.y0_frontier_lower) + "\n" + \
-            "- y0_frontier_upper..........: " + \
+                 "- y0_frontier_upper..........: " + \
                  str(self.y0_frontier_upper) + "\n" + \
-            "- bb_nc1_orig.................: " + \
+                 "- y0_frontier_lower_expected: " + \
+                 str(self.y0_frontier_lower_expected) + "\n" + \
+                 "- y0_frontier_upper_expected: " + \
+                 str(self.y0_frontier_upper_expected) + "\n" + \
+                 "- corr_yrect_a................: " + \
+                 str(self.corr_yrect_a) + \
+                 "- corr_yrect_b................: " + \
+                 str(self.corr_yrect_b) + \
+                 "- bb_nc1_orig.................: " + \
                  str(self.bb_nc1_orig) + "\n" + \
-            "- bb_nc2_orig.................: " + \
+                 "- bb_nc2_orig.................: " + \
                  str(self.bb_nc2_orig) + "\n" + \
-            "- bb_ns1_orig.................: " + \
+                 "- bb_ns1_orig.................: " + \
                  str(self.bb_ns1_orig) + "\n" + \
-            "- bb_ns2_orig.................: " + \
+                 "- bb_ns2_orig.................: " + \
                  str(self.bb_ns2_orig) + "\n" + \
-            "- lower spectrail_poly_funct..:\n\t" + \
+                 "- lower spectrail_poly_funct..:\n\t" + \
                  str(self.list_spectrails[self.i_lower_spectrail].poly_funct)\
                  + "\n" + \
-            "- middle spectrail_poly_funct.:\n\t" + \
+                 "- middle spectrail_poly_funct.:\n\t" + \
                  str(self.list_spectrails[self.i_middle_spectrail].poly_funct)\
                  + "\n" + \
-            "- upper spectrail_poly_funct..:\n\t" + \
+                 "- upper spectrail_poly_funct..:\n\t" + \
                  str(self.list_spectrails[self.i_upper_spectrail].poly_funct)\
                  + "\n" + \
-            "- lower frontier_poly_funct...:\n\t" + \
+                 "- lower frontier_poly_funct...:\n\t" + \
                  str(self.list_frontiers[0].poly_funct) + "\n" + \
-            "- upper frontier_poly_funct...:\n\t" + \
+                 "- upper frontier_poly_funct...:\n\t" + \
                  str(self.list_frontiers[1].poly_funct) + "\n"
 
         if self.list_arc_lines is None:
@@ -772,8 +857,22 @@ class Slitlet2dArc(object):
                 self.x_inter_rect, [xroot] * number_spectrum_trails
             )
             for spectrail in self.list_spectrails:
-                self.y_inter_rect = np.append(
-                    self.y_inter_rect, spectrail.y_rectified)
+                # compute expected ordinate y_expected in the rectified
+                # image
+                y_expected = self.corr_yrect_a + self.corr_yrect_b * \
+                             spectrail.y_rectified
+                self.y_inter_rect = np.append(self.y_inter_rect, y_expected)
+        if abs(self.debugplot) >= 10:
+            print('>>> y0_frontier_lower_expected........: ',
+                  self.y0_frontier_lower_expected)
+            print('>>> y0_frontier_upper_expected........: ',
+                  self.y0_frontier_upper_expected)
+            print('>>> shifted y0_frontier_upper_expected: ',
+                  self.corr_yrect_a +
+                  self.corr_yrect_b * self.y0_frontier_lower)
+            print('>>> shifted y0_frontier_lower_expected: ',
+                  self.corr_yrect_a +
+                  self.corr_yrect_b * self.y0_frontier_upper)
         #
         self.x_inter_orig = np.array([])  # original image coordinates
         self.y_inter_orig = np.array([])  # original image coordinates
@@ -874,7 +973,8 @@ class Slitlet2dArc(object):
             xx = np.arange(0, self.bb_nc2_orig - self.bb_nc1_orig + 1,
                            dtype=np.float)
             for spectrail in self.list_spectrails:
-                yy0 = spectrail.y_rectified
+                yy0 = self.corr_yrect_a + \
+                      self.corr_yrect_b * spectrail.y_rectified
                 yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
                 ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
                 xxx, yyy = fmap(self.ttd_order, self.ttd_aij, self.ttd_bij,
@@ -883,8 +983,10 @@ class Slitlet2dArc(object):
             # grid with fitted transformation: arc lines
             ylower_line = \
                 self.list_spectrails[self.i_lower_spectrail].y_rectified
+            ylower_line = self.corr_yrect_a + self.corr_yrect_b * ylower_line
             yupper_line = \
                 self.list_spectrails[self.i_upper_spectrail].y_rectified
+            yupper_line = self.corr_yrect_a + self.corr_yrect_b * yupper_line
             n_points = int(yupper_line - ylower_line + 0.5) + 1
             yy = np.linspace(ylower_line - self.bb_ns1_orig,
                              yupper_line - self.bb_ns1_orig,
@@ -893,7 +995,7 @@ class Slitlet2dArc(object):
             for arc_line in self.list_arc_lines:
                 xline = arc_line.x_rectified - self.bb_nc1_orig
                 xx = np.array([xline] * n_points)
-                ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
+                ax.plot(xx + self.bb_nc1_orig,yy + self.bb_ns1_orig, "b" )
                 xxx, yyy = fmap(self.ttd_order, self.ttd_aij, self.ttd_bij,
                                 xx, yy)
                 ax.plot(xxx + self.bb_nc1_orig, yyy + self.bb_ns1_orig, "c")
@@ -972,18 +1074,22 @@ class Slitlet2dArc(object):
             xx = np.arange(0, self.bb_nc2_orig - self.bb_nc1_orig + 1,
                            dtype=np.float)
             for spectrail in self.list_spectrails:
-                yy0 = spectrail.y_rectified
+                yy0 = self.corr_yrect_a + \
+                      self.corr_yrect_b * spectrail.y_rectified
                 yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
                 ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
             for spectrail in self.list_frontiers:
-                yy0 = spectrail.y_rectified
+                yy0 = self.corr_yrect_a + \
+                      self.corr_yrect_b * spectrail.y_rectified
                 yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
                 ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b:")
             # grid with fitted transformation: arc lines
             ylower_line = \
                 self.list_spectrails[self.i_lower_spectrail].y_rectified
+            ylower_line = self.corr_yrect_a + self.corr_yrect_b * ylower_line
             yupper_line = \
                 self.list_spectrails[self.i_upper_spectrail].y_rectified
+            yupper_line = self.corr_yrect_a + self.corr_yrect_b * yupper_line
             n_points = int(yupper_line - ylower_line + 0.5) + 1
             yy = np.linspace(ylower_line - self.bb_ns1_orig,
                              yupper_line - self.bb_ns1_orig,

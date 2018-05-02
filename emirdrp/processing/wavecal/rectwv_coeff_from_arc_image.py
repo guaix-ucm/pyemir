@@ -191,10 +191,10 @@ def rectwv_coeff_from_arc_image(reduced_image,
             # define Slitlet2dArc object
             slt = Slitlet2dArc(
                 islitlet=islitlet,
-                params=params,
-                parmodel=parmodel,
                 csu_conf=csu_conf,
                 ymargin_bb=args_ymargin_bb,
+                params=params,
+                parmodel=parmodel,
                 debugplot=debugplot
             )
 
@@ -352,9 +352,6 @@ def rectwv_coeff_from_arc_image(reduced_image,
 
                 cout += 'x'
 
-            # store current slitlet in list of measured slitlets
-            measured_slitlets.append(slt)
-
             if islitlet % 10 == 0:
                 if cout != 'x':
                     cout = str(islitlet // 10)
@@ -364,7 +361,20 @@ def rectwv_coeff_from_arc_image(reduced_image,
 
         else:
 
+            # define Slitlet2dArc object
+            slt = Slitlet2dArc(
+                islitlet=islitlet,
+                csu_conf=csu_conf,
+                ymargin_bb=args_ymargin_bb,
+                params=None,
+                parmodel=None,
+                debugplot=debugplot
+            )
+
             cout += 'i'
+
+        # store current slitlet in list of measured slitlets
+        measured_slitlets.append(slt)
 
         logger.info(cout)
 
@@ -408,96 +418,114 @@ def rectwv_coeff_from_arc_image(reduced_image,
     outdict['uuid'] = str(uuid4())
     outdict['contents'] = {}
 
+    missing_slitlets = []
     for slt in measured_slitlets:
 
         islitlet = slt.islitlet
 
-        # avoid error when creating a python list of coefficients from
-        # numpy polynomials when the polynomials do not exist (note that the
-        # JSON format doesn't handle numpy arrays and such arrays must be
-        # transformed into native python lists)
-        if slt.wpoly is None:
-            wpoly_coeff = None
-        else:
-            wpoly_coeff = slt.wpoly.coef.tolist()
-        if slt.wpoly_longslit_model is None:
-            wpoly_coeff_longslit_model = None
-        else:
-            wpoly_coeff_longslit_model = slt.wpoly_longslit_model.coef.tolist()
+        if islitlet_min <= islitlet <= islitlet_max:
 
-        # avoid similar error when creating a python list of coefficients
-        # when the numpy array does not exist; note that this problem
-        # does not happen with tt?_aij_longslit_model and
-        # tt?_bij_longslit_model because the latter have already been created
-        # as native python lists
-        if slt.ttd_aij is None:
-            ttd_aij = None
-        else:
-            ttd_aij = slt.ttd_aij.tolist()
-        if slt.ttd_bij is None:
-            ttd_bij = None
-        else:
-            ttd_bij = slt.ttd_bij.tolist()
-        if slt.tti_aij is None:
-            tti_aij = None
-        else:
-            tti_aij = slt.tti_aij.tolist()
-        if slt.tti_bij is None:
-            tti_bij = None
-        else:
-            tti_bij = slt.tti_bij.tolist()
+            # avoid error when creating a python list of coefficients from
+            # numpy polynomials when the polynomials do not exist (note that
+            # the JSON format doesn't handle numpy arrays and such arrays must
+            # be transformed into native python lists)
+            if slt.wpoly is None:
+                wpoly_coeff = None
+            else:
+                wpoly_coeff = slt.wpoly.coef.tolist()
+            if slt.wpoly_longslit_model is None:
+                wpoly_coeff_longslit_model = None
+            else:
+                wpoly_coeff_longslit_model = \
+                    slt.wpoly_longslit_model.coef.tolist()
 
-        # creating temporary dictionary with the information corresponding to
-        # the current slitlett that will be saved in the JSON file
-        tmp_dict = {
-            'csu_bar_left': slt.csu_bar_left,
-            'csu_bar_right': slt.csu_bar_right,
-            'csu_bar_slit_center': slt.csu_bar_slit_center,
-            'csu_bar_slit_width': slt.csu_bar_slit_width,
-            'x0_reference': slt.x0_reference,
-            'y0_reference_lower': slt.y0_reference_lower,
-            'y0_reference_middle': slt.y0_reference_middle,
-            'y0_reference_upper': slt.y0_reference_upper,
-            'y0_frontier_lower': slt.y0_frontier_lower,
-            'y0_frontier_upper': slt.y0_frontier_upper,
-            'ymargin_bb': slt.ymargin_bb,
-            'bb_nc1_orig': slt.bb_nc1_orig,
-            'bb_nc2_orig': slt.bb_nc2_orig,
-            'bb_ns1_orig': slt.bb_ns1_orig,
-            'bb_ns2_orig': slt.bb_ns2_orig,
-            'spectrail': {
-                'poly_coef_lower':
-                    slt.list_spectrails[
-                        slt.i_lower_spectrail].poly_funct.coef.tolist(),
-                'poly_coef_middle':
-                    slt.list_spectrails[
-                        slt.i_middle_spectrail].poly_funct.coef.tolist(),
-                'poly_coef_upper':
-                    slt.list_spectrails[
-                        slt.i_upper_spectrail].poly_funct.coef.tolist(),
-            },
-            'frontier': {
-                'poly_coef_lower':
-                    slt.list_frontiers[0].poly_funct.coef.tolist(),
-                'poly_coef_upper':
-                    slt.list_frontiers[1].poly_funct.coef.tolist(),
-            },
-            'ttd_order': slt.ttd_order,
-            'ttd_aij': ttd_aij,
-            'ttd_bij': ttd_bij,
-            'tti_aij': tti_aij,
-            'tti_bij': tti_bij,
-            'ttd_order_longslit_model': slt.ttd_order_longslit_model,
-            'ttd_aij_longslit_model': slt.ttd_aij_longslit_model,
-            'ttd_bij_longslit_model': slt.ttd_bij_longslit_model,
-            'tti_aij_longslit_model': slt.tti_aij_longslit_model,
-            'tti_bij_longslit_model': slt.tti_bij_longslit_model,
-            'wpoly_coeff': wpoly_coeff,
-            'wpoly_coeff_longslit_model': wpoly_coeff_longslit_model,
-            'crval1_linear': slt.crval1_linear,
-            'cdelt1_linear': slt.cdelt1_linear
-        }
+            # avoid similar error when creating a python list of coefficients
+            # when the numpy array does not exist; note that this problem
+            # does not happen with tt?_aij_longslit_model and
+            # tt?_bij_longslit_model because the latter have already been
+            # created as native python lists
+            if slt.ttd_aij is None:
+                ttd_aij = None
+            else:
+                ttd_aij = slt.ttd_aij.tolist()
+            if slt.ttd_bij is None:
+                ttd_bij = None
+            else:
+                ttd_bij = slt.ttd_bij.tolist()
+            if slt.tti_aij is None:
+                tti_aij = None
+            else:
+                tti_aij = slt.tti_aij.tolist()
+            if slt.tti_bij is None:
+                tti_bij = None
+            else:
+                tti_bij = slt.tti_bij.tolist()
 
+            # creating temporary dictionary with the information corresponding
+            # to the current slitlett that will be saved in the JSON file
+            tmp_dict = {
+                'csu_bar_left': slt.csu_bar_left,
+                'csu_bar_right': slt.csu_bar_right,
+                'csu_bar_slit_center': slt.csu_bar_slit_center,
+                'csu_bar_slit_width': slt.csu_bar_slit_width,
+                'x0_reference': slt.x0_reference,
+                'y0_reference_lower': slt.y0_reference_lower,
+                'y0_reference_middle': slt.y0_reference_middle,
+                'y0_reference_upper': slt.y0_reference_upper,
+                'y0_frontier_lower': slt.y0_frontier_lower,
+                'y0_frontier_upper': slt.y0_frontier_upper,
+                'y0_frontier_lower_expected': slt.y0_frontier_lower_expected,
+                'y0_frontier_upper_expected': slt.y0_frontier_upper_expected,
+                'corr_yrect_a': slt.corr_yrect_a,
+                'corr_yrect_b': slt.corr_yrect_b,
+                'ymargin_bb': slt.ymargin_bb,
+                'bb_nc1_orig': slt.bb_nc1_orig,
+                'bb_nc2_orig': slt.bb_nc2_orig,
+                'bb_ns1_orig': slt.bb_ns1_orig,
+                'bb_ns2_orig': slt.bb_ns2_orig,
+                'spectrail': {
+                    'poly_coef_lower':
+                        slt.list_spectrails[
+                            slt.i_lower_spectrail].poly_funct.coef.tolist(),
+                    'poly_coef_middle':
+                        slt.list_spectrails[
+                            slt.i_middle_spectrail].poly_funct.coef.tolist(),
+                    'poly_coef_upper':
+                        slt.list_spectrails[
+                            slt.i_upper_spectrail].poly_funct.coef.tolist(),
+                },
+                'frontier': {
+                    'poly_coef_lower':
+                        slt.list_frontiers[0].poly_funct.coef.tolist(),
+                    'poly_coef_upper':
+                        slt.list_frontiers[1].poly_funct.coef.tolist(),
+                },
+                'ttd_order': slt.ttd_order,
+                'ttd_aij': ttd_aij,
+                'ttd_bij': ttd_bij,
+                'tti_aij': tti_aij,
+                'tti_bij': tti_bij,
+                'ttd_order_longslit_model': slt.ttd_order_longslit_model,
+                'ttd_aij_longslit_model': slt.ttd_aij_longslit_model,
+                'ttd_bij_longslit_model': slt.ttd_bij_longslit_model,
+                'tti_aij_longslit_model': slt.tti_aij_longslit_model,
+                'tti_bij_longslit_model': slt.tti_bij_longslit_model,
+                'wpoly_coeff': wpoly_coeff,
+                'wpoly_coeff_longslit_model': wpoly_coeff_longslit_model,
+                'crval1_linear': slt.crval1_linear,
+                'cdelt1_linear': slt.cdelt1_linear
+            }
+        else:
+            missing_slitlets.append(islitlet)
+            tmp_dict = {
+                'csu_bar_left': slt.csu_bar_left,
+                'csu_bar_right': slt.csu_bar_right,
+                'csu_bar_slit_center': slt.csu_bar_slit_center,
+                'csu_bar_slit_width': slt.csu_bar_slit_width,
+                'x0_reference': slt.x0_reference,
+                'y0_frontier_lower_expected': slt.y0_frontier_lower_expected,
+                'y0_frontier_upper_expected': slt.y0_frontier_upper_expected
+            }
         slitlet_label = "slitlet" + str(islitlet).zfill(2)
         outdict['contents'][slitlet_label] = tmp_dict
 
@@ -523,6 +551,7 @@ def rectwv_coeff_from_arc_image(reduced_image,
         'uuid' + bound_param.uuid
     rectwv_coeff.meta_info['dtu_configuration'] = outdict['dtu_configuration']
     rectwv_coeff.total_slitlets = EMIR_NBARS
+    rectwv_coeff.missing_slitlets = missing_slitlets
     for i in range(EMIR_NBARS):
         islitlet = i + 1
         dumdict = {'islitlet': islitlet}
@@ -530,10 +559,7 @@ def rectwv_coeff_from_arc_image(reduced_image,
         if cslitlet in outdict['contents']:
             dumdict.update(outdict['contents'][cslitlet])
         else:
-            dumdict.update({
-                'ttd_order': 0
-            })
-            rectwv_coeff.missing_slitlets.append(islitlet)
+            raise ValueError("Unexpected error")
         rectwv_coeff.contents.append(dumdict)
     # debugging __getstate__ and __setstate__
     # rectwv_coeff.writeto(args.out_json.name)
@@ -691,7 +717,7 @@ def main(args=None):
         args_ylogscale=args.ylogscale,
         args_pdf=pdf,
         args_geometry=geometry,
-        debugplot=0
+        debugplot=args.debugplot
     )
 
     # save image with collapsed spectra employed to determine the
