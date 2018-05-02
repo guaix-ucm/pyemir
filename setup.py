@@ -61,6 +61,8 @@ setup(name='pyemir',
                   'emirdrp.processing.wavecal.rectwv_coeff_from_arc_image:main',
               'pyemir-rectwv_coeff_from_mos_library = ' +
                   'emirdrp.processing.wavecal.rectwv_coeff_from_mos_library:main',
+              'pyemir-rectwv_coeff_to_ds9 = ' +
+                  'emirdrp.processing.wavecal.rectwv_coeff_to_ds9:main',
               'pyemir-select_unrectified_slitlets = ' +
                   'emirdrp.tools.select_unrectified_slitlets:main',
               'pyemir-slitlet_boundaries_from_continuum = ' +
