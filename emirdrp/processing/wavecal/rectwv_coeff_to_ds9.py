@@ -25,13 +25,13 @@ import numpy as np
 from numpy.polynomial import Polynomial
 import sys
 
-from numina.tools.arg_file_is_new import arg_file_is_new
-
 from emirdrp.products import RectWaveCoeff
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS1_ENLARGED
 from emirdrp.core import EMIR_NBARS
+
+from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
 
 def save_ds9(output, filename):
@@ -52,7 +52,7 @@ def save_ds9(output, filename):
     ds9_file.close()
 
 
-def save_four_ds9(recwv_coeff):
+def save_four_ds9(rectwv_coeff, debugplot=0):
     """Save the 4 possible ds9 region files.
 
     Parameters
@@ -60,6 +60,9 @@ def save_four_ds9(recwv_coeff):
     rectwv_coeff : RectWaveCoeff instance
         Rectification and wavelength calibration coefficients for the
         particular CSU configuration.
+    debugplot : int
+            Debugging level for messages and plots. For details see
+            'numina.array.display.pause_debugplot.py'.
 
     """
 
@@ -68,11 +71,12 @@ def save_four_ds9(recwv_coeff):
         [False, True, False, True],
         ['rawimage', 'rectified', 'rawimage', 'rectified']
     ):
-        output = rectwv_coeff_to_ds9(rectwv_coeff=recwv_coeff,
+        output = rectwv_coeff_to_ds9(rectwv_coeff=rectwv_coeff,
                                      limits=limits,
                                      rectified=rectified)
         filename = 'ds9_' + limits + '_' + suffix + '.reg'
-        print(filename)
+        if abs(debugplot) >= 10:
+            print('>>> Saving: ', filename)
         save_ds9(output, filename)
 
 
@@ -206,9 +210,8 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
 def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description='description: apply rectification and wavelength '
-                    'calibration polynomials for the CSU configuration of a '
-                    'particular image'
+        description='description: generate ds9 region files associated '
+                    'to a particular rectification and wavelength calibration'
     )
 
     # required arguments
@@ -216,20 +219,13 @@ def main(args=None):
                         help="Input JSON file with rectification and "
                              "wavelength calibration coefficients",
                         type=argparse.FileType('rt'))
-    parser.add_argument("--outfile", required=True,
-                        help="Output ds9 region file",
-                        type=lambda x: arg_file_is_new(parser, x, mode='wt'))
 
     # optional arguments
-    parser.add_argument("--limits",
-                        help="'frontiers' or 'boundaries'",
-                        type=str, default='frontiers',
-                        choices=['frontiers', 'boundaries']
-                        )
-    parser.add_argument("--rectified",
-                        help="Output ds9 region file corresponds to rectified "
-                             "image",
-                        action="store_true")
+    parser.add_argument("--debugplot",
+                        help="Integer indicating plotting & debugging options"
+                             " (default=0)",
+                        default=0, type=int,
+                        choices=DEBUGPLOT_CODES)
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
@@ -242,12 +238,7 @@ def main(args=None):
     rectwv_coeff = RectWaveCoeff._datatype_load(
         args.rectwv_coeff.name)
 
-    output = rectwv_coeff_to_ds9(rectwv_coeff,
-                                 limits=args.limits,
-                                 rectified=args.rectified)
-
-    save_ds9(output, args.outfile.name)
-    save_four_ds9(rectwv_coeff)
+    save_four_ds9(rectwv_coeff=rectwv_coeff, debugplot=args.debugplot)
 
 
 if __name__ == "__main__":
