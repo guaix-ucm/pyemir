@@ -38,6 +38,7 @@ from .save_ndarray_to_fits import save_ndarray_to_fits
 from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
+from emirdrp.core import EMIR_NPIXPERSLIT_RECTIFIED
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
@@ -138,7 +139,8 @@ def main(args=None):
     if abs(args.debugplot) >= 10:
         print('>>> valid slitlet numbers:\n', list_valid_islitlets)
 
-    image2d_rectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
+    naxis2_enlarged = EMIR_NBARS * EMIR_NPIXPERSLIT_RECTIFIED
+    image2d_rectified = np.zeros((naxis2_enlarged, EMIR_NAXIS1))
     image2d_unrectified = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
 
     for islitlet in list_valid_islitlets:
@@ -150,13 +152,6 @@ def main(args=None):
                         rectwv_coeff=rectwv_coeff,
                         debugplot=args.debugplot)
 
-        # minimum and maximum useful scan (pixel in the spatial direction)
-        # for the rectified slitlet
-        nscan_min, nscan_max = nscan_minmax_frontiers(
-            slt.y0_frontier_lower,
-            slt.y0_frontier_upper,
-            resize=False
-        )
         # extract 2D image corresponding to the selected slitlet: note that
         # in this case we are not using select_unrectified_slitlets()
         # because it introduces extra zero pixels in the slitlet frontiers
@@ -165,10 +160,35 @@ def main(args=None):
         # rectify image
         slitlet2d_rect = slt.rectify(slitlet2d,
                                      resampling=args.resampling)
+
+        # minimum and maximum useful row in the full 2d rectified image
+        # (starting from 0)
+        i1 = slt.iminslt - 1
+        i2 = slt.imaxslt
+
+        # minimum and maximum scan in the rectified slitlet
+        # (in pixels, from 1 to NAXIS2)
+        ii1 = slt.min_row_rectified
+        ii2 = slt.max_row_rectified + 1
+
+        # save rectified slitlet in its corresponding location within
+        # the full 2d rectified image
+        image2d_rectified[i1:i2, :] = slitlet2d_rect[ii1:ii2, :]
+
+        # ---
+
+        # unrectify image
         slitlet2d_unrect = slt.rectify(slitlet2d_rect,
                                        resampling=args.resampling,
                                        inverse=True)
 
+        # minimum and maximum useful scan (pixel in the spatial direction)
+        # for the rectified slitlet
+        nscan_min, nscan_max = nscan_minmax_frontiers(
+            slt.y0_frontier_lower,
+            slt.y0_frontier_upper,
+            resize=False
+        )
         ii1 = nscan_min - slt.bb_ns1_orig
         ii2 = nscan_max - slt.bb_ns1_orig + 1
 
@@ -177,7 +197,6 @@ def main(args=None):
         i1 = slt.bb_ns1_orig - 1 + ii1
         i2 = i1 + ii2 - ii1
 
-        image2d_rectified[i1:i2, j1:j2] = slitlet2d_rect[ii1:ii2, :]
         image2d_unrectified[i1:i2, j1:j2] = slitlet2d_unrect[ii1:ii2, :]
 
     if args.debugplot == 0:

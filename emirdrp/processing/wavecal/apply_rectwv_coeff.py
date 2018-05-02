@@ -173,6 +173,9 @@ def apply_rectwv_coeff(reduced_image,
         # (in pixels, from 1 to NAXIS2)
         ii1 = slt.min_row_rectified
         ii2 = slt.max_row_rectified + 1
+
+        # save rectified slitlet in its corresponding location within
+        # the full 2d rectified image
         image2d_rectwv[i1:i2, :] = slitlet2d_rect_wv[ii1:ii2, :]
 
         # include scan range in FITS header
