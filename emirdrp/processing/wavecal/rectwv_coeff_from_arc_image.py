@@ -33,6 +33,7 @@ from scipy.signal import medfilt
 import sys
 from uuid import uuid4
 
+from numina.array.display.logging_from_debugplot import logging_from_debugplot
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.wavecalib.__main__ import read_wv_master_from_array
 from numina.array.wavecalib.__main__ import wvcal_spectrum
@@ -115,11 +116,11 @@ def rectwv_coeff_from_arc_image(reduced_image,
 
     # check grism and filter
     filter_name = header['filter']
-    logger.debug('Filter: ' + filter_name)
+    logger.info('Filter: ' + filter_name)
     if filter_name != bound_param.tags['filter']:
         raise ValueError('Filter name does not match!')
     grism_name = header['grism']
-    logger.debug('Grism: ' + grism_name)
+    logger.info('Grism: ' + grism_name)
     if grism_name != bound_param.tags['grism']:
         raise ValueError('Grism name does not match!')
 
@@ -677,6 +678,10 @@ def main(args=None):
 
     # ---
 
+    logger = logging.getLogger(__name__)
+
+    logging_from_debugplot(args.debugplot)
+
     # read pdffile
     if args.pdffile is not None:
         if args.interactive:
@@ -735,7 +740,7 @@ def main(args=None):
 
     # save RectWaveCoeff object into JSON file
     rectwv_coeff.writeto(args.out_json.name)
-    print('>>> Saving file ' + args.out_json.name)
+    logger.info('>>> Saving file ' + args.out_json.name)
     # debugging __getstate__ and __setstate__
     # check_setstate_getstate(rectwv_coeff, args.out_json.name)
 

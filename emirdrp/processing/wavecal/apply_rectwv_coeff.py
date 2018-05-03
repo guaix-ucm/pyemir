@@ -133,54 +133,64 @@ def apply_rectwv_coeff(reduced_image,
     image2d_rectwv = np.zeros((naxis2_enlarged, naxis1_enlarged))
 
     # main loop
+
     logger.info('Applying rectification and wavelength calibration')
-    for islitlet in list_valid_islitlets:
-        if abs(debugplot) >= 10:
-            if islitlet == list_valid_islitlets[0]:
-                print(time.ctime())
-            islitlet_progress(islitlet, EMIR_NBARS)
-            if islitlet == list_valid_islitlets[-1]:
-                print(' ')
-                print(time.ctime())
 
-        # define Slitlet2D object
-        slt = Slitlet2D(islitlet=islitlet,
-                        rectwv_coeff=rectwv_coeff,
-                        debugplot=debugplot)
+    cout = '0'
+    for islitlet in range(1, EMIR_NBARS + 1):
 
-        # extract (distorted) slitlet from the initial image
-        slitlet2d = slt.extract_slitlet2d(image2d)
+        if islitlet in list_valid_islitlets:
 
-        # rectify slitlet
-        slitlet2d_rect = slt.rectify(slitlet2d, resampling=args_resampling)
+            # define Slitlet2D object
+            slt = Slitlet2D(islitlet=islitlet,
+                            rectwv_coeff=rectwv_coeff,
+                            debugplot=debugplot)
 
-        # wavelength calibration of the rectifed slitlet
-        slitlet2d_rect_wv = resample_image2d_flux(
-            image2d_orig=slitlet2d_rect,
-            naxis1=naxis1_enlarged,
-            cdelt1=cdelt1_enlarged,
-            crval1=crval1_enlarged,
-            crpix1=crpix1_enlarged,
-            coeff=slt.wpoly
-        )
+            # extract (distorted) slitlet from the initial image
+            slitlet2d = slt.extract_slitlet2d(image2d)
 
-        # minimum and maximum useful row in the full 2d rectified image
-        # (starting from 0)
-        i1 = slt.iminslt - 1
-        i2 = slt.imaxslt
+            # rectify slitlet
+            slitlet2d_rect = slt.rectify(slitlet2d, resampling=args_resampling)
 
-        # minimum and maximum scan in the rectified slitlet
-        # (in pixels, from 1 to NAXIS2)
-        ii1 = slt.min_row_rectified
-        ii2 = slt.max_row_rectified + 1
+            # wavelength calibration of the rectifed slitlet
+            slitlet2d_rect_wv = resample_image2d_flux(
+                image2d_orig=slitlet2d_rect,
+                naxis1=naxis1_enlarged,
+                cdelt1=cdelt1_enlarged,
+                crval1=crval1_enlarged,
+                crpix1=crpix1_enlarged,
+                coeff=slt.wpoly
+            )
 
-        # save rectified slitlet in its corresponding location within
-        # the full 2d rectified image
-        image2d_rectwv[i1:i2, :] = slitlet2d_rect_wv[ii1:ii2, :]
+            # minimum and maximum useful row in the full 2d rectified image
+            # (starting from 0)
+            i1 = slt.iminslt - 1
+            i2 = slt.imaxslt
 
-        # include scan range in FITS header
-        header['minslt' + str(islitlet).zfill(2)] = slt.iminslt
-        header['maxslt' + str(islitlet).zfill(2)] = slt.imaxslt
+            # minimum and maximum scan in the rectified slitlet
+            # (in pixels, from 1 to NAXIS2)
+            ii1 = slt.min_row_rectified
+            ii2 = slt.max_row_rectified + 1
+
+            # save rectified slitlet in its corresponding location within
+            # the full 2d rectified image
+            image2d_rectwv[i1:i2, :] = slitlet2d_rect_wv[ii1:ii2, :]
+
+            # include scan range in FITS header
+            header['minslt' + str(islitlet).zfill(2)] = slt.iminslt
+            header['maxslt' + str(islitlet).zfill(2)] = slt.imaxslt
+
+            cout += '.'
+
+        else:
+
+            cout += 'i'
+
+        if islitlet % 10 == 0:
+            if cout != 'i':
+                cout = str(islitlet // 10)
+
+        logger.info(cout)
 
     # update wavelength calibration in FITS header
     logger.info('Updating image header')
@@ -268,6 +278,8 @@ def main(args=None):
 
     if args.echo:
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
+
+    # ---
 
     logging_from_debugplot(args.debugplot)
 
