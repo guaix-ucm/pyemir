@@ -152,20 +152,41 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
                 dumdict['csu_bar_slit_center']
             )
             if rectified:
+                crpix1_linear = 1.0
+                crval1_linear = dumdict['crval1_linear']
+                cdelt1_linear = dumdict['cdelt1_linear']
                 if limits == 'frontiers':
                     ydum_lower = dumdict['y0_frontier_lower_expected']
                     ydum_upper = dumdict['y0_frontier_upper_expected']
                 else:
                     ydum_lower = dumdict['y0_reference_lower_expected']
                     ydum_upper = dumdict['y0_reference_upper_expected']
+                wave_ini = crval1_linear + \
+                           (0.5 - crpix1_linear) * cdelt1_linear
+                xdum_ini = (wave_ini - crval1_enlarged) / cdelt1_enlarged
+                xdum_ini += crpix1_enlarged
+                wave_end = crval1_linear + \
+                           (EMIR_NAXIS1 + 0.5 - crpix1_linear) * cdelt1_linear
+                xdum_end = (wave_end - crval1_enlarged) / cdelt1_enlarged
+                xdum_end += crpix1_enlarged
                 for ydum in [ydum_lower, ydum_upper]:
                     ds9_output += \
                         'line {0} {1} {2} {3}'.format(
-                            1, ydum,
-                            naxis1_enlarged, ydum
+                            xdum_ini, ydum,
+                            xdum_end, ydum
                         )
                     ds9_output += ' # color={0}\n'.format(colorbox)
+                # slitlet label
                 ydum_label = (ydum_lower + ydum_upper) / 2.0
+                xdum_label = EMIR_NAXIS1 / 2 + 0.5
+                wave_center = crval1_linear + \
+                              (xdum_label - crpix1_linear) * cdelt1_linear
+                xdum_label = (wave_center - crval1_enlarged) / cdelt1_enlarged
+                xdum_label += crpix1_enlarged
+                ds9_output += 'text {0} {1} {{{2}}} # color={3} ' \
+                              'font="helvetica 10 bold ' \
+                              'roman"\n'.format(xdum_label, ydum_label,
+                                                islitlet, colorbox)
             else:
                 if limits == 'frontiers':
                     pol_lower = Polynomial(
@@ -199,23 +220,14 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
                         )
                     ds9_output += ' # color={0}\n'.format(colorbox)
                 # slitlet label
-                ydum_lower = pol_lower(EMIR_NAXIS1 / 2 + 0.5)
-                ydum_upper = pol_upper(EMIR_NAXIS1 / 2 + 0.5)
+                xdum_label = EMIR_NAXIS1 / 2 + 0.5
+                ydum_lower = pol_lower(xdum_label)
+                ydum_upper = pol_upper(xdum_label)
                 ydum_label = (ydum_lower + ydum_upper) / 2.0
-            # slitlet label
-            xdum_label = EMIR_NAXIS1 / 2 + 0.5
-            if rectified:
-                crpix1_linear = 1.0
-                crval1_linear = dumdict['crval1_linear']
-                cdelt1_linear = dumdict['cdelt1_linear']
-                wave_center = crval1_linear + \
-                              (xdum_label - crpix1_linear) * cdelt1_linear
-                xdum_label = (wave_center - crval1_enlarged) / cdelt1_enlarged
-                xdum_label += crpix1_enlarged
-            ds9_output += 'text {0} {1} {{{2}}} # color={3} ' \
-                          'font="helvetica 10 bold ' \
-                          'roman"\n'.format(xdum_label, ydum_label,
-                                            islitlet, colorbox)
+                ds9_output += 'text {0} {1} {{{2}}} # color={3} ' \
+                              'font="helvetica 10 bold ' \
+                              'roman"\n'.format(xdum_label, ydum_label,
+                                                islitlet, colorbox)
 
     return ds9_output
 
