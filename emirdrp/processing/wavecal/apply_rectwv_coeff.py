@@ -268,6 +268,8 @@ def main(args=None):
     if args.echo:
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
+    logging.basicConfig(level=logging.DEBUG)
+
     # generate RectWaveCoeff object
     rectwv_coeff = RectWaveCoeff._datatype_load(
         args.rectwv_coeff.name)
