@@ -25,10 +25,10 @@ import numpy as np
 from numpy.polynomial import Polynomial
 import sys
 
+from emirdrp.processing.wavecal.set_wv_parameters import set_wv_parameters
 from emirdrp.products import RectWaveCoeff
 
 from emirdrp.core import EMIR_NAXIS1
-from emirdrp.core import EMIR_NAXIS1_ENLARGED
 from emirdrp.core import EMIR_NBARS
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
@@ -112,6 +112,15 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
     if limits not in ['boundaries', 'frontiers']:
         raise ValueError('Unexpect limits=' + str(limits))
 
+    # retrieve relevant wavelength calibration parameters
+    grism_name = rectwv_coeff.tags['grism']
+    filter_name = rectwv_coeff.tags['filter']
+    wv_parameters = set_wv_parameters(filter_name, grism_name)
+    naxis1_enlarged = wv_parameters['naxis1_enlarged']
+    crpix1_enlarged = wv_parameters['crpix1_enlarged']
+    crval1_enlarged = wv_parameters['crval1_enlarged']
+    cdelt1_enlarged = wv_parameters['cdelt1_enlarged']
+
     ds9_output = '# Region file format: DS9 version 4.1\n' \
                  'global color=green dashlist=2 4 width=2 ' \
                  'font="helvetica 10 normal roman" select=1 ' \
@@ -153,15 +162,10 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
                     ds9_output += \
                         'line {0} {1} {2} {3}'.format(
                             1, ydum,
-                            EMIR_NAXIS1_ENLARGED, ydum
+                            naxis1_enlarged, ydum
                         )
                     ds9_output += ' # color={0}\n'.format(colorbox)
-                ds9_output += 'text {0} {1} {{{2}}} # color={3} ' \
-                              'font="helvetica 10 bold ' \
-                              'roman"\n'.format(EMIR_NAXIS1_ENLARGED / 2 + 0.5,
-                                                (ydum_lower + ydum_upper) / 2,
-                                                islitlet,
-                                                colorbox)
+                ydum_label = (ydum_lower + ydum_upper) / 2.0
             else:
                 if limits == 'frontiers':
                     pol_lower = Polynomial(
@@ -195,14 +199,23 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
                         )
                     ds9_output += ' # color={0}\n'.format(colorbox)
                 # slitlet label
-                yc_lower = pol_lower(EMIR_NAXIS1 / 2 + 0.5)
-                yc_upper = pol_upper(EMIR_NAXIS1 / 2 + 0.5)
-                ds9_output += 'text {0} {1} {{{2}}} # color={3} ' \
-                              'font="helvetica 10 bold ' \
-                              'roman"\n'.format(EMIR_NAXIS1 / 2 + 0.5,
-                                                (yc_lower + yc_upper) / 2,
-                                                islitlet,
-                                                colorbox)
+                ydum_lower = pol_lower(EMIR_NAXIS1 / 2 + 0.5)
+                ydum_upper = pol_upper(EMIR_NAXIS1 / 2 + 0.5)
+                ydum_label = (ydum_lower + ydum_upper) / 2.0
+            # slitlet label
+            xdum_label = EMIR_NAXIS1 / 2 + 0.5
+            if rectified:
+                crpix1_linear = 1.0
+                crval1_linear = dumdict['crval1_linear']
+                cdelt1_linear = dumdict['cdelt1_linear']
+                wave_center = crval1_linear + \
+                              (xdum_label - crpix1_linear) * cdelt1_linear
+                xdum_label = (wave_center - crval1_enlarged) / cdelt1_enlarged
+                xdum_label += crpix1_enlarged
+            ds9_output += 'text {0} {1} {{{2}}} # color={3} ' \
+                          'font="helvetica 10 bold ' \
+                          'roman"\n'.format(xdum_label, ydum_label,
+                                            islitlet, colorbox)
 
     return ds9_output
 
