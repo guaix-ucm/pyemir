@@ -26,7 +26,6 @@ from datetime import datetime
 import logging
 import numpy as np
 import sys
-import time
 
 from numina.array.display.logging_from_debugplot import logging_from_debugplot
 from numina.array.wavecalib.resample import resample_image2d_flux
@@ -35,7 +34,6 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import RectWaveCoeff
 
-from .islitlet_progress import islitlet_progress
 from .set_wv_parameters import set_wv_parameters
 from .slitlet2d import Slitlet2D
 
@@ -51,28 +49,28 @@ def apply_rectwv_coeff(reduced_image,
                        debugplot=0):
     """Compute rectification and wavelength calibration coefficients.
 
-        Parameters
-        ----------
-        reduced_image : HDUList object
-            Image with preliminary basic reduction: bpm, bias, dark and
-            flatfield.
-        rectwv_coeff : RectWaveCoeff instance
-            Rectification and wavelength calibration coefficients for the
-            particular CSU configuration.
-        args_resampling : int
-            1: nearest neighbour, 2: flux preserving interpolation.
-        args_ignore_dtu_configuration : bool
-            If True, ignore differences in DTU configuration.
-        debugplot : int
-            Debugging level for messages and plots. For details see
-            'numina.array.display.pause_debugplot.py'.
+    Parameters
+    ----------
+    reduced_image : HDUList object
+        Image with preliminary basic reduction: bpm, bias, dark and
+        flatfield.
+    rectwv_coeff : RectWaveCoeff instance
+        Rectification and wavelength calibration coefficients for the
+        particular CSU configuration.
+    args_resampling : int
+        1: nearest neighbour, 2: flux preserving interpolation.
+    args_ignore_dtu_configuration : bool
+        If True, ignore differences in DTU configuration.
+    debugplot : int
+        Debugging level for messages and plots. For details see
+        'numina.array.display.pause_debugplot.py'.
 
-        Returns
-        -------
-        rectwv_image : HDUList object
-            Rectified and wavelength calibrated image.
+    Returns
+    -------
+    rectwv_image : HDUList object
+        Rectified and wavelength calibrated image.
 
-        """
+    """
 
     logger = logging.getLogger(__name__)
 

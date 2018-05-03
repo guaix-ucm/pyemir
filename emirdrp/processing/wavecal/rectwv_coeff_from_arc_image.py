@@ -87,6 +87,32 @@ def rectwv_coeff_from_arc_image(reduced_image,
     lines_catalog : Numpy array
         2D numpy array with the contents of the master file with the
         expected arc line wavelengths.
+    args_nbrightlines : int
+        TBD
+    args_ymargin_bb : int
+        TBD
+    args_remove_sp_background : bool
+        TBD
+    args_times_sigma_threshold : float
+        TBD
+    args_order_fmap : int
+        TBD
+    args_sigma_gaussian_filtering : float
+        TBD
+    args_margin_npix : int
+        TBD
+    args_poldeg_initial : int
+        TBD
+    args_poldeg_refined : int
+        TBD
+    args_interactive : bool
+        TBD
+    args_threshold_wv : float
+        TBD
+    args_ylogscale : bool
+        TBD
+    args_pdf : TBD
+    args_geometry : TBD
     debugplot : int
             Debugging level for messages and plots. For details see
             'numina.array.display.pause_debugplot.py'.

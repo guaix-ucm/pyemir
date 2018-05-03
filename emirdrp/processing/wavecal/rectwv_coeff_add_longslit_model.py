@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -17,17 +17,17 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import division
-from __future__ import print_function
+from __future__ import division, print_function
 
 import argparse
 from datetime import datetime
-import json
+import logging
 import numpy as np
 import sys
 from uuid import uuid4
 
 from numina.array.display.pause_debugplot import pause_debugplot
+from numina.array.display.logging_from_debugplot import logging_from_debugplot
 from numina.array.display.polfit_residuals import \
     polfit_residuals_with_sigma_rejection
 from numina.array.distortion import ncoef_fmap
@@ -35,82 +35,46 @@ from numina.array.stats import summary
 from numina.tools.arg_file_is_new import arg_file_is_new
 from numina.tools.check_setstate_getstate import check_setstate_getstate
 
-from emirdrp.processing.wavecal import set_wv_parameters
 from emirdrp.products import RectWaveCoeff
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_NBARS
-from emirdrp.core import EMIR_VALID_FILTERS
-from emirdrp.core import EMIR_VALID_GRISMS
 
 
-def main(args=None):
+def rectwv_coeff_add_longslit_model(rectwv_coeff, geometry, debugplot=0):
+    """Compute longslit_model coefficients for RectWaveCoeff object.
 
-    # parse command-line options
-    parser = argparse.ArgumentParser()
-    # required arguments
-    parser.add_argument("--input_coef_rect_wpoly", required=True,
-                        help="Input JSON file with rectification and "
-                             "wavelength calibration polynomials "
-                             "corresponding to a longslit observation",
-                        type=argparse.FileType('rt'))
-    parser.add_argument("--output_coef_rect_wpoly", required=True,
-                        help="Output JSON file with updated longslit_model "
-                             "coefficients",
-                        type=lambda x: arg_file_is_new(parser, x, mode='wt'))
+    Parameters
+    ----------
+    rectwv_coeff : RectWaveCoeff instance
+        Rectification and wavelength calibration coefficients for a
+        particular CSU configuration corresponding to a longslit
+        observation.
+    geometry : TBD
+    debugplot : int
+        Debugging level for messages and plots. For details see
+        'numina.array.display.pause_debugplot.py'.
 
-    # optional arguments
-    parser.add_argument("--geometry",
-                        help="tuple x,y,dx,dy (default 0,0,640,480)",
-                        default="0,0,640,480")
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting & debugging options"
-                             " (default=0)",
-                        default=0, type=int,
-                        choices=DEBUGPLOT_CODES)
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
-    args = parser.parse_args(args)
+    Returns
+    -------
+    rectwv_coeff : RectWaveCoeff instance
+        Updated object with longslit_model coefficients computed.
 
-    if args.echo:
-        print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
+    """
 
-    # ---
+    logger = logging.getLogger(__name__)
 
-    # geometry
-    if args.geometry is None:
-        geometry = None
-    else:
-        tmp_str = args.geometry.split(",")
-        x_geom = int(tmp_str[0])
-        y_geom = int(tmp_str[1])
-        dx_geom = int(tmp_str[2])
-        dy_geom = int(tmp_str[3])
-        geometry = x_geom, y_geom, dx_geom, dy_geom
-
-    # read input calibration structure from JSON file
-    coef_rect_wpoly = RectWaveCoeff._datatype_load(
-        args.input_coef_rect_wpoly.name)
-
-    # read filter and grism names
-    grism_name = coef_rect_wpoly.tags['grism']
-    filter_name = coef_rect_wpoly.tags['filter']
-    if filter_name not in EMIR_VALID_FILTERS:
-        raise ValueError('Unexpected filter_name:', filter_name)
-    if grism_name not in EMIR_VALID_GRISMS:
-        raise ValueError('Unexpected grism_name:', grism_name)
-
-    # determine parameters according to grism+filter combination
-    wv_parameters = set_wv_parameters(filter_name, grism_name)
-    islitlet_min = wv_parameters['islitlet_min']
-    islitlet_max = wv_parameters['islitlet_max']
+    # check grism and filter
+    grism_name = rectwv_coeff.tags['grism']
+    logger.info('Grism: ' + grism_name)
+    filter_name = rectwv_coeff.tags['filter']
+    logger.info('Filter: ' + filter_name)
 
     # list of slitlets to be computed
     list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
-    for idel in coef_rect_wpoly.missing_slitlets:
+    for idel in rectwv_coeff.missing_slitlets:
         list_valid_islitlets.remove(idel)
-    if abs(args.debugplot) >= 10:
+    if abs(debugplot) >= 10:
         print('>>> valid slitlet numbers:\n', list_valid_islitlets)
 
     # ---
@@ -119,12 +83,12 @@ def main(args=None):
     csu_bar_slit_center_list = []
     for islitlet in list_valid_islitlets:
         csu_bar_slit_center_list.append(
-            coef_rect_wpoly.contents[islitlet - 1]['csu_bar_slit_center']
+            rectwv_coeff.contents[islitlet - 1]['csu_bar_slit_center']
         )
-    if abs(args.debugplot) >= 10:
-        print('* Checking csu_bar_slit_center values:')
+    if abs(debugplot) >= 10:
+        logger.debug('Checking csu_bar_slit_center values:')
         summary(np.array(csu_bar_slit_center_list), debug=True)
-        pause_debugplot(args.debugplot)
+        pause_debugplot(debugplot)
 
     # ---
 
@@ -135,12 +99,13 @@ def main(args=None):
     poldeg_refined_list = []
     for islitlet in list_valid_islitlets:
         poldeg_refined_list.append(
-            len(coef_rect_wpoly.contents[islitlet - 1]['wpoly_coeff']) - 1
+            len(rectwv_coeff.contents[islitlet - 1]['wpoly_coeff']) - 1
         )
     # remove duplicates
     poldeg_refined_list = list(set(poldeg_refined_list))
     if len(poldeg_refined_list) != 1:
-        raise ValueError('Unexpected different poldeg_refined found')
+        raise ValueError('Unexpected different poldeg_refined found: ' +
+                         str(poldeg_refined_list))
     poldeg_refined = poldeg_refined_list[0]
 
     # step 1: compute variation of each coefficient as a function of
@@ -150,7 +115,7 @@ def main(args=None):
         xp = []
         yp = []
         for islitlet in list_valid_islitlets:
-            tmp_dict = coef_rect_wpoly.contents[islitlet - 1]
+            tmp_dict = rectwv_coeff.contents[islitlet - 1]
             wpoly_coeff = tmp_dict['wpoly_coeff']
             if wpoly_coeff is not None:
                 xp.append(tmp_dict['y0_reference_middle'])
@@ -164,7 +129,7 @@ def main(args=None):
             ylabel='coeff[' + str(i) + ']',
             title="Fit to refined wavelength calibration coefficients",
             geometry=geometry,
-            debugplot=args.debugplot
+            debugplot=debugplot
         )
         list_poly.append(poly)
 
@@ -172,7 +137,7 @@ def main(args=None):
     # y0_reference_middle to infer the expected wavelength calibration
     # polynomial for each rectifified slitlet
     for islitlet in list_valid_islitlets:
-        tmp_dict = coef_rect_wpoly.contents[islitlet - 1]
+        tmp_dict = rectwv_coeff.contents[islitlet - 1]
         y0_reference_middle = tmp_dict['y0_reference_middle']
         list_new_coeff = []
         for i in range(poldeg_refined + 1):
@@ -189,7 +154,7 @@ def main(args=None):
     order_fmap_list = []
     for islitlet in list_valid_islitlets:
         order_fmap_list.append(
-            coef_rect_wpoly.contents[islitlet - 1]['ttd_order']
+            rectwv_coeff.contents[islitlet - 1]['ttd_order']
         )
     # remove duplicates
     order_fmap_list = list(set(order_fmap_list))
@@ -211,7 +176,7 @@ def main(args=None):
         yp_tti_aij = []
         yp_tti_bij = []
         for islitlet in list_valid_islitlets:
-            tmp_dict = coef_rect_wpoly.contents[islitlet - 1]
+            tmp_dict = rectwv_coeff.contents[islitlet - 1]
             ttd_aij = tmp_dict['ttd_aij']
             ttd_bij = tmp_dict['ttd_bij']
             tti_aij = tmp_dict['tti_aij']
@@ -230,7 +195,7 @@ def main(args=None):
             xlabel='y0_rectified',
             ylabel='ttd_aij[' + str(i) + ']',
             geometry=geometry,
-            debugplot=args.debugplot
+            debugplot=debugplot
         )
         list_poly_ttd_aij.append(poly)
         poly, yres, reject = polfit_residuals_with_sigma_rejection(
@@ -241,7 +206,7 @@ def main(args=None):
             xlabel='y0_rectified',
             ylabel='ttd_bij[' + str(i) + ']',
             geometry=geometry,
-            debugplot=args.debugplot
+            debugplot=debugplot
         )
         list_poly_ttd_bij.append(poly)
         poly, yres, reject = polfit_residuals_with_sigma_rejection(
@@ -252,7 +217,7 @@ def main(args=None):
             xlabel='y0_rectified',
             ylabel='tti_aij[' + str(i) + ']',
             geometry=geometry,
-            debugplot=args.debugplot
+            debugplot=debugplot
         )
         list_poly_tti_aij.append(poly)
         poly, yres, reject = polfit_residuals_with_sigma_rejection(
@@ -263,14 +228,14 @@ def main(args=None):
             xlabel='y0_rectified',
             ylabel='tti_bij[' + str(i) + ']',
             geometry=geometry,
-            debugplot=args.debugplot
+            debugplot=debugplot
         )
         list_poly_tti_bij.append(poly)
 
     # step 2: use the variation of each coefficient with y0_reference_middle
     # to infer the expected rectification transformation for each slitlet
     for islitlet in list_valid_islitlets:
-        tmp_dict = coef_rect_wpoly.contents[islitlet - 1]
+        tmp_dict = rectwv_coeff.contents[islitlet - 1]
         y0_reference_middle = tmp_dict['y0_reference_middle']
         tmp_dict['ttd_order_longslit_model'] = order_fmap
         ttd_aij_longslit_model = []
@@ -294,14 +259,76 @@ def main(args=None):
     # ---
 
     # update uuid and meta-info in output JSON structure
-    coef_rect_wpoly.uuid = str(uuid4())
-    coef_rect_wpoly.meta_info['creation_date'] = datetime.now().isoformat()
+    rectwv_coeff.uuid = str(uuid4())
+    rectwv_coeff.meta_info['creation_date'] = datetime.now().isoformat()
 
-    # save updated JSON file
-    coef_rect_wpoly.writeto(args.output_coef_rect_wpoly.name)
-    print('>>> Saving file ' + args.output_coef_rect_wpoly.name)
+    # return updated object
+    return rectwv_coeff
+
+
+def main(args=None):
+    # parse command-line options
+    parser = argparse.ArgumentParser()
+    # required arguments
+    parser.add_argument("--input_rectwv_coeff", required=True,
+                        help="Input JSON file with rectification and "
+                             "wavelength calibration polynomials "
+                             "corresponding to a longslit observation",
+                        type=argparse.FileType('rt'))
+    parser.add_argument("--output_rectwv_coeff", required=True,
+                        help="Output JSON file with updated longslit_model "
+                             "coefficients",
+                        type=lambda x: arg_file_is_new(parser, x, mode='wt'))
+
+    # optional arguments
+    parser.add_argument("--geometry",
+                        help="tuple x,y,dx,dy (default 0,0,640,480)",
+                        default="0,0,640,480")
+    parser.add_argument("--debugplot",
+                        help="Integer indicating plotting & debugging options"
+                             " (default=0)",
+                        default=0, type=int,
+                        choices=DEBUGPLOT_CODES)
+    parser.add_argument("--echo",
+                        help="Display full command line",
+                        action="store_true")
+    args = parser.parse_args(args)
+
+    if args.echo:
+        print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
+
+    # ---
+
+    logging_from_debugplot(args.debugplot)
+    logger = logging.getLogger(__name__)
+
+    # geometry
+    if args.geometry is None:
+        geometry = None
+    else:
+        tmp_str = args.geometry.split(",")
+        x_geom = int(tmp_str[0])
+        y_geom = int(tmp_str[1])
+        dx_geom = int(tmp_str[2])
+        dy_geom = int(tmp_str[3])
+        geometry = x_geom, y_geom, dx_geom, dy_geom
+
+    # generate RectWaveCoeff object
+    rectwv_coeff = RectWaveCoeff._datatype_load(
+        args.input_rectwv_coeff.name)
+
+    # update longslit_model parameters
+    rectwv_coeff_updated = rectwv_coeff_add_longslit_model(
+        rectwv_coeff=rectwv_coeff,
+        geometry=geometry,
+        debugplot=args.debugplot
+    )
+
+    # save updated RectWaveCoeff object into JSON file
+    rectwv_coeff_updated.writeto(args.output_rectwv_coeff.name)
+    logger.info('>>> Saving file ' + args.output_rectwv_coeff.name)
     # debugging __getstate__ and __setstate__
-    # check_setstate_getstate(coef_rect_wpoly, args.output_coef_rect_wpoly.name)
+    # check_setstate_getstate(rectwv_coeff_updated, args.output_rectwv_coeff.name)
 
 
 if __name__ == "__main__":
