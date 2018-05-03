@@ -43,6 +43,8 @@ from emirdrp.products import RectWaveCoeff
 from emirdrp.tools.fit_boundaries import bound_params_from_dict
 from emirdrp.tools.fit_boundaries import expected_distorted_boundaries
 from emirdrp.tools.fit_boundaries import expected_distorted_frontiers
+from emirdrp.processing.wavecal.slitlet2darc import expected_y0_lower_frontier
+from emirdrp.processing.wavecal.slitlet2darc import expected_y0_upper_frontier
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_NAXIS1
@@ -289,8 +291,7 @@ def rectwv_coeff_from_mos_library(reduced_image,
                 master_rectwv.contents[islitlet - 1][par]
         # estimate bb_ns1_orig and bb_ns2_orig using the already computed
         # frontiers and the value of ymargin_bb, following the same approach
-        # employed in the script rect_wpoly_from_longslit; see
-        # Slitlet2dLongSlitArc.__init__()
+        # employed in Slitlet2dArc.__init__()
         poly_lower_frontier = np.polynomial.Polynomial(
             outdict['contents'][cslitlet]['frontier']['poly_coef_lower']
         )
@@ -308,6 +309,62 @@ def rectwv_coeff_from_mos_library(reduced_image,
             bb_ns2_orig = EMIR_NAXIS2
         outdict['contents'][cslitlet]['bb_ns1_orig'] = bb_ns1_orig
         outdict['contents'][cslitlet]['bb_ns2_orig'] = bb_ns2_orig
+
+    # additional parameters (see Slitlet2dArc.__init__)
+    for islitlet in list_valid_islitlets:
+        cslitlet = 'slitlet' + str(islitlet).zfill(2)
+        # define expected frontier ordinates at x0_reference for the rectified
+        # image imposing the vertical length of the slitlet to be constant
+        # and equal to EMIR_NPIXPERSLIT_RECTIFIED
+        outdict['contents'][cslitlet]['y0_frontier_lower_expected'] = \
+            expected_y0_lower_frontier(islitlet)
+        outdict['contents'][cslitlet]['y0_frontier_upper_expected'] = \
+            expected_y0_upper_frontier(islitlet)
+        # compute linear transformation to place the rectified slitlet at
+        # the center of the current slitlet bounding box
+        tmpdict = outdict['contents'][cslitlet]
+        xdum1 = tmpdict['y0_frontier_lower']
+        ydum1 = tmpdict['y0_frontier_lower_expected']
+        xdum2 = tmpdict['y0_frontier_upper']
+        ydum2 = tmpdict['y0_frontier_upper_expected']
+        corr_yrect_b = (ydum2 - ydum1) / (xdum2 - xdum1)
+        corr_yrect_a = ydum1 - corr_yrect_b * xdum1
+        # compute expected location of rectified boundaries
+        y0_reference_lower_expected = \
+            corr_yrect_a + corr_yrect_b * tmpdict['y0_reference_lower']
+        y0_reference_middle_expected = \
+            corr_yrect_a + corr_yrect_b * tmpdict['y0_reference_middle']
+        y0_reference_upper_expected = \
+            corr_yrect_a + corr_yrect_b * tmpdict['y0_reference_upper']
+        # shift transformation to center the rectified slitlet within the
+        # slitlet bounding box
+        ydummid = (ydum1 + ydum2) / 2
+        ioffset = int(
+            ydummid - (tmpdict['bb_ns1_orig'] + tmpdict['bb_ns2_orig']) / 2.0)
+        corr_yrect_a -= ioffset
+        # minimum and maximum row in the rectified slitlet encompassing
+        # EMIR_NPIXPERSLIT_RECTIFIED pixels
+        # a) scan number (in pixels, from 1 to NAXIS2)
+        xdum1 = corr_yrect_a + \
+                corr_yrect_b * tmpdict['y0_frontier_lower']
+        xdum2 = corr_yrect_a + \
+                corr_yrect_b * tmpdict['y0_frontier_upper']
+        # b) row number (starting from zero)
+        min_row_rectified = \
+            int((round(xdum1 * 10) + 5) / 10) - tmpdict['bb_ns1_orig']
+        max_row_rectified = \
+            int((round(xdum2 * 10) - 5) / 10) - tmpdict['bb_ns1_orig']
+        # save previous results in outdict
+        outdict['contents'][cslitlet]['y0_reference_lower_expected'] = \
+            y0_reference_lower_expected
+        outdict['contents'][cslitlet]['y0_reference_middle_expected'] = \
+            y0_reference_middle_expected
+        outdict['contents'][cslitlet]['y0_reference_upper_expected'] = \
+            y0_reference_upper_expected
+        outdict['contents'][cslitlet]['corr_yrect_a'] = corr_yrect_a
+        outdict['contents'][cslitlet]['corr_yrect_b'] = corr_yrect_b
+        outdict['contents'][cslitlet]['min_row_rectified'] = min_row_rectified
+        outdict['contents'][cslitlet]['max_row_rectified'] = max_row_rectified
 
     # ---
 
@@ -331,7 +388,15 @@ def rectwv_coeff_from_mos_library(reduced_image,
             dumdict.update(outdict['contents'][cslitlet])
         else:
             dumdict.update({
-                'ttd_order': 0
+                'csu_bar_left': csu_conf.csu_bar_left(islitlet),
+                'csu_bar_right': csu_conf.csu_bar_right(islitlet),
+                'csu_bar_slit_center': csu_conf.csu_bar_slit_center(islitlet),
+                'csu_bar_slit_width': csu_conf.csu_bar_slit_width(islitlet),
+                'x0_reference': float(EMIR_NAXIS1) / 2.0 + 0.5,
+                'y0_frontier_lower_expected':
+                    expected_y0_lower_frontier(islitlet),
+                'y0_frontier_upper_expected':
+                    expected_y0_upper_frontier(islitlet)
             })
             rectwv_coeff.missing_slitlets.append(islitlet)
         rectwv_coeff.contents.append(dumdict)

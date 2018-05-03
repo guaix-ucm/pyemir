@@ -29,9 +29,10 @@ import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
+from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff
 from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
     import rectwv_coeff_from_mos_library
-from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff
+from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
 import emirdrp.decorators
 
 
@@ -106,6 +107,10 @@ class StareSpectraWaveRecipe(EmirRecipe):
         )
         # save as JSON file in work directory
         self.save_structured_as_json(rectwv_coeff, 'rectwv_coeff.json')
+
+        # generate associated ds9 region files and save them in work directory
+        if self.intermediate_results:
+            save_four_ds9(rectwv_coeff)
 
         # apply rectification and wavelength calibration
         stare_image = apply_rectwv_coeff(
