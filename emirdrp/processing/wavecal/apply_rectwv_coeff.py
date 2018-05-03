@@ -28,6 +28,7 @@ import numpy as np
 import sys
 import time
 
+from numina.array.display.logging_from_debugplot import logging_from_debugplot
 from numina.array.wavecalib.resample import resample_image2d_flux
 from numina.tools.arg_file_is_new import arg_file_is_new
 
@@ -81,11 +82,11 @@ def apply_rectwv_coeff(reduced_image,
 
     # check grism and filter
     filter_name = header['filter']
-    logger.debug('Filter: ' + filter_name)
+    logger.info('Filter: ' + filter_name)
     if filter_name != rectwv_coeff.tags['filter']:
         raise ValueError('Filter name does not match!')
     grism_name = header['grism']
-    logger.debug('Grism: ' + grism_name)
+    logger.info('Grism: ' + grism_name)
     if grism_name != rectwv_coeff.tags['grism']:
         raise ValueError('Grism name does not match!')
 
@@ -100,10 +101,10 @@ def apply_rectwv_coeff(reduced_image,
     # check that the DTU configuration employed to obtain the calibration
     # corresponds to the DTU configuration in the input FITS file
     if dtu_conf != dtu_conf_calib:
-        logger.info('DTU configuration from image header:')
-        logger.info(dtu_conf)
-        logger.info('DTU configuration from master calibration:')
-        logger.info(dtu_conf_calib)
+        logger.warning('DTU configuration from image header:')
+        logger.warning(dtu_conf)
+        logger.warning('DTU configuration from master calibration:')
+        logger.warning(dtu_conf_calib)
         if args_ignore_dtu_configuration:
             logger.warning('DTU configuration differences found!')
         else:
@@ -268,7 +269,7 @@ def main(args=None):
     if args.echo:
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging_from_debugplot(args.debugplot)
 
     # generate RectWaveCoeff object
     rectwv_coeff = RectWaveCoeff._datatype_load(
