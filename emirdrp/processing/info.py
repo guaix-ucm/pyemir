@@ -18,9 +18,6 @@
 #
 
 
-from numina.core import DataFrame, ObservationResult
-
-
 def gather_info_dframe(dataframe):
     with dataframe.open() as hdulist:
         info = gather_info_hdu(hdulist)
@@ -57,6 +54,7 @@ def gather_info_frames(framelist):
 
 
 def gather_info(recipeinput):
+    from numina.core import DataFrame
     klass = recipeinput.__class__
     metadata = {}
     for key in klass.stored():

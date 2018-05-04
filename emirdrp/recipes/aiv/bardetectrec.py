@@ -1,20 +1,10 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Bar detection recipe for EMIR"""
@@ -24,22 +14,18 @@ from __future__ import division
 import logging
 
 from numina.array.utils import coor_to_pix_1d
-from numina.core import Requirement, Product, Parameter, RecipeError
-from numina.core.products import ArrayType
-from numina.core.requirements import ObservationResultRequirement
+from numina.core import Requirement, Result, Parameter
+import numina.exceptions
+import numina.types.array as tarray
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
 import emirdrp.datamodel as datamodel
-from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
+from emirdrp.core import EMIR_PIXSCALE
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.combine import basic_processing_with_combination
-from emirdrp.products import CoordinateList2DType
-from emirdrp.products import DataFrameType
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterBiasRequirement
-from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-from emirdrp.requirements import MasterSkyRequirement
+import emirdrp.requirements as reqs
+import emirdrp.products as prods
 from emirdrp.processing.bardetect import find_position
 from emirdrp.processing.bardetect import locate_bar_l, locate_bar_r
 from .common import normalize_raw
@@ -49,14 +35,14 @@ class BarDetectionRecipe(EmirRecipe):
 
     # Recipe Requirements
     #
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = MasterSkyRequirement()
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
+    master_sky = reqs.MasterSkyRequirement()
 
-    bars_nominal_positions = Requirement(CoordinateList2DType,
+    bars_nominal_positions = Requirement(prods.CoordinateList2DType,
                                          'Nominal positions of the bars'
                                          )
     median_filter_size = Parameter(5, 'Size of the median box')
@@ -64,16 +50,16 @@ class BarDetectionRecipe(EmirRecipe):
     canny_high_threshold = Parameter(0.04, 'High threshold for the canny algorithm')
     canny_low_threshold = Parameter(0.01, 'High threshold for the canny algorithm')
 
-    # Recipe Products
-    frame = Product(DataFrameType)
-    positions = Product(ArrayType)
-    DTU = Product(ArrayType)
-    ROTANG = Product(float)
-    csupos = Product(ArrayType)
-    csusens = Product(ArrayType)
-    param_median_filter_size = Product(float)
-    param_canny_high_threshold = Product(float)
-    param_canny_low_threshold = Product(float)
+    # Recipe Results
+    frame = Result(prods.DataFrameType)
+    positions = Result(tarray.ArrayType)
+    DTU = Result(tarray.ArrayType)
+    ROTANG = Result(float)
+    csupos = Result(tarray.ArrayType)
+    csusens = Result(tarray.ArrayType)
+    param_median_filter_size = Result(float)
+    param_canny_high_threshold = Result(float)
+    param_canny_low_threshold = Result(float)
 
     def run(self, rinput):
 
@@ -96,7 +82,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         except KeyError as error:
             logger.error(error)
-            raise RecipeError(error)
+            raise numina.exceptions.RecipeError(error)
 
         logger.debug('finding bars')
 
@@ -191,12 +177,12 @@ class BarDetectionRecipe(EmirRecipe):
                 thisres2 = rbarid, fits_row, epos + 1, epos_f + 1, error
 
             elif nbars_found == 1:
-                logger.warn('only 1 edge found  at row %d, not yet implemented', fits_row)
+                logger.warning('only 1 edge found  at row %d, not yet implemented', fits_row)
                 thisres1 = (lbarid, fits_row, 0, 0, 1)
                 thisres2 = (rbarid, fits_row, 0, 0, 1)
 
             else:
-                logger.warn('3 or more edges found  at row %d, not yet implemented', fits_row)
+                logger.warning('3 or more edges found  at row %d, not yet implemented', fits_row)
                 thisres1 = (lbarid, fits_row, 0, 0, 1)
                 thisres2 = (rbarid, fits_row, 0, 0, 1)
 

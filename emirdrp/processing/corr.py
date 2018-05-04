@@ -118,21 +118,21 @@ def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order='i
     shape = ref_array.shape
     data1 = filter_region(ref_array[region])
     d1 = standarize(data1)
-    # fits.writeto('cutout_%d.fits' % 0, d1, clobber=True)
+    # fits.writeto('cutout_%d.fits' % 0, d1, overwrite=True)
 
     dcenter = numpy.asarray(d1.shape) // 2
     # Correlate
 
     data2 = filter_region(arr1[region])
     d2 = standarize(data2)
-    # fits.writeto('cutout_%d.fits' % idx, d2, clobber=True)
+    # fits.writeto('cutout_%d.fits' % idx, d2, overwrite=True)
     #corr = scipy.signal.correlate2d(d1, d2, mode='same', boundary='fill', fillvalue=fillvalue)
     # correlation is equivalent to convolution with inverted image
     corr = scipy.signal.fftconvolve(d1, d2[::-1, ::-1], mode='same')
     # normalize
     corr /= corr.max()
-    # fits.writeto('corr_%d.fits' % idx, corr, clobber=True)
-    # fits.writeto('corr2_%d.fits' % idx, corr2 / corr2.max(), clobber=True)
+    # fits.writeto('corr_%d.fits' % idx, corr, overwrite=True)
+    # fits.writeto('corr2_%d.fits' % idx, corr2 / corr2.max(), overwrite=True)
     # Find peak in cross-cor
     maxindex = numpy.unravel_index(corr.argmax(), corr.shape)
 

@@ -1,6 +1,6 @@
 
 import numpy
-from emirdrp.instrument.distortions import exvp,pvex
+from emirdrp.instrument.distortions import exvp, pvex
 
 
 def test_distortions_ex1():

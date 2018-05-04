@@ -3,19 +3,10 @@
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """Dither Image recipe for EMIR"""
 
@@ -28,7 +19,7 @@ import uuid
 import numpy
 import sep
 from astropy.io import fits
-from numina.core import Product, Requirement
+from numina.core import Result, Requirement
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
 from numina.array import combine_shape, combine_shapes
@@ -58,11 +49,11 @@ class JoinDitheredImagesRecipe(EmirRecipe):
                            destination='accum',
                            query_opts=ResultOf('DITHERED_IMAGE.accum', node='prev')
                            )
-    frame = Product(DataFrameType)
-    sky = Product(DataFrameType, optional=True)
+    frame = Result(DataFrameType)
+    sky = Result(DataFrameType, optional=True)
     #
     # Accumulate Frame results
-    accum = Product(DataFrameType, optional=True)
+    accum = Result(DataFrameType, optional=True)
 
     #@emirdrp.decorators.aggregate
     @emirdrp.decorators.loginfo
@@ -671,15 +662,12 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
 
 from numina.core import Parameter
-from numina.core import DataFrameType
-from numina.core import Product, Requirement
+from numina.types.frame import DataFrameType
+from numina.core import Result, Requirement
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.query import ResultOf
 from numina.array import fixpix2
 from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import Extinction_Requirement
-from emirdrp.requirements import Offsets_Requirement
-from emirdrp.requirements import Catalog_Requirement
 from emirdrp.requirements import SkyImageSepTime_Requirement
 from emirdrp.instrument.channels import FULL
 from emirdrp.products import SourcesCatalog, CoordinateList2DType
@@ -707,9 +695,9 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
     check_photometry_actions = Parameter(
         ['warn', 'warn', 'default'], 'Actions to take on images')
 
-    frame = Product(DataFrameType)
-    sky = Product(DataFrameType, optional=True)
-    catalog = Product(SourcesCatalog, optional=True)
+    frame = Result(DataFrameType)
+    sky = Result(DataFrameType, optional=True)
+    catalog = Result(SourcesCatalog, optional=True)
 
     def run(self, rinput):
         partial_result = self.run_single(rinput)

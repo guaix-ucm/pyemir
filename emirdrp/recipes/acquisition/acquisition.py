@@ -1,46 +1,20 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
-"""
-Recipe for the processing of target acquisition images.
 
-**Observing modes:**
-
-    * Target acquisition
-"""
-
-import logging
+"""Recipe for the processing of target acquisition images."""
 
 
-from numina.core import Product
-
-from numina.core.requirements import ObservationResultRequirement
-
-from emirdrp.core import EmirRecipe
-from emirdrp.products import TelescopeOffset, MSMPositions
-from emirdrp.requirements import MasterBiasRequirement
-from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-
-
-_logger = logging.getLogger('emirdrp.recipes')
+from emirdrp.core.recipe import EmirRecipe
+import numina.core.dataholders as dh
+import emirdrp.requirements as reqs
+import emirdrp.products as prods
 
 
 class TargetAcquisitionRecipe(EmirRecipe):
@@ -58,14 +32,14 @@ class TargetAcquisitionRecipe(EmirRecipe):
     """
 
     # Requirements
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
     
     # Products
-    telescope_offset = Product(TelescopeOffset)
+    telescope_offset = dh.Result(prods.TelescopeOffset)
 
     def run(self, rinput):
-        return self.create_result(telescope_offset=TelescopeOffset())
+        return self.create_result(telescope_offset=prods.TelescopeOffset())

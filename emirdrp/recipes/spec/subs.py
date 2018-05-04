@@ -1,20 +1,10 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """
@@ -26,7 +16,7 @@ import numina.core
 import numina.exceptions
 import numpy
 from numina.array import combine
-from numina.core import Product
+from numina.core import Result
 from numina.exceptions import RecipeError
 from numina.core.requirements import ObservationResultRequirement
 
@@ -41,10 +31,10 @@ class BaseABBARecipe(EmirRecipe):
     """Process images in ABBA mode"""
 
     obresult = ObservationResultRequirement()
-    spec_abba = Product(prods.DataFrameType)
+    spec_abba = Result(prods.DataFrameType)
 
     # Accumulate 'spec_abba' results
-    accum = Product(prods.DataFrameType, optional=True)
+    accum = Result(prods.DataFrameType, optional=True)
 
     @classmethod
     def build_recipe_input(cls, obsres, dal, pipeline='default'):

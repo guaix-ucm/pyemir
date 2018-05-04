@@ -27,7 +27,7 @@ from astropy.io import fits
 import numpy as np
 
 from numina.core.oresult import ObservationResult, dataframe_from_list
-from numina.core.dataframe import DataFrame
+from numina.types.dataframe import DataFrame
 
 from . import SimpleBiasRecipe
 

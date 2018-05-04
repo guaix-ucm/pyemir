@@ -7,15 +7,14 @@
 # License-Filename: LICENSE.txt
 #
 
-import collections
 import logging
 
 import numina.ext.gtc
 import numina.core.recipes as recipes
 import numina.core.recipeinout as recipeio
 import numina.core.dataholders as dh
-from numina.core.products import QualityControlProduct
 import numina.types.qc as qctype
+import numina.types.obsresult as obtype
 import numina.types.dataframe as dataframe
 import numina.util.flow as flowmod
 
@@ -59,7 +58,8 @@ class EmirRecipe(recipes.BaseRecipe):
     """
     RecipeResult = EmirRecipeResult
 
-    qc = dh.Result(QualityControlProduct, destination='qc', default=qctype.QC.GOOD)
+    qc = dh.Result(obtype.QualityControlProduct,
+                   destination='qc', default=qctype.QC.GOOD)
     logger = logging.getLogger('numina.recipes.emir')
     datamodel = emirdrp.datamodel.EmirDataModel()
 

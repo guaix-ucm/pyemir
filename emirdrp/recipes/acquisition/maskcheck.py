@@ -22,24 +22,18 @@ import sep
 
 from numina.array.bbox import BoundingBox
 from numina.array.offrot import fit_offset_and_rotation
-from numina.core import Requirement, Product, Parameter
+from numina.core import Requirement, Result, Parameter
 from numina.exceptions import RecipeError
-from numina.core.products import ArrayType
-from numina.core.requirements import ObservationResultRequirement
 from numina.types.qc import QC
+import numina.types.array as tarray
 
 import emirdrp.datamodel as datamodel
 from emirdrp.core import EMIR_NBARS, EMIR_PLATESCALE
 from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.bars import slits_to_ds9_reg, find_bars
 from emirdrp.processing.combine import basic_processing_with_combination
-from emirdrp.products import DataFrameType, NominalPositions
-
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterBiasRequirement
-from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-from emirdrp.requirements import MasterSkyRequirement
+import emirdrp.requirements as reqs
+import emirdrp.products as prods
 
 
 class MaskCheckRecipe(EmirRecipe):
@@ -57,14 +51,14 @@ class MaskCheckRecipe(EmirRecipe):
 
     # Recipe Requirements
     #
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = MasterSkyRequirement()
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
+    master_sky = reqs.MasterSkyRequirement()
 
-    bars_nominal_positions = Requirement(NominalPositions,
+    bars_nominal_positions = Requirement(prods.NominalPositions,
                                          'Nominal positions of the bars'
                                          )
     median_filter_size = Parameter(5, 'Size of the median box')
@@ -73,20 +67,20 @@ class MaskCheckRecipe(EmirRecipe):
     fit_peak_npoints = Parameter(3, 'Number of points to use for fitting the peak (odd)')
 
     # Recipe Products
-    frame = Product(DataFrameType)
-    # derivative = Product(DataFrameType)
-    slits = Product(ArrayType)
-    positions3 = Product(ArrayType)
-    positions5 = Product(ArrayType)
-    positions7 = Product(ArrayType)
-    positions9 = Product(ArrayType)
-    DTU = Product(ArrayType)
-    ROTANG = Product(float)
-    TSUTC1 = Product(float)
-    csupos = Product(ArrayType)
-    csusens = Product(ArrayType)
-    offset = Product(list, description='In arcseconds')
-    rotang = Product(float, description='Counterclockwise, in degrees')
+    frame = Result(prods.DataFrameType)
+    # derivative = Result(DataFrameType)
+    slits = Result(tarray.ArrayType)
+    positions3 = Result(tarray.ArrayType)
+    positions5 = Result(tarray.ArrayType)
+    positions7 = Result(tarray.ArrayType)
+    positions9 = Result(tarray.ArrayType)
+    DTU = Result(tarray.ArrayType)
+    ROTANG = Result(float)
+    TSUTC1 = Result(float)
+    csupos = Result(tarray.ArrayType)
+    csusens = Result(tarray.ArrayType)
+    offset = Result(list, description='In arcseconds')
+    rotang = Result(float, description='Counterclockwise, in degrees')
 
     def run(self, rinput):
         self.logger.info('starting processing for bars detection')
