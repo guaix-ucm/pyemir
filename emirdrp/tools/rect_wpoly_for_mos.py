@@ -22,6 +22,7 @@ from __future__ import print_function
 
 import argparse
 from datetime import datetime
+import numpy as np
 import sys
 from uuid import uuid4
 
@@ -279,6 +280,12 @@ def main(args=None):
             tmpdict = list_coef_rect_wpoly[ifile].contents[islitlet - 1]
             csu_bar_slit_center = tmpdict['csu_bar_slit_center']
             list_csu_bar_slit_center.append(csu_bar_slit_center)
+        # check that list_csu_bar_slit_center is properly sorted
+        if not np.all(list_csu_bar_slit_center[:-1] <=
+                  list_csu_bar_slit_center[1:]):
+            print('cslitlet: ', cslitlet)
+            print('list_csu_bar_slit_center: ', list_csu_bar_slit_center)
+            raise ValueError('Unsorted list_csu_bar_slit_center')
         outdict['contents'][cslitlet]['list_csu_bar_slit_center'] = \
             list_csu_bar_slit_center
     print('OK!')
