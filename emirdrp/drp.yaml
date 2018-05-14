@@ -151,6 +151,9 @@ modes:
   name: SPECTRAL FLAT mode
   summary: SPECTRAL FLAT mode
   description: SPECTRAL FLAT mode
+- key: LOAD_RECWAVE
+  name: Load MasterRecWave
+  summary: load a MasterRecWave structure from file
 pipelines:
   default:
     products:
@@ -217,4 +220,5 @@ pipelines:
       STARE_SPECTRA_WAVE: emirdrp.recipes.spec.stare.StareSpectraWaveRecipe
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
+      LOAD_RECWAVE: emirdrp.recipes.auxiliary.load.RecWaveRecipe
     version: 1
