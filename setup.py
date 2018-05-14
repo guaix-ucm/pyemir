@@ -2,13 +2,10 @@
 
 from setuptools import setup, find_packages
 
-# There is a problem installing/uninstalling with pip
-# pip will uninstall pyemir AND numina 
-# this is the bug https://github.com/pypa/pip/issues/355
-
-
 import emirdrp
+
 version = emirdrp.__version__
+
 
 setup(name='pyemir',
       version=version,
@@ -28,11 +25,13 @@ setup(name='pyemir',
           'emirdrp': ['drp.yaml'],
       },
       test_suite="emirdrp.tests",
-      install_requires=['setuptools', 'numpy', 'scipy',
-                        'numina>=0.16', 'astropy>=1.1',
-                        'enum34;python_version<"3.4"',
-                        'matplotlib', 'six', 'photutils>=0.2',
-                        'sep>0.5', 'scikit-image>=0.11', 'lmfit'],
+      install_requires=[
+          'setuptools', 'numpy', 'scipy',
+          'numina>=0.16', 'astropy>=2',
+          'enum34;python_version<"3.4"',
+          'matplotlib', 'six', 'photutils>=0.2',
+          'sep>0.5', 'scikit-image>=0.11', 'lmfit'
+      ],
       zip_safe=False,
       entry_points={
           'numina.pipeline.1': [
@@ -76,16 +75,16 @@ setup(name='pyemir',
               ],
       },
       classifiers=[
-                   "Programming Language :: Python :: 2.7",
-                   "Programming Language :: Python :: 3.4",
-                   "Programming Language :: Python :: 3.5",
-                   "Programming Language :: Python :: 3.6",
-                   'Development Status :: 3 - Alpha',
-                   "Environment :: Other Environment",
-                   "Intended Audience :: Science/Research",
-                   "License :: OSI Approved :: GNU General Public License (GPL)",
-                   "Operating System :: OS Independent",
-                   "Topic :: Scientific/Engineering :: Astronomy",
-                   ],
+          "Programming Language :: Python :: 2.7",
+          "Programming Language :: Python :: 3.4",
+          "Programming Language :: Python :: 3.5",
+          "Programming Language :: Python :: 3.6",
+          'Development Status :: 3 - Alpha',
+          "Environment :: Console",
+          "Intended Audience :: Science/Research",
+          "License :: OSI Approved :: GNU General Public License (GPL)",
+          "Operating System :: OS Independent",
+          "Topic :: Scientific/Engineering :: Astronomy",
+      ],
       long_description=open('README.rst').read()
       )
