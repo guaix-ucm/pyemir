@@ -3,7 +3,8 @@ EMIR_BIAS_MODES = ['simple', 'bias', 'single']
 EMIR_READ_MODES = ['simple', 'bias', 'single', 'cds', 'fowler', 'ramp']
 
 EMIR_PIXSCALE = 18.0 # um / pixel
-EMIR_PLATESCALE = 0.1944 # arcsec/pixel
+EMIR_PLATESCALE_PIX = 0.1944 # arcsec/pixel
+EMIR_PLATESCALE = 1.212 # arcsec/mm
 EMIR_GAIN = 5.0 # ADU / e-
 EMIR_RON = 5.69 # ADU
 EMIR_NBARS = 55

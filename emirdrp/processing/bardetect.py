@@ -211,15 +211,15 @@ def _locate_bar_gen(icut, epos, transform1, transform2):
     return epos_pix, epos_f, error
 
 
-def char_bar_peak_l(arr_deriv, ypix, bstart, bend, th, wx=10, wy=15, wfit=3):
-    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th, wx=wx, wy=wy, wfit=wfit, sign=1)
+def char_bar_peak_l(arr_deriv, ypix, bstart, bend, th):
+    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th, sign=1)
 
 
-def char_bar_peak_r(arr_deriv, ypix, bstart, bend, th, wx=10, wy=15, wfit=3):
-    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th, wx=wx, wy=wy, wfit=wfit, sign=-1)
+def char_bar_peak_r(arr_deriv, ypix, bstart, bend, th):
+    return _char_bar_peak(arr_deriv, ypix, bstart, bend, th, sign=-1)
 
 
-def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, wx=10, wy=15, wfit=3, sign=1):
+def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, sign=1):
 
     # extract a region to average
     # wy = 3
@@ -227,7 +227,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, wx=10, wy=15, wfit=3, sign
     # Fit the peak with these points
     # wfit = 3
 
-    logger = logging.getLogger('emir.recipes.bardetect')
+    logger = logging.getLogger(__name__)
 
     yvpix = numpy.clip(ypix, 0, 2047)
 
@@ -243,7 +243,7 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, wx=10, wy=15, wfit=3, sign
     logger.debug('overlaping interval %s', intv2)
 
     bar_overlap = overlap(intv1, intv2)
-    logger.debug('bar overlaping %f', bar_overlap)
+    logger.debug('bar overlaping %.1f', bar_overlap)
     offs = []
     if bar_overlap < 10:
         maxval = 18

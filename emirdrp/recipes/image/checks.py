@@ -71,7 +71,7 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
 
     # Center of the image
     wmap[border:-border, border:-border] = 0
-    # fits.writeto(weigthmap, wmap.astype('uintt8'), clobber=True)
+    # fits.writeto(weigthmap, wmap.astype('uintt8'), overwrite=True)
 
     basename = 'result_i%0d.fits' % (step)
 
@@ -234,7 +234,7 @@ def check_position(images_info, sf_data, seeing_fwhm, step=0):
     # Center of the image
     border = 300
     wmap[border:-border, border:-border] = 1
-    fits.writeto(weigthmap, wmap.astype('uint8'), clobber=True)
+    fits.writeto(weigthmap, wmap.astype('uint8'), overwrite=True)
 
     basename = 'result_i%0d.fits' % (step)
     sex = SExtractor()

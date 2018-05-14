@@ -31,6 +31,7 @@ import numina.types.product as prodtypes
 import numina.types.structured
 import numina.types.obsresult as obtypes
 
+import emirdrp.datamodel
 
 base_schema_description = {
     'keywords': {
@@ -63,7 +64,27 @@ emir_schema_description = {
     }
 
 
-class EMIRImageProduct(prodtypes.DataProductMixin, DataFrameType):
+class EmirFrame(DataFrameType):
+
+    def __init__(self, *args, **kwargs):
+        super(EmirFrame, self).__init__(datamodel=emirdrp.datamodel.EmirDataModel)
+
+
+class ProcessedFrame(EmirFrame):
+    """A processed frame"""
+    pass
+
+
+class ProcessedImage(ProcessedFrame):
+    """A processed image"""
+    pass
+
+
+class ProcessedImageProduct(prodtypes.DataProductMixin, ProcessedImage):
+    pass
+
+
+class EMIRImageProduct(ProcessedImageProduct):
 
     def convert_out(self, obj):
         newobj = super(EMIRImageProduct, self).convert_out(obj)

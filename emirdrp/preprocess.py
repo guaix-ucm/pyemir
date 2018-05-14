@@ -145,7 +145,7 @@ def preprocess(input_, output):
         if 'PREPROC' in header:
             # if the image is preprocessed, do nothing
             if input != output:
-                hdulist.writeto(output, clobber=True)
+                hdulist.writeto(output, overwrite=True)
             return
         # determine the READ mode
         guess = image_readmode(hdulist, 'single')
@@ -164,4 +164,4 @@ def preprocess(input_, output):
         else:
             hduproc = preprocess_single(hdulist)
 
-        hduproc.writeto(output, clobber=True)
+        hduproc.writeto(output, overwrite=True)

@@ -65,3 +65,12 @@ def pvex(pos_x, pos_y):
     nx1 = rr1 * ra * numpy.cos(thet) + center[0]
     ny1 = rr1 * ra * numpy.sin(thet) + center[1]
     return nx1, ny1
+
+
+def pix2virt(pos, origin=1):
+    ddef_o = 1
+    off = ddef_o - origin
+    pos = numpy.atleast_2d(pos) + off
+    nx, ny = pvex(pos[:, 0], pos[:, 1])
+    res = numpy.stack((nx, ny), axis=1)
+    return res - off

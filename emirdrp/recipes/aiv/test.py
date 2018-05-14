@@ -82,7 +82,7 @@ class MMTestCase(unittest.TestCase):
             hdu = fits.PrimaryHDU(data=np.zeros((10, 10), dtype='int16'))
             hdul = fits.HDUList([hdu])
             fd, filename = mkstemp()
-            hdul.writeto(filename, clobber=True)
+            hdul.writeto(filename, overwrite=True)
             somefits.append(filename)
 
         #

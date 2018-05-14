@@ -162,10 +162,10 @@ class CosmeticsRecipe(EmirRecipe):
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
                 fits.writeto('numina-cosmetics-i%02d.fits' %
-                             niter, ratio, clobber=True)
-                fits.writeto('numina-mask-i%02d.fits' % niter, m, clobber=True)
+                             niter, ratio, overwrite=True)
+                fits.writeto('numina-mask-i%02d.fits' % niter, m, overwrite=True)
                 fits.writeto('numina-sigma-i%02d.fits' %
-                             niter, m * 0.0 + sigma, clobber=True)
+                             niter, m * 0.0 + sigma, overwrite=True)
             _logger.info(
                 'iter %d, invalid points in input mask: %d', niter, ninvalid)
             _logger.info('iter %d, estimated sigma is %f', niter, sigma)
@@ -198,10 +198,10 @@ class CosmeticsRecipe(EmirRecipe):
         # caN be removed later
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            fits.writeto('numina-cosmetics.fits', ratio, clobber=True)
-            fits.writeto('numina-mask.fits', m, clobber=True)
+            fits.writeto('numina-cosmetics.fits', ratio, overwrite=True)
+            fits.writeto('numina-mask.fits', m, overwrite=True)
             fits.writeto(
-                'numina-sigma.fits', sigma * numpy.ones_like(m), clobber=True)
+                'numina-sigma.fits', sigma * numpy.ones_like(m), overwrite=True)
 
         hdu = fits.PrimaryHDU(ratio)
         hdr = hdu.header

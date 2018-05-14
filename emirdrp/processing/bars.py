@@ -62,12 +62,12 @@ def find_bars(hdulist, bars_nominal_positions, csupos, dtur,
     logger.debug('ignoring columns outside %d - %d', bstart, bend - 1)
 
     # extract a region to average
-    wy = (average_box_row_size // 2)
-    wx = (average_box_col_size // 2)
-    logger.debug('extraction window is %d rows, %d cols', 2 * wy + 1, 2 * wx + 1)
+    # wy = (average_box_row_size // 2)
+    # wx = (average_box_col_size // 2)
+    # logger.debug('extraction window is %d rows, %d cols', 2 * wy + 1, 2 * wx + 1)
     # Fit the peak with these points
-    wfit = 2 * (fit_peak_npoints // 2) + 1
-    logger.debug('fit with %d points', wfit)
+    # wfit = 2 * (fit_peak_npoints // 2) + 1
+    # logger.debug('fit with %d points', wfit)
 
     # Minimum threshold
     threshold = 5 * EMIR_RON
@@ -148,8 +148,8 @@ def find_bars(hdulist, bars_nominal_positions, csupos, dtur,
             bstart1 = coor_to_pix_1d(ref_x_l_coor - regionw)
             bend1 = coor_to_pix_1d(ref_x_l_coor + regionw) + 1
             centery, centery_virt, xpos1, xpos1_virt, fwhm, st = char_bar_peak_l(arr_deriv,
-                                                                                 prow, bstart1, bend1, threshold,
-                                                                                 wx=wx, wy=wy, wfit=wfit)
+                                                                                 prow, bstart1, bend1,
+                                                                                 threshold)
 
             insert1 = [lbarid, centery + 1, centery_virt, fits_row, xpos1 + 1, xpos1_virt, fwhm, st]
             positions.append(insert1)
@@ -160,7 +160,7 @@ def find_bars(hdulist, bars_nominal_positions, csupos, dtur,
             bstart2 = coor_to_pix_1d(ref_x_r_coor - regionw)
             bend2 = coor_to_pix_1d(ref_x_r_coor + regionw) + 1
             centery, centery_virt, xpos2, xpos2_virt, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart2, bend2,
-                                                                                 threshold, wx=wx, wy=wy, wfit=wfit)
+                                                                                 threshold)
             # This centery/centery_virt should be equal to ref_y_coor_virt
             insert2 = [rbarid, centery + 1, centery_virt, fits_row, xpos2 + 1, xpos2_virt, fwhm, st]
             positions.append(insert2)

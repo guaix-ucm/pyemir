@@ -114,8 +114,8 @@ modes:
 - description: Extraction of spectra
   key: TEST11
   name: TEST11
-  summary: Extraction of spectra
-- description: Alternative positions of the CSU bars
+  summary: MOS mask check
+- description: Checks the positions of reference stars in MOS mask
   key: TEST12
   name: TEST12
   summary: Positions of CSU bars
@@ -211,7 +211,7 @@ pipelines:
       TEST8: emirdrp.recipes.auxiliary.mtwflat.MultiTwilightFlatRecipe
       TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
       TEST10: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
-      TEST11: emirdrp.recipes.aiv.extraction.CSUSpectraExtractionRecipe
+      TEST11: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       TEST12: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe
       TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       SPEC_SKY: emirdrp.recipes.spec.sky.SkySpecRecipe

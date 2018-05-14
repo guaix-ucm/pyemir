@@ -344,7 +344,7 @@ class DirectImageCommon(EmirRecipe):
                         'Step %d, create object mask %s', step,  frame.objmask)
                     frame.objmask_data = objmask[frame.valid_region]
                     fits.writeto(
-                        frame.objmask, frame.objmask_data, clobber=True)
+                        frame.objmask, frame.objmask_data, overwrite=True)
 
                 if not target_is_sky:
                     # Empty object mask for sky frames
@@ -584,9 +584,9 @@ class DirectImageCommon(EmirRecipe):
             # To continue we interpolate over the patches
             fixpix2(sky, binmask, out=sky, iterations=1)
             name = name_skybackground(frame.baselabel, step)
-            fits.writeto(name, sky, clobber=True)
+            fits.writeto(name, sky, overwrite=True)
             name = name_skybackgroundmask(frame.baselabel, step)
-            fits.writeto(name, binmask.astype('int16'), clobber=True)
+            fits.writeto(name, binmask.astype('int16'), overwrite=True)
 
         dst = name_skysub_proc(frame.baselabel, step)
         prev = frame.lastname
@@ -621,9 +621,9 @@ class DirectImageCommon(EmirRecipe):
                                dtype='float32', out=out, fclip=0.1)
 
             # saving the three extensions
-            fits.writeto('result_i%0d.fits' % step, out[0], clobber=True)
-            fits.writeto('result_var_i%0d.fits' % step, out[1], clobber=True)
-            fits.writeto('result_npix_i%0d.fits' % step, out[2], clobber=True)
+            fits.writeto('result_i%0d.fits' % step, out[0], overwrite=True)
+            fits.writeto('result_var_i%0d.fits' % step, out[1], overwrite=True)
+            fits.writeto('result_npix_i%0d.fits' % step, out[2], overwrite=True)
 
             return out
 
@@ -719,7 +719,7 @@ class DirectImageCommon(EmirRecipe):
 
         # Auxiliary data
         sfhdu = fits.PrimaryHDU(sf_data)
-        sfhdu.writeto(name_skyflat('comb', step), clobber=True)
+        sfhdu.writeto(name_skyflat('comb', step), overwrite=True)
         return sf_data
 
     def update_scale_factors(self, frames, step=0):
@@ -833,7 +833,7 @@ class DirectImageCommon(EmirRecipe):
         ndata[mask] = 0
         self.figure_simple_image(fake, title='Fake sky error image')
         # store fake image
-        fits.writeto('fake_sky_rms_i%0d.fits' % step, fake, clobber=True)
+        fits.writeto('fake_sky_rms_i%0d.fits' % step, fake, overwrite=True)
 
     def figure_check_combination(self, rnimage, rmean, rstd, step=0):
         self._figure.clf()
@@ -1027,7 +1027,7 @@ class DirectImageCommon(EmirRecipe):
             # than 10% of the images
             lower = sf_data[2].max() // 10
             border = (wm < lower)
-            fits.writeto(weigthmap, border.astype('uint8'), clobber=True)
+            fits.writeto(weigthmap, border.astype('uint8'), overwrite=True)
 
             #sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             # FIXME: this is a magic number
@@ -1049,7 +1049,7 @@ class DirectImageCommon(EmirRecipe):
         _logger.info('Runing source extraction tor in %s', filename)
         objects, objmask = sep.extract(data_sub, 1.5, err=bkg.globalrms,
                               mask=border, segmentation_map=True)
-        fits.writeto(name_segmask(step), objmask, clobber=True)
+        fits.writeto(name_segmask(step), objmask, overwrite=True)
 
         # # Plot objects
         # # FIXME, plot sextractor objects on top of image
