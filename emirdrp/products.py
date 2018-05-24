@@ -20,7 +20,9 @@
 """Data products produced by the EMIR pipeline."""
 
 import uuid
+import copy
 
+import six
 import numpy
 
 from numina.ext.gtc import DF
@@ -403,4 +405,9 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
         for key in keys:
             self.__dict__[key] = state[key]
 
-        self.contents = state['contents'].copy()
+        if six.PY2:
+            # list has no .copy method in PY2
+            self.contents = copy.copy(state['contents'])
+        else:
+            self.contents = state['contents'].copy()
+
