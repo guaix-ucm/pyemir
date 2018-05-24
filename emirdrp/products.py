@@ -395,7 +395,11 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
         for key in keys:
             state[key] = self.__dict__[key]
 
-        state['contents'] = self.contents.copy()
+        if six.PY2:
+            # list has no .copy method in PY2
+            state['contents'] = copy.copy(self.contents)
+        else:
+            state['contents'] = self.contents.copy()
         return state
 
     def __setstate__(self, state):
