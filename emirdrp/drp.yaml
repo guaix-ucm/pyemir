@@ -20,12 +20,10 @@ modes:
   key: IMAGE_FLAT
   name: Intensity Flat-Field
   summary: Summary of Intensity Flat-Field
-  tagger: ['FILTER']
 - description: Lines and mode lines
   key: STARE_IMAGE
   name: Stare Image
   summary: Summary of Stare Image
-  tagger: ['FILTER']
 - description: Lines and mode lines
   key: NODDED_BEAM_SWITCHED_IMAGE
   name: Nodded/Beam-switched images
@@ -99,7 +97,6 @@ modes:
   key: ARC_CALIBRATION
   name: Wavelength calibration from arc
   summary: Wavelength calibration from arc
-  tagger: [grism, filter]
 - description: Extracts spectra of the slits in the AIV mask
   key: TEST9
   name: Slit-mask spectra extraction
@@ -136,7 +133,6 @@ modes:
   name: Stare Spectra with Wavelength Calibration
   summary: Stare Spectra with Wavelength Calibration
   description: Stare Spectra with Wavelength Calibration
-  tagger: [grism, filter]
 - key: LS_ABBA
   name: Long Slit ABBA
   summary: Spectroscopy ABBA
