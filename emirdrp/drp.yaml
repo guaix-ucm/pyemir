@@ -99,6 +99,7 @@ modes:
   key: ARC_CALIBRATION
   name: Wavelength calibration from arc
   summary: Wavelength calibration from arc
+  tagger: [grism, filter]
 - description: Extracts spectra of the slits in the AIV mask
   key: TEST9
   name: Slit-mask spectra extraction
