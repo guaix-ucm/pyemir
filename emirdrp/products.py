@@ -110,45 +110,37 @@ class MasterBadPixelMask(EMIRImageProduct):
 
 class MasterBias(EMIRImageProduct):
     """Master bias product
-
-    This image has 4 extensions: primary, two variance extensions
-    and number of pixels used in the combination.
-
-    The variance extensions are computed using two different methods.
-    The first one is the variance of the same pixels in different images.
-    The second extension is the variance of each channel in the final image.
     """
     pass
 
 
 class MasterDark(EMIRImageProduct):
     """Master dark product
-
-    This image has 4 extensions: primary, two variance extensions
-    and number of pixels used in the combination.
-
-    The variance extensions are computed using two different methods.
-    The first one is the variance of the same pixels in different images.
-    The second extension is the variance of each channel in the final image.
     """
     pass
 
 
 
 class MasterIntensityFlat(EMIRImageProduct):
-    pass
-
-
-class MasterSky(EMIRImageProduct):
-    pass
-
-
-class SkySpectrum(EMIRImageProduct):
-    pass
+    def tag_names(self):
+        return ['filter']
 
 
 class MasterSpectralFlat(EMIRImageProduct):
-    pass
+    def tag_names(self):
+        return ['grism', 'filter']
+
+
+# FIXME: This is not really a calibration
+class MasterSky(EMIRImageProduct):
+    def tag_names(self):
+        return ['filter']
+
+
+# FIXME: This is not really a calibration
+class SkySpectrum(EMIRImageProduct):
+    def tag_names(self):
+        return ['grism', 'filter']
 
 
 class Spectra(DataFrameType):
@@ -341,6 +333,9 @@ class RefinedBoundaryModelParam(numina.types.structured.BaseStructuredCalibratio
         super(RefinedBoundaryModelParam, self).__setstate__(state)
         self.contents = state['contents'].copy()
 
+    def tag_names(self):
+        return ['grism', 'filter']
+
 
 class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
     """Rectification and Wavelength Calibration Coefficients
@@ -373,6 +368,9 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
             self.__dict__[key] = state[key]
 
         self.contents = state['contents'].copy()
+
+    def tag_names(self):
+        return ['grism', 'filter']
 
 
 class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
@@ -415,3 +413,5 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
         else:
             self.contents = state['contents'].copy()
 
+    def tag_names(self):
+        return ['grism', 'filter']
