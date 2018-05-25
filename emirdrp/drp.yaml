@@ -135,6 +135,7 @@ modes:
   name: Stare Spectra with Wavelength Calibration
   summary: Stare Spectra with Wavelength Calibration
   description: Stare Spectra with Wavelength Calibration
+  tagger: [grism, filter]
 - key: LS_ABBA
   name: Long Slit ABBA
   summary: Spectroscopy ABBA
