@@ -177,6 +177,8 @@ def rectwv_coeff_from_arc_image(reduced_image,
         nbrightlines = [int(idum) for idum in args_nbrightlines.split(',')]
     poly_crval1_linear = wv_parameters['poly_crval1_linear']
     poly_cdelt1_linear = wv_parameters['poly_cdelt1_linear']
+    wvmin_useful = wv_parameters['wvmin_useful']
+    wvmax_useful = wv_parameters['wvmax_useful']
 
     # list of slitlets to be computed
     logger.info('list_slitlets: [' + str(islitlet_min) + ',... ' +
@@ -314,6 +316,8 @@ def rectwv_coeff_from_arc_image(reduced_image,
                     wv_master=wv_master_eff,
                     wv_ini_search=expected_wvmin,
                     wv_end_search=expected_wvmax,
+                    wvmin_useful=wvmin_useful,
+                    wvmax_useful=wvmax_useful,
                     geometry=args_geometry,
                     debugplot=slt.debugplot
                 )
@@ -328,6 +332,14 @@ def rectwv_coeff_from_arc_image(reduced_image,
                 lok2 = wv_master_all <= expected_wvmax
                 lok = lok1 * lok2
                 wv_master_all_eff = wv_master_all[lok]
+
+                # clip master arc line list to useful region
+                if wvmin_useful is not None:
+                    lok = wvmin_useful <= wv_master_all_eff
+                    wv_master_all_eff  = wv_master_all_eff[lok]
+                if wvmax_useful is not None:
+                    lok = wv_master_all_eff <= wvmax_useful
+                    wv_master_all_eff  = wv_master_all_eff[lok]
 
                 # refine wavelength calibration
                 if args_poldeg_refined > 0:
