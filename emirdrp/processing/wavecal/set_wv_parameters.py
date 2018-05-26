@@ -90,6 +90,8 @@ def set_wv_parameters(filter_name, grism_name):
         wv_parameters['crval1_enlarged'] = 11200.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 0.77        # Angstroms/pixel
         wv_parameters['naxis1_enlarged'] = EMIR_NAXIS1_ENLARGED  # pixels
+        wv_parameters['wvmin_expected'] = None
+        wv_parameters['wvmax_expected'] = None
         wv_parameters['wvmin_useful'] = None
         wv_parameters['wvmax_useful'] = None
     elif grism_name == "H" and filter_name == "H":
@@ -109,6 +111,8 @@ def set_wv_parameters(filter_name, grism_name):
         wv_parameters['crval1_enlarged'] = 14500.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 1.2200      # Angstroms/pixel
         wv_parameters['naxis1_enlarged'] = EMIR_NAXIS1_ENLARGED  # pixels
+        wv_parameters['wvmin_expected'] = None
+        wv_parameters['wvmax_expected'] = None
         wv_parameters['wvmin_useful'] = None
         wv_parameters['wvmax_useful'] = None
     elif grism_name == "K" and filter_name == "Ksp":
@@ -128,6 +132,8 @@ def set_wv_parameters(filter_name, grism_name):
         wv_parameters['crval1_enlarged'] = 19100.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 1.7300      # Angstroms/pixel
         wv_parameters['naxis1_enlarged'] = EMIR_NAXIS1_ENLARGED  # pixels
+        wv_parameters['wvmin_expected'] = None
+        wv_parameters['wvmax_expected'] = None
         wv_parameters['wvmin_useful'] = None
         wv_parameters['wvmax_useful'] = None
     elif grism_name == "LR" and filter_name == "YJ":
@@ -147,6 +153,8 @@ def set_wv_parameters(filter_name, grism_name):
         wv_parameters['crval1_enlarged'] = 8900.0000   # Angstroms
         wv_parameters['cdelt1_enlarged'] = 3.5600      # Angstroms/pixel
         wv_parameters['naxis1_enlarged'] = 1270        # pixels
+        wv_parameters['wvmin_expected'] = 4000
+        wv_parameters['wvmax_expected'] = 15000
         wv_parameters['wvmin_useful'] = 8900
         wv_parameters['wvmax_useful'] = 13400
     elif grism_name == "LR" and filter_name == "HK":
@@ -158,6 +166,8 @@ def set_wv_parameters(filter_name, grism_name):
         wv_parameters['crval1_enlarged'] = None        # Angstroms
         wv_parameters['cdelt1_enlarged'] = None        # Angstroms/pixel
         wv_parameters['naxis1_enlarged'] = None        # pixels
+        wv_parameters['wvmin_expected'] = None
+        wv_parameters['wvmax_expected'] = None
         wv_parameters['wvmin_useful'] = None
         wv_parameters['wvmax_useful'] = None
     else:

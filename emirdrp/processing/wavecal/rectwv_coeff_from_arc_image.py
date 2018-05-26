@@ -177,6 +177,8 @@ def rectwv_coeff_from_arc_image(reduced_image,
         nbrightlines = [int(idum) for idum in args_nbrightlines.split(',')]
     poly_crval1_linear = wv_parameters['poly_crval1_linear']
     poly_cdelt1_linear = wv_parameters['poly_cdelt1_linear']
+    wvmin_expected = wv_parameters['wvmin_expected']
+    wvmax_expected = wv_parameters['wvmax_expected']
     wvmin_useful = wv_parameters['wvmin_useful']
     wvmax_useful = wv_parameters['wvmax_useful']
 
@@ -300,6 +302,11 @@ def rectwv_coeff_from_arc_image(reduced_image,
                                 (naxis1_linear - 1) * cdelt1_linear
                 expected_wvmax = crvaln_linear + \
                                  args_margin_npix * cdelt1_linear
+                # override previous estimates when necessary
+                if wvmin_expected is not None:
+                    expected_wvmin = wvmin_expected
+                if wvmax_expected is not None:
+                    expected_wvmax = wvmax_expected
 
                 # clip initial master arc line list with bright lines to
                 # the expected wavelength range
