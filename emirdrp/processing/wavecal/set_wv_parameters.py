@@ -90,6 +90,8 @@ def set_wv_parameters(filter_name, grism_name):
         wv_parameters['crval1_enlarged'] = 11200.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 0.77        # Angstroms/pixel
         wv_parameters['naxis1_enlarged'] = EMIR_NAXIS1_ENLARGED  # pixels
+        wv_parameters['wvmin_useful'] = None
+        wv_parameters['wvmax_useful'] = None
     elif grism_name == "H" and filter_name == "H":
         wv_parameters['islitlet_min'] = 2
         wv_parameters['islitlet_max'] = 54
@@ -107,6 +109,8 @@ def set_wv_parameters(filter_name, grism_name):
         wv_parameters['crval1_enlarged'] = 14500.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 1.2200      # Angstroms/pixel
         wv_parameters['naxis1_enlarged'] = EMIR_NAXIS1_ENLARGED  # pixels
+        wv_parameters['wvmin_useful'] = None
+        wv_parameters['wvmax_useful'] = None
     elif grism_name == "K" and filter_name == "Ksp":
         wv_parameters['islitlet_min'] = 2
         wv_parameters['islitlet_max'] = 54
@@ -124,15 +128,27 @@ def set_wv_parameters(filter_name, grism_name):
         wv_parameters['crval1_enlarged'] = 19100.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 1.7300      # Angstroms/pixel
         wv_parameters['naxis1_enlarged'] = EMIR_NAXIS1_ENLARGED  # pixels
+        wv_parameters['wvmin_useful'] = None
+        wv_parameters['wvmax_useful'] = None
     elif grism_name == "LR" and filter_name == "YJ":
         wv_parameters['islitlet_min'] = 4
         wv_parameters['islitlet_max'] = 55
-        wv_parameters['nbrightlines'] = None
-        wv_parameters['poly_crval1_linear'] = None
-        wv_parameters['poly_cdelt1_linear'] = None
-        wv_parameters['crval1_enlarged'] = None        # Angstroms
-        wv_parameters['cdelt1_enlarged'] = None        # Angstroms/pixel
-        wv_parameters['naxis1_enlarged'] = None        # pixels
+        wv_parameters['nbrightlines'] = [20]
+        wv_parameters['poly_crval1_linear'] = np.polynomial.Polynomial([
+            1.04272465e+04,
+            -2.33176855e+01,
+            6.55101267e-03
+        ])
+        wv_parameters['poly_cdelt1_linear'] = np.polynomial.Polynomial([
+            3.49037727e+00,
+            1.26008332e-03,
+            -4.66149678e-06
+        ])
+        wv_parameters['crval1_enlarged'] = 8900.0000   # Angstroms
+        wv_parameters['cdelt1_enlarged'] = 3.5600      # Angstroms/pixel
+        wv_parameters['naxis1_enlarged'] = 1270        # pixels
+        wv_parameters['wvmin_useful'] = 8900
+        wv_parameters['wvmax_useful'] = 13400
     elif grism_name == "LR" and filter_name == "HK":
         wv_parameters['islitlet_min'] = 4
         wv_parameters['islitlet_max'] = 55
@@ -142,6 +158,8 @@ def set_wv_parameters(filter_name, grism_name):
         wv_parameters['crval1_enlarged'] = None        # Angstroms
         wv_parameters['cdelt1_enlarged'] = None        # Angstroms/pixel
         wv_parameters['naxis1_enlarged'] = None        # pixels
+        wv_parameters['wvmin_useful'] = None
+        wv_parameters['wvmax_useful'] = None
     else:
         print("filter_name..:", filter_name)
         print("grism_name...:", grism_name)
