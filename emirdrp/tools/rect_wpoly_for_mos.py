@@ -240,8 +240,8 @@ def main(args=None):
     ttd_order = int(order_no_duplicates[0])
     ncoef_rect = ncoef_fmap(ttd_order)
     if abs(args.debugplot) >= 10:
-        print('>>> ttd_order....:', ttd_order)
-        print('>>> ncoef_rect...:', ncoef_rect)
+        print('>>> ttd_order........:', ttd_order)
+        print('>>> ncoef_rect.......:', ncoef_rect)
 
     # check that polynomial degree in frontiers and spectrails are the same
     poldeg_check_list = []
@@ -264,9 +264,29 @@ def main(args=None):
         print('poldeg_no_duplicates:', poldeg_no_duplicates)
         raise ValueError('poldeg is not constant in frontiers and '
                          'spectrails!')
-    poldeg = int(poldeg_no_duplicates[0])
+    poldeg_spectrails = int(poldeg_no_duplicates[0])
     if abs(args.debugplot) >= 10:
-        print('>>> poldeg.......:', poldeg)
+        print('>>> poldeg spectrails:', poldeg_spectrails)
+
+    # check that polynomial degree of wavelength calibration is the same for
+    # all the slitlets
+    poldeg_check_list = []
+    for ifile in range(nfiles):
+        tmpdict = list_coef_rect_wpoly[ifile].contents
+        for islitlet in list_valid_islitlets:
+            tmppoly = tmpdict[islitlet - 1]['wpoly_coeff']
+            poldeg_check_list.append(len(tmppoly) - 1)
+            tmppoly = tmpdict[islitlet - 1]['wpoly_coeff_longslit_model']
+            poldeg_check_list.append(len(tmppoly) - 1)
+    # remove duplicates in list
+    poldeg_no_duplicates = list(set(poldeg_check_list))
+    if len(poldeg_no_duplicates) != 1:
+        print('poldeg_no_duplicates:', poldeg_no_duplicates)
+        raise ValueError('poldeg is not constant in wavelength calibration '
+                         'polynomials!')
+    poldeg_wavecal = int(poldeg_no_duplicates[0])
+    if abs(args.debugplot) >= 10:
+        print('>>> poldeg wavecal...:', poldeg_wavecal)
 
     # ---
 
@@ -337,8 +357,8 @@ def main(args=None):
     for islitlet in list_valid_islitlets:
         islitlet_progress(islitlet, EMIR_NBARS)
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
-        outdict['contents'][cslitlet]['wpoly_degree'] = poldeg
-        for icoef in range(poldeg + 1):
+        outdict['contents'][cslitlet]['wpoly_degree'] = poldeg_wavecal
+        for icoef in range(poldeg_wavecal + 1):
             ccoef = str(icoef).zfill(2)
             list_cij = []
             for ifile in range(nfiles):
