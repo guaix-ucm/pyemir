@@ -97,16 +97,16 @@ def set_wv_parameters(filter_name, grism_name):
     elif grism_name == "H" and filter_name == "H":
         wv_parameters['islitlet_min'] = 2
         wv_parameters['islitlet_max'] = 54
-        wv_parameters['nbrightlines'] = [15]
+        wv_parameters['nbrightlines'] = [12]
         wv_parameters['poly_crval1_linear'] = np.polynomial.Polynomial([
-            1.65561291e+04,
-            -7.62779414e+00,
-            7.52228172e-04
+            1.65536274e+04,
+            -7.63517173e+00,
+            7.74790265e-04
         ])
         wv_parameters['poly_cdelt1_linear'] = np.polynomial.Polynomial([
-            1.21372302e+00,
-            3.77209658e-06,
-            -1.07467162e-07
+            1.21327515e+00,
+            1.42140078e-05,
+            -1.27489119e-07
         ])
         wv_parameters['crval1_enlarged'] = 14500.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 1.2200      # Angstroms/pixel
