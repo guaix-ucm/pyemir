@@ -182,6 +182,9 @@ pipelines:
       - name: SkySpectrum
         mode: SPEC_SKY
         field: skyspec
+      - name: MasterRectWave
+        mode: LOAD_RECWAVE
+        field: master_rectwv
     recipes:
       IMAGE_BIAS: emirdrp.recipes.auxiliary.BiasRecipe
       IMAGE_DARK: emirdrp.recipes.auxiliary.DarkRecipe
@@ -214,7 +217,7 @@ pipelines:
       TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       SPEC_SKY: emirdrp.recipes.spec.sky.SkySpecRecipe
       ARC_CALIBRATION: emirdrp.recipes.calibration.arc.ArcCalibrationRecipe
-      STARE_SPECTRA: emirdrp.recipes.spec.stare.StareSpectraRecipe
+      STARE_SPECTRA: emirdrp.recipes.spec.stare.StareSpectraWaveRecipe
       STARE_SPECTRA_WAVE: emirdrp.recipes.spec.stare.StareSpectraWaveRecipe
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe

@@ -38,7 +38,6 @@ class StareSpectraRecipe(EmirRecipe):
 
     stare = Result(prods.DataFrameType)
 
-    @emirdrp.decorators.loginfo
     def run(self, rinput):
         self.logger.info('starting stare spectra reduction')
 

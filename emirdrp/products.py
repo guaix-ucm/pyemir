@@ -326,12 +326,18 @@ class RefinedBoundaryModelParam(numina.types.structured.BaseStructuredCalibratio
 
     def __getstate__(self):
         state = super(RefinedBoundaryModelParam, self).__getstate__()
-        state['contents'] = self.contents.copy()
+        if six.PY2:
+            state['contents'] = copy.copy(self.contents)
+        else:
+            state['contents'] = self.contents.copy()
         return state
 
     def __setstate__(self, state):
         super(RefinedBoundaryModelParam, self).__setstate__(state)
-        self.contents = state['contents'].copy()
+        if six.PY2:
+            self.contents = copy.copy(state['contents'])
+        else:
+            self.contents = state['contents'].copy()
 
     def tag_names(self):
         return ['grism', 'filter']
@@ -357,7 +363,10 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
         for key in keys:
             state[key] = self.__dict__[key]
 
-        state['contents'] = self.contents.copy()
+        if six.PY2:
+            state['contents'] = copy.copy(self.contents)
+        else:
+            state['contents'] = self.contents.copy()
         return state
 
     def __setstate__(self, state):
@@ -366,8 +375,10 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
         keys = ['total_slitlets', 'missing_slitlets']
         for key in keys:
             self.__dict__[key] = state[key]
-
-        self.contents = state['contents'].copy()
+        if six.PY2:
+            self.contents = copy.copy(state['contents'])
+        else:
+            self.contents = state['contents'].copy()
 
     def tag_names(self):
         return ['grism', 'filter']
@@ -415,3 +426,16 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
 
     def tag_names(self):
         return ['grism', 'filter']
+
+try:
+    # FIXME: put this where it makes sense
+    from gtc.DSL.DGCSTypes.IDL_Adapters import toIDL_, toIDL_struct, toElementType
+    import DF
+
+    toIDL_.register(MasterRectWave, toIDL_struct)
+
+    @toElementType.register(MasterRectWave)
+    def _(value):
+        return DF.TYPE_STRUCT
+except ImportError:
+    pass
