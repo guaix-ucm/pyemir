@@ -184,7 +184,7 @@ class LogicalSlit(object):
         return self.bbox_int
 
 
-def comp_centroid(data, bounding_box, debug_plot=True, plot_reference=None, logger=None):
+def comp_centroid(data, bounding_box, debug_plot=False, plot_reference=None, logger=None):
     from matplotlib.patches import Ellipse
 
     if logger is None:
@@ -436,7 +436,7 @@ class MaskCheckRecipe(EmirRecipe):
 
         offset, angle, qc = compute_off_rotation(image_sep, csu_conf, slits_bb,
                                                  rotaxis=rotaxis, logger=self.logger,
-                                                 debug_plot=True, intermediate_results=True
+                                                 debug_plot=False, intermediate_results=True
                                                  )
 
         result = self.create_result(reduced_image=hdulist, qc=qc)
