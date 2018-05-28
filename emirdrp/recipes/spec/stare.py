@@ -14,6 +14,7 @@ Spectroscopy mode, Stare Spectra
 
 from numina.core import Result
 from numina.array.combine import median
+import numina.processing as proc
 
 import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
@@ -23,7 +24,6 @@ from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff
 from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
     import rectwv_coeff_from_mos_library
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
-import emirdrp.decorators
 
 
 class StareSpectraRecipe(EmirRecipe):
@@ -69,7 +69,6 @@ class StareSpectraWaveRecipe(EmirRecipe):
     reduced_image = Result(prods.DataFrameType)
     stare = Result(prods.DataFrameType)
 
-    @emirdrp.decorators.loginfo
     def run(self, rinput):
         self.logger.info('starting rect.+wavecal. reduction of stare spectra')
 
@@ -106,6 +105,17 @@ class StareSpectraWaveRecipe(EmirRecipe):
             reduced_image,
             rectwv_coeff
         )
+
+        if rinput.master_sky:
+            # Sky subtraction after rectification
+            msky = rinput.master_sky.open()
+            sky_corrector = proc.SkyCorrector(
+                msky[0].data,
+                datamodel=self.datamodel,
+                calibid=self.datamodel.get_imgid(msky)
+            )
+
+            stare_image = sky_corrector(stare_image)
 
         # save results in results directory
         self.logger.info('end rect.+wavecal. reduction of stare spectra')
