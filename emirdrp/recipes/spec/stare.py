@@ -63,7 +63,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
-    master_rectwv = reqs.MasterRectWaveRequirement()
+    master_rectwv = reqs.MasterRectWaveRequirement(optional=True)
     master_sky = reqs.SpectralSkyRequirement(optional=True)
 
     reduced_image = Result(prods.DataFrameType)
@@ -87,36 +87,53 @@ class StareSpectraWaveRecipe(EmirRecipe):
         # save intermediate image in work directory
         self.save_intermediate_img(reduced_image, 'reduced_image.fits')
 
-        # RectWaveCoeff object with rectification and wavelength calibration
-        # coefficients for the particular CSU configuration
-        rectwv_coeff = rectwv_coeff_from_mos_library(
-            reduced_image,
-            rinput.master_rectwv
-        )
-        # save as JSON file in work directory
-        self.save_structured_as_json(rectwv_coeff, 'rectwv_coeff.json')
+        stare_image = reduced_image
+        if rinput.master_rectwv:
+            # RectWaveCoeff object with rectification and wavelength calibration
+            # coefficients for the particular CSU configuration
+            rectwv_coeff = rectwv_coeff_from_mos_library(
+                reduced_image,
+                rinput.master_rectwv
+            )
+            # save as JSON file in work directory
+            self.save_structured_as_json(rectwv_coeff, 'rectwv_coeff.json')
 
-        # generate associated ds9 region files and save them in work directory
-        if self.intermediate_results:
-            save_four_ds9(rectwv_coeff)
+            # generate associated ds9 region files and save them in work directory
+            if self.intermediate_results:
+                save_four_ds9(rectwv_coeff)
 
-        # apply rectification and wavelength calibration
-        stare_image = apply_rectwv_coeff(
-            reduced_image,
-            rectwv_coeff
-        )
+            # apply rectification and wavelength calibration
+            stare_image = apply_rectwv_coeff(
+                reduced_image,
+                rectwv_coeff
+            )
+            # image_wl_calibrated = True
+        else:
+            self.logger.info('No wavelength calibration provided')
+            grism_value = hdr.get('GRISM', 'unknown')
+            self.logger.debug('GRISM is %s', grism_value)
+            if grism_value.lower() == 'open':
+                self.logger.debug('GRISM is %s, so this seems OK', grism_value)
+
+            # image_wl_calibrated = False
 
         if rinput.master_sky:
             # Sky subtraction after rectification
             msky = rinput.master_sky.open()
-            sky_corrector = proc.SkyCorrector(
-                msky[0].data,
-                datamodel=self.datamodel,
-                calibid=self.datamodel.get_imgid(msky)
-            )
+            # Check if images have the same size.
+            # if so, go ahead
+            if msky[0].data.shape != stare_image[0].data.shape:
+                self.logger.warning("sky and current image don't have the same shape")
+            else:
+                sky_corrector = proc.SkyCorrector(
+                    msky[0].data,
+                    datamodel=self.datamodel,
+                    calibid=self.datamodel.get_imgid(msky)
+                )
 
-            stare_image = sky_corrector(stare_image)
-
+                stare_image = sky_corrector(stare_image)
+        else:
+            self.logger.info('No sky image provided')
         # save results in results directory
         self.logger.info('end rect.+wavecal. reduction of stare spectra')
         result = self.create_result(reduced_image=reduced_image,

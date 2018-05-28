@@ -80,9 +80,10 @@ class RefinedBoundaryModelParamRequirement(Requirement):
 
 
 class MasterRectWaveRequirement(Requirement):
-    def __init__(self):
+    def __init__(self, optional=False):
         super(MasterRectWaveRequirement,
-              self).__init__(prods.MasterRectWave, 'Master rectification+wavelength library')
+              self).__init__(prods.MasterRectWave, 'Master rectification+wavelength library',
+                             optional=optional)
 
 
 class MasterSkyRequirement(Requirement):
