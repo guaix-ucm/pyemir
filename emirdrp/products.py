@@ -383,12 +383,22 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
     """Rectification and Wavelength Calibration Library Product
     """
     def __init__(self, instrument='unknown'):
+        import numina.core.tagexpr as tagexpr
+
         datamodel = emirdrp.datamodel.EmirDataModel()
         super(MasterRectWave, self).__init__(instrument, datamodel=datamodel)
         self.tags = {
             'grism': "unknown",
             'filter': "unknown"
         }
+
+        my_tag_table = self.datamodel.query_attrs
+        objtags = [my_tag_table[t] for t in self.tag_names()]
+        self.query_expr = tagexpr.query_expr_from_attr(objtags)
+        self.names_t = self.query_expr.tags()
+        self.names_f = self.query_expr.fields()
+        self.query_opts = []
+
         self.total_slitlets = 0
         self.missing_slitlets = []
         self.contents = []
@@ -452,3 +462,10 @@ try:
         return DF.TYPE_STRUCT
 except ImportError:
     pass
+
+
+if __name__ == '__main__':
+    m = MasterRectWave().query_expr
+    print(m.tags())
+    m = MasterIntensityFlat().query_expr
+    print(m.tags())
