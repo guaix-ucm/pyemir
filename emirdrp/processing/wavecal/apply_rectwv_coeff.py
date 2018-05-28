@@ -128,9 +128,8 @@ def apply_rectwv_coeff(reduced_image,
 
     # initialize rectified and wavelength calibrated image
     naxis2_enlarged = EMIR_NBARS * EMIR_NPIXPERSLIT_RECTIFIED
-    fdtype = np.find_common_type(image2d, [np.float32])
-    logger.debug("Common dtype for image2d_rectwv is %s", fdtype)
-    image2d_rectwv = np.zeros((naxis2_enlarged, naxis1_enlarged), dtype=fdtype)
+    image2d_rectwv = np.zeros((naxis2_enlarged, naxis1_enlarged),
+                              dtype='float32')
 
     # main loop
 
