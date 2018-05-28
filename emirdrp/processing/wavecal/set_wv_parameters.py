@@ -118,16 +118,16 @@ def set_wv_parameters(filter_name, grism_name):
     elif grism_name == "K" and filter_name == "Ksp":
         wv_parameters['islitlet_min'] = 2
         wv_parameters['islitlet_max'] = 54
-        wv_parameters['nbrightlines'] = [15]
+        wv_parameters['nbrightlines'] = [12]
         wv_parameters['poly_crval1_linear'] = np.polynomial.Polynomial([
-            2.21095313e+04,
-            -1.08900414e+01,
-            9.66474839e-04
+            2.21044741e+04,
+            -1.08737529e+01,
+            9.05081653e-04
         ])
         wv_parameters['poly_cdelt1_linear'] = np.polynomial.Polynomial([
-            1.72596244e+00,
-            2.85573046e-05,
-            -1.30027272e-07
+            1.72696857e+00,
+            2.35009351e-05,
+            -1.02164228e-07
         ])
         wv_parameters['crval1_enlarged'] = 19100.0000  # Angstroms
         wv_parameters['cdelt1_enlarged'] = 1.7300      # Angstroms/pixel
