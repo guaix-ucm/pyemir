@@ -32,6 +32,13 @@ import emirdrp.instrument
 _logger = logging.getLogger(__name__)
 
 
+class QueryAttribute(object):
+    def __init__(self, name, tipo, description=""):
+        self.name = name
+        self.type = tipo
+        self.description = description
+
+
 class EmirDataModel(numina.datamodel.DataModel):
     """Data model of EMIR."""
 
@@ -46,6 +53,13 @@ class EmirDataModel(numina.datamodel.DataModel):
         'uuid2',
         'skyadd'
     ]
+
+    query_attrs = {
+        'filter': QueryAttribute('filter', str),
+        'grism': QueryAttribute('grism', str),
+        'insconf': QueryAttribute('insconf', str)
+    }
+
 
     def __init__(self):
         defaults = self.default_mappings()
@@ -94,8 +108,6 @@ class EmirDataModel(numina.datamodel.DataModel):
         img[0].header['NUMUTC1'] = time1.isoformat()
         img[0].header['NUMUTC2'] = time2.isoformat()
         return img
-
-
 
     def get_dtur_from_header(self, hdr):
 

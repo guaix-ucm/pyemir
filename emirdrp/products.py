@@ -122,25 +122,20 @@ class MasterDark(EMIRImageProduct):
 
 
 class MasterIntensityFlat(EMIRImageProduct):
-    def tag_names(self):
-        return ['filter']
-
+    __tags__ = ['filter']
 
 class MasterSpectralFlat(EMIRImageProduct):
-    def tag_names(self):
-        return ['grism', 'filter']
+    __tags__ = ['grism', 'filter']
 
 
 # FIXME: This is not really a calibration
 class MasterSky(EMIRImageProduct):
-    def tag_names(self):
-        return ['filter']
+    __tags__ = ['filter']
 
 
 # FIXME: This is not really a calibration
 class SkySpectrum(EMIRImageProduct):
-    def tag_names(self):
-        return ['grism', 'filter']
+    __tags__ = ['grism', 'filter']
 
 
 class Spectra(DataFrameType):
@@ -388,7 +383,8 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
     """Rectification and Wavelength Calibration Library Product
     """
     def __init__(self, instrument='unknown'):
-        super(MasterRectWave, self).__init__(instrument)
+        datamodel = emirdrp.datamodel.EmirDataModel()
+        super(MasterRectWave, self).__init__(instrument, datamodel=datamodel)
         self.tags = {
             'grism': "unknown",
             'filter': "unknown"
@@ -412,7 +408,25 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
         return state
 
     def __setstate__(self, state):
+        from numina.types.typedialect import dialect_info
+        import numina.core.tagexpr as tagexpr
+
         super(MasterRectWave, self).__setstate__(state)
+
+        # Additional values
+        # These values are not set with setstate
+        self.datamodel = emirdrp.datamodel.EmirDataModel()
+        self.internal_default = None
+        self.internal_type = self.__class__
+        self.internal_dialect = dialect_info(self)
+        #
+        my_tag_table = self.datamodel.query_attrs
+
+        objtags = [my_tag_table[t] for t in self.tag_names()]
+        self.query_expr = tagexpr.query_expr_from_attr(objtags)
+        self.names_t = self.query_expr.tags()
+        self.names_f = self.query_expr.fields()
+        self.query_opts = []
 
         keys = ['total_slitlets', 'missing_slitlets']
         for key in keys:
@@ -430,7 +444,6 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
 try:
     # FIXME: put this where it makes sense
     from gtc.DSL.DGCSTypes.IDL_Adapters import toIDL_, toIDL_struct, toElementType
-    import DF
 
     toIDL_.register(MasterRectWave, toIDL_struct)
 
