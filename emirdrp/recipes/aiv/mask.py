@@ -26,7 +26,7 @@ import emirdrp.products as prods
 import emirdrp.requirements as reqs
 from .common import pinhole_char, pinhole_char2
 
-_logger = logging.getLogger('numina.recipes.emir')
+_logger = logging.getLogger(__name__)
 
 
 class TestPinholeRecipe(EmirRecipe):

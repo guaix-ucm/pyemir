@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2016 Universidad Complutense de Madrid
+# Copyright 2013-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -48,7 +48,7 @@ from .procedures import moments
 from .procedures import AnnulusBackgroundEstimator
 from .procedures import image_box2d
 
-_logger = logging.getLogger('numina.recipes.emir')
+_logger = logging.getLogger(__name__)
 
 
 # returns y,x

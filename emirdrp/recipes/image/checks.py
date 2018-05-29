@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -32,7 +32,7 @@ from emirdrp.util.sextractor import SExtractor
 from .naming import name_skysub_proc
 
 
-_logger = logging.getLogger('numina.recipes.emir')
+_logger = logging.getLogger(__name__)
 
 # Actions to carry over images when checking the flux
 # of the objects in different images

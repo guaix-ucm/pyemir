@@ -15,8 +15,11 @@ import astropy.io.fits as fits
 import numina.core
 import numina.exceptions
 import numpy
+import numina.core.query as qmod
+import numina.ext.gtc
+
 from numina.array import combine
-from numina.core import Result
+from numina.core import Result, Requirement
 from numina.exceptions import RecipeError
 from numina.core.requirements import ObservationResultRequirement
 
@@ -30,47 +33,66 @@ from emirdrp.processing.combine import basic_processing
 class BaseABBARecipe(EmirRecipe):
     """Process images in ABBA mode"""
 
-    obresult = ObservationResultRequirement()
-    spec_abba = Result(prods.DataFrameType)
+    obresult = ObservationResultRequirement(
+        query_opts=qmod.ResultOf(
+            'STARE_SPECTRA.stare',
+            node='children',
+            id_field="stareSpectraIds"
+        )
+    )
+    accum_in = Requirement(
+        prods.DataFrameType,
+        description='Accumulated result',
+        optional=True,
+        destination='accum',
+        query_opts=qmod.ResultOf(
+            'LS_ABBA.accum',
+            node='prev'
+        )
+    )
 
+    spec_abba = Result(prods.DataFrameType)
     # Accumulate 'spec_abba' results
     accum = Result(prods.DataFrameType, optional=True)
 
-    @classmethod
-    def build_recipe_input(cls, obsres, dal, pipeline='default'):
-        return cls.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
+    def build_recipe_input(self, obsres, dal, pipeline='default'):
+        if numina.ext.gtc.check_gtc():
+            self.logger.debug('running in GTC environment')
+            return self.build_recipe_input_gtc(obsres, dal)
+        else:
+            self.logger.debug('running outside of GTC environment')
+            return super(BaseABBARecipe, self).build_recipe_input(
+                obsres, dal
+            )
 
-    @classmethod
-    def build_recipe_input_gtc(cls, obsres, dal, pipeline='default'):
-        cls.logger.debug('start recipe input builder')
+    def build_recipe_input_gtc(self, obsres, dal):
+        self.logger.debug('start recipe input builder')
         stareImagesIds = obsres.stareSpectraIds
-        cls.logger.debug('Stare Spectra images IDS: %s', stareImagesIds)
+        self.logger.debug('Stare Spectra images IDS: %s', stareImagesIds)
         stareImages = []
         for subresId in stareImagesIds:
             subres = dal.getRecipeResult(subresId)
             stareImages.append(subres['elements']['stare'])
 
         naccum = obsres.naccum
-        cls.logger.info('naccum: %d', naccum)
+        self.logger.info('naccum: %d', naccum)
         if naccum != 1:  # if it is not the first dithering loop
-            cls.logger.info("SEARCHING LATEST RESULT LS_ABBA TO ACCUMULATE")
+            self.logger.info("SEARCHING LATEST RESULT LS_ABBA TO ACCUMULATE")
             latest_result = dal.getLastRecipeResult("EMIR", "EMIR", "LS_ABBA")
             accum_dither = latest_result['elements']['accum']
-            cls.logger.info("FOUND")
+            self.logger.info("FOUND")
         else:
-            cls.logger.info("NO ACCUMULATION LS_ABBA")
+            self.logger.info("NO ACCUMULATION LS_ABBA")
             accum_dither = stareImages[0]
 
         newOR = numina.core.ObservationResult()
         newOR.frames = stareImages
         newOR.naccum = naccum
         newOR.accum = accum_dither
-        newRI = cls.create_input(obresult=newOR)
-        cls.logger.debug('end recipe input builder')
+        newRI = self.create_input(obresult=newOR)
+        self.logger.debug('end recipe input builder')
         return newRI
 
-    #@emirdrp.decorators.aggregate
-    @emirdrp.decorators.loginfo
     def run(self, rinput):
         partial_result = self.run_single(rinput)
         new_result = self.aggregate_result(partial_result, rinput)
@@ -96,7 +118,7 @@ class BaseABBARecipe(EmirRecipe):
         return result
 
     def process_abba(self, images):
-        # Process for images in ABBA mode
+        # Process four images in ABBA mode
         dataA0 = images[0][0].data
         dataB0 = images[1][0].data
 

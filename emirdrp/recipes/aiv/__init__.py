@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2016 Universidad Complutense de Madrid
+# Copyright 2013-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -36,7 +36,7 @@ from emirdrp.requirements import MasterDarkRequirement
 from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from emirdrp.processing.combine import basic_processing_with_combination
 
-_logger = logging.getLogger('numina.recipes.emir')
+_logger = logging.getLogger(__name__)
 
 
 class SimpleBiasRecipe(EmirRecipe):

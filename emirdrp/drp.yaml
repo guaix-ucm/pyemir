@@ -198,8 +198,8 @@ pipelines:
       NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.image.nodded.NBImageRecipe
       STARE_IMAGE: emirdrp.recipes.image.stare.StareImageBaseRecipe
       fail: numina.core.utils.AlwaysFailRecipe
-      gain_mode1: emirdrp.recipes.engineering.GainRecipe1
-      cosmetics: emirdrp.recipes.engineering.CosmeticsRecipe
+      gain_mode1: emirdrp.recipes.engineering.detectorgain.GainRecipe1
+      cosmetics: emirdrp.recipes.engineering.cosmetics.CosmeticsRecipe
       simple_bias: emirdrp.recipes.aiv.SimpleBiasRecipe
       TEST0: numina.core.utils.AlwaysSuccessRecipe
       TEST1: emirdrp.recipes.aiv.TestBiasCorrectRecipe
@@ -210,7 +210,7 @@ pipelines:
       TEST6: emirdrp.recipes.aiv.pointsources.TestPointSourceRecipe
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
       TEST8: emirdrp.recipes.auxiliary.mtwflat.MultiTwilightFlatRecipe
-      TEST9: emirdrp.recipes.aiv.extraction.MaskSpectraExtractionRecipe
+      TEST9: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       TEST10: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       TEST11: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       TEST12: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe
