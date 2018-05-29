@@ -170,8 +170,8 @@ def display_slitlet_arrangement(fileobj,
 
     # display arrangement
     if debugplot >= 10:
-        print("slit     left    right   center   width")
-        print("====  =======  =======  =======   =====")
+        print("slit     left    right   center   width   min.wave   max.wave")
+        print("====  =======  =======  =======   =====   ========   ========")
         for i in range(EMIR_NBARS):
             ibar = i + 1
             csu_crval1 = crval1(csu_config.csu_bar_slit_center(ibar))
