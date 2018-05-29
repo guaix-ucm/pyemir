@@ -23,6 +23,7 @@ from __future__ import print_function
 import argparse
 from astropy.io import fits
 import numpy as np
+from numpy.polynomial import Polynomial
 import os.path
 import sys
 
@@ -31,11 +32,14 @@ from numina.array.display.matplotlib_qt import patches as patches
 from numina.array.display.pause_debugplot import pause_debugplot
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 
+from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NBARS
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
 
 def display_slitlet_arrangement(fileobj,
+                                grism=None,
+                                spfilter=None,
                                 bbox=None,
                                 adjust=None,
                                 geometry=None,
@@ -45,7 +49,11 @@ def display_slitlet_arrangement(fileobj,
     Parameters
     ----------
     fileobj : file object
-        FITS file object.
+        FITS or TXT file object.
+    grism : str
+        Grism.
+    grism : str
+        Filter.
     bbox : tuple of 4 floats
         If not None, values for xmin, xmax, ymin and ymax.
     adjust : bool
@@ -74,18 +82,91 @@ def display_slitlet_arrangement(fileobj,
 
     """
 
-    # read input FITS file
-    hdulist = fits.open(fileobj.name)
-    image_header = hdulist[0].header
-    hdulist.close()
+    if fileobj.name[-4:] == ".txt":
+        if grism is None:
+            raise ValueError("Undefined grism!")
+        if spfilter is None:
+            raise ValueError("Undefined filter!")
+        # define CsuConfiguration object
+        csu_config = CsuConfiguration()
+        csu_config._csu_bar_left = []
+        csu_config._csu_bar_right = []
+        csu_config._csu_bar_slit_center = []
+        csu_config._csu_bar_slit_width = []
 
-    # additional info from header
-    grism = image_header['grism']
-    spfilter = image_header['filter']
-    rotang = image_header['rotang']
+        # since the input filename has been opened with argparse in binary
+        # mode, it is necessary to close it and open it in text mode
+        fileobj.close()
+        # read TXT file
+        with open(fileobj.name, mode='rt') as f:
+            file_content = f.read().splitlines()
+        next_id_bar = 1
+        for line in file_content:
+            if len(line) > 0:
+                if line[0] not in ['#']:
+                    line_contents = line.split()
+                    id_bar = int(line_contents[0])
+                    position = float(line_contents[1])
+                    if id_bar == next_id_bar:
+                        if id_bar <= EMIR_NBARS:
+                            csu_config._csu_bar_left.append(position)
+                            next_id_bar = id_bar + EMIR_NBARS
+                        else:
+                            csu_config._csu_bar_right.append(341.5 - position)
+                            next_id_bar = id_bar - EMIR_NBARS + 1
+                    else:
+                        raise ValueError("Unexpected id_bar:" + str(id_bar))
 
-    # define slitlet arrangement
-    csu_config = CsuConfiguration.define_from_fits(fileobj)
+        # compute slit width and center
+        for i in range(EMIR_NBARS):
+            csu_config._csu_bar_slit_center.append(
+                (csu_config._csu_bar_left[i] + csu_config._csu_bar_right[i])/2
+            )
+            csu_config._csu_bar_slit_width.append(
+                csu_config._csu_bar_right[i] - csu_config._csu_bar_left[i]
+            )
+
+    else:
+        # read input FITS file
+        hdulist = fits.open(fileobj.name)
+        image_header = hdulist[0].header
+        hdulist.close()
+
+        # additional info from header
+        grism = image_header['grism']
+        spfilter = image_header['filter']
+
+        # define slitlet arrangement
+        csu_config = CsuConfiguration.define_from_fits(fileobj)
+
+    # determine calibration
+    if grism == "J" and spfilter == "J":
+        crval1 = Polynomial(
+            [1.25137094e+04, -4.81553731e+00, 4.70039758e-04])
+        cdelt1 = Polynomial(
+            [7.74133267e-01, -4.72423718e-05, 2.79842624e-08])
+    elif grism == "H" and spfilter == "H":
+        crval1 = Polynomial(
+            [1.65536274e+04, -7.63517173e+00, 7.74790265e-04])
+        cdelt1 = Polynomial(
+            [1.21327515e+00, 1.42140078e-05, -1.27489119e-07])
+    elif grism == "K" and spfilter == "Ksp":
+        crval1 = Polynomial(
+            [2.21044741e+04, -1.08737529e+01, 9.05081653e-04])
+        cdelt1 = Polynomial(
+            [1.72696857e+00, 2.35009351e-05, -1.02164228e-07])
+    elif grism == "LR" and spfilter == "YJ":
+        crval1 = Polynomial(
+            [1.04272465e+04, -2.33176855e+01, 6.55101267e-03])
+        cdelt1 = Polynomial(
+            [3.49037727e+00, 1.26008332e-03, -4.66149678e-06])
+    elif grism == "LR" and spfilter == "HK":
+        crval1 = Polynomial(
+            [2.00704978e+04, -4.07702886e+01, -5.95247468e-03])
+        cdelt1 = Polynomial(
+            [6.54247758e+00, 2.09061196e-03, -2.48206609e-06])
+    else:
+        raise ValueError("Invalid grism + filter configuration")
 
     # display arrangement
     if debugplot >= 10:
@@ -93,11 +174,17 @@ def display_slitlet_arrangement(fileobj,
         print("====  =======  =======  =======   =====")
         for i in range(EMIR_NBARS):
             ibar = i + 1
-            print("{0:4d} {1:8.3f} {2:8.3f} {3:8.3f} {4:7.3f}".format(
+            csu_crval1 = crval1(csu_config.csu_bar_slit_center(ibar))
+            csu_cdelt1 = cdelt1(csu_config.csu_bar_slit_center(ibar))
+            csu_crvaln = csu_crval1 + (EMIR_NAXIS1 - 1) * csu_cdelt1
+            print("{0:4d} {1:8.3f} {2:8.3f} {3:8.3f} {4:7.3f}   "
+                  "{5:8.2f}   {6:8.2f}".format(
                 ibar, csu_config.csu_bar_left(ibar),
                 csu_config.csu_bar_right(ibar),
                 csu_config.csu_bar_slit_center(ibar),
-                csu_config.csu_bar_slit_width(ibar)))
+                csu_config.csu_bar_slit_width(ibar),
+                csu_crval1, csu_crvaln)
+            )
         print(
             "---> {0:8.3f} {1:8.3f} {2:8.3f} {3:7.3f} <- mean (all)".format(
                 np.mean(csu_config._csu_bar_left),
@@ -158,7 +245,7 @@ def display_slitlet_arrangement(fileobj,
             ax.plot([csu_config.csu_bar_right(ibar), 341.5],
                     [ibar, ibar], 'o-')
         plt.title("File: " + fileobj.name + "\ngrism=" + grism +
-                  ", filter=" + spfilter + ", rotang=" + str(round(rotang, 2)))
+                  ", filter=" + spfilter)
         pause_debugplot(debugplot, pltshow=True)
 
     # return results
@@ -176,11 +263,17 @@ def main(args=None):
     # positional arguments
     parser.add_argument("filename",
                         help="FITS files (wildcards accepted) or single TXT "
-                             "file with list of FITS files",
+                             "file with CSU configuration from OSP",
                         type=argparse.FileType('rb'),
                         nargs='+')
 
     # optional arguments
+    parser.add_argument("--grism",
+                        help="Grism (J, H, K, LR)",
+                        choices=["J", "H", "K", "LR"])
+    parser.add_argument("--filter",
+                        help="Filter (J, H, Ksp, YJ, HK)",
+                        choices=["J", "H", "Ksp", "YJ", "HK"])
     parser.add_argument("--bbox",
                         help="Bounding box tuple xmin,xmax,ymin,ymax "
                              "indicating plot limits")
@@ -227,21 +320,7 @@ def main(args=None):
     list_fits_file_objects = []
     # if input file is a single txt file, assume it is a list of FITS files
     if len(args.filename) == 1:
-        if args.filename[0].name[-4:] == ".txt":
-            # since the input filename has been opened with argparse in binary
-            # mode, it is necessary to close it and open it in text mode
-            args.filename[0].close()
-            with open(args.filename[0].name, mode='rt') as f:
-                file_content = f.read().splitlines()
-            for line in file_content:
-                if len(line) > 0:
-                    if line[0] != '#':
-                        tmpfile = line.split()[0]
-                        if not os.path.isfile(tmpfile):
-                            raise ValueError("File " + tmpfile + " not found!")
-                        list_fits_file_objects.append(open(tmpfile, 'rb'))
-        else:
-            list_fits_file_objects = [args.filename[0]]
+        list_fits_file_objects = [args.filename[0]]
     else:
         list_fits_file_objects = args.filename
 
@@ -260,7 +339,10 @@ def main(args=None):
               fileobj.name)
         csu_bar_left[ifile, :], csu_bar_right[ifile, :], \
         csu_bar_slit_center[ifile, :], csu_bar_slit_width[ifile, :] = \
-            display_slitlet_arrangement(fileobj, bbox=bbox,
+            display_slitlet_arrangement(fileobj,
+                                        grism=args.grism,
+                                        spfilter=args.filter,
+                                        bbox=bbox,
                                         adjust=args.adjust,
                                         geometry=geometry,
                                         debugplot=args.debugplot)
