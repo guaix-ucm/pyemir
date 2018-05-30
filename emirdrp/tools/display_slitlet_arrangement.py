@@ -31,6 +31,7 @@ from numina.array.display.matplotlib_qt import plt
 from numina.array.display.matplotlib_qt import patches as patches
 from numina.array.display.pause_debugplot import pause_debugplot
 from emirdrp.instrument.csu_configuration import CsuConfiguration
+from emirdrp.processing.wavecal.set_wv_parameters import set_wv_parameters
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NBARS
@@ -140,33 +141,41 @@ def display_slitlet_arrangement(fileobj,
         csu_config = CsuConfiguration.define_from_fits(fileobj)
 
     # determine calibration
-    if grism == "J" and spfilter == "J":
+    if grism in ["J", "OPEN"] and spfilter == "J":
         crval1 = Polynomial(
             [1.25137094e+04, -4.81553731e+00, 4.70039758e-04])
         cdelt1 = Polynomial(
             [7.74133267e-01, -4.72423718e-05, 2.79842624e-08])
-    elif grism == "H" and spfilter == "H":
+        wv_parameters = set_wv_parameters("J", "J")
+    elif grism in ["H", "OPEN"] and spfilter == "H":
         crval1 = Polynomial(
             [1.65536274e+04, -7.63517173e+00, 7.74790265e-04])
         cdelt1 = Polynomial(
             [1.21327515e+00, 1.42140078e-05, -1.27489119e-07])
-    elif grism == "K" and spfilter == "Ksp":
+        wv_parameters = set_wv_parameters("H", "H")
+    elif grism in ["K", "OPEN"] and spfilter == "Ksp":
         crval1 = Polynomial(
             [2.21044741e+04, -1.08737529e+01, 9.05081653e-04])
         cdelt1 = Polynomial(
             [1.72696857e+00, 2.35009351e-05, -1.02164228e-07])
-    elif grism == "LR" and spfilter == "YJ":
+        wv_parameters = set_wv_parameters("Ksp", "K")
+    elif grism in ["LR", "OPEN"] and spfilter == "YJ":
         crval1 = Polynomial(
             [1.04272465e+04, -2.33176855e+01, 6.55101267e-03])
         cdelt1 = Polynomial(
             [3.49037727e+00, 1.26008332e-03, -4.66149678e-06])
-    elif grism == "LR" and spfilter == "HK":
+        wv_parameters = set_wv_parameters("YJ", "LR")
+    elif grism in ["LR", "OPEN"] and spfilter == "HK":
         crval1 = Polynomial(
             [2.00704978e+04, -4.07702886e+01, -5.95247468e-03])
         cdelt1 = Polynomial(
             [6.54247758e+00, 2.09061196e-03, -2.48206609e-06])
+        wv_parameters = set_wv_parameters("HK", "LR")
     else:
         raise ValueError("Invalid grism + filter configuration")
+
+    wvmin_useful = wv_parameters['wvmin_useful']
+    wvmax_useful = wv_parameters['wvmax_useful']
 
     # display arrangement
     if debugplot >= 10:
@@ -177,6 +186,10 @@ def display_slitlet_arrangement(fileobj,
             csu_crval1 = crval1(csu_config.csu_bar_slit_center(ibar))
             csu_cdelt1 = cdelt1(csu_config.csu_bar_slit_center(ibar))
             csu_crvaln = csu_crval1 + (EMIR_NAXIS1 - 1) * csu_cdelt1
+            if wvmin_useful is not None:
+                csu_crval1 = np.amax([csu_crval1, wvmin_useful])
+            if wvmax_useful is not None:
+                csu_crvaln = np.amin([csu_crvaln, wvmax_useful])
             print("{0:4d} {1:8.3f} {2:8.3f} {3:8.3f} {4:7.3f}   "
                   "{5:8.2f}   {6:8.2f}".format(
                 ibar, csu_config.csu_bar_left(ibar),
@@ -241,9 +254,10 @@ def display_slitlet_arrangement(fileobj,
             ax.add_patch(patches.Rectangle(
                 (csu_config.csu_bar_left(ibar), ibar-0.5),
                 csu_config.csu_bar_slit_width(ibar), 1.0))
-            ax.plot([0., csu_config.csu_bar_left(ibar)], [ibar, ibar], 'o-')
+            ax.plot([0., csu_config.csu_bar_left(ibar)], [ibar, ibar],
+                    '-', color='gray')
             ax.plot([csu_config.csu_bar_right(ibar), 341.5],
-                    [ibar, ibar], 'o-')
+                    [ibar, ibar], '-', color='gray')
         plt.title("File: " + fileobj.name + "\ngrism=" + grism +
                   ", filter=" + spfilter)
         pause_debugplot(debugplot, pltshow=True)
