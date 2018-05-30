@@ -502,14 +502,14 @@ def compute_off_rotation(data, csu_conf, slits_bb, rotaxis=(0, 0),
     logger.info('compute offset and rotation with %d points', len(p1))
     qc = QC.BAD
 
-    logger.debug('convert coordinates to virtual, ie, focal plane')
-    q2 = pix2virt(q1, origin=0)
     if len(p2) == 0:
         logger.warning('cant compute offset and rotation with 0 points')
         offset = [0.0, 0.0]
         rot = [[1, 0], [0, 1]]
         angle = 0.0
     else:
+        logger.debug('convert coordinates to virtual, ie, focal plane')
+        q2 = pix2virt(q1, origin=0)
         # Move from objects to reference
         logger.debug('compute transform from measured objects to reference coordinates')
         offset, rot = fit_offset_and_rotation(q2, p2)
@@ -537,7 +537,10 @@ def compute_off_rotation(data, csu_conf, slits_bb, rotaxis=(0, 0),
     logger.info('OFF (mm) %s', o_mm)
     logger.info('Default IPA is %s', EMIR_REF_IPA)
     o_mm_ipa = np.dot(ipa_rot, o_mm)
+
+    logger.info('=============================')
     logger.info('OFF in IPA ROTADED REF %s mm', o_mm_ipa)
+    logger.info('=============================')
 
     logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', np.subtract(p1, q1).mean(axis=0))
     logger.debug('MEAN pf REF-MEASURED (VIRT) %s', (p2 - q2).mean(axis=0))
