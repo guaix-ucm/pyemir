@@ -743,7 +743,7 @@ def compute_off_rotation(data, csu_conf, slits_bb, rotaxis=(0, 0),
     o_mm_ipa = np.dot(ipa_rot, o_mm)
 
     logger.info('=============================')
-    logger.info('OFF in IPA ROTADED REF %s mm', o_mm_ipa)
+    logger.info('Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
     logger.info('=============================')
 
     logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', np.subtract(p1, q1).mean(axis=0))
