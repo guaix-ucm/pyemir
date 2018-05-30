@@ -22,6 +22,7 @@ from __future__ import print_function
 
 from astropy.io import fits
 from copy import deepcopy
+import numpy as np
 
 from emirdrp.core import EMIR_NBARS
 
@@ -172,6 +173,32 @@ class CsuConfiguration(object):
                 round(self._csu_bar_slit_width[i], ndigits)
 
         return outdict
+
+    def widths_in_range(self, minwidth=0, maxwidth=np.infty):
+        """Return list of slitlets which width is within given range
+
+        Parameters
+        ----------
+        minwidth : float
+            Minimum slit width (mm).
+        maxwidth : float
+            Maximum slit width (mm).
+
+        Returns
+        -------
+        list_ok : list
+            List of booleans indicating whether the corresponding
+            slitlet width is within range
+
+        """
+
+        list_ok = []
+        for i in range(EMIR_NBARS):
+            slitlet_ok = minwidth <= self._csu_bar_slit_width[i] <= maxwidth
+            if slitlet_ok:
+                list_ok.append(i + 1)
+
+        return list_ok
 
 
 def merge_odd_even_csu_configurations(conf_odd, conf_even):
