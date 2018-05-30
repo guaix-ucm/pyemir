@@ -210,7 +210,7 @@ pipelines:
       TEST6: emirdrp.recipes.aiv.pointsources.TestPointSourceRecipe
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
       TEST8: emirdrp.recipes.auxiliary.mtwflat.MultiTwilightFlatRecipe
-      TEST9: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
+      TEST9: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipeABBA
       TEST10: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       TEST11: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       TEST12: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe

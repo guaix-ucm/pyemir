@@ -29,6 +29,7 @@ from numina.array.offrot import fit_offset_and_rotation
 from numina.array.peaks.peakdet import refine_peaks
 from numina.core import Requirement, Result, Parameter
 from numina.types.qc import QC
+from numina.core.query import ResultOf
 
 from emirdrp.core import EMIR_NBARS, EMIR_PLATESCALE_PIX, EMIR_PLATESCALE
 from emirdrp.core import EMIR_PIXSCALE
@@ -259,13 +260,216 @@ class MaskCheckRecipe(EmirRecipe):
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
 
-    bars_nominal_positions = Requirement(prods.NominalPositions,
-                                         'Nominal positions of the bars'
-                                         )
-    median_filter_size = Parameter(5, 'Size of the median box')
-    average_box_row_size = Parameter(7, 'Number of rows to average for fine centering (odd)')
-    average_box_col_size = Parameter(21, 'Number of columns to extract for fine centering (odd)')
-    fit_peak_npoints = Parameter(3, 'Number of points to use for fitting the peak (odd)')
+    bars_nominal_positions = Requirement(
+        prods.NominalPositions,
+        'Nominal positions of the bars'
+    )
+
+    # Recipe Products
+    reduced_image = Result(prods.ProcessedImage)
+
+    def run(self, rinput):
+        self.logger.info('starting processing for bars detection')
+        # Combine and masking
+        flow = self.init_filters(rinput)
+
+        hdulist = basic_processing_with_combination(rinput, flow=flow)
+
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
+
+        self.save_intermediate_img(hdulist, 'reduced_image.fits')
+
+        # Extract DTU and CSU information from headers
+
+        # Rotation around (0,0)
+        # For other axis, offset is changed
+        # (Off - raxis) = Rot * (Offnew - raxis)
+        crpix1 = hdr['CRPIX1']
+        crpix2 = hdr['CRPIX2']
+
+        rotaxis = np.array((crpix1 - 1, crpix2 - 1))
+        self.logger.debug('center of rotation (from CRPIX) is %s', rotaxis)
+
+        dtuconf = self.datamodel.get_dtur_from_header(hdr)
+
+        # coordinates transformation from DTU coordinates
+        # to image coordinates
+        # Y inverted
+        # XY switched
+        # trans1 = [[1, 0, 0], [0,-1, 0], [0,0,1]]
+        # trans2 = [[0,1,0], [1,0,0], [0,0,1]]
+        trans3 = [[0, -1,  0], [1,  0,  0], [0,  0,  1]]  # T3 = T2 * T1
+
+        vec = np.dot(trans3, dtuconf.coor_r) / EMIR_PIXSCALE
+        self.logger.debug('DTU shift is %s', vec)
+
+        self.logger.debug('create bar model')
+        barmodel = create_bar_models(rinput.bars_nominal_positions)
+        csu_conf = read_csu_2(hdr, barmodel)
+
+        if self.intermediate_results:
+            self.logger.debug('create bar mask from predictions')
+            mask1 = np.ones_like(hdulist[0].data)
+            for i in itertools.chain(csu_conf.lbars, csu_conf.rbars):
+                bar = csu_conf.bars[i]
+                mask1[bar.bbox().slice] = 0
+
+            self.save_intermediate_array(mask1, 'mask1.fits')
+
+            self.logger.debug('create slit mask from predictions')
+            mask1 = np.zeros_like(hdulist[0].data)
+            for slit in csu_conf.slits.values():
+                mask1[slit.bbox().slice] = slit.idx
+            self.save_intermediate_array(mask1, 'mask2.fits')
+
+            self.logger.debug('create slit reference mask from predictions')
+            mask1 = np.zeros_like(hdulist[0].data)
+            for slit in csu_conf.slits.values():
+                if slit.target_type == TargetType.REFERENCE:
+                    mask1[slit.bbox().slice] = slit.idx
+            self.save_intermediate_array(mask1, 'mask3.fits')
+
+        self.logger.debug('finding borders of slits')
+        self.logger.debug('not strictly necessary...')
+        data = hdulist[0].data
+        self.logger.debug('dtype of data %s', data.dtype)
+
+        self.logger.debug('median filter (3x3)')
+        image_base = ndi.filters.median_filter(data, size=3)
+
+        # Cast as original type for skimage
+        self.logger.debug('casting image to unit16 (for skimage)')
+        iuint16 = np.iinfo(np.uint16)
+        image = np.clip(image_base, iuint16.min, iuint16.max).astype(np.uint16)
+
+        self.logger.debug('compute Sobel filter')
+        # FIXME: compute sob and sob_v is redundant
+        sob = filt.sobel(image)
+        self.save_intermediate_array(sob, 'sobel_image.fits')
+        sob_v = filt.sobel_v(image)
+        self.save_intermediate_array(sob_v, 'sobel_v_image.fits')
+
+        # Compute detector coordinates of bars
+        all_coords_virt = np.empty((110, 2))
+        all_coords_real = np.empty((110, 2))
+
+        # Origin of coordinates is 1
+        for bar in csu_conf.bars.values():
+            all_coords_virt[bar.idx - 1] = bar.xpos, bar.y0
+
+        # Origin of coordinates is 1 for this function
+        _x, _y = dist.exvp(all_coords_virt[:, 0], all_coords_virt[:, 1])
+        all_coords_real[:, 0] = _x
+        all_coords_real[:, 1] = _y
+
+        # FIXME: hardcoded value
+        h = 16
+        slit_h_virt = 16.242
+        slit_h_tol = 3
+        slits_bb = {}
+
+        mask1 = np.zeros_like(hdulist[0].data)
+
+        for idx in range(EMIR_NBARS):
+            lbarid = idx + 1
+            rbarid = lbarid + EMIR_NBARS
+            ref_x_l_v, ref_y_l_v = all_coords_virt[lbarid - 1]
+            ref_x_r_v, ref_y_r_v = all_coords_virt[rbarid - 1]
+
+            ref_x_l_d, ref_y_l_d = all_coords_real[lbarid - 1]
+            ref_x_r_d, ref_y_r_d = all_coords_real[rbarid - 1]
+
+            width_v = ref_x_r_v - ref_x_l_v
+            # width_d = ref_x_r_d - ref_x_l_d
+
+            if (ref_y_l_d >= 2047 + h) or (ref_y_l_d <= 1 - h):
+                # print('reference y position is outlimits, skipping')
+                continue
+
+            if width_v < 5:
+                # print('width is less than 5 pixels, skipping')
+                continue
+
+            plot = False
+            regionw = 12
+            px1 = coor_to_pix_1d(ref_x_l_d) - 1
+            px2 = coor_to_pix_1d(ref_x_r_d) - 1
+            prow = coor_to_pix_1d(ref_y_l_d) - 1
+
+            comp_l, comp_r = calc0(image, sob_v, prow, px1, px2, regionw, h=h,
+                                   plot=plot, lbarid=lbarid, rbarid=rbarid,
+                                   plot2=False)
+
+            region2 = 5
+            px21 = coor_to_pix_1d(comp_l)
+            px22 = coor_to_pix_1d(comp_r)
+
+            comp2_l, comp2_r = calc0(image, sob_v, prow, px21, px22, region2,
+                                     refine=True,
+                                     plot=plot, lbarid=lbarid, rbarid=rbarid,
+                                     plot2=False)
+
+            # print('slit', lbarid, '-', rbarid, comp_l, comp_r)
+            # print('pos1', comp_l, comp_r)
+            # print('pos2', comp2_l, comp2_r)
+
+            xpos1_virt, _ = dist.pvex(comp2_l + 1, ref_y_l_d)
+            xpos2_virt, _ = dist.pvex(comp2_r + 1, ref_y_r_d)
+
+            y1_virt = ref_y_l_v - slit_h_virt - slit_h_tol
+            y2_virt = ref_y_r_v + slit_h_virt + slit_h_tol
+            _, y1 = dist.exvp(xpos1_virt + 1, y1_virt)
+            _, y2 = dist.exvp(xpos2_virt + 1, y2_virt)
+            # print(comp2_l, comp2_r, y1 - 1, y2 - 1)
+            cbb = BoundingBox.from_coordinates(comp2_l, comp2_r, y1 - 1, y2 - 1)
+            slits_bb[lbarid] = cbb
+            mask1[cbb.slice] = lbarid
+
+        self.save_intermediate_array(mask1, 'mask3.fits')
+
+        image_sep = image.astype('float32')
+
+        self.logger.debug('center of rotation (from CRPIX) is %s', rotaxis)
+
+        offset, angle, qc = compute_off_rotation(image_sep, csu_conf, slits_bb,
+                                                 rotaxis=rotaxis, logger=self.logger,
+                                                 debug_plot=False, intermediate_results=True
+                                                 )
+
+        result = self.create_result(reduced_image=hdulist, qc=qc)
+
+        return result
+
+
+class MaskCheckRecipeABBA(EmirRecipe):
+
+    """
+    Acquire a target.
+
+    Recipe for the processing of multi-slit/long-slit check images.
+
+    **Observing modes:**
+
+        * MSM and LSM check
+
+    """
+
+    # Recipe Requirements
+    #
+    obresult = reqs.ObservationResultRequirement(
+        query_opts=ResultOf(
+            'LS_ABBA.spec_abba',
+            node='children',
+        )
+            #id_field="stareImagesIds")
+    )
+
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    bars_nominal_positions = Requirement(
+        prods.NominalPositions,
+        'Nominal positions of the bars'
+    )
 
     # Recipe Products
     reduced_image = Result(prods.ProcessedImage)
