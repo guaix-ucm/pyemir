@@ -245,8 +245,9 @@ def rectwv_coeff_from_mos_library(reduced_image,
     parmodel = fitted_bound_param_json['contents']['parmodel']
     fitted_bound_param_json.update({'meta_info': {'parmodel': parmodel}})
     params = bound_params_from_dict(fitted_bound_param_json)
-    logger.debug('Fitted boundary parameters:')
-    logger.debug(params.pretty_print())
+    if abs(debugplot) >= 10:
+        logger.debug('Fitted boundary parameters:')
+        logger.debug(params.pretty_print())
     for islitlet in list_valid_islitlets:
         cslitlet = 'slitlet' + str(islitlet).zfill(2)
         # csu_bar_slit_center of current slitlet in initial FITS image
