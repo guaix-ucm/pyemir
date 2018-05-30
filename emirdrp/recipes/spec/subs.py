@@ -260,11 +260,11 @@ class BaseABBARecipe(EmirRecipe):
 
     def process_abba(self, images):
         # Process four images in ABBA mode
-        dataA0 = images[0][0].data
-        dataB0 = images[1][0].data
+        dataA0 = images[0][0].data.astype('float32')
+        dataB0 = images[1][0].data.astype('float32')
 
-        dataB1 = images[2][0].data
-        dataA1 = images[3][0].data
+        dataB1 = images[2][0].data.astype('float32')
+        dataA1 = images[3][0].data.astype('float32')
 
         dataAB0 = dataA0 - dataB0
         dataAB1 = dataA1 - dataB1
