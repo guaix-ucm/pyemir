@@ -72,8 +72,6 @@ setup(name='pyemir',
                   'emirdrp.tools.overplot_bounddict:main',
               'pyemir-verify_rect_wpoly = ' +
                   'emirdrp.tools.verify_rect_wpoly:main',
-              'pyemir-wavelength_coverage_from_csu_osp = ' +
-                  'emirdrp.tools.wavelength_coverage_from_csu_osp:main'
               ],
       },
       classifiers=[
