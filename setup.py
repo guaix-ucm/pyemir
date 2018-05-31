@@ -30,7 +30,7 @@ setup(name='pyemir',
           'numina>=0.16', 'astropy>=2',
           'enum34;python_version<"3.4"',
           'matplotlib', 'six', 'photutils>=0.2',
-          'sep>0.5', 'scikit-image>=0.11', 'lmfit'
+          'sep>0.5', 'scikit-image>=0.11', 'scikit-learn', 'lmfit'
       ],
       zip_safe=False,
       entry_points={
