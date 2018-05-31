@@ -27,39 +27,54 @@ import sys
 
 from numina.tools.arg_file_is_new import arg_file_is_new
 
-from emirdrp.tools.save_ndarray_to_fits import save_ndarray_to_fits
-
 from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_NPIXPERSLIT_RECTIFIED
 
 
-def median_slitlets_rectified(image2d, same_size=True):
+def median_slitlets_rectified(input_image, sp55=False):
     """Compute median spectrum for each slitlet
 
     Parameters
     ----------
-    image2d : numpy array
+    input_image : HDUList object
         Input 2D image.
-    same_size : bool
-        If True, the returned array has the same size as the input
-        array.
+    sp55 : bool
+        If True, the returned array contains only EMIR_NBARS
+        spectra, one for each slitlet. If False, the returned
+        image has the same dimensions as the input image, with the
+        median spectrum of each slitlet spanning all the spectra
+        of the corresponding slitlet.
 
     Returns
     -------
-    image2d_median : numpy array
+    image_median : HDUList object
         Output 2d image where the spectra of each slitlet has been
         replaced by the median spectrum of the same slitlet.
 
     """
 
-    # size of input image
+    image_header = input_image[0].header
+    image2d = input_image[0].data
+
+    # check image dimensions
+    naxis2_expected = EMIR_NBARS * EMIR_NPIXPERSLIT_RECTIFIED
+
     naxis2, naxis1 = image2d.shape
+    if naxis2 != naxis2_expected:
+        raise ValueError("NAXIS2={0} should be {1}".format(
+            naxis2, naxis2_expected
+        ))
+
+    # check that the FITS file has been obtained with EMIR
+    instrument = image_header['instrume']
+    if instrument != 'EMIR':
+        raise ValueError("INSTRUME keyword is not 'EMIR'!")
 
     # initialize output image
-    if same_size:
-        image2d_median = np.zeros((naxis2, naxis1))
-    else:
+    if sp55:
         image2d_median = np.zeros((EMIR_NBARS, naxis1))
+    else:
+        image2d_median = np.zeros((naxis2, naxis1))
 
     # main loop
     for i in range(EMIR_NBARS):
@@ -67,14 +82,16 @@ def median_slitlets_rectified(image2d, same_size=True):
         ns2 = ns1 + EMIR_NPIXPERSLIT_RECTIFIED - 1
         sp_median = np.median(image2d[(ns1-1):ns2, :], axis=0)
 
-        if same_size:
+        if sp55:
+            image2d_median[i] = np.copy(sp_median)
+        else:
             image2d_median[(ns1-1):ns2, :] = np.tile(
                 sp_median, (EMIR_NPIXPERSLIT_RECTIFIED, 1)
             )
-        else:
-            image2d_median[i] = np.copy(sp_median)
 
-    return image2d_median
+    image_median = fits.PrimaryHDU(data=image2d_median, header=image_header)
+
+    return image_median
 
 
 def main(args=None):
@@ -107,34 +124,15 @@ def main(args=None):
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # read input FITS file
-    hdulist = fits.open(args.fitsfile.name)
-    image_header = hdulist[0].header
-    image2d = hdulist[0].data
-    hdulist.close()
+    hdulist = fits.open(args.fitsfile)
 
-    # check image dimensions
-    naxis2_expected = EMIR_NBARS * EMIR_NPIXPERSLIT_RECTIFIED
-
-    naxis2, naxis1 = image2d.shape
-    if naxis2 != naxis2_expected:
-        raise ValueError("NAXIS2={0} should be {1}".format(
-            naxis2, naxis2_expected
-        ))
-
-    # check that the FITS file has been obtained with EMIR
-    instrument = image_header['instrume']
-    if instrument != 'EMIR':
-        raise ValueError("INSTRUME keyword is not 'EMIR'!")
-
-    # compute median of each slitlet
-    image2d_median = median_slitlets_rectified(
-        image2d,
-        same_size=(not args.only55)
+    image_median = median_slitlets_rectified(
+        hdulist,
+        sp55=args.only55
     )
 
     # save result
-    save_ndarray_to_fits(image2d_median, file_name=args.outfile,
-                         main_header=image_header)
+    image_median.writeto(args.outfile, overwrite=True)
 
 
 if __name__ == "__main__":
