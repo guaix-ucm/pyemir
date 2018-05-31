@@ -266,7 +266,7 @@ def apply_rectwv_coeff(reduced_image,
 
     rectwv_image = fits.PrimaryHDU(data=image2d_rectwv, header=header)
 
-    return rectwv_image
+    return fits.HDUList([rectwv_image])
 
 
 def main(args=None):
