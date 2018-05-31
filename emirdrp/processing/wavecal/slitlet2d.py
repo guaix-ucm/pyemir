@@ -124,6 +124,10 @@ class Slitlet2D(object):
         Minimum useful scan in output full 2d rectified image.
     imaxslt : int
         Maximum useful scan in output full 2d rectified image.
+    jminslt : int
+        Minimum useful channel in output full 2d rectified image.
+    jmaxslt : int
+        Maximum useful channel in output full 2d rectified image.
     ttd_order : int or None
         Polynomial order corresponding to the rectification
         transformation.
@@ -208,6 +212,10 @@ class Slitlet2D(object):
         self.iminslt = (islitlet - 1) * EMIR_NPIXPERSLIT_RECTIFIED + 1
         self.imaxslt = islitlet * EMIR_NPIXPERSLIT_RECTIFIED
 
+        # define useful channel region in output rectified image
+        self.jminslt = 0
+        self.jmaxslt = 0
+
         # Rectification coefficients
         self.ttd_aij = tmpcontent['ttd_aij']
         self.ttd_bij = tmpcontent['ttd_bij']
@@ -266,6 +274,10 @@ class Slitlet2D(object):
                  str(self.iminslt) + \
                  "- imaxslt.....................: " + \
                  str(self.imaxslt) + \
+                 "- jminslt.....................: " + \
+                 str(self.jminslt) + \
+                 "- jmaxslt.....................: " + \
+                 str(self.jmaxslt) + \
                  "- bb_nc1_orig...............: " + \
                  str(self.bb_nc1_orig) + "\n" + \
                  "- bb_nc2_orig...............: " + \

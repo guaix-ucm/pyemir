@@ -28,6 +28,7 @@ import numpy as np
 import sys
 
 from numina.array.display.logging_from_debugplot import logging_from_debugplot
+from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 from numina.array.wavecalib.resample import resample_image2d_flux
 from numina.tools.arg_file_is_new import arg_file_is_new
 
@@ -176,8 +177,26 @@ def apply_rectwv_coeff(reduced_image,
             image2d_rectwv[i1:i2, :] = slitlet2d_rect_wv[ii1:ii2, :]
 
             # include scan range in FITS header
-            header['minslt' + str(islitlet).zfill(2)] = slt.iminslt
-            header['maxslt' + str(islitlet).zfill(2)] = slt.imaxslt
+            header['imnslt' + str(islitlet).zfill(2)] = slt.iminslt
+            header['imxslt' + str(islitlet).zfill(2)] = slt.imaxslt
+
+            # determine useful channel region in each spectrum and include
+            # that information in FITS header
+            jminslt = []
+            jmaxslt = []
+            for idum in range(ii1, ii2 + 1):
+                jminmax = find_pix_borders(
+                    slitlet2d_rect_wv[idum, :],
+                    sought_value=0
+                )
+                if jminmax != (-1, naxis1_enlarged):
+                    jminslt.append(jminmax[0])
+                    jmaxslt.append(jminmax[1])
+            if len(jminslt) > 0:
+                slt.jminslt = min(jminslt) + 1
+                slt.jmaxslt = max(jmaxslt) + 1
+            header['jmnslt' + str(islitlet).zfill(2)] = slt.jminslt
+            header['jmxslt' + str(islitlet).zfill(2)] = slt.jmaxslt
 
             cout += '.'
 
@@ -217,6 +236,8 @@ def apply_rectwv_coeff(reduced_image,
     header.remove('PCD2_2')
     header.remove('PCRPIX1')
     header.remove('PCRPIX2')
+
+    # update history in FITS header
     header['history'] = 'Boundary parameters uuid:' + \
                         rectwv_coeff.meta_info['origin']['bound_param'][4:]
     if 'master_rectwv' in rectwv_coeff.meta_info['origin']:
