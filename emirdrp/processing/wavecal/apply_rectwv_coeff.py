@@ -177,8 +177,10 @@ def apply_rectwv_coeff(reduced_image,
             image2d_rectwv[i1:i2, :] = slitlet2d_rect_wv[ii1:ii2, :]
 
             # include scan range in FITS header
-            header['imnslt' + str(islitlet).zfill(2)] = slt.iminslt
-            header['imxslt' + str(islitlet).zfill(2)] = slt.imaxslt
+            header['imnslt' + str(islitlet).zfill(2)] = \
+                slt.iminslt, 'minimum X pixel of useful slitlet region'
+            header['imxslt' + str(islitlet).zfill(2)] = \
+                slt.imaxslt, 'maximum X pixel of useful slitlet region'
 
             # determine useful channel region in each spectrum and include
             # that information in FITS header
@@ -195,12 +197,24 @@ def apply_rectwv_coeff(reduced_image,
             if len(jminslt) > 0:
                 slt.jminslt = min(jminslt) + 1
                 slt.jmaxslt = max(jmaxslt) + 1
-            header['jmnslt' + str(islitlet).zfill(2)] = slt.jminslt
-            header['jmxslt' + str(islitlet).zfill(2)] = slt.jmaxslt
+            header['jmnslt' + str(islitlet).zfill(2)] = \
+                slt.jminslt, 'minimum Y pixel of useful slitlet region'
+            header['jmxslt' + str(islitlet).zfill(2)] = \
+                slt.jmaxslt, 'maximum Y pixel of useful slitlet region'
 
             cout += '.'
 
         else:
+
+            # include scan and channel range in FITS header
+            header['imnslt' + str(islitlet).zfill(2)] = \
+                0, 'minimum X pixel of useful slitlet region'
+            header['imxslt' + str(islitlet).zfill(2)] = \
+                0, 'maximum X pixel of useful slitlet region'
+            header['jmnslt' + str(islitlet).zfill(2)] = \
+                0, 'minimum Y pixel of useful slitlet region'
+            header['jmxslt' + str(islitlet).zfill(2)] = \
+                0, 'maximum Y pixel of useful slitlet region'
 
             cout += 'i'
 
