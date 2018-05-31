@@ -30,6 +30,7 @@ from numina.array.peaks.peakdet import refine_peaks
 from numina.core import Requirement, Result, Parameter
 from numina.types.qc import QC
 from numina.core.query import ResultOf
+import numina.types.array as tarray
 
 from emirdrp.core import EMIR_NBARS, EMIR_PLATESCALE_PIX, EMIR_PLATESCALE
 from emirdrp.core import EMIR_PIXSCALE
@@ -267,6 +268,8 @@ class MaskCheckRecipe(EmirRecipe):
 
     # Recipe Products
     reduced_image = Result(prods.ProcessedImage)
+    offset = Result(tarray.ArrayType)
+    angle = Result(float)
 
     def run(self, rinput):
         self.logger.info('starting processing for bars detection')
@@ -410,6 +413,9 @@ class MaskCheckRecipe(EmirRecipe):
                                      plot=plot, lbarid=lbarid, rbarid=rbarid,
                                      plot2=False)
 
+            if np.any(np.isnan([comp2_l, comp2_r])):
+                self.logger.warning("converting NaN value, border of=%d", idx + 1)
+                comp2_l, comp2_r = comp_l, comp_r
             # print('slit', lbarid, '-', rbarid, comp_l, comp_r)
             # print('pos1', comp_l, comp_r)
             # print('pos2', comp2_l, comp2_r)
@@ -437,7 +443,16 @@ class MaskCheckRecipe(EmirRecipe):
                                                  debug_plot=False, intermediate_results=True
                                                  )
 
-        result = self.create_result(reduced_image=hdulist, qc=qc)
+        # Convert mm to m
+        offset_out = np.array(offset) / 1000.0
+        # Convert DEG to RAD
+        angle_out = np.deg2rad(angle)
+        result = self.create_result(
+            reduced_image=hdulist,
+            offset=offset_out,
+            angle=angle_out,
+            qc=qc
+        )
 
         return result
 
@@ -685,6 +700,8 @@ def compute_off_rotation(data, csu_conf, slits_bb, rotaxis=(0, 0),
         target_coordinates = this.target_coordinates
         res = comp_centroid(data, bb, debug_plot=debug_plot, plot_reference=target_coordinates)
 
+        logger.debug('in slit %s, reference is %s', this.idx, target_coordinates)
+
         if res is None:
             logger.warning('no object found in slit %s, skipping', this.idx)
             continue
@@ -697,7 +714,7 @@ def compute_off_rotation(data, csu_conf, slits_bb, rotaxis=(0, 0),
 
         m_x = res[0] + region[1].start
         m_y = res[1] + region[0].start
-        logger.debug('in slit %s, reference is %s', this.idx, target_coordinates)
+
         logger.debug('in slit %s, object is (%s, %s)', this.idx, m_x, m_y)
         p1.append(this.target_coordinates)
         p2.append(this.target_coordinates_v)
@@ -707,9 +724,9 @@ def compute_off_rotation(data, csu_conf, slits_bb, rotaxis=(0, 0),
     qc = QC.BAD
 
     if len(p2) == 0:
-        logger.warning('cant compute offset and rotation with 0 points')
-        offset = [0.0, 0.0]
-        rot = [[1, 0], [0, 1]]
+        logger.warning("can't compute offset and rotation with 0 points")
+        offset = np.array([0.0, 0.0])
+        rot = np.array([[1, 0], [0, 1]])
         angle = 0.0
     else:
         logger.debug('convert coordinates to virtual, ie, focal plane')
@@ -742,9 +759,9 @@ def compute_off_rotation(data, csu_conf, slits_bb, rotaxis=(0, 0),
     logger.info('Default IPA is %s', EMIR_REF_IPA)
     o_mm_ipa = np.dot(ipa_rot, o_mm)
 
-    logger.info('=============================')
+    logger.info('=========================================')
     logger.info('Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
-    logger.info('=============================')
+    logger.info('=========================================')
 
     logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', np.subtract(p1, q1).mean(axis=0))
     logger.debug('MEAN pf REF-MEASURED (VIRT) %s', (p2 - q2).mean(axis=0))
