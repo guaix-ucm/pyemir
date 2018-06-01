@@ -1,0 +1,118 @@
+#
+# Copyright 2008-2018 Universidad Complutense de Madrid
+#
+# This file is part of PyEmir
+#
+# PyEmir is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# PyEmir is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+from __future__ import division
+from __future__ import print_function
+
+import numpy as np
+from copy import deepcopy
+
+from numina.array.display.pause_debugplot import pause_debugplot
+from numina.array.display.ximplotxy import ximplotxy
+from numina.array.wavecalib.fix_pix_borders import find_pix_borders
+from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
+
+from emirdrp.processing.wavecal.median_slitlets_rectified \
+    import median_slitlets_rectified
+
+
+def refine_rectwv_coeff(input_image, rectwv_coeff, ohlines, debugplot=0):
+    """Refine RectWaveCoeff object using OH sky lines
+
+    Parameters
+    ----------
+    input_image : HDUList object
+        Input 2D image.
+    rectwv_coeff : RectWaveCoeff instance
+        Rectification and wavelength calibration coefficients for the
+        particular CSU configuration.
+    ohlines : numpy array
+        2D numpy array with the contents of the file with the table of
+        expected OH sky lines.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
+
+    Returns
+    -------
+    refined_rectwv_coeff : RectWaveCoeff instance
+        Refined rectification and wavelength calibration coefficients
+        for the particular CSU configuration.
+
+    """
+
+    # initialize output
+    refined_rectwv_coeff = deepcopy(rectwv_coeff)
+
+    # compute median spectrum and normalize it
+    sp_median = median_slitlets_rectified(input_image, mode=2)[0].data
+    sp_median /= sp_median.max()
+
+    # determine minimum and maximum useful wavelength
+    jmin, jmax = find_pix_borders(sp_median, 0)
+    main_header = input_image[0].header
+    naxis1 = main_header['naxis1']
+    naxis2 = main_header['naxis2']
+    crpix1 = main_header['crpix1']
+    crval1 = main_header['crval1']
+    cdelt1 = main_header['cdelt1']
+    crvaln = crval1 + (naxis1 - crpix1) * cdelt1
+    xwave = crval1 + (np.arange(naxis1) + 1.0 - crpix1) * cdelt1
+    wave_min = crval1 + (jmin + 1 - crpix1) * cdelt1
+    wave_max = crval1 + (jmax + 1 - crpix1) * cdelt1
+
+    # extract subset of lines within current wavelength range
+    lok1 = ohlines[:, 1] >= wave_min
+    lok2 = ohlines[:, 0] <= wave_max
+    ohlines_reference = ohlines[lok1*lok2]
+
+    # define wavelength and flux as separate arrays
+    ohlines_reference_wave = np.concatenate(
+        (ohlines_reference[:, 1], ohlines_reference[:, 0]))
+    ohlines_reference_flux = np.concatenate(
+        (ohlines_reference[:, 2], ohlines_reference[:, 2]))
+    ohlines_reference_flux /= ohlines_reference_flux.max()
+
+    # convolve location of OH lines to generate expected spectrum
+    xwave_reference, sp_oh_reference = convolve_comb_lines(
+        ohlines_reference_wave, ohlines_reference_flux, 2.0,
+        crpix1, crval1, cdelt1, naxis1
+    )
+
+    if abs(debugplot) >= 10:
+        ax = ximplotxy(xwave, sp_median,
+                       xlabel='Wavelength (Angstroms, in vacuum)',
+                       ylabel='Normalized number of counts',
+                       label='observed spectrum', show=False,
+                       local_call=True)
+        # overplot reference OH lines
+        ax.stem(ohlines_reference_wave, ohlines_reference_flux, '-',
+                markerfmt=' ', label='tabulated OH lines', color='grey')
+        # overplot convolved reference OH lines
+        ax.plot(xwave_reference, sp_oh_reference, '-',
+                label='expected spectrum', color='blue')
+
+        ax.legend()
+        pause_debugplot(debugplot=debugplot, pltshow=True)
+
+    median_image = median_slitlets_rectified(input_image, mode=1)
+
+    # return result
+    return refined_rectwv_coeff

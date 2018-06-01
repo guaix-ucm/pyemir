@@ -13,6 +13,7 @@ Spectroscopy mode, Stare Spectra
 
 
 from numina.core import Result
+from numina.core import Requirement, Parameter
 from numina.array.combine import median
 import numina.processing as proc
 
@@ -26,6 +27,7 @@ from emirdrp.processing.wavecal.median_slitlets_rectified \
 from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
     import rectwv_coeff_from_mos_library
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
+from emirdrp.processing.wavecal.refine_rectwv_coeff import refine_rectwv_coeff
 
 
 class StareSpectraRecipe(EmirRecipe):
@@ -67,6 +69,8 @@ class StareSpectraWaveRecipe(EmirRecipe):
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
     master_rectwv = reqs.MasterRectWaveRequirement(optional=True)
     master_sky = reqs.SpectralSkyRequirement(optional=True)
+    ohlines = Requirement(prods.SkyLinesCatalog, 'Catalog of OH Sky lines')
+    refine_with_ohlines = Parameter(False, 'Apply refinement with OH lines')
 
     reduced_image = Result(prods.DataFrameType)
     stare = Result(prods.DataFrameType)
@@ -97,19 +101,34 @@ class StareSpectraWaveRecipe(EmirRecipe):
                 reduced_image,
                 rinput.master_rectwv
             )
-            # save as JSON file in work directory
-            self.save_structured_as_json(rectwv_coeff, 'rectwv_coeff.json')
-
-            # ds9 region files (to be saved in the work directory)
-            if self.intermediate_results:
-                save_four_ds9(rectwv_coeff)
 
             # apply rectification and wavelength calibration
             stare_image = apply_rectwv_coeff(
                 reduced_image,
                 rectwv_coeff
             )
-            # image_wl_calibrated = True
+
+            if rinput.refine_with_ohlines:
+                self.logger.info('Refining wavelength calibration')
+                # refine RectWaveCoeff object
+                rectwv_coeff = refine_rectwv_coeff(
+                    stare_image,
+                    rectwv_coeff,
+                    rinput.ohlines,
+                    debugplot=12
+                )
+                # re-apply rectification and wavelength calibration
+                stare_image = apply_rectwv_coeff(
+                    reduced_image,
+                    rectwv_coeff
+                )
+
+            # save as JSON file in work directory
+            self.save_structured_as_json(rectwv_coeff, 'rectwv_coeff.json')
+
+            # ds9 region files (to be saved in the work directory)
+            if self.intermediate_results:
+                save_four_ds9(rectwv_coeff)
 
             # compute median spectra employing the useful region of the
             # rectified image
@@ -121,6 +140,11 @@ class StareSpectraWaveRecipe(EmirRecipe):
                         stare_image, mode=imode
                     )
                     self.save_intermediate_img(median_image, outfile + '.fits')
+
+            # image_wl_calibrated = True
+
+        else:
+
             self.logger.info('No wavelength calibration provided')
             grism_value = hdr.get('GRISM', 'unknown')
             self.logger.debug('GRISM is %s', grism_value)
@@ -146,6 +170,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
                 stare_image = sky_corrector(stare_image)
         else:
             self.logger.info('No sky image provided')
+
         # save results in results directory
         self.logger.info('end rect.+wavecal. reduction of stare spectra')
         result = self.create_result(reduced_image=reduced_image,

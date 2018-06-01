@@ -28,6 +28,7 @@ import numpy
 from numina.ext.gtc import DF
 from numina.core import DataFrameType, DataProductType
 import numina.types.array as arrtype
+from numina.types.linescatalog import LinesCatalog
 import numina.exceptions
 import numina.types.product as prodtypes
 import numina.types.structured
@@ -119,6 +120,11 @@ class MasterDark(EMIRImageProduct):
     """
     pass
 
+
+class SkyLinesCatalog(LinesCatalog):
+    """Sky Lines Catalog
+    """
+    pass
 
 
 class MasterIntensityFlat(EMIRImageProduct):

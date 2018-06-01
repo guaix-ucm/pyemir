@@ -226,10 +226,9 @@ def apply_rectwv_coeff(reduced_image,
 
     # update wavelength calibration in FITS header
     logger.info('Updating image header')
-    header.remove('crval1')
-    header.remove('crpix1')
-    header.remove('crval2')
-    header.remove('crpix2')
+    for keyword in ['crval1', 'crpix1', 'crval2', 'crpix2']:
+        if keyword in header:
+            header.remove(keyword)
     header['crpix1'] = (crpix1_enlarged, 'reference pixel')
     header['crval1'] = (crval1_enlarged, 'central wavelength at crpix1')
     header['cdelt1'] = (cdelt1_enlarged, 'linear dispersion (Angstrom/pixel)')
@@ -240,16 +239,11 @@ def apply_rectwv_coeff(reduced_image,
     header['cdelt2'] = (1.0, 'increment')
     header['ctype2'] = 'PIXEL'
     header['cunit2'] = ('Pixel', 'units along axis2')
-    header.remove('cd1_1')
-    header.remove('cd1_2')
-    header.remove('cd2_1')
-    header.remove('cd2_2')
-    header.remove('PCD1_1')
-    header.remove('PCD1_2')
-    header.remove('PCD2_1')
-    header.remove('PCD2_2')
-    header.remove('PCRPIX1')
-    header.remove('PCRPIX2')
+    for keyword in ['cd1_1', 'cd1_2', 'cd2_1', 'cd2_2',
+                    'PCD1_1', 'PCD1_2', 'PCD2_1', 'PCD2_2',
+                    'PCRPIX1', 'PCRPIX2']:
+        if keyword in header:
+            header.remove(keyword)
 
     # update history in FITS header
     header['history'] = 'Boundary parameters uuid:' + \
