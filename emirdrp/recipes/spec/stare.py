@@ -111,17 +111,16 @@ class StareSpectraWaveRecipe(EmirRecipe):
             )
             # image_wl_calibrated = True
 
-            # compute median spectra of the useful rectified image
+            # compute median spectra employing the useful region of the
+            # rectified image
             if self.intermediate_results:
-                median_image = median_slitlets_rectified(stare_image,
-                                                         sp55=False)
-                self.save_intermediate_img(median_image,
-                                           'median_spectra_full.fits')
-                median_image = median_slitlets_rectified(stare_image,
-                                                         sp55=True)
-                self.save_intermediate_img(median_image,
-                                           'median_spectra_slitlets.fits')
-        else:
+                for imode, outfile in enumerate(['median_spectra_full',
+                                                 'median_spectra_slitlets',
+                                                 'median_spectrum_slitlets']):
+                    median_image = median_slitlets_rectified(
+                        stare_image, mode=imode
+                    )
+                    self.save_intermediate_img(median_image, outfile + '.fits')
             self.logger.info('No wavelength calibration provided')
             grism_value = hdr.get('GRISM', 'unknown')
             self.logger.debug('GRISM is %s', grism_value)
