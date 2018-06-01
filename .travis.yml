@@ -41,7 +41,7 @@ install:
   - > 
     conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION 
     $DEPS pip pytest setuptools Cython six>=1.7 
-    pyyaml matplotlib scikit-image>=0.12
+    pyyaml matplotlib scikit-image>=0.12 scikit-learn
   - source activate testenv
   - conda install --yes -c astropy photutils=$PHOTUTILS
   - pip install sep lmfit
