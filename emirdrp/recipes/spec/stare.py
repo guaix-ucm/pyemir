@@ -70,7 +70,11 @@ class StareSpectraWaveRecipe(EmirRecipe):
     master_rectwv = reqs.MasterRectWaveRequirement(optional=True)
     master_sky = reqs.SpectralSkyRequirement(optional=True)
     ohlines = Requirement(prods.SkyLinesCatalog, 'Catalog of OH Sky lines')
-    refine_with_ohlines = Parameter(False, 'Apply refinement with OH lines')
+    refine_with_ohlines = Parameter(
+        0,
+        description='Apply refinement with OH lines',
+        choices=[0, 1, 2]
+    )
 
     reduced_image = Result(prods.DataFrameType)
     stare = Result(prods.DataFrameType)
@@ -108,15 +112,28 @@ class StareSpectraWaveRecipe(EmirRecipe):
                 rectwv_coeff
             )
 
-            if rinput.refine_with_ohlines:
+            # wavelength calibration refinement when refine_with_ohlines != 0
+            # 0 -> no refinement
+            # 1 -> apply global offset to all the slitlets
+            # 2 -> apply individual offset to each slitlet
+            if rinput.refine_with_ohlines != 0:
                 self.logger.info('Refining wavelength calibration')
                 # refine RectWaveCoeff object
-                rectwv_coeff = refine_rectwv_coeff(
+                rectwv1, rectwv2, expected_oh_lines = refine_rectwv_coeff(
                     stare_image,
                     rectwv_coeff,
                     rinput.ohlines,
-                    debugplot=12
+                    debugplot=0
                 )
+                if rinput.refine_with_ohlines == 1:
+                    rectwv_coeff = rectwv1
+                elif rinput.refine_with_ohlines == 2:
+                    rectwv_coeff = rectwv2
+                else:
+                    raise ValueError("Unexpected refine_with_ohlines value:" +
+                                     str(rinput.refine_with_ohlines))
+                self.save_intermediate_img(expected_oh_lines,
+                                           'expected_oh_lines.fits')
                 # re-apply rectification and wavelength calibration
                 stare_image = apply_rectwv_coeff(
                     reduced_image,

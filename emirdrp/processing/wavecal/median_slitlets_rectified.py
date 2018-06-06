@@ -63,8 +63,7 @@ def median_slitlets_rectified(input_image, mode=0, debugplot=0):
     Returns
     -------
     image_median : HDUList object
-        Output 2d image where the spectra of each slitlet has been
-        replaced by the median spectrum of the same slitlet.
+        Output image.
 
     """
 
@@ -130,21 +129,21 @@ def median_slitlets_rectified(input_image, mode=0, debugplot=0):
             print('>>> list_not_useful_slitlets:', list_not_useful_slitlets)
 
         # define mask from array data
-        mask2d = define_mask_borders(image2d_median, sought_value=0)
-        if abs(debugplot) >= 10:
+        mask2d, borders = define_mask_borders(image2d_median, sought_value=0)
+        if abs(debugplot) % 10 != 0:
             ximshow(mask2d.astype(int), z1z2=(-.2, 1.2), crpix1=crpix1,
                     crval1=crval1, cdelt1=cdelt1, debugplot=debugplot)
 
         # update mask with unused slitlets
         for islitlet in list_not_useful_slitlets:
             mask2d[islitlet - 1, :] = np.array([True] * naxis1)
-        if abs(debugplot) >= 10:
+        if abs(debugplot) % 10 != 0:
             ximshow(mask2d.astype(int), z1z2=(-.2, 1.2), crpix1=crpix1,
                     crval1=crval1, cdelt1=cdelt1, debugplot=debugplot)
 
         # useful image pixels
         image2d_masked = image2d_median * (1 - mask2d.astype(int))
-        if abs(debugplot) >= 10:
+        if abs(debugplot) % 10 != 0:
             ximshow(image2d_masked, crpix1=crpix1, crval1=crval1,
                     cdelt1=cdelt1, debugplot=debugplot)
 
@@ -167,7 +166,7 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description='description: overplot boundary model over FITS image'
+        description='description: compute median spectrum for each slitlet'
     )
 
     # positional arguments
