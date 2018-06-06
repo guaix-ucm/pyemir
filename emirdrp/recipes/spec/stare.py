@@ -112,26 +112,20 @@ class StareSpectraWaveRecipe(EmirRecipe):
                 rectwv_coeff
             )
 
-            # wavelength calibration refinement when refine_with_ohlines != 0
+            # wavelength calibration refinement depends on refine_with_ohlines
             # 0 -> no refinement
             # 1 -> apply global offset to all the slitlets
             # 2 -> apply individual offset to each slitlet
             if rinput.refine_with_ohlines != 0:
                 self.logger.info('Refining wavelength calibration')
                 # refine RectWaveCoeff object
-                rectwv1, rectwv2, expected_oh_lines = refine_rectwv_coeff(
+                rectwv_coeff, expected_oh_lines = refine_rectwv_coeff(
                     stare_image,
                     rectwv_coeff,
                     rinput.ohlines,
+                    rinput.refine_with_ohlines,
                     debugplot=0
                 )
-                if rinput.refine_with_ohlines == 1:
-                    rectwv_coeff = rectwv1
-                elif rinput.refine_with_ohlines == 2:
-                    rectwv_coeff = rectwv2
-                else:
-                    raise ValueError("Unexpected refine_with_ohlines value:" +
-                                     str(rinput.refine_with_ohlines))
                 self.save_intermediate_img(expected_oh_lines,
                                            'expected_oh_lines.fits')
                 # re-apply rectification and wavelength calibration
