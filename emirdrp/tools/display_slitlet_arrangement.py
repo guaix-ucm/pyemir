@@ -24,7 +24,7 @@ import argparse
 from astropy.io import fits
 import numpy as np
 from numpy.polynomial import Polynomial
-import os.path
+from sklearn.cluster import KMeans
 import sys
 
 from numina.array.display.matplotlib_qt import plt
@@ -178,7 +178,7 @@ def display_slitlet_arrangement(fileobj,
     wvmax_useful = wv_parameters['wvmax_useful']
 
     # display arrangement
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print("slit     left    right   center   width   min.wave   max.wave")
         print("====  =======  =======  =======   =====   ========   ========")
         for i in range(EMIR_NBARS):
@@ -224,7 +224,7 @@ def display_slitlet_arrangement(fileobj,
         )
 
     # display slit arrangement
-    if debugplot % 10 != 0:
+    if abs(debugplot) % 10 != 0:
         fig = plt.figure()
         if geometry is not None:
             x_geom, y_geom, dx_geom, dy_geom = geometry
@@ -267,6 +267,65 @@ def display_slitlet_arrangement(fileobj,
            csu_config._csu_bar_slit_center, csu_config._csu_bar_slit_width
 
 
+def display_slitlet_histogram(csu_bar_slit_width,
+                              n_clusters=2,
+                              geometry=None,
+                              debugplot=0):
+    """
+
+    Find separations between groups of slitlet widths.
+
+    Parameters
+    ----------
+    csu_bar_slit_width : numpy array
+        Array containing the csu_bar_slit_center values.
+    n_clusters : int
+        Number of slitlet groups to be sought.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt backend geometry.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot
+
+    Returns
+    -------
+    TBD
+
+    """
+
+    # protections
+    if n_clusters < 2:
+        raise ValueError("n_clusters must be >= 2")
+
+    # determine useful slitlets from their widths
+    km = KMeans(n_clusters=n_clusters)
+    fit = km.fit(np.array(csu_bar_slit_width).reshape(-1, 1))
+    print(type(fit.cluster_centers_))
+    separator_list = []
+    for i in range(n_clusters - 1):
+        peak1 = fit.cluster_centers_[i][0]
+        peak2 = fit.cluster_centers_[i+1][0]
+        separator = (peak1 + peak2) / 2
+        separator_list.append(separator)
+        print('--->  separator: {0:7.3f}'.format(separator))
+
+    # display histogram
+    if abs(debugplot) % 10 != 0:
+        fig = plt.figure()
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        ax = fig.add_subplot(111)
+        ax.hist(csu_bar_slit_width, bins=100)
+        ax.set_xlabel('slit width (mm)')
+        ax.set_ylabel('number of slitlets')
+        for separator in separator_list:
+            ax.axvline(separator, color='C1', linestyle='dashed')
+        pause_debugplot(debugplot, pltshow=True)
+
+
 def main(args=None):
 
     # parse command-line options
@@ -288,6 +347,9 @@ def main(args=None):
     parser.add_argument("--filter",
                         help="Filter (J, H, Ksp, YJ, HK)",
                         choices=["J", "H", "Ksp", "YJ", "HK"])
+    parser.add_argument("--n_clusters",
+                        help="Display histogram of slitlet widths",
+                        default=0, type=int)
     parser.add_argument("--bbox",
                         help="Bounding box tuple xmin,xmax,ymin,ymax "
                              "indicating plot limits")
@@ -353,13 +415,22 @@ def main(args=None):
               fileobj.name)
         csu_bar_left[ifile, :], csu_bar_right[ifile, :], \
         csu_bar_slit_center[ifile, :], csu_bar_slit_width[ifile, :] = \
-            display_slitlet_arrangement(fileobj,
-                                        grism=args.grism,
-                                        spfilter=args.filter,
-                                        bbox=bbox,
-                                        adjust=args.adjust,
-                                        geometry=geometry,
-                                        debugplot=args.debugplot)
+            display_slitlet_arrangement(
+                fileobj,
+                grism=args.grism,
+                spfilter=args.filter,
+                bbox=bbox,
+                adjust=args.adjust,
+                geometry=geometry,
+                debugplot=args.debugplot
+            )
+        if args.n_clusters >= 2:
+            display_slitlet_histogram(
+                csu_bar_slit_width[ifile, :],
+                n_clusters=args.n_clusters,
+                geometry=geometry,
+                debugplot=args.debugplot
+            )
 
     # print summary of comparison between files
     if nfiles > 1:
