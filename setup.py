@@ -32,6 +32,9 @@ setup(name='pyemir',
           'matplotlib', 'six', 'photutils>=0.2',
           'sep>0.5', 'scikit-image>=0.11', 'scikit-learn>=0.19', 'lmfit'
       ],
+      extras_require={
+        'tools':  ["PyQt5"],
+      },
       zip_safe=False,
       entry_points={
           'numina.pipeline.1': [
