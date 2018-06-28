@@ -152,6 +152,9 @@ modes:
 - key: LOAD_RECWAVE
   name: Load MasterRecWave
   summary: load a MasterRecWave structure from file
+- key: IMG_ACQ
+  name: Mask Acquisition
+  summary: Finds objects for mask acquisition
 - key: BASIC_COMBINE
   name: Combine
   summary: Combine
@@ -219,6 +222,7 @@ pipelines:
       TEST11: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       TEST12: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe
       TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
+      IMG_ACQ: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       SPEC_SKY: emirdrp.recipes.spec.sky.SkySpecRecipe
       ARC_CALIBRATION: emirdrp.recipes.calibration.arc.ArcCalibrationRecipe
       STARE_SPECTRA: emirdrp.recipes.spec.stare.StareSpectraWaveRecipe

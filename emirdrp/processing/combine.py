@@ -41,10 +41,105 @@ _logger = logging.getLogger(__name__)
 
 def basic_processing(rinput, flow):
     datamodel = EmirDataModel()
-    cdata = []
+    return basic_processing_(rinput.obresult.images, flow, datamodel)
 
-    _logger.info('processing input images')
-    for frame in rinput.obresult.images:
+
+def process_abba(images, datamodel, errors=False, prolog=None):
+    base_header = images[0][0].header.copy()
+    cnum = len(images)
+    now = datetime.datetime.utcnow()
+    _logger.info("processing ABBA")
+    ###
+    ###
+    dataA0 = images[0][0].data.astype('float32')
+    dataB0 = images[1][0].data.astype('float32')
+    dataB1 = images[2][0].data.astype('float32')
+    dataA1 = images[3][0].data.astype('float32')
+    dataAB0 = dataA0 - dataB0
+    dataAB1 = dataA1 - dataB1
+    data = dataAB0 + dataAB1
+    ###
+    hdu = fits.PrimaryHDU(data, header=base_header)
+    _logger.debug('update result header')
+    if prolog:
+        hdu.header['history'] = prolog
+    hdu.header['history'] = "Processed ABBA"
+    hdu.header['history'] = 'Combination time {}'.format(now.isoformat())
+    for img in images:
+        hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
+    prevnum = base_header.get('NUM-NCOM', 1)
+    hdu.header['NUM-NCOM'] = prevnum * cnum // 2
+    hdu.header['UUID'] = str(uuid.uuid1())
+    # Headers of last image
+    hdu.header['TSUTC2'] = images[-1][0].header['TSUTC2']
+
+    for img, key in zip(images, ['A', 'B', 'B', 'A']):
+        imgid = datamodel.get_imgid(img)
+        hdu.header['history'] = "Image '{}' is '{}'".format(imgid, key)
+
+    hdulist = fits.HDUList([hdu])
+
+    return hdulist
+
+
+def process_ab(images, datamodel, errors=False, prolog=None):
+    base_header = images[0][0].header.copy()
+    cnum = len(images)
+    now = datetime.datetime.utcnow()
+    _logger.info("processing AB")
+    ###
+    ###
+    dataA0 = images[0][0].data.astype('float32')
+    dataB0 = images[1][0].data.astype('float32')
+    data = dataA0 - dataB0
+
+    ###
+    hdu = fits.PrimaryHDU(data, header=base_header)
+    _logger.debug('update result header')
+    if prolog:
+        hdu.header['history'] = prolog
+    hdu.header['history'] = "Processed AB"
+    hdu.header['history'] = 'Combination time {}'.format(now.isoformat())
+    for img in images:
+        hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
+    prevnum = base_header.get('NUM-NCOM', 1)
+    hdu.header['NUM-NCOM'] = prevnum * cnum // 2
+    hdu.header['UUID'] = str(uuid.uuid1())
+    # Headers of last image
+    hdu.header['TSUTC2'] = images[-1][0].header['TSUTC2']
+
+    for img, key in zip(images, ['A', 'B']):
+        imgid = datamodel.get_imgid(img)
+        hdu.header['history'] = "Image '{}' is '{}'".format(imgid, key)
+
+    hdulist = fits.HDUList([hdu])
+
+    return hdulist
+
+
+def create_proc_hdulist(cdata, data_array):
+    import astropy.io.fits as fits
+    import uuid
+
+    # Copy header of first image
+    base_header = cdata[0][0].header.copy()
+
+    hdu = fits.PrimaryHDU(data_array, header=base_header)
+    # self.set_base_headers(hdu.header)
+    hdu.header['EMIRUUID'] = str(uuid.uuid1())
+    # Update obsmode in header
+    #hdu.header['OBSMODE'] = 'LS_ABBA'
+    # Headers of last image
+    hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
+    result = fits.HDUList([hdu])
+    return result
+
+
+def basic_processing_(frames, flow, datamodel):
+
+    cdata = []
+    _logger.info('processing input frames')
+    for frame in frames:
         hdulist = frame.open()
         fname = datamodel.get_imgid(hdulist)
         _logger.info('input is %s', fname)
@@ -54,6 +149,36 @@ def basic_processing(rinput, flow):
         cdata.append(final)
 
     return cdata
+
+
+def combine_images(images, datamodel, method=combine.mean, errors=False, prolog=None):
+
+    base_header = images[0][0].header.copy()
+    cnum = len(images)
+    now = datetime.datetime.utcnow()
+    _logger.info("stacking %d images using '%s'", cnum, method.__name__)
+    data = method([d[0].data for d in images], dtype='float32')
+    hdu = fits.PrimaryHDU(data[0], header=base_header)
+    _logger.debug('update result header')
+    if prolog:
+        hdu.header['history'] = prolog
+    hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method.__name__)
+    hdu.header['history'] = 'Combination time {}'.format(now.isoformat())
+    for img in images:
+        hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
+    prevnum = base_header.get('NUM-NCOM', 1)
+    hdu.header['NUM-NCOM'] = prevnum * cnum
+    hdu.header['UUID'] = str(uuid.uuid1())
+    # Headers of last image
+    hdu.header['TSUTC2'] = images[-1][0].header['TSUTC2']
+    if errors:
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE')
+        num = fits.ImageHDU(data[2], name='MAP')
+        result = fits.HDUList([hdu, varhdu, num])
+    else:
+        result = fits.HDUList([hdu])
+
+    return result
 
 
 def basic_processing_with_combination(rinput, flow,
