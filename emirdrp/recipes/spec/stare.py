@@ -29,6 +29,9 @@ from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
 from emirdrp.processing.wavecal.refine_rectwv_coeff import refine_rectwv_coeff
 
+from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
+from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
+
 
 class StareSpectraRecipe(EmirRecipe):
     """Process images in Stare spectra mode"""
@@ -79,6 +82,22 @@ class StareSpectraWaveRecipe(EmirRecipe):
         description='Apply refinement with OH lines',
         choices=[0, 1, 2]
     )
+    minimum_slitlet_width_mm = Parameter(
+        float(EMIR_MINIMUM_SLITLET_WIDTH_MM),
+        description='Minimum width (mm) for a valid slitlet',
+    )
+    maximum_slitlet_width_mm = Parameter(
+        float(EMIR_MAXIMUM_SLITLET_WIDTH_MM),
+        description='Maximum width (mm) for a valid slitlet',
+    )
+    global_offset_x_pix = Parameter(
+        0,
+        description='Global offset (pixels) in wavelength direction (integer)',
+    )
+    global_offset_y_pix = Parameter(
+        0,
+        description='Global offset (pixels) in spatial direction (integer)',
+    )
 
     reduced_image = Result(prods.DataFrameType)
     stare = Result(prods.DataFrameType)
@@ -87,6 +106,16 @@ class StareSpectraWaveRecipe(EmirRecipe):
         self.logger.info('starting rect.+wavecal. reduction of stare spectra')
 
         self.logger.info(rinput.master_rectwv)
+        self.logger.info('Refinement with OH lines mode.....: {}'.format(
+            rinput.refine_with_ohlines))
+        self.logger.info('Minimum slitlet width (mm)........: {}'.format(
+            rinput.minimum_slitlet_width_mm))
+        self.logger.info('Maximum slitlet width (mm)........: {}'.format(
+            rinput.maximum_slitlet_width_mm))
+        self.logger.info('Global offset X direction (pixels): {}'.format(
+            rinput.global_offset_x_pix))
+        self.logger.info('Global offset Y direction (pixels): {}'.format(
+            rinput.global_offset_y_pix))
 
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
@@ -110,6 +139,10 @@ class StareSpectraWaveRecipe(EmirRecipe):
                 rinput.master_rectwv
             )
 
+            # set global offsets
+            rectwv_coeff.global_offset_x_pix = rinput.global_offset_x_pix
+            rectwv_coeff.global_offset_y_pix = rinput.global_offset_y_pix
+
             # apply rectification and wavelength calibration
             stare_image = apply_rectwv_coeff(
                 reduced_image,
@@ -123,14 +156,16 @@ class StareSpectraWaveRecipe(EmirRecipe):
             if rinput.ohlines is not None and rinput.refine_with_ohlines != 0:
                 self.logger.info('Refining wavelength calibration')
                 # refine RectWaveCoeff object
-                rectwv_coeff, expected_oh_lines = refine_rectwv_coeff(
+                rectwv_coeff, expected_ohlines = refine_rectwv_coeff(
                     stare_image,
                     rectwv_coeff,
                     rinput.ohlines,
                     rinput.refine_with_ohlines,
-                    debugplot=0
+                    rinput.minimum_slitlet_width_mm,
+                    rinput.maximum_slitlet_width_mm,
+                    debugplot=12
                 )
-                self.save_intermediate_img(expected_oh_lines,
+                self.save_intermediate_img(expected_ohlines,
                                            'expected_oh_lines.fits')
                 # re-apply rectification and wavelength calibration
                 stare_image = apply_rectwv_coeff(

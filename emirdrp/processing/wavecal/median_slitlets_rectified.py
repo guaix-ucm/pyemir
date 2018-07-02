@@ -23,7 +23,6 @@ from __future__ import print_function
 import argparse
 from astropy.io import fits
 import numpy as np
-from sklearn.cluster import KMeans
 import sys
 
 from emirdrp.instrument.csu_configuration import CsuConfiguration
@@ -36,10 +35,18 @@ from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_NPIXPERSLIT_RECTIFIED
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
+from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
+from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
 
 
-def median_slitlets_rectified(input_image, mode=0, debugplot=0):
-    """Compute median spectrum for each slitlet
+def median_slitlets_rectified(
+        input_image,
+        mode=0,
+        minimum_slitlet_width_mm=EMIR_MINIMUM_SLITLET_WIDTH_MM,
+        maximum_slitlet_width_mm=EMIR_MAXIMUM_SLITLET_WIDTH_MM,
+        debugplot=0
+    ):
+    """Compute median spectrum for each slitlet.
 
     Parameters
     ----------
@@ -54,11 +61,14 @@ def median_slitlets_rectified(input_image, mode=0, debugplot=0):
             each slitlet
         2 : single collapsed median spectrum, using exclusively the
             useful pixels from the input image
+    minimum_slitlet_width_mm : float
+        Minimum slitlet width (mm) for a valid slitlet.
+    maximum_slitlet_width_mm : float
+        Maximum slitlet width (mm) for a valid slitlet.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
-
 
     Returns
     -------
@@ -112,16 +122,11 @@ def median_slitlets_rectified(input_image, mode=0, debugplot=0):
         crval1 = image_header['crval1']
         cdelt1 = image_header['cdelt1']
 
-        # determine useful slitlets from their widths
-        km = KMeans(n_clusters=2)
-        csu_bar_slit_width = [csu_config.csu_bar_slit_width(i) for i in
-                              range(1, EMIR_NBARS + 1)]
-        fit = km.fit(np.array(csu_bar_slit_width).reshape(-1, 1))
-        peak1, peak2 = fit.cluster_centers_
-        separator = (peak1 + peak2) / 2
-
         # segregate slitlets
-        list_useful_slitlets = csu_config.widths_in_range(minwidth=separator)
+        list_useful_slitlets = csu_config.widths_in_range_mm(
+            minwidth=minimum_slitlet_width_mm,
+            maxwidth=maximum_slitlet_width_mm
+        )
         list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1))
                                     if i not in list_useful_slitlets]
         if abs(debugplot) != 0:
@@ -184,6 +189,15 @@ def main(args=None):
                              "2 -> collapsed single spectrum)",
                         default=0, type=int,
                         choices=[0, 1, 2])
+    parser.add_argument("--minimum_slitlet_width_mm",
+                        help="Minimum slitlet width (mm) for --mode 2 "
+                             "(default=0)",
+                        default=EMIR_MINIMUM_SLITLET_WIDTH_MM, type=float)
+    parser.add_argument("--maximum_slitlet_width_mm",
+                        help="Maximum slitlet width (mm) for --mode 2 "
+                             "(default=" +
+                             str(EMIR_MAXIMUM_SLITLET_WIDTH_MM) + ")",
+                        default=EMIR_MAXIMUM_SLITLET_WIDTH_MM, type=float)
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
                              " (default=0)",
@@ -204,6 +218,8 @@ def main(args=None):
     image_median = median_slitlets_rectified(
         hdulist,
         mode=args.mode,
+        minimum_slitlet_width_mm=args.minimum_slitlet_width_mm,
+        maximum_slitlet_width_mm=args.maximum_slitlet_width_mm,
         debugplot=args.debugplot
     )
 

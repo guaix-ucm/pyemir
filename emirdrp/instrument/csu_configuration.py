@@ -25,6 +25,8 @@ from copy import deepcopy
 import numpy as np
 
 from emirdrp.core import EMIR_NBARS
+from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
+from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
 
 
 class CsuConfiguration(object):
@@ -174,7 +176,11 @@ class CsuConfiguration(object):
 
         return outdict
 
-    def widths_in_range(self, minwidth=0, maxwidth=np.infty):
+    def widths_in_range_mm(
+            self,
+            minwidth=EMIR_MINIMUM_SLITLET_WIDTH_MM,
+            maxwidth=EMIR_MAXIMUM_SLITLET_WIDTH_MM
+    ):
         """Return list of slitlets which width is within given range
 
         Parameters

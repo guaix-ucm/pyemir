@@ -27,18 +27,23 @@ import numpy as np
 
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
+from numina.array.display.matplotlib_qt import plt
 from numina.array.stats import summary
 from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
 from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 
+from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.processing.wavecal.median_slitlets_rectified \
     import median_slitlets_rectified
 
 from emirdrp.core import EMIR_NBARS
 
 
-def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode, debugplot=0):
+def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode,
+                        minimum_slitlet_width_mm,
+                        maximum_slitlet_width_mm,
+                        debugplot=0):
     """Refine RectWaveCoeff object using a catalogue of lines
 
     Parameters
@@ -55,6 +60,10 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode, debugplot=0):
         Integer (from 0 to 2), indicating the type of refinement:
         1 : apply the same global offset to all the slitlets
         2 : apply individual offset to each individual slitlet
+    minimum_slitlet_width_mm : float
+        Minimum slitlet width (mm) for a valid slitlet.
+    maximum_slitlet_width_mm : float
+        Maximum slitlet width (mm) for a valid slitlet.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -79,13 +88,21 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode, debugplot=0):
     # initialize output
     refined_rectwv_coeff = deepcopy(rectwv_coeff)
 
+    logger.info('Computing median spectrum')
     # compute median spectrum and normalize it
-    sp_median = median_slitlets_rectified(input_image, mode=2)[0].data
+    sp_median = median_slitlets_rectified(
+        input_image,
+        mode=2,
+        minimum_slitlet_width_mm=minimum_slitlet_width_mm,
+        maximum_slitlet_width_mm=maximum_slitlet_width_mm
+    )[0].data
     sp_median /= sp_median.max()
+
+    # image header
+    main_header = input_image[0].header
 
     # determine minimum and maximum useful wavelength
     jmin, jmax = find_pix_borders(sp_median, 0)
-    main_header = input_image[0].header
     naxis1 = main_header['naxis1']
     naxis2 = main_header['naxis2']
     crpix1 = main_header['crpix1']
@@ -107,9 +124,33 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode, debugplot=0):
         (catlines_reference[:, 2], catlines_reference[:, 2]))
     catlines_reference_flux /= catlines_reference_flux.max()
 
+    # estimate sigma to broaden catalogue lines
+    csu_config = CsuConfiguration.define_from_header(main_header)
+    # segregate slitlets
+    list_useful_slitlets = csu_config.widths_in_range_mm(
+        minwidth=minimum_slitlet_width_mm,
+        maxwidth=maximum_slitlet_width_mm
+    )
+    list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1))
+                                if i not in list_useful_slitlets]
+    logger.info('list of useful slitlets: {}'.format(
+        list_useful_slitlets))
+    logger.info('list of not useful slitlets: {}'.format(
+        list_not_useful_slitlets))
+    tempwidths = np.array([csu_config.csu_bar_slit_width(islitlet)
+                           for islitlet in list_useful_slitlets])
+    widths_summary = summary(tempwidths)
+    logger.info('Statistics of useful slitlet widths (mm):')
+    logger.info('- npoints....: {0:d}'.format(widths_summary['npoints']))
+    logger.info('- mean.......: {0:7.3f}'.format(widths_summary['mean']))
+    logger.info('- median.....: {0:7.3f}'.format(widths_summary['median']))
+    logger.info('- std........: {0:7.3f}'.format(widths_summary['std']))
+    logger.info('- robust_std.: {0:7.3f}'.format(widths_summary['robust_std']))
+    sigma = widths_summary['median']
+
     # convolve location of catalogue lines to generate expected spectrum
     xwave_reference, sp_reference = convolve_comb_lines(
-        catlines_reference_wave, catlines_reference_flux, 2.0,
+        catlines_reference_wave, catlines_reference_flux, sigma,
         crpix1, crval1, cdelt1, naxis1
     )
     sp_reference /= sp_reference.max()
@@ -134,15 +175,31 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode, debugplot=0):
         ax.legend()
         pause_debugplot(debugplot=debugplot, pltshow=True)
 
+    # compute baseline signal in sp_median
+    baseline = np.percentile(sp_median[sp_median > 0], q=10)
+    if abs(debugplot) % 10 != 0:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.hist(sp_median, bins=1000)
+        ax.axvline(float(baseline), linestyle='--', color='grey')
+        x_geom, y_geom, dx_geom, dy_geom = (0, 0, 640, 480)
+        mngr = plt.get_current_fig_manager()
+        if 'window' in dir(mngr):
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        plt.show()
+    # subtract baseline to sp_median (only pixels with signal above zero)
+    lok = np.where(sp_median > 0)
+    sp_median[lok] -= baseline
+
     # compute global offset through periodic correlation
     logger.info('Computing global offset')
-    offset = periodic_corr1d(
+    offset, fpeak = periodic_corr1d(
         sp_reference=sp_reference,
         sp_offset=sp_median,
         fminmax=None,
         debugplot=debugplot
     )
-    logger.info('Global offset: {} pixels'.format(offset))
+    logger.info('Global offset: {} pixels'.format(-offset))
 
     missing_slitlets = rectwv_coeff.missing_slitlets
 
@@ -165,7 +222,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode, debugplot=0):
                 i = islitlet - 1
                 sp_median = median_image[0].data[i, :]
                 sp_median /= sp_median.max()
-                offset_array[i] = periodic_corr1d(
+                offset_array[i], fpeak = periodic_corr1d(
                     sp_reference=sp_reference,
                     sp_offset=median_image[0].data[i, :],
                     fminmax=None,
@@ -176,13 +233,14 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode, debugplot=0):
                 xplot.append(islitlet)
                 yplot.append(offset_array[i])
 
-        stat_summary = summary(yplot)
-        logger.info('Individual offsets (pixels):')
-        logger.info('- npoints....: {}'.format(stat_summary['npoints']))
-        logger.info('- mean.......: {}'.format(stat_summary['mean']))
-        logger.info('- median.....: {}'.format(stat_summary['median']))
-        logger.info('- std........: {}'.format(stat_summary['std']))
-        logger.info('- robust_std.: {}'.format(stat_summary['robust_std']))
+        # show offsets with opposite sign
+        stat_summary = summary(-np.array(yplot))
+        logger.info('Statistics of individual slitlet offsets (pixels):')
+        logger.info('- npoints....: {0:d}'.format(stat_summary['npoints']))
+        logger.info('- mean.......: {0:7.3f}'.format(stat_summary['mean']))
+        logger.info('- median.....: {0:7.3f}'.format(stat_summary['median']))
+        logger.info('- std........: {0:7.3f}'.format(stat_summary['std']))
+        logger.info('- robust_std.: {0:7.3f}'.format(stat_summary['robust_std']))
         if abs(debugplot) % 10 != 0:
             ximplotxy(xplot, yplot,
                       linestyle='', marker='o', color='C0',

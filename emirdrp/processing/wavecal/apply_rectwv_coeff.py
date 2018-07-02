@@ -28,6 +28,7 @@ import numpy as np
 import sys
 
 from numina.array.display.logging_from_debugplot import logging_from_debugplot
+from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 from numina.array.wavecalib.resample import resample_image2d_flux
 from numina.tools.arg_file_is_new import arg_file_is_new
@@ -78,6 +79,13 @@ def apply_rectwv_coeff(reduced_image,
     # header and data array
     header = reduced_image[0].header
     image2d = reduced_image[0].data
+
+    # apply global offsets
+    image2d = apply_integer_offsets(
+        image2d=image2d,
+        offx=rectwv_coeff.global_offset_x_pix,
+        offy=rectwv_coeff.global_offset_y_pix
+    )
 
     # check grism and filter
     filter_name = header['filter']

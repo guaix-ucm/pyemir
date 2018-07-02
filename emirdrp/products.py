@@ -353,6 +353,8 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
             'grism': "unknown",
             'filter': "unknown"
         }
+        self.global_offset_x_pix = 0.0
+        self.global_offset_y_pix = 0.0
         self.total_slitlets = 0
         self.missing_slitlets = []
         self.contents = []
@@ -360,7 +362,8 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
     def __getstate__(self):
         state = super(RectWaveCoeff, self).__getstate__()
 
-        keys = ['total_slitlets', 'missing_slitlets']
+        keys = ['global_offset_x_pix', 'global_offset_y_pix',
+                'total_slitlets', 'missing_slitlets']
         for key in keys:
             state[key] = self.__dict__[key]
 
@@ -373,7 +376,8 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
     def __setstate__(self, state):
         super(RectWaveCoeff, self).__setstate__(state)
 
-        keys = ['total_slitlets', 'missing_slitlets']
+        keys = ['global_offset_x_pix', 'global_offset_y_pix',
+                'total_slitlets', 'missing_slitlets']
         for key in keys:
             self.__dict__[key] = state[key]
         if six.PY2:
