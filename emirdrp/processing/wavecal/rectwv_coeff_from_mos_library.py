@@ -84,17 +84,16 @@ def rectwv_coeff_from_mos_library(reduced_image,
     """
 
     logger = logging.getLogger(__name__)
+    logger.info('Computing expected RectWaveCoeff from CSU configuration')
 
     # header
     header = reduced_image[0].header
 
     # read the CSU configuration from the image header
     csu_conf = CsuConfiguration.define_from_header(header)
-    logger.debug(csu_conf)
 
     # read the DTU configuration from the image header
     dtu_conf = DtuConfiguration.define_from_header(header)
-    logger.debug(dtu_conf)
 
     # retrieve DTU configuration from MasterRectWave object
     dtu_conf_calib = DtuConfiguration.define_from_dictionary(
@@ -103,13 +102,13 @@ def rectwv_coeff_from_mos_library(reduced_image,
     # check that the DTU configuration employed to obtain the calibration
     # corresponds to the DTU configuration in the input FITS file
     if dtu_conf != dtu_conf_calib:
-        logger.info('DTU configuration from image header:')
-        logger.info(dtu_conf)
-        logger.info('DTU configuration from master calibration:')
-        logger.info(dtu_conf_calib)
         if ignore_dtu_configuration:
             logger.warning('DTU configuration differences found!')
         else:
+            logger.info('DTU configuration from image header:')
+            logger.info(dtu_conf)
+            logger.info('DTU configuration from master calibration:')
+            logger.info(dtu_conf_calib)
             raise ValueError("DTU configurations do not match!")
     else:
         logger.info('DTU configuration match!')

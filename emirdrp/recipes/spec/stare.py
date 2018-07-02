@@ -12,6 +12,10 @@ Spectroscopy mode, Stare Spectra
 """
 
 
+import numpy as np
+import pkgutil
+from six import StringIO
+
 from numina.core import Result
 from numina.core import Requirement, Parameter
 from numina.array.combine import median
@@ -72,11 +76,6 @@ class StareSpectraWaveRecipe(EmirRecipe):
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
     master_rectwv = reqs.MasterRectWaveRequirement(optional=True)
     master_sky = reqs.SpectralSkyRequirement(optional=True)
-    oh_lines = Requirement(
-        prods.SkyLinesCatalog,
-        'Catalog of OH Sky lines',
-        optional=True
-    )
     refine_with_oh_lines = Parameter(
         0,
         description='Apply refinement with OH lines',
@@ -153,14 +152,19 @@ class StareSpectraWaveRecipe(EmirRecipe):
             # 0 -> no refinement
             # 1 -> apply global offset to all the slitlets
             # 2 -> apply individual offset to each slitlet
-            if rinput.oh_lines is not None \
-                    and rinput.refine_with_oh_lines != 0:
+            if rinput.refine_with_oh_lines != 0:
                 self.logger.info('Refining wavelength calibration')
+                dumdata = pkgutil.get_data(
+                    'emirdrp.instrument.configs',
+                    'Oliva_etal_2013.dat'
+                )
+                oh_lines_tmpfile = StringIO(dumdata.decode('utf8'))
+                oh_lines_catalog = np.genfromtxt(oh_lines_tmpfile)
                 # refine RectWaveCoeff object
                 rectwv_coeff, expected_oh_lines = refine_rectwv_coeff(
                     stare_image,
                     rectwv_coeff,
-                    rinput.oh_lines,
+                    oh_lines_catalog,
                     rinput.refine_with_oh_lines,
                     rinput.minimum_slitlet_width_mm,
                     rinput.maximum_slitlet_width_mm,

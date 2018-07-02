@@ -99,7 +99,6 @@ def apply_rectwv_coeff(reduced_image,
 
     # read the DTU configuration from the image header
     dtu_conf = DtuConfiguration.define_from_header(header)
-    logger.debug(dtu_conf)
 
     # retrieve DTU configuration from RectWaveCoeff object
     dtu_conf_calib = DtuConfiguration.define_from_dictionary(
@@ -108,13 +107,13 @@ def apply_rectwv_coeff(reduced_image,
     # check that the DTU configuration employed to obtain the calibration
     # corresponds to the DTU configuration in the input FITS file
     if dtu_conf != dtu_conf_calib:
-        logger.warning('DTU configuration from image header:')
-        logger.warning(dtu_conf)
-        logger.warning('DTU configuration from master calibration:')
-        logger.warning(dtu_conf_calib)
         if args_ignore_dtu_configuration:
             logger.warning('DTU configuration differences found!')
         else:
+            logger.warning('DTU configuration from image header:')
+            logger.warning(dtu_conf)
+            logger.warning('DTU configuration from master calibration:')
+            logger.warning(dtu_conf_calib)
             raise ValueError("DTU configurations do not match!")
     else:
         logger.info('DTU configuration match!')
