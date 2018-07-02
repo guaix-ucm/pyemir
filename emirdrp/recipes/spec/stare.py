@@ -164,7 +164,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
                     rinput.refine_with_oh_lines,
                     rinput.minimum_slitlet_width_mm,
                     rinput.maximum_slitlet_width_mm,
-                    debugplot=12
+                    debugplot=0
                 )
                 self.save_intermediate_img(expected_oh_lines,
                                            'expected_oh_lines.fits')

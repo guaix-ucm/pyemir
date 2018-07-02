@@ -146,11 +146,12 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode,
     logger.info('- median.....: {0:7.3f}'.format(widths_summary['median']))
     logger.info('- std........: {0:7.3f}'.format(widths_summary['std']))
     logger.info('- robust_std.: {0:7.3f}'.format(widths_summary['robust_std']))
-    sigma = widths_summary['median']
+    # empirical transformation of slit width (mm) to pixels
+    sigma_broadening = 0.75 * widths_summary['median']
 
     # convolve location of catalogue lines to generate expected spectrum
     xwave_reference, sp_reference = convolve_comb_lines(
-        catlines_reference_wave, catlines_reference_flux, sigma,
+        catlines_reference_wave, catlines_reference_flux, sigma_broadening,
         crpix1, crval1, cdelt1, naxis1
     )
     sp_reference /= sp_reference.max()
