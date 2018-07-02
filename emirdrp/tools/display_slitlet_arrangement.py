@@ -142,37 +142,20 @@ def display_slitlet_arrangement(fileobj,
 
     # determine calibration
     if grism in ["J", "OPEN"] and spfilter == "J":
-        crval1 = Polynomial(
-            [1.25137094e+04, -4.81553731e+00, 4.70039758e-04])
-        cdelt1 = Polynomial(
-            [7.74133267e-01, -4.72423718e-05, 2.79842624e-08])
         wv_parameters = set_wv_parameters("J", "J")
     elif grism in ["H", "OPEN"] and spfilter == "H":
-        crval1 = Polynomial(
-            [1.65536274e+04, -7.63517173e+00, 7.74790265e-04])
-        cdelt1 = Polynomial(
-            [1.21327515e+00, 1.42140078e-05, -1.27489119e-07])
         wv_parameters = set_wv_parameters("H", "H")
     elif grism in ["K", "OPEN"] and spfilter == "Ksp":
-        crval1 = Polynomial(
-            [2.21044741e+04, -1.08737529e+01, 9.05081653e-04])
-        cdelt1 = Polynomial(
-            [1.72696857e+00, 2.35009351e-05, -1.02164228e-07])
         wv_parameters = set_wv_parameters("Ksp", "K")
     elif grism in ["LR", "OPEN"] and spfilter == "YJ":
-        crval1 = Polynomial(
-            [1.04272465e+04, -2.33176855e+01, 6.55101267e-03])
-        cdelt1 = Polynomial(
-            [3.49037727e+00, 1.26008332e-03, -4.66149678e-06])
         wv_parameters = set_wv_parameters("YJ", "LR")
     elif grism in ["LR", "OPEN"] and spfilter == "HK":
-        crval1 = Polynomial(
-            [2.00704978e+04, -4.07702886e+01, -5.95247468e-03])
-        cdelt1 = Polynomial(
-            [6.54247758e+00, 2.09061196e-03, -2.48206609e-06])
         wv_parameters = set_wv_parameters("HK", "LR")
     else:
         raise ValueError("Invalid grism + filter configuration")
+
+    crval1 = wv_parameters['poly_crval1_linear']
+    cdelt1 = wv_parameters['poly_cdelt1_linear']
 
     wvmin_useful = wv_parameters['wvmin_useful']
     wvmax_useful = wv_parameters['wvmax_useful']
@@ -301,7 +284,6 @@ def display_slitlet_histogram(csu_bar_slit_width,
     # determine useful slitlets from their widths
     km = KMeans(n_clusters=n_clusters)
     fit = km.fit(np.array(csu_bar_slit_width).reshape(-1, 1))
-    print(type(fit.cluster_centers_))
     separator_list = []
     for i in range(n_clusters - 1):
         peak1 = fit.cluster_centers_[i][0]
