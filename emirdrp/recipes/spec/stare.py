@@ -69,7 +69,11 @@ class StareSpectraWaveRecipe(EmirRecipe):
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
     master_rectwv = reqs.MasterRectWaveRequirement(optional=True)
     master_sky = reqs.SpectralSkyRequirement(optional=True)
-    ohlines = Requirement(prods.SkyLinesCatalog, 'Catalog of OH Sky lines')
+    ohlines = Requirement(
+        prods.SkyLinesCatalog,
+        'Catalog of OH Sky lines',
+        optional=True
+    )
     refine_with_ohlines = Parameter(
         0,
         description='Apply refinement with OH lines',
@@ -116,7 +120,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
             # 0 -> no refinement
             # 1 -> apply global offset to all the slitlets
             # 2 -> apply individual offset to each slitlet
-            if rinput.refine_with_ohlines != 0:
+            if rinput.ohlines is not None and rinput.refine_with_ohlines != 0:
                 self.logger.info('Refining wavelength calibration')
                 # refine RectWaveCoeff object
                 rectwv_coeff, expected_oh_lines = refine_rectwv_coeff(
