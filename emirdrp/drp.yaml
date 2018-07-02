@@ -152,6 +152,9 @@ modes:
 - key: LOAD_RECWAVE
   name: Load MasterRecWave
   summary: load a MasterRecWave structure from file
+- key: LOAD_SKYLINES
+  name: Load SkyLinesCatalog
+  summary: load a SkyLinesCatalog structure from file
 - key: IMG_ACQ
   name: Mask Acquisition
   summary: Finds objects for mask acquisition
@@ -166,6 +169,7 @@ pipelines:
       MasterDark: emirdrp.products.MasterDark
       MasterIntensityFlat: emirdrp.products.MasterIntensityFlat
       MasterSpectralFlat: emirdrp.products.MasterSpectralFlat
+      SkyLinesCatalog: emirdrp.products.SkyLinesCatalog
     provides:
       - name: MasterBadPixelMask
         mode: cosmetics
@@ -191,6 +195,9 @@ pipelines:
       - name: MasterRectWave
         mode: LOAD_RECWAVE
         field: master_rectwv
+      - name: SkyLinesCatalog
+        mode: LOAD_SKYLINES
+        field: skylines
     recipes:
       BASIC_COMBINE: numina.core.utils.Combine
       IMAGE_BIAS: emirdrp.recipes.auxiliary.BiasRecipe
