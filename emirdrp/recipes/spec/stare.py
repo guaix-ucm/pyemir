@@ -72,12 +72,12 @@ class StareSpectraWaveRecipe(EmirRecipe):
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
     master_rectwv = reqs.MasterRectWaveRequirement(optional=True)
     master_sky = reqs.SpectralSkyRequirement(optional=True)
-    ohlines = Requirement(
+    oh_lines = Requirement(
         prods.SkyLinesCatalog,
         'Catalog of OH Sky lines',
         optional=True
     )
-    refine_with_ohlines = Parameter(
+    refine_with_oh_lines = Parameter(
         0,
         description='Apply refinement with OH lines',
         choices=[0, 1, 2]
@@ -107,7 +107,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
 
         self.logger.info(rinput.master_rectwv)
         self.logger.info('Refinement with OH lines mode.....: {}'.format(
-            rinput.refine_with_ohlines))
+            rinput.refine_with_oh_lines))
         self.logger.info('Minimum slitlet width (mm)........: {}'.format(
             rinput.minimum_slitlet_width_mm))
         self.logger.info('Maximum slitlet width (mm)........: {}'.format(
@@ -149,23 +149,24 @@ class StareSpectraWaveRecipe(EmirRecipe):
                 rectwv_coeff
             )
 
-            # wavelength calibration refinement depends on refine_with_ohlines
+            # wavelength calibration refinement depends on refine_with_oh_lines
             # 0 -> no refinement
             # 1 -> apply global offset to all the slitlets
             # 2 -> apply individual offset to each slitlet
-            if rinput.ohlines is not None and rinput.refine_with_ohlines != 0:
+            if rinput.oh_lines is not None \
+                    and rinput.refine_with_oh_lines != 0:
                 self.logger.info('Refining wavelength calibration')
                 # refine RectWaveCoeff object
-                rectwv_coeff, expected_ohlines = refine_rectwv_coeff(
+                rectwv_coeff, expected_oh_lines = refine_rectwv_coeff(
                     stare_image,
                     rectwv_coeff,
-                    rinput.ohlines,
-                    rinput.refine_with_ohlines,
+                    rinput.oh_lines,
+                    rinput.refine_with_oh_lines,
                     rinput.minimum_slitlet_width_mm,
                     rinput.maximum_slitlet_width_mm,
                     debugplot=12
                 )
-                self.save_intermediate_img(expected_ohlines,
+                self.save_intermediate_img(expected_oh_lines,
                                            'expected_oh_lines.fits')
                 # re-apply rectification and wavelength calibration
                 stare_image = apply_rectwv_coeff(
