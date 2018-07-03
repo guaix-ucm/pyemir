@@ -736,8 +736,11 @@ def compute_off_rotation(data, csu_conf, slits_bb, rotaxis=(0, 0),
     logger.info('Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
     logger.info('=========================================')
 
-    logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', np.subtract(p1, q1).mean(axis=0))
-    logger.debug('MEAN pf REF-MEASURED (VIRT) %s', np.subtract(p2, q2).mean(axis=0))
+    pq1 = np.subtract(p1, q1)
+    pq2 = np.subtract(p2, q2)
+    if len(pq1) != 0:
+        logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', pq1.mean(axis=0))
+        logger.debug('MEAN pf REF-MEASURED (VIRT) %s', pq2.mean(axis=0))
 
     return offset, angle, qc
 
