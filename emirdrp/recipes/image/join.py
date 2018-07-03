@@ -654,10 +654,13 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         bkg = sep.Background(arr)
         data_sub = arr - bkg
-        objects, objmask = sep.extract(data_sub, threshold,
-                                       err=bkg.globalrms,
-                                       mask=wmap,
-                                       segmentation_map=True)
+        objects, objmask = sep.extract(
+            data_sub,
+            threshold,
+            err=bkg.globalrms * numpy.ones_like(data_sub),
+            mask=wmap,
+            segmentation_map=True
+        )
         return objects, objmask
 
 
