@@ -595,6 +595,10 @@ class MaskCheckRecipe(EmirRecipe):
             comp_l, comp_r = calc0(image, sob_v, prow, px1, px2, regionw, h=h,
                                    plot=plot, lbarid=lbarid, rbarid=rbarid,
                                    plot2=False)
+            if np.any(np.isnan([comp_l, comp_r])):
+                self.logger.warning("converting NaN value, border of=%d", idx + 1)
+                self.logger.warning("skipping bar=%d", idx + 1)
+                continue
 
             region2 = 5
             px21 = coor_to_pix_1d(comp_l)
@@ -660,6 +664,10 @@ def compute_off_rotation(data, csu_conf, slits_bb, rotaxis=(0, 0),
     EMIR_REF_IPA = 90.0552
 
     for this in refslits:
+        if this.idx not in slits_bb:
+            logger.warning('slit %s not detected, skipping', this.idx)
+            continue
+
         bb = slits_bb[this.idx]
         region = bb.slice
         target_coordinates = this.target_coordinates
