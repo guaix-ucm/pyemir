@@ -189,6 +189,7 @@ def create_bar_models(barstab):
         bars[barid] = bar
     return bars
 
+
 def read_csu_2(hdr, barmodel):
     """Read CSU information and slits from header"""
     conf = CSUConf()

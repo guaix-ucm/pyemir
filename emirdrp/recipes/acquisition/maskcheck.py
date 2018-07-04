@@ -129,7 +129,7 @@ class MaskCheckRecipe(EmirRecipe):
     angle = Result(float)
 
     def run(self, rinput):
-        self.logger.info('starting processing for bars detection')
+        self.logger.info('starting processing for image acquisition')
         # Combine and masking
         flow = self.init_filters(rinput)
 
@@ -209,7 +209,7 @@ class MaskCheckRecipe(EmirRecipe):
             angle=angle_out,
             qc=qc
         )
-
+        self.logger.info('end processing for image acquisition')
         return result
 
     def load_csu_conf(self, hdulist, bars_nominal_positions):
