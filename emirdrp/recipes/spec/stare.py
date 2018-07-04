@@ -13,8 +13,6 @@ Spectroscopy mode, Stare Spectra
 
 
 import numpy as np
-import pkgutil
-from six import StringIO
 
 from numina.core import Result
 from numina.core import Requirement, Parameter
@@ -76,10 +74,10 @@ class StareSpectraWaveRecipe(EmirRecipe):
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
     master_rectwv = reqs.MasterRectWaveRequirement(optional=True)
     master_sky = reqs.SpectralSkyRequirement(optional=True)
-    refine_with_oh_lines = Parameter(
+    refine_wavecalib_mode = Parameter(
         0,
-        description='Apply refinement with OH lines',
-        choices=[0, 1, 2]
+        description='Apply wavelength calibration refinement',
+        choices=[0, 1, 2, 11, 12]
     )
     minimum_slitlet_width_mm = Parameter(
         float(EMIR_MINIMUM_SLITLET_WIDTH_MM),
@@ -105,15 +103,15 @@ class StareSpectraWaveRecipe(EmirRecipe):
         self.logger.info('starting rect.+wavecal. reduction of stare spectra')
 
         self.logger.info(rinput.master_rectwv)
-        self.logger.info('Refinement with OH lines mode.....: {}'.format(
-            rinput.refine_with_oh_lines))
-        self.logger.info('Minimum slitlet width (mm)........: {}'.format(
+        self.logger.info('Wavelength calibration refinement mode: {}'.format(
+            rinput.refine_wavecalib_mode))
+        self.logger.info('Minimum slitlet width (mm)............: {}'.format(
             rinput.minimum_slitlet_width_mm))
-        self.logger.info('Maximum slitlet width (mm)........: {}'.format(
+        self.logger.info('Maximum slitlet width (mm)............: {}'.format(
             rinput.maximum_slitlet_width_mm))
-        self.logger.info('Global offset X direction (pixels): {}'.format(
+        self.logger.info('Global offset X direction (pixels)....: {}'.format(
             rinput.global_offset_x_pix))
-        self.logger.info('Global offset Y direction (pixels): {}'.format(
+        self.logger.info('Global offset Y direction (pixels)....: {}'.format(
             rinput.global_offset_y_pix))
 
         # build object to proceed with bpm, bias, dark and flat
@@ -148,27 +146,22 @@ class StareSpectraWaveRecipe(EmirRecipe):
                 rectwv_coeff
             )
 
-            # wavelength calibration refinement depends on refine_with_oh_lines
+            # wavelength calibration refinement
             # 0 -> no refinement
-            # 1 -> apply global offset to all the slitlets
-            # 2 -> apply individual offset to each slitlet
-            if rinput.refine_with_oh_lines != 0:
+            # 1 -> apply global offset to all the slitlets (using ARC lines)
+            # 2 -> apply individual offset to each slitlet (using ARC lines)
+            # 11 -> apply global offset to all the slitlets (using OH lines)
+            # 12 -> apply individual offset to each slitlet (using OH lines)
+            if rinput.refine_wavecalib_mode != 0:
                 self.logger.info('Refining wavelength calibration')
-                dumdata = pkgutil.get_data(
-                    'emirdrp.instrument.configs',
-                    'Oliva_etal_2013.dat'
-                )
-                oh_lines_tmpfile = StringIO(dumdata.decode('utf8'))
-                oh_lines_catalog = np.genfromtxt(oh_lines_tmpfile)
                 # refine RectWaveCoeff object
                 rectwv_coeff, expected_oh_lines = refine_rectwv_coeff(
                     stare_image,
                     rectwv_coeff,
-                    oh_lines_catalog,
-                    rinput.refine_with_oh_lines,
+                    rinput.refine_wavecalib_mode,
                     rinput.minimum_slitlet_width_mm,
                     rinput.maximum_slitlet_width_mm,
-                    debugplot=0
+                    debugplot=12
                 )
                 self.save_intermediate_img(expected_oh_lines,
                                            'expected_oh_lines.fits')

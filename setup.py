@@ -20,6 +20,7 @@ setup(name='pyemir',
           'emirdrp.instrument': ['image_*.txt', 'spectrum_*.txt'],
           'emirdrp.instrument.configs': [
               'Oliva_etal_2013.dat',
+              'lines_argon_neon_xenon_empirical.dat'
               'instrument-*.json',
               'component-*.json'
           ],

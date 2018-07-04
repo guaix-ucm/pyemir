@@ -24,6 +24,8 @@ from astropy.io import fits
 from copy import deepcopy
 import logging
 import numpy as np
+import pkgutil
+from six import StringIO
 
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
@@ -41,11 +43,15 @@ from emirdrp.processing.wavecal.median_slitlets_rectified \
 from emirdrp.core import EMIR_NBARS
 
 
-def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode,
+def refine_rectwv_coeff(input_image, rectwv_coeff,
+                        refine_wavecalib_mode,
                         minimum_slitlet_width_mm,
                         maximum_slitlet_width_mm,
                         debugplot=0):
     """Refine RectWaveCoeff object using a catalogue of lines
+
+    One and only one among refine_with_oh_lines_mode and
+    refine_with_arc_lines must be different from zero.
 
     Parameters
     ----------
@@ -54,13 +60,13 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode,
     rectwv_coeff : RectWaveCoeff instance
         Rectification and wavelength calibration coefficients for the
         particular CSU configuration.
-    catlines : numpy array
-        2D numpy array with the contents of the file with the table of
-        expected catalogued lines.
-    mode : int
-        Integer (from 0 to 2), indicating the type of refinement:
-        1 : apply the same global offset to all the slitlets
-        2 : apply individual offset to each individual slitlet
+    refine_wavecalib_mode : int
+        Integer, indicating the type of refinement:
+        0 : no refinement
+        1 : apply the same global offset to all the slitlets (using ARC lines)
+        2 : apply individual offset to each slitlet (using ARC lines)
+        11 : apply the same global offset to all the slitlets (using OH lines)
+        12 : apply individual offset to each slitlet (using OH lines)
     minimum_slitlet_width_mm : float
         Minimum slitlet width (mm) for a valid slitlet.
     maximum_slitlet_width_mm : float
@@ -83,8 +89,38 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode,
     logger = logging.getLogger(__name__)
 
     # protections
-    if mode not in [1, 2]:
-        raise ValueError('Invalid mode={}'.format(mode))
+    if refine_wavecalib_mode not in [1, 2, 11, 12]:
+        logger.error('Wavelength calibration refinemente mode={}'. format(
+            refine_wavecalib_mode
+        ))
+        raise ValueError("Invalid wavelength calibration refinement mode")
+
+    # read tabulated lines
+    if refine_wavecalib_mode in [1, 2]:        # ARC lines
+        dumdata = pkgutil.get_data(
+            'emirdrp.instrument.configs',
+            'lines_argon_neon_xenon_empirical.dat'
+        )
+        arc_lines_tmpfile = StringIO(dumdata.decode('utf8'))
+        catlines = np.genfromtxt(arc_lines_tmpfile)
+        # define wavelength and flux as separate arrays
+        catlines_all_wave = catlines[:, 0]
+        catlines_all_flux = catlines[:, 2]
+        mode = refine_wavecalib_mode
+    elif refine_wavecalib_mode in [11, 12]:    # OH lines
+        dumdata = pkgutil.get_data(
+            'emirdrp.instrument.configs',
+            'Oliva_etal_2013.dat'
+        )
+        oh_lines_tmpfile = StringIO(dumdata.decode('utf8'))
+        catlines = np.genfromtxt(oh_lines_tmpfile)
+        # ToDo: take into account which arc lamps have been used
+        # define wavelength and flux as separate arrays
+        catlines_all_wave = np.concatenate((catlines[:, 1], catlines[:, 0]))
+        catlines_all_flux = np.concatenate((catlines[:, 2], catlines[:, 2]))
+        mode = refine_wavecalib_mode - 10
+    else:
+        raise ValueError('Unexpected mode={}'.format(refine_wavecalib_mode))
 
     # initialize output
     refined_rectwv_coeff = deepcopy(rectwv_coeff)
@@ -114,15 +150,10 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode,
     wave_max = crval1 + (jmax + 1 - crpix1) * cdelt1
 
     # extract subset of catalogue lines within current wavelength range
-    lok1 = catlines[:, 1] >= wave_min
-    lok2 = catlines[:, 0] <= wave_max
-    catlines_reference = catlines[lok1*lok2]
-
-    # define wavelength and flux as separate arrays
-    catlines_reference_wave = np.concatenate(
-        (catlines_reference[:, 1], catlines_reference[:, 0]))
-    catlines_reference_flux = np.concatenate(
-        (catlines_reference[:, 2], catlines_reference[:, 2]))
+    lok1 = catlines_all_wave >= wave_min
+    lok2 = catlines_all_wave <= wave_max
+    catlines_reference_wave = catlines_all_wave[lok1*lok2]
+    catlines_reference_flux = catlines_all_flux[lok1*lok2]
     catlines_reference_flux /= catlines_reference_flux.max()
 
     # estimate sigma to broaden catalogue lines
@@ -247,10 +278,8 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode,
                       xlabel='slitlet number',
                       ylabel='offset (pixels)',
                       debugplot=debugplot)
-
     else:
-
-        raise ValueError('Invalide mode={}'.format(mode))
+        raise ValueError('Unexpected mode={}'.format(mode))
 
     # return result
     return refined_rectwv_coeff, \
