@@ -29,6 +29,7 @@ import sys
 
 from numina.array.display.matplotlib_qt import plt
 from numina.array.display.matplotlib_qt import patches as patches
+from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.processing.wavecal.set_wv_parameters import set_wv_parameters
@@ -209,10 +210,7 @@ def display_slitlet_arrangement(fileobj,
     # display slit arrangement
     if abs(debugplot) % 10 != 0:
         fig = plt.figure()
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        set_window_geometry(geometry)
         ax = fig.add_subplot(111)
         if bbox is None:
             if adjust:
@@ -295,10 +293,7 @@ def display_slitlet_histogram(csu_bar_slit_width,
     # display histogram
     if abs(debugplot) % 10 != 0:
         fig = plt.figure()
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        set_window_geometry(geometry)
         ax = fig.add_subplot(111)
         ax.hist(csu_bar_slit_width, bins=100)
         ax.set_xlabel('slit width (mm)')

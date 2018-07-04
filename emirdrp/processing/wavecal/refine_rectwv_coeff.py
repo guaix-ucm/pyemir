@@ -28,6 +28,7 @@ import numpy as np
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
 from numina.array.display.matplotlib_qt import plt
+from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.stats import summary
 from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
@@ -183,10 +184,8 @@ def refine_rectwv_coeff(input_image, rectwv_coeff, catlines, mode,
         ax = fig.add_subplot(111)
         ax.hist(sp_median, bins=1000)
         ax.axvline(float(baseline), linestyle='--', color='grey')
-        x_geom, y_geom, dx_geom, dy_geom = (0, 0, 640, 480)
-        mngr = plt.get_current_fig_manager()
-        if 'window' in dir(mngr):
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        geometry = (0, 0, 640, 480)
+        set_window_geometry(geometry)
         plt.show()
     # subtract baseline to sp_median (only pixels with signal above zero)
     lok = np.where(sp_median > 0)

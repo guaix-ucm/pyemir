@@ -33,6 +33,7 @@ import sys
 from uuid import uuid4
 
 from numina.array.ccd_line import SpectrumTrail
+from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 from emirdrp.core import EMIR_NBARS
@@ -1431,8 +1432,8 @@ def main(args=None):
 
     if args.debugplot % 10 != 0:
         fig = plt.figure()
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(0, 0, 640, 480)
+        geometry = (0, 0, 640, 480)
+        set_window_geometry(geometry)
         if args.background_image is not None:
             # read input FITS file
             hdulist = fits.open(args.background_image.name)
