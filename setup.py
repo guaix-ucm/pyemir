@@ -59,6 +59,8 @@ setup(name='pyemir',
                   'emirdrp.processing.wavecal.median_slitlets_rectified:main',
               'pyemir-merge_bounddict_files = ' +
                   'emirdrp.tools.merge_bounddict_files:main',
+              'pyemir-merge2images = ' +
+                  'emirdrp.tools.merge2images:main',
               'pyemir-rectwv_coeff_add_longslit_model = ' +
                   'emirdrp.processing.wavecal.rectwv_coeff_add_longslit_model:main',
               'pyemir-rect_wpoly_for_mos = ' +
