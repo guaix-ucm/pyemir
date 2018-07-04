@@ -32,14 +32,16 @@ from numina.array.display.ximplotxy import ximplotxy
 from numina.array.display.matplotlib_qt import plt
 from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.stats import summary
-from numina.array.wavecalib.fix_pix_borders import find_pix_borders
+from numina.array.wavecalib.check_wlcalib import check_wlcalib_sp
 from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
 from numina.array.wavecalib.crosscorrelation import periodic_corr1d
+from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.processing.wavecal.median_slitlets_rectified \
     import median_slitlets_rectified
 
+from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NBARS
 
 
@@ -105,7 +107,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         catlines = np.genfromtxt(arc_lines_tmpfile)
         # define wavelength and flux as separate arrays
         catlines_all_wave = catlines[:, 0]
-        catlines_all_flux = catlines[:, 2]
+        catlines_all_flux = catlines[:, 1]
         mode = refine_wavecalib_mode
     elif refine_wavecalib_mode in [11, 12]:    # OH lines
         dumdata = pkgutil.get_data(
@@ -244,18 +246,18 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
 
     elif mode == 2:
         # compute individual offset for each slitlet
-        median_image = median_slitlets_rectified(input_image, mode=1)
+        median_55sp = median_slitlets_rectified(input_image, mode=1)
         offset_array = np.zeros(EMIR_NBARS)
         xplot = []
         yplot = []
         for islitlet in range(1, EMIR_NBARS + 1):
             if islitlet not in missing_slitlets:
                 i = islitlet - 1
-                sp_median = median_image[0].data[i, :]
+                sp_median = median_55sp[0].data[i, :]
                 sp_median /= sp_median.max()
                 offset_array[i], fpeak = periodic_corr1d(
                     sp_reference=sp_reference,
-                    sp_offset=median_image[0].data[i, :],
+                    sp_offset=median_55sp[0].data[i, :],
                     fminmax=None,
                     debugplot=0
                 )
@@ -263,6 +265,18 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                 dumdict['wpoly_coeff'][0] -= offset_array[i]*cdelt1
                 xplot.append(islitlet)
                 yplot.append(offset_array[i])
+                # second correction
+                wpoly_coeff_refined = check_wlcalib_sp(
+                    sp=median_55sp[0].data[i, :],
+                    crpix1=crpix1,
+                    crval1=crval1-offset_array[i]*cdelt1,
+                    cdelt1=cdelt1,
+                    wv_master=catlines_reference_wave,
+                    coeff_ini=dumdict['wpoly_coeff'],
+                    naxis1_ini=EMIR_NAXIS1,
+                    debugplot=0
+                )
+                dumdict['wpoly_coeff'] = wpoly_coeff_refined
 
         # show offsets with opposite sign
         stat_summary = summary(-np.array(yplot))
