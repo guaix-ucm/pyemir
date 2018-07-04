@@ -47,11 +47,24 @@ class CSUConf(object):
     def __init__(self):
         self.name = 'CSU'
         self.conf_id = 'v1'
+        self.conf_f = 'UNKNOWN'
         self.slits = {}
         # Indices
         self.lbars = list(range(1, 55 + 1))
         self.rbars = [(i + 55) for i in self.lbars]
         self.bars = {}
+        # CSU is open if
+        self.L_LIMIT = 6
+        self.R_LIMIT = 2057
+
+    def is_open(self):
+        lopen = all(self.bars[barid].x2 <= self.L_LIMIT for barid in self.lbars)
+        ropen = all(self.bars[barid].x1 >= self.R_LIMIT for barid in self.rbars)
+
+        return lopen and ropen
+
+    def is_closed(self):
+        return not self.is_open()
 
 
 class TargetType(enum.Enum):
@@ -102,10 +115,11 @@ class CSUBarModel(object):
 
     def bbox(self):
         # origin is 1
-        return BoundingBox.from_coordinates(
-            x1=max(self.x1-1, 0), x2=max(self.x2-1, 0),
-            y1=max(self.y1-1, 0), y2=max(self.y2-1, 0)
-        )
+        x1 = max(self.x1 - 1, 0)
+        y1 = max(self.y1 - 1, 0)
+        x2 = max(self.x2 - 1, 0, x1)
+        y2 = max(self.y2 - 1, 0, y1)
+        return BoundingBox.from_coordinates(x1, x2, y1, y2)
 
 
 class CSUBarModelL(CSUBarModel):
@@ -282,19 +296,7 @@ class MaskCheckRecipe(EmirRecipe):
         frames = rinput.obresult.frames
 
         nframes = len(frames)
-        if nframes == 1:
-            slit_frames = frames
-            object_frames = frames
-            background_subs = False
-        elif nframes == 2:
-            slit_frames = frames[0:]
-            object_frames = frames
-            background_subs = True
-        elif nframes == 4:
-            slit_frames = frames[0::3]
-            object_frames = frames
-            background_subs = True
-        else:
+        if nframes not in [1, 2, 4]:
             raise ValueError("expected 1, 2 or 4 frames, got {}".format(nframes))
 
         interm = basic_processing_(frames, flow, self.datamodel)
@@ -332,16 +334,29 @@ class MaskCheckRecipe(EmirRecipe):
 
         self.logger.debug('center of rotation (from CRPIX) is %s', rotaxis)
 
-        csu_conf, slits_bb = self.compute_slits(hdulist_slit, rinput.bars_nominal_positions)
+        csu_conf = self.load_csu_conf(hdulist_slit, rinput.bars_nominal_positions)
 
-        image_sep = hdulist_object[0].data.astype('float32')
+        # IF CSU is completely open OR therea no refereces,
+        # this is not needed
+        csu_conf_open = True
+        if not csu_conf.is_open():
+            self.logger.info('CSU is configured, detecting slits')
+            slits_bb = self.compute_slits(hdulist_slit, csu_conf)
 
-        self.logger.debug('center of rotation (from CRPIX) is %s', rotaxis)
+            image_sep = hdulist_object[0].data.astype('float32')
 
-        offset, angle, qc = compute_off_rotation(image_sep, csu_conf, slits_bb,
-                                                 rotaxis=rotaxis, logger=self.logger,
-                                                 debug_plot=True, intermediate_results=True
-                                                 )
+            self.logger.debug('center of rotation (from CRPIX) is %s', rotaxis)
+
+            offset, angle, qc = compute_off_rotation(
+                image_sep, csu_conf, slits_bb,
+                rotaxis=rotaxis, logger=self.logger,
+                debug_plot=True, intermediate_results=True
+            )
+        else:
+            self.logger.info('CSU is open, not detecting slits')
+            offset = [0.0, 0.0]
+            angle = 0.0
+            qc = QC.GOOD
 
         # Convert mm to m
         offset_out = np.array(offset) / 1000.0
@@ -357,7 +372,7 @@ class MaskCheckRecipe(EmirRecipe):
 
         return result
 
-    def compute_slits(self, hdulist, bars_nominal_positions):
+    def load_csu_conf(self, hdulist, bars_nominal_positions):
         # Get slits
         hdr = hdulist[0].header
         # Extract DTU and CSU information from headers
@@ -380,26 +395,30 @@ class MaskCheckRecipe(EmirRecipe):
         csu_conf = read_csu_2(hdr, barmodel)
 
         if self.intermediate_results:
+            # FIXME: coordinates are in VIRT pixels
             self.logger.debug('create bar mask from predictions')
-            mask1 = np.ones_like(hdulist[0].data)
+            mask = np.ones_like(hdulist[0].data)
             for i in itertools.chain(csu_conf.lbars, csu_conf.rbars):
                 bar = csu_conf.bars[i]
-                mask1[bar.bbox().slice] = 0
-
-            self.save_intermediate_array(mask1, 'mask1.fits')
+                mask[bar.bbox().slice] = 0
+            self.save_intermediate_array(mask, 'mask_bars.fits')
 
             self.logger.debug('create slit mask from predictions')
-            mask1 = np.zeros_like(hdulist[0].data)
+            mask = np.zeros_like(hdulist[0].data)
             for slit in csu_conf.slits.values():
-                mask1[slit.bbox().slice] = slit.idx
-            self.save_intermediate_array(mask1, 'mask2.fits')
+                mask[slit.bbox().slice] = slit.idx
+            self.save_intermediate_array(mask, 'mask_slit.fits')
 
             self.logger.debug('create slit reference mask from predictions')
             mask1 = np.zeros_like(hdulist[0].data)
             for slit in csu_conf.slits.values():
                 if slit.target_type == TargetType.REFERENCE:
                     mask1[slit.bbox().slice] = slit.idx
-            self.save_intermediate_array(mask1, 'mask3.fits')
+            self.save_intermediate_array(mask1, 'mask_slit_ref.fits')
+
+        return csu_conf
+
+    def compute_slits(self, hdulist, csu_conf):
 
         self.logger.debug('finding borders of slits')
         self.logger.debug('not strictly necessary...')
@@ -504,8 +523,8 @@ class MaskCheckRecipe(EmirRecipe):
             slits_bb[lbarid] = cbb
             mask1[cbb.slice] = lbarid
 
-        self.save_intermediate_array(mask1, 'mask3.fits')
-        return csu_conf, slits_bb
+        self.save_intermediate_array(mask1, 'mask_slit_computed.fits')
+        return slits_bb
 
 
 def pix2virt(pos, origin=1):
@@ -641,7 +660,7 @@ def read_csu_2(hdr, barmodel):
     conf = CSUConf()
     conf.name = 'NAME'
     conf.conf_id = 'v1'
-
+    conf.conf_f = hdr.get('CSUCONFF', 'UNKNOWN')
     conf.bars = barmodel
     # Read CSUPOS and set position in model
     # The bars
