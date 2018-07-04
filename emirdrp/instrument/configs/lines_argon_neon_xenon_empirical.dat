@@ -1,327 +1,205 @@
-# Merge of lines_argon.dat, lines_neon.dat and lines_xenon.dat
+# Empirical line peaks (argon + neon + xenon)
 #------------------------------------------------------------------------------
-11180.59    1       0 # NeI 240000	
-#11292.19    0       0 # XeI from NIST (air 11289.10     10  XeI)
-#11312.66    0       0 # XeI from NIST (air 11309.56      5  XeI)
-11393.55    0       0 # NeI 21000	
-#11396.8207  0     515 # ArI from NIST ThArLampAtlas
-11412.26    0       0 # NeI 28000	
-#11418.17    0       0 # XeI from NIST (air 11415.04     15  XeI)
-11444.9647  0    1214 # ArI from NIST ThArLampAtlas
-11491.2540  1    3625 # ArI from NIST ThArLampAtlas
-#11494.37    0       0 # XeI from NIST (air 11491.22     15  XeI)
-11525.90    0       0 # NeI 90000	
-#11528.18    0       0 # NeI 22500	
-11539.50    0       0 # NeI 25000	
-11604.71    0       0 # NeI 7000	
-11617.26    0       0 # XeI from NIST (air 11614.08     25  XeI)
-11671.9043  1    4390 # ArI from NIST ThArLampAtlas
-11691.20    1       0 # NeI 8000	
-11722.6969  0     959 # ArI from NIST ThArLampAtlas
-11736.4426  0     520 # ArI from NIST ThArLampAtlas (weak)
-11745.45    0       0 # XeI from NIST (air 11742.236  1750  XeI)
-11770.01    1       0 # NeI 38000	
-11792.27    1       0 # NeI 12500	
-#11793.12    0       0 # NeI 2500	
-11796.79    0       0 # XeI from NIST (air 11793.56     10  XeI)
-11860.56    0       0 # XeI from NIST (air 11857.31      6  XeI)
-#11877.61    0       0 # XeI from NIST (air 11874.36      1  XeI)
-11887.7334  0     270 # ArI from NIST ThArLampAtlas (weak)
-11899.8895  0     128 # ArI from NIST ThArLampAtlas (weak)
-11915.36    0       0 # XeI from NIST (air 11912.10      2  XeI)
-###11946.5475  0     842 # ArI from NIST ThArLampAtlas (blended?)
-11946.7400  0     842 # ArI from NIST ThArLampAtlas (modified from residuals)
-11956.27    0       0 # XeI from NIST (air 11953.00      3  XeI)
-11988.19    1       0 # NeI 13000	
-12029.9409  0     561 # ArI from NIST ThArLampAtlas
-12069.64    1       0 # NeI 15000	
-12088.11    0       0 # XeI from NIST (air 12084.80      3  XeI)
-12115.6411  1    6805 # ArI from NIST ThArLampAtlas
-12143.0614  1    5284 # ArI from NIST ThArLampAtlas
-#12206.88    0       0 # XeI from NIST (air 12203.54      5  XeI)
-12238.59    1       0 # XeI from NIST (air 12235.24      5  XeI)
-#12261.35    0       0 # XeI from NIST (air 12257.81      1  XeI)
-#12276.24    0       0 # XeI from NIST (air 12272.88      2  XeI)
-12346.7711  1    3457 # ArI from NIST ThArLampAtlas
-12359.6736  0    1434 # ArI from NIST ThArLampAtlas (blended?)
-12406.2215  1   13700 # ArI from NIST ThArLampAtlas
-12412.50    0       0 # XeI from NIST (air 12409.10     20  XeI)
-#12422.7879  1     400 # ArI from NIST ThArLampAtlas (weak)
-12442.7260  1   19740 # ArI from NIST ThArLampAtlas
-12454.62    0       0 # XeI from NIST (air 12451.21      2  XeI)
-12459.5223  1   10040 # ArI from NIST ThArLampAtlas
-12462.80    0       0 # NeI 2000	
-#12490.15    0       0 # NeI from NIST (air 12486.7315    450  NeI)
-12491.0794  1   16100 # ArI from NIST ThArLampAtlas
-12557.7626  0     240 # ArI from NIST ThArLampAtlas
-12588.05    0       0 # NeI from NIST (air 12584.6021   1200  NeI)
-#12593.44    0       0 # XeI from NIST (air 12590.00     26  XeI)
-#12598.45    0       0 # NeI from NIST (air 12595.0049   1600  NeI)
-#12599.6556  0      96 # ArI from NIST ThArLampAtlas (weak)
-#12607.63    0       0 # NeI from NIST (air 12604.1773    550  NeI)
-12621.12    0       0 # NeI from NIST (air 12617.6692    150  NeI)
-12625.0717  0     301 # ArI from NIST ThArLampAtlas (weak)
-12626.85    0       0 # XeI from NIST (air 12623.40      5  XeI)
-#12641.9390  0     155 # ArI from NIST ThArLampAtlas (weak)
-#12643.78    0       0 # NeI 850	
-#12646.20    0       0 # NeI 1250	
-#12654.44    0       0 # NeI from NIST (air 12650.9824    330  NeI)
-#12661.81    0       0 # NeI from NIST (air 12658.3460    470  NeI)
-12687.00    0       0 # NeI 600	
-12692.67    0       0 # NeI 17000	
-12705.7571  1    9006 # ArI from NIST ThArLampAtlas
-12736.9011  1    2139 # ArI from NIST ThArLampAtlas
-12749.7187  1    1468 # ArI from NIST ThArLampAtlas
-12752.61    0       0 # NeI 1200	
-12773.02    0       0 # NeI 3000	
-12806.2419  1    9430 # ArI from NIST ThArLampAtlas
-12915.55    0       0 # NeI 25000	
-12936.7322  1    2388 # ArI from NIST ThArLampAtlas
-12960.2040  1   21310 # ArI from NIST ThArLampAtlas
-13011.8219  1    7495 # ArI from NIST ThArLampAtlas
-#13031.9892  0     254 # ArI from NIST ThArLampAtlas (weak)
-13217.6071  1    8620 # ArI from NIST ThArLampAtlas
-#13222.86    0       0 # NeI 12000  (Too faint!)
-###13231.7238  1    7418 # ArI from NIST ThArLampAtlas (blended?)
-13232.2500  1    7418 # ArI from NIST ThArLampAtlas (modified from residuals)
-13276.2661  1   22360 # ArI from NIST ThArLampAtlas
-#13305.95    0       0 # ArI vacuum
-13316.8510  1   15430 # ArI from NIST ThArLampAtlas
-#13333.76    0       0 # ArI vacuum
-13370.7674  1   27950 # ArI from NIST ThArLampAtlas
-13410.26    0       0 # ArI vacuum
-13507.88    0       0 # ArI vacuum
-#13546.86    0       0 # XeI vacuum
-13547.9052  1     767 # ArI from NIST ThArLampAtlas
-13577.3281  1    1203 # ArI from NIST ThArLampAtlas
-13603.0526  1    2234 # ArI from NIST ThArLampAtlas
-13626.3846  1   16640 # ArI from NIST ThArLampAtlas
-#13660.79    0       0 # XeI vacuum
-13682.2906  1   11590 # ArI from NIST ThArLampAtlas
-13722.3278  1   51650 # ArI from NIST ThArLampAtlas
+11393.55 1314.76904296875
+11412.26 1512.735107421875
+11444.9647 1679.508056640625
+11491.254 6868.74560546875
+11525.9 16949.931640625
+11539.5 7871.0693359375
+11604.71 6877.63671875
+11617.26 30981.11328125
+11671.9043 46072.32421875
+11691.2 18288.361328125
+11722.6969 16353.6611328125
+11736.4426 8344.841796875
+11745.45 21576.54296875
+11770.01 82313.1953125
+11792.27 43472.75
+11796.79  8092.0
+11860.56 8099.119140625
+11887.7334 6227.900390625
+11899.8895 5726.8076171875
+11915.36 4102.52734375
+11946.74 19424.6796875
+11956.27 5418.6904296875
+11988.19 57980.28515625
+12029.9409 12537.212890625
+12069.64 69720.4375
+12088.11 6952.63916015625
+12115.6411 172553.59375
+12143.0614 94020.15625
+12238.59 11127.208984375
+12346.7711 82961.59375
+12359.6736 25466.35546875
+12406.2215 279045.5
+12442.726 443938.5
+12459.5223 180958.984375
+12491.0794 382939.46875
+12557.7626 8036.20947265625
+12626.85 103293.390625
+12687.0 5390.49853515625
+12692.67 23879.255859375
+12705.7571 165521.875
+12736.9011 51352.9375
+12749.7187 35081.515625
+12773.02 7544.115234375
+12806.2419 204005.21875
+12915.55 30241.38671875
+12936.7322 84579.9140625
+12960.2040 400000.0
+13011.8219 168311.328125
+13217.6071 218573.625
+13232.25 150813.078125
+13276.2661 237633.78125
+13316.851 109278.375
+13370.7674 97352.578125
+13410.26 7780.71435546875
+13507.88 21647.58984375
+13547.9052 1464.8203125
+13577.3281 1316.606201171875
+13603.0526 1129.7855224609375
+13626.3846 2435.130859375
+13682.2906 958.5240478515625
+13722.3278 2261.73046875
 #------------------------------------------------------------------------------
-14600.4637  0   30800 # ArI from NIST ThArLampAtlas
-14638.4146  0   55000 # ArI from NIST ThArLampAtlas
-14654.3531  0   59000 # ArI from NIST ThArLampAtlas
-14697.0258  0   13500 # ArI from NIST ThArLampAtlas
-14736.8369  1       0 # XeI from NIST (air 14732.81      200  XeI)
-14743.1673  0     366 # ArI from NIST ThArLampAtlas
-14790.1040  0    3320 # ArI from NIST ThArLampAtlas
-14837.5327  0     440 # ArI from NIST ThArLampAtlas
-14854.0588  0      20 # XeI from NIST (air 14850.0        20  XeI)
-14881.0296  0       0 # Average of next two lines
-#14880.5730  0     880 # ArI from NIST ThArLampAtlas
-#14881.4862  0       0 # ArI from NIST (air 14877.420       0  ArI)
-#14902.205   0     310 # ArI from NIST ThArLampAtlas
-14933.8866  0     110 # NeI from NIST (air 14929.8061    110  NeI)
-14971.0460  0     550 # ArI from NIST ThArLampAtlas
-14978.662   0     270 # ArI from NIST ThArLampAtlas
-14990.4151  0     530 # NeI from NIST (air 14986.3193    530  NeI)
-15034.6220  0     130 # ArI from NIST ThArLampAtlas
-15050.6179  1    6460 # ArI from NIST ThArLampAtlas
-15078.2885  0     140 # NeI from NIST (air 15074.1688    140  NeI)
-15089.4331  0      94 # NeI from NIST (air 15085.3103     94  NeI)
-15103.8267  0     100 # XeI from NIST (air 15099.7       100  XeI)
-15144.24    0       0 # NeI 650
-15176.8355  1    1719 # ArI from NIST ThArLampAtlas
-15195.08    0       0 # NeI 750
-15234.88    1       0 # NeI from NIST (air 15230.7144   5300  NeI)
-15306.0653  1    2310 # ArI from NIST ThArLampAtlas
-15333.5353  1     731 # ArI from NIST ThArLampAtlas
-#15352.39    0       0 # NeI from NIST (air 15348.191     160  NeI)
-#..............................................................................
-15353.4412  1     487 # ArI from NIST ThArLampAtlas
-15357.3219  0     286 # ArI from NIST ThArLampAtlas
-#..............................................................................
-15374.28    0       0 # NeI from NIST (air 15370.079      74  NeI)
-15394.24    0       0 # NeI from NIST (air 15390.030      17  NeI)
-15406.8529  0     495 # ArI from NIST ThArLampAtlas
-15411.81    0       0 # NeI from NIST (air 15407.595     250  NeI)
-15422.61    1       0 # XeI from NIST (air 15418.40    110  XeI)
-#15450.9538  0      31 # ArI form NIST ThArLampAtlas (weak)
-15455.45    0       0 # NeI from NIST (air 15451.231     110  NeI)
-15470.45    0       0 # NeI from NIST (air 15466.227      25  NeI)
-15495.20    0       0 # XeI from NIST (air 15490.97     45  XeI)
-15503.72    0       0 # NeI from NIST (air 15499.485      23  NeI)
-#..............................................................................
-#15559.7122  1      29 # ArI from NIST ThArLampAtlas (weak)
-#15561.37    0       0 # XeI from NIST (air 15557.12    150  XeI)
-15560.5411  0       0 # ArI + XeI, average of previous two lines
-#..............................................................................
-15608.48    0       0 # NeI from NIST (air 15604.215      65  NeI)
-15739.2066  0      47 # ArI from NIST ThArLampAtlas (weak)
-15780.9219  0      13 # ArI from NIST ThArLampAtlas
-15797.4668  0      22 # ArI from NIST ThArLampAtlas (weak)
-15821.0956  0      69 # ArI from NIST ThArLampAtlas
-15887.5057  0     130 # ArI from NIST ThArLampAtlas
-15904.0309  1     658 # ArI from NIST ThArLampAtlas
-15983.90    0       0 # XeI from NIST (air 15979.53    250  XeI)
-15993.8589  1    1816 # ArI from NIST ThArLampAtlas
-16027.15    0       0 # NeI from NIST (air 16022.771     130  NeI)
-#16044.28    0       0  # XeI vacuum
-16057.68    1       0 # XeI from NIST (air 16053.29     50  XeI)
-#16102.88    0       0 # NeI from NIST (air 16098.485      47  NeI)
-16127.0630  1     165 # ArI from NIST ThArLampAtlas
-16184.4406  1     293 # ArI from NIST ThArLampAtlas
-16268.5110  0      59 # ArI from NIST ThArLampAtlas
-16271.05    0       0 # NeI from NIST (average of air 16264.248+16268.956 NeI)
-16351.39    0       0 # NeI from NIST (air 16346.923      40  NeI)
-16409.74    0       0 # NeI from NIST (air 16405.256     150  NeI)
-16428.15    0       0 # NeI from NIST (air 16423.662      15  NeI)
-16441.0689  1     984 # ArI from NIST ThArLampAtlas
-16479.25    0       0 # NeI from NIST (air 16474.754      81  NeI)
-16524.3783  1    1636 # ArI from NIST ThArLampAtlas
-16532.60    0       0 # NeI from NIST (air 16528.086      34  NeI)
-16553.7824  1     492 # ArI from NIST ThArLampAtlas
-16559.01    0       0 # XeI from NIST (air 16554.49    125  XeI)
-#16596.04    0       0 # NeI from NIST (air 16591.510      34  NeI)
-#16613.98    0       0 # NeI from NIST (air 16609.440      89  NeI)
-16638.60    0       0 # NeI from NIST (air 16634.052      35  NeI)
-#16671.66    0       0 # NeI from NIST (air 16667.111      16  NeI)
-16732.73    1       0 # XeI from NIST (air 16728.16   5000  XeI)
-16744.6481  1     663 # ArI from NIST ThArLampAtlas
-#16793.38    0       0 # NeI from NIST (air 16788.793      54  NeI)
-#16839.15    0       0 # XeI from NIST (air 16834.55     15  XeI)
-16866.26    0       0 # NeI from NIST (air 16861.650      37  NeI)
-16887.68    0       0 # XeI from NIST (air 16883.07     38  XeI)
-16914.68    0       0 # NeI from NIST (air 16910.058      11  NeI)
-16945.2121  1   13560 # ArI from NIST ThArLampAtlas
-#16988.61    0       0 # NeI from NIST (air 16983.974      67  NeI)
-#17145.29    0       0 # XeI from NIST (air 17140.61      5  XeI)
-17166.62    1       0 # NeI from NIST (air 17161.929    1800  NeI)
-17330.50    1       0 # XeI from NIST (air 17325.77   1650  XeI)
-17369.83    0       0 # XeI from NIST (air 17365.09     22  XeI)
-17406.6540  0      88 # ArI from NIST ThArLampAtlas
-17449.6662  1     734 # ArI from NIST ThArLampAtlas
-17487.68    0       0 # XeI from NIST (air 17482.90     42  XeI)
-17828.8578  0       0 # ArI from NIST (air 17823.99      0  ArI)
-###missing 17829.53
-#17892.0671  0      70 # ArI from NIST ThArLampAtlas
-17919.6186  1    3393 # ArI from NIST ThArLampAtlas
-#18040.74    0       0 # NeI from NIST (air 18035.811    1900  NeI)
-18088.12    0       0 # NeI from NIST (air 18083.179    4500  NeI)
-#18226.06    0       0 # NeI from NIST (air 18221.087    1600  NeI)
-18281.63    0       0 # NeI from NIST (air 18276.6415  14000  NeI)
-#18287.61    0       0 # NeI 5850	
-#18308.97    0       0 # NeI 4660	
-#18364.11    0       0 # NeI 1390	
-#18376.46    0       0 # NeI 7420	
-#18389.85    0       0 # NeI 4730	
-#18394.96    0       0 # NeI from NIST (air 18389.9366   8600  NeI)
-#18407.86    0       0 # NeI 3350	
-#18427.43    0       0 # NeI 6550	
-#18434.4786  0     368 # ArI from NIST ThArLampAtlas
-#18463.68    0       0 # NeI 2800	
-#18480.84    0       0 # NeI 8100	
-#18491.7613  0      49 # ArI from NIST ThArLampAtlas
-#18575.2348  0     117 # ArI from NIST ThArLampAtlas
-#18596.62    0       0 # NeI from NIST (air 18591.541    6900  NeI)
-#18602.78    0       0 # NeI from NIST (air 18597.701    9500  NeI)
-#18637.3678  0     114 # ArI from NIST ThArLampAtlas
-#18687.34    0       0 # NeI 400	
-#18750.1178  0      59 # ArI from NIST ThArLampAtlas
-#18942.72    0       0 # NeI 320	
+14600.4637 1297.0205078125
+14638.4146 3710.49658203125
+14654.3531 4688.537109375
+14697.0258 2586.9931640625
+14736.8369 77560.015625
+14790.104 2928.2744140625
+14837.5327 1825.5294189453125
+14854.0588 1914.36962890625
+14881.0296 2184.5576171875
+14933.8866 2132.24658203125
+14971.046 2207.5517578125
+14978.662 2313.261962890625
+14990.4151 4294.748046875
+15034.622 9467.96875
+15050.6179 248752.125
+15078.2885 3583.66650390625
+15089.4331 3094.19091796875
+15103.8267 4555.88671875
+15144.24 4361.82421875
+15176.8355 71544.5546875
+15195.08 4919.71826171875
+15234.88 78524.46875
+15306.0653 84651.453125
+15333.5353 46327.484375
+15353.4412 22476.337890625
+15374.28 3236.86572265625
+15406.8529 19770.78125
+15422.61 116169.921875
+15470.45 2890.81982421875
+15495.2 3544.042724609375
+15503.72 2885.1025390625
+15560.5411 6993.123046875
+15608.48 2948.916015625
+15739.2066 4670.83935546875
+15780.9219 3310.47216796875
+15797.4668 3241.23095703125
+15821.0956 4739.845703125
+15887.5057 8805.9765625
+15904.0309 25219.16796875
+15983.9 10021.984375
+15993.8589 87892.078125
+16027.15 2561.25634765625
+16057.68 40021.109375
+16127.063 12079.73046875
+16184.4406 16205.4150390625
+16268.511 3727.671875
+16351.39 1529.82861328125
+16409.74 2064.23095703125
+16441.0689 29141.30859375
+16479.25 1710.0107421875
+16524.3783 75045.9375
+16553.7824 14008.544921875
+16638.6 1245.8299560546875
+16732.73 56945.296875
+16744.6481 24877.6328125
+16866.26 1736.127197265625
+16887.68 1699.8148193359375
+16945.2121 447002.9375
+17166.62 8319.7958984375
+17330.5 29571.923828125
+17369.83 1634.1273193359375
+17406.654 2221.950927734375
+17449.6662 27234.37890625
+17487.68 1709.381591796875
+17828.8578 766.24609375
+17919.6186 4418.087890625
+18088.12 339.90142822265625
+18281.63 115.92942810058594
 #------------------------------------------------------------------------------
-#19579.09    0       0 # NeI from NIST (air 19573.75      260  NeI)
-19582.455   0       0 # NeI from NIST (air 19577.110     790  NeI)
-19777.86    0       0 # NeI 200	
-19822.9091  1     732 # ArI from NIST ThArLampAtlas
-19950.5093  0      96 # ArI from NIST ThArLampAtlas
-19971.1802  1     436 # ArI from NIST ThArLampAtlas
-19997.689   0     330 # ArI from NIST ThArLampAtlas
-20031.1309  0     114 # ArI from NIST ThArLampAtlas
-20035.5675  0      46 # ArI from NIST ThArLampAtlas
-20074.4052  0      59 # ArI from NIST ThArLampAtlas
-20192.70    0      80 # XeI form NIST (vacuum)
-20267.78    1    2300 # XeI from NIST (vacuum)
-20322.5535  1     303 # ArI from NIST ThArLampAtlas
-20355.771   1     630 # NeI from NIST (vacuum)
-#20359.40    0       0 # NeI 360 (faint)
-20421.587   0      37 # NeI from NIST (vacuum)
-20574.4263  0      76 # ArI from NIST ThArLampAtlas
-20599.07    0      11 # XeI from NIST (vacuum)
-20621.8566  1    2952 # ArI form NIST ThArLampAtlas
-20652.7624  1     216 # ArI from NIST ThArLampAtlas
-20721.8468  0     500 # ArI from NIST ThArLampAtlas
-20739.2201  0     128 # ArI from NIST ThArLampAtlas
-20816.7131  0     136 # ArI form NIST ThArLampAtlas
-20847.438   0      18 # ArII form NIST (vacuum)
-#20854.446   0      11 # NeI from NIST (vacuum) (faint)
-20857.615   0       6 # XeI from NIST (vacuum)
-20910.236   0      29 # NeI from NIST (vacuum)
-20991.8387  1    1521 # ArI form NIST ThArLampAtlas
-#21041.5644  0      26 # ArI from NIST ThArLampAtlas (weak)
-21047.013   1    2700 # NeI from NIST (vacuum)
-21225.461   0       4 # ArII from NIST (vacuum)
-21338.7089  1     166 # ArI form NIST ThArLampAtlas
-21378.892   0      26 # XeI from NIST (vacuum)
-21420.94    0       0 # NeI 280	
-21427.88    0       0 # NeI 280	
-21475.961   1     140 # XeI from NIST (vacuum)
-21509.615   0      90 # NeI from NIST (vacuum)
-21540.0839  1     837 # ArI from NIST ThArLampAtlas
-21584.087   0       0 # NeI from NIST (vacuum: average of 21582.413+21585.760)
-21675.908   0     100 # ArI from NIST ThArLampAtlas
-21714.039   1    2900 # NeI from NIST (vacuum)
-22045.5774  1     217 # ArI from NIST ThArLampAtlas
-22083.2076  1     888 # ArI from NIST ThArLampAtlas
-22118.6524  0      70 # ArI from NIST ThArLampAtlas
-22177.292   0      78 # NeI from NIST (vacuum)
-22253.432   1    1300 # NeI from NIST (vacuum)
-22275.91    0      60 # XeI from NIST (vacuum)
-22392.49    0      40 # XeI from NIST (vacuum)
-22412.93    0      75 # XeI from NIST (vacuum)
-22434.265   1    1300 # NeI from NIST (vacuum)
-22472.920   0     540 # NeI from NIST (vacuum)
-22536.528   1    8500 # NeI from NIST (vacuum)
-#22539.7370  0       8 # ArI from NIST ThArLampAtlas (faint)
-22624.44    0      90 # XeI from NIST (vacuum)
-22667.971   0    1300 # NeI from NIST (vacuum)
-22693.96    0       0 # NeI 370	
-22884.10    0       0 # XeI vacuum
-#22971.03    0      40 # XeI from NIST (vacuum) (faint)
-#23079.76    0      45 # XeI from NIST (vacuum) (faint)
-23106.784   1    2500 # NeI from NIST (vacuum)
-23139.5178  1     796 # ArI from NIST ThArLampAtlas
-23199.67    1      10 # XeI from NIST (vacuum)
-#23259.11    0      35 # XeI from NIST (vacuum) (faint)
-23266.619   1    3800 # NeI from NIST (vacuum)
-23285.90    0     110 # XeI from NIST (vacuum)
-23379.343   1    5000 # NeI from NIST (vacuum)
-23571.764   1    3400 # NeI from NIST (vacuum)
-23642.934   1   17000 # NeI from NIST (vacuum)
-23708.13    0       0 # NeI 2520	
-23715.599   1    5900 # NeI from NIST (vacuum)
-23803.000   0      60 # XeI from NIST (vacuum)
-23851.5370  1    1349 # ArI from NIST ThArLampAtlas
-23918.54    0       0 # NeI 525	
-23957.93    1       0 # NeI 37000	
-#23962.964   0    4600 # NeI from NIST (vacuum) (faint)
-23973.0588  1     891 # ArI from NIST ThArLampAtlas
-#23978.37    0       0 # NeI 730 (faint)
-23984.701   1    6000 # NeI from NIST (vacuum)
-24105.15    0       0 # NeI 1220	
-#24156.49    0       0 # NeI 400 (faint)
-24168.03    0       0 # NeI 2250	
-24225.54    0       0 # NeI 350	
-24256.22    0       0 # NeI 6000	
-#24316.42    0       0 # NeI 350	
-24371.66    0       0 # NeI 10500	
-24378.26    0       0 # NeI 4890	
-24390.01    0       0 # NeI 370	
-24454.53    0       0 # NeI 2900	
-#24459.78    0       0 # NeI 630 (faint)
-24466.07    0       0 # NeI 5620	
-#24471.61    0       0 # NeI 630 (faint)
-#24532.50    0       0 # NeI 370 (faint)
-#24783.25    0       0 # NeI 2360 (faint)
-24832.2     0      20 # XeI from NIST (vacuum)
-24910.52    0       0 # NeI 880	
-24935.70    0       0 # NeI 2520	
-25006.63    0       0 # NeI 200	
-25168.57    0       0 # NeI 2200	
-25234.82    0       0 # NeI 600	
-25284.13    0       0 # NeI 430	
-25400.12    0       0 # NeI 750	
-25531.30    0       0 # NeI 8650	
-25794.01    0       0 # NeI 330
+19582.455 5242.1494140625
+19777.86 1000.528076171875
+19822.9091 24044.494140625
+19950.5093 4178.4189453125
+19971.1802 25030.00390625
+19997.689 1283.365234375
+20031.1309 5332.83251953125
+20074.4052 2768.990234375
+20192.7 4475.7236328125
+20267.78 113115.3125
+20322.5535 14213.5244140625
+20355.771 7436.6376953125
+20421.587 1552.64501953125
+20574.4263 4213.1201171875
+20599.07 2214.0390625
+20621.8566 171559.3125
+20652.7624 8981.36328125
+20721.8468 2180.44970703125
+20739.2201 6910.7353515625
+20816.7131 6060.25390625
+20857.615 1835.199951171875
+20910.236 1782.536376953125
+20991.8387 97099.4140625
+21047.013 15520.65234375
+21225.461 1552.9317626953125
+21338.7089 7641.1376953125
+21378.892 2286.693359375
+21427.88 1158.245849609375
+21475.961 12670.126953125
+21509.615 1427.8223876953125
+21540.0839 28808.3046875
+21584.087 1229.294921875
+21675.908 1312.251220703125
+21714.039 19649.56640625
+22045.5774 11424.041015625
+22083.2076 39883.28125
+22118.6524 2346.24072265625
+22177.292 1376.0980224609375
+22253.432 6515.56005859375
+22275.91 1208.981201171875
+22392.49 1073.08447265625
+22412.93 1521.0361328125
+22434.265 4422.1630859375
+22472.92 2192.2392578125
+22536.528 16980.748046875
+22624.44 1026.1181640625
+22667.971 2640.18798828125
+22693.96 1073.103271484375
+22884.1 1311.3580322265625
+23106.784 6715.51953125
+23139.5178 11410.580078125
+23199.67 13778.2841796875
+23266.619 6975.552734375
+23285.9 1662.238037109375
+23379.343 12018.255859375
+23571.764 6216.7216796875
+23642.934 27648.177734375
+23715.599 9328.962890625
+23803.0 1380.9501953125
+23851.537 8029.6591796875
+23918.54 1274.8271484375
+23957.93 18161.12890625
+23973.0588 7081.2421875
+23984.701 6587.46826171875
+24105.15 1485.71240234375
+24168.03 1419.4622802734375
+24225.54 503.4232177734375
+24256.22 1534.16357421875
+24371.66 1084.1025390625
+24454.53 200.70578002929688
+24466.07 246.33973693847656
+24832.2 40.75381851196289
