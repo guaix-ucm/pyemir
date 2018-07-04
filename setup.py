@@ -20,8 +20,8 @@ setup(name='pyemir',
           'emirdrp.instrument': ['image_*.txt', 'spectrum_*.txt'],
           'emirdrp.instrument.configs': [
               'Oliva_etal_2013.dat',
-              'instrument-225fcaf2-7f6f-49cc-972a-70fd0aee8e96.json',
-              'component-1ac26dff-4c3f-43d8-a069-7470357120d6.json'
+              'instrument-*.json',
+              'component-*.json'
           ],
           'emirdrp': ['drp.yaml'],
       },
