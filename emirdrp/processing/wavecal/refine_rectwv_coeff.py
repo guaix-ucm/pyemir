@@ -40,6 +40,7 @@ from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.processing.wavecal.median_slitlets_rectified \
     import median_slitlets_rectified
+from emirdrp.processing.wavecal.set_wv_parameters import set_wv_parameters
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NBARS
@@ -49,6 +50,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                         refine_wavecalib_mode,
                         minimum_slitlet_width_mm,
                         maximum_slitlet_width_mm,
+                        save_intermediate_results=False,
                         debugplot=0):
     """Refine RectWaveCoeff object using a catalogue of lines
 
@@ -73,6 +75,8 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         Minimum slitlet width (mm) for a valid slitlet.
     maximum_slitlet_width_mm : float
         Maximum slitlet width (mm) for a valid slitlet.
+    save_intermediate_results : bool
+        If True, save plots in PDF files
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -90,6 +94,17 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
 
     logger = logging.getLogger(__name__)
 
+    if save_intermediate_results:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pdf = PdfPages('crosscorrelation.pdf')
+    else:
+        pdf = None
+
+    # image header
+    main_header = input_image[0].header
+    filter_name = main_header['filter']
+    grism_name = main_header['grism']
+
     # protections
     if refine_wavecalib_mode not in [1, 2, 11, 12]:
         logger.error('Wavelength calibration refinemente mode={}'. format(
@@ -99,10 +114,11 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
 
     # read tabulated lines
     if refine_wavecalib_mode in [1, 2]:        # ARC lines
-        dumdata = pkgutil.get_data(
-            'emirdrp.instrument.configs',
-            'lines_argon_neon_xenon_empirical.dat'
-        )
+        if grism_name == 'LR':
+            catlines_file = 'lines_argon_neon_xenon_empirical_LR.dat'
+        else:
+            catlines_file = 'lines_argon_neon_xenon_empirical.dat'
+        dumdata = pkgutil.get_data('emirdrp.instrument.configs',catlines_file)
         arc_lines_tmpfile = StringIO(dumdata.decode('utf8'))
         catlines = np.genfromtxt(arc_lines_tmpfile)
         # define wavelength and flux as separate arrays
@@ -137,9 +153,6 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     )[0].data
     sp_median /= sp_median.max()
 
-    # image header
-    main_header = input_image[0].header
-
     # determine minimum and maximum useful wavelength
     jmin, jmax = find_pix_borders(sp_median, 0)
     naxis1 = main_header['naxis1']
@@ -148,8 +161,15 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     crval1 = main_header['crval1']
     cdelt1 = main_header['cdelt1']
     xwave = crval1 + (np.arange(naxis1) + 1.0 - crpix1) * cdelt1
-    wave_min = crval1 + (jmin + 1 - crpix1) * cdelt1
-    wave_max = crval1 + (jmax + 1 - crpix1) * cdelt1
+    if grism_name == 'LR':
+        wv_parameters = set_wv_parameters(filter_name, grism_name)
+        wave_min = wv_parameters['wvmin_useful']
+        wave_max = wv_parameters['wvmax_useful']
+    else:
+        wave_min = crval1 + (jmin + 1 - crpix1) * cdelt1
+        wave_max = crval1 + (jmax + 1 - crpix1) * cdelt1
+    logger.info('Setting wave_min to {}'.format(wave_min))
+    logger.info('Setting wave_max to {}'.format(wave_max))
 
     # extract subset of catalogue lines within current wavelength range
     lok1 = catlines_all_wave >= wave_min
@@ -196,7 +216,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     expected_cat_image = fits.HDUList([hdu])
 
     if abs(debugplot) % 10 != 0:
-        ax = ximplotxy(xwave, sp_median, 'C0-',
+        ax = ximplotxy(xwave, sp_median, 'C1-',
                        xlabel='Wavelength (Angstroms, in vacuum)',
                        ylabel='Normalized number of counts',
                        label='observed spectrum', show=False)
@@ -204,22 +224,29 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         ax.stem(catlines_reference_wave, catlines_reference_flux, 'C4-',
                 markerfmt=' ', basefmt='C4-', label='tabulated lines')
         # overplot convolved reference lines
-        ax.plot(xwave_reference, sp_reference, 'C1-',
+        ax.plot(xwave_reference, sp_reference, 'C0-',
                 label='expected spectrum')
-
         ax.legend()
-        pause_debugplot(debugplot=debugplot, pltshow=True)
+        if pdf is not None:
+            pdf.savefig()
+        else:
+            pause_debugplot(debugplot=debugplot, pltshow=True)
 
     # compute baseline signal in sp_median
     baseline = np.percentile(sp_median[sp_median > 0], q=10)
     if abs(debugplot) % 10 != 0:
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.hist(sp_median, bins=1000)
+        ax.hist(sp_median, bins=1000, log=True)
+        ax.set_xlabel('Normalized number of counts')
+        ax.set_ylabel('Number of pixels')
         ax.axvline(float(baseline), linestyle='--', color='grey')
-        geometry = (0, 0, 640, 480)
-        set_window_geometry(geometry)
-        plt.show()
+        if pdf is not None:
+            pdf.savefig()
+        else:
+            geometry = (0, 0, 640, 480)
+            set_window_geometry(geometry)
+            plt.show()
     # subtract baseline to sp_median (only pixels with signal above zero)
     lok = np.where(sp_median > 0)
     sp_median[lok] -= baseline
@@ -230,6 +257,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         sp_reference=sp_reference,
         sp_offset=sp_median,
         fminmax=None,
+        pdf=pdf,
         debugplot=debugplot
     )
     logger.info('Global offset: {} pixels'.format(-offset))
@@ -302,9 +330,17 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                       linestyle='', marker='o', color='C0',
                       xlabel='slitlet number',
                       ylabel='offset (pixels)',
-                      debugplot=debugplot)
+                      show=False)
+            if pdf is not None:
+                pdf.savefig()
+            else:
+                pause_debugplot(debugplot=debugplot, pltshow=True)
     else:
         raise ValueError('Unexpected mode={}'.format(mode))
+
+    # close output PDF file
+    if pdf is not None:
+        pdf.close()
 
     # return result
     return refined_rectwv_coeff, \

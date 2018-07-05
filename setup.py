@@ -21,6 +21,7 @@ setup(name='pyemir',
           'emirdrp.instrument.configs': [
               'Oliva_etal_2013.dat',
               'lines_argon_neon_xenon_empirical.dat',
+              'lines_argon_neon_xenon_empirical_LR.dat',
               'instrument-*.json',
               'component-*.json'
           ],

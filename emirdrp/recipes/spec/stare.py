@@ -153,7 +153,10 @@ class StareSpectraWaveRecipe(EmirRecipe):
             # 11 -> apply global offset to all the slitlets (using OH lines)
             # 12 -> apply individual offset to each slitlet (using OH lines)
             if rinput.refine_wavecalib_mode != 0:
-                self.logger.info('Refining wavelength calibration')
+                self.logger.info(
+                    'Refining wavelength calibration (mode={})'.format(
+                        rinput.refine_wavecalib_mode
+                    ))
                 # refine RectWaveCoeff object
                 rectwv_coeff, expected_catalog_lines = refine_rectwv_coeff(
                     stare_image,
@@ -161,6 +164,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
                     rinput.refine_wavecalib_mode,
                     rinput.minimum_slitlet_width_mm,
                     rinput.maximum_slitlet_width_mm,
+                    save_intermediate_results=self.intermediate_results,
                     debugplot=12
                 )
                 self.save_intermediate_img(expected_catalog_lines,
