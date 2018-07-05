@@ -155,7 +155,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
             if rinput.refine_wavecalib_mode != 0:
                 self.logger.info('Refining wavelength calibration')
                 # refine RectWaveCoeff object
-                rectwv_coeff, expected_oh_lines = refine_rectwv_coeff(
+                rectwv_coeff, expected_catalog_lines = refine_rectwv_coeff(
                     stare_image,
                     rectwv_coeff,
                     rinput.refine_wavecalib_mode,
@@ -163,8 +163,8 @@ class StareSpectraWaveRecipe(EmirRecipe):
                     rinput.maximum_slitlet_width_mm,
                     debugplot=12
                 )
-                self.save_intermediate_img(expected_oh_lines,
-                                           'expected_oh_lines.fits')
+                self.save_intermediate_img(expected_catalog_lines,
+                                           'expected_catalog_lines.fits')
                 # re-apply rectification and wavelength calibration
                 stare_image = apply_rectwv_coeff(
                     reduced_image,
