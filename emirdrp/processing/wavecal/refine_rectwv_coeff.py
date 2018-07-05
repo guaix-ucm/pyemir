@@ -84,7 +84,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         Refined rectification and wavelength calibration coefficients
         for the particular CSU configuration.
     expected_cat_image : HDUList object
-        Output 2D image with the expected catalogue lines.
+        Output 2D image with the expected catalogued lines.
 
     """
 
@@ -250,6 +250,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         offset_array = np.zeros(EMIR_NBARS)
         xplot = []
         yplot = []
+        cout = '0'
         for islitlet in range(1, EMIR_NBARS + 1):
             if islitlet not in missing_slitlets:
                 i = islitlet - 1
@@ -277,6 +278,16 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                     debugplot=0
                 )
                 dumdict['wpoly_coeff'] = wpoly_coeff_refined
+                cout += '.'
+
+            else:
+                cout += 'i'
+
+            if islitlet % 10 == 0:
+                if cout != 'i':
+                    cout = str(islitlet // 10)
+
+            logger.info(cout)
 
         # show offsets with opposite sign
         stat_summary = summary(-np.array(yplot))
