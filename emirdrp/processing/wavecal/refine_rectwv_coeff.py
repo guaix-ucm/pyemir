@@ -201,7 +201,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     logger.info('- std........: {0:7.3f}'.format(widths_summary['std']))
     logger.info('- robust_std.: {0:7.3f}'.format(widths_summary['robust_std']))
     # empirical transformation of slit width (mm) to pixels
-    sigma_broadening = 0.75 * widths_summary['median']
+    sigma_broadening = cdelt1 * widths_summary['median']
 
     # convolve location of catalogue lines to generate expected spectrum
     xwave_reference, sp_reference = convolve_comb_lines(
@@ -253,14 +253,14 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
 
     # compute global offset through periodic correlation
     logger.info('Computing global offset')
-    offset, fpeak = periodic_corr1d(
+    global_offset, fpeak = periodic_corr1d(
         sp_reference=sp_reference,
         sp_offset=sp_median,
         fminmax=None,
         pdf=pdf,
         debugplot=debugplot
     )
-    logger.info('Global offset: {} pixels'.format(-offset))
+    logger.info('Global offset: {} pixels'.format(global_offset))
 
     missing_slitlets = rectwv_coeff.missing_slitlets
 
@@ -270,7 +270,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
             if islitlet not in missing_slitlets:
                 i = islitlet - 1
                 dumdict = refined_rectwv_coeff.contents[i]
-                dumdict['wpoly_coeff'][0] -= offset*cdelt1
+                dumdict['wpoly_coeff'][0] -= global_offset*cdelt1
 
     elif mode == 2:
         # compute individual offset for each slitlet
@@ -318,7 +318,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
             logger.info(cout)
 
         # show offsets with opposite sign
-        stat_summary = summary(-np.array(yplot))
+        stat_summary = summary(np.array(yplot))
         logger.info('Statistics of individual slitlet offsets (pixels):')
         logger.info('- npoints....: {0:d}'.format(stat_summary['npoints']))
         logger.info('- mean.......: {0:7.3f}'.format(stat_summary['mean']))
@@ -326,11 +326,15 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         logger.info('- std........: {0:7.3f}'.format(stat_summary['std']))
         logger.info('- robust_std.: {0:7.3f}'.format(stat_summary['robust_std']))
         if abs(debugplot) % 10 != 0:
-            ximplotxy(xplot, yplot,
-                      linestyle='', marker='o', color='C0',
-                      xlabel='slitlet number',
-                      ylabel='offset (pixels)',
-                      show=False)
+            ax = ximplotxy(xplot, yplot,
+                           linestyle='', marker='o', color='C0',
+                           xlabel='slitlet number',
+                           ylabel='offset (pixels)',
+                           title='cross-correlation result',
+                           show=False, **{'label':'individual slitlets'})
+            ax.axhline(global_offset, linestyle='--', color='C1',
+                       label='global offset')
+            ax.legend()
             if pdf is not None:
                 pdf.savefig()
             else:
