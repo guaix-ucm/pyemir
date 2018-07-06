@@ -260,7 +260,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         pdf=pdf,
         debugplot=debugplot
     )
-    logger.info('Global offset: {} pixels'.format(global_offset))
+    logger.info('Global offset: {} pixels'.format(-global_offset))
 
     missing_slitlets = rectwv_coeff.missing_slitlets
 
@@ -293,7 +293,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                 dumdict = refined_rectwv_coeff.contents[i]
                 dumdict['wpoly_coeff'][0] -= offset_array[i]*cdelt1
                 xplot.append(islitlet)
-                yplot.append(offset_array[i])
+                yplot.append(-offset_array[i])
                 # second correction
                 wpoly_coeff_refined = check_wlcalib_sp(
                     sp=median_55sp[0].data[i, :],
@@ -329,10 +329,10 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
             ax = ximplotxy(xplot, yplot,
                            linestyle='', marker='o', color='C0',
                            xlabel='slitlet number',
-                           ylabel='offset (pixels)',
+                           ylabel='-offset (pixels) = offset to be applied',
                            title='cross-correlation result',
                            show=False, **{'label':'individual slitlets'})
-            ax.axhline(global_offset, linestyle='--', color='C1',
+            ax.axhline(-global_offset, linestyle='--', color='C1',
                        label='global offset')
             ax.legend()
             if pdf is not None:
