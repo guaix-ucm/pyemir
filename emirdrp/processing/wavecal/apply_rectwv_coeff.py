@@ -142,6 +142,7 @@ def apply_rectwv_coeff(reduced_image,
     # main loop
 
     logger.info('Applying rectification and wavelength calibration')
+    logger.info('RectWaveCoeff uuid={}'.format(rectwv_coeff.uuid))
 
     cout = '0'
     for islitlet in range(1, EMIR_NBARS + 1):
