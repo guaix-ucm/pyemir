@@ -83,8 +83,8 @@ def apply_rectwv_coeff(reduced_image,
     # apply global offsets
     image2d = apply_integer_offsets(
         image2d=image2d,
-        offx=rectwv_coeff.global_offset_x_pix,
-        offy=rectwv_coeff.global_offset_y_pix
+        offx=rectwv_coeff.global_integer_offset_x_pix,
+        offy=rectwv_coeff.global_integer_offset_y_pix
     )
 
     # check grism and filter

@@ -87,11 +87,11 @@ class StareSpectraWaveRecipe(EmirRecipe):
         float(EMIR_MAXIMUM_SLITLET_WIDTH_MM),
         description='Maximum width (mm) for a valid slitlet',
     )
-    global_offset_x_pix = Parameter(
+    global_integer_offset_x_pix = Parameter(
         0,
         description='Global offset (pixels) in wavelength direction (integer)',
     )
-    global_offset_y_pix = Parameter(
+    global_integer_offset_y_pix = Parameter(
         0,
         description='Global offset (pixels) in spatial direction (integer)',
     )
@@ -110,9 +110,9 @@ class StareSpectraWaveRecipe(EmirRecipe):
         self.logger.info('Maximum slitlet width (mm)............: {}'.format(
             rinput.maximum_slitlet_width_mm))
         self.logger.info('Global offset X direction (pixels)....: {}'.format(
-            rinput.global_offset_x_pix))
+            rinput.global_integer_offset_x_pix))
         self.logger.info('Global offset Y direction (pixels)....: {}'.format(
-            rinput.global_offset_y_pix))
+            rinput.global_integer_offset_y_pix))
 
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
@@ -137,8 +137,10 @@ class StareSpectraWaveRecipe(EmirRecipe):
             )
 
             # set global offsets
-            rectwv_coeff.global_offset_x_pix = rinput.global_offset_x_pix
-            rectwv_coeff.global_offset_y_pix = rinput.global_offset_y_pix
+            rectwv_coeff.global_integer_offset_x_pix = \
+                rinput.global_integer_offset_x_pix
+            rectwv_coeff.global_integer_offset_y_pix = \
+                rinput.global_integer_offset_y_pix
 
             # apply rectification and wavelength calibration
             stare_image = apply_rectwv_coeff(
