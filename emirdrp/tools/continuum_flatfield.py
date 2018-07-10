@@ -22,16 +22,16 @@ from __future__ import print_function
 
 import argparse
 from astropy.io import fits
-import json
 import numpy as np
 from scipy import ndimage
 import sys
 
 from numina.array.display.ximplotxy import ximplotxy
 from numina.array.display.pause_debugplot import pause_debugplot
+from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.tools.arg_file_is_new import arg_file_is_new
 
-from emirdrp.processing.wavecal import Slitlet2D
+from emirdrp.processing.wavecal.slitlet2d import Slitlet2D
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
 from emirdrp.tools.rect_wpoly_for_mos import islitlet_progress
@@ -53,7 +53,7 @@ def main(args=None):
     parser.add_argument("fitsfile",
                         help="Input FITS file (flat ON-OFF)",
                         type=argparse.FileType('rb'))
-    parser.add_argument("--coef_rect_wpoly", required=True,
+    parser.add_argument("--rectwv_coeff", required=True,
                         help="Input JSON file with rectification and "
                              "wavelength calibration coefficients",
                         type=argparse.FileType('rt'))
@@ -73,6 +73,14 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x, mode='wb'))
 
     # optional arguments
+    parser.add_argument("--delta_global_integer_offset_x_pix",
+                        help="Delta global integer offset in the X direction "
+                             "(default=0)",
+                        default=0, type=int)
+    parser.add_argument("--delta_global_integer_offset_y_pix",
+                        help="Delta global integer offset in the Y direction "
+                             "(default=0)",
+                        default=0, type=int)
     parser.add_argument("--resampling",
                         help="Resampling method: 1 -> nearest neighbor, "
                              "2 -> linear interpolation (default)",
@@ -96,14 +104,26 @@ def main(args=None):
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # read calibration structure from JSON file
-    # read calibration structure from JSON file
-    coef_rect_wpoly = RectWaveCoeff._datatype_load(args.coef_rect_wpoly.name)
+    rectwv_coeff = RectWaveCoeff._datatype_load(args.rectwv_coeff.name)
+
+    # modify (when requested) global offsets
+    rectwv_coeff.global_integer_offset_x_pix += \
+        args.delta_global_integer_offset_x_pix
+    rectwv_coeff.global_integer_offset_y_pix += \
+        args.delta_global_integer_offset_y_pix
 
     # read FITS image and its corresponding header
     hdulist = fits.open(args.fitsfile)
     header = hdulist[0].header
     image2d = hdulist[0].data
     hdulist.close()
+
+    # apply global offsets
+    image2d = apply_integer_offsets(
+        image2d=image2d,
+        offx=rectwv_coeff.global_integer_offset_x_pix,
+        offy=rectwv_coeff.global_integer_offset_y_pix
+    )
 
     # protections
     naxis2, naxis1 = image2d.shape
@@ -117,10 +137,10 @@ def main(args=None):
 
     # check that the input FITS file grism and filter match
     filter_name = header['filter']
-    if filter_name != coef_rect_wpoly.tags['filter']:
+    if filter_name != rectwv_coeff.tags['filter']:
         raise ValueError("Filter name does not match!")
     grism_name = header['grism']
-    if grism_name != coef_rect_wpoly.tags['grism']:
+    if grism_name != rectwv_coeff.tags['grism']:
         raise ValueError("Filter name does not match!")
     if abs(args.debugplot) >= 10:
         print('>>> grism.......:', grism_name)
@@ -129,7 +149,7 @@ def main(args=None):
     # check that the DTU configurations are compatible
     dtu_conf_fitsfile = DtuConfiguration.define_from_fits(args.fitsfile)
     dtu_conf_jsonfile = DtuConfiguration.define_from_dictionary(
-        coef_rect_wpoly.meta_info['dtu_configuration'])
+        rectwv_coeff.meta_info['dtu_configuration'])
     if dtu_conf_fitsfile != dtu_conf_jsonfile:
         print('DTU configuration (FITS file):\n\t', dtu_conf_fitsfile)
         print('DTU configuration (JSON file):\n\t', dtu_conf_jsonfile)
@@ -144,7 +164,7 @@ def main(args=None):
 
     # valid slitlet numbers
     list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
-    for idel in coef_rect_wpoly.missing_slitlets:
+    for idel in rectwv_coeff.missing_slitlets:
         list_valid_islitlets.remove(idel)
     if abs(args.debugplot) >= 10:
         print('>>> valid slitlet numbers:\n', list_valid_islitlets)
@@ -161,7 +181,7 @@ def main(args=None):
 
         # define Slitlet2D object
         slt = Slitlet2D(islitlet=islitlet,
-                        rectwv_coeff=coef_rect_wpoly,
+                        rectwv_coeff=rectwv_coeff,
                         debugplot=args.debugplot)
 
         if abs(args.debugplot) >= 10:
@@ -260,6 +280,13 @@ def main(args=None):
     # set pixels below minimum value to 1.0
     filtered = np.where(image2d_flatfielded < args.minimum_value_in_output)
     image2d_flatfielded[filtered] = 1.0
+
+    # restore global offsets
+    image2d_flatfielded = apply_integer_offsets(
+        image2d=image2d_flatfielded ,
+        offx=-rectwv_coeff.global_integer_offset_x_pix,
+        offy=-rectwv_coeff.global_integer_offset_y_pix
+    )
 
     # save output file
     save_ndarray_to_fits(

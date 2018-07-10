@@ -293,6 +293,14 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x, mode='wb'))
 
     # optional arguments
+    parser.add_argument("--delta_global_integer_offset_x_pix",
+                        help="Delta global integer offset in the X direction "
+                             "(default=0)",
+                        default=0, type=int)
+    parser.add_argument("--delta_global_integer_offset_y_pix",
+                        help="Delta global integer offset in the Y direction "
+                             "(default=0)",
+                        default=0, type=int)
     parser.add_argument("--resampling",
                         help="Resampling method: 1 -> nearest neighbor, "
                              "2 -> linear interpolation (default)",
@@ -320,8 +328,13 @@ def main(args=None):
     logging_from_debugplot(args.debugplot)
 
     # generate RectWaveCoeff object
-    rectwv_coeff = RectWaveCoeff._datatype_load(
-        args.rectwv_coeff.name)
+    rectwv_coeff = RectWaveCoeff._datatype_load(args.rectwv_coeff.name)
+
+    # modify (when requested) global offsets
+    rectwv_coeff.global_integer_offset_x_pix += \
+        args.delta_global_integer_offset_x_pix
+    rectwv_coeff.global_integer_offset_y_pix += \
+        args.delta_global_integer_offset_y_pix
 
     # generate HDUList object
     # read FITS image and its corresponding header
