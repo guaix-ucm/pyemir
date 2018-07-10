@@ -109,7 +109,7 @@ def main(args=None):
     if abs(args.debugplot) in [21, 22]:
         params.pretty_print()
 
-    parmodel = fittedpar_dict['meta-info']['parmodel']
+    parmodel = fittedpar_dict['meta_info']['parmodel']
     if parmodel != 'multislit':
         raise ValueError("Unexpected parameter model: ", parmodel)
 

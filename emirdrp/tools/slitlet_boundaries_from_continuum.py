@@ -631,11 +631,11 @@ def main(args=None):
     if args.first_time:
         bounddict = {}
         bounddict['instrument'] = 'EMIR'
-        bounddict['meta-info'] = {}
-        bounddict['meta-info']['creation_date'] = datetime.now().isoformat()
-        bounddict['meta-info']['description'] = \
+        bounddict['meta_info'] = {}
+        bounddict['meta_info']['creation_date'] = datetime.now().isoformat()
+        bounddict['meta_info']['description'] = \
             'slitlet boundaries from fits to continuum-lamp exposures'
-        bounddict['meta-info']['recipe_name'] = 'undefined'
+        bounddict['meta_info']['recipe_name'] = 'undefined'
         bounddict['tags'] = {}
         bounddict['tags']['grism'] = args.grism
         bounddict['tags']['filter'] = args.filter

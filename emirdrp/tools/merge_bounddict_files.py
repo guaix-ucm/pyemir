@@ -71,7 +71,7 @@ def main(args=None):
                 if next_file_is_first:
                     bounddict = deepcopy(tmpbounddict)
                     # update some values
-                    bounddict['meta-info']['creation_date'] = \
+                    bounddict['meta_info']['creation_date'] = \
                         datetime.now().isoformat()
                     bounddict['uuid'] = str(uuid4())
                     next_file_is_first = False

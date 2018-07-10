@@ -194,17 +194,17 @@ def main(args=None):
     outdict = {}
     outdict['refined_boundary_model'] = refined_boundary_model.__getstate__()
     outdict['instrument'] = 'EMIR'
-    outdict['meta-info'] = {}
-    outdict['meta-info']['creation_date'] = datetime.now().isoformat()
-    outdict['meta-info']['description'] = \
+    outdict['meta_info'] = {}
+    outdict['meta_info']['creation_date'] = datetime.now().isoformat()
+    outdict['meta_info']['description'] = \
         'rectification and wavelength calibration polynomial coefficients ' \
         'as a function of csu_bar_slit_center for MOS'
-    outdict['meta-info']['recipe_name'] = 'undefined'
-    outdict['meta-info']['origin'] = {}
-    outdict['meta-info']['origin']['wpoly_longslits'] = {}
+    outdict['meta_info']['recipe_name'] = 'undefined'
+    outdict['meta_info']['origin'] = {}
+    outdict['meta_info']['origin']['wpoly_longslits'] = {}
     for ifile in range(nfiles):
         cdum = 'longslit_' + str(ifile + 1).zfill(3) + '_uuid'
-        outdict['meta-info']['origin']['wpoly_longslits'][cdum] = \
+        outdict['meta_info']['origin']['wpoly_longslits'][cdum] = \
             list_coef_rect_wpoly[ifile].uuid
     outdict['tags'] = {}
     outdict['tags']['grism'] = grism_name

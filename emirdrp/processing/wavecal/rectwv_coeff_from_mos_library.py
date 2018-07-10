@@ -135,17 +135,17 @@ def rectwv_coeff_from_mos_library(reduced_image,
     # but here we reuse that dictionary for convenience)
     outdict = {}
     outdict['instrument'] = 'EMIR'
-    outdict['meta-info'] = {}
-    outdict['meta-info']['creation_date'] = datetime.now().isoformat()
-    outdict['meta-info']['description'] = \
+    outdict['meta_info'] = {}
+    outdict['meta_info']['creation_date'] = datetime.now().isoformat()
+    outdict['meta_info']['description'] = \
         'computation of rectification and wavelength calibration polynomial ' \
         'coefficients for a particular CSU configuration from a MOS model '
-    outdict['meta-info']['recipe_name'] = 'undefined'
-    outdict['meta-info']['origin'] = {}
-    outdict['meta-info']['origin']['fits_frame_uuid'] = 'TBD'
-    outdict['meta-info']['origin']['rect_wpoly_mos_uuid'] = \
+    outdict['meta_info']['recipe_name'] = 'undefined'
+    outdict['meta_info']['origin'] = {}
+    outdict['meta_info']['origin']['fits_frame_uuid'] = 'TBD'
+    outdict['meta_info']['origin']['rect_wpoly_mos_uuid'] = \
         master_rectwv.uuid
-    outdict['meta-info']['origin']['fitted_boundary_param_uuid'] = \
+    outdict['meta_info']['origin']['fitted_boundary_param_uuid'] = \
         master_rectwv.meta_info['origin']['bound_param']
     outdict['tags'] = {}
     outdict['tags']['grism'] = grism_name

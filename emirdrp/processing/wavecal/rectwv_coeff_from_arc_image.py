@@ -445,16 +445,16 @@ def rectwv_coeff_from_arc_image(reduced_image,
     # Generate structure to store intermediate results
     outdict = {}
     outdict['instrument'] = 'EMIR'
-    outdict['meta-info'] = {}
-    outdict['meta-info']['creation_date'] = datetime.now().isoformat()
-    outdict['meta-info']['description'] = \
+    outdict['meta_info'] = {}
+    outdict['meta_info']['creation_date'] = datetime.now().isoformat()
+    outdict['meta_info']['description'] = \
         'computation of rectification and wavelength calibration polynomial ' \
         'coefficients for a particular CSU configuration'
-    outdict['meta-info']['recipe_name'] = 'undefined'
-    outdict['meta-info']['origin'] = {}
-    outdict['meta-info']['origin']['bound_param_uuid'] = \
+    outdict['meta_info']['recipe_name'] = 'undefined'
+    outdict['meta_info']['origin'] = {}
+    outdict['meta_info']['origin']['bound_param_uuid'] = \
         bound_param.uuid
-    outdict['meta-info']['origin']['arc_image_uuid'] = 'undefined'
+    outdict['meta_info']['origin']['arc_image_uuid'] = 'undefined'
     outdict['tags'] = {}
     outdict['tags']['grism'] = grism_name
     outdict['tags']['filter'] = filter_name

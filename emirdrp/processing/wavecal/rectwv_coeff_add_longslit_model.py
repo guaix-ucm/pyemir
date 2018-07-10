@@ -258,7 +258,7 @@ def rectwv_coeff_add_longslit_model(rectwv_coeff, geometry, debugplot=0):
 
     # ---
 
-    # update uuid and meta-info in output JSON structure
+    # update uuid and meta_info in output JSON structure
     rectwv_coeff.uuid = str(uuid4())
     rectwv_coeff.meta_info['creation_date'] = datetime.now().isoformat()
 
