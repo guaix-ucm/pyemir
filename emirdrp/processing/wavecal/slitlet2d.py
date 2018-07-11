@@ -263,21 +263,21 @@ class Slitlet2D(object):
                  "- y0_frontier_upper_expected: " + \
                  str(self.y0_frontier_upper_expected) + "\n" + \
                  "- corr_yrect_a................: " + \
-                 str(self.corr_yrect_a) + \
+                 str(self.corr_yrect_a) + "\n" + \
                  "- corr_yrect_b................: " + \
-                 str(self.corr_yrect_b) + \
+                 str(self.corr_yrect_b) + "\n" + \
                  "- min_row_rectified...........: " + \
-                 str(self.min_row_rectified) + \
+                 str(self.min_row_rectified) + "\n" + \
                  "- max_row_rectified...........: " + \
-                 str(self.max_row_rectified) + \
+                 str(self.max_row_rectified) + "\n" + \
                  "- iminslt.....................: " + \
-                 str(self.iminslt) + \
+                 str(self.iminslt) + "\n" + \
                  "- imaxslt.....................: " + \
-                 str(self.imaxslt) + \
+                 str(self.imaxslt) + "\n" + \
                  "- jminslt.....................: " + \
-                 str(self.jminslt) + \
+                 str(self.jminslt) + "\n" + \
                  "- jmaxslt.....................: " + \
-                 str(self.jmaxslt) + \
+                 str(self.jmaxslt) + "\n" + \
                  "- bb_nc1_orig...............: " + \
                  str(self.bb_nc1_orig) + "\n" + \
                  "- bb_nc2_orig...............: " + \

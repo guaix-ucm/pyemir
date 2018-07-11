@@ -47,7 +47,9 @@ from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
 def main(args=None):
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='apply_rect_wpoly')
+    parser = argparse.ArgumentParser(
+        description='description: compute pixel-to-pixel flatfield'
+    )
 
     # required arguments
     parser.add_argument("fitsfile",
