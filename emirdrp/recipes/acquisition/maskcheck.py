@@ -29,6 +29,8 @@ from numina.array.peaks.peakdet import refine_peaks
 from numina.core import Requirement, Result
 from numina.types.qc import QC
 import numina.types.array as tarray
+from numina.core.requirements import ObservationResultRequirement
+import numina.core.query as qmod
 
 from emirdrp.core import EMIR_NBARS, EMIR_PLATESCALE_PIX, EMIR_PLATESCALE
 from emirdrp.core import EMIR_PIXSCALE
@@ -114,7 +116,13 @@ class MaskCheckRecipe(EmirRecipe):
 
     # Recipe Requirements
     #
-    obresult = reqs.ObservationResultRequirement()
+    obresult = ObservationResultRequirement(
+        query_opts=qmod.ResultOf(
+            'STARE_IMAGE.frame',
+            node='children',
+            id_field="resultsIds"
+        )
+    )
     master_bpm = reqs.MasterBadPixelMaskRequirement()
 
     bars_nominal_positions = Requirement(
