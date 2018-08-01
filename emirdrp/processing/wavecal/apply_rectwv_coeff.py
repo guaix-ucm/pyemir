@@ -186,9 +186,9 @@ def apply_rectwv_coeff(reduced_image,
 
             # include scan range in FITS header
             header['imnslt' + str(islitlet).zfill(2)] = \
-                slt.iminslt, 'minimum X pixel of useful slitlet region'
+                slt.iminslt, 'minimum Y pixel of useful slitlet region'
             header['imxslt' + str(islitlet).zfill(2)] = \
-                slt.imaxslt, 'maximum X pixel of useful slitlet region'
+                slt.imaxslt, 'maximum Y pixel of useful slitlet region'
 
             # determine useful channel region in each spectrum and include
             # that information in FITS header
@@ -206,9 +206,9 @@ def apply_rectwv_coeff(reduced_image,
                 slt.jminslt = min(jminslt) + 1
                 slt.jmaxslt = max(jmaxslt) + 1
             header['jmnslt' + str(islitlet).zfill(2)] = \
-                slt.jminslt, 'minimum Y pixel of useful slitlet region'
+                slt.jminslt, 'minimum X pixel of useful slitlet region'
             header['jmxslt' + str(islitlet).zfill(2)] = \
-                slt.jmaxslt, 'maximum Y pixel of useful slitlet region'
+                slt.jmaxslt, 'maximum X pixel of useful slitlet region'
 
             cout += '.'
 
@@ -216,13 +216,13 @@ def apply_rectwv_coeff(reduced_image,
 
             # include scan and channel range in FITS header
             header['imnslt' + str(islitlet).zfill(2)] = \
-                0, 'minimum X pixel of useful slitlet region'
-            header['imxslt' + str(islitlet).zfill(2)] = \
-                0, 'maximum X pixel of useful slitlet region'
-            header['jmnslt' + str(islitlet).zfill(2)] = \
                 0, 'minimum Y pixel of useful slitlet region'
-            header['jmxslt' + str(islitlet).zfill(2)] = \
+            header['imxslt' + str(islitlet).zfill(2)] = \
                 0, 'maximum Y pixel of useful slitlet region'
+            header['jmnslt' + str(islitlet).zfill(2)] = \
+                0, 'minimum X pixel of useful slitlet region'
+            header['jmxslt' + str(islitlet).zfill(2)] = \
+                0, 'maximum X pixel of useful slitlet region'
 
             cout += 'i'
 
