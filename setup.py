@@ -77,7 +77,7 @@ setup(name='pyemir',
               'pyemir-slitlet_boundaries_from_continuum = ' +
                   'emirdrp.tools.slitlet_boundaries_from_continuum:main',
               'pyemir-overplot_boundary_model = ' +
-                  'emirdrp.tools.overplot_boundary_model:main',
+                  'emirdrp.processing.wavecal.overplot_boundary_model:main',
               'pyemir-overplot_bounddict = ' +
                   'emirdrp.tools.overplot_bounddict:main',
               ],
