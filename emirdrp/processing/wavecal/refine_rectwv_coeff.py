@@ -287,6 +287,9 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
             if islitlet not in missing_slitlets:
                 i = islitlet - 1
                 sp_median = median_55sp[0].data[i, :]
+                lok = np.where(sp_median > 0)
+                baseline = np.percentile(sp_median[lok], q=10)
+                sp_median[lok] -= baseline
                 sp_median /= sp_median.max()
                 offset_array[i], fpeak = periodic_corr1d(
                     sp_reference=sp_reference,
