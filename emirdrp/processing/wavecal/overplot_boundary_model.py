@@ -163,7 +163,9 @@ def main(args=None):
             uuid=master_rectwv.uuid,
             grism=grism,
             spfilter=spfilter,
-            ds9_filename=args.ds9_boundaries.name
+            ds9_filename=args.ds9_boundaries.name,
+            global_offset_x_pix=-args.global_integer_offset_x_pix,
+            global_offset_y_pix=-args.global_integer_offset_y_pix
         )
 
     # generate output ds9 region file with slitlet frontiers
@@ -176,7 +178,9 @@ def main(args=None):
             uuid=master_rectwv.uuid,
             grism=grism,
             spfilter=spfilter,
-            ds9_filename=args.ds9_frontiers.name
+            ds9_filename=args.ds9_frontiers.name,
+            global_offset_x_pix=-args.global_integer_offset_x_pix,
+            global_offset_y_pix=-args.global_integer_offset_y_pix
         )
 
     # display full image
@@ -193,7 +197,9 @@ def main(args=None):
             params=params,
             parmodel=parmodel,
             list_islitlet=list_valid_islitlets,
-            list_csu_bar_slit_center=list_csu_bar_slit_center
+            list_csu_bar_slit_center=list_csu_bar_slit_center,
+            global_offset_x_pix=-args.global_integer_offset_x_pix,
+            global_offset_y_pix=-args.global_integer_offset_y_pix
         )
 
         # overplot frontiers
@@ -204,7 +210,9 @@ def main(args=None):
             list_islitlet=list_valid_islitlets,
             list_csu_bar_slit_center=list_csu_bar_slit_center,
             micolors=('b', 'b'), linetype='-',
-            labels=False    # already displayed with the boundaries
+            labels=False,    # already displayed with the boundaries
+            global_offset_x_pix = -args.global_integer_offset_x_pix,
+            global_offset_y_pix = -args.global_integer_offset_y_pix
         )
 
         # show plot

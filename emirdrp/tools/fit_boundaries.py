@@ -720,7 +720,9 @@ def overplot_boundaries_from_params(ax, params, parmodel,
                                     list_islitlet,
                                     list_csu_bar_slit_center,
                                     micolors=('m', 'c'), linetype='--',
-                                    labels=True, alpha_fill=None):
+                                    labels=True, alpha_fill=None,
+                                    global_offset_x_pix=0,
+                                    global_offset_y_pix=0):
     """Overplot boundaries computed from fitted parameters.
 
     Parameters
@@ -747,6 +749,12 @@ def overplot_boundaries_from_params(ax, params, parmodel,
         If True, display slilet label
     alpha_fill : float or None
         Alpha factor to be employed to fill slitlet region.
+    global_integer_offset_x_pix : int or float
+        Global offset in the X direction to be applied after computing
+        the expected location.
+    global_offset_y_pix : int or float
+        Global offset in the Y direction to be applied after computing
+        the expected location.
 
     Returns
     -------
@@ -759,6 +767,10 @@ def overplot_boundaries_from_params(ax, params, parmodel,
 
 
     """
+
+    # duplicate to shorten the variable names
+    xoff = float(global_offset_x_pix)
+    yoff = float(global_offset_y_pix)
 
     list_pol_lower_boundaries = []
     list_pol_upper_boundaries = []
@@ -777,18 +789,18 @@ def overplot_boundaries_from_params(ax, params, parmodel,
         list_pol_upper_boundaries.append(pol_upper_expected)
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
         ydum1 = pol_lower_expected(xdum)
-        ax.plot(xdum, ydum1, tmpcolor + linetype)
+        ax.plot(xdum + xoff, ydum1 + yoff, tmpcolor + linetype)
         ydum2 = pol_upper_expected(xdum)
-        ax.plot(xdum, ydum2, tmpcolor + linetype)
+        ax.plot(xdum + xoff, ydum2 + yoff, tmpcolor + linetype)
         if alpha_fill is not None:
-            ax.fill_between(xdum, ydum1, ydum2,
+            ax.fill_between(xdum + xoff, ydum1 + yoff, ydum2 + yoff,
                             facecolor=tmpcolor, alpha=alpha_fill)
         if labels:
             # slitlet label
             yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
             yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
             xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
-            ax.text(xcsu, (yc_lower + yc_upper) / 2,
+            ax.text(xcsu + xoff, (yc_lower + yc_upper) / 2 + yoff,
                     str(islitlet),
                     fontsize=10, va='center', ha='center',
                     bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
@@ -803,7 +815,9 @@ def overplot_frontiers_from_params(ax, params, parmodel,
                                    list_islitlet,
                                    list_csu_bar_slit_center,
                                    micolors=('m', 'c'), linetype='--',
-                                   labels=True, alpha_fill=None):
+                                   labels=True, alpha_fill=None,
+                                   global_offset_x_pix=0,
+                                   global_offset_y_pix=0):
     """Overplot frontiers computed from fitted parameters.
 
     Parameters
@@ -830,6 +844,12 @@ def overplot_frontiers_from_params(ax, params, parmodel,
         If True, display slilet label
     alpha_fill : float or None
         Alpha factor to be employed to fill slitlet region.
+    global_integer_offset_x_pix : int or float
+        Global offset in the X direction to be applied after computing
+        the expected location.
+    global_offset_y_pix : int or float
+        Global offset in the Y direction to be applied after computing
+        the expected location.
 
     Returns
     -------
@@ -842,6 +862,10 @@ def overplot_frontiers_from_params(ax, params, parmodel,
 
 
     """
+
+    # duplicate to shorten the variable names
+    xoff = float(global_offset_x_pix)
+    yoff = float(global_offset_y_pix)
 
     list_pol_lower_frontiers = []
     list_pol_upper_frontiers = []
@@ -858,18 +882,18 @@ def overplot_frontiers_from_params(ax, params, parmodel,
         list_pol_upper_frontiers.append(pol_upper_expected)
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
         ydum1 = pol_lower_expected(xdum)
-        ax.plot(xdum, ydum1, tmpcolor + linetype)
+        ax.plot(xdum + xoff, ydum1 + yoff, tmpcolor + linetype)
         ydum2 = pol_upper_expected(xdum)
-        ax.plot(xdum, ydum2, tmpcolor + linetype)
+        ax.plot(xdum + xoff, ydum2 + yoff, tmpcolor + linetype)
         if alpha_fill is not None:
-            ax.fill_between(xdum, ydum1, ydum2,
+            ax.fill_between(xdum + xoff, ydum1 + yoff, ydum2 + yoff,
                             facecolor=tmpcolor, alpha=alpha_fill)
         if labels:
             # slitlet label
             yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
             yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
             xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
-            ax.text(xcsu, (yc_lower + yc_upper) / 2,
+            ax.text(xcsu + xoff, (yc_lower + yc_upper) / 2 + yoff,
                     str(islitlet),
                     fontsize=10, va='center', ha='center',
                     bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
@@ -972,7 +996,9 @@ def save_boundaries_from_params_ds9(params, parmodel,
                                     list_islitlet,
                                     list_csu_bar_slit_center,
                                     uuid, grism, spfilter,
-                                    ds9_filename, numpix=100):
+                                    ds9_filename, numpix=100,
+                                    global_offset_x_pix=0,
+                                    global_offset_y_pix=0):
     """Export to ds9 region file the boundaries parametrised with params.
 
     Parameters
@@ -999,6 +1025,13 @@ def save_boundaries_from_params_ds9(params, parmodel,
         Number of points in which the X-range interval is subdivided
         in order to save each boundary as a connected set of line
         segments.
+    global_offset_x_pix : int or float
+        Global offset in the X direction to be applied after computing
+        the expected location.
+        sign.
+    global_offset_y_pix : int or float
+        Global offset in the Y direction to be applied after computing
+        the expected location.
 
     """
 
@@ -1014,6 +1047,15 @@ def save_boundaries_from_params_ds9(params, parmodel,
     ds9_file.write('#\n# uuid..: {0}\n'.format(uuid))
     ds9_file.write('# filter: {0}\n'.format(spfilter))
     ds9_file.write('# grism.: {0}\n'.format(grism))
+
+    ds9_file.write('#\n# global_offset_x_pix: {0}\n'.format(
+        global_offset_x_pix))
+    ds9_file.write('# global_offset_y_pix: {0}\n#\n'.format(
+        global_offset_y_pix))
+
+    # duplicate to shorten the variable names
+    xoff = float(global_offset_x_pix)
+    yoff = float(global_offset_y_pix)
 
     if parmodel == "longslit":
         for dumpar in EXPECTED_PARAMETER_LIST:
@@ -1049,15 +1091,15 @@ def save_boundaries_from_params_ds9(params, parmodel,
         ydum = pol_lower_expected(xdum)
         for i in range(len(xdum)-1):
             ds9_file.write(
-                'line {0} {1} {2} {3}'.format(xdum[i], ydum[i],
-                                              xdum[i+1], ydum[i+1])
+                'line {0} {1} {2} {3}'.format(xdum[i]+xoff, ydum[i]+yoff,
+                                              xdum[i+1]+xoff, ydum[i+1]+yoff)
             )
             ds9_file.write(' # color={0}\n'.format(colorbox))
         ydum = pol_upper_expected(xdum)
         for i in range(len(xdum)-1):
             ds9_file.write(
-                'line {0} {1} {2} {3}'.format(xdum[i], ydum[i],
-                                              xdum[i+1], ydum[i+1])
+                'line {0} {1} {2} {3}'.format(xdum[i]+xoff, ydum[i]+yoff,
+                                              xdum[i+1]+xoff, ydum[i+1]+yoff)
             )
             ds9_file.write(' # color={0}\n'.format(colorbox))
         # slitlet label
@@ -1065,8 +1107,8 @@ def save_boundaries_from_params_ds9(params, parmodel,
         yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
         ds9_file.write('text {0} {1} {{{2}}} # color={3} '
                        'font="helvetica 10 bold '
-                       'roman"\n'.format(EMIR_NAXIS1 / 2 + 0.5,
-                                         (yc_lower + yc_upper) / 2,
+                       'roman"\n'.format(EMIR_NAXIS1 / 2 + 0.5 + xoff,
+                                         (yc_lower + yc_upper) / 2 + yoff,
                                          islitlet,
                                          colorbox))
 
@@ -1077,7 +1119,9 @@ def save_frontiers_from_params_ds9(params, parmodel,
                                    list_islitlet,
                                    list_csu_bar_slit_center,
                                    uuid, grism, spfilter,
-                                   ds9_filename, numpix=100):
+                                   ds9_filename, numpix=100,
+                                   global_offset_x_pix=0,
+                                   global_offset_y_pix=0):
     """Export to ds9 region file the frontiers parametrised with params.
 
     Parameters
@@ -1104,6 +1148,12 @@ def save_frontiers_from_params_ds9(params, parmodel,
         Number of points in which the X-range interval is subdivided
         in order to save each boundary as a connected set of line
         segments.
+    global_integer_offset_x_pix : int or float
+        Global offset in the X direction to be applied after computing
+        the expected location.
+    global_offset_y_pix : int or float
+        Global offset in the Y direction to be applied after computing
+        the expected location.
 
     """
 
@@ -1119,6 +1169,15 @@ def save_frontiers_from_params_ds9(params, parmodel,
     ds9_file.write('#\n# uuid..: {0}\n'.format(uuid))
     ds9_file.write('# filter: {0}\n'.format(spfilter))
     ds9_file.write('# grism.: {0}\n'.format(grism))
+
+    ds9_file.write('#\n# global_offset_x_pix: {0}\n'.format(
+        global_offset_x_pix))
+    ds9_file.write('# global_offset_y_pix: {0}\n#\n'.format(
+        global_offset_y_pix))
+
+    # duplicate to shorten the variable names
+    xoff = float(global_offset_x_pix)
+    yoff = float(global_offset_y_pix)
 
     if parmodel == "longslit":
         for dumpar in EXPECTED_PARAMETER_LIST:
@@ -1152,15 +1211,15 @@ def save_frontiers_from_params_ds9(params, parmodel,
         ydum = pol_lower_expected(xdum)
         for i in range(len(xdum)-1):
             ds9_file.write(
-                'line {0} {1} {2} {3}'.format(xdum[i], ydum[i],
-                                              xdum[i+1], ydum[i+1])
+                'line {0} {1} {2} {3}'.format(xdum[i]+xoff, ydum[i]+yoff,
+                                              xdum[i+1]+xoff, ydum[i+1]+yoff)
             )
             ds9_file.write(' # color={0}\n'.format(colorbox))
         ydum = pol_upper_expected(xdum)
         for i in range(len(xdum)-1):
             ds9_file.write(
-                'line {0} {1} {2} {3}'.format(xdum[i], ydum[i],
-                                              xdum[i+1], ydum[i+1])
+                'line {0} {1} {2} {3}'.format(xdum[i]+xoff, ydum[i]+yoff,
+                                              xdum[i+1]+xoff, ydum[i+1]+yoff)
             )
             ds9_file.write(' # color={0}\n'.format(colorbox))
         # slitlet label
@@ -1168,8 +1227,8 @@ def save_frontiers_from_params_ds9(params, parmodel,
         yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
         ds9_file.write('text {0} {1} {{{2}}} # color={3} '
                        'font="helvetica 10 bold '
-                       'roman"\n'.format(EMIR_NAXIS1 / 2 + 0.5,
-                                         (yc_lower + yc_upper) / 2,
+                       'roman"\n'.format(EMIR_NAXIS1 / 2 + 0.5 + xoff,
+                                         (yc_lower + yc_upper) / 2 + yoff,
                                          islitlet,
                                          colorbox))
 
