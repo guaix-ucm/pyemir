@@ -166,8 +166,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
                     rinput.refine_wavecalib_mode,
                     rinput.minimum_slitlet_width_mm,
                     rinput.maximum_slitlet_width_mm,
-                    save_intermediate_results=self.intermediate_results,
-                    debugplot=12
+                    save_intermediate_results=self.intermediate_results
                 )
                 self.save_intermediate_img(expected_catalog_lines,
                                            'expected_catalog_lines.fits')

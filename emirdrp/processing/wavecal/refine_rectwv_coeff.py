@@ -210,15 +210,16 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     )
     sp_reference /= sp_reference.max()
 
-    # generate expected_oh_image
+    # generate image2d with expected lines
     image2d_expected_lines = np.tile(sp_reference, (naxis2, 1))
     hdu = fits.PrimaryHDU(data=image2d_expected_lines, header=main_header)
     expected_cat_image = fits.HDUList([hdu])
 
-    if abs(debugplot) % 10 != 0:
+    if (abs(debugplot) % 10 != 0) or (pdf is not None):
         ax = ximplotxy(xwave, sp_median, 'C1-',
                        xlabel='Wavelength (Angstroms, in vacuum)',
                        ylabel='Normalized number of counts',
+                       title='Median spectrum',
                        label='observed spectrum', show=False)
         # overplot reference catalogue lines
         ax.stem(catlines_reference_wave, catlines_reference_flux, 'C4-',
@@ -234,12 +235,13 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
 
     # compute baseline signal in sp_median
     baseline = np.percentile(sp_median[sp_median > 0], q=10)
-    if abs(debugplot) % 10 != 0:
+    if (abs(debugplot) % 10 != 0) or (pdf is not None):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.hist(sp_median, bins=1000, log=True)
         ax.set_xlabel('Normalized number of counts')
         ax.set_ylabel('Number of pixels')
+        ax.set_title('Median spectrum')
         ax.axvline(float(baseline), linestyle='--', color='grey')
         if pdf is not None:
             pdf.savefig()
@@ -257,6 +259,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         sp_reference=sp_reference,
         sp_offset=sp_median,
         fminmax=None,
+        plottitle='Median spectrum (cross-correlation)',
         pdf=pdf,
         debugplot=debugplot
     )
@@ -274,6 +277,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
 
     elif mode == 2:
         # compute individual offset for each slitlet
+        logger.info('Computing individual offsets')
         median_55sp = median_slitlets_rectified(input_image, mode=1)
         offset_array = np.zeros(EMIR_NBARS)
         xplot = []
@@ -288,7 +292,10 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                     sp_reference=sp_reference,
                     sp_offset=median_55sp[0].data[i, :],
                     fminmax=None,
-                    debugplot=0
+                    plottitle='slitlet #{0} (cross-correlation)'.format(
+                        islitlet),
+                    pdf=pdf,
+                    debugplot=debugplot
                 )
                 dumdict = refined_rectwv_coeff.contents[i]
                 dumdict['wpoly_coeff'][0] -= offset_array[i]*cdelt1
@@ -303,7 +310,11 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                     wv_master=catlines_reference_wave,
                     coeff_ini=dumdict['wpoly_coeff'],
                     naxis1_ini=EMIR_NAXIS1,
-                    debugplot=0
+                    title='slitlet #{0} (after applying offset)'.format(
+                        islitlet),
+                    ylogscale=False,
+                    pdf=pdf,
+                    debugplot=debugplot
                 )
                 dumdict['wpoly_coeff'] = wpoly_coeff_refined
                 cout += '.'
@@ -325,7 +336,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         logger.info('- median.....: {0:7.3f}'.format(stat_summary['median']))
         logger.info('- std........: {0:7.3f}'.format(stat_summary['std']))
         logger.info('- robust_std.: {0:7.3f}'.format(stat_summary['robust_std']))
-        if abs(debugplot) % 10 != 0:
+        if (abs(debugplot) % 10 != 0) or (pdf is not None):
             ax = ximplotxy(xplot, yplot,
                            linestyle='', marker='o', color='C0',
                            xlabel='slitlet number',
