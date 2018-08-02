@@ -80,8 +80,6 @@ setup(name='pyemir',
                   'emirdrp.tools.overplot_boundary_model:main',
               'pyemir-overplot_bounddict = ' +
                   'emirdrp.tools.overplot_bounddict:main',
-              'pyemir-verify_rect_wpoly = ' +
-                  'emirdrp.tools.verify_rect_wpoly:main',
               ],
       },
       classifiers=[
