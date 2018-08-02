@@ -52,7 +52,7 @@ EXPECTED_PARAMETER_LIST = (
     'theta0_origin', 'theta0_slope', 'x0', 'y0', 'y_baseline'
 )
 
-EXPECTED_PARAMETER_LIST_EXTENDED = (
+EXPECTED_PARAMETER_LIST_EXTENDED = tuple(
     mainpar + '_' + subpar for mainpar in EXPECTED_PARAMETER_LIST
     for subpar in ['a0s', 'a1s', 'a2s']
 )
@@ -987,9 +987,8 @@ def save_boundaries_from_params_ds9(params, parmodel,
         Slitlet numbers to be considered.
     list_csu_bar_slit_center : list of floats
         CSU bar slit centers of the considered slitlets.
-    uuid: int
-        UUID corresponding to the bounddict file that has been employed
-        to fit the parameters 'params'.
+    uuid: str
+        UUID associated to the parameters 'params'.
     grism : str
         Employed grism.
     spfilter : str
@@ -1012,9 +1011,9 @@ def save_boundaries_from_params_ds9(params, parmodel,
                    'move=1 delete=1 include=1 source=1\n')
     ds9_file.write('physical\n#\n')
 
-    ds9_file.write('#\n# uuid (boundict file): {0}\n'.format(uuid))
-    ds9_file.write('# filter..............: {0}\n'.format(spfilter))
-    ds9_file.write('# grism...............: {0}\n'.format(grism))
+    ds9_file.write('#\n# uuid..: {0}\n'.format(uuid))
+    ds9_file.write('# filter: {0}\n'.format(spfilter))
+    ds9_file.write('# grism.: {0}\n'.format(grism))
 
     if parmodel == "longslit":
         for dumpar in EXPECTED_PARAMETER_LIST:
@@ -1093,9 +1092,8 @@ def save_frontiers_from_params_ds9(params, parmodel,
         Slitlet numbers to be considered.
     list_csu_bar_slit_center : list of floats
         CSU bar slit centers of the considered slitlets.
-    uuid: int
-        UUID corresponding to the bounddict file that has been employed
-        to fit the parameters 'params'.
+    uuid: str
+        UUID associated to the parameters 'params'.
     grism : str
         Employed grism.
     spfilter : str
@@ -1118,9 +1116,9 @@ def save_frontiers_from_params_ds9(params, parmodel,
                    'move=1 delete=1 include=1 source=1\n')
     ds9_file.write('physical\n#\n')
 
-    ds9_file.write('#\n# uuid (boundict file): {0}\n'.format(uuid))
-    ds9_file.write('# filter..............: {0}\n'.format(spfilter))
-    ds9_file.write('# grism...............: {0}\n'.format(grism))
+    ds9_file.write('#\n# uuid..: {0}\n'.format(uuid))
+    ds9_file.write('# filter: {0}\n'.format(spfilter))
+    ds9_file.write('# grism.: {0}\n'.format(grism))
 
     if parmodel == "longslit":
         for dumpar in EXPECTED_PARAMETER_LIST:
@@ -1282,7 +1280,7 @@ def main(args=None):
                          "--debugplot value compatible with "
                          "plotting\n'")
 
-    if args.shrinking_factor <=0 or args.shrinking_factor > 1:
+    if args.shrinking_factor <= 0 or args.shrinking_factor > 1:
         raise ValueError("Unexpected shriking factor: ",
                          args.shrinking_factor, '\n')
 
