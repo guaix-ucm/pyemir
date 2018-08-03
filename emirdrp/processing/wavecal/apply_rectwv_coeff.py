@@ -22,6 +22,7 @@ from __future__ import print_function
 
 import argparse
 from astropy.io import fits
+import copy
 from datetime import datetime
 import logging
 import numpy as np
@@ -76,8 +77,9 @@ def apply_rectwv_coeff(reduced_image,
 
     logger = logging.getLogger(__name__)
 
-    # header and data array
-    header = reduced_image[0].header
+    # header and data array (use deepcopy to avoid modifying
+    # reduced_image[0].header as a side effect)
+    header = copy.deepcopy(reduced_image[0].header)
     image2d = reduced_image[0].data
 
     # apply global offsets
