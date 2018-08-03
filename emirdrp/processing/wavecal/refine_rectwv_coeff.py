@@ -132,7 +132,6 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         )
         oh_lines_tmpfile = StringIO(dumdata.decode('utf8'))
         catlines = np.genfromtxt(oh_lines_tmpfile)
-        # ToDo: take into account which arc lamps have been used
         # define wavelength and flux as separate arrays
         catlines_all_wave = np.concatenate((catlines[:, 1], catlines[:, 0]))
         catlines_all_flux = np.concatenate((catlines[:, 2], catlines[:, 2]))

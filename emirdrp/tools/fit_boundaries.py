@@ -1028,7 +1028,6 @@ def save_boundaries_from_params_ds9(params, parmodel,
     global_offset_x_pix : int or float
         Global offset in the X direction to be applied after computing
         the expected location.
-        sign.
     global_offset_y_pix : int or float
         Global offset in the Y direction to be applied after computing
         the expected location.
