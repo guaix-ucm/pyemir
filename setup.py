@@ -51,7 +51,7 @@ setup(name='pyemir',
               'pyemir-continuum_flatfield = ' +
                   'emirdrp.tools.continuum_flatfield:main',
               'pyemir-convert_refined_multislit_param = ' +
-                  'emirdrp.tools.convert_refined_multislit_param:main',
+                  'emirdrp.tools.convert_refined_multislit_bound_param:main',
               'pyemir-display_slitlet_arrangement = ' +
                   'emirdrp.tools.display_slitlet_arrangement:main',
               'pyemir-fit_boundaries = ' +
