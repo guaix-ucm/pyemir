@@ -342,19 +342,28 @@ class MaskCheckRecipe(EmirRecipe):
                 self.logger.warning("converting NaN value, border of=%d", idx + 1)
                 self.logger.warning("skipping bar=%d", idx + 1)
                 continue
+            elif comp_l > comp_r:
+                # Not refining
+                self.logger.warning("computed left border of=%d greater than right border", idx + 1)
+                comp2_l, comp2_r = px1, px2
+            else:
+                region2 = 5
+                px21 = coor_to_pix_1d(comp_l)
+                px22 = coor_to_pix_1d(comp_r)
 
-            region2 = 5
-            px21 = coor_to_pix_1d(comp_l)
-            px22 = coor_to_pix_1d(comp_r)
+                comp2_l, comp2_r = calc0(image, sob_v, prow, px21, px22, region2,
+                                         refine=True,
+                                         plot=plot, lbarid=lbarid, rbarid=rbarid,
+                                         plot2=False)
 
-            comp2_l, comp2_r = calc0(image, sob_v, prow, px21, px22, region2,
-                                     refine=True,
-                                     plot=plot, lbarid=lbarid, rbarid=rbarid,
-                                     plot2=False)
+                if np.any(np.isnan([comp2_l, comp2_r])):
+                    self.logger.warning("converting NaN value, border of=%d", idx + 1)
+                    comp2_l, comp2_r = comp_l, comp_r
+                elif comp2_l > comp2_r:
+                    # Not refining
+                    self.logger.warning("computed left border of=%d greater than right border", idx + 1)
+                    comp2_l, comp2_r = comp_l, comp_r
 
-            if np.any(np.isnan([comp2_l, comp2_r])):
-                self.logger.warning("converting NaN value, border of=%d", idx + 1)
-                comp2_l, comp2_r = comp_l, comp_r
             # print('slit', lbarid, '-', rbarid, comp_l, comp_r)
             # print('pos1', comp_l, comp_r)
             # print('pos2', comp2_l, comp2_r)
