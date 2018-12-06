@@ -22,6 +22,7 @@ import numina.processing as proc
 import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
+from emirdrp.products import RectWaveCoeff
 from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff
 from emirdrp.processing.wavecal.median_slitlets_rectified \
@@ -232,6 +233,85 @@ class StareSpectraWaveRecipe(EmirRecipe):
 
     def set_base_headers(self, hdr):
         newhdr = super(StareSpectraWaveRecipe, self).set_base_headers(hdr)
+        # Update SEC to 0
+        newhdr['SEC'] = 0
+        return newhdr
+
+
+class StareSpectraApplyWaveRecipe(EmirRecipe):
+    """Process images in Stare spectra mode applying wavelength calibration
+
+    Note that in this case the wavelength calibration has already been
+    determined.
+
+    """
+
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterSpectralFlatFieldRequirement()
+    rectwv_coeff_json = Parameter(
+        'undefined_rectwv_coeff.json',
+        description='JSON file with rect.+wavecal. coefficients',
+        optional=False
+    )
+
+    reduced_image = Result(prods.DataFrameType)
+    stare = Result(prods.DataFrameType)
+
+    def run(self, rinput):
+        self.logger.info('applying existing rect.+wavecal. calibration of '
+                         'stare spectra')
+
+        self.logger.info('JSON file with rect.+wavecal. coeff.: {}'.format(
+            rinput.rectwv_coeff_json))
+        # generate RectWaveCoeff object
+        rectwv_coeff = RectWaveCoeff._datatype_load(
+            '../data/'+rinput.rectwv_coeff_json)
+
+        # build object to proceed with bpm, bias, dark and flat
+        flow = self.init_filters(rinput)
+
+        # apply bpm, bias, dark and flat
+        reduced_image = basic_processing_with_combination(rinput, flow,
+                                                          method=median)
+        # update header with additional info
+        hdr = reduced_image[0].header
+        self.set_base_headers(hdr)
+
+        # save intermediate image in work directory
+        self.save_intermediate_img(reduced_image, 'reduced_image.fits')
+
+        # apply rectification and wavelength calibration
+        stare_image = apply_rectwv_coeff(
+            reduced_image,
+            rectwv_coeff
+        )
+
+        # ds9 region files (to be saved in the work directory)
+        if self.intermediate_results:
+            save_four_ds9(rectwv_coeff)
+
+        # compute median spectra employing the useful region of the
+        # rectified image
+        if self.intermediate_results:
+            for imode, outfile in enumerate(['median_spectra_full',
+                                             'median_spectra_slitlets',
+                                             'median_spectrum_slitlets']):
+                median_image = median_slitlets_rectified(
+                    stare_image, mode=imode
+                )
+                self.save_intermediate_img(median_image, outfile + '.fits')
+
+        # save results in results directory
+        self.logger.info('end rect.+wavecal. reduction of stare spectra')
+        result = self.create_result(reduced_image=reduced_image,
+                                    stare=stare_image)
+        return result
+
+    def set_base_headers(self, hdr):
+        newhdr = super(StareSpectraApplyWaveRecipe, self).set_base_headers(hdr)
         # Update SEC to 0
         newhdr['SEC'] = 0
         return newhdr

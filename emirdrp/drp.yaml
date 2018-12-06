@@ -133,6 +133,10 @@ modes:
   name: Stare Spectra with Wavelength Calibration
   summary: Stare Spectra with Wavelength Calibration
   description: Stare Spectra with Wavelength Calibration
+- key: STARE_SPECTRA_APPLY_WAVE
+  name: Stare Spectra with Precomputed Wavelength Calibration
+  summary: Stare Spectra with Precomputed Wavelength Calibration
+  description: Stare Spectra with Precomputed Wavelength Calibration
 - key: LS_ABBA
   name: Long Slit ABBA
   summary: Spectroscopy ABBA
@@ -234,6 +238,7 @@ pipelines:
       ARC_CALIBRATION: emirdrp.recipes.calibration.arc.ArcCalibrationRecipe
       STARE_SPECTRA: emirdrp.recipes.spec.stare.StareSpectraWaveRecipe
       STARE_SPECTRA_WAVE: emirdrp.recipes.spec.stare.StareSpectraWaveRecipe
+      STARE_SPECTRA_APPLY_WAVE: emirdrp.recipes.spec.stare.StareSpectraApplyWaveRecipe
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
       LOAD_RECWAVE: emirdrp.recipes.auxiliary.load.RecWaveRecipe
