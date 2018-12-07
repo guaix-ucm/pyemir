@@ -48,7 +48,7 @@ class StareSpectraRecipe(EmirRecipe):
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
     master_sky = reqs.SpectralSkyRequirement(optional=True)
 
-    stare = Result(prods.DataFrameType)
+    stare = Result(prods.ProcessedMOS)
 
     def run(self, rinput):
         self.logger.info('starting stare spectra reduction')
@@ -99,8 +99,8 @@ class StareSpectraWaveRecipe(EmirRecipe):
         description='Global offset (pixels) in spatial direction (integer)',
     )
 
-    reduced_image = Result(prods.DataFrameType)
-    stare = Result(prods.DataFrameType)
+    reduced_image = Result(prods.ProcessedImage)
+    stare = Result(prods.ProcessedMOS)
 
     def run(self, rinput):
         self.logger.info('starting rect.+wavecal. reduction of stare spectra')
@@ -260,8 +260,8 @@ class StareSpectraApplyWaveRecipe(EmirRecipe):
         optional=False
     )
 
-    reduced_image = Result(prods.DataFrameType)
-    stare = Result(prods.DataFrameType)
+    reduced_image = Result(prods.ProcessedImage)
+    stare = Result(prods.ProcessedMOS)
 
     def run(self, rinput):
         self.logger.info('applying existing rect.+wavecal. calibration of '

@@ -23,17 +23,12 @@ import logging
 
 from astropy.io import fits
 from numina.array.combine import median
-from numina.core import DataFrame
-from numina.core import Product
+from numina.core import Result
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.products import DataFrameType
-from emirdrp.products import MasterBias
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterBiasRequirement
-from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterIntensityFlatFieldRequirement
+import emirdrp.products as prods
+import emirdrp.requirements as reqs
 from emirdrp.processing.combine import basic_processing_with_combination
 
 _logger = logging.getLogger(__name__)
@@ -56,7 +51,7 @@ class SimpleBiasRecipe(EmirRecipe):
     """
 
     obresult = ObservationResultRequirement()
-    biasframe = Product(MasterBias)
+    biasframe = Result(prods.MasterBias)
 
     def run(self, rinput):
         _logger.info('starting simple bias reduction')
@@ -77,16 +72,16 @@ class SimpleBiasRecipe(EmirRecipe):
         _logger.info('simple bias reduction ended')
 
         # qc is QC.UNKNOWN
-        result = self.create_result(biasframe=DataFrame(hdulist))
+        result = self.create_result(biasframe=hdulist)
         return result
 
 
 class TestBiasCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    frame = Product(DataFrameType)
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    frame = Result(prods.ProcessedImage)
 
     def run(self, rinput):
         _logger.info('starting simple bias reduction')
@@ -110,7 +105,7 @@ class TestRectImageRecipe(EmirRecipe):
     """
 
     obresult = ObservationResultRequirement()
-    frame = Product(DataFrameType)
+    frame = Result(prods.ProcessedImage)
 
     def run(self, rinput):
         import numpy
@@ -130,11 +125,11 @@ class TestRectImageRecipe(EmirRecipe):
 class TestDarkCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
 
-    frame = Product(DataFrameType)
+    frame = Result(prods.ProcessedImage)
 
     def run(self, rinput):
         _logger.info('starting simple dark reduction')
@@ -154,12 +149,12 @@ class TestDarkCorrectRecipe(EmirRecipe):
 class TestFlatCorrectRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
 
-    frame = Product(DataFrameType)
+    frame = Result(prods.ProcessedImage)
 
     def run(self, rinput):
         _logger.info('starting simple flat reduction')

@@ -36,7 +36,7 @@ class CoaddABBARecipe(EmirRecipe):
         )
     )
 
-    spec_coadd_abba = Result(prods.DataFrameType)
+    spec_coadd_abba = Result(prods.ProcessedMOS)
 
 
     def build_recipe_input(self, obsres, dal):
@@ -98,7 +98,7 @@ class CoaddRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
 
-    result_coadd = Result(prods.DataFrameType)
+    result_coadd = Result(prods.ProcessedMOS)
 
     def build_recipe_input(self, obsres, dal):
         if numina.ext.gtc.check_gtc():

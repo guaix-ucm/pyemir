@@ -38,7 +38,7 @@ class SkySpecRecipe(EmirRecipe):
     master_flat = reqs.MasterSpectralFlatFieldRequirement()
     master_rectwv = reqs.MasterRectWaveRequirement()
     skyspec = Result(prods.SkySpectrum)
-    reduced_image = Result(prods.DataFrameType)
+    reduced_image = Result(prods.ProcessedMOS)
 
     def run(self, rinput):
         self.logger.info('starting spectral sky reduction')

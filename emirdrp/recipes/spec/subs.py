@@ -166,9 +166,9 @@ class BaseABBARecipe(EmirRecipe):
         )
     )
 
-    spec_abba = Result(prods.DataFrameType)
+    spec_abba = Result(prods.ProcessedMOS)
     # Accumulate 'spec_abba' results
-    accum = Result(prods.DataFrameType, optional=True)
+    accum = Result(prods.ProcessedMOS, optional=True)
 
     def build_recipe_input(self, obsres, dal, pipeline='default'):
         if numina.ext.gtc.check_gtc():

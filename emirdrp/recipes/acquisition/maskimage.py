@@ -49,8 +49,8 @@ class MaskImagingRecipe(EmirRecipe):
     fit_peak_npoints = Parameter(3, 'Number of points to use for fitting the peak (odd)')
 
     # Recipe Products
-    frame = Result(prods.DataFrameType)
-    # derivative = Result(DataFrameType)
+    frame = Result(prods.ProcessedImage)
+    # derivative = Result(prods.ProcessedImage)
     slits = Result(tarray.ArrayType)
     positions3 = Result(tarray.ArrayType)
     positions5 = Result(tarray.ArrayType)

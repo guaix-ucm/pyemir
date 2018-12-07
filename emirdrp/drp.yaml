@@ -37,10 +37,6 @@ modes:
   name: Micro-dithered images
   summary: Summary of Micro-dithered images
 - description: Lines and mode lines
-  key: MOSAICED_IMAGE
-  name: Mosaiced images
-  summary: Summary of Mosaiced images
-- description: Lines and mode lines
   key: gain_mode1
   name: Gain Mode1
   summary: Summary of GainMode1
@@ -212,7 +208,6 @@ pipelines:
       DITHERED_IMAGE: emirdrp.recipes.image.join.JoinDitheredImagesRecipe
       FULL_DITHERED_IMAGE: emirdrp.recipes.image.join.FullDitheredImagesRecipe
       MICRODITHERED_IMAGE: emirdrp.recipes.image.micro.MicroditheredImageRecipe
-      MOSAICED_IMAGE: emirdrp.recipes.image.mosaic.MosaicRecipe
       NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.image.nodded.NBImageRecipe
       STARE_IMAGE: emirdrp.recipes.image.stare.StareImageBaseRecipe
       fail: numina.core.utils.AlwaysFailRecipe

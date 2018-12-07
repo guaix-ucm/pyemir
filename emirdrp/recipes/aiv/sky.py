@@ -28,7 +28,7 @@ class TestSkyCorrectRecipe(EmirRecipe):
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
     master_sky = Requirement(prods.MasterIntensityFlat, 'Master Sky calibration')
 
-    frame = Result(prods.DataFrameType)
+    frame = Result(prods.ProcessedImage)
 
     def run(self, rinput):
         self.logger.info('starting simple sky reduction')

@@ -19,7 +19,7 @@ import uuid
 import numpy
 import sep
 from astropy.io import fits
-from numina.core import Result, Requirement
+from numina.core import Result, Requirement, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
 from numina.array import combine_shape, combine_shapes
@@ -28,13 +28,15 @@ from numina.array.combine import flatcombine, median, quantileclip
 from numina.array.utils import coor_to_pix, image_box2d
 import numina.processing as proc
 from numina.core.query import ResultOf
-from numina.exceptions import RecipeError
+from numina.array import fixpix2
 
+from emirdrp.instrument.channels import FULL
+import emirdrp.products as prods
+import emirdrp.requirements as reqs
 import emirdrp.decorators
 from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs_imgs
 from emirdrp.processing.corr import offsets_from_crosscor, offsets_from_crosscor_regions
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.products import DataFrameType
 from emirdrp.processing.combine import segmentation_combined
 
 
@@ -43,17 +45,17 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement(query_opts=ResultOf(
         'STARE_IMAGE.frame', node='children', id_field="stareImagesIds"))
-    accum_in = Requirement(DataFrameType,
+    accum_in = Requirement(prods.ProcessedImage,
                            description='Accumulated result',
                            optional=True,
                            destination='accum',
                            query_opts=ResultOf('DITHERED_IMAGE.accum', node='prev')
                            )
-    frame = Result(DataFrameType)
-    sky = Result(DataFrameType, optional=True)
+    frame = Result(prods.ProcessedImage)
+    sky = Result(prods.ProcessedImage, optional=True)
     #
     # Accumulate Frame results
-    accum = Result(DataFrameType, optional=True)
+    accum = Result(prods.ProcessedImage, optional=True)
 
     #@emirdrp.decorators.aggregate
     @emirdrp.decorators.loginfo
@@ -664,26 +666,14 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         return objects, objmask
 
 
-from numina.core import Parameter
-from numina.types.frame import DataFrameType
-from numina.core import Result, Requirement
-from numina.core.requirements import ObservationResultRequirement
-from numina.core.query import ResultOf
-from numina.array import fixpix2
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import SkyImageSepTime_Requirement
-from emirdrp.instrument.channels import FULL
-from emirdrp.products import SourcesCatalog, CoordinateList2DType
-
-
 class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
     obresult = ObservationResultRequirement(query_opts=ResultOf('frame', node='children'))
-    master_bpm = MasterBadPixelMaskRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
     # extinction = Extinction_Requirement()
     # sources = Catalog_Requirement()
     # offsets = Offsets_Requirement()
     offsets = Requirement(
-        CoordinateList2DType,
+        prods.CoordinateList2DType,
         'List of pairs of offsets',
         optional=True
     )
@@ -692,15 +682,15 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
     sky_images = Parameter(
         5, 'Images used to estimate the '
            'background before and after current image')
-    sky_images_sep_time = SkyImageSepTime_Requirement()
+    sky_images_sep_time = reqs.SkyImageSepTime_Requirement()
     check_photometry_levels = Parameter(
         [0.5, 0.8], 'Levels to check the flux of the objects')
     check_photometry_actions = Parameter(
         ['warn', 'warn', 'default'], 'Actions to take on images')
 
-    frame = Result(DataFrameType)
-    sky = Result(DataFrameType, optional=True)
-    catalog = Result(SourcesCatalog, optional=True)
+    frame = Result(prods.ProcessedImage)
+    sky = Result(prods.ProcessedImage, optional=True)
+    catalog = Result(prods.SourcesCatalog, optional=True)
 
     def run(self, rinput):
         partial_result = self.run_single(rinput)

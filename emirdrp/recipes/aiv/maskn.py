@@ -63,11 +63,11 @@ class TestMaskRecipe(EmirRecipe):
     slit_size_ratio = Parameter(4.0, 'Minimum ratio between height and width for slits')
 
     # Recipe Results
-    frame = Result(prods.DataFrameType)
+    frame = Result(prods.ProcessedImage)
     positions = Result(tarray.ArrayType)
     positions_alt = Result(tarray.ArrayType)
     slitstable = Result(tarray.ArrayType)
-    DTU = Product(tarray.ArrayType)
+    DTU = Result(tarray.ArrayType)
     filter = Result(str)
     readmode = Result(str)
     ROTANG = Result(float)

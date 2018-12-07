@@ -51,7 +51,7 @@ class TestPinholeRecipe(EmirRecipe):
     max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
 
     # Recipe Results
-    frame = Result(prods.DataFrameType)
+    frame = Result(prods.ProcessedImage)
     positions = Result(tarray.ArrayType)
     positions_alt = Result(tarray.ArrayType)
     DTU = Result(tarray.ArrayType)

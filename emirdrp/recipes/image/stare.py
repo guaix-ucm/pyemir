@@ -20,8 +20,8 @@ from numina.core.query import Ignore
 from numina.core.recipes import timeit
 
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.products import DataFrameType
 import emirdrp.requirements as reqs
+import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
 import emirdrp.decorators
 
@@ -36,7 +36,7 @@ class StareImageBaseRecipe(EmirRecipe):
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
     master_sky = reqs.MasterSkyRequirement(optional=True)
 
-    frame = Result(DataFrameType)
+    frame = Result(prods.ProcessedImage)
 
     def __init__(self, *args, **kwargs):
         super(StareImageBaseRecipe, self).__init__(*args, **kwargs)

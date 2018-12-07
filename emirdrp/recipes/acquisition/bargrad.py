@@ -14,7 +14,6 @@ from __future__ import division
 from numina.core import Requirement, Result, Parameter
 from numina.exceptions import RecipeError
 import numina.types.array as tarray
-import numina.types.frame as tframe
 
 import emirdrp.datamodel as datamodel
 from emirdrp.processing.bars import slits_to_ds9_reg, find_bars
@@ -46,8 +45,8 @@ class BarDetectionRecipe(EmirRecipe):
     fit_peak_npoints = Parameter(3, 'Number of points to use for fitting the peak (odd)')
 
     # Recipe Products
-    frame = Result(tframe.DataFrameType)
-    # derivative = Result(DataFrameType)
+    frame = Result(prods.ProcessedImage)
+    # derivative = Result(prods.ProcessedImage)
     slits = Result(tarray.ArrayType)
     positions3 = Result(tarray.ArrayType)
     positions5 = Result(tarray.ArrayType)

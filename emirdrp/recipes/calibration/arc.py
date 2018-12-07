@@ -38,10 +38,10 @@ class ArcCalibrationRecipe(EmirRecipe):
     bound_param = reqs.RefinedBoundaryModelParamRequirement()
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
 
-    reduced_image = Result(prods.DataFrameType)
+    reduced_image = Result(prods.ProcessedImage)
     rectwv_coeff = Result(prods.RectWaveCoeff)
-    reduced_55sp = Result(prods.DataFrameType)
-    reduced_arc = Result(prods.DataFrameType)
+    reduced_55sp = Result(prods.ProcessedMOS)
+    reduced_arc = Result(prods.ProcessedMOS)
 
     @emirdrp.decorators.loginfo
     def run(self, rinput):

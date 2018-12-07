@@ -13,7 +13,6 @@
 from numina.core import Parameter
 from numina.core import Result, Requirement
 from numina.core.query import ResultOf
-from numina.types.frame import DataFrameType
 
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
@@ -118,7 +117,7 @@ class DitheredImageRecipe(DirectImageCommon):
     check_photometry_actions = Parameter(
         ['warn', 'warn', 'default'], 'Actions to take on images')
 
-    frame = Result(DataFrameType)
+    frame = Result(prods.ProcessedImage)
     catalog = Result(prods.SourcesCatalog)
 
     def run(self, recipe_input):

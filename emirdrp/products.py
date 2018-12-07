@@ -83,14 +83,20 @@ class ProcessedImage(ProcessedFrame):
     pass
 
 
-class ProcessedImageProduct(prodtypes.DataProductMixin, ProcessedImage):
+class ProcessedMOS(ProcessedFrame):
+    """A processed image with slit spectra"""
     pass
 
 
-class EMIRImageProduct(ProcessedImageProduct):
+class ProcessedSpectrum(ProcessedFrame):
+    """A 1d spectrum"""
+    pass
 
+
+class ProcessedImageProduct(prodtypes.DataProductMixin, ProcessedImage):
     def convert_out(self, obj):
-        newobj = super(EMIRImageProduct, self).convert_out(obj)
+        """Write EMIRUUID header on reduction"""
+        newobj = super(ProcessedImageProduct, self).convert_out(obj)
         if newobj:
             hdulist = newobj.open()
             hdr = hdulist[0].header
@@ -99,23 +105,32 @@ class EMIRImageProduct(ProcessedImageProduct):
         return newobj
 
 
+class ProcessedMOSProduct(prodtypes.DataProductMixin, ProcessedMOS):
+    pass
+
+
+class ProcessedSpectrumProduct(prodtypes.DataProductMixin, ProcessedSpectrum):
+    pass
+
+
+
 class EMIRConfigurationType(obtypes.InstrumentConfigurationType):
 
     def validate(self, value):
         super(EMIRConfigurationType, self).validate(value)
 
 
-class MasterBadPixelMask(EMIRImageProduct):
+class MasterBadPixelMask(ProcessedImageProduct):
     pass
 
 
-class MasterBias(EMIRImageProduct):
+class MasterBias(ProcessedImageProduct):
     """Master bias product
     """
     pass
 
 
-class MasterDark(EMIRImageProduct):
+class MasterDark(ProcessedImageProduct):
     """Master dark product
     """
     pass
@@ -127,20 +142,20 @@ class SkyLinesCatalog(LinesCatalog):
     pass
 
 
-class MasterIntensityFlat(EMIRImageProduct):
+class MasterIntensityFlat(ProcessedImageProduct):
     __tags__ = ['filter']
 
-class MasterSpectralFlat(EMIRImageProduct):
+class MasterSpectralFlat(ProcessedImageProduct):
     __tags__ = ['grism', 'filter']
 
 
 # FIXME: This is not really a calibration
-class MasterSky(EMIRImageProduct):
+class MasterSky(ProcessedImageProduct):
     __tags__ = ['filter']
 
 
 # FIXME: This is not really a calibration
-class SkySpectrum(EMIRImageProduct):
+class SkySpectrum(ProcessedImageProduct):
     __tags__ = ['grism', 'filter']
 
 

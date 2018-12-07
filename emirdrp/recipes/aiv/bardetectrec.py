@@ -51,7 +51,7 @@ class BarDetectionRecipe(EmirRecipe):
     canny_low_threshold = Parameter(0.01, 'High threshold for the canny algorithm')
 
     # Recipe Results
-    frame = Result(prods.DataFrameType)
+    frame = Result(prods.ProcessedImage)
     positions = Result(tarray.ArrayType)
     DTU = Result(tarray.ArrayType)
     ROTANG = Result(float)
