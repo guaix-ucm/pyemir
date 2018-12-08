@@ -30,6 +30,8 @@ from emirdrp.processing.wavecal.median_slitlets_rectified \
 from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
     import rectwv_coeff_from_mos_library
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
+from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 \
+    import save_spectral_lines_ds9
 from emirdrp.processing.wavecal.refine_rectwv_coeff import refine_rectwv_coeff
 
 from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
@@ -183,6 +185,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
             # ds9 region files (to be saved in the work directory)
             if self.intermediate_results:
                 save_four_ds9(rectwv_coeff)
+                save_spectral_lines_ds9(rectwv_coeff)
 
             # compute median spectra employing the useful region of the
             # rectified image
@@ -292,6 +295,7 @@ class StareSpectraApplyWaveRecipe(EmirRecipe):
         # ds9 region files (to be saved in the work directory)
         if self.intermediate_results:
             save_four_ds9(rectwv_coeff)
+            save_spectral_lines_ds9(rectwv_coeff)
 
         # compute median spectra employing the useful region of the
         # rectified image
