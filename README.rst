@@ -23,10 +23,11 @@ be able to be installed and work properly:
  - numpy (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
  - astropy >= 2(http://www.astropy.org/)
- - numina >= 0.16 (https://github.com/guaix-ucm/numina)
+ - numina >= 0.17 (https://github.com/guaix-ucm/numina)
  - photutils >=0.2 (https://github.com/astropy/photutils)
  - sep (https://github.com/kbarbary/sep)
- - scikit-image (http://scikit-image.org/)
+ - scikit-image >= 0.11 (http://scikit-image.org/)
+ - scikit-learn >= 0.19 (http://scikit-learn.org/)
  - lmfit (http://lmfit.github.io/lmfit-py/)
 
 EMIR is a wide-field, near-infrared, multi-object spectrograph proposed 
