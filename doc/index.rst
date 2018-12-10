@@ -11,12 +11,15 @@ to address the science goals of the proposing team and of the Spanish community 
 
 PyEmir user guide: :ref:`user`
 
+PyEmir MOS tutorial: :ref:`MOS_tutorial`
+
 PyEmir reference guide: :ref:`reference`
 
 .. toctree::
    :maxdepth: 1
 
    user/index 
+   tutorial_mos/index
    reference/index
    glossary
 
