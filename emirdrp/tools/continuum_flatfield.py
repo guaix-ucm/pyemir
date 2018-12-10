@@ -276,6 +276,10 @@ def main(args=None):
             nn2 = n2 - slt.bb_ns1_orig + 1
             image2d_flatfielded[(n1 - 1):n2, j] = \
                 slitlet2d_norm[(nn1 - 1):nn2, j]
+
+            # force to 1.0 region around frontiers
+            image2d_flatfielded[(n1 - 1):(n1 + 2), j] = 1
+            image2d_flatfielded[(n2 - 5):n2, j] = 1
     if args.debugplot == 0:
         print('OK!')
 
