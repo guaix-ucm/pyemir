@@ -43,5 +43,6 @@ Maintainer: sergiopr@fis.ucm.es
    :target: https://readthedocs.org/projects/pyemir/?badge=latest
    :alt: Documentation Status
 
-.. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.18040.svg
-   :target: http://dx.doi.org/10.5281/zenodo.18040
+.. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.593642.svg
+   :target: http://dx.doi.org/10.5281/zenodo.593642
+
