@@ -198,7 +198,7 @@ class MaskCheckRecipe(EmirRecipe):
             offset, angle, qc = compute_off_rotation(
                 image_sep, csu_conf, slits_bb,
                 rotaxis=rotaxis, logger=self.logger,
-                debug_plot=True, intermediate_results=True
+                debug_plot=False, intermediate_results=self.intermediate_results
             )
         else:
             self.logger.info('CSU is open, not detecting slits')
