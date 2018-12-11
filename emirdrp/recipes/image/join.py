@@ -808,15 +808,15 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
         if compute_cross_offsets:
 
             self.logger.debug("Compute cross-correlation of images")
-            # regions = self.compute_regions(finalshape, box=200, corners=True)
+            # regions_c = self.compute_regions(finalshape, box=200, corners=True)
 
             # Regions frm bright objects
-            regions = self.compute_regions_from_objs(hdulist[0].data, finalshape, box=20)
+            regions_c = self.compute_regions_from_objs(hdulist[0].data, finalshape, box=20)
 
             try:
 
                 offsets_xy_c = self.compute_offset_xy_crosscor_regions(
-                    data_arr_sr, regions, refine=True, tol=1
+                    data_arr_sr, regions_c, refine=True, tol=1
                 )
                 #
                 # Combined offsets
