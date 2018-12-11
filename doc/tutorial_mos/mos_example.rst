@@ -578,7 +578,7 @@ computer). The final image will be stored in the
 
 ::
 
-  (py36) $ numina-ximshow obsidABBA_combined_results/result.fits
+  (py36) $ ds9 obsidABBA_combined_results/result.fits
 
 - select ``region --> load ->
   obsid2158refined_work/ds9_boundaries_rectified.reg``
