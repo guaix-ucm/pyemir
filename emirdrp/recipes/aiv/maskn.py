@@ -1,21 +1,12 @@
 #
-# Copyright 2013-2016 Universidad Complutense de Madrid
+# Copyright 2013-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """AIV Recipes for EMIR"""
 
@@ -25,42 +16,37 @@ import logging
 
 import numpy
 import six
-from numina.core import RecipeError
-from numina.core import Requirement, Product, Parameter
-from numina.core.products import ArrayType
-from numina.core.requirements import ObservationResultRequirement
+import numina.exceptions
+from numina.core import Requirement, Result, Parameter
+import numina.types.array as tarray
 from scipy import ndimage
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
 import emirdrp.datamodel as datamodel
-from emirdrp.core import EmirRecipe, EMIR_PIXSCALE
+from emirdrp.core import EMIR_PIXSCALE
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.combine import basic_processing_with_combination
-from emirdrp.products import CoordinateList2DType
-from emirdrp.products import DataFrameType
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterBiasRequirement
-from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-from emirdrp.requirements import MasterSkyRequirement
+import emirdrp.requirements as reqs
+import emirdrp.products as prods
 from .common import normalize, char_slit
 from .common import pinhole_char, pinhole_char2
 
-_logger = logging.getLogger('numina.recipes.emir')
+_logger = logging.getLogger(__name__)
 
 
 class TestMaskRecipe(EmirRecipe):
 
     # Recipe Requirements
     #
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = MasterSkyRequirement()
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
+    master_sky = reqs.MasterSkyRequirement()
 
-    pinhole_nominal_positions = Requirement(CoordinateList2DType,
+    pinhole_nominal_positions = Requirement(prods.CoordinateList2DType,
                                             'Nominal positions of the pinholes'
                                             )
     shift_coordinates = Parameter(True, 'Use header information to'
@@ -76,20 +62,20 @@ class TestMaskRecipe(EmirRecipe):
     obj_max_size = Parameter(3000, 'Maximum size of the slit')
     slit_size_ratio = Parameter(4.0, 'Minimum ratio between height and width for slits')
 
-    # Recipe Products
-    frame = Product(DataFrameType)
-    positions = Product(ArrayType)
-    positions_alt = Product(ArrayType)
-    slitstable = Product(ArrayType)
-    DTU = Product(ArrayType)
-    filter = Product(str)
-    readmode = Product(str)
-    ROTANG = Product(float)
-    DETPA = Product(float)
-    DTUPA = Product(float)
-    param_recenter = Product(bool)
-    param_max_recenter_radius = Product(float)
-    param_box_half_size = Product(float)
+    # Recipe Results
+    frame = Result(prods.ProcessedImage)
+    positions = Result(tarray.ArrayType)
+    positions_alt = Result(tarray.ArrayType)
+    slitstable = Result(tarray.ArrayType)
+    DTU = Result(tarray.ArrayType)
+    filter = Result(str)
+    readmode = Result(str)
+    ROTANG = Result(float)
+    DETPA = Result(float)
+    DTUPA = Result(float)
+    param_recenter = Result(bool)
+    param_max_recenter_radius = Result(float)
+    param_box_half_size = Result(float)
 
     def run(self, rinput):
         _logger.info('starting processing for slit detection')
@@ -112,7 +98,7 @@ class TestMaskRecipe(EmirRecipe):
             dtub, dtur = datamodel.get_dtur_from_header(hdr)
         except KeyError as error:
             _logger.error(error)
-            raise RecipeError(error)
+            raise numina.exceptions.RecipeError(error)
 
         if rinput.shift_coordinates:
             xdtur, ydtur, zdtur = dtur

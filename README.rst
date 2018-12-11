@@ -22,11 +22,12 @@ be able to be installed and work properly:
  - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
  - numpy (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
- - astropy (http://www.astropy.org/)
- - numina >=0.15(https://github.com/guaix-ucm/numina)
- - photutils >=0.1 (https://github.com/astropy/photutils)
+ - astropy >= 2(http://www.astropy.org/)
+ - numina >= 0.17 (https://github.com/guaix-ucm/numina)
+ - photutils >=0.2 (https://github.com/astropy/photutils)
  - sep (https://github.com/kbarbary/sep)
- - scikit-image (http://scikit-image.org/)
+ - scikit-image >= 0.11 (http://scikit-image.org/)
+ - scikit-learn >= 0.19 (http://scikit-learn.org/)
  - lmfit (http://lmfit.github.io/lmfit-py/)
 
 EMIR is a wide-field, near-infrared, multi-object spectrograph proposed 
@@ -36,12 +37,13 @@ nIR bands Z, J, H and K. A multi-slit mask unit will be used for target acquisit
 EMIR is designed to address the science goals of the proposing team and 
 of the Spanish community at large. 
 
-Webpage: https://guaix.fis.ucm.es/projects/emir
-Maintainer: sergiopr@fis.ucm.es            
+Webpage: https://readthedocs.org/projects/pyemir/?badge=latest
+Maintainers: sergiopr@fis.ucm.es, cardiel@ucm.es
       
 .. |docs| image:: https://readthedocs.org/projects/pyemir/badge/?version=latest
    :target: https://readthedocs.org/projects/pyemir/?badge=latest
    :alt: Documentation Status
 
-.. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.18040.svg
-   :target: http://dx.doi.org/10.5281/zenodo.18040
+.. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.593642.svg
+   :target: http://dx.doi.org/10.5281/zenodo.593642
+

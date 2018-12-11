@@ -1,21 +1,12 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """Twilight Flat Recipe for a list of frames in different filters"""
 
@@ -24,31 +15,27 @@ import uuid
 import datetime
 
 import numpy
-import numpy.polynomial.polynomial as nppol
 import astropy.io.fits as fits
 from numina.array.combine import median
 from numina.array.robustfit import fit_theil_sen
-from numina.core import Product
-from numina.core.types import ListOfType
-from numina.core.requirements import ObservationResultRequirement
+from numina.core import Result
+import numina.types.datatype as dt
 
 from emirdrp.processing.info import gather_info_frames
-from emirdrp.core import EmirRecipe
-from emirdrp.products import MasterIntensityFlat
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterBiasRequirement
-from emirdrp.requirements import MasterDarkRequirement
+from emirdrp.core.recipe import EmirRecipe
+import emirdrp.products as prods
+import emirdrp.requirements as reqs
 from emirdrp.processing.combine import basic_processing_with_combination_frames
 
 
 class MultiTwilightFlatRecipe(EmirRecipe):
     """Create a list of twilight flats"""
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
 
-    twflatframes = Product(ListOfType(MasterIntensityFlat))
+    twflatframes = Result(dt.ListOfType(prods.MasterIntensityFlat))
 
     def run(self, rinput):
 

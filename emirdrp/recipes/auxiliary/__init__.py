@@ -1,48 +1,27 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Auxiliary Recipes for EMIR"""
 
 import logging
 
-import numpy
 from numina.array.combine import median
 from numina.core import DataFrame
-from numina.core import Product
-from numina.core import RecipeError
-from numina.core.requirements import ObservationResultRequirement
+from numina.core import Result
+from numina.exceptions import RecipeError
 
-import emirdrp.instrument.channels as allchannels
 from emirdrp.core import EMIR_BIAS_MODES
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.info import gather_info_frames
-from emirdrp.products import ChannelLevelStatistics
-from emirdrp.products import ChannelLevelStatisticsType
-from emirdrp.products import MasterBias, MasterDark
-from emirdrp.products import MasterIntensityFlat
-from emirdrp.products import SlitTransmissionCalibration
-from emirdrp.products import WavelengthCalibration, MasterSpectralFlat
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterBiasRequirement
-from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterIntensityFlatFieldRequirement
-from emirdrp.requirements import MasterSpectralFlatFieldRequirement
+import emirdrp.products as prods
+import emirdrp.requirements as reqs
+
 from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.processing.combine import  basic_processing_with_segmentation
 
@@ -74,10 +53,10 @@ class BiasRecipe(EmirRecipe):
 
     """
     
-    master_bpm = MasterBadPixelMaskRequirement()
-    obresult = ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    obresult = reqs.ObservationResultRequirement()
 
-    biasframe = Product(MasterBias)
+    biasframe = Result(prods.MasterBias)
 
     def run(self, rinput):
         _logger.info('starting bias reduction')
@@ -128,11 +107,11 @@ class DarkRecipe(EmirRecipe):
      * A combined dark frame, with variance extension.
     """
 
-    master_bpm = MasterBadPixelMaskRequirement()
-    obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    obresult = reqs.ObservationResultRequirement()
+    master_bias = reqs.MasterBiasRequirement()
 
-    darkframe = Product(MasterDark)
+    darkframe = Result(prods.MasterDark)
 
     def run(self, rinput):
 
@@ -193,12 +172,12 @@ class IntensityFlatRecipe(EmirRecipe):
 
     """
 
-    master_bpm = MasterBadPixelMaskRequirement()
-    obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    obresult = reqs.ObservationResultRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
 
-    flatframe = Product(MasterIntensityFlat)    
+    flatframe = Result(prods.MasterIntensityFlat)
 
     def run(self, rinput):
         _logger.info('starting flat reduction')
@@ -229,13 +208,13 @@ class SimpleSkyRecipe(EmirRecipe):
 
     """
 
-    master_bpm = MasterBadPixelMaskRequirement()
-    obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    obresult = reqs.ObservationResultRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
 
-    skyframe = Product(MasterIntensityFlat)
+    skyframe = Result(prods.MasterSky)
 
 
     def run(self, rinput):
@@ -260,13 +239,13 @@ class DitherSkyRecipe(EmirRecipe):
 
     """
 
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
 
-    skyframe = Product(MasterIntensityFlat)
+    skyframe = Result(prods.MasterSky)
 
 
     def run(self, rinput):
@@ -291,17 +270,18 @@ class DitherSkyRecipe(EmirRecipe):
 
 
 class SpectralFlatRecipe(EmirRecipe):
+    """Recipe to process data taken in intensity flat-field mode."""
 
-    master_bpm = MasterBadPixelMaskRequirement()
-    obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    obresult = reqs.ObservationResultRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
     
-    flatframe = Product(MasterSpectralFlat)
+    flatframe = Result(prods.MasterSpectralFlat)
 
     def run(self, rinput):
-        return self.create_result(flatframe=MasterSpectralFlat())
+        return self.create_result(flatframe=prods.MasterSpectralFlat())
 
 
 class SlitTransmissionRecipe(EmirRecipe):
@@ -325,14 +305,14 @@ class SlitTransmissionRecipe(EmirRecipe):
 
     """
 
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
 
-    slit = Product(SlitTransmissionCalibration)
+    slit = Result(prods.SlitTransmissionCalibration)
 
     def run(self, rinput):
-        return self.create_result(slit=SlitTransmissionCalibration())
+        return self.create_result(slit=prods.SlitTransmissionCalibration())
 
 
 
@@ -357,13 +337,13 @@ class WavelengthCalibrationRecipe(EmirRecipe):
      * TBD
     """
 
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_spectral_ff = MasterSpectralFlatFieldRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
+    master_spectral_ff = reqs.MasterSpectralFlatFieldRequirement()
 
-    cal = Product(WavelengthCalibration)
+    cal = Result(prods.WavelengthCalibration)
 
     def run(self, rinput):
-        return self.create_result(cal=WavelengthCalibration())
+        return self.create_result(cal=prods.WavelengthCalibration())

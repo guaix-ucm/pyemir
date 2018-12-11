@@ -1,20 +1,10 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Bar characterization using gradients for EMIR"""
@@ -22,9 +12,10 @@
 from __future__ import division
 
 import numpy
-from numina.array.utils import wc_to_pix_1d
-from numina.core import Requirement, Product, Parameter, RecipeError
-from numina.core.products import ArrayType
+from numina.array.utils import coor_to_pix_1d
+from numina.core import Requirement, Result, Parameter
+import numina.exceptions
+import numina.types.array as tarray
 from numpy.polynomial.polynomial import polyval
 from scipy.ndimage import convolve1d
 from scipy.ndimage.filters import median_filter
@@ -32,9 +23,10 @@ from scipy.ndimage.filters import median_filter
 import emirdrp.datamodel as datamodel
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
-from emirdrp.core import EmirRecipe, EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
+from emirdrp.core import EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.combine import basic_processing_with_combination
-from emirdrp.recipes.aiv.bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
+from emirdrp.processing.bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
 
 
 class MaskImagingRecipe(EmirRecipe):
@@ -57,18 +49,18 @@ class MaskImagingRecipe(EmirRecipe):
     fit_peak_npoints = Parameter(3, 'Number of points to use for fitting the peak (odd)')
 
     # Recipe Products
-    frame = Product(prods.DataFrameType)
-    # derivative = Product(DataFrameType)
-    slits = Product(ArrayType)
-    positions3 = Product(ArrayType)
-    positions5 = Product(ArrayType)
-    positions7 = Product(ArrayType)
-    positions9 = Product(ArrayType)
-    DTU = Product(ArrayType)
-    ROTANG = Product(float)
-    TSUTC1 = Product(float)
-    csupos = Product(ArrayType)
-    csusens = Product(ArrayType)
+    frame = Result(prods.ProcessedImage)
+    # derivative = Result(prods.ProcessedImage)
+    slits = Result(tarray.ArrayType)
+    positions3 = Result(tarray.ArrayType)
+    positions5 = Result(tarray.ArrayType)
+    positions7 = Result(tarray.ArrayType)
+    positions9 = Result(tarray.ArrayType)
+    DTU = Result(tarray.ArrayType)
+    ROTANG = Result(float)
+    TSUTC1 = Result(float)
+    csupos = Result(tarray.ArrayType)
+    csusens = Result(tarray.ArrayType)
 
     def run(self, rinput):
         self.logger.info('starting processing for bars detection')
@@ -89,7 +81,7 @@ class MaskImagingRecipe(EmirRecipe):
 
         except KeyError as error:
             self.logger.error(error)
-            raise RecipeError(error)
+            raise numina.exceptions.RecipeError(error)
 
         self.logger.debug('finding bars')
         # Processed array
@@ -168,7 +160,7 @@ class MaskImagingRecipe(EmirRecipe):
                 rbarid = lbarid + EMIR_NBARS
                 ref_y_coor = coords[1] + vec[1]
                 poly_coeffs = coords[2:]
-                prow = wc_to_pix_1d(ref_y_coor) - 1
+                prow = coor_to_pix_1d(ref_y_coor) - 1
                 fits_row = prow + 1 # FITS pixel index
 
                 # A function that returns the center of the bar

@@ -1,10 +1,32 @@
+#
+# Copyright 2008-2018 Universidad Complutense de Madrid
+#
+# This file is part of PyEmir
+#
+# PyEmir is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# PyEmir is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 from __future__ import division
 from __future__ import print_function
 
 from astropy.io import fits
 from copy import deepcopy
+import numpy as np
 
 from emirdrp.core import EMIR_NBARS
+from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
+from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
 
 
 class CsuConfiguration(object):
@@ -46,12 +68,14 @@ class CsuConfiguration(object):
         return output
 
     def __eq__(self, other):
-        result = \
-            (self._csu_bar_left == other._csu_bar_left) and \
-            (self._csu_bar_right == other._csu_bar_right) and \
-            (self._csu_bar_slit_center == other._csu_bar_slit_center) and \
-            (self._csu_bar_slit_width == other._csu_bar_slit_width)
-        return result
+        if isinstance(other, CsuConfiguration):
+            result = \
+                (self._csu_bar_left == other._csu_bar_left) and \
+                (self._csu_bar_right == other._csu_bar_right) and \
+                (self._csu_bar_slit_center == other._csu_bar_slit_center) and \
+                (self._csu_bar_slit_width == other._csu_bar_slit_width)
+            return result
+        return NotImplemented
 
     @classmethod
     def define_from_fits(cls, fitsobj, extnum=0):
@@ -151,6 +175,36 @@ class CsuConfiguration(object):
                 round(self._csu_bar_slit_width[i], ndigits)
 
         return outdict
+
+    def widths_in_range_mm(
+            self,
+            minwidth=EMIR_MINIMUM_SLITLET_WIDTH_MM,
+            maxwidth=EMIR_MAXIMUM_SLITLET_WIDTH_MM
+    ):
+        """Return list of slitlets which width is within given range
+
+        Parameters
+        ----------
+        minwidth : float
+            Minimum slit width (mm).
+        maxwidth : float
+            Maximum slit width (mm).
+
+        Returns
+        -------
+        list_ok : list
+            List of booleans indicating whether the corresponding
+            slitlet width is within range
+
+        """
+
+        list_ok = []
+        for i in range(EMIR_NBARS):
+            slitlet_ok = minwidth <= self._csu_bar_slit_width[i] <= maxwidth
+            if slitlet_ok:
+                list_ok.append(i + 1)
+
+        return list_ok
 
 
 def merge_odd_even_csu_configurations(conf_odd, conf_even):

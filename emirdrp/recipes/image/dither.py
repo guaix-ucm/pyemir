@@ -1,39 +1,21 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Recipe for the reduction of imaging mode observations."""
 
 
 from numina.core import Parameter
-from numina.core import DataFrameType
-from numina.core import Product, Requirement
-from numina.core.requirements import ObservationResultRequirement
-from numina.core.query import Result
+from numina.core import Result, Requirement
+from numina.core.query import ResultOf
 
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import Extinction_Requirement
-from emirdrp.requirements import Offsets_Requirement
-from emirdrp.requirements import Catalog_Requirement
-from emirdrp.requirements import SkyImageSepTime_Requirement
-
-from emirdrp.products import SourcesCatalog, CoordinateList2DType
-
+import emirdrp.requirements as reqs
+import emirdrp.products as prods
 from .shared import DirectImageCommon
 
 
@@ -114,13 +96,13 @@ class DitheredImageRecipe(DirectImageCommon):
        A better calibration might be computed using available stars (TBD).
 
     """
-    obresult = ObservationResultRequirement(query_opts=Result('frame', node='children'))
-    master_bpm = MasterBadPixelMaskRequirement()
-    extinction = Extinction_Requirement()
-    sources = Catalog_Requirement()
+    obresult = reqs.ObservationResultRequirement(query_opts=ResultOf('frame', node='children'))
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    extinction = reqs.Extinction_Requirement()
+    sources = reqs.Catalog_Requirement()
     #offsets = Offsets_Requirement()
     offsets = Requirement(
-        CoordinateList2DType,
+        prods.CoordinateList2DType,
         'List of pairs of offsets',
         optional=True
     )
@@ -129,14 +111,14 @@ class DitheredImageRecipe(DirectImageCommon):
     sky_images = Parameter(
         5, 'Images used to estimate the '
         'background before and after current image')
-    sky_images_sep_time = SkyImageSepTime_Requirement()
+    sky_images_sep_time = reqs.SkyImageSepTime_Requirement()
     check_photometry_levels = Parameter(
         [0.5, 0.8], 'Levels to check the flux of the objects')
     check_photometry_actions = Parameter(
         ['warn', 'warn', 'default'], 'Actions to take on images')
 
-    frame = Product(DataFrameType)
-    catalog = Product(SourcesCatalog)
+    frame = Result(prods.ProcessedImage)
+    catalog = Result(prods.SourcesCatalog)
 
     def run(self, recipe_input):
         print(recipe_input.obresult.frames)

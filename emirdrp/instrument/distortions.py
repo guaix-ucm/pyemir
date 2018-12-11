@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -17,7 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 import numpy
 
 
@@ -25,6 +24,7 @@ from . import EMIR_PLATESCALE_RADS
 
 
 def exvp(pos_x, pos_y):
+    """Convert virtual pixel to real pixel"""
     pos_x = numpy.asarray(pos_x)
     pos_y = numpy.asarray(pos_y)
     # convert virtual pixel to real pixel
@@ -46,6 +46,7 @@ def exvp(pos_x, pos_y):
 
 
 def pvex(pos_x, pos_y):
+    """Convert real pixel to virtual pixel"""
     # convert real pixel to virtual pixel.
     # convert pixel to world coordinate
     pos_x = numpy.asarray(pos_x)
@@ -64,3 +65,12 @@ def pvex(pos_x, pos_y):
     nx1 = rr1 * ra * numpy.cos(thet) + center[0]
     ny1 = rr1 * ra * numpy.sin(thet) + center[1]
     return nx1, ny1
+
+
+def pix2virt(pos, origin=1):
+    ddef_o = 1
+    off = ddef_o - origin
+    pos = numpy.atleast_2d(pos) + off
+    nx, ny = pvex(pos[:, 0], pos[:, 1])
+    res = numpy.stack((nx, ny), axis=1)
+    return res - off

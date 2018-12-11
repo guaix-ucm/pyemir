@@ -1,21 +1,12 @@
 #
-# Copyright 2014-2017 Universidad Complutense de Madrid
+# Copyright 2014-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """Dither Image recipe for EMIR"""
 
@@ -26,91 +17,45 @@ import datetime
 import uuid
 
 import numpy
+import sep
 from astropy.io import fits
-from numina.core import Product, RecipeError, Requirement
+from numina.core import Result, Requirement, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.array import combine
 from numina.array import combine_shape, combine_shapes
-from numina.array.combine import flatcombine, median, quantileclip
 from numina.array import resize_arrays, resize_arrays_alt
+from numina.array.combine import flatcombine, median, quantileclip
 from numina.array.utils import coor_to_pix, image_box2d
-from numina.core import ObservationResult
-from numina.flow.processing import SkyCorrector
-import numina.ext.gtc
-from numina.core.query import Result
-import sep
+import numina.processing as proc
+from numina.core.query import ResultOf
+from numina.array import fixpix2
 
+from emirdrp.instrument.channels import FULL
+import emirdrp.products as prods
+import emirdrp.requirements as reqs
+import emirdrp.decorators
 from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs_imgs
 from emirdrp.processing.corr import offsets_from_crosscor, offsets_from_crosscor_regions
-from emirdrp.core import EmirRecipe
-from emirdrp.products import DataFrameType
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.combine import segmentation_combined
-import emirdrp.decorators
 
 
 class JoinDitheredImagesRecipe(EmirRecipe):
     """Combine single exposures obtained in dithered mode"""
 
-    obresult = ObservationResultRequirement()
-    accum_in = Requirement(DataFrameType,
+    obresult = ObservationResultRequirement(query_opts=ResultOf(
+        'STARE_IMAGE.frame', node='children', id_field="stareImagesIds"))
+    accum_in = Requirement(prods.ProcessedImage,
                            description='Accumulated result',
                            optional=True,
                            destination='accum',
-                           query_opts=Result('accum', node='prev')
+                           query_opts=ResultOf('DITHERED_IMAGE.accum', node='prev')
                            )
-    frame = Product(DataFrameType)
-    sky = Product(DataFrameType, optional=True)
+    frame = Result(prods.ProcessedImage)
+    sky = Result(prods.ProcessedImage, optional=True)
     #
     # Accumulate Frame results
-    accum = Product(DataFrameType, optional=True)
-
-    def build_recipe_input(self, obsres, dal, pipeline='default'):
-        if numina.ext.gtc.check_gtc():
-            self.logger.debug('Using GTC version of build_recipe_input in DitheredImages')
-            return self.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
-        else:
-            return super(JoinDitheredImagesRecipe, self).build_recipe_input(obsres, dal)
-
-    def build_recipe_input_gtc(self, obsres, dal, pipeline='default'):
-        newOR = ObservationResult()
-        # FIXME: this method will work only in GTC
-        # stareImagesIds = obsres['stareImagesIds']._v
-        stareImagesIds = obsres.stareImagesIds
-        obsres.children = stareImagesIds
-        self.logger.info('Submode result IDs: %s', obsres.children)
-        stareImages = []
-        # Field to query the results
-        key_field = 'frame'
-        for subresId in obsres.children:
-            subres = dal.getRecipeResult(subresId)
-            # This 'frame' is the name of the product in RecipeResult
-            # there is also a 'sky' field
-            elements = subres['elements']
-            stareImages.append(elements[key_field])
-        newOR.frames = stareImages
-
-        naccum = obsres.naccum
-        self.logger.info('naccum: %d', naccum)
-        mode_field = "DITHERED_IMAGE"
-        key_field = 'accum'
-        if naccum != 1:  # if it is not the first dithering loop
-            self.logger.info("SEARCHING LATEST RESULT of %s", mode_field)
-            latest_result = dal.getLastRecipeResult("EMIR", "EMIR", mode_field)
-            elements = latest_result['elements']
-            accum_dither = elements[key_field]
-            self.logger.info("FOUND")
-        else:
-            self.logger.info("NO ACCUMULATION")
-            accum_dither = stareImages[0]
-
-        newOR.naccum = naccum
-        newOR.accum = accum_dither
-
-        # obsres['obresult'] = newOR
-        # print('Adding RI parameters ', obsres)
-        # newRI = DitheredImageARecipeInput(**obsres)
-        newRI = self.create_input(obresult=newOR)
-        return newRI
+    accum = Result(prods.ProcessedImage, optional=True)
 
     #@emirdrp.decorators.aggregate
     @emirdrp.decorators.loginfo
@@ -123,24 +68,17 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         obresult = rinput.obresult
         # Check if this is our first run
-        naccum = getattr(obresult, 'naccum', 0)
-        accum = getattr(obresult, 'accum', None)
+        naccum = getattr(obresult, 'naccum', 1)
+        accum = rinput.accum
 
         frame = partial_result.frame
 
-        if naccum == 0:
-            self.logger.debug('naccum is not set, do not accumulate')
-            return partial_result
-        elif naccum == 1:
+        if 0 <= naccum <= 1  or accum is None:
             self.logger.debug('round %d initialize accumulator', naccum)
             newaccum = frame
-        elif naccum > 1:
+        else:
             self.logger.debug('round %d of accumulation', naccum)
             newaccum = self.aggregate_frames(accum, frame, naccum)
-        else:
-            msg = 'naccum set to %d, invalid' % (naccum, )
-            self.logger.error(msg)
-            raise RecipeError(msg)
 
         # Update partial result
         partial_result.accum = newaccum
@@ -180,12 +118,12 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             self.logger.info('compute sky simple')
             sky_result = self.compute_sky_simple(data_hdul, use_errors=False)
             self.save_intermediate_img(sky_result, 'sky_init.fits')
-            sky_result.writeto('sky_init.fits', clobber=True)
+            sky_result.writeto('sky_init.fits', overwrite=True)
             sky_data = sky_result[0].data
             self.logger.debug('sky image has shape %s', sky_data.shape)
 
             self.logger.info('sky correction in individual images')
-            corrector = SkyCorrector(
+            corrector = proc.SkyCorrector(
                 sky_data,
                 self.datamodel,
                 calibid=self.datamodel.get_imgid(sky_result)
@@ -378,7 +316,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         hdu.header['history'] = 'Combination time {}'.format(
             datetime.datetime.utcnow().isoformat()
         )
-        # Update NUM-NCOM, sum of individual imagess
+        # Update NUM-NCOM, sum of individual images
         ncom = 0
         for img in data_hdul:
             hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
@@ -718,36 +656,24 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         bkg = sep.Background(arr)
         data_sub = arr - bkg
-        objects, objmask = sep.extract(data_sub, threshold,
-                                       err=bkg.globalrms,
-                                       mask=wmap,
-                                       segmentation_map=True)
+        objects, objmask = sep.extract(
+            data_sub,
+            threshold,
+            err=bkg.globalrms * numpy.ones_like(data_sub),
+            mask=wmap,
+            segmentation_map=True
+        )
         return objects, objmask
 
 
-from numina.core import Parameter
-from numina.core import DataFrameType
-from numina.core import Product, Requirement
-from numina.core.requirements import ObservationResultRequirement
-from numina.core.query import Result
-from numina.array import fixpix2
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import Extinction_Requirement
-from emirdrp.requirements import Offsets_Requirement
-from emirdrp.requirements import Catalog_Requirement
-from emirdrp.requirements import SkyImageSepTime_Requirement
-from emirdrp.instrument.channels import FULL
-from emirdrp.products import SourcesCatalog, CoordinateList2DType
-
-
 class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
-    obresult = ObservationResultRequirement(query_opts=Result('frame', node='children'))
-    master_bpm = MasterBadPixelMaskRequirement()
+    obresult = ObservationResultRequirement(query_opts=ResultOf('frame', node='children'))
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
     # extinction = Extinction_Requirement()
     # sources = Catalog_Requirement()
     # offsets = Offsets_Requirement()
     offsets = Requirement(
-        CoordinateList2DType,
+        prods.CoordinateList2DType,
         'List of pairs of offsets',
         optional=True
     )
@@ -756,15 +682,15 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
     sky_images = Parameter(
         5, 'Images used to estimate the '
            'background before and after current image')
-    sky_images_sep_time = SkyImageSepTime_Requirement()
+    sky_images_sep_time = reqs.SkyImageSepTime_Requirement()
     check_photometry_levels = Parameter(
         [0.5, 0.8], 'Levels to check the flux of the objects')
     check_photometry_actions = Parameter(
         ['warn', 'warn', 'default'], 'Actions to take on images')
 
-    frame = Product(DataFrameType)
-    sky = Product(DataFrameType, optional=True)
-    catalog = Product(SourcesCatalog, optional=True)
+    frame = Result(prods.ProcessedImage)
+    sky = Result(prods.ProcessedImage, optional=True)
+    catalog = Result(prods.SourcesCatalog, optional=True)
 
     def run(self, rinput):
         partial_result = self.run_single(rinput)
@@ -812,12 +738,12 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
             self.logger.info('compute sky simple')
             sky_result = self.compute_sky_simple(data_hdul, use_errors=False)
             self.save_intermediate_img(sky_result, 'sky_init.fits')
-            sky_result.writeto('sky_init.fits', clobber=True)
+            sky_result.writeto('sky_init.fits', overwrite=True)
             sky_data = sky_result[0].data
             self.logger.debug('sky image has shape %s', sky_data.shape)
 
             self.logger.info('sky correction in individual images')
-            corrector = SkyCorrector(
+            corrector = proc.SkyCorrector(
                 sky_data,
                 self.datamodel,
                 calibid=self.datamodel.get_imgid(sky_result)
@@ -882,15 +808,15 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
         if compute_cross_offsets:
 
             self.logger.debug("Compute cross-correlation of images")
-            # regions = self.compute_regions(finalshape, box=200, corners=True)
+            # regions_c = self.compute_regions(finalshape, box=200, corners=True)
 
             # Regions frm bright objects
-            regions = self.compute_regions_from_objs(hdulist[0].data, finalshape, box=20)
+            regions_c = self.compute_regions_from_objs(hdulist[0].data, finalshape, box=20)
 
             try:
 
                 offsets_xy_c = self.compute_offset_xy_crosscor_regions(
-                    data_arr_sr, regions, refine=True, tol=1
+                    data_arr_sr, regions_c, refine=True, tol=1
                 )
                 #
                 # Combined offsets
@@ -939,7 +865,7 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
         for inum in range(1, rinput.iterations + 1):
             # superflat
             sf_data = self.compute_superflat(data_arr_0, objmask, regions, channels)
-            fits.writeto('superflat_%d.fits' % inum, sf_data, clobber=True)
+            fits.writeto('superflat_%d.fits' % inum, sf_data, overwrite=True)
             # apply superflat
             data_arr_rf = data_arr_r
             for base, arr, reg in zip(data_arr_rf, data_arr_0, regions):
@@ -1001,9 +927,9 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
                     fixpix2(sky, binmask, out=sky, iterations=1)
 
                 name = 'sky_%d_%03d.fits' % (inum, idx)
-                fits.writeto(name, sky, clobber=True)
+                fits.writeto(name, sky, overwrite=True)
                 name = 'sky_binmask_%d_%03d.fits' % (inum, idx)
-                fits.writeto(name, binmask.astype('int16'), clobber=True)
+                fits.writeto(name, binmask.astype('int16'), overwrite=True)
 
                 data_arr_sky.append(sky)
                 arr = numpy.copy(data_arr_rf[idx])

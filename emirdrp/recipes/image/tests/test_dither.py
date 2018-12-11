@@ -95,27 +95,27 @@ def test_join(nimages, naccum):
     obsresult.naccum = 1
 
     recipe = JoinDitheredImagesRecipe()
+    prev_accum = None
 
     while True:
 
         rinput = recipe.create_input(
             obresult=obsresult,
+            accum=prev_accum
         )
 
-        result = recipe.run(rinput)
+        result = recipe(rinput)
         frame_hdul = result.frame.open()
         assert frame_hdul[0].header['NUM-NCOM'] == nimages * nstare
         accum_hdul = result.accum.open()
-        # print('frame', obsresult.naccum, frame_hdul[0].data.mean(), frame_hdul[0].data.std(), 2*(1.0/obsresult.naccum))
-        # print('acuum', obsresult.naccum, accum_hdul[0].data.mean(), accum_hdul[0].data.std(), 2*(1-1.0/obsresult.naccum))
         assert accum_hdul[0].header['NUM-NCOM'] == nimages * nstare * obsresult.naccum
         if obsresult.naccum < naccum:
             # Init next loop
             starttime += exptime * (nimages + 1)
             nobsresult = create_ob(value , nimages, crpix, nstare, exptime, starttime)
             nobsresult.naccum = obsresult.naccum + 1
-            nobsresult.accum = result.accum
             obsresult = nobsresult
+            prev_accum = result.accum
         else:
             break
 

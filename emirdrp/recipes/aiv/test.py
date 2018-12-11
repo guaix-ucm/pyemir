@@ -27,7 +27,7 @@ from astropy.io import fits
 import numpy as np
 
 from numina.core.oresult import ObservationResult, dataframe_from_list
-from numina.core.dataframe import DataFrame
+from numina.types.dataframe import DataFrame
 
 from . import SimpleBiasRecipe
 
@@ -82,7 +82,7 @@ class MMTestCase(unittest.TestCase):
             hdu = fits.PrimaryHDU(data=np.zeros((10, 10), dtype='int16'))
             hdul = fits.HDUList([hdu])
             fd, filename = mkstemp()
-            hdul.writeto(filename, clobber=True)
+            hdul.writeto(filename, overwrite=True)
             somefits.append(filename)
 
         #

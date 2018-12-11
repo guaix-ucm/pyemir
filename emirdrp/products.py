@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -20,16 +20,21 @@
 """Data products produced by the EMIR pipeline."""
 
 import uuid
+import copy
 
+import six
 import numpy
 
 from numina.ext.gtc import DF
 from numina.core import DataFrameType, DataProductType
-from numina.core.products import ArrayNType
-from numina.core.products import DataProductTag
-from numina.core.requirements import InstrumentConfigurationType
-from numina.core import ValidationError
+import numina.types.array as arrtype
+from numina.types.linescatalog import LinesCatalog
+import numina.exceptions
+import numina.types.product as prodtypes
+import numina.types.structured
+import numina.types.obsresult as obtypes
 
+import emirdrp.datamodel
 
 base_schema_description = {
     'keywords': {
@@ -62,10 +67,36 @@ emir_schema_description = {
     }
 
 
-class EMIRImageProduct(DataProductTag, DataFrameType):
+class EmirFrame(DataFrameType):
 
+    def __init__(self, *args, **kwargs):
+        super(EmirFrame, self).__init__(datamodel=emirdrp.datamodel.EmirDataModel)
+
+
+class ProcessedFrame(EmirFrame):
+    """A processed frame"""
+    pass
+
+
+class ProcessedImage(ProcessedFrame):
+    """A processed image"""
+    pass
+
+
+class ProcessedMOS(ProcessedFrame):
+    """A processed image with slit spectra"""
+    pass
+
+
+class ProcessedSpectrum(ProcessedFrame):
+    """A 1d spectrum"""
+    pass
+
+
+class ProcessedImageProduct(prodtypes.DataProductMixin, ProcessedImage):
     def convert_out(self, obj):
-        newobj = super(EMIRImageProduct, self).convert_out(obj)
+        """Write EMIRUUID header on reduction"""
+        newobj = super(ProcessedImageProduct, self).convert_out(obj)
         if newobj:
             hdulist = newobj.open()
             hdr = hdulist[0].header
@@ -74,57 +105,58 @@ class EMIRImageProduct(DataProductTag, DataFrameType):
         return newobj
 
 
-class EMIRConfigurationType(InstrumentConfigurationType):
+class ProcessedMOSProduct(prodtypes.DataProductMixin, ProcessedMOS):
+    pass
+
+
+class ProcessedSpectrumProduct(prodtypes.DataProductMixin, ProcessedSpectrum):
+    pass
+
+
+
+class EMIRConfigurationType(obtypes.InstrumentConfigurationType):
 
     def validate(self, value):
         super(EMIRConfigurationType, self).validate(value)
 
 
-class MasterBadPixelMask(EMIRImageProduct):
+class MasterBadPixelMask(ProcessedImageProduct):
     pass
 
 
-class MasterBias(EMIRImageProduct):
+class MasterBias(ProcessedImageProduct):
     """Master bias product
-
-    This image has 4 extensions: primary, two variance extensions
-    and number of pixels used in the combination.
-
-    The variance extensions are computed using two different methods.
-    The first one is the variance of the same pixels in different images.
-    The second extension is the variance of each channel in the final image.
     """
     pass
 
 
-class MasterDark(EMIRImageProduct):
+class MasterDark(ProcessedImageProduct):
     """Master dark product
-
-    This image has 4 extensions: primary, two variance extensions
-    and number of pixels used in the combination.
-
-    The variance extensions are computed using two different methods.
-    The first one is the variance of the same pixels in different images.
-    The second extension is the variance of each channel in the final image.
     """
     pass
 
 
-
-class MasterIntensityFlat(EMIRImageProduct):
+class SkyLinesCatalog(LinesCatalog):
+    """Sky Lines Catalog
+    """
     pass
 
 
-class MasterSky(EMIRImageProduct):
-    pass
+class MasterIntensityFlat(ProcessedImageProduct):
+    __tags__ = ['filter']
+
+class MasterSpectralFlat(ProcessedImageProduct):
+    __tags__ = ['grism', 'filter']
 
 
-class SkySpectrum(EMIRImageProduct):
-    pass
+# FIXME: This is not really a calibration
+class MasterSky(ProcessedImageProduct):
+    __tags__ = ['filter']
 
 
-class MasterSpectralFlat(EMIRImageProduct):
-    pass
+# FIXME: This is not really a calibration
+class SkySpectrum(ProcessedImageProduct):
+    __tags__ = ['grism', 'filter']
 
 
 class Spectra(DataFrameType):
@@ -211,7 +243,7 @@ class TelescopeOffset(DataProductType):
         super(TelescopeOffset, self).__init__(ptype=float)
 
 
-class CoordinateListNType(ArrayNType):
+class CoordinateListNType(arrtype.ArrayNType):
     def __init__(self, dimensions, default=None):
         super(CoordinateListNType,
               self).__init__(dimensions,
@@ -220,13 +252,15 @@ class CoordinateListNType(ArrayNType):
     def validate(self, obj):
         ndims = len(obj.shape)
         if ndims != 2:
-            raise ValidationError('%r is not a valid %r' %
-                                  (obj, self.__class__.__name__)
-                                  )
+            raise numina.exceptions.ValidationError(
+                '%r is not a valid %r' %
+                (obj, self.__class__.__name__)
+            )
         if obj.shape[1] != self.N:
-            raise ValidationError('%r is not a valid %r' %
-                                  (obj, self.__class__.__name__)
-                                  )
+            raise numina.exceptions.ValidationError(
+                '%r is not a valid %r' %
+                (obj, self.__class__.__name__)
+            )
 
 
 class CoordinateList1DType(CoordinateListNType):
@@ -240,7 +274,7 @@ class CoordinateList2DType(CoordinateListNType):
         self.add_dialect_info('gtc', DF.TYPE_DOUBLE_ARRAY2D)
 
 
-class NominalPositions(DataProductTag, CoordinateList2DType):
+class NominalPositions(prodtypes.DataProductMixin, CoordinateList2DType):
     pass
 
 
@@ -293,3 +327,170 @@ class ChannelLevelStatisticsType(DataProductType):
 class LinesCatalog(DataProductType):
     def __init__(self):
         super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
+
+
+class RefinedBoundaryModelParam(numina.types.structured.BaseStructuredCalibration):
+    """Refined parameters of MOS model
+    """
+    def __init__(self, instrument='unknown'):
+        super(RefinedBoundaryModelParam, self).__init__(instrument)
+        self.tags = {
+            'grism': "unknown",
+            'filter': "unknown"
+        }
+        self.contents = []
+
+    def __getstate__(self):
+        state = super(RefinedBoundaryModelParam, self).__getstate__()
+        if six.PY2:
+            state['contents'] = copy.copy(self.contents)
+        else:
+            state['contents'] = self.contents.copy()
+        return state
+
+    def __setstate__(self, state):
+        super(RefinedBoundaryModelParam, self).__setstate__(state)
+        if six.PY2:
+            self.contents = copy.copy(state['contents'])
+        else:
+            self.contents = state['contents'].copy()
+
+    def tag_names(self):
+        return ['grism', 'filter']
+
+
+class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
+    """Rectification and Wavelength Calibration Coefficients
+    """
+    def __init__(self, instrument='unknown'):
+        super(RectWaveCoeff, self).__init__(instrument)
+        self.tags = {
+            'grism': "unknown",
+            'filter': "unknown"
+        }
+        self.global_integer_offset_x_pix = 0
+        self.global_integer_offset_y_pix = 0
+        self.total_slitlets = 0
+        self.missing_slitlets = []
+        self.contents = []
+
+    def __getstate__(self):
+        state = super(RectWaveCoeff, self).__getstate__()
+
+        keys = ['global_integer_offset_x_pix', 'global_integer_offset_y_pix',
+                'total_slitlets', 'missing_slitlets']
+        for key in keys:
+            state[key] = self.__dict__[key]
+
+        if six.PY2:
+            state['contents'] = copy.copy(self.contents)
+        else:
+            state['contents'] = self.contents.copy()
+        return state
+
+    def __setstate__(self, state):
+        super(RectWaveCoeff, self).__setstate__(state)
+
+        keys = ['global_integer_offset_x_pix', 'global_integer_offset_y_pix',
+                'total_slitlets', 'missing_slitlets']
+        for key in keys:
+            self.__dict__[key] = state[key]
+        if six.PY2:
+            self.contents = copy.copy(state['contents'])
+        else:
+            self.contents = state['contents'].copy()
+
+    def tag_names(self):
+        return ['grism', 'filter']
+
+
+class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
+    """Rectification and Wavelength Calibration Library Product
+    """
+    def __init__(self, instrument='unknown'):
+        import numina.core.tagexpr as tagexpr
+
+        datamodel = emirdrp.datamodel.EmirDataModel()
+        super(MasterRectWave, self).__init__(instrument, datamodel=datamodel)
+        self.tags = {
+            'grism': "unknown",
+            'filter': "unknown"
+        }
+
+        my_tag_table = self.datamodel.query_attrs
+        objtags = [my_tag_table[t] for t in self.tag_names()]
+        self.query_expr = tagexpr.query_expr_from_attr(objtags)
+        self.names_t = self.query_expr.tags()
+        self.names_f = self.query_expr.fields()
+        self.query_opts = []
+
+        self.total_slitlets = 0
+        self.missing_slitlets = []
+        self.contents = []
+
+    def __getstate__(self):
+        state = super(MasterRectWave, self).__getstate__()
+
+        keys = ['total_slitlets', 'missing_slitlets']
+        for key in keys:
+            state[key] = self.__dict__[key]
+
+        if six.PY2:
+            # list has no .copy method in PY2
+            state['contents'] = copy.copy(self.contents)
+        else:
+            state['contents'] = self.contents.copy()
+        return state
+
+    def __setstate__(self, state):
+        from numina.types.typedialect import dialect_info
+        import numina.core.tagexpr as tagexpr
+
+        super(MasterRectWave, self).__setstate__(state)
+
+        # Additional values
+        # These values are not set with setstate
+        self.datamodel = emirdrp.datamodel.EmirDataModel()
+        self.internal_default = None
+        self.internal_type = self.__class__
+        self.internal_dialect = dialect_info(self)
+        #
+        my_tag_table = self.datamodel.query_attrs
+
+        objtags = [my_tag_table[t] for t in self.tag_names()]
+        self.query_expr = tagexpr.query_expr_from_attr(objtags)
+        self.names_t = self.query_expr.tags()
+        self.names_f = self.query_expr.fields()
+        self.query_opts = []
+
+        keys = ['total_slitlets', 'missing_slitlets']
+        for key in keys:
+            self.__dict__[key] = state[key]
+
+        if six.PY2:
+            # list has no .copy method in PY2
+            self.contents = copy.copy(state['contents'])
+        else:
+            self.contents = state['contents'].copy()
+
+    def tag_names(self):
+        return ['grism', 'filter']
+
+try:
+    # FIXME: put this where it makes sense
+    from gtc.DSL.DGCSTypes.IDL_Adapters import toIDL_, toIDL_struct, toElementType
+
+    toIDL_.register(MasterRectWave, toIDL_struct)
+
+    @toElementType.register(MasterRectWave)
+    def _(value):
+        return DF.TYPE_STRUCT
+except ImportError:
+    pass
+
+
+if __name__ == '__main__':
+    m = MasterRectWave().query_expr
+    print(m.tags())
+    m = MasterIntensityFlat().query_expr
+    print(m.tags())

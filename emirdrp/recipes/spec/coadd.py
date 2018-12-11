@@ -1,20 +1,10 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """
@@ -24,11 +14,13 @@ Spectroscopy mode, coadd ABBA
 
 import numina.core
 import numina.array.combine as combine
-from numina.core import Product
+from numina.core import Result
 from numina.core.requirements import ObservationResultRequirement
 import numina.exceptions
+import numina.ext.gtc
+import numina.core.query as qmod
 
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
 
@@ -36,20 +28,32 @@ from emirdrp.processing.combine import basic_processing_with_combination
 class CoaddABBARecipe(EmirRecipe):
     """Process images in ABBA mode"""
 
-    obresult = ObservationResultRequirement()
+    obresult = ObservationResultRequirement(
+        query_opts=qmod.ResultOf(
+            'STARE_SPECTRA.stare',
+            node='children',
+            id_field="stareSpectraIds"
+        )
+    )
 
-    spec_coadd_abba = Product(prods.DataFrameType)
+    spec_coadd_abba = Result(prods.ProcessedMOS)
 
-    @classmethod
-    def build_recipe_input(cls, obsres, dal, pipeline='default'):
-        return cls.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
 
-    @classmethod
-    def build_recipe_input_gtc(cls, obsres, dal, pipeline='default'):
-        cls.logger.debug('start recipe input builder')
-        print(dir(obsres))
+    def build_recipe_input(self, obsres, dal):
+        if numina.ext.gtc.check_gtc():
+            self.logger.debug('running in GTC environment')
+            return self.build_recipe_input_gtc(obsres, dal)
+        else:
+            self.logger.debug('running outside of GTC environment')
+            return super(CoaddABBARecipe, self).build_recipe_input(
+                obsres, dal
+            )
+
+
+    def build_recipe_input_gtc(self, obsres, dal):
+        self.logger.debug('start recipe input builder')
         stareImagesIds = obsres.stareSpectraIds
-        cls.logger.debug('ABBA images IDS %s: ', stareImagesIds)
+        self.logger.debug('ABBA images IDS %s: ', stareImagesIds)
         stareImages = []
         for subresId in stareImagesIds:
             subres = dal.getRecipeResult(subresId)
@@ -57,8 +61,8 @@ class CoaddABBARecipe(EmirRecipe):
 
         newOR = numina.core.ObservationResult()
         newOR.frames = stareImages
-        newRI = cls.create_input(obresult=newOR)
-        cls.logger.debug('end recipe input builder')
+        newRI = self.create_input(obresult=newOR)
+        self.logger.debug('end recipe input builder')
         return newRI
 
     def run(self, rinput):
@@ -94,21 +98,26 @@ class CoaddRecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement()
 
-    result_coadd = Product(prods.DataFrameType)
+    result_coadd = Result(prods.ProcessedMOS)
 
-    @classmethod
-    def build_recipe_input(cls, obsres, dal, pipeline='default'):
-        return cls.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
+    def build_recipe_input(self, obsres, dal):
+        if numina.ext.gtc.check_gtc():
+            self.logger.debug('running in GTC environment')
+            return self.build_recipe_input_gtc(obsres, dal)
+        else:
+            self.logger.debug('running outside of GTC environment')
+            return super(CoaddRecipe, self).build_recipe_input(
+                obsres, dal
+            )
 
-    @classmethod
-    def build_recipe_input_gtc(cls, obsres, dal, pipeline='default'):
-        cls.logger.debug('start recipe input builder')
+    def build_recipe_input_gtc(self, obsres, dal):
+        self.logger.debug('start recipe input builder')
 
         # This depends on the RecipeResult
         result_field = 'spec_abba'
 
         stareImagesIds = obsres.stareSpectraIds
-        cls.logger.debug('Coadd images IDS %s: ', stareImagesIds)
+        self.logger.debug('Coadd images IDS %s: ', stareImagesIds)
         stareImages = []
         for subresId in stareImagesIds:
             subres = dal.getRecipeResult(subresId)
@@ -116,8 +125,8 @@ class CoaddRecipe(EmirRecipe):
 
         newOR = numina.core.ObservationResult()
         newOR.frames = stareImages
-        newRI = cls.create_input(obresult=newOR)
-        cls.logger.debug('end recipe input builder')
+        newRI = self.create_input(obresult=newOR)
+        self.logger.debug('end recipe input builder')
         return newRI
 
     def run(self, rinput):

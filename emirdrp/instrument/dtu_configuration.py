@@ -1,3 +1,22 @@
+#
+# Copyright 2008-2018 Universidad Complutense de Madrid
+#
+# This file is part of PyEmir
+#
+# PyEmir is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# PyEmir is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 from __future__ import division
 from __future__ import print_function
 
@@ -56,14 +75,16 @@ class DtuConfiguration(object):
         # number employed in __str__() function above to print out member
         # values
         ndig = 3
-        result = \
-            (round(self.xdtu, ndig) == round(other.xdtu, ndig)) and \
-            (round(self.ydtu, ndig) == round(other.ydtu, ndig)) and \
-            (round(self.zdtu, ndig) == round(other.zdtu, ndig)) and \
-            (round(self.xdtu_0, ndig) == round(other.xdtu_0, ndig)) and \
-            (round(self.ydtu_0, ndig) == round(other.ydtu_0, ndig)) and \
-            (round(self.zdtu_0, ndig) == round(other.zdtu_0, ndig))
-        return result
+        if isinstance(other, DtuConfiguration):
+            result = \
+                (round(self.xdtu, ndig) == round(other.xdtu, ndig)) and \
+                (round(self.ydtu, ndig) == round(other.ydtu, ndig)) and \
+                (round(self.zdtu, ndig) == round(other.zdtu, ndig)) and \
+                (round(self.xdtu_0, ndig) == round(other.xdtu_0, ndig)) and \
+                (round(self.ydtu_0, ndig) == round(other.ydtu_0, ndig)) and \
+                (round(self.zdtu_0, ndig) == round(other.zdtu_0, ndig))
+            return result
+        return NotImplemented
 
     def __ne__(self, other):
         result = not self.__eq__(other)

@@ -1,31 +1,21 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """Recipes for finding the best focus."""
 
 from numina.core import Parameter
-from numina.core import Product
+from numina.core import Result
 
 import emirdrp.requirements as reqs
-from emirdrp.core import EmirRecipe
-from emirdrp.products import TelescopeFocus
-from emirdrp.products import DTUFocus
+import emirdrp.products as prods
+from emirdrp.core.recipe import EmirRecipe
 
 
 class TelescopeRoughFocusRecipe(EmirRecipe):
@@ -55,10 +45,10 @@ class TelescopeRoughFocusRecipe(EmirRecipe):
     objects = Parameter([], 'List of x-y pair of object coordinates'),
     focus_range = Parameter([], 'Focus range: begin, end and step')
 
-    focus = Product(TelescopeFocus)
+    focus = Result(prods.TelescopeFocus)
 
     def run(self, rinput):
-        return self.create_result(focus=TelescopeFocus())
+        return self.create_result(focus=prods.TelescopeFocus())
 
 
 class TelescopeFineFocusRecipe(EmirRecipe):
@@ -88,10 +78,10 @@ class TelescopeFineFocusRecipe(EmirRecipe):
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
     objects = Parameter([], 'List of x-y pair of object coordinates'),
 
-    focus = Product(TelescopeFocus)
+    focus = Result(prods.TelescopeFocus)
 
     def run(self, rinput):
-        return self.create_result(focus=TelescopeFocus())
+        return self.create_result(focus=prods.TelescopeFocus())
 
 
 class DTUFocusRecipe(EmirRecipe):
@@ -121,11 +111,10 @@ class DTUFocusRecipe(EmirRecipe):
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
     objects = Parameter([], 'List of x-y pair of object coordinates'),
     msm_pattern = Parameter([], 'List of x-y pair of slit coordinates'),
-    dtu_focus_range = Parameter(
-        'dtu_focus_range', [], 'Focus range of the DTU: begin, end and step')
+    dtu_focus_range = Parameter([], 'Focus range of the DTU: begin, end and step')
 
-    focus = Product(DTUFocus)
+    focus = Result(prods.DTUFocus)
 
 
     def run(self, rinput):
-        return self.create_result(focus=DTUFocus())
+        return self.create_result(focus=prods.DTUFocus())

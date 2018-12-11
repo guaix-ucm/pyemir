@@ -1,3 +1,3 @@
 
-from numina.tests.pytest_plugins import *
+from numina.tests.plugins import *
 

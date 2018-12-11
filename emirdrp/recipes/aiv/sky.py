@@ -1,55 +1,37 @@
 #
-# Copyright 2013-2016 Universidad Complutense de Madrid
+# Copyright 2013-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """AIV Recipes for EMIR"""
 
-import logging
 
 from numina.array.combine import median
-from numina.core import Product, Requirement
-from numina.core.requirements import ObservationResultRequirement
+from numina.core import Result, Requirement
 
-from emirdrp.core import EmirRecipe
-from emirdrp.products import DataFrameType, MasterIntensityFlat
-from emirdrp.requirements import MasterBadPixelMaskRequirement
-from emirdrp.requirements import MasterBiasRequirement
-from emirdrp.requirements import MasterDarkRequirement
-from emirdrp.requirements import MasterIntensityFlatFieldRequirement
+from emirdrp.core.recipe import EmirRecipe
+import emirdrp.requirements as reqs
+import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
-
-
-_logger = logging.getLogger('numina.recipes.emir')
 
 
 class TestSkyCorrectRecipe(EmirRecipe):
 
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    master_sky = Requirement(MasterIntensityFlat, 'Master Sky calibration')
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
+    master_sky = Requirement(prods.MasterIntensityFlat, 'Master Sky calibration')
 
-    frame = Product(DataFrameType)
+    frame = Result(prods.ProcessedImage)
 
     def run(self, rinput):
-        _logger.info('starting simple sky reduction')
+        self.logger.info('starting simple sky reduction')
 
         flow = self.init_filters(rinput)
 

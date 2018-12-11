@@ -1,20 +1,10 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Typical requirements of recipes"""
@@ -81,6 +71,19 @@ class MasterSpectralFlatFieldRequirement(Requirement):
     def __init__(self):
         super(MasterSpectralFlatFieldRequirement,
               self).__init__(prods.MasterSpectralFlat, 'Master spectral flatfield')
+
+
+class RefinedBoundaryModelParamRequirement(Requirement):
+    def __init__(self):
+        super(RefinedBoundaryModelParamRequirement,
+              self).__init__(prods.RefinedBoundaryModelParam, 'Refined boundary model')
+
+
+class MasterRectWaveRequirement(Requirement):
+    def __init__(self, optional=False):
+        super(MasterRectWaveRequirement,
+              self).__init__(prods.MasterRectWave, 'Master rectification+wavelength library',
+                             optional=optional)
 
 
 class MasterSkyRequirement(Requirement):

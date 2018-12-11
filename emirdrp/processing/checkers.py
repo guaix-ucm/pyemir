@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2016 Universidad Complutense de Madrid
+# Copyright 2013-2018 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -22,14 +22,14 @@ from __future__ import division
 import logging
 
 import numpy
-
-from numina.flow.processing import Corrector
-
-_logger = logging.getLogger('numina.recipes.emir')
+import numina.processing as  proc
 
 
-class Checker(Corrector):
-    '''A Node that checks.'''
+_logger = logging.getLogger(__name__)
+
+
+class Checker(proc.Corrector):
+    """A Node that checks."""
     def __init__(self):
         super(Checker, self).__init__()
 
@@ -42,5 +42,3 @@ class Checker(Corrector):
             _logger.warning('image has %d NaN', mask1.sum())
 
         return img
-
-

@@ -28,10 +28,10 @@ from astropy.io import fits
 
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import Parameter, DataFrame
-from numina.core import RecipeError
+from numina.exceptions import RecipeError
 from numina.core import Product
 
-from emirdrp.core import EmirRecipe
+from emirdrp.core.recipe import EmirRecipe
 from emirdrp.instrument.channels import QUADRANTS
 from emirdrp.instrument.channels import CHANNELS
 from emirdrp.products import MasterGainMap, MasterRONMap

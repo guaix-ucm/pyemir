@@ -1,0 +1,18 @@
+
+EMIR_BIAS_MODES = ['simple', 'bias', 'single']
+EMIR_READ_MODES = ['simple', 'bias', 'single', 'cds', 'fowler', 'ramp']
+
+EMIR_PIXSCALE = 18.0 # um / pixel
+EMIR_PLATESCALE_PIX = 0.1944 # arcsec/pixel
+EMIR_PLATESCALE = 1.212 # arcsec/mm
+EMIR_GAIN = 5.0 # ADU / e-
+EMIR_RON = 5.69 # ADU
+EMIR_NBARS = 55
+EMIR_NAXIS1 = 2048
+EMIR_NAXIS1_ENLARGED = 3400
+EMIR_NAXIS2 = 2048
+EMIR_NPIXPERSLIT_RECTIFIED = 38
+EMIR_MINIMUM_SLITLET_WIDTH_MM = 0.0
+EMIR_MAXIMUM_SLITLET_WIDTH_MM = 1000.0
+EMIR_VALID_GRISMS = ['J', 'H', 'K', 'LR']
+EMIR_VALID_FILTERS = ['J', 'H', 'Ksp', 'YJ', 'HK']
