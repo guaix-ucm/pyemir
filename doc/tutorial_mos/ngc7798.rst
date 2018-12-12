@@ -249,8 +249,12 @@ and another with negavite counts) in each case:
    :width: 800
    :alt: ds9 grismJ A-B
 
-**From this point, we continue the reduction of the spectrophotometric standard
-using Python (within a Jupyter notebook).** 
+**From this point, we continue the reduction of the galaxy spectra using 
+Python (within a Jupyter notebook).** 
 See `final reduction of NGC7798
 <http://nartex.fis.ucm.es/~ncl/emir/reduction_ngc7798.html>`_.
+
+.. image:: images/plot_JHK_ngc7798.png
+   :width: 800
+   :alt: ds9 grismJ A-B
 
