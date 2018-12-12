@@ -23,14 +23,13 @@ slitlets configured in a non-longslit pattern.
 Download the following file: `EMIR_mos_example.tgz 
 <http://nartex.fis.ucm.es/~ncl/emir/EMIR_mos_example.tgz>`_.
 
-Download and decompress the previous file:
+Decompress the previous file:
 
 ::
 
-   (download EMIR_mos_example.tgz)
    (py36) $ tar zxvf EMIR_mos_example.tgz
    ...
-   (you can remove the tgz file)
+   ...
    (py36) $ rm EMIR_mos_example.tgz
 
 A new subdirectory named ``EMIR_mos_exmaple`` should have appeared, with the
@@ -73,8 +72,6 @@ Move into the ``EMIR_mos_example`` directory:
    (py36) $ cd EMIR_mos_example
 
 This directory contains a subdirectory ``data/`` with the following files:
-
-The ``data/`` subdirectory contains the following files:
 
 - The first 12 FITS files ``0001572*.FITS`` correspond to science exposures. In
   this case, the targets were observed following the typical ABBA scheme (in

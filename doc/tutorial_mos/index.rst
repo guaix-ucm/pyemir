@@ -37,4 +37,5 @@ favourite software tools to proceed with the spectra extraction and analysis.
    understanding
    simple_example
    mos_example
+   ngc7798
 

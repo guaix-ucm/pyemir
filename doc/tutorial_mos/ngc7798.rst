@@ -1,0 +1,256 @@
+*******
+NGC7798
+*******
+
+.. warning::
+
+   All the commands are assumed to be executed in a terminal running the **bash
+   shell**.
+
+   Don't forget to activate the same Python environment employed to install
+   PyEmir.  In this document, the prompt ``(py36) $`` will indicate that this
+   is the case.
+
+.. note::
+
+   It is assumed that the reader has already followed the previous tutorials
+   :ref:`simple_example` and :ref:`mos_example`. Some of the concepts already
+   introduced there are not going to be repeated here with the same level of
+   detail.
+
+In this case we are going to reduce simple spectroscopic observations obtained
+in the central region of the HII galaxy NGC7798 using the J, H and K grisms. In
+this case the target was observed with all the EMIR slitlets aligned,
+simulating a single longslit.
+
+.. image:: images/ngc7798.png
+   :width: 800
+   :alt: NGC 7798
+
+Since we plan to obtained flux calibrated results, we are also going to reduce
+the spectra of the spectrophotometric standard HD209290 (HIP 108782), observed
+with the same instrumental configuration.
+
+Download the following file: `EMIR_ngc7798_example.tgz.
+<http://nartex.fis.ucm.es/~ncl/emir/EMIR_ngc7798_example.tgz>`_.
+
+Decompress the previous file:
+
+::
+
+   (py36) $ tar zxvf EMIR_ngc7798_example.tgz
+   ...
+   ...
+   (py36) $ rm EMIR_ngc7798_example.tgz
+
+A new subdirectory named ``EMIR_ngc7798_example`` should have appeared, with
+the following content:
+
+::
+
+   EMIR_ngc7798_example/
+   ├── 00_stare_hd209290.yaml
+   ├── 00_stare_ngc7798.yaml
+   ├── control.yaml
+   ├── data
+       ├── 0001005178-20160727-EMIR-TEST0.fits
+       ├── 0001005189-20160727-EMIR-TEST0.fits
+       ├── 0001005200-20160727-EMIR-TEST0.fits
+       ├── 0001005211-20160727-EMIR-TEST0.fits
+       ├── 0001005222-20160727-EMIR-TEST0.fits
+       ├── 0001005233-20160727-EMIR-TEST0.fits
+       ├── 0001005263-20160727-EMIR-TEST0.fits
+       ├── 0001005266-20160727-EMIR-TEST0.fits
+       ├── 0001005269-20160727-EMIR-TEST0.fits
+       ├── 0001005272-20160727-EMIR-TEST0.fits
+       ├── 0001005275-20160727-EMIR-TEST0.fits
+       ├── 0001005278-20160727-EMIR-TEST0.fits
+       ├── master_bpm.fits
+       ├── master_dark.fits
+       ├── master_flat_grism_H_filter_H.fits
+       ├── master_flat_grism_J_filter_J.fits
+       ├── master_flat_grism_K_filter_Ksp.fits
+       ├── rect_wpoly_MOSlibrary_grism_H_filter_H.json
+       ├── rect_wpoly_MOSlibrary_grism_J_filter_J.json
+       ├── rect_wpoly_MOSlibrary_grism_K_filter_Ksp.json
+       ├── rect_wpoly_MOSlibrary_grism_LR_filter_HK.json
+       └── rect_wpoly_MOSlibrary_grism_LR_filter_YJ.json
+
+
+Move into the ``EMIR_ngc7798_example`` directory:
+
+::
+
+   (py36) $ cd EMIR_ngc7798_example
+
+
+This directory contains a subdirectory ``data/`` with the following files:
+
+The ``data/`` subdirectory contains the following files:
+
+- The first 12 FITS files ``0001005*.FITS`` correspond to six exposures of
+  NGC7798 (grisms J, H and K), and six exposures of the spectrophotometric
+  standard HD209290 (grisms J, H and K). Each object was observed twice, in
+  different locations along the (pseudo) longslit.
+
+- ``master_bpm.fits`` is a preliminary bad-pixel-mask image (pixels in this
+  image with values different from zero are interpolated).
+
+- ``master_dark.fits`` is a dummy 2048x2048 image of zeros (this image is
+  typically not necessary since in the IR the reduction of science observations
+  usually requires de subtraction of consecutive images).
+
+- ``master_flat_grism_?_filter_?.fits`` are tentative pixel-to-pixel flatfields
+  derived from continuum lamp exposures (grisms J, H and K).
+
+- The ``rect_wpoly_MOSlibrary_grism*.json`` files contain the empirical
+  calibration for rectification and wavelength calibration for different
+  grism+filter configurations.
+
+Remain in the ``EMIR_ngc7798_example`` directory. From here you are going to
+execute the pipeline.
+
+You can easily examine the header of the 12 science files using the utilities 
+``dfits`` and ``fitsort`` (previously mentioned):
+
+::
+
+   (py36) $ dfits data/0001005* | fitsort object grism filter exptime
+   FILE                                    	OBJECT  	GRISM   	FILTER  	EXPTIME   	
+   data/0001005178-20160727-EMIR-TEST0.fits	NGC7798 	J       	J       	119.991601	
+   data/0001005189-20160727-EMIR-TEST0.fits	NGC7798 	J       	J       	119.991601	
+   data/0001005200-20160727-EMIR-TEST0.fits	NGC7798 	H       	H       	119.991601	
+   data/0001005211-20160727-EMIR-TEST0.fits	NGC7798 	H       	H       	119.991601	
+   data/0001005222-20160727-EMIR-TEST0.fits	NGC7798 	K       	Ksp     	119.991601	
+   data/0001005233-20160727-EMIR-TEST0.fits	NGC7798 	K       	Ksp     	119.991601	
+   data/0001005263-20160727-EMIR-TEST0.fits	HD209290	K       	Ksp     	9.999289  	
+   data/0001005266-20160727-EMIR-TEST0.fits	HD209290	K       	Ksp     	9.999289  	
+   data/0001005269-20160727-EMIR-TEST0.fits	HD209290	H       	H       	9.999289  	
+   data/0001005272-20160727-EMIR-TEST0.fits	HD209290	H       	H       	9.999289  	
+   data/0001005275-20160727-EMIR-TEST0.fits	HD209290	J       	J       	9.999289  	
+   data/0001005278-20160727-EMIR-TEST0.fits	HD209290	J       	J       	9.999289 
+
+The slitlet configuration can be easily displayed with the help of the
+auxiliary PyEmir script ``pyemir-display_slitlet_arrangement``:
+
+::
+
+   (py36) $ pyemir-display_slitlet_arrangement data/0001005*
+   ...
+
+12 plots are displayed, one for each raw image. The additional information
+displayed in the terminal show that the CSU configuration was the same for the
+12 images.
+
+.. image:: images/0001005178_csu_configuration.png
+   :width: 800
+   :alt: 0001005178 csu configuration
+
+
+Reduction of HD209290
+---------------------
+
+The rectification and wavelength calibration of the images corresponding to the
+spectrophotometric star is carried using the empirical model (reduction recipe
+``STARE_SPECTRA_WAVE``). The first lines of the associated observation result
+``00_stare_hd209290.yaml`` are:
+
+.. literalinclude:: 00_stare_hd209290.yaml
+   :lines: 1-14
+   :linenos:
+   :lineno-start: 1
+
+There is a block for each single raw image.
+
+Execute the reduction recipe:
+
+::
+
+   (py36) $ numina run 00_stare_hd209290.yaml -r control.yaml
+   ...
+   ...
+
+As expected, two new subdirectories (``obsid52??_work`` and
+``obsid52??_results``) have been created for each raw image.
+
+Since we have 2 images for each grism (positions A and B along the slit), it is
+useful to subtract them. You can use for this task your favourite software, or
+the auxiliary Numina script ``numina-imath`` (which performs binary operations
+betwen images of the same size):
+
+::
+
+   (py36) $ numina-imath obsid5278_results/stare.fits - obsid5275_results/stare.fits grismJ_hd209290_A-B.fits
+   (py36) $ numina-imath obsid5269_results/stare.fits - obsid5272_results/stare.fits grismH_hd209290_A-B.fits
+   (py36) $ numina-imath obsid5266_results/stare.fits - obsid5263_results/stare.fits grismK_hd209290_A-B.fits
+
+Display the result to check that you get two spectra (one with positive counts
+and another with negavite counts) in each case:
+
+::
+
+   (py36) $ ds9 grismJ_hd209290_A-B.fits
+
+.. image:: images/ds9_grismJ_hd209290_A-B.png
+   :width: 800
+   :alt: ds9 grismJ A-B
+
+**From this point, we continue the reduction of the spectrophotometric standard
+using Python (within a Jupyter notebook).** 
+See `final reduction of HD209290 
+<http://nartex.fis.ucm.es/~ncl/emir/reduction_hd209290.html>`_.
+
+
+Reduction of NGC7798
+--------------------
+
+The rectification and wavelength calibration of the images corresponding to the
+central region of NGC7798 star is carried using the empirical model (reduction recipe
+``STARE_SPECTRA_WAVE``). The first lines of the associated observation result
+``00_stare_ngc7798.yaml`` are:
+
+.. literalinclude:: 00_stare_ngc7798.yaml
+   :lines: 1-14
+   :linenos:
+   :lineno-start: 1
+
+There is a block for each single raw image.
+
+Execute the reduction recipe:
+
+::
+
+   (py36) $ numina run 00_stare_ngc7798.yaml -r control.yaml
+   ...
+   ...
+
+As expected, two new subdirectories (``obsid52??_work`` and
+``obsid52??_results``) have been created for each raw image.
+
+Since we have 2 images for each grism (positions A and B along the slit), it is
+useful to subtract them. You can use for this task your favourite software, or
+the auxiliary Numina script ``numina-imath`` (which performs binary operations
+betwen images of the same size):
+
+::
+
+   (py36) $ numina-imath obsid5178_results/stare.fits - obsid5189_results/stare.fits grismJ_ngc7798_A-B.fits
+   (py36) $ numina-imath obsid5211_results/stare.fits - obsid5200_results/stare.fits grismH_ngc7798_A-B.fits
+   (py36) $ numina-imath obsid5222_results/stare.fits - obsid5233_results/stare.fits grismK_ngc7798_A-B.fits
+
+Display the result to check that you get two spectra (one with positive counts
+and another with negavite counts) in each case:
+
+::
+
+   (py36) $ ds9 grismJ_ngc7798_A-B.fits
+
+.. image:: images/ds9_grismJ_ngc7798_A-B.png
+   :width: 800
+   :alt: ds9 grismJ A-B
+
+**From this point, we continue the reduction of the spectrophotometric standard
+using Python (within a Jupyter notebook).** 
+See `final reduction of NGC7798
+<http://nartex.fis.ucm.es/~ncl/emir/reduction_ngc7798.html>`_.
+
