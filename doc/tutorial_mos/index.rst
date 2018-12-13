@@ -5,9 +5,9 @@
 PyEmir MOS Tutorial
 ###################
 
-This tutorial provides an easy introduction to the use of Numina and PyEmir,
-focusing on the rectification and wavelength
-calibration of EMIR spectroscopic images.
+This tutorial provides an easy introduction to the use of PyEmir (via Numina),
+focusing on the rectification and wavelength calibration of EMIR spectroscopic
+images.
 
 .. warning::
 
@@ -41,15 +41,19 @@ CSU (Cold Slit Unit).
 At present, PyEmir is able to work with raw images obtained with the following
 spectroscopic configurations:
 
-=====   ======
+=====   =====================
 Grism   Filter
-=====   ======
-J       J
-H       H
-K       Ksp
-LR      YJ
-LR      HK
-=====   ======
+=====   =====================
+HR J    J
+HR H    H
+HR K    Ksp
+LR      YJ (selectable range)
+LR      HK (selectable range)
+=====   =====================
+
+We strongly recommend to follow the different sections of this tutorial in the
+provided order, starting with the simple handling of (pseudo) longslit data and
+then facing the proper reduction of MOS observations.
 
 **Tutorial index:**
 

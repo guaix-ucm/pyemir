@@ -1,3 +1,5 @@
+.. _ngc7798:
+
 *******
 NGC7798
 *******
@@ -13,15 +15,15 @@ NGC7798
 
 .. note::
 
-   It is assumed that the reader has already followed the previous tutorials
-   :ref:`simple_example` and :ref:`mos_example`. Some of the concepts already
-   introduced there are not going to be repeated here with the same level of
-   detail.
+   It is assumed that the reader has already followed the previous sections of
+   this tutorial :ref:`simple_example` and :ref:`mos_example`. Some of the
+   concepts already introduced there are not going to be repeated here with the
+   same level of detail (or even mentioned at all!).
 
 In this case we are going to reduce simple spectroscopic observations obtained
-in the central region of the HII galaxy NGC7798 using the J, H and K grisms. In
-this case the target was observed with all the EMIR slitlets aligned,
-simulating a single longslit.
+in the central region of the HII galaxy NGC7798 using the J, H and K grisms. 
+**In this case the target was observed with all the EMIR slitlets aligned,
+simulating a single (pseudo) longslit.**
 
 .. image:: images/ngc7798.png
    :width: 800
@@ -85,8 +87,6 @@ Move into the ``EMIR_ngc7798_example`` directory:
 
 
 This directory contains a subdirectory ``data/`` with the following files:
-
-The ``data/`` subdirectory contains the following files:
 
 - The first 12 FITS files ``0001005*.FITS`` correspond to six exposures of
   NGC7798 (grisms J, H and K), and six exposures of the spectrophotometric

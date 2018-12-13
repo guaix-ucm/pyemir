@@ -1,3 +1,5 @@
+.. _mos_example:
+
 ***********
 MOS example
 ***********
@@ -13,9 +15,10 @@ MOS example
 
 .. note::
 
-   It is assumed that the reader has already followed the previous tutorial
-   :ref:`simple_example`. Some of the concepts already introduced there are not
-   going to be repeated here with the same level of detail.
+   It is assumed that the reader has already followed the previous section of
+   this tutorial :ref:`simple_example`. Some of the concepts already introduced
+   there are not going to be repeated here with the same level of detail (or
+   even mentioned at all!).
 
 Let's consider the rectification and wavelength calibration of a MOS image with
 slitlets configured in a non-longslit pattern.
@@ -115,7 +118,7 @@ You can easily examine the header of the 12 science files using the utilities
    data/0001572501-20180530-EMIR-STARE_SPECTRA.fits	MOS example	J       	J       	359.986465	2018-05-31T00:18:46.92
 
 Have a look to any of the tree raw arc images (the three images are similar).
-For that purpose you can use ds9 or the visualization tool provided with
+For that purpose you can use ``ds9`` or the visualization tool provided with
 numina:
    
 ::
@@ -181,14 +184,14 @@ quality:
   (OH) emission lines. 
   
   
-*The refinement process requieres an initial estimation of the offsets in the
+*The refinement process requires an initial estimation of the offsets in the
 spatial (Y axis) and spectral (X axis) directions between the empirical
 calibration and the actual data. These two offsets can be easily estimated
 after computing the preliminary calibration.*
 
 In this example, for the preliminary rectification and wavelength calibration
-one can simply reduce one of the twelve scientific images (the first one for
-example). Have a look to the observation result file ``00_mos_example.yaml``:
+one can simply reduce any of the twelve scientific images.
+Have a look to the observation result file ``00_mos_example.yaml``:
 
 ::
 
@@ -233,7 +236,7 @@ observed slitlet frontiers. Fortunately, both problems can be easily solved.
 
    As described in :ref:`simple_example`, the task of finding the offsets can
    be performed with either the auxiliary PyEmir script
-   ``pyemir-overplot_boundary_model``, or by using ds9 with the auxiliary
+   ``pyemir-overplot_boundary_model``, or by using ``ds9`` with the auxiliary
    ds9-region files created during the preliminary rectification and wavelength
    calibration reduction. In the following two subsections we are using the
    latter option.
@@ -279,8 +282,8 @@ Checking the wavelength direction (X axis)
    are not dominant over the airglow emission. If this is not the case (for
    example when observing bright sources with short exposure times), the user
    should employ calibration arc images obtained before and/or after the
-   science images. The refinement process should be carried out as described in
-   :ref:`simple_example`.
+   science images. The refinement process should then be carried out as
+   described in :ref:`simple_example`.
 
 Continuing with the same ``ds9`` interface, overplot the expected location of
 the airglow (OH) emission lines:
@@ -342,8 +345,8 @@ can see the following changes:
 - We have introduced a ``requirements`` block, defining the following
   parameters:
 
-   - ``refine_wavecalib_mode: 12``: this indicates that the image correspond to
-     a science exposure, deep enough to detect OH sky lines, and that we are
+   - ``refine_wavecalib_mode: 12``: this indicates that the image corresponds
+     to a science exposure, deep enough to detect OH sky lines, and that we are
      asking for a refinement of the wavelength calibration using that
      information. Note that if we were using an arc image, this parameter
      should be set to ``2`` instead of ``12`` (as described in
@@ -361,7 +364,7 @@ can see the following changes:
 
    - ``global_integer_offset_x_pix: 8`` and ``global_integer_offset_y_pix:
      -4``: these are the offsets between the raw images and the expected
-     empirical calibration, estimated as described above.
+     empirical calibration, estimated as previously described.
 
 Execute the reduction recipe:
 

@@ -18,16 +18,21 @@ can be obtained with two levels of quality:
 
 - **Preliminary (empirical) calibration**, without auxiliary calibration
   images, computed from the empirical calibration derived by the instrument
-  team. This is the on-line reduction perfomed at the GTC while gathering the
-  images. Note that the empirical calibrations were computed using a large set
-  of initial calibration (continuum and arc) images, and *it is not expected
-  that the absolute wavelength calibration to be correct within a few pixels
-  nor the relative wavelength calibration between slitlets to agree within one
-  pixel*. For that reason, this rectified and wavelength calibrated image has
-  been defined as a preliminary version. In addition, *the boundaries between
-  slitlets can also exhibit small deviations (a few pixels) with respect to the
-  empirical calibration*. Anyhow, this empirical calibration constitutes a good
-  starting point in order to have a look to the data.
+  team. 
+  
+  -  This is the on-line reduction perfomed at the GTC while gathering the
+     images. 
+     
+  - Note that although the empirical calibrations were computed using a large
+    set of initial calibration (continuum and arc) images, and *it is not
+    expected that the absolute wavelength calibration to be correct within a
+    few pixels nor the relative wavelength calibration between slitlets to
+    agree within one pixel*. For that reason, this rectified and wavelength
+    calibrated image has been defined as a preliminary version. In addition,
+    *the boundaries between slitlets can also exhibit small deviations (a few
+    pixels) with respect to the empirical calibration*. Anyhow, this empirical
+    calibration constitutes a good starting point in order to have a look to
+    the data.
 
 - **Refined calibration**, which requires either auxilary arc exposures or a
   more detailed reduction of scientific images with good signal on the airglow
@@ -101,8 +106,6 @@ Move into the ``EMIR_simple_example`` directory:
 
 This directory contains a subdirectory ``data/`` with the following files:
 
-The ``data/`` subdirectory contains the following files:
-
 - The first three FITS files ``00010413*.FITS`` correspond to the arc exposures.
 
 - ``master_bpm.fits`` is a preliminary bad-pixel-mask image (pixels in this
@@ -151,8 +154,8 @@ slitlets configured in longslit format. The arc lines exhibit an important
 geometric distortion when moving along the spatial direction even in this
 longslit configuration.
 
-The slitlet configuration can also be easily displayed using an auxiliay PyEmir
-script:
+The slitlet configuration can be easily displayed using the auxiliay PyEmir
+script ``pyemir-display_slitlet_arrangement``:
 
 ::
 
@@ -166,7 +169,7 @@ script:
    :alt: Image 0001041345 csu configuration
 
 The above image clearly shows that all CSU bars were configured to create
-aligned slitlets forming a longslit.
+aligned slitlets forming a (pseudo) longslit.
 
 .. note::
 
@@ -204,19 +207,25 @@ to execute the reduction recipe needed in this case:
       enabled: True
 
    - The ``id`` value is a label that is employed to generate the name of two
-     auxiliary subdirectories (in this example the two subdirectories will be
-     named ``obsid1345_work`` and ``obsid1345_results``; see below), where the
-     intermediate results and the final results are going to be stored. 
+     auxiliary subdirectories. In this example the two subdirectories will be
+     named ``obsid1345_work`` and ``obsid1345_results`` (see below), where the
+     intermediate results and the final results are going to be stored,
+     respectively. 
    
-   - Not surprisingly, the key ``instrument`` is set to EMIR. 
+   - Not surprisingly, the key ``instrument`` is set to EMIR (do not forget
+     that Numina also is at present also employed to reduce MEGARA data, and
+     hopefully, future GTC instruments).
    
    - The key ``mode`` indicates the identification of the reduction recipe
-     (``STARE_SPECTRA_WAVE`` in this example). frames lists the images to be
-     combined (median). 
+     (``STARE_SPECTRA_WAVE`` in this example). 
+     
+   - The key ``frames`` lists the images to be combined (median). 
    
-   - The key ``enabled: True`` indicates that this block is going to be reduced
-     (it is possible to concatenate several blocks in the same observation
-     result file, as it is going to be shown later).
+   - The key ``enabled: True`` indicates that this block is going to be
+     reduced. As it is going to be shown later, it is possible to concatenate 
+     several blocks in the same observation result file; the user can easily
+     activate/deactivate the execution of particular reduction recipes (i.e.
+     blocks in this file) just by modifying this flag.
 
 - ``control.yaml``: this is the requirements file, containing the expected name
   of generic calibration files.
@@ -280,7 +289,7 @@ The ``work`` subdirectory
    ds9_frontiers_rectified.reg          reduced_image.fits
    ds9_oh_rawimage.reg
 
-All the relevant raw images ``00010413*-EMIR-TEST0.fits`` have been copied in
+All the relevant raw images ``00010413*-EMIR-TEST0.fits`` have been copied into
 this working directory in order to preserve the original files.
 
 In addition, some intermediate images are also stored here during the execution
@@ -346,8 +355,8 @@ The ``results`` subdirectory
    processing.log      result.yaml         task.yaml
    reduced_image.fits  stare.fits
 
-The main results are stored separately in this last subdirectory. The important
-files here are:
+The main results are stored separately in this last subdirectory. The
+important files here are:
 
 - ``reduced_image.fits``: contains the (median) combination of the 3 original
   raw images.
@@ -402,7 +411,8 @@ provided with numina:
   particular example (grism J + filter J) slitlet#1 and slitlet#55 fall
   partially or totally outside of the spatial coverage of the EMIR detector.
   For that reason the first 38 pixels (slitlet #1) and the last 38 pixels
-  (slitlet#55) in the vertical (spatial) direction are also set to zero.
+  (slitlet#55) in the vertical (spatial) direction are also set to zero in the
+  reduced image.
 
 - The coordinates of the useful rectangular region of each slitlet in the
   rectified and wavelength calibrated image are stored in the FITS header under
@@ -453,15 +463,15 @@ The user can obtain a more refined rectified and wavelength calibrated image
 using precise wavelength calibration data. For this purpose one can use arc
 exposures (obtained just before or after de scientific images), or even the
 scientific images themselves, when the airglow emission (OH emission lines) are
-brigth enough to be employed as wavelength references).
+brigth enough to be employed as wavelength signposts).
 
 In this simple example, since the image we are trying to reduce is precisely an
-arc exposure, we are using the arc lines to refine the calibration.
+arc exposure, we are using its own arc-line set to refine the calibration.
 
-**Important:** The following process only works for arc images obtained with
-the 3 types of arc lamps simultaneously ON during the exposure time. An easy
-way to check that this is the case is to examine the corresponding status
-keywords:
+**Important:** The following process only works for arc images obtained when
+the 3 types of arc lamps were simultaneously ON during the exposure time. An
+easy way to check that this was really the case is to examine the corresponding
+status keywords:
 
 ::
 
@@ -525,28 +535,28 @@ Zooming in the upper region:
    :width: 800
    :alt: Overplot boundary 4
 
-The above plots show the selected image with the frontiers and boundaries of
-each slitlet overplotted. Here a clarification is needed:
+The above plots show the selected image with the **frontiers** and
+**boundaries** of each slitlet overplotted. Here a clarification is needed:
 
-- **frontiers**: separation between slitlets. In the above plots frontiers are
+- **Frontiers**: separation between slitlets. In the above plots frontiers are
   displayed with blue lines running from left to right. These lines are curved
   due to the geometric distortions.
 
-- **boundaries**: more conservative slitlet limits, avoiding a few pixels too
+- **Boundaries**: more conservative slitlet limits, avoiding a few pixels too
   close to the frontiers. Boundaries have been determined by examining
   continuum lamp exposures and selecting regions were the slitlet illumination
   is relatively flat. Note that, by construction, the CSU bars create a small
   (but detectable) decrease in the slitlet width at the frontiers between bars.
   The boundary limits are displayed alternatively with cyan and magenta lines
   (with the same color as the one employed in the label indicating the slitlet
-  number; in this example all the labels appear centered in the image). One can
-  easily check that with grism J + filter J the slitlets number 1 and 55 fall
-  partially outside the detector.
+  number; in this example all the labels appear centered in the image along the
+  X axis). One can easily check that with grism J + filter J the slitlets
+  number 1 and 55 fall partially outside the detector.
 
-Although the longslit configuration in this example makes difficult to
+Although the (pseudo) longslit configuration in this example makes difficult to
 distinguish the frontiers between slitlets in the data, a reasonable zoom
 (showing consecutive slitlets with slightly different slit widths), helps to
-check that the predicted frontiers (blue lines) separate properly the slitlet
+check that the predicted frontiers (blue lines) properly separate the slitlet
 data:
 
 .. image:: images/overplot_boundary5.png
@@ -615,7 +625,7 @@ Zooming:
    :width: 800
    :alt: overplot arclines 2
 
-The data arc lines appear around 3 pixels towards the left of the predicted
+The observed arc lines appear around 3 pixels towards the left of the predicted
 locations (marked by the cyan circles).
 
 If you prefer to use ``ds9`` for this task, it is also possible to use the
@@ -627,7 +637,7 @@ image:
 
    (py36) $ ds9 data/0001041345-20160917-EMIR-TEST0.fits
 
-and load the two region files:
+and load the region file:
 
 - select ``region --> load -> obsid1345_work/ds9_arc_rawimage.reg``
 
@@ -641,8 +651,8 @@ Zooming:
    :width: 800
    :alt: ds9 arc lines 2
 
-Here it is also clear that the arc lines appear around 3 pixels towards the
-left of the expected locations (indicated by the ds9 regions).
+Here it is also clear that the observed arc lines appear around 3 pixels
+towards the left of the expected locations (indicated by the ds9 regions).
 
 Improving the rectification and wavelength calibration
 ------------------------------------------------------
@@ -654,11 +664,9 @@ locations (X axis), it is possible to rerun the reduction recipe
 
 In our case, we have estimated that there is no offset in the spatial direction
 (Y axis), and an offset of around 3 pixels in the wavelength direction (X
-axis).
-
-We can introduce that information in the observation result file. In this case,
-we create a copy of the initial ``00_starespectrawave.yaml`` file as
-``01_starespectrawave.yaml``, with the following content:
+axis). Those offsets should be introduced in the observation result file. For
+that purpose, we have created a modified version of
+``00_starespectrawave.yaml`` with the name ``01_starespectrawave.yaml``:
 
 ::
 
@@ -683,9 +691,10 @@ behavior of the reduction recipe:
 
 - ``refine_wavecalib_mode``: 2: this indicates that the image correspond to an
   arc exposure and that we are asking for a refinement of the wavelength
-  calibration using that information. Note that, by default, this parameter is 
-  set to zero, and no refinement is carried out. The value ``2`` indicates that
-  the refinement is performed with the help or arc lines; a value of ``12``
+  calibration using that information. Note that, by default, this parameter is
+  set to zero, which means that no refinement is carried out (being the rest of
+  the refinement parameters ignored). The value ``2`` indicates that the
+  refinement is performed with the help or arc lines; a value of ``12``
   indicates that the refinement process will use airglow (OH) lines.
 
 - ``global_integer_offset_x_pix``: 3: integer offset (pixels) that must be
@@ -705,7 +714,7 @@ Now the execution of the code takes longer (the median spectrum of each slitlet
 is crosscorrelated with an expected arc spectrum in order to guarantee that the
 wavelength calibration of the different slitlets match).
 
-The new stare.fits image now exhibit a much better wavelength calibration:
+The new stare.fits image now does exhibit a much better wavelength calibration:
 
 ::
 
@@ -722,7 +731,7 @@ frontiers (``ds9_frontiers_rectified.reg``), boundaries
 (``ds9_arc_rectified.reg``) for the rectified and wavelength calibrated image.
 Note that in this case the expected frontiers and boundaries lines are
 perfectly horizontal, whereas the expected arc lines are vertical (the image
-has been rectified!). This region files are useful to locate individual
+has been rectified!). These region files are useful to locate individual
 slitlets by number.
 
 ::
