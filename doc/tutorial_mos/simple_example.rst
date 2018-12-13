@@ -16,23 +16,26 @@ Simple example: arc exposure
 The rectification and wavelength calibration of any EMIR spectroscopic image
 can be obtained with two levels of quality:
 
-- **Preliminary calibration**, without auxiliary calibration images, computed 
-  from the empirical calibration derived by the instrument team. This is the
-  on-line reduction perfomed at the GTC while gathering the images. Note that
-  the empirical calibrations were computed using a large set of initial
-  calibration images, and *it is not expected that the absolute wavelength
-  calibration to be correct within a few pixels nor the relative wavelength
-  calibration between slitlets to agree within one pixel*. For that reason
-  this rectified and wavelength calibrated image has been defined as a
-  preliminary version.  Anyhow, it is a good starting point in order to have a
-  look to the data.
+- **Preliminary (empirical) calibration**, without auxiliary calibration
+  images, computed from the empirical calibration derived by the instrument
+  team. This is the on-line reduction perfomed at the GTC while gathering the
+  images. Note that the empirical calibrations were computed using a large set
+  of initial calibration (continuum and arc) images, and *it is not expected
+  that the absolute wavelength calibration to be correct within a few pixels
+  nor the relative wavelength calibration between slitlets to agree within one
+  pixel*. For that reason, this rectified and wavelength calibrated image has
+  been defined as a preliminary version. In addition, *the boundaries between
+  slitlets can also exhibit small deviations (a few pixels) with respect to the
+  empirical calibration*. Anyhow, this empirical calibration constitutes a good
+  starting point in order to have a look to the data.
 
 - **Refined calibration**, which requires either auxilary arc exposures or a
-  more detailed reduction of scientific images with good signal of the airglow
+  more detailed reduction of scientific images with good signal on the airglow
   emission (OH emission lines). In this case, the preliminary calibration is
   refined *in order to guarantee that both, the absolute wavelength calibration
   and the relative wavelength calibration between slitlets do agree within a
-  fraction of a pixel*.
+  fraction of a pixel*. In addition, the boundaries between the slitlets can
+  also be shifted in order to match the real data.
 
 
 Preliminary rectification and wavelength calibration
