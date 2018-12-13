@@ -10,9 +10,9 @@ of the spatial direction.
    :width: 800
    :alt: Image Distortions
 
-The previous image correspond to a continuum exposure where the even-numbered
-slitlets were open, whereas the odd-numbered slitlets were closed. In this way
-it is easy to recognize the detector region spanned by each (distorted)
+The previous image corresponds to a continuum exposure where the even-numbered
+slitlets were opened, whereas the odd-numbered slitlets were closed. In this
+way it was easier to recognize the detector region spanned by each (distorted)
 individual 2D spectroscopic image corresponding to each particular slitlet.
 
 In addition to that, it also important to keep in mind that the frontiers
