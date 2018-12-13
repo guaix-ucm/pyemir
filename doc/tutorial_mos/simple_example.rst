@@ -24,7 +24,7 @@ can be obtained with two levels of quality:
      images. 
      
   - Note that although the empirical calibrations were computed using a large
-    set of initial calibration (continuum and arc) images, and *it is not
+    set of initial calibration (continuum and arc) images, *it is not
     expected that the absolute wavelength calibration to be correct within a
     few pixels nor the relative wavelength calibration between slitlets to
     agree within one pixel*. For that reason, this rectified and wavelength
@@ -137,7 +137,7 @@ You can easily examine the header of the three arc files using the utilities
    data/0001041351-20160917-EMIR-TEST0.fits	CSU_RETI ALL SPEC	J      J       	1.999288	2016-09-17T18:32:35.74
 
 Have a look to any of the tree raw arc images (the three images are similar).
-For that purpose you can use ds9 or the visualization tool provided with
+For that purpose you can use ``ds9`` or the visualization tool provided with
 numina:
    
 ::
@@ -305,32 +305,32 @@ of the reduction recipe. In particular:
 - ds9-region files for raw images (before rectification and wavelength
   calibration):
 
-   - ``ds9_frontiers_rawimage.reg``: ds9 region file with the frontiers between
-     slitlets, valid for the raw-type images (images with the original
+   - ``ds9_frontiers_rawimage.reg``: ds9-region file with the frontiers
+     between slitlets, valid for the raw-type images (images with the original
      distortions).
 
-   - ``ds9_boundaries_rawimage.reg``: ds9 region file with the boundaries for
-     each slitlet, valid for the raw-type images (images with the original
+   - ``ds9_boundaries_rawimage.reg``: ds9-region file with the boundaries
+     for each slitlet, valid for the raw-type images (images with the original
      distortions).
 
-   - ``ds9_arc_rawimage.reg``: ds9 region file with expected location of arc
-     lines from the EMIR calibration lamps.
+   - ``ds9_arc_rawimage.reg``: ds9-region file with expected location of
+     arc lines from the EMIR calibration lamps.
 
-   - ``ds9_oh_rawimage.reg``: ds9 region file with expected location of airglow
+   - ``ds9_oh_rawimage.reg``: ds9-region file with expected location of airglow
      (OH) sky lines.
 
 - ds9-region files for rectified and wavelength calibrated images:
 
-   - ``ds9_frontiers_rectified``: ds9 region file with the frontiers between
+   - ``ds9_frontiers_rectified``: ds9-region file with the frontiers between
      slitlets, valid for rectified and wavelength calibrated images.
 
-   - ``ds9_boundaries_rectified``: ds9 region file with the boundaries for each
+   - ``ds9_boundaries_rectified``: ds9-region file with the boundaries for each
      slitlet, valid for rectified and wavelength calibrated images.
 
-   - ``ds9_arc_rectified.reg``: ds9 region file with expected location of arc
+   - ``ds9_arc_rectified.reg``: ds9-region file with expected location of arc
      lines from the EMIR calibration lamps.
 
-   - ``ds9_oh_rectified.reg``: ds9 region file with expected location of
+   - ``ds9_oh_rectified.reg``: ds9-region file with expected location of
      airglow (OH) sky lines.
 
 - images with averaged spectra:
@@ -364,7 +364,7 @@ important files here are:
 - ``stare.fits`` is the preliminary version of the rectified and wavelength
   calibrated image (please, keep reading).
 
-You can easily display the last image using ds9 or the visualization tool
+You can easily display the last image using ``ds9`` or the visualization tool
 provided with numina:
 
 ::
@@ -498,9 +498,9 @@ Checking the spatial direction (Y axis)
 
 .. note::
 
-   If you prefer to use ds9 instead of the default PyEmir graphical output for
-   the following examples, please keep reading anyway and wait for additional
-   explanations below.
+   If you prefer to use ``ds9`` instead of the default PyEmir graphical output
+   for the following examples, please keep reading anyway and wait for
+   additional explanations below.
 
 For example, we can execute the auxiliary script
 ``pyemir-overplot_boundary_model`` with the first of the three raw arc images
@@ -600,9 +600,9 @@ Checking the wavelength direction (X axis)
 
 .. note::
 
-   If you prefer to use ds9 instead of the default PyEmir graphical output for
-   the following examples, please keep reading anyway and wait for additional
-   explanations below.
+   If you prefer to use ``ds9`` instead of the default PyEmir graphical output
+   for the following examples, please keep reading anyway and wait for
+   additional explanations below.
 
 Since we know that the raw data correspond to arc images, we can overplot the
 expected locations of the some of the brightest arc lines by using the

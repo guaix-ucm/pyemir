@@ -22,7 +22,7 @@ NGC7798
 
 In this case we are going to reduce simple spectroscopic observations obtained
 in the central region of the HII galaxy NGC7798 using the J, H and K grisms. 
-**In this case the target was observed with all the EMIR slitlets aligned,
+**The target was observed with all the EMIR slitlets aligned,
 simulating a single (pseudo) longslit.**
 
 .. image:: images/ngc7798.png
@@ -50,6 +50,7 @@ the following content:
 
 ::
 
+   (py36) $ tree EMIR_ngc7798_example/
    EMIR_ngc7798_example/
    ├── 00_stare_hd209290.yaml
    ├── 00_stare_ngc7798.yaml
