@@ -7,6 +7,11 @@
  "name": "EMIR",
  "components":
   {
-     "detector": "1ac26dff-4c3f-43d8-a069-7470357120d6"
-  }
+     "detector": "1ac26dff-4c3f-43d8-a069-7470357120d6",
+     "CSU": "5dcdda56-3a5f-4bb8-b88c-776f7eee6cfe"
+  },
+ "components-2": [
+  {"uuid": "1ac26dff-4c3f-43d8-a069-7470357120d6"},
+  {"uuid": "5dcdda56-3a5f-4bb8-b88c-776f7eee6cfe"}
+ ]
 }
