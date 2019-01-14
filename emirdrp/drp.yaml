@@ -213,7 +213,7 @@ pipelines:
       FULL_DITHERED_IMAGE: emirdrp.recipes.image.join.FullDitheredImagesRecipe
       MICRODITHERED_IMAGE: emirdrp.recipes.image.micro.MicroditheredImageRecipe
       NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.image.nodded.NBImageRecipe
-      STARE_IMAGE: emirdrp.recipes.image.stare.StareImageBaseRecipe
+      STARE_IMAGE: emirdrp.recipes.image.stare.StareImageRecipe2
       fail: numina.core.utils.AlwaysFailRecipe
       gain_mode1: emirdrp.recipes.engineering.detectorgain.GainRecipe1
       cosmetics: emirdrp.recipes.engineering.cosmetics.CosmeticsRecipe
