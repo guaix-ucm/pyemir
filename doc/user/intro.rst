@@ -185,7 +185,9 @@ instructions, the steps to execute and run PyEmir under conda are:
 
 3. **Install PyEmir with conda**
 
-  After the environment activation, we can instal PyEmir using conda:
+  After the environment activation, we can instal PyEmir using conda (we
+  provide conda packages for PyEmir in the `conda-forge channel
+  <https://conda-forge.org>`_):
 
   ::
 
@@ -221,4 +223,99 @@ instructions, the steps to execute and run PyEmir under conda are:
      (emir) bash$ source deactivate
      bash$
 
+
+Installing the development version (using conda)
+------------------------------------------------
+
+The development version is the most updated working version of the code (use it
+at your own risk!). For this version to work properly, some additinal python
+packages must have been already installed in your system. 
+
+In order to facilitate the installation of the additional packages, it is
+useful to add the AstroConda channel:
+
+::
+
+   bash$ $ conda config --add channels http://ssb.stsci.edu/astroconda
+
+It is easy to create a new environment and install the required
+packages using (in this example python 3.6 is defined as the default python
+interpreter):
+
+::
+
+   bash$ conda create --name emir python=3.6 \
+   astropy \
+   cython \
+   ipython \
+   jupyter \
+   matplotlib \
+   numpy \
+   photutils \
+   pytest \
+   PyYaml \
+   scikit-image \
+   scipy \
+   setuptools \
+   six \
+   sphinx
+
+Activate the new environment:
+
+::
+
+   bash$ source activate emir
+   (emir) bash$
+
+**Installing/updating numina**
+
+Download and install the development version using git:
+
+::
+
+   (emir) bash$ git clone https://github.com/guaix-ucm/numina.git
+   (emir) bash$ cd numina
+   (emir) bash$ python setup.py build
+   (emir) bash$ python setup.py install
+   (emir) bash$ cd ..
+
+If you have numina already installed in your system, but want to update the
+code with the latest version, you need to move to the same directory where you
+previously downloaded numina and reinstall it:
+
+::
+
+   (emir) bash$ cd numina
+   (emir) bash$ git pull
+   (emir) bash$ python setup.py build
+   (emir) bash$ python setup.py install
+   (emir) bash$ cd ..
+
+Note: when updating numina, remember to update also pyemir (see next).
+
+**Installing/updating pyemir**
+
+After installing numina, you can install pyemir, following the same procedure
+previously described for numina:
+
+::
+
+   (emir) bash$ cd pyemir
+   (emir) bash$ python setup.py build
+   (emir) bash$ python setup.py install
+   (emir) bash$ cd ..
+
+If you have pyemir already installed in your system, but want to update the
+code with the latest version, you need to move to the same directory where you
+previously downloaded pyemir and reinstall it:
+
+::
+
+   (emir) bash$ cd pyemir
+   (emir) bash$ git pull
+   (emir) bash$ python setup.py build
+   (emir) bash$ python setup.py install
+   (emir) bash$ cd ..
+
+Note: when updating pyemir, remember to update numina first (see above).
 
