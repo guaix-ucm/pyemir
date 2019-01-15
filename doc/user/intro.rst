@@ -299,7 +299,8 @@ After installing numina, you can install pyemir, following the same procedure
 previously described for numina:
 
 ::
-
+   
+   (emir) bash$ git clone https://github.com/guaix-ucm/pyemir.git
    (emir) bash$ cd pyemir
    (emir) bash$ python setup.py build
    (emir) bash$ python setup.py install
