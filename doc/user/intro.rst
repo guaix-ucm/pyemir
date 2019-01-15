@@ -3,104 +3,222 @@
 PyEmir Installation
 *******************
 
-This is PyEmir, the data reduction pipeline for EMIR. 
+PyEmir, the data reduction pipeline for EMIR, is a Python package for Python
+2.7 and Python 3.5 or greater.
 
-PyEmir is distributed under GNU GPL, either version 3 of the License, 
-or (at your option) any later version. See the file COPYING for details.
+The easiest method of installing PyEmir is using prebuilt packages. You can
+also build from the development version. 
 
-PyEmir requires the following packages installed in order to
-be able to be installed and work properly:
+Maintainers: sergiopr@fis.ucm.es, cardiel@ucm.es
 
- 
- - `setuptools <http://peak.telecommunity.com/DevCenter/setuptools>`_
- - `numpy <http://numpy.scipy.org/>`_
- - `scipy <http://www.scipy.org>`_
- - `astropy <http://www.astropy.org>`_ >= 1.1
- - `matplotlib <http://matplotlib.org/>`_
- - `six <https://six.readthedocs.io//>`_
- - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.15
- - `photutils <https://photutils.readthedocs.io/en/stable/>`_
- - `sep <https://github.com/kbarbary/sep>`_
- - `scikit-image <http://scikit-image.org/>`_
+.. warning::
 
-Additional packages are optionally required:
- - `pytest <http://pytest.org>`_ to run the tests
- - `sphinx`_ to build the documentation
-
-Webpage: https://guaix.fis.ucm.es/projects/emir
-
-Maintainer: sergiopr@fis.ucm.es
-
-Stable version
---------------
-
-The latest stable version of PyEmir can be downloaded from  
-https://pypi.python.org/pypi/pyemir
-
-To install PyEmir, use the standard installation procedure:::
-
-    $ tar zxvf pyemir-X.Y.Z.tar.gz
-    $ cd pyemir-X.Y.Z
-    $ python setup.py install
-    
-The `install` command provides options to change the target directory. By default
-installation requires administrative privileges. The different installation options
-can be checked with::: 
-
-   $ python setup.py install --help
-   
-Development version
--------------------
+   All the commands are assumed to be executed in a terminal running the **bash
+   shell**
 
 
-The development version can be checked out with:::
+What method of installation should I use?
+-----------------------------------------
 
-    $ git clone https://github.com/guaix-ucm/pyemir.git
+- If you are familiar with one method, use it (conda or virtualenv), since both
+  are fully supported.
 
-And then installed following the standard procedure:::
+- In macOS, there is a well-known compatibility problem between virtualenv and
+  `matplotlib <https://matplotlib.org/faq/osx_framework.html>`_, so we recommend setting up conda.
 
-    $ cd pyemir
-    $ python setup.py install
+- In Linux, virtualenv is easier to setup.
 
-Using conda
-***********
+Install in virtualenv
+---------------------
 
-Install and configure conda. Then install the dependencies (you can create an environment):::
+`Virtualenv <https:virtualenv.pypa.io/en/stable/installation/>`_ is a tool that
+allows to create isolated Python environments.
 
-    $ conda create --name emir python=3
-    $ source activate emir
-    $ (emir) conda install numpy scipy astropy matplotlib six scikit-image
-    $ (emir) conda install -c astropy photutils
-    $ (emir) conda install cython pyyaml
+Since Python version 3.3, there is also a module in the standard library called
+``venv`` with roughly the same functionality.
 
-The latest development version of the emirdrp source code can be retrieved
-using git. In addition, we will need the latest version of numina:::
+The steps to install and run PyEmir within a virtual environment are:
 
-    $ git clone https://github.com/guaix-ucm/numina.git
-    $ git clone https://github.com/guaix-ucm/pyemir.git
+1. **Create a virtual environment using either virtualenv or venv**
 
-Then, to build and install emirdrp:::
+  In order to create a virtual environment called e.g. emir using ``venv``:
 
-    $ (emir) cd numina
-    $ (emir) python setup.py build
-    $ (emir) python setup.py install
-    $ (emir) cd ../emirdrp
-    $ (emir) python setup.py build
-    $ (emir) python setup.py install
-
-
-Building the documentation
----------------------------
-The PyEmir documentation is base on `sphinx`_. With the package installed, the 
-html documentation can be built from the `doc` directory::
-
-  $ cd doc
-  $ make html
+  ::
   
-The documentation will be copied to a directory under `build/sphinx`.
+     bash$ python3 -m venv emir /path/to/emir
+
+  With ``virtualenv``:
   
-The documentation can be built in different formats. The complete list will appear
-if you type `make` 
+  ::
+
+     bash$ virtualenv /path/to/emir
+
+  The directory ``/path/to/emir`` represents the location of the environment.
+  It can be any valid directory path.
+
+
+2. **Activate the environment**
+
+  After creating the environment, the directory ``/path/to/emir`` contains a
+  Python tree. One of the directories is ``/path/to/emir/bin``, whih contains a
+  script called ``activate``. To activate the environment we ``source`` (a bash
+  shell command) this script file:
+
+  ::
   
-.. _virtualenv: http://pypi.python.org/pypi/virtualenv
-.. _sphinx: http://sphinx.pocoo.org
+     bash$ source /path/to/emir/bin/activate
+
+  which yields a different system prompt to the user:
+
+  ::
+  
+     (emir) bash$
+
+  Now, the name of the environment appears before the standard prompt. We can
+  use the environment only on the consoles or terminals where we have
+  previously activated it.
+
+3. **Install PyEmir with pip**
+
+  After the environment activation, we can install PyEmir with ``pip``. This is
+  the standard Python tool for package management. It will download the package
+  and its dependencies, unpack everything and compile when needed.
+
+  ::
+  
+     (emir) bash$ pip install pyemir
+     ...
+     ...
+
+4. **Test the installation**
+
+  We can test the installation by running the ``numina`` command:
+
+  ::
+
+     (emir) bash$ numina
+     DEBUG: Numina simple recipe runner version 0.18
+
+5. **Update within the environment**
+
+  In order to update PyEmir within a virtualenv installation the user should
+  execute:
+  
+  ::
+  
+     (emir) bash$ pip install -U pyemir
+
+6. **Deactivate the environment**
+  
+  To exit the environment is enough to exit the terminal or run the command
+  ``deactivate``:
+
+  ::
+  
+     (emir) bash$ deactivate
+     bash$
+
+
+Install in Conda
+----------------
+
+`Conda <https://conda.io/docs/>`_ was created with a target similar to
+``virtualenv``, but extended its functionality to the management of packages in
+different languages.
+
+You can install `miniconda <https://conda.io/miniconda.html>`_ or `anaconda
+<http://docs.anaconda.com/anaconda/install/>`_. The difference is that
+miniconda provides a light-weight environment and anaconda comes with lots of
+additional Python packages. By installing ``miniconda`` you reduce the amount
+of preinstalled packages in your system (after installing ``miniconda`` it is
+possible to install ``anaconda`` by executing ``conda install anaconda``).
+
+If you have updated the ``$PATH`` system variable during the miniconda or conda
+installation, you can call conda commands directly in the shell, like this:
+
+::
+
+   bash$ conda info
+
+If not, you will need the add the path to the command, like:
+
+::
+
+  bash$ /path/to/conda/bin/conda info
+
+
+In this guide we will write the commands without the full path, for simplicity.
+
+Once conda is installed according to the corresponding miniconda or anaconda
+instructions, the steps to execute and run PyEmir under conda are:
+
+1. **Create a conda environment**
+
+  With coda, environments are created in a centralised manner (under the
+  subdirectory ``./envs`` in your conda tree), i.e., we do not pass the path to
+  the environment:
+
+  ::
+
+     bash$ conda create --name emir
+
+  The Pyhton interpreter used in this environment is the sazme version
+  currently used by conda. You can select a different version with
+
+  ::
+
+     bash$ conda create --name emir python=3.6
+
+2. **Activate the environment**
+
+  Activate the environment:
+
+  ::
+
+     bash$ conda activate emir
+
+  which yields a different system prompt to the user:
+
+  ::
+
+     (emir) bash$ 
+
+3. **Install PyEmir with conda**
+
+  After the environment activation, we can instal PyEmir using conda:
+
+  ::
+
+     (emir) bash$ conda install -c conda-forge pyemir
+     ...
+     ...
+
+4. **Test the installation**
+
+  We can test the installation by running the ``numina`` command:
+
+  ::
+
+     (emir) bash$ numina
+     DEBUG: Numina simple recipe runner version 0.18
+
+5. **Update within the environment**
+
+  In order to update PyEmir within the conda environment the user should
+  execute:
+  
+  ::
+  
+     (emir) bash$ conda update pyemir
+
+6. **Deactivate the environment**
+  
+  To exit the environment is enough to exit the terminal or run the following
+  command:
+
+  ::
+  
+     (emir) bash$ source deactivate
+     bash$
+
+

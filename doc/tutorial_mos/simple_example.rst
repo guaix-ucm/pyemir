@@ -481,7 +481,11 @@ status keywords:
 
 Note that the EMIR calibration unit has 3 types of arc lamps: Xe, Ne, and Hg
 (actually two lamps of each type). In principle the six lamps should be ON
-(keyword = 1).
+(keyword = 1) for the refinement procedure to work properly.  If separate
+exposures were obtained for each lamp type, the user must previously combine
+the images, multiplying each frame by the appropiate factor in order to
+simulate simultaneous exposures of the three arc lamp types *with the same
+exposure time*.
 
 .. warning::
 

@@ -20,8 +20,6 @@ classes contained in the package, see the :ref:`reference`.
    :maxdepth: 2
 
    intro
-   deploy
-   deployc
    running
    recipes
    products
