@@ -23,5 +23,7 @@ PyEmir reference guide: :ref:`reference`
    reference/index
    glossary
 
+
+Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
    
 .. _GTC: http://www.gtc.iac.es
