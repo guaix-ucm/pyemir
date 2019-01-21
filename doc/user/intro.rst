@@ -1,3 +1,4 @@
+.. _pyemir_installation:
 
 *******************
 PyEmir Installation

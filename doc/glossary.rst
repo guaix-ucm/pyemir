@@ -1,8 +1,8 @@
 
 .. _glossary:
 
-Glossary 
-=========
+PyEmir Glossary 
+===============
 
 .. glossary::
    :sorted:
