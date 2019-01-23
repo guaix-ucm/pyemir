@@ -70,10 +70,10 @@ Download and decompress the previous file:
 
 ::
 
-   (py36) $ tar zxvf simple_example_files.tgz
+   (py36) $ tar zxvf EMIR_simple_example_files.tgz
    ...
    ...
-   (py36) $ rm simple_example_files.tgz
+   (py36) $ rm EMIR_simple_example_files.tgz
 
 A new subdirectory named ``EMIR_simple_example`` should have appeared, with the
 following content:
@@ -82,8 +82,8 @@ following content:
 
    (py36) $ tree EMIR_simple_example
    EMIR_simple_example
-   ├── 00_starespectrawave.yaml
-   ├── 01_starespectrawave.yaml
+   ├── 00_simple_example.yaml
+   ├── 01_simple_example.yaml
    ├── control.yaml
    └── data
        ├── 0001041345-20160917-EMIR-TEST0.fits
@@ -97,6 +97,8 @@ following content:
        ├── rect_wpoly_MOSlibrary_grism_K_filter_Ksp.json
        ├── rect_wpoly_MOSlibrary_grism_LR_filter_HK.json
        └── rect_wpoly_MOSlibrary_grism_LR_filter_YJ.json
+
+   1 directory, 14 files
 
 Move into the ``EMIR_simple_example`` directory:
 
@@ -191,7 +193,7 @@ aligned slitlets forming a (pseudo) longslit.
 The directory ``EMIR_simple_example`` contains the following two files required
 to execute the reduction recipe needed in this case:
 
-- ``00_starespectrawave.yaml``: this is what we call an observation result
+- ``00_simple_example.yaml``: this is what we call an observation result
   file, which basically contains the reduction recipe to be applied and the
   images involved.
 
@@ -199,7 +201,7 @@ to execute the reduction recipe needed in this case:
 
       id: 1345
       instrument: EMIR
-      mode: STARE_SPECTRA_WAVE
+      mode: GENERATE_RECTWV_COEFF
       frames:
        - 0001041345-20160917-EMIR-TEST0.fits
        - 0001041348-20160917-EMIR-TEST0.fits
@@ -210,14 +212,15 @@ to execute the reduction recipe needed in this case:
      auxiliary subdirectories. In this example the two subdirectories will be
      named ``obsid1345_work`` and ``obsid1345_results`` (see below), where the
      intermediate results and the final results are going to be stored,
-     respectively. 
+     respectively. Note that we have arbitrarily chosen the last 4 digits of
+     the unique running number assigned to each image obtained with the GTC.
    
    - Not surprisingly, the key ``instrument`` is set to EMIR (do not forget
      that Numina also is at present also employed to reduce MEGARA data, and
      hopefully, future GTC instruments).
    
    - The key ``mode`` indicates the identification of the reduction recipe
-     (``STARE_SPECTRA_WAVE`` in this example). 
+     (``GENERATE_RECTWV_COEFF`` in this example). 
      
    - The key ``frames`` lists the images to be combined (median). 
    
@@ -255,12 +258,12 @@ to execute the reduction recipe needed in this case:
             }
       
 You are ready to execute the reduction recipe indicated in the file
-``00_starespectrawave.yaml`` (in this case the reduccion recipe named
-``STARE_SPECTRA_WAVE``):
+``00_simple_example.yaml`` (in this case the reduccion recipe named
+``GENERATE_RECTWV_COEFF``):
 
 ::
 
-   (py36) $ numina run 00_starespectrawave.yaml -r control.yaml
+   (py36) $ numina run 00_simple_example.yaml -r control.yaml
    ...
    ...
 
@@ -277,17 +280,29 @@ The ``work`` subdirectory
 
 ::
 
-   (py36) $ ls obsid1345_work/
-   0001041345-20160917-EMIR-TEST0.fits  ds9_oh_rectified.reg
-   0001041348-20160917-EMIR-TEST0.fits  index.pkl
-   0001041351-20160917-EMIR-TEST0.fits  master_dark.fits
-   ds9_arc_rawimage.reg                 master_flat.fits
-   ds9_arc_rectified.reg                median_spectra_full.fits
-   ds9_boundaries_rawimage.reg          median_spectra_slitlets.fits
-   ds9_boundaries_rectified.reg         median_spectrum_slitlets.fits
-   ds9_frontiers_rawimage.reg           rectwv_coeff.json
-   ds9_frontiers_rectified.reg          reduced_image.fits
-   ds9_oh_rawimage.reg
+   (py36) $ tree obsid1345_work/
+   obsid1345_work/
+   ├── 0001041345-20160917-EMIR-TEST0.fits
+   ├── 0001041348-20160917-EMIR-TEST0.fits
+   ├── 0001041351-20160917-EMIR-TEST0.fits
+   ├── ds9_arc_rawimage.reg
+   ├── ds9_arc_rectified.reg
+   ├── ds9_boundaries_rawimage.reg
+   ├── ds9_boundaries_rectified.reg
+   ├── ds9_frontiers_rawimage.reg
+   ├── ds9_frontiers_rectified.reg
+   ├── ds9_oh_rawimage.reg
+   ├── ds9_oh_rectified.reg
+   ├── index.pkl
+   ├── master_bpm.fits
+   ├── master_dark.fits
+   ├── master_flat.fits
+   ├── median_spectra_full.fits
+   ├── median_spectra_slitlets.fits
+   ├── median_spectrum_slitlets.fits
+   └── reduced_image.fits
+   
+   0 directories, 19 files
 
 All the relevant raw images ``00010413*-EMIR-TEST0.fits`` have been copied into
 this working directory in order to preserve the original files.
@@ -295,12 +310,11 @@ this working directory in order to preserve the original files.
 In addition, some intermediate images are also stored here during the execution
 of the reduction recipe. In particular:
 
-- ``reduced_image.fits``: median combination of the three ``00010413*fits
-  files``.
-
-- ``rectwv_coeff.json``: rectification and wavelength calibration polinomial
-  coefficients derived from the empirical model, and computed for the specific
-  CSU configuration of the considered raw images.
+- ``reduced_image.fits``: result of applying, to the median combination of the
+  three ``00010413*fits files``, the bad-pixel mask, bias, dark and flatfield.
+  Note that, albeit its name, this is not a rectified and wavelength calibrated
+  image. This is simply a temporary image, stored in this working directory for
+  double-checking purposes.
 
 - ds9-region files for raw images (before rectification and wavelength
   calibration):
@@ -351,25 +365,32 @@ The ``results`` subdirectory
 
 ::
 
-   (py36) $ ls obsid1345_results/
-   processing.log      result.yaml         task.yaml
-   reduced_image.fits  stare.fits
+   (py36) $ tree obsid1345_results/
+   obsid1345_results/
+   ├── processing.log
+   ├── rectwv_coeff.json
+   ├── reduced_mos.fits
+   ├── result.yaml
+   └── task.yaml
+   
+   0 directories, 5 files
 
 The main results are stored separately in this last subdirectory. The
 important files here are:
 
-- ``reduced_image.fits``: contains the (median) combination of the 3 original
-  raw images.
+- ``reduced_mos.fits`` is the preliminary version of the rectified and
+  wavelength calibrated image (please, keep reading).
 
-- ``stare.fits`` is the preliminary version of the rectified and wavelength
-  calibrated image (please, keep reading).
+- ``rectwv_coeff.json``: rectification and wavelength calibration polinomial
+  coefficients derived from the empirical model, and computed for the specific
+  CSU configuration of the considered raw images.
 
 You can easily display the last image using ``ds9`` or the visualization tool
 provided with numina:
 
 ::
 
-   (py36) $ numina-ximshow obsid1345_results/stare.fits --z1z2 0,1000
+   (py36) $ numina-ximshow obsid1345_results/reduced_mos.fits --z1z2 0,1000
 
 
 .. image:: images/stare_preliminary_version.png
@@ -381,9 +402,9 @@ provided with numina:
 
   ::
 
-     (py36) $ dfits obsid1345_results/stare.fits | fitsort crpix1 crval1 cdelt1
-     FILE                        	CRPIX1	CRVAL1 	CDELT1	
-     obsid1345_results/stare.fits	1.0   	11200.0	0.77  
+     (py36) $ dfits obsid1345_results/reduced_mos.fits | fitsort crpix1 crval1 cdelt1
+     FILE                              	CRPIX1	CRVAL1 	CDELT1	
+     obsid1345_results/reduced_mos.fits	1.0   	11200.0	0.77 
 
   Prefixed ``CRVAL1`` and ``CDELT1`` values have been stablished for the
   different grism+filter combinations (``CRPIX1=1`` is employed in all cases).
@@ -397,9 +418,9 @@ provided with numina:
 
   ::
 
-     (py36) $ dfits obsid1345_results/stare.fits | fitsort naxis1 naxis2
-     FILE                        	NAXIS1	NAXIS2	
-     obsid1345_results/stare.fits	3400  	2090  
+     (py36) $ dfits obsid1345_results/reduced_mos.fits | fitsort naxis1 naxis2
+     FILE                              	NAXIS1	NAXIS2	
+     obsid1345_results/reduced_mos.fits	3400  	2090  
 
   ``NAXIS1`` has been enlarged in order to accommodate wavelength calibrated
   spectra for slitlets in different locations along the spectral direction
@@ -436,7 +457,7 @@ provided with numina:
   determines its resulting wavelength coverage.
 
 In the simple example just described, we have straightforwardly executed the
-reduction recipe ``STARE_SPECTRA_WAVE`` using the empirical model for
+reduction recipe ``GENERATE_RECTWV_COEFF`` using the empirical model for
 rectification and wavelength calibration. This is good enough for a preliminary
 inspection of the data (for example when observing at the telescope), but it is
 possible to do a better job with some extra effort. For example, having a look
@@ -446,7 +467,7 @@ wavelength calibration between slitlets does not agree within roughtly 1 pixel:
 
 ::
 
-   (py36) $ numina-ximshow obsid1345_results/stare.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
+   (py36) $ numina-ximshow obsid1345_results/reduced_mos.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
 
 .. image:: images/stare_preliminary_zoom.png
    :width: 800
@@ -475,9 +496,9 @@ status keywords:
 
 ::
 
-   (py36) $ dfits obsid1345_results/stare.fits | fitsort lampxe1 lampne1 lamphg1 lampxe2 lampne2 lamphg2
-   FILE                        	LAMPXE1	LAMPNE1	LAMPHG1	LAMPXE2	LAMPNE2	LAMPHG2
-   obsid1345_results/stare.fits	1      	1      	1      	1      	1      	1
+   (py36) $ dfits obsid1345_results/reduced_mos.fits | fitsort lampxe1 lampne1 lamphg1 lampxe2 lampne2 lamphg2
+   FILE                              	LAMPXE1	LAMPNE1	LAMPHG1	LAMPXE2	LAMPNE2	LAMPHG2	
+   obsid1345_results/reduced_mos.fits	1      	1      	1      	1      	1      	1
 
 Note that the EMIR calibration unit has 3 types of arc lamps: Xe, Ne, and Hg
 (actually two lamps of each type). In principle the six lamps should be ON
@@ -664,19 +685,19 @@ Improving the rectification and wavelength calibration
 Once you have estimated the potential integer offsets (in X and Y) of your
 image relative to the expected slitlet frontiers (Y axis) and arc line
 locations (X axis), it is possible to rerun the reduction recipe
-``STARE_SPECTRA_WAVE`` making use of that information.
+``GENERATE_RECTWV_COEFF`` making use of that information.
 
 In our case, we have estimated that there is no offset in the spatial direction
 (Y axis), and an offset of around 3 pixels in the wavelength direction (X
 axis). Those offsets should be introduced in the observation result file. For
 that purpose, we have created a modified version of
-``00_starespectrawave.yaml`` with the name ``01_starespectrawave.yaml``:
+``00_simple_example.yaml`` with the name ``01_simple_example.yaml``:
 
 ::
 
    id: 1345refined
    instrument: EMIR
-   mode: STARE_SPECTRA_WAVE
+   mode: GENERATE_RECTWV_COEFF
    frames:
     - 0001041345-20160917-EMIR-TEST0.fits
     - 0001041348-20160917-EMIR-TEST0.fits
@@ -687,7 +708,7 @@ that purpose, we have created a modified version of
      global_integer_offset_x_pix : 3 
      global_integer_offset_y_pix : 0 
 
-This file is the same as ``00_starespecrawave.yaml`` but with a different
+This file is the same as ``00_simple_example.yaml`` but with a different
 ``id`` (to generate different `work` and `results` subdirectories that do not
 overwrite the initial reduction), and four extra lines at the end. In
 particular, we are specifying a few parameters that are going to modify the
@@ -710,7 +731,7 @@ Execute the reduction recipe using the new observation result file:
 
 ::
 
-   (py36) $ numina run 01_starespectrawave.yaml -r control.yaml
+   (py36) $ numina run 01_simple_example.yaml -r control.yaml
    ...
    ...
 
@@ -718,19 +739,36 @@ Now the execution of the code takes longer (the median spectrum of each slitlet
 is crosscorrelated with an expected arc spectrum in order to guarantee that the
 wavelength calibration of the different slitlets match).
 
-The new stare.fits image now does exhibit a much better wavelength calibration:
+The new ``reduced_mos.fits`` image now does exhibit a much better wavelength calibration:
 
 ::
 
-   (py36) $ numina-ximshow obsid1345refined_results/stare.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
+   (py36) $ numina-ximshow obsid1345refined_results/reduced_mos.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
 
 
 .. image:: images/stare_refined_zoom.png
    :width: 800
    :alt: stare image refined zoom
 
-Remember that in the work directory you can find ds9-region files with the
-frontiers (``ds9_frontiers_rectified.reg``), boundaries
+Within the ``obsid1345refined_work`` subdirectory you can find a new auxiliary
+file called ``expected_catalog_lines.fits`` which contains the expected
+locations of the arc lines in the rectified and wavelength calibrated sampling
+(i.e., with the same dimensions as ``reduced_mos.fits``). We can then display
+that new image zooming into the same region employed in the last plot (note
+that the intensity of the arc lines in ``expected_catalog_lines.fits`` ranges
+from 0.0 to 1.0):
+
+::
+
+   (py36) $ numina-ximshow obsid1345refined_work/expected_catalog_lines.fits --bbox 1920,2050,1,2090 --z1z2 0,0.4
+
+
+.. image:: images/stare_expected_refined_zoom.png
+   :width: 800
+   :alt: expected stare image refined zoom
+
+Remember that in the work directory you can still find the ds9-region files
+with the frontiers (``ds9_frontiers_rectified.reg``), boundaries
 (``ds9_boundaries_rectified.reg``) and expected arc line locations
 (``ds9_arc_rectified.reg``) for the rectified and wavelength calibrated image.
 Note that in this case the expected frontiers and boundaries lines are
@@ -740,7 +778,7 @@ slitlets by number.
 
 ::
 
-   (py36) $ ds9 obsid1345refined_results/stare.fits
+   (py36) $ ds9 obsid1345refined_results/reduced_mos.fits
 
 and load the region files:
 
@@ -758,8 +796,8 @@ Zooming:
    :width: 800
    :alt: ds9 rectified image zoom
 
-In the ``obsid1345refined_work`` subdirectory you can find a file named
-``crosscorrelation.pdf`` which contains a graphical summary of the
+In the ``obsid1345refined_work`` subdirectory you should also find a new file
+named ``crosscorrelation.pdf`` which contains a graphical summary of the
 cross-correlation process. In particular, you have an individual plot for each
 slitlet showing the cross-correlation function:
 

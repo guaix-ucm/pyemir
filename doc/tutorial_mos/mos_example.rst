@@ -68,6 +68,8 @@ following content:
        ├── rect_wpoly_MOSlibrary_grism_LR_filter_HK.json
        └── rect_wpoly_MOSlibrary_grism_LR_filter_YJ.json
 
+   1 directory, 24 files
+
 Move into the ``EMIR_mos_example`` directory:
 
 ::
@@ -197,7 +199,7 @@ Have a look to the observation result file ``00_mos_example.yaml``:
 
    id: 2158preliminary
    instrument: EMIR
-   mode: STARE_SPECTRA_WAVE
+   mode: GENERATE_RECTWV_COEFF
    frames:
     - 0001572158-20180530-EMIR-STARE_SPECTRA.fits
    enabled: True
@@ -215,7 +217,7 @@ As expected, two new subdirectories have been created:
 
 ::
 
-   (py36) $ numina-ximshow obsid2158preliminary_results/stare.fits
+   (py36) $ numina-ximshow obsid2158preliminary_results/reduced_mos.fits
 
 
 .. image:: images/0001572158_preliminary.png
@@ -311,7 +313,7 @@ the observation result file ``01_mos_example.yaml``:
 
    id: 2158refined
    instrument: EMIR
-   mode: STARE_SPECTRA_WAVE
+   mode: GENERATE_RECTWV_COEFF
    frames:
     - 0001572158-20180530-EMIR-STARE_SPECTRA.fits
     - 0001572187-20180530-EMIR-STARE_SPECTRA.fits
@@ -370,7 +372,7 @@ Execute the reduction recipe:
 
 ::
 
-   numina run 01_mos_example.yaml -r control.yaml
+   (py36) $ numina run 01_mos_example.yaml -r control.yaml
    ...
    ...
 
@@ -379,12 +381,25 @@ As expected, two new subdirectories have been created:
 
 ::
 
-   (py36) $ numina-ximshow obsid2158refined_results/stare.fits
+   (py36) $ numina-ximshow obsid2158refined_results/reduced_mos.fits
 
 
 .. image:: images/0001572158_refined.png
    :width: 800
    :alt: Image 0001572158 refined
+
+It is possible to display the synthetic image with the expected location of the
+airglow (OH) lines (remember that the line intensities are normalized in the
+range from 0.0 to 1.0):
+
+::
+
+   (py36) $ numina-ximshow obsid2158refined_work/expected_catalog_lines.fits --z1z2 0,0.3
+
+
+.. image:: images/0001572158_expected_ohlines.png
+   :width: 800
+   :alt: Image 0001572158 expected oh lines
 
 In the ``obsid2158refined_work`` subdirectory you can find a file named
 ``crosscorrelation.pdf`` which contains a graphical summary of the
@@ -411,9 +426,9 @@ slitlet showing the cross-correlation function:
 .. warning::
 
    The refined rectification and wavelength calibration has been saved in the
-   file ``obsid2158refined_work/rectwv_coeff.json``. This file can be applied,
-   as described in the next section, to any raw image (with the same CSU
-   configuration).
+   file ``obsid2158refined_results/rectwv_coeff.json``. This file can be
+   applied, as described in the next section, to any raw image (with the same
+   CSU configuration).
 
    This file, stored in JSON format, contains all the relevant information
    necessary to carry out the rectification and wavelength calibration of any
@@ -431,13 +446,14 @@ Placing the refined calibration in ``data/`` subdirectory
 ---------------------------------------------------------
 
 The first step is to copy the file containing the refined rectification and
-wavelength calibration (in this case ``obsid2158refined_work/rectwv_coeff.json``) into the
-``data/`` subdirectory. Since the this JSON file has a generic name, it is
-advisable to rename it in order to avoid overwritting it by accident:
+wavelength calibration (in this case
+``obsid2158refined_results/rectwv_coeff.json``) into the ``data/``
+subdirectory. Since the this JSON file has a generic name, it is advisable to
+rename it in order to avoid overwritting it by accident:
 
 ::
 
-   (py36) $ cp obsid2158refined_work/rectwv_coeff.json data/rectwv_coeff_2158refined.json
+   (py36) $ cp obsid2158refined_results/rectwv_coeff.json data/rectwv_coeff_2158refined.json
 
 Preparing the observation result file
 -------------------------------------
@@ -479,11 +495,11 @@ The previous display shows the first 5 blocks:
   rectification and wavelength calibration of the first four individual images
   of the first ABBA observation pattern employed at the telescope. 
   
-  - **Note that the reduction recipe is** ``STARE_SPECTRA_APPLY_WAVE``, which
+  - **Note that the reduction recipe is** ``STARE_SPECTRA_RECTWV``, which
     indicates that the pipeline is not going to use the empirical calibration
     but the refined calibration previously obtained. The specific name of the
     file containing this refined calibration must be given in the requirements
-    section of each block under the label ``rectwv_coeff_json`` (remember that
+    section of each block under the label ``rectwv_coeff`` (remember that
     the refined calibration file has been copied to the ``data/`` subdirectory
     and renamed as ``rectwv_coeff_2158refined.json``). We are using the same
     refined calibration for the 12 science images (the three ABBA observation
@@ -538,26 +554,26 @@ the previous blocks identified as ``ABBA1``, ``ABBA2`` and ``ABBA3``:
 Here is a summary of the different blocks that constitute the observation result
 file ``02_mos_example.yaml``:
 
-============== ===========================================  ========================
+============== ===========================================  ======================
 id             input                                        recipe
-============== ===========================================  ========================
-2158           0001572158-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2187           0001572187-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2216           0001572216-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2245           0001572245-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
+============== ===========================================  ======================
+2158           0001572158-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
+2187           0001572187-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
+2216           0001572216-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
+2245           0001572245-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
 ABBA1          2158, 2187, 2216, 2245                       LS_ABBA
-2274           0001572274-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2303           0001572303-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2332           0001572332-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2361           0001572361-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
+2274           0001572274-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
+2303           0001572303-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
+2332           0001572332-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
+2361           0001572361-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
 ABBA2          2274, 2303, 2332, 2361                       LS_ABBA
-2414           0001572414-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2443           0001572443-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2472           0001572472-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2501           0001572501-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
+2414           0001572414-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
+2443           0001572443-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
+2472           0001572472-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
+2501           0001572501-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
 ABBA3          2414, 2443, 2472, 2501                       LS_ABBA
 ABBA_combined  ABBA1, ABBA2, ABBA3                          BASIC_COMBINE (median)
-============== ===========================================  ========================
+============== ===========================================  ======================
 
 
 Executing the observation result file
@@ -573,7 +589,7 @@ described in the previous subsection:
    ...
 
 The execution of all the blocks may require a few minutes (depending on your
-computer). The final image will be stored in the
+computer speed). The final image will be stored in the
 ``obsidABBA_combined_results`` subdirectory:
 
 ::
