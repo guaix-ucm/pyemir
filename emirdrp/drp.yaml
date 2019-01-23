@@ -133,7 +133,7 @@ modes:
   name: Generate rectwv calibration coefficients
   summary: Generate rectwv calibration coefficients
   description: Generate rectwv calibration coefficients
-- key: STARE_SPECTRA_APPLY_WAVE
+- key: STARE_SPECTRA_RECTWV
   name: Stare Spectra with Precomputed Wavelength Calibration
   summary: Stare Spectra with Precomputed Wavelength Calibration
   description: Stare Spectra with Precomputed Wavelength Calibration
@@ -238,7 +238,7 @@ pipelines:
       STARE_SPECTRA: emirdrp.recipes.spec.stare.StareSpectraWaveRecipe
       STARE_SPECTRA_WAVE: emirdrp.recipes.spec.stare.StareSpectraWaveRecipe
       GENERATE_RECTWV_COEFF: emirdrp.recipes.spec.stare.GenerateRectwvCoeff
-      STARE_SPECTRA_APPLY_WAVE: emirdrp.recipes.spec.stare.StareSpectraApplyWaveRecipe
+      STARE_SPECTRA_RECTWV: emirdrp.recipes.spec.stare.StareSpectraRectwv
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
       LOAD_RECWAVE: emirdrp.recipes.auxiliary.load.RecWaveRecipe
