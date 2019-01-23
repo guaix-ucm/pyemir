@@ -59,8 +59,8 @@ class StareSpectraRecipe(EmirRecipe):
                                                     method=median)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
-        # Update SEC to 0
-        hdr['SEC'] = 0
+        # Update EXP to 0
+        hdr['EXP'] = 0
 
         self.logger.info('end stare spectra reduction')
         result = self.create_result(stare=hdulist)
@@ -236,8 +236,149 @@ class StareSpectraWaveRecipe(EmirRecipe):
 
     def set_base_headers(self, hdr):
         newhdr = super(StareSpectraWaveRecipe, self).set_base_headers(hdr)
-        # Update SEC to 0
-        newhdr['SEC'] = 0
+        # Update EXP to 0
+        newhdr['EXP'] = 0
+        return newhdr
+
+
+class GenerateRectwvCoeff(EmirRecipe):
+    """Process images in Stare spectra mode applying wavelength calibration"""
+
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterSpectralFlatFieldRequirement()
+    master_rectwv = reqs.MasterRectWaveRequirement()
+    refine_wavecalib_mode = Parameter(
+        0,
+        description='Apply wavelength calibration refinement',
+        choices=[0, 1, 2, 11, 12]
+    )
+    minimum_slitlet_width_mm = Parameter(
+        float(EMIR_MINIMUM_SLITLET_WIDTH_MM),
+        description='Minimum width (mm) for a valid slitlet',
+    )
+    maximum_slitlet_width_mm = Parameter(
+        float(EMIR_MAXIMUM_SLITLET_WIDTH_MM),
+        description='Maximum width (mm) for a valid slitlet',
+    )
+    global_integer_offset_x_pix = Parameter(
+        0,
+        description='Global offset (pixels) in wavelength direction (integer)',
+    )
+    global_integer_offset_y_pix = Parameter(
+        0,
+        description='Global offset (pixels) in spatial direction (integer)',
+    )
+
+    reduced_mos = Result(prods.ProcessedMOS)
+    rectwv_coeff = Result(RectWaveCoeff)
+
+    def run(self, rinput):
+        self.logger.info('starting rect.+wavecal. reduction of stare spectra')
+
+        self.logger.info(rinput.master_rectwv)
+        self.logger.info('Wavelength calibration refinement mode: {}'.format(
+            rinput.refine_wavecalib_mode))
+        self.logger.info('Minimum slitlet width (mm)............: {}'.format(
+            rinput.minimum_slitlet_width_mm))
+        self.logger.info('Maximum slitlet width (mm)............: {}'.format(
+            rinput.maximum_slitlet_width_mm))
+        self.logger.info('Global offset X direction (pixels)....: {}'.format(
+            rinput.global_integer_offset_x_pix))
+        self.logger.info('Global offset Y direction (pixels)....: {}'.format(
+            rinput.global_integer_offset_y_pix))
+
+        # build object to proceed with bpm, bias, dark and flat
+        flow = self.init_filters(rinput)
+
+        # apply bpm, bias, dark and flat
+        reduced_image = basic_processing_with_combination(rinput, flow,
+                                                          method=median)
+        # update header with additional info
+        hdr = reduced_image[0].header
+        self.set_base_headers(hdr)
+
+        # save intermediate image in work directory
+        self.save_intermediate_img(reduced_image, 'reduced_image.fits')
+
+        # RectWaveCoeff object with rectification and wavelength
+        # calibration coefficients for the particular CSU configuration
+        rectwv_coeff = rectwv_coeff_from_mos_library(
+            reduced_image,
+            rinput.master_rectwv
+        )
+
+        # set global offsets
+        rectwv_coeff.global_integer_offset_x_pix = \
+            rinput.global_integer_offset_x_pix
+        rectwv_coeff.global_integer_offset_y_pix = \
+            rinput.global_integer_offset_y_pix
+
+        # apply rectification and wavelength calibration
+        reduced_mos = apply_rectwv_coeff(
+            reduced_image,
+            rectwv_coeff
+        )
+
+        # wavelength calibration refinement
+        # 0 -> no refinement
+        # 1 -> apply global offset to all the slitlets (using ARC lines)
+        # 2 -> apply individual offset to each slitlet (using ARC lines)
+        # 11 -> apply global offset to all the slitlets (using OH lines)
+        # 12 -> apply individual offset to each slitlet (using OH lines)
+        if rinput.refine_wavecalib_mode != 0:
+            self.logger.info(
+                'Refining wavelength calibration (mode={})'.format(
+                    rinput.refine_wavecalib_mode
+                ))
+            # refine RectWaveCoeff object
+            rectwv_coeff, expected_catalog_lines = refine_rectwv_coeff(
+                reduced_mos,
+                rectwv_coeff,
+                rinput.refine_wavecalib_mode,
+                rinput.minimum_slitlet_width_mm,
+                rinput.maximum_slitlet_width_mm,
+                save_intermediate_results=self.intermediate_results
+            )
+            self.save_intermediate_img(expected_catalog_lines,
+                                       'expected_catalog_lines.fits')
+            # re-apply rectification and wavelength calibration
+            reduced_mos = apply_rectwv_coeff(
+                reduced_image,
+                rectwv_coeff
+            )
+
+        # save as JSON file in work directory
+        self.save_structured_as_json(rectwv_coeff, 'rectwv_coeff.json')
+
+        # ds9 region files (to be saved in the work directory)
+        if self.intermediate_results:
+            save_four_ds9(rectwv_coeff)
+            save_spectral_lines_ds9(rectwv_coeff)
+
+        # compute median spectra employing the useful region of the
+        # rectified image
+        if self.intermediate_results:
+            for imode, outfile in enumerate(['median_spectra_full',
+                                             'median_spectra_slitlets',
+                                             'median_spectrum_slitlets']):
+                median_image = median_slitlets_rectified(
+                    reduced_mos, mode=imode
+                )
+                self.save_intermediate_img(median_image, outfile + '.fits')
+
+        # save results in results directory
+        self.logger.info('end rect.+wavecal. reduction of stare spectra')
+        result = self.create_result(reduced_mos=reduced_mos,
+                                    rectwv_coeff=rectwv_coeff)
+        return result
+
+    def set_base_headers(self, hdr):
+        newhdr = super(GenerateRectwvCoeff, self).set_base_headers(hdr)
+        # Update EXP to 0
+        newhdr['EXP'] = 0
         return newhdr
 
 
@@ -316,6 +457,6 @@ class StareSpectraApplyWaveRecipe(EmirRecipe):
 
     def set_base_headers(self, hdr):
         newhdr = super(StareSpectraApplyWaveRecipe, self).set_base_headers(hdr)
-        # Update SEC to 0
-        newhdr['SEC'] = 0
+        # Update EXP to 0
+        newhdr['EXP'] = 0
         return newhdr
