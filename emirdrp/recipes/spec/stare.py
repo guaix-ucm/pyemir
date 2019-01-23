@@ -300,9 +300,6 @@ class GenerateRectwvCoeff(EmirRecipe):
                 rectwv_coeff
             )
 
-        # save as JSON file in work directory
-        self.save_structured_as_json(rectwv_coeff, 'rectwv_coeff.json')
-
         # ds9 region files (to be saved in the work directory)
         if self.intermediate_results:
             save_four_ds9(rectwv_coeff)
