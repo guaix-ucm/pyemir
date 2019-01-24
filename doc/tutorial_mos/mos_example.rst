@@ -509,6 +509,10 @@ The previous display shows the first 5 blocks:
     digits of the running number that uniquely identifies each raw image
     obtained with the GTC.
 
+  - The resulting reduced image for each one of the 12 science images will be 
+    stored as ``reduced_mos.fits`` under the corresponding ``results``
+    subdirectory.  ``reduced_mos.fits``.
+
 - The fifth block (lines 37-41) is the responsible of computing the arithmetic
   combination A-B-B+A sequence, using for that purpose the result (rectified
   and wavelength calibrated image) of the previous four blocks.
@@ -522,9 +526,14 @@ The previous display shows the first 5 blocks:
 
   - The ``id`` of this fifth block has been chosen to be ``ABBA1``.
 
+  - The corresponding `work` and `results` subdirectory will be created.
+   
+  - The result of the A-B-B+A combination will be stored as
+    ``reduced_mos_abba.fits`` under the ``results`` subdirectory.
+
 If you examine the rest of the file ``02_mos_example.yaml`` you will find that
-the same pattern of 5 blocks is repeated three times, once for each of the
-three ABBA sequences.
+the same pattern of 5 blocks is actually repeated three times, once for each of
+the three ABBA sequences.
 
 Finally, there is an additional block at the end of the observation result file 
 (lines 130-137) that reads:
@@ -545,35 +554,46 @@ the previous blocks identified as ``ABBA1``, ``ABBA2`` and ``ABBA3``:
   ``children:`` field. This field contains a list with the ``id`` of the three
   relevant blocks (``[ABBA1, ABBA2, ABBA3]``).
 
-- The additional requirement ``field: spec_abba`` indicates that the results
-  from the reduction of the ``ABBA1``, ``ABBA2`` and ``ABBA3`` blocks that are
-  going to be used as input are the images named ``spec_abba.fits`` (that can
-  be found within the corresponding ``obsidABBA1_result``,
-  ``obsidABBA2_result`` and ``obsidABBA3_result`` subdirectories.
- 
-Here is a summary of the different blocks that constitute the observation result
-file ``02_mos_example.yaml``:
+- The additional requirement ``field: reduced_mos_abba`` indicates that the
+  results from the reduction of the ``ABBA1``, ``ABBA2`` and ``ABBA3`` blocks
+  that are going to be used as input are the images named
+  ``reduced_mos_abba.fits`` (these files can be found within the corresponding
+  ``obsidABBA1_result``, ``obsidABBA2_result`` and ``obsidABBA3_result``
+  subdirectories).
 
-============== ===========================================  ======================
-id             input                                        recipe
-============== ===========================================  ======================
-2158           0001572158-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-2187           0001572187-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-2216           0001572216-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-2245           0001572245-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-ABBA1          2158, 2187, 2216, 2245                       LS_ABBA
-2274           0001572274-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-2303           0001572303-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-2332           0001572332-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-2361           0001572361-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-ABBA2          2274, 2303, 2332, 2361                       LS_ABBA
-2414           0001572414-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-2443           0001572443-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-2472           0001572472-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-2501           0001572501-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_RECTWV
-ABBA3          2414, 2443, 2472, 2501                       LS_ABBA
-ABBA_combined  ABBA1, ABBA2, ABBA3                          BASIC_COMBINE (median)
-============== ===========================================  ======================
+- The final combined result is ``result.fits`` under the
+  ``obsidABBA_combined_results`` subdirectory.
+ 
+Here is a summary of the different blocks that constitute the observation
+result file ``02_mos_example.yaml``:
+
+============== ============================================  ======================
+id             input                                         recipe
+============== ============================================  ======================
+2158           0001572158-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2187           0001572187-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2216           0001572216-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2245           0001572245-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+ABBA1          4 files reduced_mos.fits (within              LS_ABBA
+               obsidXXXX_results/,
+               where XXXX=2158, 2187,2216 and 2245)
+2274           0001572274-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2303           0001572303-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2332           0001572332-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2361           0001572361-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+ABBA2          4 files reduced_mos.fits (within              LS_ABBA
+               obsidXXXX_results/,
+               where XXXX=2274, 2303, 2332 and 2361)
+2414           0001572414-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2443           0001572443-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2472           0001572472-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2501           0001572501-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+ABBA3          4 files reduced_mos.fits (within              LS_ABBA
+               obsidXXXX_results/,
+               where XXXX=2414, 2443, 2472 and 2501)
+ABBA_combined  3 files reduced_mos_abba.fits (within         BASIC_COMBINE (median)
+               obsidABBAX_results/, where X=1, 2 and 3)
+============== ============================================  ======================
 
 
 Executing the observation result file

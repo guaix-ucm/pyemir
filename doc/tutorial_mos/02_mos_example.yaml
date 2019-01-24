@@ -133,5 +133,5 @@ mode: BASIC_COMBINE
 children: [ABBA1, ABBA2, ABBA3]
 requirements: 
   method: median
-  field: spec_abba
+  field: reduced_mos_abba
 enabled: True

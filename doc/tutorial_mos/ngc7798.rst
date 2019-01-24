@@ -78,6 +78,8 @@ the following content:
        ├── rect_wpoly_MOSlibrary_grism_K_filter_Ksp.json
        ├── rect_wpoly_MOSlibrary_grism_LR_filter_HK.json
        └── rect_wpoly_MOSlibrary_grism_LR_filter_YJ.json
+   
+   1 directory, 25 files
 
 
 Move into the ``EMIR_ngc7798_example`` directory:
@@ -153,8 +155,8 @@ Reduction of HD209290
 
 The rectification and wavelength calibration of the images corresponding to the
 spectrophotometric star is carried using the empirical model (reduction recipe
-``STARE_SPECTRA_WAVE``). The first lines of the associated observation result
-``00_stare_hd209290.yaml`` are:
+``GENERATE_RECTWV_COEFF``). The first lines of the associated observation
+result ``00_stare_hd209290.yaml`` are:
 
 .. literalinclude:: 00_stare_hd209290.yaml
    :lines: 1-14
@@ -181,9 +183,9 @@ betwen images of the same size):
 
 ::
 
-   (py36) $ numina-imath obsid5278_results/stare.fits - obsid5275_results/stare.fits grismJ_hd209290_A-B.fits
-   (py36) $ numina-imath obsid5269_results/stare.fits - obsid5272_results/stare.fits grismH_hd209290_A-B.fits
-   (py36) $ numina-imath obsid5266_results/stare.fits - obsid5263_results/stare.fits grismK_hd209290_A-B.fits
+   (py36) $ numina-imath obsid5278_results/reduced_mos.fits - obsid5275_results/reduced_mos.fits grismJ_hd209290_A-B.fits
+   (py36) $ numina-imath obsid5269_results/reduced_mos.fits - obsid5272_results/reduced_mos.fits grismH_hd209290_A-B.fits
+   (py36) $ numina-imath obsid5266_results/reduced_mos.fits - obsid5263_results/reduced_mos.fits grismK_hd209290_A-B.fits
 
 Display the result to check that you get two spectra (one with positive counts
 and another with negavite counts) in each case:
@@ -207,8 +209,8 @@ Reduction of NGC7798
 
 The rectification and wavelength calibration of the images corresponding to the
 central region of NGC7798 star is carried using the empirical model (reduction recipe
-``STARE_SPECTRA_WAVE``). The first lines of the associated observation result
-``00_stare_ngc7798.yaml`` are:
+``GENERATE_RECTWV_COEFF``). The first lines of the associated observation
+result ``00_stare_ngc7798.yaml`` are:
 
 .. literalinclude:: 00_stare_ngc7798.yaml
    :lines: 1-14
@@ -235,9 +237,9 @@ betwen images of the same size):
 
 ::
 
-   (py36) $ numina-imath obsid5178_results/stare.fits - obsid5189_results/stare.fits grismJ_ngc7798_A-B.fits
-   (py36) $ numina-imath obsid5211_results/stare.fits - obsid5200_results/stare.fits grismH_ngc7798_A-B.fits
-   (py36) $ numina-imath obsid5222_results/stare.fits - obsid5233_results/stare.fits grismK_ngc7798_A-B.fits
+   (py36) $ numina-imath obsid5178_results/reduced_mos.fits - obsid5189_results/reduced_mos.fits grismJ_ngc7798_A-B.fits
+   (py36) $ numina-imath obsid5211_results/reduced_mos.fits - obsid5200_results/reduced_mos.fits grismH_ngc7798_A-B.fits
+   (py36) $ numina-imath obsid5222_results/reduced_mos.fits - obsid5233_results/reduced_mos.fits grismK_ngc7798_A-B.fits
 
 Display the result to check that you get two spectra (one with positive counts
 and another with negavite counts) in each case:
