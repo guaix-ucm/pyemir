@@ -206,11 +206,11 @@ pipelines:
       BASIC_COMBINE: numina.core.utils.Combine
       IMAGE_BIAS: emirdrp.recipes.auxiliary.BiasRecipe
       IMAGE_DARK: emirdrp.recipes.auxiliary.DarkRecipe
-      IMAGE_FLAT: emirdrp.recipes.auxiliary.IntensityFlatRecipe
+      IMAGE_FLAT: emirdrp.recipes.auxiliary.IntensityFlatRecipe2
       IMAGE_SKY: emirdrp.recipes.auxiliary.DitherSkyRecipe
       SPECTRAL_FLAT: emirdrp.recipes.auxiliary.SpectralFlatRecipe
       DITHERED_IMAGE: emirdrp.recipes.image.join.JoinDitheredImagesRecipe
-      FULL_DITHERED_IMAGE: emirdrp.recipes.image.join.FullDitheredImagesRecipe
+      FULL_DITHERED_IMAGE: emirdrp.recipes.image.dither.FullDitheredImagesRecipe
       MICRODITHERED_IMAGE: emirdrp.recipes.image.micro.MicroditheredImageRecipe
       NODDED_BEAM_SWITCHED_IMAGE: emirdrp.recipes.image.nodded.NBImageRecipe
       STARE_IMAGE: emirdrp.recipes.image.stare.StareImageRecipe2
