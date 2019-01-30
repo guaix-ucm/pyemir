@@ -23,6 +23,7 @@ from numina.core import Result, Requirement, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.query import ResultOf
 import numina.array as narray
+import numina.array.utils as nautils
 import numina.array.combine as nacom
 import numina.frame.combine as nfcom
 import numina.processing as proc
@@ -32,6 +33,7 @@ import emirdrp.requirements as reqs
 import emirdrp.products as prods
 from emirdrp.instrument.channels import FULL
 from emirdrp.processing.wcs import offsets_from_wcs_imgs
+from emirdrp.processing.corr import offsets_from_crosscor, offsets_from_crosscor_regions
 from emirdrp.core.recipe import EmirRecipe
 
 from .naming import (name_redimensioned_frames, name_object_mask,
@@ -142,7 +144,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         'List of pairs of offsets',
         optional=True
     )
-
+    refine_offsets = Parameter(False, 'Refine offsets by cross-correlation')
     iterations = Parameter(2, 'Iterations of the recipe')
     extinction = Parameter(0.0, 'Mean atmospheric extinction')
 
@@ -163,15 +165,58 @@ class FullDitheredImagesRecipe(EmirRecipe):
         obresult = rinput.obresult
         sky_images = rinput.sky_images
         sky_images_sep_time = rinput.sky_images_sep_time
+        baseshape = (2048, 2048)
         user_offsets = rinput.offsets
         extinction = rinput.extinction
 
         images_info = self.initial_classification(obresult, target_is_sky)
 
-        self.resize_basic(images_info, user_offsets)
+        # Resizing target frames
+        target_info = [iinfo for iinfo in images_info if iinfo.valid_target]
+        finalshape, offsetsp, refpix, offset_fc0 = self.compute_size(
+            target_info, baseshape, user_offsets
+        )
+
+        self.resize(target_info, baseshape, offsetsp, finalshape)
 
         result = self.process_basic(images_info, target_is_sky=target_is_sky,
                                      extinction=extinction)
+
+        if rinput.refine_offsets:
+            self.logger.debug("Compute cross-correlation of images")
+            # regions_c = self.compute_regions(finalshape, box=200, corners=True)
+
+            # Regions frm bright objects
+            regions_c = self.compute_regions_from_objs(result[0].data, finalshape, box=40)
+
+            try:
+
+                offsets_xy_c = self.compute_offset_xy_crosscor_regions(
+                    images_info, regions_c, refine=True, tol=1
+                )
+                #
+                # Combined offsets
+                # Offsets in numpy order, swaping
+                offset_xy0 = numpy.fliplr(offset_fc0)
+                offsets_xy_t = offset_xy0 - offsets_xy_c
+                offsets_fc = numpy.fliplr(offsets_xy_t)
+                offsets_fc_t = numpy.round(offsets_fc).astype('int')
+                self.logger.debug('Total offsets: %s', offsets_xy_t)
+                self.logger.info('Computing relative offsets from cross-corr')
+                finalshape2, offsetsp2 = narray.combine_shape(baseshape, offsets_fc_t)
+                #
+                self.logger.debug("Relative offsetsp (crosscorr) %s", offsetsp2)
+                self.logger.info('Shape of resized array (crosscorr) is %s', finalshape2)
+
+                # Resizing target imgs
+                self.logger.debug("Resize to final offsets")
+                self.resize(target_info, baseshape, offsetsp2, finalshape2)
+            except Exception as error:
+                self.logger.warning('Error during cross-correlation, %s', error)
+
+        result = self.process_basic(images_info, target_is_sky=target_is_sky,
+                                     extinction=extinction)
+
         step = 1
 
         while step <= rinput.iterations:
@@ -184,15 +229,27 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         return self.create_result(result_image=result)
 
-    def resize_basic(self, images_info, user_offsets=None):
+    def compute_offset_xy_crosscor_regions(self, iinfo, regions, refine=False, tol=0.5):
 
-        baseshape = (2048, 2048)
+        names = [frame.lastname for frame in iinfo]
+        print(names)
+        print(regions)
+        with nfcom.manage_fits(names) as imgs:
+            arrs = [img[0].data for img in imgs]
+            offsets_xy = offsets_from_crosscor_regions(
+                arrs, regions,
+                refine=refine, order='xy', tol=tol
+            )
+            self.logger.debug("offsets_xy cross-corr %s", offsets_xy)
+            # Offsets in numpy order, swaping
+        return offsets_xy
+
+    def compute_size(self, images_info, baseshape, user_offsets=None):
 
         # Reference pixel in the center of the frame
         refpix = numpy.array([[baseshape[0] / 2.0, baseshape[1] / 2.0]])
 
         target_info = [iinfo for iinfo in images_info if iinfo.valid_target]
-        sky_info = [iinfo for iinfo in images_info if iinfo.valid_sky]
 
         if user_offsets is not None:
             self.logger.info('Using offsets from parameters')
@@ -206,7 +263,6 @@ class FullDitheredImagesRecipe(EmirRecipe):
         # FIXME: I am using offsets in row/columns
         # the values are provided in XY so flip-lr
         list_of_offsets = numpy.fliplr(list_of_offsets)
-        print(list_of_offsets)
 
         # Insert pixel offsets between frames
         for iinfo, off in zip(target_info, list_of_offsets):
@@ -221,10 +277,9 @@ class FullDitheredImagesRecipe(EmirRecipe):
         offsets = numpy.round(offsets).astype('int')
 
         finalshape, offsetsp = narray.combine_shape(baseshape, offsets)
+        self.logger.debug("Relative offsetsp %s", offsetsp)
         self.logger.info('Shape of resized array is %s', finalshape)
-
-        # Resizing target frames
-        self.resize(target_info, baseshape, offsetsp, finalshape)
+        return finalshape, offsetsp, refpix, list_of_offsets
 
 
     def process_basic(self, images_info, target_is_sky=True, extinction=0.0):
@@ -465,6 +520,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
 
     def run_single(self, rinput):
+
+        # FIXME: remove this, is deprecated
 
         obresult = rinput.obresult
 
@@ -796,6 +853,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             hdu.header['NUM-NCOM'] = prevnum * len(frameslll)
             hdu.header['NUMRNAM'] = 'FullDitheredImagesRecipe'
             hdu.header['UUID'] = str(uuid.uuid1())
+            hdu.header['OBSMODE'] = 'FULL_DITHERED_IMAGE'
             # Headers of last image
             hdu.header['TSUTC2'] = headers[-1]['TSUTC2']
 
@@ -1095,3 +1153,44 @@ class FullDitheredImagesRecipe(EmirRecipe):
             data = hdulist['primary'].data
             valid = data[frame.valid_region]
             valid -= sky
+
+
+    def compute_regions_from_objs(self, arr, finalshape, box=50, corners=True):
+        regions = []
+        catalog, mask = self.create_object_catalog(arr, border=300)
+
+        self.save_intermediate_array(mask, 'objmask.fits')
+        # with the catalog, compute 5 objects
+
+        LIMIT_AREA = 5000
+        NKEEP = 1
+        idx_small = catalog['npix'] < LIMIT_AREA
+        objects_small = catalog[idx_small]
+        idx_flux = objects_small['flux'].argsort()
+        objects_nth = objects_small[idx_flux][-NKEEP:]
+        for obj in objects_nth:
+            print('ref is', obj['x'], obj['y'])
+            region = nautils.image_box2d(obj['x'], obj['y'], finalshape, (box, box))
+            print(region)
+            regions.append(region)
+        return regions
+
+
+    def create_object_catalog(self, arr, threshold=3.0, border=0):
+
+        if border > 0:
+            wmap = numpy.ones_like(arr)
+            wmap[border:-border, border:-border] = 0
+        else:
+            wmap = None
+
+        bkg = sep.Background(arr)
+        data_sub = arr - bkg
+        objects, objmask = sep.extract(
+            data_sub,
+            threshold,
+            err=bkg.globalrms * numpy.ones_like(data_sub),
+            mask=wmap,
+            segmentation_map=True
+        )
+        return objects, objmask
