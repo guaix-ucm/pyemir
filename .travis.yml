@@ -46,7 +46,7 @@ install:
   - conda install --yes -c astropy photutils=$PHOTUTILS
   - pip install sep lmfit
   - pip install pytest-benchmark pytest-cov
-  - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
+  - pip install numina
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
   # Build in place so we can run tests
