@@ -1,0 +1,41 @@
+id: 5178
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001005178-20160727-EMIR-TEST0.fits
+enabled: True
+---
+id: 5189
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001005189-20160727-EMIR-TEST0.fits
+enabled: True
+---
+id: 5200
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001005200-20160727-EMIR-TEST0.fits
+enabled: True
+---
+id: 5211
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001005211-20160727-EMIR-TEST0.fits
+enabled: True
+---
+id: 5222
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001005222-20160727-EMIR-TEST0.fits
+enabled: True
+---
+id: 5233
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001005233-20160727-EMIR-TEST0.fits
+enabled: True

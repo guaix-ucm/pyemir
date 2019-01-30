@@ -9,11 +9,10 @@ intermediate resolution spectra simultaneously**, in the nIR bands *Z, J, H* and
 A multi-slit mask unit will be used for target acquisition. EMIR is designed 
 to address the science goals of the proposing team and of the Spanish community at large.
 
-PyEmir user guide: :ref:`user`
+If you are in a hurry, follow the :ref:`pyemir_installation` and the
+:ref:`MOS_tutorial`.
 
-PyEmir MOS tutorial: :ref:`MOS_tutorial`
-
-PyEmir reference guide: :ref:`reference`
+Document index:
 
 .. toctree::
    :maxdepth: 1
@@ -23,5 +22,7 @@ PyEmir reference guide: :ref:`reference`
    reference/index
    glossary
 
+
+Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
    
 .. _GTC: http://www.gtc.iac.es

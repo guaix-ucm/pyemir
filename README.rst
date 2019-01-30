@@ -38,7 +38,8 @@ EMIR is designed to address the science goals of the proposing team and
 of the Spanish community at large. 
 
 Webpage: https://readthedocs.org/projects/pyemir/?badge=latest
-Maintainers: sergiopr@fis.ucm.es, cardiel@ucm.es
+
+Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
       
 .. |docs| image:: https://readthedocs.org/projects/pyemir/badge/?version=latest
    :target: https://readthedocs.org/projects/pyemir/?badge=latest

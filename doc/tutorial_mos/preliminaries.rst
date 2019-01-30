@@ -80,8 +80,8 @@ not have eclipse installed in your system, you can download the following
 stand-alone files (somehow outdated, but they work perfectly fine for our
 purposes and do not require anything else but a C compiler): 
 
-- :download:`dfits.c <simple_example/dfits.c>`
-- :download:`fitsort.c <simple_example/fitsort.c>`
+- :download:`dfits.c <dfits.c>`
+- :download:`fitsort.c <fitsort.c>`
 
 These files can be directly compiled using any C compiler:
 

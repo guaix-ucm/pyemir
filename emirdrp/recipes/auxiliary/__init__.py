@@ -203,6 +203,56 @@ class IntensityFlatRecipe(EmirRecipe):
         return result
 
 
+class IntensityFlatRecipe2(EmirRecipe):
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+
+    master_flatframe = Result(prods.MasterIntensityFlat)
+
+    def run(self, rinput):
+        import emirdrp.core.extra as extra
+        from numina.array import combine
+
+        _logger.info('starting flat reduction')
+
+        frames = rinput.obresult.frames
+        datamodel = self.datamodel
+
+        with extra.manage_frame(frames) as list_of:
+            c_img = extra.combine_frames2(list_of, datamodel, method=combine.mean, errors=False)
+
+        self.save_intermediate_img(c_img, 'p0.fits')
+
+        flow = self.init_filters(rinput)
+
+        processed_img = flow(c_img)
+
+        self.save_intermediate_img(processed_img, 'p1.fits')
+
+        hdr = processed_img[0].header
+        self.set_base_headers(hdr)
+
+        import scipy.ndimage.filters
+
+        _logger.info('median filter')
+        data_smooth = scipy.ndimage.filters.median_filter(processed_img[0].data, size=11)
+
+        self.save_intermediate_array(data_smooth, 'smooth.fits')
+
+        mm = processed_img[0].data.mean()
+        hdr['CCDMEAN'] = mm
+
+        processed_img[0].data /= data_smooth
+
+        self.save_intermediate_img(processed_img, 'p2.fits')
+
+        result = self.create_result(master_flatframe=processed_img)
+
+        return result
+
+
 class SimpleSkyRecipe(EmirRecipe):
     """Recipe to process data taken in intensity flat-field mode.
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -12,18 +12,79 @@
 Stare Image mode of EMIR
 """
 
-import numpy
-import astropy.io.fits as fits
+import logging
+
+
 from numina.array import combine
 from numina.core import Result
 from numina.core.query import Ignore
 from numina.core.recipes import timeit
 
 from emirdrp.core.recipe import EmirRecipe
+import emirdrp.core.extra as extra
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
 from emirdrp.processing.combine import basic_processing_with_combination
 import emirdrp.decorators
+
+
+_logger = logging.getLogger(__name__)
+
+
+class StareImageRecipe2(EmirRecipe):
+    """Process images in Stare Image Mode"""
+
+    obresult = reqs.ObservationResultRequirement()
+    master_bpm = reqs.MasterBadPixelMaskRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_flat = reqs.MasterIntensityFlatFieldRequirement()
+
+    result_image = Result(prods.ProcessedImage)
+
+    def run(self, rinput):
+        self.logger.info('starting stare image reduction (offline)')
+
+        frames = rinput.obresult.frames
+        datamodel = self.datamodel
+
+        with extra.manage_frame(frames) as list_of:
+            c_img = extra.combine_frames(list_of, datamodel, method=combine.mean, errors=False)
+
+        flow = self.init_filters(rinput)
+
+        # Correct Bias if needed
+        # Correct Dark if needed
+        # Correct FF
+
+        processed_img = flow(c_img)
+
+        hdr = processed_img[0].header
+        self.set_base_headers(hdr)
+
+        self.logger.debug('append BPM')
+        if rinput.master_bpm is not None:
+            self.logger.debug('using BPM from inputs')
+            hdul_bpm = rinput.master_bpm.open()
+            hdu_bpm = extra.generate_bpm_hdu(hdul_bpm[0])
+        else:
+            self.logger.debug('using empty BPM')
+            hdu_bpm = extra.generate_empty_bpm_hdu(processed_img[0])
+
+        # Append the BPM to the result
+        processed_img.append(hdu_bpm)
+        self.logger.info('end stare image (off) reduction')
+        result = self.create_result(result_image=processed_img)
+
+        return result
+
+
+    def set_base_headers(self, hdr):
+        """Set metadata in FITS headers."""
+        hdr = super(StareImageRecipe2, self).set_base_headers(hdr)
+        # Set EXP to 0
+        hdr['EXP'] = 0
+        return hdr
 
 
 class StareImageBaseRecipe(EmirRecipe):
@@ -60,9 +121,9 @@ class StareImageBaseRecipe(EmirRecipe):
 
         if rinput.master_bpm:
             hdul_bpm = rinput.master_bpm.open()
-            hdu_bpm = generate_bpm_hdu(hdul_bpm[0])
+            hdu_bpm = extra.generate_bpm_hdu(hdul_bpm[0])
         else:
-            hdu_bpm = generate_empty_bpm_hdu(hdulist[0])
+            hdu_bpm = extra.generate_empty_bpm_hdu(hdulist[0])
 
         # Append the BPM to the result
         hdulist.append(hdu_bpm)
@@ -74,25 +135,6 @@ class StareImageBaseRecipe(EmirRecipe):
     def set_base_headers(self, hdr):
         """Set metadata in FITS headers."""
         hdr = super(StareImageBaseRecipe, self).set_base_headers(hdr)
-        # Update SEC to 0
-        hdr['SEC'] = 0
+        # Update EXP to 0
+        hdr['EXP'] = 0
         return hdr
-
-
-def generate_bpm_hdu(hdu):
-    return generate_bpm_data(hdu.data, hdu.header)
-
-
-def generate_empty_bpm_hdu(hdu):
-    data = numpy.zeros_like(hdu.data, dtype='uint8')
-    return generate_bpm_data(data)
-
-
-def generate_bpm_data(data, header=None):
-    hdu_bpm = fits.ImageHDU(
-        data,
-        header=header
-    )
-
-    hdu_bpm.header['EXTNAME'] = 'BPM'
-    return hdu_bpm

@@ -23,7 +23,7 @@ from __future__ import division
 
 import logging
 
-import numina.datamodel
+import numina.datamodel as dm
 import astropy.wcs
 
 import emirdrp.instrument
@@ -32,14 +32,7 @@ import emirdrp.instrument
 _logger = logging.getLogger(__name__)
 
 
-class QueryAttribute(object):
-    def __init__(self, name, tipo, description=""):
-        self.name = name
-        self.type = tipo
-        self.description = description
-
-
-class EmirDataModel(numina.datamodel.DataModel):
+class EmirDataModel(dm.DataModel):
     """Data model of EMIR."""
 
     meta_dinfo_headers = [
@@ -55,9 +48,9 @@ class EmirDataModel(numina.datamodel.DataModel):
     ]
 
     query_attrs = {
-        'filter': QueryAttribute('filter', str),
-        'grism': QueryAttribute('grism', str),
-        'insconf': QueryAttribute('insconf', str)
+        'filter': dm.QueryAttribute('filter', str),
+        'grism': dm.QueryAttribute('grism', str),
+        'insconf': dm.QueryAttribute('insconf', str)
     }
 
 

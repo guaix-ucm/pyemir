@@ -150,7 +150,7 @@ class BaseABBARecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement(
         query_opts=qmod.ResultOf(
-            'STARE_SPECTRA.stare',
+            'STARE_SPECTRA.reduced_mos',
             node='children',
             id_field="stareSpectraIds"
         )
@@ -166,8 +166,8 @@ class BaseABBARecipe(EmirRecipe):
         )
     )
 
-    spec_abba = Result(prods.ProcessedMOS)
-    # Accumulate 'spec_abba' results
+    reduced_mos_abba = Result(prods.ProcessedMOS)
+    # Accumulate 'reduced_mos_abba' results
     accum = Result(prods.ProcessedMOS, optional=True)
 
     def build_recipe_input(self, obsres, dal, pipeline='default'):
@@ -187,7 +187,7 @@ class BaseABBARecipe(EmirRecipe):
         stareImages = []
         for subresId in stareImagesIds:
             subres = dal.getRecipeResult(subresId)
-            stareImages.append(subres['elements']['stare'])
+            stareImages.append(subres['elements']['reduced_mos'])
 
         naccum = obsres.naccum
         self.logger.info('naccum: %d', naccum)
@@ -254,7 +254,7 @@ class BaseABBARecipe(EmirRecipe):
 
             sub.run(subinput)
 
-        result = self.create_result(spec_abba=hdulist)
+        result = self.create_result(reduced_mos_abba=hdulist)
         self.logger.info('end spectroscopy ABBA reduction')
         return result
 
@@ -340,7 +340,7 @@ class BaseABBARecipe(EmirRecipe):
         naccum = getattr(obresult, 'naccum', 0)
         accum = getattr(obresult, 'accum', None)
         # result to accumulate
-        result_key = 'spec_abba'
+        result_key = 'reduced_mos_abba'
         field_to_accum = getattr(partial_result, result_key)
 
         if naccum == 0:

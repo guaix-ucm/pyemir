@@ -86,6 +86,13 @@ class MasterRectWaveRequirement(Requirement):
                              optional=optional)
 
 
+class RectWaveCoeffRequirement(Requirement):
+    def __init__(self, optional=False):
+        super(RectWaveCoeffRequirement,
+              self).__init__(prods.RectWaveCoeff, 'Rectification+wavelength calibration coefficients',
+                             optional=optional)
+
+
 class MasterSkyRequirement(Requirement):
     def __init__(self, optional=False):
         super(MasterSkyRequirement,

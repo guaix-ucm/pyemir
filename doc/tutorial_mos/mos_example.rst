@@ -1,3 +1,5 @@
+.. _mos_example:
+
 ***********
 MOS example
 ***********
@@ -13,9 +15,10 @@ MOS example
 
 .. note::
 
-   It is assumed that the reader has already followed the previous tutorial
-   :ref:`simple_example`. Some of the concepts already introduced there are not
-   going to be repeated here with the same level of detail.
+   It is assumed that the reader has already followed the previous section of
+   this tutorial :ref:`simple_example`. Some of the concepts already introduced
+   there are not going to be repeated here with the same level of detail (or
+   even mentioned at all!).
 
 Let's consider the rectification and wavelength calibration of a MOS image with
 slitlets configured in a non-longslit pattern.
@@ -23,14 +26,13 @@ slitlets configured in a non-longslit pattern.
 Download the following file: `EMIR_mos_example.tgz 
 <http://nartex.fis.ucm.es/~ncl/emir/EMIR_mos_example.tgz>`_.
 
-Download and decompress the previous file:
+Decompress the previous file:
 
 ::
 
-   (download EMIR_mos_example.tgz)
    (py36) $ tar zxvf EMIR_mos_example.tgz
    ...
-   (you can remove the tgz file)
+   ...
    (py36) $ rm EMIR_mos_example.tgz
 
 A new subdirectory named ``EMIR_mos_exmaple`` should have appeared, with the
@@ -66,6 +68,8 @@ following content:
        ├── rect_wpoly_MOSlibrary_grism_LR_filter_HK.json
        └── rect_wpoly_MOSlibrary_grism_LR_filter_YJ.json
 
+   1 directory, 24 files
+
 Move into the ``EMIR_mos_example`` directory:
 
 ::
@@ -73,8 +77,6 @@ Move into the ``EMIR_mos_example`` directory:
    (py36) $ cd EMIR_mos_example
 
 This directory contains a subdirectory ``data/`` with the following files:
-
-The ``data/`` subdirectory contains the following files:
 
 - The first 12 FITS files ``0001572*.FITS`` correspond to science exposures. In
   this case, the targets were observed following the typical ABBA scheme (in
@@ -118,7 +120,7 @@ You can easily examine the header of the 12 science files using the utilities
    data/0001572501-20180530-EMIR-STARE_SPECTRA.fits	MOS example	J       	J       	359.986465	2018-05-31T00:18:46.92
 
 Have a look to any of the tree raw arc images (the three images are similar).
-For that purpose you can use ds9 or the visualization tool provided with
+For that purpose you can use ``ds9`` or the visualization tool provided with
 numina:
    
 ::
@@ -184,20 +186,20 @@ quality:
   (OH) emission lines. 
   
   
-*The refinement process requieres an initial estimation of the offsets in the
+*The refinement process requires an initial estimation of the offsets in the
 spatial (Y axis) and spectral (X axis) directions between the empirical
 calibration and the actual data. These two offsets can be easily estimated
 after computing the preliminary calibration.*
 
 In this example, for the preliminary rectification and wavelength calibration
-one can simply reduce one of the twelve scientific images (the first one for
-example). Have a look to the observation result file ``00_mos_example.yaml``:
+one can simply reduce any of the twelve scientific images.
+Have a look to the observation result file ``00_mos_example.yaml``:
 
 ::
 
    id: 2158preliminary
    instrument: EMIR
-   mode: STARE_SPECTRA_WAVE
+   mode: GENERATE_RECTWV_COEFF
    frames:
     - 0001572158-20180530-EMIR-STARE_SPECTRA.fits
    enabled: True
@@ -215,7 +217,7 @@ As expected, two new subdirectories have been created:
 
 ::
 
-   (py36) $ numina-ximshow obsid2158preliminary_results/stare.fits
+   (py36) $ numina-ximshow obsid2158preliminary_results/reduced_mos.fits
 
 
 .. image:: images/0001572158_preliminary.png
@@ -236,7 +238,7 @@ observed slitlet frontiers. Fortunately, both problems can be easily solved.
 
    As described in :ref:`simple_example`, the task of finding the offsets can
    be performed with either the auxiliary PyEmir script
-   ``pyemir-overplot_boundary_model``, or by using ds9 with the auxiliary
+   ``pyemir-overplot_boundary_model``, or by using ``ds9`` with the auxiliary
    ds9-region files created during the preliminary rectification and wavelength
    calibration reduction. In the following two subsections we are using the
    latter option.
@@ -282,8 +284,8 @@ Checking the wavelength direction (X axis)
    are not dominant over the airglow emission. If this is not the case (for
    example when observing bright sources with short exposure times), the user
    should employ calibration arc images obtained before and/or after the
-   science images. The refinement process should be carried out as described in
-   :ref:`simple_example`.
+   science images. The refinement process should then be carried out as
+   described in :ref:`simple_example`.
 
 Continuing with the same ``ds9`` interface, overplot the expected location of
 the airglow (OH) emission lines:
@@ -311,7 +313,7 @@ the observation result file ``01_mos_example.yaml``:
 
    id: 2158refined
    instrument: EMIR
-   mode: STARE_SPECTRA_WAVE
+   mode: GENERATE_RECTWV_COEFF
    frames:
     - 0001572158-20180530-EMIR-STARE_SPECTRA.fits
     - 0001572187-20180530-EMIR-STARE_SPECTRA.fits
@@ -345,8 +347,8 @@ can see the following changes:
 - We have introduced a ``requirements`` block, defining the following
   parameters:
 
-   - ``refine_wavecalib_mode: 12``: this indicates that the image correspond to
-     a science exposure, deep enough to detect OH sky lines, and that we are
+   - ``refine_wavecalib_mode: 12``: this indicates that the image corresponds
+     to a science exposure, deep enough to detect OH sky lines, and that we are
      asking for a refinement of the wavelength calibration using that
      information. Note that if we were using an arc image, this parameter
      should be set to ``2`` instead of ``12`` (as described in
@@ -364,13 +366,13 @@ can see the following changes:
 
    - ``global_integer_offset_x_pix: 8`` and ``global_integer_offset_y_pix:
      -4``: these are the offsets between the raw images and the expected
-     empirical calibration, estimated as described above.
+     empirical calibration, estimated as previously described.
 
 Execute the reduction recipe:
 
 ::
 
-   numina run 01_mos_example.yaml -r control.yaml
+   (py36) $ numina run 01_mos_example.yaml -r control.yaml
    ...
    ...
 
@@ -379,12 +381,25 @@ As expected, two new subdirectories have been created:
 
 ::
 
-   (py36) $ numina-ximshow obsid2158refined_results/stare.fits
+   (py36) $ numina-ximshow obsid2158refined_results/reduced_mos.fits
 
 
 .. image:: images/0001572158_refined.png
    :width: 800
    :alt: Image 0001572158 refined
+
+It is possible to display the synthetic image with the expected location of the
+airglow (OH) lines (remember that the line intensities are normalized in the
+range from 0.0 to 1.0):
+
+::
+
+   (py36) $ numina-ximshow obsid2158refined_work/expected_catalog_lines.fits --z1z2 0,0.3
+
+
+.. image:: images/0001572158_expected_ohlines.png
+   :width: 800
+   :alt: Image 0001572158 expected oh lines
 
 In the ``obsid2158refined_work`` subdirectory you can find a file named
 ``crosscorrelation.pdf`` which contains a graphical summary of the
@@ -411,9 +426,9 @@ slitlet showing the cross-correlation function:
 .. warning::
 
    The refined rectification and wavelength calibration has been saved in the
-   file ``obsid2158refined_work/rectwv_coeff.json``. This file can be applied,
-   as described in the next section, to any raw image (with the same CSU
-   configuration).
+   file ``obsid2158refined_results/rectwv_coeff.json``. This file can be
+   applied, as described in the next section, to any raw image (with the same
+   CSU configuration).
 
    This file, stored in JSON format, contains all the relevant information
    necessary to carry out the rectification and wavelength calibration of any
@@ -431,13 +446,14 @@ Placing the refined calibration in ``data/`` subdirectory
 ---------------------------------------------------------
 
 The first step is to copy the file containing the refined rectification and
-wavelength calibration (in this case ``obsid2158refined_work/rectwv_coeff.json``) into the
-``data/`` subdirectory. Since the this JSON file has a generic name, it is
-advisable to rename it in order to avoid overwritting it by accident:
+wavelength calibration (in this case
+``obsid2158refined_results/rectwv_coeff.json``) into the ``data/``
+subdirectory. Since the this JSON file has a generic name, it is advisable to
+rename it in order to avoid overwritting it by accident:
 
 ::
 
-   (py36) $ cp obsid2158refined_work/rectwv_coeff.json data/rectwv_coeff_2158refined.json
+   (py36) $ cp obsid2158refined_results/rectwv_coeff.json data/rectwv_coeff_2158refined.json
 
 Preparing the observation result file
 -------------------------------------
@@ -479,11 +495,11 @@ The previous display shows the first 5 blocks:
   rectification and wavelength calibration of the first four individual images
   of the first ABBA observation pattern employed at the telescope. 
   
-  - **Note that the reduction recipe is** ``STARE_SPECTRA_APPLY_WAVE``, which
+  - **Note that the reduction recipe is** ``STARE_SPECTRA_RECTWV``, which
     indicates that the pipeline is not going to use the empirical calibration
     but the refined calibration previously obtained. The specific name of the
     file containing this refined calibration must be given in the requirements
-    section of each block under the label ``rectwv_coeff_json`` (remember that
+    section of each block under the label ``rectwv_coeff`` (remember that
     the refined calibration file has been copied to the ``data/`` subdirectory
     and renamed as ``rectwv_coeff_2158refined.json``). We are using the same
     refined calibration for the 12 science images (the three ABBA observation
@@ -492,6 +508,10 @@ The previous display shows the first 5 blocks:
   - The ``id`` label for each block has been arbitrarily set to the last 4
     digits of the running number that uniquely identifies each raw image
     obtained with the GTC.
+
+  - The resulting reduced image for each one of the 12 science images will be 
+    stored as ``reduced_mos.fits`` under the corresponding ``results``
+    subdirectory.  ``reduced_mos.fits``.
 
 - The fifth block (lines 37-41) is the responsible of computing the arithmetic
   combination A-B-B+A sequence, using for that purpose the result (rectified
@@ -506,9 +526,14 @@ The previous display shows the first 5 blocks:
 
   - The ``id`` of this fifth block has been chosen to be ``ABBA1``.
 
+  - The corresponding `work` and `results` subdirectory will be created.
+   
+  - The result of the A-B-B+A combination will be stored as
+    ``reduced_mos_abba.fits`` under the ``results`` subdirectory.
+
 If you examine the rest of the file ``02_mos_example.yaml`` you will find that
-the same pattern of 5 blocks is repeated three times, once for each of the
-three ABBA sequences.
+the same pattern of 5 blocks is actually repeated three times, once for each of
+the three ABBA sequences.
 
 Finally, there is an additional block at the end of the observation result file 
 (lines 130-137) that reads:
@@ -529,35 +554,46 @@ the previous blocks identified as ``ABBA1``, ``ABBA2`` and ``ABBA3``:
   ``children:`` field. This field contains a list with the ``id`` of the three
   relevant blocks (``[ABBA1, ABBA2, ABBA3]``).
 
-- The additional requirement ``field: spec_abba`` indicates that the results
-  from the reduction of the ``ABBA1``, ``ABBA2`` and ``ABBA3`` blocks that are
-  going to be used as input are the images named ``spec_abba.fits`` (that can
-  be found within the corresponding ``obsidABBA1_result``,
-  ``obsidABBA2_result`` and ``obsidABBA3_result`` subdirectories.
- 
-Here is a summary of the different blocks that constitute the observation result
-file ``02_mos_example.yaml``:
+- The additional requirement ``field: reduced_mos_abba`` indicates that the
+  results from the reduction of the ``ABBA1``, ``ABBA2`` and ``ABBA3`` blocks
+  that are going to be used as input are the images named
+  ``reduced_mos_abba.fits`` (these files can be found within the corresponding
+  ``obsidABBA1_result``, ``obsidABBA2_result`` and ``obsidABBA3_result``
+  subdirectories).
 
-============== ===========================================  ========================
-id             input                                        recipe
-============== ===========================================  ========================
-2158           0001572158-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2187           0001572187-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2216           0001572216-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2245           0001572245-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-ABBA1          2158, 2187, 2216, 2245                       LS_ABBA
-2274           0001572274-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2303           0001572303-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2332           0001572332-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2361           0001572361-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-ABBA2          2274, 2303, 2332, 2361                       LS_ABBA
-2414           0001572414-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2443           0001572443-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2472           0001572472-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-2501           0001572501-20180530-EMIR-STARE_SPECTRA.fits  STARE_SPECTRA_APPLY_WAVE
-ABBA3          2414, 2443, 2472, 2501                       LS_ABBA
-ABBA_combined  ABBA1, ABBA2, ABBA3                          BASIC_COMBINE (median)
-============== ===========================================  ========================
+- The final combined result is ``result.fits`` under the
+  ``obsidABBA_combined_results`` subdirectory.
+ 
+Here is a summary of the different blocks that constitute the observation
+result file ``02_mos_example.yaml``:
+
+============== ============================================  ======================
+id             input                                         recipe
+============== ============================================  ======================
+2158           0001572158-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2187           0001572187-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2216           0001572216-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2245           0001572245-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+ABBA1          4 files reduced_mos.fits (within              LS_ABBA
+               obsidXXXX_results/,
+               where XXXX=2158, 2187,2216 and 2245)
+2274           0001572274-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2303           0001572303-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2332           0001572332-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2361           0001572361-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+ABBA2          4 files reduced_mos.fits (within              LS_ABBA
+               obsidXXXX_results/,
+               where XXXX=2274, 2303, 2332 and 2361)
+2414           0001572414-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2443           0001572443-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2472           0001572472-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+2501           0001572501-20180530-EMIR-STARE_SPECTRA.fits   STARE_SPECTRA_RECTWV
+ABBA3          4 files reduced_mos.fits (within              LS_ABBA
+               obsidXXXX_results/,
+               where XXXX=2414, 2443, 2472 and 2501)
+ABBA_combined  3 files reduced_mos_abba.fits (within         BASIC_COMBINE (median)
+               obsidABBAX_results/, where X=1, 2 and 3)
+============== ============================================  ======================
 
 
 Executing the observation result file
@@ -573,7 +609,7 @@ described in the previous subsection:
    ...
 
 The execution of all the blocks may require a few minutes (depending on your
-computer). The final image will be stored in the
+computer speed). The final image will be stored in the
 ``obsidABBA_combined_results`` subdirectory:
 
 ::

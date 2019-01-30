@@ -1,0 +1,14 @@
+{
+ "name": "CSU",
+ "type": "component",
+ "description": "Configurable Slit Unit",
+ "uuid": "5dcdda56-3a5f-4bb8-b88c-776f7eee6cfe",
+ "date_start": "2014-1-1",
+ "date_end": null,
+ "fqn_class": "emirdrp.instrument.comps.CsuComponent",
+ "data": {
+ },
+ "configurations": {
+
+ }
+}

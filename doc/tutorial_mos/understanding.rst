@@ -10,9 +10,9 @@ of the spatial direction.
    :width: 800
    :alt: Image Distortions
 
-The previous image correspond to a continuum exposure where the even-numbered
-slitlets were open, whereas the odd-numbered slitlets were closed. In this way
-it is easy to recognize the detector region spanned by each (distorted)
+The previous image corresponds to a continuum exposure where the even-numbered
+slitlets were opened, whereas the odd-numbered slitlets were closed. In this
+way it was easier to recognize the detector region spanned by each (distorted)
 individual 2D spectroscopic image corresponding to each particular slitlet.
 
 In addition to that, it also important to keep in mind that the frontiers
@@ -23,7 +23,7 @@ configuration of the slitlets in the Cold Slit Unit).
 The described geometric distortion, as well as the wavelength calibration for
 each slitlet, have been modelled for any arbitrary configuration of the Cold
 Slit Unit (i.e., for any reasonable arrangement of the slitlets), using for
-that purpose a large set of tungsten and arc calibration exposures.
+that purpose a large set of continuum and arc calibration exposures.
 The calibration model can be easily employed to obtain a preliminary
 rectified and wavelength calibrated EMIR spectroscopic image without additional
 calibration images. This facilitates both the on-line quick reduction
@@ -50,6 +50,6 @@ different slitlet configurations in the following videos:
 
    <iframe width="640" height="480" src="https://www.youtube.com/embed/whWaEtFQlkk?rel=0" frameborder="0" allowfullscreen></iframe>
 
-- Video 2: Same as the previous video, zooming in the frontier between slitlet
-  3 and 4.
+- Video 2: Same as the previous video, but zooming in the frontier between
+  slitlet 3 and 4.
 
