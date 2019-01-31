@@ -34,7 +34,9 @@ Use of interactive matplotlib plots
 -----------------------------------
 
 The interactive plots created by some Numina and PyEmir scripts have been
-tested using the Qt5Agg backend of matplotlib.
+tested using the Qt5Agg backend of matplotlib. Nnote that this will require the
+``pyqt`` package to be installed in your environment (see for example `the
+conda instructions to install pyqt <https://anaconda.org/anaconda/pyqt>`_).
 
 If you want to use the same backend, check that the following line appears in
 the file ``.matplotlib/matplotlibrc`` (under your home directory):

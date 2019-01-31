@@ -33,7 +33,7 @@ Since we plan to obtained flux calibrated results, we are also going to reduce
 the spectra of the spectrophotometric standard HD209290 (HIP 108782), observed
 with the same instrumental configuration.
 
-Download the following file: `EMIR_ngc7798_example.tgz.
+Download the following file: `EMIR_ngc7798_example.tgz
 <http://nartex.fis.ucm.es/~ncl/emir/EMIR_ngc7798_example.tgz>`_.
 
 Decompress the previous file:
