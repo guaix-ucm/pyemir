@@ -60,7 +60,7 @@ def median_slitlets_rectified(
         1 : image with 55 spectra, containing the median spectra of
             each slitlet
         2 : single collapsed median spectrum, using exclusively the
-            useful pixels from the input image
+            useful slitlets from the input image
     minimum_slitlet_width_mm : float
         Minimum slitlet width (mm) for a valid slitlet.
     maximum_slitlet_width_mm : float

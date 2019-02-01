@@ -282,9 +282,11 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         offset_array = np.zeros(EMIR_NBARS)
         xplot = []
         yplot = []
+        xplot_skipped = []
+        yplot_skipped = []
         cout = '0'
         for islitlet in range(1, EMIR_NBARS + 1):
-            if islitlet not in missing_slitlets:
+            if islitlet in list_useful_slitlets:
                 i = islitlet - 1
                 sp_median = median_55sp[0].data[i, :]
                 lok = np.where(sp_median > 0)
@@ -324,6 +326,8 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                 cout += '.'
 
             else:
+                xplot_skipped.append(islitlet)
+                yplot_skipped.append(0)
                 cout += 'i'
 
             if islitlet % 10 == 0:
@@ -348,6 +352,8 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                            ylabel='-offset (pixels) = offset to be applied',
                            title='cross-correlation result',
                            show=False, **{'label': 'individual slitlets'})
+            if len(xplot_skipped) > 0:
+                ax.plot(xplot_skipped, yplot_skipped, 'mx')
             ax.axhline(-global_offset, linestyle='--', color='C1',
                        label='global offset')
             ax.legend()
