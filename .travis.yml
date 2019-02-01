@@ -8,49 +8,28 @@ env:
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy scipy astropy=2.0 enum34" PHOTUTILS="0.4"
     - python: "3.5"
-      env: DEPS="numpy scipy astropy=3.0" PHOTUTILS="0.4" COVERAGE=true
+      env:  COVERAGE=true
     - python: "3.5"
-      env: DEPS="numpy scipy astropy=2.0" PHOTUTILS="0.4"
     - python: "3.6"
-      env: DEPS="numpy scipy astropy=3.0" PHOTUTILS="0.4"
     - python: "3.6"
-      env: DEPS="numpy scipy astropy=2.0" PHOTUTILS="0.4"
 
-cache:
-  apt: true
-  pip: true
-  directories:
-    - $HOME/.cache/pip
-    - $HOME/.local
-
-before_install:
-  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b -p /home/travis/mc
-  - export PATH=/home/travis/mc/bin:$PATH
+cache: pip
 
 install:
-  # See:
-  # https://groups.google.com/a/continuum.io/forum/#!topic/conda/RSFENqovnro
-  # - conda update --yes --no-deps conda
-  # OK, this used to *fix* the build, but now it *breaks* the build.
-  # If you're reading this, good luck out there. I'm not sure what to tell you.
-  - conda update --yes conda
-  - > 
-    conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION 
-    $DEPS pip pytest setuptools Cython six>=1.7 
-    pyyaml matplotlib scikit-image>=0.12 scikit-learn
-  - source activate testenv
-  - conda install --yes -c astropy photutils=$PHOTUTILS
+  - pip install Cython
+# The preinstalled numpy 1.15 with python 3.5 breaks something
+# probably a wheel
+  - pip install "numpy>=1.16"
+  - pip install scipy astropy "six>=1.7"
+  - pip install git+git://github.com/guaix-ucm/numina.git#egg=numina
+  - pip install "scikit-image>=0.12" scikit-learn photutils
   - pip install sep lmfit
+  - pip install pytest
   - pip install pytest-benchmark pytest-cov
-  - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
-  # Build in place so we can run tests
-  - python setup.py build_ext --inplace
+
 
 before_script:
   # https://docs.travis-ci.com/user/gui-and-headless-browsers/#Using-xvfb-to-Run-Tests-That-Require-a-GUI
