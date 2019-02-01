@@ -56,9 +56,12 @@ class MasterBiasRequirement(Requirement):
 
 
 class MasterDarkRequirement(Requirement):
-    def __init__(self):
+    def __init__(self, optional=True):
         super(MasterDarkRequirement,
-              self).__init__(prods.MasterDark, 'Master DARK image')
+              self).__init__(prods.MasterDark,
+                             'Master DARK image',
+                             optional=optional
+                             )
 
 
 class MasterIntensityFlatFieldRequirement(Requirement):

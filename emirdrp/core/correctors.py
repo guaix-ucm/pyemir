@@ -120,15 +120,25 @@ def get_corrector_d(rinput, meta, ins, datamodel):
 
 
 def get_corrector_gen(rinput, datamodel, CorrectorClass, key):
-    req = getattr(rinput, key)
-    with req.open() as hdul:
-        datac = hdul['primary'].data
-        corrector = CorrectorClass(
-            datac,
-            calibid=datamodel.get_imgid(hdul),
-            datamodel=datamodel
-        )
-    return corrector
+    value = getattr(rinput, key)
+    req = rinput.stored()[key]
+    if value is None:
+        if req.optional:
+            _logger.info('"%s" not provided, ignored', key)
+            corrector = numina.util.node.IdNode()
+            return corrector
+        else:
+            msg = '"{}" not provided, is required'.format(key)
+            raise ValueError(msg)
+    else:
+        with value.open() as hdul:
+            datac = hdul['primary'].data
+            corrector = CorrectorClass(
+                datac,
+                calibid=datamodel.get_imgid(hdul),
+                datamodel=datamodel
+            )
+        return corrector
 
 
 def get_checker(rinput, meta, ins, datamodel):
