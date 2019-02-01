@@ -1,30 +1,23 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """Test the AIV pinhole mask recipe"""
 
+
 import pytest
 
-from numina.user.cli import main
 from emirdrp.tests.runrecipe import run_recipe
 
-BASE_URL = 'http://guaix.fis.ucm.es/~spr/emir_test/'
+
+BASE_URL = 'https://guaix.fis.ucm.es/data/pyemir/test/'
+
 
 @pytest.mark.remote
 def test_mode_TEST6_set0(numinatpldir):
