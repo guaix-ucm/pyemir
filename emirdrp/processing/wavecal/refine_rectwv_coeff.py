@@ -118,7 +118,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
             catlines_file = 'lines_argon_neon_xenon_empirical_LR.dat'
         else:
             catlines_file = 'lines_argon_neon_xenon_empirical.dat'
-        dumdata = pkgutil.get_data('emirdrp.instrument.configs',catlines_file)
+        dumdata = pkgutil.get_data('emirdrp.instrument.configs', catlines_file)
         arc_lines_tmpfile = StringIO(dumdata.decode('utf8'))
         catlines = np.genfromtxt(arc_lines_tmpfile)
         # define wavelength and flux as separate arrays
@@ -258,6 +258,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         sp_reference=sp_reference,
         sp_offset=sp_median,
         fminmax=None,
+        naround_zero=50,
         plottitle='Median spectrum (cross-correlation)',
         pdf=pdf,
         debugplot=debugplot
@@ -294,6 +295,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                     sp_reference=sp_reference,
                     sp_offset=median_55sp[0].data[i, :],
                     fminmax=None,
+                    naround_zero=50,
                     plottitle='slitlet #{0} (cross-correlation)'.format(
                         islitlet),
                     pdf=pdf,
@@ -337,14 +339,15 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         logger.info('- mean.......: {0:7.3f}'.format(stat_summary['mean']))
         logger.info('- median.....: {0:7.3f}'.format(stat_summary['median']))
         logger.info('- std........: {0:7.3f}'.format(stat_summary['std']))
-        logger.info('- robust_std.: {0:7.3f}'.format(stat_summary['robust_std']))
+        logger.info('- robust_std.: {0:7.3f}'.format(stat_summary[
+                                                        'robust_std']))
         if (abs(debugplot) % 10 != 0) or (pdf is not None):
             ax = ximplotxy(xplot, yplot,
                            linestyle='', marker='o', color='C0',
                            xlabel='slitlet number',
                            ylabel='-offset (pixels) = offset to be applied',
                            title='cross-correlation result',
-                           show=False, **{'label':'individual slitlets'})
+                           show=False, **{'label': 'individual slitlets'})
             ax.axhline(-global_offset, linestyle='--', color='C1',
                        label='global offset')
             ax.legend()
@@ -360,5 +363,4 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         pdf.close()
 
     # return result
-    return refined_rectwv_coeff, \
-           expected_cat_image
+    return refined_rectwv_coeff, expected_cat_image
