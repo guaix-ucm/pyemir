@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -68,10 +68,11 @@ class EmirRecipe(recipes.BaseRecipe):
                     prods.MasterBias,
                     prods.MasterDark,
                     prods.MasterIntensityFlat,
+                    prods.MasterSpectralFlat,
                     prods.MasterSky
                     ]
         getters = [cor.get_corrector_p, cor.get_corrector_b, cor.get_corrector_d,
-                   [cor.get_corrector_f, cor.get_checker], cor.get_corrector_s]
+                   [cor.get_corrector_f, cor.get_checker], cor.get_corrector_sf, cor.get_corrector_s]
 
         return imgtypes, getters
 

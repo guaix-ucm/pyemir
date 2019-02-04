@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -92,10 +92,33 @@ def get_corrector_s(rinput, meta, ins, datamodel):
 
 
 def get_corrector_f(rinput, meta, ins, datamodel):
+    """Corrector for intensity flat"""
     from emirdrp.processing.flatfield import FlatFieldCorrector
     flat_info = meta['master_flat']
     with rinput.master_flat.open() as hdul:
         _logger.info('loading intensity flat')
+        _logger.debug('flat info: %s', flat_info)
+        mflat = hdul[0].data
+        # Check NaN and Ceros
+        mask1 = mflat < 0
+        mask2 = ~numpy.isfinite(mflat)
+        if numpy.any(mask1):
+            _logger.warning('flat has %d values below 0', mask1.sum())
+        if numpy.any(mask2):
+            _logger.warning('flat has %d NaN', mask2.sum())
+        flat_corrector = FlatFieldCorrector(mflat,
+                                            datamodel=datamodel,
+                                            calibid=datamodel.get_imgid(hdul))
+
+    return flat_corrector
+
+
+def get_corrector_sf(rinput, meta, ins, datamodel):
+    """Corrector for spectral flat"""
+    from emirdrp.processing.flatfield import FlatFieldCorrector
+    flat_info = meta['master_flat']
+    with rinput.master_flat.open() as hdul:
+        _logger.info('loading spectral flat')
         _logger.debug('flat info: %s', flat_info)
         mflat = hdul[0].data
         # Check NaN and Ceros
