@@ -80,12 +80,12 @@ def test_subs():
     )
     result = recipe.run(rinput)
 
-    spec_abba_hdul = result.spec_abba.frame
-    assert spec_abba_hdul[0].header['TSUTC1'] == 1000000001.00034
-    assert spec_abba_hdul[0].header['TSUTC2'] == 1000000400.00034
+    reduced_mos_abba_hdul = result.reduced_mos_abba.frame
+    assert reduced_mos_abba_hdul[0].header['TSUTC1'] == 1000000001.00034
+    assert reduced_mos_abba_hdul[0].header['TSUTC2'] == 1000000400.00034
 
-    assert spec_abba_hdul[0].header['NUM-NCOM'] == 2
-    assert numpy.allclose(expected_data, result.spec_abba.frame[0].data)
+    assert reduced_mos_abba_hdul[0].header['NUM-NCOM'] == 2
+    assert numpy.allclose(expected_data, result.reduced_mos_abba.frame[0].data)
 
 
 def test_subs_raise():
@@ -127,7 +127,7 @@ def test_init_aggregate_result(nimages):
     #logging.basicConfig(level=logging.DEBUG)
     result1 = recipe.run(rinput)
 
-    frame_hdul = result1.spec_abba.open()
+    frame_hdul = result1.reduced_mos_abba.open()
     accum_hdul = result1.accum.open()
 
     assert(len(frame_hdul) == len(accum_hdul))
@@ -160,7 +160,7 @@ def test_accum_spec(naccum):
         )
 
         result = recipe.run(rinput)
-        frame_hdul = result.spec_abba.open()
+        frame_hdul = result.reduced_mos_abba.open()
         assert frame_hdul[0].header['NUM-NCOM'] == nimages * nstare
         accum_hdul = result.accum.open()
         # print('frame', obsresult.naccum, frame_hdul[0].data.mean(), frame_hdul[0].data.std(), 2*(1.0/obsresult.naccum))
@@ -176,7 +176,7 @@ def test_accum_spec(naccum):
         else:
             break
 
-    frame_hdul = result.spec_abba.open()
+    frame_hdul = result.reduced_mos_abba.open()
     accum_hdul = result.accum.open()
 
     assert frame_hdul[0].header['NUM-NCOM'] == nimages * nstare

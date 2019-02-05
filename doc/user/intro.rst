@@ -98,7 +98,7 @@ The steps to install and run PyEmir within a virtual environment are:
   ::
 
      (emir) bash$ numina
-     DEBUG: Numina simple recipe runner version 0.18
+     DEBUG: Numina simple recipe runner version 0.19
 
 5. **Update within the environment**
 
@@ -163,7 +163,7 @@ instructions, the steps to execute and run PyEmir under conda are:
 
      bash$ conda create --name emir
 
-  The Pyhton interpreter used in this environment is the sazme version
+  The Pyhton interpreter used in this environment is the same version
   currently used by conda. You can select a different version with
 
   ::
@@ -203,7 +203,7 @@ instructions, the steps to execute and run PyEmir under conda are:
   ::
 
      (emir) bash$ numina
-     DEBUG: Numina simple recipe runner version 0.18
+     DEBUG: Numina simple recipe runner version 0.19
 
 5. **Update within the environment**
 
@@ -221,7 +221,7 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   ::
   
-     (emir) bash$ source deactivate
+     (emir) bash$ conda deactivate
      bash$
 
 
@@ -245,7 +245,7 @@ interpreter):
 
 ::
 
-   bash$ conda create --name emir python=3.6 \
+   bash$ conda create --name emir python=3.7 \
    astropy \
    cython \
    ipython \
@@ -265,7 +265,7 @@ Activate the new environment:
 
 ::
 
-   bash$ source activate emir
+   bash$ conda activate emir
    (emir) bash$
 
 **Installing/updating numina**

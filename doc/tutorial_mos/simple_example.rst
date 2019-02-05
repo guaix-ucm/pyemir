@@ -70,10 +70,10 @@ Download and decompress the previous file:
 
 ::
 
-   (py36) $ tar zxvf EMIR_simple_example_files.tgz
+   (py36) $ tar zxvf EMIR_simple_example.tgz
    ...
    ...
-   (py36) $ rm EMIR_simple_example_files.tgz
+   (py36) $ rm EMIR_simple_example.tgz
 
 A new subdirectory named ``EMIR_simple_example`` should have appeared, with the
 following content:

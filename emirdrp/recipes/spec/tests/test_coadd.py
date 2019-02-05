@@ -68,7 +68,7 @@ def test_coadd(nabba):
         results.append(result)
 
     obsresult = numina.core.ObservationResult()
-    obsresult.frames = [result.spec_abba for result in results]
+    obsresult.frames = [result.reduced_mos_abba for result in results]
 
     recipe = CoaddABBARecipe()
     rinput = recipe.create_input(
