@@ -22,6 +22,7 @@ setup(name='pyemir',
               'Oliva_etal_2013.dat',
               'lines_argon_neon_xenon_empirical.dat',
               'lines_argon_neon_xenon_empirical_LR.dat',
+              'bars_nominal_positions_test.txt',
               'instrument-*.json',
               'component-*.json'
           ],
