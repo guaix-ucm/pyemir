@@ -240,7 +240,7 @@ class MaskCheckRecipe(EmirRecipe):
 
         self.logger.debug('create bar model')
         barmodel = csuconf.create_bar_models(bars_nominal_positions)
-        csu_conf = csuconf.read_csu_2(hdr, barmodel)
+        csu_conf = csuconf.read_csu_3(hdr, barmodel)
 
         if self.intermediate_results:
             # FIXME: coordinates are in VIRT pixels
