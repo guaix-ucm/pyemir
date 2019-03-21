@@ -113,13 +113,6 @@ class ProcessedSpectrumProduct(prodtypes.DataProductMixin, ProcessedSpectrum):
     pass
 
 
-
-class EMIRConfigurationType(obtypes.InstrumentConfigurationType):
-
-    def validate(self, value):
-        super(EMIRConfigurationType, self).validate(value)
-
-
 class MasterBadPixelMask(ProcessedImageProduct):
     pass
 

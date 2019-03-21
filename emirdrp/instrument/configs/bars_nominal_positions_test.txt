@@ -1,4 +1,4 @@
-# Polinomials for positions of the bars
+# Polynomials for positions of the bars
 # Use this file for testing
 # It may not reflect the current state of the instrument
    1  11.21484759	6.050300152	1.006931003
@@ -111,4 +111,3 @@
  108  1961.181748	-6.049388185	2062.875553
  109  1998.66557	-6.051123287	2061.869519
  110  2037.108886	-6.050515352	2062.176973
-

@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2018 Universidad Complutense de Madrid
+# Copyright 2010-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -76,7 +76,6 @@ class CosmeticsRecipe(EmirRecipe):
     """
 
     obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()

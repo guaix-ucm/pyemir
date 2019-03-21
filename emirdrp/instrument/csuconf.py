@@ -19,27 +19,89 @@ from emirdrp.core import EMIR_NBARS
 
 class CSUConf(object):
     """Information about the configuration of slits in the CSU"""
-    def __init__(self):
+    def __init__(self, barmodel):
         self.name = 'CSU'
         self.conf_id = 'v1'
         self.conf_f = 'UNKNOWN'
         self.slits = {}
         # Indices
-        self.lbars = list(range(1, EMIR_NBARS + 1))
-        self.rbars = [(i + EMIR_NBARS) for i in self.lbars]
-        self.bars = {}
+        self.LBARS = list(range(1, EMIR_NBARS + 1))
+        self.RBARS = [(i + EMIR_NBARS) for i in self.LBARS]
+        self.bars = barmodel
         # CSU is open if
         self.L_LIMIT = 6
         self.R_LIMIT = 2057
+        # Generate default slits, without header information
+        self._update_slits({})
 
     def is_open(self):
-        lopen = all(self.bars[barid].x2 <= self.L_LIMIT for barid in self.lbars)
-        ropen = all(self.bars[barid].x1 >= self.R_LIMIT for barid in self.rbars)
+        lopen = all(self.bars[barid].x2 <= self.L_LIMIT for barid in self.LBARS)
+        ropen = all(self.bars[barid].x1 >= self.R_LIMIT for barid in self.RBARS)
 
         return lopen and ropen
 
     def is_closed(self):
         return not self.is_open()
+
+    def set_state(self, hdr):
+        """Read CSU information and slits from header"""
+
+        self.conf_f = hdr.get('CSUCONFF', 'UNKNOWN')
+        # Read CSUPOS and set position in model
+        # The bars
+        for idx in self.bars:
+            key = "CSUP{}".format(idx)
+            # UNIT is mm
+
+            # set CSUPOS for BAR
+            # Using the model, this sets the X,Y coordinate
+            self.bars[idx].csupos = hdr[key]
+
+        self._update_slits(hdr)
+
+    def _update_slits(self, hdr):
+        """Recreate slits"""
+
+        # Slits.
+        # For the moment we will fuse only reference slits
+
+        # clean existing slits
+        self.slits = {}
+        mm = []
+        for idx in self.LBARS:
+
+            # References from header
+            try:
+                slit_t = hdr["SLIFL%d" % idx]
+                target_type = TargetType(slit_t)
+            except KeyError:
+                target_type = TargetType.UNKNOWN
+
+            xref = hdr.get("XRSLI%d" % idx, -100) - 1
+            yref = hdr.get("YRSLI%d" % idx, -100) - 1
+            target_coordinates = (xref, yref)
+
+            xref = hdr.get("XVSLI%d" % idx, -100) - 1
+            yref = hdr.get("YVSLI%d" % idx, -100) - 1
+            target_coordinates_v = (xref, yref)
+
+            mm.append((idx, target_type, target_coordinates, target_coordinates_v))
+
+        bag = merge_slits(mm, max_slits=3, tol=1e-2)
+
+        for idx, l_ids in bag.items():
+            r_ids = [lid + EMIR_NBARS for lid in l_ids]
+
+            lbars = {lid: self.bars[lid] for lid in l_ids}
+            rbars = {rid: self.bars[rid] for rid in r_ids}
+
+            this = LogicalSlit(idx, lbars=lbars, rbars=rbars)
+            # References from header
+            ref = mm[l_ids[0] - 1]
+            this.target_type = ref[1]
+            this.target_coordinates = ref[2]
+            this.target_coordinates_v = ref[3]
+            self.slits[idx] = this
 
 
 class TargetType(enum.Enum):
@@ -197,63 +259,57 @@ def create_bar_models(barstab):
     return bars
 
 
-def read_csu_3(barmodel, hdr):
+def read_csu_2(hdr, barmodel):
     """Read CSU information and slits from header"""
-    conf = CSUConf()
-    conf.name = 'NAME'
-    conf.conf_id = 'v1'
+    conf = CSUConf(barmodel)
+
     conf.conf_f = hdr.get('CSUCONFF', 'UNKNOWN')
-    conf.bars = barmodel
     # Read CSUPOS and set position in model
     # The bars
     for idx in conf.bars:
         key = "CSUP{}".format(idx)
-        # UNIT is mm
+        # UNIT of CSUPOS?
+        # who knows
 
         # set CSUPOS for BAR
         # Using the model, this sets the X,Y coordinate
         conf.bars[idx].csupos = hdr[key]
         # print('read_csu {}, position is {}'.format(idx, conf.bars[idx].current_pos))
 
-    # Slits.
-    # For the moment we will fuse only reference slits
-
-    mm = []
+    # Slits. We dont have keywords to fuse slitlets into larger logical slits
+    # so there is one slitslet for each pair of bars
     for idx in range(1, EMIR_NBARS + 1):
-
-        # References from header
-        try:
-            slit_t = hdr["SLIFL%d" % idx]
-            target_type = TargetType(slit_t)
-        except KeyError:
-            target_type = TargetType.UNKNOWN
-
-        xref = hdr.get("XRSLI%d" % idx, -100) - 1
-        yref = hdr.get("YRSLI%d" % idx, -100) - 1
-        target_coordinates = (xref, yref)
-
-        xref = hdr.get("XVSLI%d" % idx, -100) - 1
-        yref = hdr.get("YVSLI%d" % idx, -100) - 1
-        target_coordinates_v = (xref, yref)
-
-        mm.append((idx, target_type, target_coordinates, target_coordinates_v))
-
-    bag = merge_slits(mm, max_slits=3, tol=1e-2)
-
-    for idx, l_ids in bag.items():
-        r_ids = [lid + EMIR_NBARS for lid in l_ids]
+        l_ids = [idx]
+        r_ids = [idx + EMIR_NBARS]
 
         lbars = {lid: conf.bars[lid] for lid in l_ids}
         rbars = {rid: conf.bars[rid] for rid in r_ids}
 
         this = LogicalSlit(idx, lbars=lbars, rbars=rbars)
         # References from header
-        ref = mm[l_ids[0] - 1]
-        this.target_type = ref[1]
-        this.target_coordinates = ref[2]
-        this.target_coordinates_v = ref[3]
+        try:
+            slit_t = hdr["SLIFL%d" % idx]
+            this.target_type = TargetType(slit_t)
+        except KeyError as err:
+            # print('warning', err)
+            this.target_type = TargetType.UNKNOWN
+
+        xref = hdr.get("XRSLI%d" % this.idx, -100) - 1
+        yref = hdr.get("YRSLI%d" % this.idx, -100) - 1
+        this.target_coordinates = (xref, yref)
+
+        xref = hdr.get("XVSLI%d" % this.idx, -100) - 1
+        yref = hdr.get("YVSLI%d" % this.idx, -100) - 1
+        this.target_coordinates_v = (xref, yref)
         conf.slits[idx] = this
 
+    return conf
+
+
+def read_csu_3(hdr, barmodel):
+    """Read CSU information and slits from header"""
+    conf = CSUConf(barmodel)
+    conf.set_state(hdr)
     return conf
 
 
