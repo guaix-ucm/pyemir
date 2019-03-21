@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -185,7 +185,7 @@ class MaskCheckRecipe(EmirRecipe):
 
         csu_conf = self.load_csu_conf(hdulist_slit, rinput.bars_nominal_positions)
 
-        # IF CSU is completely open OR there are no refereces,
+        # IF CSU is completely open OR there are no references,
         # this is not needed
         if not csu_conf.is_open():
             self.logger.info('CSU is configured, detecting slits')
@@ -302,6 +302,7 @@ class MaskCheckRecipe(EmirRecipe):
         all_coords_real[:, 1] = _y
 
         # FIXME: hardcoded value
+        # use what is defined in CSUBarModel instead
         h = 16
         slit_h_virt = 16.242
         slit_h_tol = 3
@@ -435,7 +436,7 @@ def compute_off_rotation(data, csu_conf, slits_bb, rotaxis=(0, 0),
             ax = res[2]
             ax.set_title('slit %s' % this.idx)
             plt.savefig('centroid_slit_%s.png' % this.idx)
-            # plt.show()
+            plt.close()
 
         m_x = res[0] + region[1].start
         m_y = res[1] + region[0].start
@@ -558,15 +559,15 @@ def calc0(image, sob, prow, px1, px2, regionw, h=16, refine=False,
     else:
         comp_r = np.median(col_r)
 
-    if plot2:
-        plt.imshow(image[bb.slice], extent=bb.extent)
-        plt.scatter(colr_l, row_l, marker='+', color='black')
-        plt.scatter(colr_r, row_r, marker='+', color='black')
-        plt.axvline(px1, color='blue')
-        plt.axvline(px2, color='blue')
-        plt.axvline(comp_l, color='red')
-        plt.axvline(comp_r, color='red')
-        plt.show()
+    # if plot2:
+    #     plt.imshow(image[bb.slice], extent=bb.extent)
+    #     plt.scatter(colr_l, row_l, marker='+', color='black')
+    #     plt.scatter(colr_r, row_r, marker='+', color='black')
+    #     plt.axvline(px1, color='blue')
+    #     plt.axvline(px2, color='blue')
+    #     plt.axvline(comp_l, color='red')
+    #     plt.axvline(comp_r, color='red')
+    #     plt.show()
 
     return comp_l, comp_r
 
