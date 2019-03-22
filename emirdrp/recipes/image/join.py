@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2018 Universidad Complutense de Madrid
+# Copyright 2014-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -44,7 +44,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
     """Combine single exposures obtained in dithered mode"""
 
     obresult = ObservationResultRequirement(query_opts=ResultOf(
-        'STARE_IMAGE.frame', node='children', id_field="stareImagesIds"))
+        'STARE_IMAGE.result_image', node='children', id_field="stareImagesIds"))
     accum_in = Requirement(prods.ProcessedImage,
                            description='Accumulated result',
                            optional=True,

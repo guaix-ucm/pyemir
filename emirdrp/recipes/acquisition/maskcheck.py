@@ -118,7 +118,7 @@ class MaskCheckRecipe(EmirRecipe):
     #
     obresult = ObservationResultRequirement(
         query_opts=qmod.ResultOf(
-            'STARE_IMAGE.frame',
+            'STARE_IMAGE.result_image',
             node='children',
             id_field="resultsIds"
         )
