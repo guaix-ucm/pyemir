@@ -71,7 +71,7 @@ def test_csubar(hdr, nslits):
     bars_nominal_positions = numpy.loadtxt(ss)
     #hdr = create_test_header()
     barmodel = create_bar_models(bars_nominal_positions)
-    csu_conf = read_csu_3(hdr, barmodel)
+    csu_conf = read_csu_3(barmodel, hdr)
     assert len(csu_conf.slits) == nslits
 
 
@@ -107,5 +107,5 @@ def test_csuconf1():
     bars_nominal_positions = numpy.loadtxt(ss)
     hdr = create_test_header1()
     barmodel = create_bar_models(bars_nominal_positions)
-    csu_conf = read_csu_3(hdr, barmodel)
+    csu_conf = read_csu_3(barmodel, hdr)
     assert csu_conf.is_open()

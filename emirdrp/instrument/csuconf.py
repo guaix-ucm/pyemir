@@ -176,6 +176,11 @@ class LogicalSlit(object):
     def bbox(self):
         return self.bbox_int
 
+    def width(self):
+        bar_x1 = min(self.lbars.values(), key=lambda obk: obk.xpos)
+        bar_x2 = max(self.rbars.values(), key=lambda obk: obk.xpos)
+        return bar_x2.xpos - bar_x1.xpos
+
 
 def create_bar_models(barstab):
     bars = {}
@@ -192,56 +197,7 @@ def create_bar_models(barstab):
     return bars
 
 
-def read_csu_2(hdr, barmodel):
-    """Read CSU information and slits from header"""
-    conf = CSUConf()
-    conf.name = 'NAME'
-    conf.conf_id = 'v1'
-    conf.conf_f = hdr.get('CSUCONFF', 'UNKNOWN')
-    conf.bars = barmodel
-    # Read CSUPOS and set position in model
-    # The bars
-    for idx in conf.bars:
-        key = "CSUP{}".format(idx)
-        # UNIT of CSUPOS?
-        # who knows
-
-        # set CSUPOS for BAR
-        # Using the model, this sets the X,Y coordinate
-        conf.bars[idx].csupos = hdr[key]
-        # print('read_csu {}, position is {}'.format(idx, conf.bars[idx].current_pos))
-
-    # Slits. We dont have keywords to fuse slitlets into larger logical slits
-    # so there is one slitslet for each pair of bars
-    for idx in range(1, EMIR_NBARS + 1):
-        l_ids = [idx]
-        r_ids = [idx + EMIR_NBARS]
-
-        lbars = {lid: conf.bars[lid] for lid in l_ids}
-        rbars = {rid: conf.bars[rid] for rid in r_ids}
-
-        this = LogicalSlit(idx, lbars=lbars, rbars=rbars)
-        # References from header
-        try:
-            slit_t = hdr["SLIFL%d" % idx]
-            this.target_type = TargetType(slit_t)
-        except KeyError as err:
-            # print('warning', err)
-            this.target_type = TargetType.UNKNOWN
-
-        xref = hdr.get("XRSLI%d" % this.idx, -100) - 1
-        yref = hdr.get("YRSLI%d" % this.idx, -100) - 1
-        this.target_coordinates = (xref, yref)
-
-        xref = hdr.get("XVSLI%d" % this.idx, -100) - 1
-        yref = hdr.get("YVSLI%d" % this.idx, -100) - 1
-        this.target_coordinates_v = (xref, yref)
-        conf.slits[idx] = this
-
-    return conf
-
-
-def read_csu_3(hdr, barmodel):
+def read_csu_3(barmodel, hdr):
     """Read CSU information and slits from header"""
     conf = CSUConf()
     conf.name = 'NAME'
