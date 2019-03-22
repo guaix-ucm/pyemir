@@ -86,7 +86,7 @@ class CoaddABBARecipe(EmirRecipe):
         # Update SEC to 0
         # hdr['SEC'] = 0
 
-        result = self.create_result(spec_coadd_abba=hdulist)
+        result = self.create_result(reduced_mos_abba=hdulist)
         self.logger.info('end spectroscopy ABBA coadd reduction')
         return result
 
