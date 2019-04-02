@@ -184,6 +184,12 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         minwidth=minimum_slitlet_width_mm,
         maxwidth=maximum_slitlet_width_mm
     )
+    # remove missing slitlets
+    if len(refined_rectwv_coeff.missing_slitlets) > 0:
+        for iremove in refined_rectwv_coeff.missing_slitlets:
+            if iremove in list_useful_slitlets:
+                list_useful_slitlets.remove(iremove)
+
     list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1))
                                 if i not in list_useful_slitlets]
     logger.info('list of useful slitlets: {}'.format(
@@ -290,19 +296,22 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                 i = islitlet - 1
                 sp_median = median_55sp[0].data[i, :]
                 lok = np.where(sp_median > 0)
-                baseline = np.percentile(sp_median[lok], q=10)
-                sp_median[lok] -= baseline
-                sp_median /= sp_median.max()
-                offset_array[i], fpeak = periodic_corr1d(
-                    sp_reference=sp_reference,
-                    sp_offset=median_55sp[0].data[i, :],
-                    fminmax=None,
-                    naround_zero=50,
-                    plottitle='slitlet #{0} (cross-correlation)'.format(
-                        islitlet),
-                    pdf=pdf,
-                    debugplot=debugplot
-                )
+                if np.any(lok):
+                    baseline = np.percentile(sp_median[lok], q=10)
+                    sp_median[lok] -= baseline
+                    sp_median /= sp_median.max()
+                    offset_array[i], fpeak = periodic_corr1d(
+                        sp_reference=sp_reference,
+                        sp_offset=median_55sp[0].data[i, :],
+                        fminmax=None,
+                        naround_zero=50,
+                        plottitle='slitlet #{0} (cross-correlation)'.format(
+                            islitlet),
+                        pdf=pdf,
+                        debugplot=debugplot
+                    )
+                else:
+                    offset_array[i] = 0.0
                 dumdict = refined_rectwv_coeff.contents[i]
                 dumdict['wpoly_coeff'][0] -= offset_array[i]*cdelt1
                 xplot.append(islitlet)
