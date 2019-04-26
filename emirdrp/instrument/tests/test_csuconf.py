@@ -69,7 +69,6 @@ def test_csubar(hdr, nslits):
     dumdata = pkgutil.get_data('emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
     ss = S.StringIO(dumdata.decode('utf8'))
     bars_nominal_positions = numpy.loadtxt(ss)
-    #hdr = create_test_header()
     barmodel = create_bar_models(bars_nominal_positions)
     csu_conf = read_csu_3(barmodel, hdr)
     assert len(csu_conf.slits) == nslits

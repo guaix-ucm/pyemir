@@ -259,7 +259,7 @@ def create_bar_models(barstab):
     return bars
 
 
-def read_csu_2(hdr, barmodel):
+def read_csu_2(barmodel, hdr):
     """Read CSU information and slits from header"""
     conf = CSUConf(barmodel)
 
@@ -306,7 +306,7 @@ def read_csu_2(hdr, barmodel):
     return conf
 
 
-def read_csu_3(hdr, barmodel):
+def read_csu_3(barmodel, hdr):
     """Read CSU information and slits from header"""
     conf = CSUConf(barmodel)
     conf.set_state(hdr)
