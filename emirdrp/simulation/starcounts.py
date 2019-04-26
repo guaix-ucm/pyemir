@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -49,10 +49,10 @@ class PhotometricFilter:
 
 
 class RBModel:
-    '''Star counts model from Ratnatunga & Bahcall.
+    """Star counts model from Ratnatunga & Bahcall.
 
     Number of stars per square arc minute
-    '''
+    """
     _counts = array(
         [
             [12, 14, 16, 18, 20, 22, 24, 26, 28],
@@ -104,10 +104,10 @@ class RBModel:
 
 
 class SpagnaModel:
-    '''Star counts model from Spagna 1999.
+    """Star counts model from Spagna 1999.
 
     Number of stars per square arc minute
-    '''
+    """
 
     _J_counts_data = loadtxt(StringIO(
         pkgutil.get_data('emirdrp.simulation', 'spagna-J.dat')
@@ -141,7 +141,6 @@ class SpagnaModel:
             return sil.splev(mag, cls._spl_K_2)
         else:
             return 0.
-        return 0.
 
     @classmethod
     def differential_counts(cls, mag, filter=PhotometricFilter.FILTER_K):
@@ -151,14 +150,13 @@ class SpagnaModel:
             return sil.splev(mag, cls._spl_K_1) / 3600.0
         else:
             return 0.
-        return 0.
 
 
 class BSModel:
-    '''Star counts model from Bahcall & Soneira.
+    """Star counts model from Bahcall & Soneira.
 
     Number of stars per square arc minute
-    '''
+    """
     name = "Bahcall & Soneira"
     params = array(
         [
@@ -177,7 +175,6 @@ class BSModel:
             return cls.dFunction(mag, 0., 0.5 * pi, *cls.params[4])
         else:
             return 0.
-        return 0.
 
     @classmethod
     def differential_counts(cls, mag, filter=PhotometricFilter.FILTER_V):
@@ -187,11 +184,10 @@ class BSModel:
             return cls.dFunction(mag, 0., 0.5 * pi, *cls.params[3])
         else:
             return 0.
-        return 0.
 
     @staticmethod
     def mu(magnitude):
-        '''Compute parameter \mu of Appendix B.'''
+        """Compute parameter \mu of Appendix B."""
         if magnitude <= 12.:
             return 0.03
         if magnitude <= 20:
@@ -228,8 +224,9 @@ class BSModel:
                       )
         return (firstTerm + secondTerm) / 3600.0
 
+
 if __name__ == '__main__':
-    import np as np
+    import numpy as np
     import np.random
     from math import sqrt, log
 
@@ -244,7 +241,7 @@ if __name__ == '__main__':
     # print bsmodel.differential_counts(18)
 
     class GeneralRandom:
-        ''' Recipe from http://code.activestate.com/recipes/576556/.'''
+        """ Recipe from http://code.activestate.com/recipes/576556/."""
         def __init__(self, x, p, Nrl=1000):
             self.x = x
             self.pdf = p / p.sum()
@@ -305,13 +302,9 @@ if __name__ == '__main__':
 
     g = GeneralRandom(x, p)
 
-    mags = g.random(nstars)
+    np.random.seed(100)
     y = np.random.uniform(high=pixel_area[0], size=nstars)
     x = np.random.uniform(high=pixel_area[1], size=nstars)
-
-    np.random.seed(100)
-    x = np.random.uniform(high=2048, size=nstars)
-    y = np.random.uniform(high=2048, size=nstars)
     sigmas = [seeing / scale / plate_scale] * nstars
     ints = [100] * nstars
     mag = g.random(N=nstars)
