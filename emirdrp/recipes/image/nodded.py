@@ -23,7 +23,7 @@
 from numina.core import Parameter
 from numina.core import RecipeInput
 from numina.core.recipeinout import define_input, define_result
-from numina.core import Product, DataFrameType
+from numina.core import Result, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core.recipe import EmirRecipeResult as RecipeResult
@@ -58,8 +58,8 @@ class NBImageRecipeInput(RecipeInput):
 
 
 class NBImageRecipeResult(RecipeResult):
-    frame = Product(DataFrameType)
-    catalog = Product(SourcesCatalog)
+    frame = Result(DataFrameType)
+    catalog = Result(SourcesCatalog)
 
 
 @define_input(NBImageRecipeInput)
