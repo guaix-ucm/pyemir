@@ -67,7 +67,7 @@ class EmirDataModel(dm.DataModel):
             'uuid1': ('UUID', 'undefined'),
             'uuid2': ('EMIRUUID', 'undefined'),
             'skyadd': ('SKYADD', True),
-            'insconf': lambda img: 'default',
+            'insconf': ('INSCONF', None),
             'blckuuid': lambda img: None,
         }
 
