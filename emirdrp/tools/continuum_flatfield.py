@@ -190,12 +190,16 @@ def main(args=None):
             print(slt)
 
         # extract (distorted) slitlet from the initial image
-        slitlet2d = slt.extract_slitlet2d(image2d)
+        slitlet2d = slt.extract_slitlet2d(
+            image_2k2k=image2d,
+            subtitle='original image'
+        )
 
         # rectify slitlet
         slitlet2d_rect = slt.rectify(
-            slitlet2d,
-            resampling=args.resampling
+            slitlet2d=slitlet2d,
+            resampling=args.resampling,
+            subtitle='original rectified'
         )
         naxis2_slitlet2d, naxis1_slitlet2d = slitlet2d_rect.shape
 
@@ -204,7 +208,7 @@ def main(args=None):
             print('EMIR_NAXIS1.....: ', EMIR_NAXIS1)
             raise ValueError("Unexpected naxis1_slitlet2d")
 
-        # get useful slitlet region (use boundaires instead of frontiers;
+        # get useful slitlet region (use boundaries instead of frontiers;
         # note that the nscan_minmax_frontiers() works well independently
         # of using frontiers of boundaries as arguments)
         nscan_min, nscan_max = nscan_minmax_frontiers(
@@ -226,7 +230,7 @@ def main(args=None):
         sp_median[np.where(sp_median < y_threshold)] = 0.0
 
         if abs(args.debugplot) > 10:
-            title = 'Slitlet#' + str(islitlet) + '(median spectrum)'
+            title = 'Slitlet#' + str(islitlet) + ' (median spectrum)'
             xdum = np.arange(1, naxis1_slitlet2d + 1)
             ax = ximplotxy(xdum, sp_collapsed,
                            title=title,
@@ -242,13 +246,17 @@ def main(args=None):
         # generate rectified slitlet region filled with the median spectrum
         slitlet2d_rect_spmedian = np.tile(sp_median, (naxis2_slitlet2d, 1))
         if abs(args.debugplot) > 10:
-            slt.ximshow_rectified(slitlet2d_rect_spmedian)
+            slt.ximshow_rectified(
+                slitlet2d_rect=slitlet2d_rect_spmedian,
+                subtitle='rectified, filled with median spectrum'
+            )
 
         # unrectified image
         slitlet2d_unrect_spmedian = slt.rectify(
-            slitlet2d_rect_spmedian,
+            slitlet2d=slitlet2d_rect_spmedian,
             resampling=args.resampling,
-            inverse=True
+            inverse=True,
+            subtitle='unrectified, filled with median spectrum'
         )
 
         # normalize initial slitlet image (avoid division by zero)
@@ -262,7 +270,10 @@ def main(args=None):
                     slitlet2d_norm[i, j] = slitlet2d[i, j] / den
 
         if abs(args.debugplot) > 10:
-            slt.ximshow_unrectified(slitlet2d_norm)
+            slt.ximshow_unrectified(
+                slitlet2d=slitlet2d_norm,
+                subtitle='unrectified, pixel-to-pixel'
+            )
 
         for j in range(EMIR_NAXIS1):
             xchannel = j + 1
@@ -278,8 +289,8 @@ def main(args=None):
                 slitlet2d_norm[(nn1 - 1):nn2, j]
 
             # force to 1.0 region around frontiers
-            image2d_flatfielded[(n1 - 1):(n1 + 2), j] = 1
-            image2d_flatfielded[(n2 - 5):n2, j] = 1
+            ## image2d_flatfielded[(n1 - 1):(n1 + 2), j] = 1
+            ## image2d_flatfielded[(n2 - 5):n2, j] = 1
     if args.debugplot == 0:
         print('OK!')
 
