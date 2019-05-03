@@ -34,6 +34,7 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.processing.wavecal.slitlet2d import Slitlet2D
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
 from emirdrp.tools.rect_wpoly_for_mos import islitlet_progress
 from emirdrp.tools.save_ndarray_to_fits import save_ndarray_to_fits
@@ -60,6 +61,12 @@ def main(args=None):
                         help="Input JSON file with rectification and "
                              "wavelength calibration coefficients",
                         type=argparse.FileType('rt'))
+    parser.add_argument("--minimum_slitlet_width_mm", required=True,
+                        help="Minimum slitlet width in mm",
+                        type=float)
+    parser.add_argument("--maximum_slitlet_width_mm", required=True,
+                        help="Maximum slitlet width in mm",
+                        type=float)
     parser.add_argument("--minimum_fraction", required=True,
                         help="Minimum allowed flatfielding value",
                         type=float, default=0.01)
@@ -169,12 +176,28 @@ def main(args=None):
             print('>>> DTU Configuration match!')
             print(dtu_conf_fitsfile)
 
+    # load CSU configuration
+    csu_conf_fitsfile = CsuConfiguration.define_from_fits(args.fitsfile)
+    if abs(args.debugplot) >= 10:
+        print(csu_conf_fitsfile)
+
     # valid slitlet numbers
     list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
     for idel in rectwv_coeff.missing_slitlets:
+        print('-> Removing slitlet (not defined):', idel)
         list_valid_islitlets.remove(idel)
-    if abs(args.debugplot) >= 10:
-        print('>>> valid slitlet numbers:\n', list_valid_islitlets)
+    # filter out slitlets with widths outside valid range
+    list_outside_valid_width = []
+    for islitlet in list_valid_islitlets:
+        slitwidth = csu_conf_fitsfile.csu_bar_slit_width(islitlet)
+        if (slitwidth < args.minimum_slitlet_width_mm) or \
+                (slitwidth > args.maximum_slitlet_width_mm):
+            list_outside_valid_width.append(islitlet)
+            print('-> Removing slitlet (invalid width):', islitlet)
+    if len(list_outside_valid_width) > 0:
+        for idel in list_outside_valid_width:
+            list_valid_islitlets.remove(idel)
+    print('>>> valid slitlet numbers:\n', list_valid_islitlets)
 
     # ---
 
@@ -182,132 +205,178 @@ def main(args=None):
     image2d_flatfielded = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
 
     # main loop
-    for islitlet in list_valid_islitlets:
-        if args.debugplot == 0:
-            islitlet_progress(islitlet, EMIR_NBARS)
+    for islitlet in list(range(1, EMIR_NBARS + 1)):
+        if islitlet in list_valid_islitlets:
+            if args.debugplot == 0:
+                islitlet_progress(islitlet, EMIR_NBARS, ignore=False)
+            # define Slitlet2D object
+            slt = Slitlet2D(islitlet=islitlet,
+                            rectwv_coeff=rectwv_coeff,
+                            debugplot=args.debugplot)
 
-        # define Slitlet2D object
-        slt = Slitlet2D(islitlet=islitlet,
-                        rectwv_coeff=rectwv_coeff,
-                        debugplot=args.debugplot)
+            if abs(args.debugplot) >= 10:
+                print(slt)
 
-        if abs(args.debugplot) >= 10:
-            print(slt)
-
-        # extract (distorted) slitlet from the initial image
-        slitlet2d = slt.extract_slitlet2d(
-            image_2k2k=image2d,
-            subtitle='original image'
-        )
-
-        # rectify slitlet
-        slitlet2d_rect = slt.rectify(
-            slitlet2d=slitlet2d,
-            resampling=args.resampling,
-            subtitle='original rectified'
-        )
-        naxis2_slitlet2d, naxis1_slitlet2d = slitlet2d_rect.shape
-
-        if naxis1_slitlet2d != EMIR_NAXIS1:
-            print('naxis1_slitlet2d: ', naxis1_slitlet2d)
-            print('EMIR_NAXIS1.....: ', EMIR_NAXIS1)
-            raise ValueError("Unexpected naxis1_slitlet2d")
-
-        # get useful slitlet region (use boundaries instead of frontiers;
-        # note that the nscan_minmax_frontiers() works well independently
-        # of using frontiers of boundaries as arguments)
-        nscan_min, nscan_max = nscan_minmax_frontiers(
-            slt.y0_reference_lower,
-            slt.y0_reference_upper,
-            resize=False
-        )
-        ii1 = nscan_min - slt.bb_ns1_orig
-        ii2 = nscan_max - slt.bb_ns1_orig + 1
-
-        # median spectrum
-        sp_collapsed = np.median(slitlet2d_rect[ii1:(ii2 + 1), :], axis=0)
-
-        # smooth median spectrum along the spectral direction
-        ## sp_median = ndimage.median_filter(sp_collapsed, args.nwindow_median,
-        ##                                   mode='nearest')
-        xdum = np.arange(1, naxis1_slitlet2d + 1)
-        spl = AdaptiveLSQUnivariateSpline(
-            x=xdum,
-            y=sp_collapsed,
-            t=11,
-            adaptive=True
-        )
-        sp_median = spl(xdum)
-
-        ymax_spmedian = sp_median.max()
-        y_threshold = ymax_spmedian * args.minimum_fraction
-        sp_median[np.where(sp_median < y_threshold)] = 0.0
-
-
-        if abs(args.debugplot) > 10:
-            title = 'Slitlet#' + str(islitlet) + ' (median spectrum)'
-            ax = ximplotxy(xdum, sp_collapsed,
-                           title=title,
-                           show=False, **{'label' : 'collapsed spectrum'})
-            ax.plot(xdum, sp_median, label='filtered spectrum')
-            ax.plot([1, naxis1_slitlet2d], 2*[y_threshold],
-                    label='threshold')
-            xknots = spl.get_knots()
-            yknots = spl(xknots)
-            ax.plot(xknots, yknots, 'o', label='knots')
-            ax.legend()
-            ax.set_ylim(-0.05*ymax_spmedian, 1.05*ymax_spmedian)
-            pause_debugplot(args.debugplot,
-                            pltshow=True, tight_layout=True)
-
-        # generate rectified slitlet region filled with the median spectrum
-        slitlet2d_rect_spmedian = np.tile(sp_median, (naxis2_slitlet2d, 1))
-        if abs(args.debugplot) > 10:
-            slt.ximshow_rectified(
-                slitlet2d_rect=slitlet2d_rect_spmedian,
-                subtitle='rectified, filled with median spectrum'
+            # extract (distorted) slitlet from the initial image
+            slitlet2d = slt.extract_slitlet2d(
+                image_2k2k=image2d,
+                subtitle='original image'
             )
 
-        # unrectified image
-        slitlet2d_unrect_spmedian = slt.rectify(
-            slitlet2d=slitlet2d_rect_spmedian,
-            resampling=args.resampling,
-            inverse=True,
-            subtitle='unrectified, filled with median spectrum'
-        )
+            # rectify slitlet
+            slitlet2d_rect = slt.rectify(
+                slitlet2d=slitlet2d,
+                resampling=args.resampling,
+                subtitle='original rectified'
+            )
+            naxis2_slitlet2d, naxis1_slitlet2d = slitlet2d_rect.shape
 
-        # normalize initial slitlet image (avoid division by zero)
-        slitlet2d_norm = np.zeros_like(slitlet2d)
-        for j in range(naxis1_slitlet2d):
-            for i in range(naxis2_slitlet2d):
-                den = slitlet2d_unrect_spmedian[i, j]
-                if den == 0:
-                    slitlet2d_norm[i, j] = 1.0
+            if naxis1_slitlet2d != EMIR_NAXIS1:
+                print('naxis1_slitlet2d: ', naxis1_slitlet2d)
+                print('EMIR_NAXIS1.....: ', EMIR_NAXIS1)
+                raise ValueError("Unexpected naxis1_slitlet2d")
+
+            # get useful slitlet region (use boundaries instead of frontiers;
+            # note that the nscan_minmax_frontiers() works well independently
+            # of using frontiers of boundaries as arguments)
+            nscan_min, nscan_max = nscan_minmax_frontiers(
+                slt.y0_reference_lower,
+                slt.y0_reference_upper,
+                resize=False
+            )
+            ii1 = nscan_min - slt.bb_ns1_orig
+            ii2 = nscan_max - slt.bb_ns1_orig + 1
+
+            # median spectrum
+            sp_collapsed = np.median(slitlet2d_rect[ii1:(ii2 + 1), :], axis=0)
+
+            # smooth median spectrum along the spectral direction
+            ## sp_median = ndimage.median_filter(sp_collapsed, args.nwindow_median,
+            ##                                   mode='nearest')
+            xdum = np.arange(1, naxis1_slitlet2d + 1)
+            spl = AdaptiveLSQUnivariateSpline(
+                x=xdum,
+                y=sp_collapsed,
+                t=11,
+                adaptive=True
+            )
+            sp_median = spl(xdum)
+
+            ymax_spmedian = sp_median.max()
+            y_threshold = ymax_spmedian * args.minimum_fraction
+            sp_median[np.where(sp_median < y_threshold)] = 0.0
+
+
+            if abs(args.debugplot) > 10:
+                title = 'Slitlet#' + str(islitlet) + ' (median spectrum)'
+                ax = ximplotxy(xdum, sp_collapsed,
+                               title=title,
+                               show=False, **{'label' : 'collapsed spectrum'})
+                ax.plot(xdum, sp_median, label='filtered spectrum')
+                ax.plot([1, naxis1_slitlet2d], 2*[y_threshold],
+                        label='threshold')
+                xknots = spl.get_knots()
+                yknots = spl(xknots)
+                ax.plot(xknots, yknots, 'o', label='knots')
+                ax.legend()
+                ax.set_ylim(-0.05*ymax_spmedian, 1.05*ymax_spmedian)
+                pause_debugplot(args.debugplot,
+                                pltshow=True, tight_layout=True)
+
+            # generate rectified slitlet region filled with the median spectrum
+            slitlet2d_rect_spmedian = np.tile(sp_median, (naxis2_slitlet2d, 1))
+            if abs(args.debugplot) > 10:
+                slt.ximshow_rectified(
+                    slitlet2d_rect=slitlet2d_rect_spmedian,
+                    subtitle='rectified, filled with median spectrum'
+                )
+
+            # unrectified image
+            slitlet2d_unrect_spmedian = slt.rectify(
+                slitlet2d=slitlet2d_rect_spmedian,
+                resampling=args.resampling,
+                inverse=True,
+                subtitle='unrectified, filled with median spectrum'
+            )
+
+            # normalize initial slitlet image (avoid division by zero)
+            slitlet2d_norm = np.zeros_like(slitlet2d)
+            for j in range(naxis1_slitlet2d):
+                for i in range(naxis2_slitlet2d):
+                    den = slitlet2d_unrect_spmedian[i, j]
+                    if den == 0:
+                        slitlet2d_norm[i, j] = 1.0
+                    else:
+                        slitlet2d_norm[i, j] = slitlet2d[i, j] / den
+
+            if abs(args.debugplot) > 10:
+                slt.ximshow_unrectified(
+                    slitlet2d=slitlet2d_norm,
+                    subtitle='unrectified, pixel-to-pixel'
+                )
+
+            # check for pseudo-longslit with previous slitlet
+            if islitlet > 1:
+                if (islitlet - 1) in list_valid_islitlets:
+                    c1 = csu_conf_fitsfile.csu_bar_slit_center(islitlet - 1)
+                    w1 = csu_conf_fitsfile.csu_bar_slit_width(islitlet - 1)
+                    c2 = csu_conf_fitsfile.csu_bar_slit_center(islitlet)
+                    w2 = csu_conf_fitsfile.csu_bar_slit_width(islitlet)
+                    if abs(w1-w2)/w1 < 0.25:
+                        wmean = (w1 + w2) / 2.0
+                        if abs(c1 - c2) < wmean/4.0:
+                            same_slitlet_below = True
+                        else:
+                            same_slitlet_below = False
+                    else:
+                        same_slitlet_below = False
                 else:
-                    slitlet2d_norm[i, j] = slitlet2d[i, j] / den
+                    same_slitlet_below = False
+            else:
+                same_slitlet_below = False
 
-        if abs(args.debugplot) > 10:
-            slt.ximshow_unrectified(
-                slitlet2d=slitlet2d_norm,
-                subtitle='unrectified, pixel-to-pixel'
-            )
+            # check for pseudo-longslit with previous slitlet
+            if islitlet < EMIR_NBARS:
+                if (islitlet + 1) in list_valid_islitlets:
+                    c1 = csu_conf_fitsfile.csu_bar_slit_center(islitlet)
+                    w1 = csu_conf_fitsfile.csu_bar_slit_width(islitlet)
+                    c2 = csu_conf_fitsfile.csu_bar_slit_center(islitlet + 1)
+                    w2 = csu_conf_fitsfile.csu_bar_slit_width(islitlet + 1)
+                    if abs(w1-w2)/w1 < 0.25:
+                        wmean = (w1 + w2) / 2.0
+                        if abs(c1 - c2) < wmean/4.0:
+                            same_slitlet_above = True
+                        else:
+                            same_slitlet_above = False
+                    else:
+                        same_slitlet_above = False
+                else:
+                    same_slitlet_above = False
+            else:
+                same_slitlet_above = False
 
-        for j in range(EMIR_NAXIS1):
-            xchannel = j + 1
-            y0_lower = slt.list_frontiers[0](xchannel)
-            y0_upper = slt.list_frontiers[1](xchannel)
-            n1, n2 = nscan_minmax_frontiers(y0_frontier_lower=y0_lower,
-                                            y0_frontier_upper=y0_upper,
-                                            resize=True)
-            # note that n1 and n2 are scans (ranging from 1 to NAXIS2)
-            nn1 = n1 - slt.bb_ns1_orig + 1
-            nn2 = n2 - slt.bb_ns1_orig + 1
-            image2d_flatfielded[(n1 - 1):n2, j] = \
-                slitlet2d_norm[(nn1 - 1):nn2, j]
+            for j in range(EMIR_NAXIS1):
+                xchannel = j + 1
+                y0_lower = slt.list_frontiers[0](xchannel)
+                y0_upper = slt.list_frontiers[1](xchannel)
+                n1, n2 = nscan_minmax_frontiers(y0_frontier_lower=y0_lower,
+                                                y0_frontier_upper=y0_upper,
+                                                resize=True)
+                # note that n1 and n2 are scans (ranging from 1 to NAXIS2)
+                nn1 = n1 - slt.bb_ns1_orig + 1
+                nn2 = n2 - slt.bb_ns1_orig + 1
+                image2d_flatfielded[(n1 - 1):n2, j] = \
+                    slitlet2d_norm[(nn1 - 1):nn2, j]
 
-            # force to 1.0 region around frontiers
-            image2d_flatfielded[(n1 - 1):(n1 + 2), j] = 1
-            image2d_flatfielded[(n2 - 5):n2, j] = 1
+                # force to 1.0 region around frontiers
+                if not same_slitlet_below:
+                    image2d_flatfielded[(n1 - 1):(n1 + 2), j] = 1
+                if not same_slitlet_above:
+                    image2d_flatfielded[(n2 - 5):n2, j] = 1
+        else:
+            if args.debugplot == 0:
+                islitlet_progress(islitlet, EMIR_NBARS, ignore=True)
+
     if args.debugplot == 0:
         print('OK!')
 
