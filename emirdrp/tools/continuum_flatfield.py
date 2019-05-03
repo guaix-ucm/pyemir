@@ -28,6 +28,7 @@ import sys
 
 from numina.array.display.ximplotxy import ximplotxy
 from numina.array.display.pause_debugplot import pause_debugplot
+from numina.array.numsplines import AdaptiveLSQUnivariateSpline
 from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.tools.arg_file_is_new import arg_file_is_new
 
@@ -66,6 +67,10 @@ def main(args=None):
                         help="Minimum value allowed in output file: pixels "
                              "below this value are set to 1.0 (default=0.01)",
                         type=float, default=0.01)
+    parser.add_argument("--maximum_value_in_output",
+                        help="Maximum value allowed in output file: pixels "
+                             "above this value are set to 1.0 (default=10.0)",
+                        type=float, default=10.0)
     parser.add_argument("--nwindow_median", required=True,
                         help="Window size to smooth median spectrum in the "
                              "spectral direction",
@@ -223,21 +228,33 @@ def main(args=None):
         sp_collapsed = np.median(slitlet2d_rect[ii1:(ii2 + 1), :], axis=0)
 
         # smooth median spectrum along the spectral direction
-        sp_median = ndimage.median_filter(sp_collapsed, args.nwindow_median,
-                                          mode='nearest')
+        ## sp_median = ndimage.median_filter(sp_collapsed, args.nwindow_median,
+        ##                                   mode='nearest')
+        xdum = np.arange(1, naxis1_slitlet2d + 1)
+        spl = AdaptiveLSQUnivariateSpline(
+            x=xdum,
+            y=sp_collapsed,
+            t=11,
+            adaptive=True
+        )
+        sp_median = spl(xdum)
+
         ymax_spmedian = sp_median.max()
         y_threshold = ymax_spmedian * args.minimum_fraction
         sp_median[np.where(sp_median < y_threshold)] = 0.0
 
+
         if abs(args.debugplot) > 10:
             title = 'Slitlet#' + str(islitlet) + ' (median spectrum)'
-            xdum = np.arange(1, naxis1_slitlet2d + 1)
             ax = ximplotxy(xdum, sp_collapsed,
                            title=title,
                            show=False, **{'label' : 'collapsed spectrum'})
             ax.plot(xdum, sp_median, label='filtered spectrum')
             ax.plot([1, naxis1_slitlet2d], 2*[y_threshold],
                     label='threshold')
+            xknots = spl.get_knots()
+            yknots = spl(xknots)
+            ax.plot(xknots, yknots, 'o', label='knots')
             ax.legend()
             ax.set_ylim(-0.05*ymax_spmedian, 1.05*ymax_spmedian)
             pause_debugplot(args.debugplot,
@@ -289,14 +306,10 @@ def main(args=None):
                 slitlet2d_norm[(nn1 - 1):nn2, j]
 
             # force to 1.0 region around frontiers
-            ## image2d_flatfielded[(n1 - 1):(n1 + 2), j] = 1
-            ## image2d_flatfielded[(n2 - 5):n2, j] = 1
+            image2d_flatfielded[(n1 - 1):(n1 + 2), j] = 1
+            image2d_flatfielded[(n2 - 5):n2, j] = 1
     if args.debugplot == 0:
         print('OK!')
-
-    # set pixels below minimum value to 1.0
-    filtered = np.where(image2d_flatfielded < args.minimum_value_in_output)
-    image2d_flatfielded[filtered] = 1.0
 
     # restore global offsets
     image2d_flatfielded = apply_integer_offsets(
@@ -304,6 +317,14 @@ def main(args=None):
         offx=-rectwv_coeff.global_integer_offset_x_pix,
         offy=-rectwv_coeff.global_integer_offset_y_pix
     )
+
+    # set pixels below minimum value to 1.0
+    filtered = np.where(image2d_flatfielded < args.minimum_value_in_output)
+    image2d_flatfielded[filtered] = 1.0
+
+    # set pixels above maximum value to 1.0
+    filtered = np.where(image2d_flatfielded > args.maximum_value_in_output)
+    image2d_flatfielded[filtered] = 1.0
 
     # save output file
     save_ndarray_to_fits(
