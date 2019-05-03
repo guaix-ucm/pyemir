@@ -78,10 +78,10 @@ def main(args=None):
                         help="Maximum value allowed in output file: pixels "
                              "above this value are set to 1.0 (default=10.0)",
                         type=float, default=10.0)
-    parser.add_argument("--nwindow_median", required=True,
-                        help="Window size to smooth median spectrum in the "
-                             "spectral direction",
-                        type=int)
+    # parser.add_argument("--nwindow_median", required=True,
+    #                     help="Window size to smooth median spectrum in the "
+    #                          "spectral direction",
+    #                     type=int)
     parser.add_argument("--outfile", required=True,
                         help="Output FITS file",
                         type=lambda x: arg_file_is_new(parser, x, mode='wb'))
@@ -251,32 +251,83 @@ def main(args=None):
             sp_collapsed = np.median(slitlet2d_rect[ii1:(ii2 + 1), :], axis=0)
 
             # smooth median spectrum along the spectral direction
-            ## sp_median = ndimage.median_filter(sp_collapsed, args.nwindow_median,
-            ##                                   mode='nearest')
-            xdum = np.arange(1, naxis1_slitlet2d + 1)
+            # sp_median = ndimage.median_filter(
+            #     sp_collapsed,
+            #     args.nwindow_median,
+            #     mode='nearest'
+            # )
+            xaxis1 = np.arange(1, naxis1_slitlet2d + 1)
+            nremove = 5
             spl = AdaptiveLSQUnivariateSpline(
-                x=xdum,
-                y=sp_collapsed,
+                x=xaxis1[nremove:-nremove],
+                y=sp_collapsed[nremove:-nremove],
                 t=11,
                 adaptive=True
             )
-            sp_median = spl(xdum)
+            xknots = spl.get_knots()
+            yknots = spl(xknots)
+            sp_median = spl(xaxis1)
+
+            # compute rms within each knot interval
+            nknots = len(xknots)
+            rms_array = np.zeros(nknots - 1, dtype=float)
+            for iknot in range(nknots - 1):
+                residuals = []
+                for xdum, ydum, yydum in \
+                        zip(xaxis1, sp_collapsed, sp_median):
+                    if xknots[iknot] <= xdum <= xknots[iknot + 1]:
+                        residuals.append(abs(ydum - yydum))
+                if len(residuals) > 5:
+                    rms_array[iknot] = np.std(residuals)
+                else:
+                    rms_array[iknot] = 0
+
+            # determine in which knot interval falls each pixel
+            iknot_array = np.zeros(len(xaxis1), dtype=int)
+            for idum, xdum in enumerate(xaxis1):
+                for iknot in range(nknots - 1):
+                    if xknots[iknot] <= xdum <= xknots[iknot + 1]:
+                        iknot_array[idum] = iknot
+
+            # compute new fit removing deviant points (with fixed knots)
+            xnewfit = []
+            ynewfit = []
+            for idum in range(len(xaxis1)):
+                delta_sp = abs(sp_collapsed[idum] - sp_median[idum])
+                rms_tmp = rms_array[iknot_array[idum]]
+                if idum == 0 or idum == (len(xaxis1) - 1):
+                    lok = True
+                elif rms_tmp > 0:
+                    if delta_sp < 3.0 * rms_tmp:
+                        lok = True
+                    else:
+                        lok = False
+                else:
+                    lok = True
+                if lok:
+                    xnewfit.append(xaxis1[idum])
+                    ynewfit.append(sp_collapsed[idum])
+            nremove = 5
+            splnew = AdaptiveLSQUnivariateSpline(
+                x=xnewfit[nremove:-nremove],
+                y=ynewfit[nremove:-nremove],
+                t=xknots[1:-1],
+                adaptive=False
+            )
+            sp_median = splnew(xaxis1)
 
             ymax_spmedian = sp_median.max()
             y_threshold = ymax_spmedian * args.minimum_fraction
             sp_median[np.where(sp_median < y_threshold)] = 0.0
 
-
             if abs(args.debugplot) > 10:
                 title = 'Slitlet#' + str(islitlet) + ' (median spectrum)'
-                ax = ximplotxy(xdum, sp_collapsed,
+                ax = ximplotxy(xaxis1, sp_collapsed,
                                title=title,
                                show=False, **{'label' : 'collapsed spectrum'})
-                ax.plot(xdum, sp_median, label='filtered spectrum')
+                ax.plot(xaxis1, sp_median, label='fitted spectrum')
                 ax.plot([1, naxis1_slitlet2d], 2*[y_threshold],
                         label='threshold')
-                xknots = spl.get_knots()
-                yknots = spl(xknots)
                 ax.plot(xknots, yknots, 'o', label='knots')
                 ax.legend()
                 ax.set_ylim(-0.05*ymax_spmedian, 1.05*ymax_spmedian)
