@@ -11,11 +11,6 @@ import logging
 
 import numina.ext.gtc
 import numina.core.recipes as recipes
-import numina.core.recipeinout as recipeio
-import numina.core.dataholders as dh
-import numina.types.qc as qctype
-import numina.types.obsresult as obtype
-import numina.types.dataframe as dataframe
 import numina.util.flow as flowmod
 
 import emirdrp.core.correctors as cor
@@ -24,42 +19,18 @@ import emirdrp.products as prods
 import emirdrp.datamodel
 
 
-class EmirRecipeResult(recipeio.RecipeResult):
-    """Specific RecipeResult for EMIR"""
-
-    def time_it(self, time1, time2):
-        values = self.attrs()
-        for k, spec in self.stored().items():
-            value = values[k]
-            # Store for Images..
-            if isinstance(value, dataframe.DataFrame):
-                hdul = value.open()
-                self.add_computation_time(hdul, time1, time2)
-
-    def add_computation_time(self, img, time1, time2):
-        img[0].header['NUMUTC1'] = time1.isoformat()
-        img[0].header['NUMUTC2'] = time2.isoformat()
-        return img
-
-
 class EmirRecipe(recipes.BaseRecipe):
     """Base clase for all EMIR Recipes
 
 
     Attributes
     ----------
-    qc : QualityControl, result, QC.GOOD by default
-
     logger :
          recipe logger
 
     datamodel : EmirDataModel
 
     """
-    RecipeResult = EmirRecipeResult
-
-    qc = dh.Result(obtype.QualityControlProduct,
-                   destination='qc', default=qctype.QC.GOOD)
     logger = logging.getLogger('numina.recipes.emir')
     datamodel = emirdrp.datamodel.EmirDataModel()
 
