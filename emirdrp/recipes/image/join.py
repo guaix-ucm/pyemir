@@ -617,7 +617,6 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         idx_flux = objects_small['flux'].argsort()
         objects_nth = objects_small[idx_flux][-NKEEP:]
         for obj in objects_nth:
-            print(obj['x'], obj['y'])
             region = image_box2d(obj['x'], obj['y'], finalshape, (box, box))
             regions.append(region)
         return regions
