@@ -7,7 +7,8 @@ import pytest
 from numina.tests.testcache import download_cache
 from numina.user.cli import main
 
-@pytest.mark.skip
+
+@pytest.mark.remote_data
 def test_1(tmpdir):
 
     tarname = "pyemir/pyemir-image-tutorial-v1.tar.gz"
