@@ -96,9 +96,9 @@ def median_slitlets_rectified(
 
     # initialize output image
     if mode == 0:
-        image2d_median = np.zeros((naxis2, naxis1))
+        image2d_median = np.zeros((naxis2, naxis1), dtype='float32')
     else:
-        image2d_median = np.zeros((EMIR_NBARS, naxis1))
+        image2d_median = np.zeros((EMIR_NBARS, naxis1), dtype='float32')
 
     # main loop
     for i in range(EMIR_NBARS):
@@ -157,11 +157,11 @@ def median_slitlets_rectified(
         # median spectrum
         image1d_median = np.ma.median(image2d_masked, axis=0).data
 
-        image_median = fits.PrimaryHDU(data=image1d_median,
+        image_median = fits.PrimaryHDU(data=image1d_median.astype('float32'),
                                        header=image_header)
 
     else:
-        image_median = fits.PrimaryHDU(data=image2d_median,
+        image_median = fits.PrimaryHDU(data=image2d_median.astype('float32'),
                                        header=image_header)
 
     return fits.HDUList([image_median])

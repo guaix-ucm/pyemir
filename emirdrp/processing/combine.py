@@ -246,6 +246,58 @@ def basic_processing_with_combination_frames(frames,
     return result
 
 
+def combination_hdul(hduls, method=combine.mean, errors=False, prolog=None):
+
+    _logger = logging.getLogger(__name__)
+
+    # FIXME: this should be merged with basic_processing_with_combination_frames
+    # FIXME: DRY
+
+    cnum = len(hduls)
+    if cnum == 0:
+        raise ValueError('number of HDUList == 0')
+
+    datamodel = EmirDataModel()
+
+    first_image = hduls[0]
+    base_header = first_image[0].header.copy()
+    last_image = hduls[-1]
+    base_header_last = last_image[0].header.copy()
+
+    _logger.info("stacking %d images using '%s'", cnum, method.__name__)
+    combined_data = method([d[0].data for d in hduls], dtype='float32')
+
+    hdu = fits.PrimaryHDU(combined_data[0], header=base_header)
+    _logger.debug('update result header')
+    if prolog:
+        hdu.header['history'] = prolog
+    hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method.__name__)
+    hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+
+    for img in hduls:
+        hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
+
+    prevnum = base_header.get('NUM-NCOM', 1)
+    hdu.header['NUM-NCOM'] = prevnum * cnum
+    hdu.header['UUID'] = str(uuid.uuid1())
+
+    # Copy extensions and then append 'variance' and 'map'
+    result = fits.HDUList([hdu])
+    for hdu in first_image[1:]:
+        result.append(hdu.copy())
+
+    # Headers of last image
+    hdu.header['TSUTC2'] = base_header_last['TSUTC2']
+    # Append error extensions
+    if errors:
+        varhdu = fits.ImageHDU(combined_data[1], name='VARIANCE')
+        result.append(varhdu)
+        num = fits.ImageHDU(combined_data[2].astype('int16'), name='MAP')
+        result.append(num)
+
+    return result
+
+
 def resize_hdul(hdul, newshape, region, extensions=None, window=None,
                     scale=1, fill=0.0, conserve=True):
     from numina.frame import resize_hdu
