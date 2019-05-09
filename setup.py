@@ -57,6 +57,8 @@ setup(name='pyemir',
                   'emirdrp.tools.display_slitlet_arrangement:main',
               'pyemir-fit_boundaries = ' +
                   'emirdrp.tools.fit_boundaries:main',
+              'pyemir-generate_yaml_for_abba = ' +
+                  'emirdrp.tools.generate_yaml_for_abba:main',
               'pyemir-median_slitlets_rectified = ' +
                   'emirdrp.processing.wavecal.median_slitlets_rectified:main',
               'pyemir-merge_bounddict_files = ' +
