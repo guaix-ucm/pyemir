@@ -1129,7 +1129,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         if numpy.any(num == 0):
             # We have pixels without
             # sky background information
-            self.logger.warn('pixels without sky information when correcting %s',
+            self.logger.warning('pixels without sky information when correcting %s',
                          frame.flat_corrected)
             binmask = num == 0
             # FIXME: during development, this is faster
