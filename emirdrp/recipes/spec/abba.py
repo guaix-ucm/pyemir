@@ -91,8 +91,12 @@ class ABBASpectraRectwv(EmirRecipe):
                   if char == 'A']
         with contextlib.ExitStack() as stack:
             hduls = [stack.enter_context(fname.open()) for fname in list_a]
-            reduced_image_a = combination_hdul(hduls, method=combine.sum,
-                                               errors=False, prolog=None)
+            reduced_image_a = combination_hdul(
+                hduls,
+                method=combine.sum,
+                errors=False,
+                prolog=None
+            )
         reduced_image_a = flow(reduced_image_a)
         hdr = reduced_image_a[0].header
         self.set_base_headers(hdr)
@@ -106,8 +110,12 @@ class ABBASpectraRectwv(EmirRecipe):
                       enumerate(full_set) if char == 'B']
             with contextlib.ExitStack() as stack:
                 hduls = [stack.enter_context(fname.open()) for fname in list_b]
-                reduced_image_b = combination_hdul(hduls, method=combine.sum,
-                                                   errors=False, prolog=None)
+                reduced_image_b = combination_hdul(
+                    hduls,
+                    method=combine.sum,
+                    errors=False,
+                    prolog=None
+                )
             reduced_image_b = flow(reduced_image_b)
             hdr = reduced_image_b[0].header
             self.set_base_headers(hdr)
@@ -166,7 +174,7 @@ class ABBASpectraRectwv(EmirRecipe):
         self.set_base_headers(hdu.header)
 
         self.logger.debug('update result header')
-        hdu.header['EMIRUUID'] = str(uuid.uuid1())
+        hdu.header['UUID'] = str(uuid.uuid1())
         hdu.header['OBSMODE'] = pattern + ' pattern'
         hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
         hdu.header['history'] = "Processed " + pattern + " pattern"
