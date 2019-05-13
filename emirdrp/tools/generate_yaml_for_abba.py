@@ -75,6 +75,9 @@ def main(args=None):
                         type=int)
     parser.add_argument("--abba_prefix",
                         type=str)
+    parser.add_argument("--method",
+                        default='sigmaclip',
+                        choices=['mean', 'median', 'sum', 'sigmaclip'])
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
@@ -198,7 +201,7 @@ def main(args=None):
                 output += '\n          ]'
             output += '\n'
         output += 'requirements:\n'
-        output += '  method: mean\n'
+        output += '  method: sigmaclip\n'
         output += '  field: reduced_mos_abba\n'
         output += 'enabled: True'
     else:
