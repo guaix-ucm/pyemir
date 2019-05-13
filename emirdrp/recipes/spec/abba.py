@@ -55,6 +55,11 @@ class ABBASpectraRectwv(EmirRecipe):
         1,
         description='Repetitions at each individual A or B location'
     )
+    method = Parameter(
+        'sum',
+        description='Combination method',
+        choices=['mean', 'median', 'sum', 'sigmaclip']
+    )
 
     reduced_mos_abba = Result(prods.ProcessedMOS)
 
@@ -86,6 +91,13 @@ class ABBASpectraRectwv(EmirRecipe):
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
 
+        # available combination methods
+        fmethod = {'mean': combine.mean,
+                   'median': combine.median,
+                   'sum': combine.sum,
+                   'sigmaclip': combine.sigmaclip
+                   }
+
         # basic reduction of A images
         list_a = [rinput.obresult.frames[i] for i, char in enumerate(full_set)
                   if char == 'A']
@@ -93,7 +105,7 @@ class ABBASpectraRectwv(EmirRecipe):
             hduls = [stack.enter_context(fname.open()) for fname in list_a]
             reduced_image_a = combination_hdul(
                 hduls,
-                method=combine.sum,
+                method=fmethod[rinput.method],
                 kwargs={},  # parameters for method
                 errors=False,
                 prolog=None
@@ -113,7 +125,7 @@ class ABBASpectraRectwv(EmirRecipe):
                 hduls = [stack.enter_context(fname.open()) for fname in list_b]
                 reduced_image_b = combination_hdul(
                     hduls,
-                    method=combine.sum,
+                    method=fmethod[rinput.method],
                     kwargs={},  # parameters for method
                     errors=False,
                     prolog=None
