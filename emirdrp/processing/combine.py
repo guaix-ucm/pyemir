@@ -246,7 +246,8 @@ def basic_processing_with_combination_frames(frames,
     return result
 
 
-def combination_hdul(hduls, method=combine.mean, errors=False, prolog=None):
+def combination_hdul(hduls, method=combine.mean, kwargs=None,
+                     errors=False, prolog=None):
 
     _logger = logging.getLogger(__name__)
 
@@ -265,7 +266,12 @@ def combination_hdul(hduls, method=combine.mean, errors=False, prolog=None):
     base_header_last = last_image[0].header.copy()
 
     _logger.info("stacking %d images using '%s'", cnum, method.__name__)
-    combined_data = method([d[0].data for d in hduls], dtype='float32')
+
+    # define parameters for method
+    kwargs = kwargs or dict()
+    kwargs['dtype'] = 'float32'
+
+    combined_data = method([d[0].data for d in hduls], **kwargs)
 
     hdu = fits.PrimaryHDU(combined_data[0], header=base_header)
     _logger.debug('update result header')

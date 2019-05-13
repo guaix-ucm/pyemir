@@ -94,6 +94,7 @@ class ABBASpectraRectwv(EmirRecipe):
             reduced_image_a = combination_hdul(
                 hduls,
                 method=combine.sum,
+                kwargs={},  # parameters for method
                 errors=False,
                 prolog=None
             )
@@ -113,6 +114,7 @@ class ABBASpectraRectwv(EmirRecipe):
                 reduced_image_b = combination_hdul(
                     hduls,
                     method=combine.sum,
+                    kwargs={},  # parameters for method
                     errors=False,
                     prolog=None
                 )
