@@ -138,6 +138,9 @@ class ABBASpectraRectwv(EmirRecipe):
             data_a = reduced_image_a[0].data.astype('float32')
             data_b = reduced_image_b[0].data.astype('float32')
             reduced_data = data_a - data_b
+            if pattern_sequence == 'ABBA':
+                # rescale output image
+                reduced_data *= 2.0
 
         # create reduced_image
         with contextlib.ExitStack() as stack:
