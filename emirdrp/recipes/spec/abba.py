@@ -55,10 +55,16 @@ class ABBASpectraRectwv(EmirRecipe):
         1,
         description='Repetitions at each individual A or B location'
     )
+    nsequences = Parameter(
+        1,
+        description='Number of pattern sequences'
+    )
+    # do not allow 'sum' as combination method in order to avoid
+    # confusion with number of counts in resulting image
     method = Parameter(
-        'sum',
+        'mean',
         description='Combination method',
-        choices=['mean', 'median', 'sum', 'sigmaclip']
+        choices=['mean', 'median', 'sigmaclip']
     )
 
     reduced_mos_abba = Result(prods.ProcessedMOS)
@@ -67,24 +73,29 @@ class ABBASpectraRectwv(EmirRecipe):
         self.logger.info('applying existing rect.+wavecal. calibration of '
                          'ABBA spectra')
 
+        pattern = rinput.pattern
+        repeat = rinput.repeat
+        nsequences = rinput.nsequences
+
         self.logger.info(rinput.rectwv_coeff)
-        self.logger.info('observation pattern......: {}'.format(
-            rinput.pattern))
-        self.logger.info('repeat...................: {}'.format(
-            rinput.repeat))
+        self.logger.info('observation pattern......: {}'.format(pattern))
+        self.logger.info('repeat...................: {}'.format(repeat))
+        self.logger.info('nsequences...............: {}'.format(nsequences))
 
         # check number of images
         nimages = len(rinput.obresult.frames)
         pattern_sequence = ''
         for i in range(len(rinput.pattern)):
-            pattern_sequence += rinput.pattern[i] * rinput.repeat
+            pattern_sequence += pattern[i] * repeat
         self.logger.info('expected sequence pattern: {}'.format(
             pattern_sequence))
         if nimages % len(pattern_sequence) != 0:
             raise ValueError('Unexpected number of images in observation '
                              'result file')
-        nsequences = nimages // len(pattern_sequence)
-        self.logger.info('number of sequences......: {}'.format(nsequences))
+        nexpected_images = len(pattern_sequence) * repeat * nsequences
+        if nimages != nexpected_images:
+            raise ValueError('Unexpected number of images in observation '
+                             'result file')
         full_set = pattern_sequence * nsequences
         self.logger.info('full set of images.......: {}'.format(full_set))
 
@@ -94,7 +105,6 @@ class ABBASpectraRectwv(EmirRecipe):
         # available combination methods
         fmethod = {'mean': combine.mean,
                    'median': combine.median,
-                   'sum': combine.sum,
                    'sigmaclip': combine.sigmaclip
                    }
 
@@ -102,6 +112,7 @@ class ABBASpectraRectwv(EmirRecipe):
         list_a = [rinput.obresult.frames[i] for i, char in enumerate(full_set)
                   if char == 'A']
         with contextlib.ExitStack() as stack:
+            self.logger.info('starting basic reduction of A images')
             hduls = [stack.enter_context(fname.open()) for fname in list_a]
             reduced_image_a = combination_hdul(
                 hduls,
@@ -122,6 +133,7 @@ class ABBASpectraRectwv(EmirRecipe):
             list_b = [rinput.obresult.frames[i] for i, char in
                       enumerate(full_set) if char == 'B']
             with contextlib.ExitStack() as stack:
+                self.logger.info('starting basic reduction of B images')
                 hduls = [stack.enter_context(fname.open()) for fname in list_b]
                 reduced_image_b = combination_hdul(
                     hduls,
@@ -138,9 +150,6 @@ class ABBASpectraRectwv(EmirRecipe):
             data_a = reduced_image_a[0].data.astype('float32')
             data_b = reduced_image_b[0].data.astype('float32')
             reduced_data = data_a - data_b
-            if pattern_sequence == 'ABBA':
-                # rescale output image
-                reduced_data *= 2.0
 
         # create reduced_image
         with contextlib.ExitStack() as stack:

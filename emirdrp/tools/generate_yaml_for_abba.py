@@ -73,11 +73,8 @@ def main(args=None):
                         type=int)
     parser.add_argument("--global_integer_offset_y_pix",
                         type=int)
-    parser.add_argument("--abba_prefix",
+    parser.add_argument("--obsid_prefix",
                         type=str)
-    parser.add_argument("--method",
-                        default='sigmaclip',
-                        choices=['mean', 'median', 'sum', 'sigmaclip'])
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
@@ -115,9 +112,14 @@ def main(args=None):
     print('Number of sequences......: {}'.format(nsequences))
     print('Full set of images.......: {}'.format(full_set))
 
+    # obsid_prefix
+    if args.obsid_prefix is None:
+        obsid_prefix = ''
+    else:
+        obsid_prefix = args.obsid_prefix + '_'
+
     # generate YAML file
     output = ''
-    output_script = ''
     if args.yamlnumber == 0:
         # initial rectification and wavelength calibration coefficients
         idlabel = list_fileinfo[0].filename[:10]
@@ -141,17 +143,15 @@ def main(args=None):
             if args.__dict__[item] is None:
                 raise ValueError('Parameter {} is None!'.format(item))
         # refined rectification and wavelength calibration for each block
-        output_script = '#!/bin/bash\n'
         i = 0
+        nblock = 0
         while i < nimages - 1:
-            idlabel = list_fileinfo[i].filename[:10]
-            output += 'id: _' + idlabel + '\n'
+            nblock += 1
+            idlabel = '_' + obsid_prefix + 'rectwv_{:03d}'.format(nblock)
+            output += 'id: ' + idlabel + '\n'
             output += 'instrument: EMIR\n'
             output += 'mode: GENERATE_RECTWV_COEFF\n'
             output += 'frames:\n'
-            output_script += 'cp -v obsid_' + idlabel + \
-                             '_results/rectwv_coeff.json data/' + \
-                             'rectwv_coeff_' + idlabel + 'refined.json\n'
             for k in range(len(args.pattern)):
                 output += ' - ' + list_fileinfo[i].filename + '\n'
                 i += 1
@@ -163,59 +163,46 @@ def main(args=None):
                 output += '\n---\n'
     elif args.yamlnumber == 2:
         # apply rectification and wavelength calibration to each block
-        if args.abba_prefix is None:
-            abba_prefix = ''
-        else:
-            abba_prefix = args.abba_prefix + '_'
         i = 0
         nblock = 0
         list_children = []
         while i < nimages - 1:
             nblock += 1
-            idlabel = '_' + abba_prefix + 'abba_{:03d}'.format(nblock)
+            idlabel = '_' + obsid_prefix + 'abba_{:03d}'.format(nblock)
             output += 'id: ' + idlabel + '\n'
             list_children.append(idlabel)
             output += 'instrument: EMIR\n'
             output += 'mode: ABBA_SPECTRA_RECTWV\n'
             output += 'frames:\n'
-            idrefined = list_fileinfo[i].filename[:10]
             for k in range(len(args.pattern)):
                 output += ' - ' + list_fileinfo[i].filename + '\n'
                 i += 1
             output += 'requirements:\n'
             output += '  pattern: ABBA\n'
             output += '  repeat: 1\n'
-            output += '  rectwv_coeff: rectwv_coeff_' + \
-                      idrefined + 'refined.json\n'
+            output += '  nsequences: 1\n'
+            idrectwv = obsid_prefix + 'rectwv_{:03d}'.format(nblock)
+            output += '  rectwv_coeff: ../obsid_' + idrectwv + \
+                      '_results/rectwv_coeff.json\n'
+            output += '  method: mean\n'
             output += 'enabled: True\n'
             output += '---\n'
-        output += 'id: _' + abba_prefix + 'abba_combined\n'
+        output += 'id: _' + obsid_prefix + 'abba_combined\n'
         output += 'instrument: EMIR\n'
         output += 'mode: BASIC_COMBINE\n'
-        output += 'children: [\n'
+        output += 'children:\n'
         for idum, dum in enumerate(list_children):
-            output += "           " + dum
-            if idum < len(list_children) - 1:
-                output += ','
-            else:
-                output += '\n          ]'
-            output += '\n'
+            output += ' - ' + dum + '\n'
         output += 'requirements:\n'
         output += '  method: sigmaclip\n'
         output += '  field: reduced_mos_abba\n'
-        output += 'enabled: True'
+        output += 'enabled: True\n'
     else:
         raise ValueError('Unexpected yamlnumber={}'.format(args.yamlnumber))
 
     with args.outfile as f:
         f.write(output)
     print('--> File {} generated!'.format(args.outfile.name))
-
-    if output_script != '':
-        scriptfilename = re.sub('\. *', '_', args.outfile.name) + '_copy.sh'
-        with open(scriptfilename, 'w') as f:
-            f.write(output_script)
-        print('--> File {} generated!'.format(scriptfilename))
 
 
 if __name__ == "__main__":
