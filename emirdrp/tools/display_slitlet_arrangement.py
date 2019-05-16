@@ -288,7 +288,23 @@ def display_slitlet_histogram(csu_bar_slit_width,
         peak2 = fit.cluster_centers_[i+1][0]
         separator = (peak1 + peak2) / 2
         separator_list.append(separator)
-        print('--->  separator: {0:7.3f}'.format(separator))
+        array_csu_bar_slit_width = np.array(csu_bar_slit_width)
+        list_ok = []
+        list_not_ok = []
+        for k in range(EMIR_NBARS):
+            if array_csu_bar_slit_width[k] > separator:
+                list_ok.append(k + 1)
+            else:
+                list_not_ok.append(k + 1)
+        print('\nNumber of slitlets with width > separator: {}'.format(
+            sum(np.array(csu_bar_slit_width) > separator)
+        ))
+        print(list_ok)
+        print('\nNumber of slitlets with width < separator: {}'.format(
+            sum(np.array(csu_bar_slit_width) < separator)
+        ))
+        print(list_not_ok)
+        print('\n--->  separator: {0:7.3f}'.format(separator))
 
     # display histogram
     if abs(debugplot) % 10 != 0:
