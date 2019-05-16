@@ -30,8 +30,6 @@ import numpy
 from astropy.io import fits
 from numina.array import combine
 from numina.array import combine_shape
-from numina.processing.combine import basic_processing_with_combination
-from numina.processing.combine import basic_processing_with_combination_frames
 
 from emirdrp.processing.wcs import offsets_from_wcs
 from emirdrp.datamodel import EmirDataModel
