@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2017 Universidad Complutense de Madrid
+# Copyright 2013-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -30,6 +30,8 @@ import numpy
 from astropy.io import fits
 from numina.array import combine
 from numina.array import combine_shape
+from numina.processing.combine import basic_processing_with_combination
+from numina.processing.combine import basic_processing_with_combination_frames
 
 from emirdrp.processing.wcs import offsets_from_wcs
 from emirdrp.datamodel import EmirDataModel
@@ -177,129 +179,6 @@ def combine_images(images, datamodel, method=combine.mean, errors=False, prolog=
         result = fits.HDUList([hdu, varhdu, num])
     else:
         result = fits.HDUList([hdu])
-
-    return result
-
-
-def basic_processing_with_combination(rinput, flow,
-                                      method=combine.mean,
-                                      errors=True,
-                                      prolog=None):
-    return basic_processing_with_combination_frames(rinput.obresult.frames,
-                                                    flow, method=method,
-                                                    errors=errors,
-                                                    prolog=prolog)
-
-
-def basic_processing_with_combination_frames(frames,
-                                             flow,
-                                             method=combine.mean,
-                                             errors=True,
-                                             prolog=None
-                                             ):
-    odata = []
-    cdata = []
-    datamodel = EmirDataModel()
-    try:
-        _logger.info('processing input images')
-        for frame in frames:
-            hdulist = frame.open()
-            fname = datamodel.get_imgid(hdulist)
-            _logger.info('input is %s', fname)
-            final = flow(hdulist)
-            _logger.debug('output is input: %s', final is hdulist)
-            cdata.append(final)
-            # Files to be closed at the end
-            odata.append(hdulist)
-            if final is not hdulist:
-                odata.append(final)
-
-        base_header = cdata[0][0].header.copy()
-        cnum = len(cdata)
-        _logger.info("stacking %d images using '%s'", cnum, method.__name__)
-        data = method([d[0].data for d in cdata], dtype='float32')
-        hdu = fits.PrimaryHDU(data[0], header=base_header)
-        _logger.debug('update result header')
-        if prolog:
-            _logger.debug('write prolog')
-            hdu.header['history'] = prolog
-        hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method.__name__)
-        hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
-        for img in cdata:
-            hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
-        prevnum = base_header.get('NUM-NCOM', 1)
-        hdu.header['NUM-NCOM'] = prevnum * cnum
-        hdu.header['UUID'] = str(uuid.uuid1())
-        # Headers of last image
-        hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
-        if errors:
-            varhdu = fits.ImageHDU(data[1], name='VARIANCE')
-            num = fits.ImageHDU(data[2], name='MAP')
-            result = fits.HDUList([hdu, varhdu, num])
-        else:
-            result = fits.HDUList([hdu])
-    finally:
-        _logger.debug('closing images')
-        for hdulist in odata:
-            hdulist.close()
-
-    return result
-
-
-def combination_hdul(hduls, method=combine.mean, kwargs=None,
-                     errors=False, prolog=None):
-
-    _logger = logging.getLogger(__name__)
-
-    # FIXME: this should be merged with basic_processing_with_combination_frames
-    # FIXME: DRY
-
-    cnum = len(hduls)
-    if cnum == 0:
-        raise ValueError('number of HDUList == 0')
-
-    datamodel = EmirDataModel()
-
-    first_image = hduls[0]
-    base_header = first_image[0].header.copy()
-    last_image = hduls[-1]
-    base_header_last = last_image[0].header.copy()
-
-    _logger.info("stacking %d images using '%s'", cnum, method.__name__)
-
-    # define parameters for method
-    kwargs = kwargs or dict()
-    kwargs['dtype'] = 'float32'
-
-    combined_data = method([d[0].data for d in hduls], **kwargs)
-
-    hdu = fits.PrimaryHDU(combined_data[0], header=base_header)
-    _logger.debug('update result header')
-    if prolog:
-        hdu.header['history'] = prolog
-    hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method.__name__)
-    hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
-
-    for img in hduls:
-        hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
-
-    prevnum = base_header.get('NUM-NCOM', 1)
-    hdu.header['NUM-NCOM'] = prevnum * cnum
-    hdu.header['UUID'] = str(uuid.uuid1())
-
-    # Copy extensions and then append 'variance' and 'map'
-    result = fits.HDUList([hdu])
-    for hdu in first_image[1:]:
-        result.append(hdu.copy())
-
-    # Headers of last image
-    hdu.header['TSUTC2'] = base_header_last['TSUTC2']
-    # Append error extensions
-    if errors:
-        varhdu = fits.ImageHDU(combined_data[1], name='VARIANCE')
-        result.append(varhdu)
-        num = fits.ImageHDU(combined_data[2].astype('int16'), name='MAP')
-        result.append(num)
 
     return result
 

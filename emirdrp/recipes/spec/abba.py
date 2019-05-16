@@ -23,7 +23,7 @@ import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.datamodel
 import emirdrp.products as prods
-from emirdrp.processing.combine import combination_hdul
+from numina.processing.combine import combine_imgs
 from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff
 from emirdrp.processing.wavecal.median_slitlets_rectified import \
     median_slitlets_rectified
@@ -103,10 +103,7 @@ class ABBASpectraRectwv(EmirRecipe):
         flow = self.init_filters(rinput)
 
         # available combination methods
-        fmethod = {'mean': combine.mean,
-                   'median': combine.median,
-                   'sigmaclip': combine.sigmaclip
-                   }
+        fmethod = getattr(combine, rinput.method)
 
         # basic reduction of A images
         list_a = [rinput.obresult.frames[i] for i, char in enumerate(full_set)
@@ -114,13 +111,24 @@ class ABBASpectraRectwv(EmirRecipe):
         with contextlib.ExitStack() as stack:
             self.logger.info('starting basic reduction of A images')
             hduls = [stack.enter_context(fname.open()) for fname in list_a]
-            reduced_image_a = combination_hdul(
+            reduced_image_a = combine_imgs(
                 hduls,
-                method=fmethod[rinput.method],
-                kwargs={},  # parameters for method
+                method=fmethod,
+                method_kwargs={},  # parameters for method
                 errors=False,
                 prolog=None
             )
+        # ToDo: seguir aqui
+        # - la idea es aplicar flow() individualmente a cada frame original
+        # - hay que realizar rectificación y calibración en l.d.o.
+        # - hay que enmascarar líneas de cielo y generar una imagen sin ellas
+        # - obtener un perfil espacial (para rendijas predefinidas)
+        # - hacer crosscorrelación para medir offsets con respecto a una
+        # rendija(s) de referencia
+        if False:
+            print(type(hduls[0]))
+            print(type(reduced_image_a))
+            input("Stop here!")
         reduced_image_a = flow(reduced_image_a)
         hdr = reduced_image_a[0].header
         self.set_base_headers(hdr)
@@ -135,10 +143,10 @@ class ABBASpectraRectwv(EmirRecipe):
             with contextlib.ExitStack() as stack:
                 self.logger.info('starting basic reduction of B images')
                 hduls = [stack.enter_context(fname.open()) for fname in list_b]
-                reduced_image_b = combination_hdul(
+                reduced_image_b = combine_imgs(
                     hduls,
-                    method=fmethod[rinput.method],
-                    kwargs={},  # parameters for method
+                    method=fmethod,
+                    method_kwargs={},  # parameters for method
                     errors=False,
                     prolog=None
                 )
