@@ -21,11 +21,11 @@ from numina.array.fwhm import compute_fwhm_2d_simple
 from numina.core import Result, Parameter
 from numina.exceptions import RecipeError
 import numina.types.array as tarray
+from numina.processing.combine import basic_processing_with_combination
 from scipy.spatial import KDTree
 
 import emirdrp.datamodel as datamodel
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.processing.combine import basic_processing_with_combination
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 

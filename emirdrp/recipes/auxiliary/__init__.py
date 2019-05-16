@@ -22,7 +22,7 @@ from emirdrp.processing.info import gather_info_frames
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 
-from emirdrp.processing.combine import basic_processing_with_combination
+from numina.processing.combine import basic_processing_with_combination
 from emirdrp.processing.combine import  basic_processing_with_segmentation
 
 

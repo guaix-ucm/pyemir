@@ -19,7 +19,7 @@ import emirdrp.datamodel as datamodel
 from emirdrp.processing.bars import slits_to_ds9_reg, find_bars
 from emirdrp.core import EMIR_NBARS
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.processing.combine import basic_processing_with_combination
+from numina.processing.combine import basic_processing_with_combination
 
 import emirdrp.requirements as reqs
 import emirdrp.products as prods

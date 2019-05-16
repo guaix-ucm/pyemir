@@ -19,10 +19,10 @@ from numina.core.requirements import ObservationResultRequirement
 import numina.exceptions
 import numina.ext.gtc
 import numina.core.query as qmod
+from numina.processing.combine import basic_processing_with_combination
 
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
-from emirdrp.processing.combine import basic_processing_with_combination
 
 
 class CoaddABBARecipe(EmirRecipe):

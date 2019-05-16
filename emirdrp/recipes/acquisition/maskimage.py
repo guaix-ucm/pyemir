@@ -20,12 +20,13 @@ from numpy.polynomial.polynomial import polyval
 from scipy.ndimage import convolve1d
 from scipy.ndimage.filters import median_filter
 
+from numina.processing.combine import basic_processing_with_combination
+
 import emirdrp.datamodel as datamodel
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 from emirdrp.core import EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.processing.bardetect import char_bar_peak_l, char_bar_peak_r, char_bar_height
 
 

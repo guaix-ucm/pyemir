@@ -12,11 +12,11 @@
 
 from numina.array.combine import median
 from numina.core import Result, Requirement
+from numina.processing.combine import basic_processing_with_combination
 
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
-from emirdrp.processing.combine import basic_processing_with_combination
 
 
 class TestSkyCorrectRecipe(EmirRecipe):

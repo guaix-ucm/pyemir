@@ -25,11 +25,11 @@ from astropy.io import fits
 from numina.array.combine import median
 from numina.core import Result
 from numina.core.requirements import ObservationResultRequirement
+from numina.processing.combine import basic_processing_with_combination
 
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
-from emirdrp.processing.combine import basic_processing_with_combination
 
 _logger = logging.getLogger(__name__)
 

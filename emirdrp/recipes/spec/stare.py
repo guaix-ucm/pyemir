@@ -18,12 +18,12 @@ from numina.core import Result
 from numina.core import Requirement, Parameter
 from numina.array.combine import median
 import numina.processing as proc
+from numina.processing.combine import basic_processing_with_combination
 
 import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 from emirdrp.products import RectWaveCoeff
-from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff
 from emirdrp.processing.wavecal.median_slitlets_rectified \
     import median_slitlets_rectified

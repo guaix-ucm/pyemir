@@ -15,9 +15,9 @@ Spectroscopy mode, Stare Spectra
 
 from numina.core import Result
 from numina.array.combine import median
+from numina.processing.combine import basic_processing_with_combination
 
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.processing.combine import basic_processing_with_combination
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
 from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff

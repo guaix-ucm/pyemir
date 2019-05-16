@@ -17,13 +17,13 @@ import six
 from numina.core import Result, Parameter
 from numina.exceptions import RecipeError
 import numina.types.array as tarray
+from numina.processing.combine import basic_processing_with_combination
 from scipy import ndimage
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
 import emirdrp.datamodel as datamodel
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.processing.combine import basic_processing_with_combination
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
 from .common import normalize_raw, char_slit
