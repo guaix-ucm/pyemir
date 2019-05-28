@@ -33,7 +33,6 @@ from numina.exceptions import RecipeError
 from numina.core import Result
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.requirements import InstrumentConfigurationRequirement
 import numina.util.flow
 import numina.util.node
 import numina.processing as proc
