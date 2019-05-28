@@ -11,6 +11,8 @@
 Spectroscopy mode, combine AB or ABBA observations
 """
 
+from astropy import wcs
+from astropy.coordinates import SkyCoord
 import astropy.io.fits as fits
 import contextlib
 import numpy as np
@@ -21,7 +23,6 @@ from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 from numina.core import Result
 from numina.core import Parameter
 import numina.array.combine as combine
-from numina.processing.combine import basic_processing_with_combination_frames
 from numina.array.distortion import shift_image2d
 
 import emirdrp.requirements as reqs
@@ -36,6 +37,9 @@ from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import \
     save_spectral_lines_ds9
 from emirdrp.processing.wavecal.useful_mos_xpixels import useful_mos_xpixels
+
+from emirdrp.core import EMIR_NAXIS1
+from emirdrp.core import EMIR_NAXIS2
 
 
 def get_isky(i, pattern):
@@ -52,17 +56,38 @@ def get_isky(i, pattern):
             n_previous_sequences -= 1
         ieff = i - n_previous_sequences * 4
         if ieff == 0:
-            return i + 1
+            iout = i + 1
         elif ieff == 1:
-            return i - 1
+            iout = i - 1
         elif ieff == 2:
-            return i + 1
+            iout = i + 1
         elif ieff == 3:
-            return i - 1
+            iout = i - 1
         else:
             raise ValueError('Unexpected ieff value={}'.format(ieff))
     else:
         raise ValueError('Unexpected pattern: {}'.format(pattern))
+
+    return iout
+
+
+def compute_wcs_offsets(hduls):
+    """Compute offsets between ABBA images from WCS info in image headers"""
+
+    nimages = len(hduls)
+    c0 = None
+    list_sep_arcsec = []
+    for i in range(nimages):
+        wcsh = wcs.WCS(hduls[i][0].header)
+        ra, dec = wcsh.wcs_pix2world(EMIR_NAXIS1 / 2 + 0.5,
+                                     EMIR_NAXIS2 / 2 + 0.5, 1)
+        if i == 0:
+            c0 = SkyCoord(ra, dec, unit="deg")
+        c = SkyCoord(ra, dec, unit="deg")
+        sep = c.separation(c0).arcsec
+        list_sep_arcsec.append(round(sep, 4))
+
+    return list_sep_arcsec
 
 
 class ABBASpectraRectwv(EmirRecipe):
@@ -145,10 +170,18 @@ class ABBASpectraRectwv(EmirRecipe):
         grism_name = list_rectwv_coeff[0].tags['grism']
         filter_name = list_rectwv_coeff[0].tags['filter']
 
+        # compute offsets from WCS info in image headers
+        with contextlib.ExitStack() as stack:
+            hduls = [stack.enter_context(fname.open()) for fname in
+                     rinput.obresult.frames]
+            list_sep_arcsec = compute_wcs_offsets(hduls)
+
         for i in range(nimages):
             self.logger.info(list_rectwv_coeff[i])
-        self.logger.info('observation pattern: {}'.format(pattern))
-        self.logger.info('nsequences.........: {}'.format(nsequences))
+        self.logger.info('observation pattern.......: {}'.format(pattern))
+        self.logger.info('nsequences................: {}'.format(nsequences))
+        self.logger.info('offsets (arcsec, from WCS): {}'.format(
+            list_sep_arcsec))
 
         full_set = pattern * nsequences
         self.logger.info('full set of images.: {}'.format(full_set))
@@ -328,7 +361,7 @@ class ABBASpectraRectwv(EmirRecipe):
                 profile = np.sum(slitlet2d_blocked_smoothed, axis=1)
                 if char == 'A' and first_a:
                     reference_profile_a = profile.copy()
-                elif char=='B' and first_b:
+                elif char== 'B' and first_b:
                     reference_profile_b = profile.copy()
                 # ToDo: save profile using pickle
                 # para leer
@@ -436,9 +469,6 @@ class ABBASpectraRectwv(EmirRecipe):
         self.save_intermediate_img(reduced_mos_image_b,
                                    'reduced_mos_image_b.fits')
 
-        # ToDo: compute reduced_mos_abba
-        # tengo que actualizar header para meter la calibración en longitud
-        # de onda
         header_a = reduced_mos_image_a[0].header
         header_b = reduced_mos_image_b[0].header
         data_a = reduced_mos_image_a[0].data.astype('float32')
@@ -463,7 +493,7 @@ class ABBASpectraRectwv(EmirRecipe):
             save_four_ds9(list_rectwv_coeff[0])
             save_spectral_lines_ds9(list_rectwv_coeff[0])
 
-        # ToDo: estas imágenes no tienen la calibración en longitud de onda
+        # ToDo: estas imagenes no tienen la calibracion en longitud de onda
         # compute median spectra employing the useful region of the
         # rectified image
         if self.intermediate_results:
