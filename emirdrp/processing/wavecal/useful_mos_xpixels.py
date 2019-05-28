@@ -31,7 +31,7 @@ from emirdrp.processing.wavecal.get_islitlet import get_islitlet
 
 def useful_mos_xpixels(reduced_mos_image,
                        vertical_pix_region,
-                       npix_removed_around_ohlines=0,
+                       npix_removed_near_ohlines=0,
                        list_valid_wvregions=None,
                        debugplot=0):
     """Useful X-axis pixels removing +/- npixaround pixels around each OH line
@@ -87,7 +87,7 @@ def useful_mos_xpixels(reduced_mos_image,
 
     # pixels affected by OH lines
     xisok_oh = np.ones(naxis1, dtype='bool')
-    if int(npix_removed_around_ohlines) > 0:
+    if int(npix_removed_near_ohlines) > 0:
         dumdata = pkgutil.get_data(
             'emirdrp.instrument.configs',
             'Oliva_etal_2013.dat'
@@ -99,8 +99,8 @@ def useful_mos_xpixels(reduced_mos_image,
         for waveline in catlines_all_wave:
             expected_pixel = int(
                 (waveline - crval1) / cdelt1 + crpix1 + 0.5)
-            minpix = expected_pixel - int(npix_removed_around_ohlines)
-            maxpix = expected_pixel + int(npix_removed_around_ohlines)
+            minpix = expected_pixel - int(npix_removed_near_ohlines)
+            maxpix = expected_pixel + int(npix_removed_near_ohlines)
             for ipix in range(minpix, maxpix + 1):
                 if 1 <= ipix <= naxis1:
                     xisok_oh[ipix - 1] = False
