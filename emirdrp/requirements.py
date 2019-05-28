@@ -11,6 +11,7 @@
 
 from numina.core import Parameter, Requirement
 from numina.core.requirements import ObservationResultRequirement
+from numina.types.datatype import ListOfType
 
 import emirdrp.products as prods
 
@@ -93,6 +94,13 @@ class RectWaveCoeffRequirement(Requirement):
     def __init__(self, optional=False):
         super(RectWaveCoeffRequirement,
               self).__init__(prods.RectWaveCoeff, 'Rectification+wavelength calibration coefficients',
+                             optional=optional)
+
+
+class ListOfRectWaveCoeffRequirement(Requirement):
+    def __init__(self, optional=False):
+        super(ListOfRectWaveCoeffRequirement,
+              self).__init__(ListOfType(prods.RectWaveCoeff), 'List of Rectification+wavelength calibration coefficients',
                              optional=optional)
 
 

@@ -141,6 +141,10 @@ modes:
   name: ABBA Spectra with Precomputed Wavelength Calibration
   summary: ABBA Spectra with Precomputed Wavelength Calibration
   description: ABBA Spectra with Precomputed Wavelength Calibration
+- key: ABBA_SPECTRA_FAST_RECTWV
+  name: ABBA Spectra with Precomputed Wavelength Calibration (fast)
+  summary: ABBA Spectra with Precomputed Wavelength Calibration (fast)
+  description: ABBA Spectra with Precomputed Wavelength Calibration (fast)
 - key: LS_ABBA
   name: Long Slit ABBA
   summary: Spectroscopy ABBA
@@ -244,6 +248,7 @@ pipelines:
       GENERATE_RECTWV_COEFF: emirdrp.recipes.spec.stare.GenerateRectwvCoeff
       STARE_SPECTRA_RECTWV: emirdrp.recipes.spec.stare.StareSpectraRectwv
       ABBA_SPECTRA_RECTWV: emirdrp.recipes.spec.abba.ABBASpectraRectwv
+      ABBA_SPECTRA_FAST_RECTWV: emirdrp.recipes.spec.abba.ABBASpectraFastRectwv
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
       LOAD_RECWAVE: emirdrp.recipes.auxiliary.load.RecWaveRecipe
