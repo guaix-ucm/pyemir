@@ -74,7 +74,7 @@ def generate_yaml_content(step_number, args, list_fileinfo, enabled=True):
             if obsid_prefix == '':
                 output += 'id: _{}_rectwv\n'.format(idlabel)
             else:
-                output += 'id: _{}_{}_rectwv\n'.format(obsid_prefix, idlabel)
+                output += 'id: _{}{}_rectwv\n'.format(obsid_prefix, idlabel)
             output += 'instrument: EMIR\n'
             output += 'mode: GENERATE_RECTWV_COEFF\n'
             output += 'frames:\n'
@@ -90,20 +90,57 @@ def generate_yaml_content(step_number, args, list_fileinfo, enabled=True):
                 output += '\n---\n'
     elif step_number == 2:
         # apply rectification and wavelength calibration to each block
-        output += 'id: _' + obsid_prefix + 'abba_combined\n'
+        if obsid_prefix == '':
+            output += 'id: _abba_fast\n'
+        else:
+            output += 'id: _' + obsid_prefix + '_abba_fast\n'
+        output += 'instrument: EMIR\n'
+        output += 'mode: ABBA_SPECTRA_FAST_RECTWV\n'
+        output += 'frames:\n'
+        for i in range(nimages):
+            output += ' - ' + list_fileinfo[i].filename + '\n'
+        output += 'requirements:\n'
+        output += '  pattern: ABBA\n'
+        idlabel = list_fileinfo[0].filename[:10]
+        output += '  rectwv_coeff: ../obsid_' + idlabel + \
+                  '_rectwv_results/rectwv_coeff.json\n'
+        output += '  method: sigmaclip\n'
+        output += '  method_kwargs:\n'
+        output += '    low: 3.0\n'
+        output += '    high: 3.0\n'
+        output += 'enabled: True\n'
+    elif step_number == 3:
+        # apply rectification and wavelength calibration to each block
+        if obsid_prefix == '':
+            output += 'id: _abba\n'
+        else:
+            output += 'id: _' + obsid_prefix + '_abba\n'
         output += 'instrument: EMIR\n'
         output += 'mode: ABBA_SPECTRA_RECTWV\n'
         output += 'frames:\n'
         for i in range(nimages):
-            idlabel = list_fileinfo[i].filename[:10]
-            if obsid_prefix == '':
-                dumid = '_{}_rectwv'.format(idlabel)
-            else:
-                dumid = '_{}_{}_rectwv'.format(obsid_prefix, idlabel)
-            output += ' - ' + dumid + '\n'
+            output += ' - ' + list_fileinfo[i].filename + '\n'
         output += 'requirements:\n'
+        output += '  pattern: ABBA\n'
+        output += '  list_rectwv_coeff:\n'
+        for i in range(nimages):
+            idlabel = list_fileinfo[i].filename[:10]
+            output += '    - ../obsid_' + idlabel + \
+                      '_rectwv_results/rectwv_coeff.json\n'
         output += '  method: sigmaclip\n'
-        output += '  refine_objects_in_slit: 1\n'
+        output += '  method_kwargs:\n'
+        output += '    low: 3.0\n'
+        output += '    high: 3.0\n'
+        output += '  refine_target_along_slitlet:\n'
+        output += '    npix_removed_around_ohlines: 3\n'
+        output += '    nwidth_medfilt: 11\n'
+        output += '    ab_different_target: TBD\n'
+        output += '    vpix_region_a_target: [TBD, TBD]\n'
+        output += '    vpix_region_a_sky: [TBD, TBD]\n'
+        output += '    vpix_region_b_target: [TBD, TBD]\n'
+        output += '    vpix_region_b_sky: [TBD, TBD]\n'
+        output += '    list_valid_wvregions_a: [ [TBD, TBD], [TBD, TBD] ]\n'
+        output += '    list_valid_wvregions_b: [ [TBD, TBD], [TBD, TBD] ]\n'
         output += 'enabled: True\n'
     else:
         raise ValueError('Unexpected step_number={}'.format(args.step_number))
@@ -126,8 +163,9 @@ def main(args=None):
                         help=textwrap.dedent("""\
                         0: preliminary rectwv_coeff.json
                         1: refined rectwv_coeff.json
-                        2: ABBA reduction"""),
-                        type=int, choices=[0, 1, 2])
+                        2: ABBA fast reduction
+                        3: ABBA careful reduction"""),
+                        type=int, choices=[0, 1, 2, 3])
     parser.add_argument("outfile",
                         help="Output YAML file name",
                         type=lambda x: arg_file_is_new(parser, x))
@@ -205,6 +243,8 @@ def main(args=None):
         output = generate_yaml_content(1, args, list_fileinfo)
     elif args.step_number == 2:
         output = generate_yaml_content(2, args, list_fileinfo)
+    elif args.step_number == 3:
+        output = generate_yaml_content(3, args, list_fileinfo)
     else:
         raise ValueError('Unexpected step_number={}'.format(args.step_number))
 
