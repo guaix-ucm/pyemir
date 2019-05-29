@@ -72,22 +72,37 @@ def get_isky(i, pattern):
 
 
 def compute_wcs_offsets(hduls):
-    """Compute offsets between ABBA images from WCS info in image headers"""
+    """Compute offsets and spatial scales from WCS info in image headers.
+
+    Compute offset (arcsec) between the first image in the sequence and
+    the rest of the images, as well as the spatial scale (arcsec/pix)
+    within each individual image.
+
+    """
 
     nimages = len(hduls)
     c0 = None
     list_sep_arcsec = []
+    list_spatial_scales_arcsecperpix = []
     for i in range(nimages):
         wcsh = wcs.WCS(hduls[i][0].header)
         ra, dec = wcsh.wcs_pix2world(EMIR_NAXIS1 / 2 + 0.5,
                                      EMIR_NAXIS2 / 2 + 0.5, 1)
+        ra_, dec_ = wcsh.wcs_pix2world(EMIR_NAXIS1 / 2 + 0.5,
+                                       EMIR_NAXIS2 / 2 + 1.5, 1)
         if i == 0:
             c0 = SkyCoord(ra, dec, unit="deg")
-        c = SkyCoord(ra, dec, unit="deg")
-        sep = c.separation(c0).arcsec
+        ci = SkyCoord(ra, dec, unit="deg")
+        ci_ = SkyCoord(ra_, dec_, unit="deg")
+        sep = ci.separation(c0).arcsec
+        scale = ci.separation(ci_).arcsec
         list_sep_arcsec.append(round(sep, 4))
+        list_spatial_scales_arcsecperpix.append(round(scale, 7))
 
-    return list_sep_arcsec
+    sep_arcsec = np.array(list_sep_arcsec)
+    spatial_scales_arcsecperpix = np.array(list_spatial_scales_arcsecperpix)
+
+    return sep_arcsec, spatial_scales_arcsecperpix
 
 
 class ABBASpectraRectwv(EmirRecipe):
@@ -128,14 +143,9 @@ class ABBASpectraRectwv(EmirRecipe):
     )
 
     reduced_mos_abba = Result(prods.ProcessedMOS)
+    reduced_mos_abba_combined = Result(prods.ProcessedMOS)
 
     def run(self, rinput):
-
-        if self.intermediate_results:
-            from matplotlib.backends.backend_pdf import PdfPages
-            pdf = PdfPages('crosscorrelation_ab.pdf')
-        else:
-            pdf = None
 
         nimages = len(rinput.obresult.frames)
         pattern = rinput.pattern
@@ -174,6 +184,7 @@ class ABBASpectraRectwv(EmirRecipe):
         else:
             raise ValueError("Unexpected error!")
 
+        # grism and filter names
         grism_name = list_rectwv_coeff[0].tags['grism']
         filter_name = list_rectwv_coeff[0].tags['filter']
 
@@ -181,31 +192,58 @@ class ABBASpectraRectwv(EmirRecipe):
         with contextlib.ExitStack() as stack:
             hduls = [stack.enter_context(fname.open()) for fname in
                      rinput.obresult.frames]
-            list_sep_arcsec = compute_wcs_offsets(hduls)
+            sep_arcsec, spatial_scales = compute_wcs_offsets(hduls)
+
+        sep_pixel = np.round(sep_arcsec / spatial_scales, 6)
 
         for i in range(nimages):
             self.logger.info(list_rectwv_coeff[i])
-        self.logger.info('observation pattern.......: {}'.format(pattern))
-        self.logger.info('nsequences................: {}'.format(nsequences))
-        self.logger.info('offsets (arcsec, from WCS): {}'.format(
-            list_sep_arcsec))
+        self.logger.info('observation pattern..................: {}'.format(
+            pattern))
+        self.logger.info('nsequences...........................: {}'.format(
+            nsequences))
+        self.logger.info('offsets (arcsec, from WCS)...........: {}'.format(
+            sep_arcsec))
+        self.logger.info('spatial scales (arcsec/pix, from WCS): {}'.format(
+            spatial_scales))
+        self.logger.info('spatial scales (pixels, from WCS)....: {}'.format(
+            sep_pixel))
 
         full_set = pattern * nsequences
-        self.logger.info('full set of images.: {}'.format(full_set))
+        self.logger.info('full set of images...................: {}'.format(
+            full_set))
 
         # basic parameters to determine useful pixels in the wavelength
         # direction
         dumdict = rinput.refine_target_along_slitlet
 
-        if 'vertical_pix_region_a' in dumdict.keys():
-            vertical_pix_region_a = dumdict['vertical_pix_region_a']
+        if 'vpix_region_a_target' in dumdict.keys():
+            vpix_region_a_target = dumdict['vpix_region_a_target']
         else:
-            vertical_pix_region_a = None
+            vpix_region_a_target = None
 
-        if 'vertical_pix_region_b' in dumdict.keys():
-            vertical_pix_region_b = dumdict['vertical_pix_region_b']
+        if 'vpix_region_a_sky' in dumdict.keys():
+            vpix_region_a_sky = dumdict['vpix_region_a_sky']
         else:
-            vertical_pix_region_b = None
+            vpix_region_a_sky = None
+
+        if 'vpix_region_b_target' in dumdict.keys():
+            vpix_region_b_target = dumdict['vpix_region_b_target']
+        else:
+            vpix_region_b_target = None
+
+        if 'vpix_region_b_sky' in dumdict.keys():
+            vpix_region_b_sky = dumdict['vpix_region_b_sky']
+        else:
+            vpix_region_b_sky = None
+
+        if 'ab_different_target' in dumdict.keys():
+            ab_different_target = int(dumdict['ab_different_target'])
+            if ab_different_target not in [-1, 0, 1]:
+                raise ValueError('Invalid ab_different_target={} value'.format(
+                    ab_different_target))
+        else:
+            raise ValueError('Missing ab_different_target value')
 
         try:
             npix_removed_near_ohlines = \
@@ -219,17 +257,17 @@ class ABBASpectraRectwv(EmirRecipe):
             )
 
         if 'list_valid_wvregions_a' in dumdict.keys():
-            if vertical_pix_region_a is None:
+            if vpix_region_a_target is None:
                 raise ValueError('Unexpected list_valid_wvregions_a when '
-                                 'vertical_pix_region_a is not set')
+                                 'vpix_region_a_target is not set')
             list_valid_wvregions_a = dumdict['list_valid_wvregions_a']
         else:
             list_valid_wvregions_a = None
 
         if 'list_valid_wvregions_b' in dumdict.keys():
-            if vertical_pix_region_b is None:
+            if vpix_region_b_target is None:
                 raise ValueError('Unexpected list_valid_wvregions_b when '
-                                 'vertical_pix_region_b is not set')
+                                 'vpix_region_b_target is not set')
 
             list_valid_wvregions_b = dumdict['list_valid_wvregions_b']
         else:
@@ -243,10 +281,10 @@ class ABBASpectraRectwv(EmirRecipe):
             raise ValueError('wrong value: nwidth_medfilt={}'.format(
                 dumdict['nwidth_medfilt']))
 
-        self.logger.info('vertical_pix_region_a: {}'.format(
-            vertical_pix_region_a))
-        self.logger.info('vertical_pix_region_b: {}'.format(
-            vertical_pix_region_b))
+        self.logger.info('vpix_region_a_target: {}'.format(
+            vpix_region_a_target))
+        self.logger.info('vpix_region_b_target: {}'.format(
+            vpix_region_b_target))
         self.logger.info('npix_removed_near_ohlines: {}'.format(
             npix_removed_near_ohlines))
         self.logger.info('list_valid_wvregions_a: {}'.format(
@@ -258,6 +296,13 @@ class ABBASpectraRectwv(EmirRecipe):
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
 
+        # intermediate PDF file with crosscorrelation plots
+        if self.intermediate_results:
+            from matplotlib.backends.backend_pdf import PdfPages
+            pdf = PdfPages('crosscorrelation_ab.pdf')
+        else:
+            pdf = None
+
         # basic reduction of A images
         self.logger.info('starting reduction of individual images')
         first_a = True
@@ -266,8 +311,8 @@ class ABBASpectraRectwv(EmirRecipe):
         xisok_b = None
         reference_profile_a = None
         reference_profile_b = None
-        refine_a = vertical_pix_region_a is not None
-        refine_b = vertical_pix_region_b is not None
+        refine_a = vpix_region_a_target is not None
+        refine_b = vpix_region_b_target is not None
         list_offsets = []
         for i, char in enumerate(full_set):
             if char == 'A' and refine_a:
@@ -314,16 +359,18 @@ class ABBASpectraRectwv(EmirRecipe):
                     reduced_image,
                     list_rectwv_coeff[i]
                 )
-                self.save_intermediate_img(
-                    reduced_mos_image,
-                    'reduced_mos_image_' + char + '_' + frame.filename[:10] +
-                    '.fits')
+                # ---
+                # self.save_intermediate_img(
+                #     reduced_mos_image,
+                #     'reduced_mos_image_' + char + '_' + frame.filename[:10] +
+                #     '.fits')
+                # ---
 
                 # get useful pixels in the wavelength direction
                 if char == 'A' and first_a:
                     xisok_a = useful_mos_xpixels(
                         reduced_mos_image=reduced_mos_image,
-                        vertical_pix_region=vertical_pix_region_a,
+                        vpix_region=vpix_region_a_target,
                         npix_removed_near_ohlines=npix_removed_near_ohlines,
                         list_valid_wvregions=list_valid_wvregions_a,
                         debugplot=0
@@ -331,26 +378,47 @@ class ABBASpectraRectwv(EmirRecipe):
                 elif char == 'B' and first_b:
                     xisok_b = useful_mos_xpixels(
                         reduced_mos_image=reduced_mos_image,
-                        vertical_pix_region=vertical_pix_region_b,
+                        vpix_region=vpix_region_b_target,
                         npix_removed_near_ohlines=npix_removed_near_ohlines,
                         list_valid_wvregions=list_valid_wvregions_b,
                         debugplot=0
                     )
 
                 if char == 'A':
-                    nsmin = vertical_pix_region_a[0]
-                    nsmax = vertical_pix_region_a[1]
+                    nsmin = vpix_region_a_target[0]
+                    nsmax = vpix_region_a_target[1]
                     xisok = xisok_a
+                    if vpix_region_a_sky is not None:
+                        nsmin_sky = vpix_region_a_sky[0]
+                        nsmax_sky = vpix_region_a_sky[1]
+                        skysubtraction = True
+                    else:
+                        nsmin_sky = None
+                        nsmax_sky = None
+                        skysubtraction = False
                 elif char == 'B':
-                    nsmin = vertical_pix_region_b[0]
-                    nsmax = vertical_pix_region_b[1]
+                    nsmin = vpix_region_b_target[0]
+                    nsmax = vpix_region_b_target[1]
                     xisok = xisok_b
+                    if vpix_region_b_sky is not None:
+                        nsmin_sky = vpix_region_b_sky[0]
+                        nsmax_sky = vpix_region_b_sky[1]
+                        skysubtraction = True
+                    else:
+                        nsmin_sky = None
+                        nsmax_sky = None
+                        skysubtraction = False
                 else:
                     raise ValueError('Unexpected char value: {}'.format(char))
 
                 # initial slitlet region
                 slitlet2d = \
                     reduced_mos_image[0].data[(nsmin - 1):nsmax, :].copy()
+                if skysubtraction:
+                    slitlet2d_sky = reduced_mos_image[0].data[
+                                    (nsmin_sky - 1):nsmax_sky, :].copy()
+                    median_sky = np.median(slitlet2d_sky, axis=0)
+                    slitlet2d -= median_sky
 
                 # selected wavelength regions after blocking OH lines
                 slitlet2d_blocked = slitlet2d[:, xisok]
@@ -363,9 +431,12 @@ class ABBASpectraRectwv(EmirRecipe):
                 else:
                     slitlet2d_blocked_smoothed = slitlet2d_blocked
 
-                # ToDo: choose best option
-                # convert to 1D series of spatial profiles
-                # spatial_prof = slitlet2d_blocked_smoothed.transpose().ravel()
+                # ---
+                # convert to 1D series of spatial profiles (note: this
+                # option does not work very well when the signal is low;
+                # a simple mean profile does a better job)
+                # profile = slitlet2d_blocked_smoothed.transpose().ravel()
+                # ---
                 profile = np.mean(slitlet2d_blocked_smoothed, axis=1)
                 if char == 'A' and first_a:
                     reference_profile_a = profile.copy()
@@ -382,7 +453,7 @@ class ABBASpectraRectwv(EmirRecipe):
                 # ---
 
                 # crosscorrelation to find offset
-                naround_zero = (nsmax - nsmin) // 2
+                naround_zero = (nsmax - nsmin) // 3
                 if char == 'A':
                     reference_profile = reference_profile_a
                 elif char == 'B':
@@ -392,8 +463,8 @@ class ABBASpectraRectwv(EmirRecipe):
                 offset, fpeak = periodic_corr1d(
                     reference_profile,
                     profile,
-                    fminmax=None,
-                    zero_padding=0,
+                    fminmax=(-1, 1),
+                    zero_padding=11,
                     nfit_peak=7,
                     naround_zero=naround_zero,
                     sp_label='spatial profile',
@@ -425,11 +496,14 @@ class ABBASpectraRectwv(EmirRecipe):
             self.logger.info('image: {}'.format(frame.filename))
             with frame.open() as f:
                 base_header = f[0].header.copy()
-                data = f[0].data.astype('double')
+                data = f[0].data
             if int(offset*1000 + 0.5) != 0:
                 self.logger.info(
                     'correcting vertical offset (pixesl): {}'.format(offset))
-                data = shift_image2d(data, yoffset=-offset).astype('float32')
+                data = shift_image2d(
+                    data,
+                    yoffset=-offset
+                ).astype('float32')
             hdu = fits.PrimaryHDU(data, header=base_header)
             hdu.header['UUID'] = str(uuid.uuid1())
             hdul = fits.HDUList([hdu])
@@ -444,10 +518,12 @@ class ABBASpectraRectwv(EmirRecipe):
                 reduced_image,
                 list_rectwv_coeff[i]
             )
-            self.save_intermediate_img(
-                reduced_mos_image,
-                'reduced_mos_image_refined_' + char + '_' +
-                frame.filename[:10] + '.fits')
+            # ---
+            # self.save_intermediate_img(
+            #     reduced_mos_image,
+            #     'reduced_mos_image_refined_' + char + '_' +
+            #     frame.filename[:10] + '.fits')
+            # ---
             # store reduced_mos_image
             if char == 'A':
                 list_a.append(reduced_mos_image)
@@ -481,15 +557,15 @@ class ABBASpectraRectwv(EmirRecipe):
         self.save_intermediate_img(reduced_mos_image_b,
                                    'reduced_mos_image_b.fits')
 
+        self.logger.info('mixing A and B spectra')
         header_a = reduced_mos_image_a[0].header
         header_b = reduced_mos_image_b[0].header
         data_a = reduced_mos_image_a[0].data.astype('float32')
         data_b = reduced_mos_image_b[0].data.astype('float32')
 
-        # ToDo: combine considering the offset between A and B
         reduced_mos_abba_data = data_a - data_b
 
-        # update reduced image header
+        # update reduced mos image header
         with contextlib.ExitStack() as stack:
             hduls = [stack.enter_context(fname.open()) for fname in
                      rinput.obresult.frames]
@@ -499,7 +575,42 @@ class ABBASpectraRectwv(EmirRecipe):
                 header_a, header_b,
                 pattern,
                 full_set,
-                list_offsets
+                list_offsets,
+                offset_ab=0
+            )
+
+        if abs(ab_different_target) == 0:
+            # ToDo: cross-correlate A and B profiles
+            reduced_mos_abba_combined_data = None
+            offset_ab = None
+        elif abs(ab_different_target) == 1:
+            # apply nominal offset (from WCS info) between first A
+            # and first B
+            offset_ab = sep_pixel[1] * ab_different_target
+            self.logger.info(
+                'correcting vertical offset (pixesl): {}'.format(offset_ab))
+            shifted_a_minus_b_data = shift_image2d(
+                reduced_mos_abba_data,
+                yoffset=-offset_ab,
+            ).astype('float32')
+            reduced_mos_abba_combined_data = \
+                reduced_mos_abba_data - shifted_a_minus_b_data
+        else:
+            raise ValueError('Invalid ab_different_target={}'.format(
+                ab_different_target))
+
+        # update reduced mos combined image header
+        with contextlib.ExitStack() as stack:
+            hduls = [stack.enter_context(fname.open()) for fname in
+                     rinput.obresult.frames]
+            reduced_mos_abba_combined = self.create_mos_abba_image(
+                hduls,
+                reduced_mos_abba_combined_data,
+                header_a, header_b,
+                pattern,
+                full_set,
+                list_offsets,
+                offset_ab
             )
 
         # ds9 region files (to be saved in the work directory)
@@ -524,12 +635,15 @@ class ABBASpectraRectwv(EmirRecipe):
 
         # save results in results directory
         self.logger.info('end rect.+wavecal. reduction of ABBA spectra')
-        result = self.create_result(reduced_mos_abba=reduced_mos_abba)
+        result = self.create_result(
+            reduced_mos_abba=reduced_mos_abba,
+            reduced_mos_abba_combined=reduced_mos_abba_combined
+        )
         return result
 
     def create_mos_abba_image(self, hduls, reduced_mos_abba_data,
                               header_a, header_b,
-                              pattern, full_set, list_offsets):
+                              pattern, full_set, list_offsets, offset_ab):
         # Copy header of first image
         base_header = hduls[0][0].header.copy()
 
@@ -585,8 +699,12 @@ class ABBASpectraRectwv(EmirRecipe):
         for img, key, offset in zip(hduls, full_set, list_offsets):
             imgid = dm.get_imgid(img)
             hdu.header['HISTORY'] = \
-                "Image '{}' is '{}', with voffset {}".format(
+                "Image '{}' is '{}', with voffset_pix {}".format(
                     imgid, key, offset)
+        if offset_ab != 0:
+            hdu.header['HISTORY'] = '--- Combination of AB spectra ---'
+            hdu.header['HISTORY'] = "voffset_pix between A and B {}".format(
+                offset_ab)
         result = fits.HDUList([hdu])
         return result
 

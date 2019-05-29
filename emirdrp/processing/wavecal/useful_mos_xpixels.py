@@ -30,7 +30,7 @@ from emirdrp.processing.wavecal.get_islitlet import get_islitlet
 
 
 def useful_mos_xpixels(reduced_mos_image,
-                       vertical_pix_region,
+                       vpix_region,
                        npix_removed_near_ohlines=0,
                        list_valid_wvregions=None,
                        debugplot=0):
@@ -46,12 +46,12 @@ def useful_mos_xpixels(reduced_mos_image,
     cdelt1 = base_header['cdelt1']
 
     # check vertical region
-    nsmin = int(vertical_pix_region[0] + 0.5)
-    nsmax = int(vertical_pix_region[1] + 0.5)
+    nsmin = int(vpix_region[0] + 0.5)
+    nsmax = int(vpix_region[1] + 0.5)
     if nsmin > nsmax:
-        raise ValueError('vertical_pix_region values in wrong order')
+        raise ValueError('vpix_region values in wrong order')
     elif nsmin < 1 or nsmax > naxis2:
-        raise ValueError('vertical_pix_region outside valid range')
+        raise ValueError('vpix_region outside valid range')
 
     # minimum and maximum pixels in the wavelength direction
     islitlet_min = get_islitlet(nsmin)
