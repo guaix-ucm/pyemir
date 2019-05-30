@@ -29,7 +29,8 @@ from numina.array.display.pause_debugplot import pause_debugplot
 from emirdrp.processing.wavecal.get_islitlet import get_islitlet
 
 
-def useful_mos_xpixels(reduced_mos_image,
+def useful_mos_xpixels(reduced_mos_data,
+                       base_header,
                        vpix_region,
                        npix_removed_near_ohlines=0,
                        list_valid_wvregions=None,
@@ -38,7 +39,6 @@ def useful_mos_xpixels(reduced_mos_image,
     """
 
     # get wavelength calibration from image header
-    base_header = reduced_mos_image[0].header
     naxis1 = base_header['naxis1']
     naxis2 = base_header['naxis2']
     crpix1 = base_header['crpix1']
@@ -113,7 +113,7 @@ def useful_mos_xpixels(reduced_mos_image,
                          'removing OH lines')
 
     if abs(debugplot) in [21, 22]:
-        slitlet2d = reduced_mos_image[0].data[(nsmin - 1):nsmax, :].copy()
+        slitlet2d = reduced_mos_data[(nsmin - 1):nsmax, :].copy()
         ximshow(slitlet2d,
                 title='Rectified region',
                 first_pixel=(1, nsmin),

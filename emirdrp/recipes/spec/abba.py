@@ -281,6 +281,14 @@ class ABBASpectraRectwv(EmirRecipe):
             raise ValueError('wrong value: nwidth_medfilt={}'.format(
                 dumdict['nwidth_medfilt']))
 
+        try:
+            save_individual_images = int(dumdict['save_individual_images'])
+        except KeyError:
+            save_individual_images = 0
+        except ValueError:
+            raise ValueError('wrong value: save_individual_images={}'.format(
+                dumdict['save_individual_images']))
+
         self.logger.info('vpix_region_a_target: {}'.format(
             vpix_region_a_target))
         self.logger.info('vpix_region_b_target: {}'.format(
@@ -296,6 +304,38 @@ class ABBASpectraRectwv(EmirRecipe):
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
 
+        # basic reduction, rectification and wavelength calibration of
+        # all the individual images
+        list_reduced_mos_images = []
+        self.logger.info('starting reduction of individual images')
+        for i, char in enumerate(full_set):
+            frame = rinput.obresult.frames[i]
+            self.logger.info('image {} ({} of {})'.format(char, i + 1,
+                                                          nimages))
+            self.logger.info('image: {}'.format(frame.filename))
+            with frame.open() as f:
+                base_header = f[0].header.copy()
+                data = f[0].data.astype('float32')
+            hdu = fits.PrimaryHDU(data, header=base_header)
+            hdu.header['UUID'] = str(uuid.uuid1())
+            hdul = fits.HDUList([hdu])
+            # basic reduction
+            reduced_image = flow(hdul)
+            hdr = reduced_image[0].header
+            self.set_base_headers(hdr)
+            # rectification and wavelength calibration
+            reduced_mos_image = apply_rectwv_coeff(
+                reduced_image,
+                list_rectwv_coeff[i]
+            )
+            if save_individual_images != 0:
+                self.save_intermediate_img(
+                    reduced_mos_image,
+                    'reduced_mos_image_' + char + '_' +
+                    frame.filename[:10] + '.fits'
+                )
+            list_reduced_mos_images.append(reduced_mos_image)
+
         # intermediate PDF file with crosscorrelation plots
         if self.intermediate_results:
             from matplotlib.backends.backend_pdf import PdfPages
@@ -303,8 +343,8 @@ class ABBASpectraRectwv(EmirRecipe):
         else:
             pdf = None
 
-        # basic reduction of A images
-        self.logger.info('starting reduction of individual images')
+        # compute offsets between images
+        self.logger.info('computing offsets between individual images')
         first_a = True
         first_b = True
         xisok_a = None
@@ -329,47 +369,16 @@ class ABBASpectraRectwv(EmirRecipe):
                                                               nimages))
                 self.logger.info('image: {}'.format(frame.filename))
                 self.logger.info('(sky): {}'.format(frame_sky.filename))
-                with frame.open() as f:
-                    base_header = f[0].header.copy()
-                    # check grism
-                    grism_name_ = base_header['grism']
-                    if grism_name_ != grism_name:
-                        raise ValueError('Unexpected grism: {}'.format(
-                            grism_name_))
-                    # check filter
-                    filter_name_ = base_header['filter']
-                    if filter_name_ != filter_name:
-                        raise ValueError('Unexpected filter: {}'.format(
-                            filter_name_))
-                    data = f[0].data.astype('float32')
-                with frame_sky.open() as fsky:
-                    data_sky = fsky[0].data.astype('float32')
+                data = list_reduced_mos_images[i][0].data.copy()
+                data_sky = list_reduced_mos_images[isky][0].data
                 data -= data_sky
-                hdu = fits.PrimaryHDU(data, header=base_header)
-                hdu.header['UUID'] = str(uuid.uuid1())
-                hdul = fits.HDUList([hdu])
-                for hdu in f[1:]:
-                    hdul.append(hdu.copy())
-                # basic reduction
-                reduced_image = flow(hdul)
-                hdr = reduced_image[0].header
-                self.set_base_headers(hdr)
-                # rectification and wavelength calibration
-                reduced_mos_image = apply_rectwv_coeff(
-                    reduced_image,
-                    list_rectwv_coeff[i]
-                )
-                # ---
-                # self.save_intermediate_img(
-                #     reduced_mos_image,
-                #     'reduced_mos_image_' + char + '_' + frame.filename[:10] +
-                #     '.fits')
-                # ---
+                base_header = list_reduced_mos_images[i][0].header
 
                 # get useful pixels in the wavelength direction
                 if char == 'A' and first_a:
                     xisok_a = useful_mos_xpixels(
-                        reduced_mos_image=reduced_mos_image,
+                        data,
+                        base_header,
                         vpix_region=vpix_region_a_target,
                         npix_removed_near_ohlines=npix_removed_near_ohlines,
                         list_valid_wvregions=list_valid_wvregions_a,
@@ -377,7 +386,8 @@ class ABBASpectraRectwv(EmirRecipe):
                     )
                 elif char == 'B' and first_b:
                     xisok_b = useful_mos_xpixels(
-                        reduced_mos_image=reduced_mos_image,
+                        data,
+                        base_header,
                         vpix_region=vpix_region_b_target,
                         npix_removed_near_ohlines=npix_removed_near_ohlines,
                         list_valid_wvregions=list_valid_wvregions_b,
@@ -412,11 +422,9 @@ class ABBASpectraRectwv(EmirRecipe):
                     raise ValueError('Unexpected char value: {}'.format(char))
 
                 # initial slitlet region
-                slitlet2d = \
-                    reduced_mos_image[0].data[(nsmin - 1):nsmax, :].copy()
+                slitlet2d = data[(nsmin - 1):nsmax, :].copy()
                 if skysubtraction:
-                    slitlet2d_sky = reduced_mos_image[0].data[
-                                    (nsmin_sky - 1):nsmax_sky, :].copy()
+                    slitlet2d_sky = data[(nsmin_sky - 1):nsmax_sky, :].copy()
                     median_sky = np.median(slitlet2d_sky, axis=0)
                     slitlet2d -= median_sky
 
@@ -487,6 +495,12 @@ class ABBASpectraRectwv(EmirRecipe):
             else:
                 list_offsets.append(0.0)
 
+        # close output PDF file
+        if pdf is not None:
+            pdf.close()
+
+        self.logger.info('correcting vertical offsets between individual '
+                         'images')
         list_a = []
         list_b = []
         for i, (char, offset) in enumerate(zip(full_set, list_offsets)):
@@ -494,36 +508,24 @@ class ABBASpectraRectwv(EmirRecipe):
             self.logger.info('image {} ({} of {})'.format(char, i + 1,
                                                           nimages))
             self.logger.info('image: {}'.format(frame.filename))
-            with frame.open() as f:
-                base_header = f[0].header.copy()
-                data = f[0].data
-            if int(offset*1000 + 0.5) != 0:
-                self.logger.info(
-                    'correcting vertical offset (pixesl): {}'.format(offset))
-                data = shift_image2d(
+            reduced_mos_image = list_reduced_mos_images[i]
+            data = reduced_mos_image[0].data
+            base_header = reduced_mos_image[0].header
+            self.logger.info(
+                'correcting vertical offset (pixesl): {}'.format(offset))
+            if offset != 0:
+                reduced_mos_image[0].data = shift_image2d(
                     data,
                     yoffset=-offset
                 ).astype('float32')
-            hdu = fits.PrimaryHDU(data, header=base_header)
-            hdu.header['UUID'] = str(uuid.uuid1())
-            hdul = fits.HDUList([hdu])
-            for hdu in f[1:]:
-                hdul.append(hdu.copy())
-            # basic reduction
-            reduced_image = flow(hdul)
-            hdr = reduced_image[0].header
-            self.set_base_headers(hdr)
-            # rectification and wavelength calibration
-            reduced_mos_image = apply_rectwv_coeff(
-                reduced_image,
-                list_rectwv_coeff[i]
-            )
-            # ---
-            # self.save_intermediate_img(
-            #     reduced_mos_image,
-            #     'reduced_mos_image_refined_' + char + '_' +
-            #     frame.filename[:10] + '.fits')
-            # ---
+            base_header['HISTORY'] = 'Applying voffset_pix {}'.format(offset)
+            if save_individual_images != 0:
+                self.save_intermediate_img(
+                    reduced_mos_image,
+                    'reduced_mos_image_refined_' + char + '_' +
+                    frame.filename[:10] + '.fits'
+                )
+
             # store reduced_mos_image
             if char == 'A':
                 list_a.append(reduced_mos_image)
@@ -536,6 +538,7 @@ class ABBASpectraRectwv(EmirRecipe):
         fmethod = getattr(combine, rinput.method)
 
         # final combination of A images
+        self.logger.info('combining individual A images')
         reduced_mos_image_a = combine_imgs(
             list_a,
             method=fmethod,
@@ -547,6 +550,7 @@ class ABBASpectraRectwv(EmirRecipe):
                                    'reduced_mos_image_a.fits')
 
         # final combination of B images
+        self.logger.info('combining individual B images')
         reduced_mos_image_b = combine_imgs(
             list_b,
             method=fmethod,
@@ -628,10 +632,6 @@ class ABBASpectraRectwv(EmirRecipe):
                     reduced_mos_abba, mode=imode
                 )
                 self.save_intermediate_img(median_image, outfile + '.fits')
-
-        # close output PDF file
-        if pdf is not None:
-            pdf.close()
 
         # save results in results directory
         self.logger.info('end rect.+wavecal. reduction of ABBA spectra')
