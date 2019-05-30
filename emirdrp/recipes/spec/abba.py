@@ -842,9 +842,17 @@ class ABBASpectraFastRectwv(EmirRecipe):
     reduced_mos_abba_combined = Result(prods.ProcessedMOS)
 
     def run(self, rinput):
+
         nimages = len(rinput.obresult.frames)
         pattern = rinput.pattern
         pattern_length = len(pattern)
+
+        # check combination method
+        if rinput.method != 'sigmaclip':
+            if rinput.method_kwargs != {}:
+                raise ValueError('Unexpected method_kwargs={}'.format(
+                    rinput.method_kwargs))
+
         # check pattern sequence matches number of images
         if nimages % pattern_length != 0:
             raise ValueError('Number of images is not a multiple of pattern '
@@ -904,6 +912,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
         self.save_intermediate_img(reduced_image_b, 'reduced_image_b.fits')
 
         # computation of A-B
+        header_a = reduced_image_a[0].header
+        header_b = reduced_image_b[0].header
         data_a = reduced_image_a[0].data.astype('float32')
         data_b = reduced_image_b[0].data.astype('float32')
         reduced_data = data_a - data_b
@@ -915,6 +925,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
             reduced_image = self.create_reduced_image(
                 hduls,
                 reduced_data,
+                header_a,
+                header_b,
                 rinput.pattern,
                 full_set,
                 voffset_pix=0
@@ -955,6 +967,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
             reduced_mos_abba_combined = self.create_reduced_image(
                 hduls,
                 reduced_mos_abba_combined_data,
+                header_a,
+                header_b,
                 rinput.pattern,
                 full_set,
                 voffset_pix
@@ -984,7 +998,9 @@ class ABBASpectraFastRectwv(EmirRecipe):
         )
         return result
 
-    def create_reduced_image(self, hduls, reduced_data, pattern, full_set,
+    def create_reduced_image(self, hduls, reduced_data,
+                             header_a, header_b,
+                             pattern, full_set,
                              voffset_pix):
         # Copy header of first image
         base_header = hduls[0][0].header.copy()
@@ -998,10 +1014,19 @@ class ABBASpectraFastRectwv(EmirRecipe):
         hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
         hdu.header['history'] = "Processed " + pattern + " pattern"
         hdu.header['NUM-NCOM'] = (len(hduls), 'Number of combined frames')
+
+        # update history
         dm = emirdrp.datamodel.EmirDataModel()
         for img, key in zip(hduls, full_set):
             imgid = dm.get_imgid(img)
             hdu.header['HISTORY'] = "Image '{}' is '{}'".format(imgid, key)
+        hdu.header['HISTORY'] = "Processed " + pattern + " pattern"
+        hdu.header['HISTORY'] = '--- Reduction of A images ---'
+        for line in header_a['HISTORY']:
+            hdu.header['HISTORY'] = line
+        hdu.header['HISTORY'] = '--- Reduction of B images ---'
+        for line in header_b['HISTORY']:
+            hdu.header['HISTORY'] = line
         if voffset_pix is not None and voffset_pix != 0:
             hdu.header['HISTORY'] = '--- Combination of AB spectra ---'
             hdu.header['HISTORY'] = "voffset_pix between A and B {}".format(
