@@ -929,7 +929,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
                 header_b,
                 rinput.pattern,
                 full_set,
-                voffset_pix=0
+                voffset_pix=0,
+                header_mos_abba=None,
             )
 
         # save intermediate image in work directory
@@ -941,6 +942,7 @@ class ABBASpectraFastRectwv(EmirRecipe):
             reduced_image,
             rectwv_coeff
         )
+        header_mos_abba = reduced_mos_abba[0].header
 
         # combine A and B data by shifting B on top of A
         voffset_pix = rinput.voffset_pix
@@ -948,7 +950,7 @@ class ABBASpectraFastRectwv(EmirRecipe):
         if voffset_pix is not None and voffset_pix != 0:
             self.logger.info(
                 'correcting vertical offset (pixesl): {}'.format(voffset_pix))
-            reduced_mos_abba_data =reduced_mos_abba[0].data.astype('float32')
+            reduced_mos_abba_data = reduced_mos_abba[0].data.astype('float32')
             shifted_a_minus_b_data = shift_image2d(
                 reduced_mos_abba_data,
                 yoffset=-voffset_pix,
@@ -971,7 +973,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
                 header_b,
                 rinput.pattern,
                 full_set,
-                voffset_pix
+                voffset_pix,
+                header_mos_abba=header_mos_abba
             )
 
         # ds9 region files (to be saved in the work directory)
@@ -1001,7 +1004,7 @@ class ABBASpectraFastRectwv(EmirRecipe):
     def create_reduced_image(self, hduls, reduced_data,
                              header_a, header_b,
                              pattern, full_set,
-                             voffset_pix):
+                             voffset_pix, header_mos_abba):
         # Copy header of first image
         base_header = hduls[0][0].header.copy()
 
@@ -1009,6 +1012,34 @@ class ABBASpectraFastRectwv(EmirRecipe):
         self.set_base_headers(hdu.header)
 
         self.logger.debug('update result header')
+        if header_mos_abba is not None:
+            self.logger.debug('update result header')
+            crpix1 = header_mos_abba['crpix1']
+            crval1 = header_mos_abba['crval1']
+            cdelt1 = header_mos_abba['cdelt1']
+
+            # update wavelength calibration in FITS header
+            for keyword in ['crval1', 'crpix1', 'crval2', 'crpix2']:
+                if keyword in hdu.header:
+                    hdu.header.remove(keyword)
+            hdu.header['crpix1'] = (crpix1, 'reference pixel')
+            hdu.header['crval1'] = (crval1, 'central wavelength at crpix1')
+            hdu.header['cdelt1'] = \
+                (cdelt1, 'linear dispersion (Angstrom/pixel)')
+            hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
+            hdu.header['ctype1'] = 'WAVELENGTH'
+            hdu.header['crpix2'] = (0.0, 'reference pixel')
+            hdu.header['crval2'] = (0.0, 'central value at crpix2')
+            hdu.header['cdelt2'] = (1.0, 'increment')
+            hdu.header['ctype2'] = 'PIXEL'
+            hdu.header['cunit2'] = ('Pixel', 'units along axis2')
+            for keyword in ['cd1_1', 'cd1_2', 'cd2_1', 'cd2_2',
+                            'PCD1_1', 'PCD1_2', 'PCD2_1', 'PCD2_2',
+                            'PCRPIX1', 'PCRPIX2']:
+                if keyword in hdu.header:
+                    hdu.header.remove(keyword)
+
+        # update additional keywords
         hdu.header['UUID'] = str(uuid.uuid1())
         hdu.header['OBSMODE'] = pattern + ' pattern'
         hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
