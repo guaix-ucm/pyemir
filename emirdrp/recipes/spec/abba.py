@@ -608,7 +608,7 @@ class ABBASpectraRectwv(EmirRecipe):
                 pattern,
                 full_set,
                 list_offsets,
-                offset_ab=0
+                voffset_pix=0
             )
 
         # combine A and B data by shifting B on top of A
@@ -644,24 +644,28 @@ class ABBASpectraRectwv(EmirRecipe):
                 plottitle='Comparison of A and B profiles',
                 pdf=pdf
             )
-            offset_ab = vpix_region_b_target[0] - vpix_region_a_target[0]
-            offset_ab += offset
+            voffset_pix = vpix_region_b_target[0] - vpix_region_a_target[0]
+            voffset_pix += offset
         elif abs(ab_different_target) == 1:
             # apply nominal offset (from WCS info) between first A
             # and first B
-            offset_ab = sep_pixel[1] * ab_different_target
+            voffset_pix = sep_pixel[1] * ab_different_target
         elif ab_different_target == 9:
-            offset_ab = None
+            voffset_pix = None
         else:
             raise ValueError('Invalid ab_different_target={}'.format(
                 ab_different_target))
 
-        if offset_ab is not None:
+        # close output PDF file
+        if pdf is not None:
+            pdf.close()
+
+        if voffset_pix is not None:
             self.logger.info(
-                'correcting vertical offset (pixesl): {}'.format(offset_ab))
+                'correcting vertical offset (pixesl): {}'.format(voffset_pix))
             shifted_a_minus_b_data = shift_image2d(
                 reduced_mos_abba_data,
-                yoffset=-offset_ab,
+                yoffset=-voffset_pix,
             ).astype('float32')
             reduced_mos_abba_combined_data = \
                 reduced_mos_abba_data - shifted_a_minus_b_data
@@ -669,10 +673,6 @@ class ABBASpectraRectwv(EmirRecipe):
             reduced_mos_abba_combined_data /= 2.0
         else:
             reduced_mos_abba_combined_data = None
-
-        # close output PDF file
-        if pdf is not None:
-            pdf.close()
 
         # update reduced mos combined image header
         with contextlib.ExitStack() as stack:
@@ -686,7 +686,7 @@ class ABBASpectraRectwv(EmirRecipe):
                 pattern,
                 full_set,
                 list_offsets,
-                offset_ab
+                voffset_pix
             )
 
         # ds9 region files (to be saved in the work directory)
@@ -715,7 +715,7 @@ class ABBASpectraRectwv(EmirRecipe):
 
     def create_mos_abba_image(self, hduls, dict_rtas, reduced_mos_abba_data,
                               header_a, header_b,
-                              pattern, full_set, list_offsets, offset_ab):
+                              pattern, full_set, list_offsets, voffset_pix):
         # Copy header of first image
         base_header = hduls[0][0].header.copy()
 
@@ -775,10 +775,10 @@ class ABBASpectraRectwv(EmirRecipe):
             hdu.header['HISTORY'] = \
                 "Image '{}' is '{}', with voffset_pix {}".format(
                     imgid, key, offset)
-        if offset_ab != 0:
+        if voffset_pix is not None and voffset_pix != 0:
             hdu.header['HISTORY'] = '--- Combination of AB spectra ---'
             hdu.header['HISTORY'] = "voffset_pix between A and B {}".format(
-                offset_ab)
+                voffset_pix)
         result = fits.HDUList([hdu])
         return result
 
@@ -832,8 +832,14 @@ class ABBASpectraFastRectwv(EmirRecipe):
         dict(),
         description='Arguments for combination method'
     )
+    voffset_pix = Parameter(
+        0.0,
+        description='Shift (pixels) to move A into B',
+        optional=True
+    )
 
     reduced_mos_abba = Result(prods.ProcessedMOS)
+    reduced_mos_abba_combined = Result(prods.ProcessedMOS)
 
     def run(self, rinput):
         nimages = len(rinput.obresult.frames)
@@ -910,7 +916,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
                 hduls,
                 reduced_data,
                 rinput.pattern,
-                full_set
+                full_set,
+                voffset_pix=0
             )
 
         # save intermediate image in work directory
@@ -922,6 +929,36 @@ class ABBASpectraFastRectwv(EmirRecipe):
             reduced_image,
             rectwv_coeff
         )
+
+        # combine A and B data by shifting B on top of A
+        voffset_pix = rinput.voffset_pix
+
+        if voffset_pix is not None and voffset_pix != 0:
+            self.logger.info(
+                'correcting vertical offset (pixesl): {}'.format(voffset_pix))
+            reduced_mos_abba_data =reduced_mos_abba[0].data.astype('float32')
+            shifted_a_minus_b_data = shift_image2d(
+                reduced_mos_abba_data,
+                yoffset=-voffset_pix,
+            ).astype('float32')
+            reduced_mos_abba_combined_data = \
+                reduced_mos_abba_data - shifted_a_minus_b_data
+            # scale signal to exposure of a single image
+            reduced_mos_abba_combined_data /= 2.0
+        else:
+            reduced_mos_abba_combined_data = None
+
+        # update reduced combined image header
+        with contextlib.ExitStack() as stack:
+            hduls = [stack.enter_context(fname.open()) for fname in
+                     rinput.obresult.frames]
+            reduced_mos_abba_combined = self.create_reduced_image(
+                hduls,
+                reduced_mos_abba_combined_data,
+                rinput.pattern,
+                full_set,
+                voffset_pix
+            )
 
         # ds9 region files (to be saved in the work directory)
         if self.intermediate_results:
@@ -941,10 +978,14 @@ class ABBASpectraFastRectwv(EmirRecipe):
 
         # save results in results directory
         self.logger.info('end rect.+wavecal. reduction of ABBA spectra')
-        result = self.create_result(reduced_mos_abba=reduced_mos_abba)
+        result = self.create_result(
+            reduced_mos_abba=reduced_mos_abba,
+            reduced_mos_abba_combined=reduced_mos_abba_combined
+        )
         return result
 
-    def create_reduced_image(self, hduls, reduced_data, pattern, full_set):
+    def create_reduced_image(self, hduls, reduced_data, pattern, full_set,
+                             voffset_pix):
         # Copy header of first image
         base_header = hduls[0][0].header.copy()
 
@@ -960,8 +1001,11 @@ class ABBASpectraFastRectwv(EmirRecipe):
         dm = emirdrp.datamodel.EmirDataModel()
         for img, key in zip(hduls, full_set):
             imgid = dm.get_imgid(img)
-            hdu.header['history'] = "Image '{}' is '{}'".format(imgid, key)
-
+            hdu.header['HISTORY'] = "Image '{}' is '{}'".format(imgid, key)
+        if voffset_pix is not None and voffset_pix != 0:
+            hdu.header['HISTORY'] = '--- Combination of AB spectra ---'
+            hdu.header['HISTORY'] = "voffset_pix between A and B {}".format(
+                voffset_pix)
         result = fits.HDUList([hdu])
         return result
 

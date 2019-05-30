@@ -129,6 +129,7 @@ def generate_yaml_content(step_number, args, list_fileinfo, enabled=True):
         output += '  method_kwargs:\n'
         output += '    low: 3.0\n'
         output += '    high: 3.0\n'
+        output += '  voffset_pix: 0.0\n'
         output += 'enabled: True\n'
     elif step_number == 3:
         # apply rectification and wavelength calibration to each block
