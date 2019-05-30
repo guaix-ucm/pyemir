@@ -70,24 +70,43 @@ def generate_yaml_content(step_number, args, list_fileinfo, enabled=True):
                 raise ValueError('Parameter {} is None!'.format(item))
         # refined rectification and wavelength calibration for each block
         for i in range(nimages):
-            idlabel = list_fileinfo[i].filename[:10]
-            if obsid_prefix == '':
-                output += 'id: _{}_rectwv\n'.format(idlabel)
+            if args.rectwv_combined:
+                if i == 0:
+                    display_id = True
+                else:
+                    display_id = False
             else:
-                output += 'id: _{}{}_rectwv\n'.format(obsid_prefix, idlabel)
-            output += 'instrument: EMIR\n'
-            output += 'mode: GENERATE_RECTWV_COEFF\n'
-            output += 'frames:\n'
+                display_id = True
+            if display_id:
+                idlabel = list_fileinfo[i].filename[:10]
+                if obsid_prefix == '':
+                    output += 'id: _{}_rectwv'.format(idlabel)
+                else:
+                    output += 'id: _{}{}_rectwv'.format(obsid_prefix, idlabel)
+                if args.rectwv_combined:
+                    output += '_combined'
+                output += '\n'
+                output += 'instrument: EMIR\n'
+                output += 'mode: GENERATE_RECTWV_COEFF\n'
+                output += 'frames:\n'
             output += ' - ' + list_fileinfo[i].filename + '\n'
-            output += 'requirements:\n'
-            for item in lrequirements:
-                output += '  {}: {}\n'.format(item, args.__dict__[item])
-            if enabled:
-                output += 'enabled: True'
+            if args.rectwv_combined:
+                if i == nimages - 1:
+                    display_requirements = True
+                else:
+                    display_requirements = False
             else:
-                output += 'enabled: False'
-            if i < nimages - 1:
-                output += '\n---\n'
+                display_requirements = True
+            if display_requirements:
+                output += 'requirements:\n'
+                for item in lrequirements:
+                    output += '  {}: {}\n'.format(item, args.__dict__[item])
+                if enabled:
+                    output += 'enabled: True'
+                else:
+                    output += 'enabled: False'
+                if i < nimages - 1:
+                    output += '\n---\n'
     elif step_number == 2:
         # apply rectification and wavelength calibration to each block
         if obsid_prefix == '':
@@ -102,8 +121,10 @@ def generate_yaml_content(step_number, args, list_fileinfo, enabled=True):
         output += 'requirements:\n'
         output += '  pattern: ABBA\n'
         idlabel = list_fileinfo[0].filename[:10]
-        output += '  rectwv_coeff: ../obsid_' + idlabel + \
-                  '_rectwv_results/rectwv_coeff.json\n'
+        output += '  rectwv_coeff: ../obsid_' + idlabel + '_rectwv_'
+        if args.rectwv_combined:
+            output += 'combined_'
+        output += 'results/rectwv_coeff.json\n'
         output += '  method: sigmaclip\n'
         output += '  method_kwargs:\n'
         output += '    low: 3.0\n'
@@ -122,18 +143,24 @@ def generate_yaml_content(step_number, args, list_fileinfo, enabled=True):
             output += ' - ' + list_fileinfo[i].filename + '\n'
         output += 'requirements:\n'
         output += '  pattern: ABBA\n'
-        output += '  list_rectwv_coeff:\n'
-        for i in range(nimages):
-            idlabel = list_fileinfo[i].filename[:10]
-            output += '    - ../obsid_' + idlabel + \
-                      '_rectwv_results/rectwv_coeff.json\n'
+        if args.rectwv_combined:
+            output += '  rectwv_coeff: ../obsid_'
+            output += list_fileinfo[0].filename[:10]
+            output += '_rectwv_combined_results/rectwv_coeff.json\n'
+        else:
+            output += '  list_rectwv_coeff:\n'
+            for i in range(nimages):
+                idlabel = list_fileinfo[i].filename[:10]
+                output += '    - ../obsid_' + idlabel + \
+                          '_rectwv_results/rectwv_coeff.json\n'
         output += '  method: sigmaclip\n'
         output += '  method_kwargs:\n'
         output += '    low: 3.0\n'
         output += '    high: 3.0\n'
         output += '  refine_target_along_slitlet:\n'
-        output += '    npix_removed_around_ohlines: 3\n'
+        output += '    npix_removed_near_ohlines: 3\n'
         output += '    nwidth_medfilt: 11\n'
+        output += '    save_individual_images: 0\n'
         output += '    ab_different_target: TBD\n'
         output += '    vpix_region_a_target: [TBD, TBD]\n'
         output += '    vpix_region_a_sky: [TBD, TBD]\n'
@@ -200,6 +227,9 @@ def main(args=None):
                         type=int)
     parser.add_argument("--obsid_prefix",
                         type=str)
+    parser.add_argument("--rectwv_combined",
+                        help="Generate single rectwv_coeff.json",
+                        action="store_true")
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
