@@ -499,11 +499,13 @@ class ABBASpectraRectwv(EmirRecipe):
                 else:
                     raise ValueError('Unexpected char value: {}'.format(char))
                 offset, fpeak = periodic_corr1d(
-                    reference_profile,
-                    profile,
-                    fminmax=(-1, 1),
+                    sp_reference=reference_profile,
+                    sp_offset=profile,
+                    remove_mean=False,
+                    frac_cosbell=0.10,
                     zero_padding=11,
-                    nfit_peak=7,
+                    fminmax=None,
+                    nfit_peak=5,
                     naround_zero=naround_zero,
                     sp_label='spatial profile',
                     plottitle='Image #{} (type {}), {}'.format(
@@ -634,11 +636,13 @@ class ABBASpectraRectwv(EmirRecipe):
                 profile = reference_profile_b
                 naround_zero = len_prof_b // 3
             offset, fpeak = periodic_corr1d(
-                reference_profile,
-                profile,
-                fminmax=(-1, 1),
+                sp_reference=reference_profile,
+                sp_offset=profile,
+                remove_mean=False,
+                frac_cosbell=0.10,
                 zero_padding=11,
-                nfit_peak=7,
+                fminmax=None,
+                nfit_peak=5,
                 naround_zero=naround_zero,
                 sp_label='spatial profile',
                 plottitle='Comparison of A and B profiles',
