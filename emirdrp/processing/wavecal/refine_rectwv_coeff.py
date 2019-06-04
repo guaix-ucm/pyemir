@@ -22,6 +22,7 @@ from __future__ import print_function
 
 from astropy.io import fits
 from copy import deepcopy
+from datetime import datetime
 import logging
 import numpy as np
 import pkgutil
@@ -41,6 +42,8 @@ from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.processing.wavecal.median_slitlets_rectified \
     import median_slitlets_rectified
 from emirdrp.processing.wavecal.set_wv_parameters import set_wv_parameters
+from emirdrp.processing.wavecal.synthetic_lines_rawdata import \
+    synthetic_lines_rawdata
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NBARS
@@ -87,8 +90,11 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     refined_rectwv_coeff : RectWaveCoeff instance
         Refined rectification and wavelength calibration coefficients
         for the particular CSU configuration.
+    synthetic_raw_image : HDUList object
+        Output 2D image (raw format) with the expected catalogue lines.
     expected_cat_image : HDUList object
-        Output 2D image with the expected catalogued lines.
+        Output 2D image (rectified and wavelength calibrated) with
+        the expected catalogue lines.
 
     """
 
@@ -207,6 +213,22 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     logger.info('- robust_std.: {0:7.3f}'.format(widths_summary['robust_std']))
     # empirical transformation of slit width (mm) to pixels
     sigma_broadening = cdelt1 * widths_summary['median']
+
+    synthetic_raw_data = synthetic_lines_rawdata(
+        catlines_all_wave,
+        catlines_all_flux,
+        list_useful_slitlets,
+        refined_rectwv_coeff
+    )
+    synthetic_raw_header = main_header.copy()
+    synthetic_raw_header['DATE-OBS'] = \
+        datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+    chistory = 'Synthetic image'
+    synthetic_raw_header.add_history(chistory)
+    hdu = fits.PrimaryHDU(synthetic_raw_data.astype('float32'),
+                          header=synthetic_raw_header)
+    synthetic_raw_image = fits.HDUList([hdu])
+    input("Stop here")
 
     # convolve location of catalogue lines to generate expected spectrum
     xwave_reference, sp_reference = convolve_comb_lines(
@@ -378,4 +400,4 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         pdf.close()
 
     # return result
-    return refined_rectwv_coeff, expected_cat_image
+    return refined_rectwv_coeff, synthetic_raw_image, expected_cat_image

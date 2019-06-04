@@ -727,7 +727,7 @@ def overplot_boundaries_from_params(ax, params, parmodel,
 
     Parameters
     ----------
-    ax : matplotlib axes
+    ax : matplotlib axes or None
         Current plot axes.
     params : :class:`~lmfit.parameter.Parameters`
         Parameters to be employed in the prediction of the distorted
@@ -787,25 +787,28 @@ def overplot_boundaries_from_params(ax, params, parmodel,
             [1], params, parmodel, numpts=101, deg=5, debugplot=0
         )[0].poly_funct
         list_pol_upper_boundaries.append(pol_upper_expected)
-        xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
-        ydum1 = pol_lower_expected(xdum)
-        ax.plot(xdum + xoff, ydum1 + yoff, tmpcolor + linetype)
-        ydum2 = pol_upper_expected(xdum)
-        ax.plot(xdum + xoff, ydum2 + yoff, tmpcolor + linetype)
-        if alpha_fill is not None:
-            ax.fill_between(xdum + xoff, ydum1 + yoff, ydum2 + yoff,
-                            facecolor=tmpcolor, alpha=alpha_fill)
-        if labels:
-            # slitlet label
-            yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
-            yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
-            xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
-            ax.text(xcsu + xoff, (yc_lower + yc_upper) / 2 + yoff,
-                    str(islitlet),
-                    fontsize=10, va='center', ha='center',
-                    bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
-                    color=tmpcolor, fontweight='bold',
-                    backgroundcolor='white')
+
+        if ax is not None:
+            xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
+            ydum1 = pol_lower_expected(xdum)
+            ax.plot(xdum + xoff, ydum1 + yoff, tmpcolor + linetype)
+            ydum2 = pol_upper_expected(xdum)
+            ax.plot(xdum + xoff, ydum2 + yoff, tmpcolor + linetype)
+            if alpha_fill is not None:
+                ax.fill_between(xdum + xoff, ydum1 + yoff, ydum2 + yoff,
+                                facecolor=tmpcolor, alpha=alpha_fill)
+            if labels:
+                # slitlet label
+                yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
+                yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
+                xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
+                ax.text(xcsu + xoff, (yc_lower + yc_upper) / 2 + yoff,
+                        str(islitlet),
+                        fontsize=10, va='center', ha='center',
+                        bbox=dict(boxstyle="round,pad=0.1", fc="white",
+                                  ec="grey"),
+                        color=tmpcolor, fontweight='bold',
+                        backgroundcolor='white')
 
     # return lists with boundaries
     return list_pol_lower_boundaries, list_pol_upper_boundaries
@@ -822,7 +825,7 @@ def overplot_frontiers_from_params(ax, params, parmodel,
 
     Parameters
     ----------
-    ax : matplotlib axes
+    ax : matplotlib axes or None
         Current plot axes.
     params : :class:`~lmfit.parameter.Parameters`
         Parameters to be employed in the prediction of the distorted
@@ -880,25 +883,27 @@ def overplot_frontiers_from_params(ax, params, parmodel,
         list_pol_lower_frontiers.append(pol_lower_expected)
         pol_upper_expected = list_expected_frontiers[1].poly_funct
         list_pol_upper_frontiers.append(pol_upper_expected)
-        xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
-        ydum1 = pol_lower_expected(xdum)
-        ax.plot(xdum + xoff, ydum1 + yoff, tmpcolor + linetype)
-        ydum2 = pol_upper_expected(xdum)
-        ax.plot(xdum + xoff, ydum2 + yoff, tmpcolor + linetype)
-        if alpha_fill is not None:
-            ax.fill_between(xdum + xoff, ydum1 + yoff, ydum2 + yoff,
-                            facecolor=tmpcolor, alpha=alpha_fill)
-        if labels:
-            # slitlet label
-            yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
-            yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
-            xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
-            ax.text(xcsu + xoff, (yc_lower + yc_upper) / 2 + yoff,
-                    str(islitlet),
-                    fontsize=10, va='center', ha='center',
-                    bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey"),
-                    color=tmpcolor, fontweight='bold',
-                    backgroundcolor='white')
+        if ax is not None:
+            xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
+            ydum1 = pol_lower_expected(xdum)
+            ax.plot(xdum + xoff, ydum1 + yoff, tmpcolor + linetype)
+            ydum2 = pol_upper_expected(xdum)
+            ax.plot(xdum + xoff, ydum2 + yoff, tmpcolor + linetype)
+            if alpha_fill is not None:
+                ax.fill_between(xdum + xoff, ydum1 + yoff, ydum2 + yoff,
+                                facecolor=tmpcolor, alpha=alpha_fill)
+            if labels:
+                # slitlet label
+                yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
+                yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
+                xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
+                ax.text(xcsu + xoff, (yc_lower + yc_upper) / 2 + yoff,
+                        str(islitlet),
+                        fontsize=10, va='center', ha='center',
+                        bbox=dict(boxstyle="round,pad=0.1", fc="white",
+                                  ec="grey"),
+                        color=tmpcolor, fontweight='bold',
+                        backgroundcolor='white')
 
     # return lists of SpectrumTrail boundaries
     return list_pol_lower_frontiers, list_pol_upper_frontiers

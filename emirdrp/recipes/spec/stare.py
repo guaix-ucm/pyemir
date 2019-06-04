@@ -287,7 +287,8 @@ class GenerateRectwvCoeff(EmirRecipe):
                     rinput.refine_wavecalib_mode
                 ))
             # refine RectWaveCoeff object
-            rectwv_coeff, expected_catalog_lines = refine_rectwv_coeff(
+            rectwv_coeff, synthetic_raw_image, expected_catalog_lines = \
+                refine_rectwv_coeff(
                 reduced_mos,
                 rectwv_coeff,
                 rinput.refine_wavecalib_mode,
@@ -295,6 +296,8 @@ class GenerateRectwvCoeff(EmirRecipe):
                 rinput.maximum_slitlet_width_mm,
                 save_intermediate_results=self.intermediate_results
             )
+            self.save_intermediate_img(synthetic_raw_image,
+                                       'synthetic_raw_image.fits')
             self.save_intermediate_img(expected_catalog_lines,
                                        'expected_catalog_lines.fits')
             # re-apply rectification and wavelength calibration
