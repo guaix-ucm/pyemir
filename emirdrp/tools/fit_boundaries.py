@@ -749,10 +749,10 @@ def overplot_boundaries_from_params(ax, params, parmodel,
         If True, display slilet label
     alpha_fill : float or None
         Alpha factor to be employed to fill slitlet region.
-    global_integer_offset_x_pix : int or float
+    global_offset_x_pix : float
         Global offset in the X direction to be applied after computing
         the expected location.
-    global_offset_y_pix : int or float
+    global_offset_y_pix : float
         Global offset in the Y direction to be applied after computing
         the expected location.
 
@@ -769,8 +769,8 @@ def overplot_boundaries_from_params(ax, params, parmodel,
     """
 
     # duplicate to shorten the variable names
-    xoff = float(global_offset_x_pix)
-    yoff = float(global_offset_y_pix)
+    xoff = global_offset_x_pix
+    yoff = global_offset_y_pix
 
     list_pol_lower_boundaries = []
     list_pol_upper_boundaries = []
@@ -847,10 +847,10 @@ def overplot_frontiers_from_params(ax, params, parmodel,
         If True, display slilet label
     alpha_fill : float or None
         Alpha factor to be employed to fill slitlet region.
-    global_integer_offset_x_pix : int or float
+    global_offset_x_pix : float
         Global offset in the X direction to be applied after computing
         the expected location.
-    global_offset_y_pix : int or float
+    global_offset_y_pix : float
         Global offset in the Y direction to be applied after computing
         the expected location.
 
@@ -867,8 +867,8 @@ def overplot_frontiers_from_params(ax, params, parmodel,
     """
 
     # duplicate to shorten the variable names
-    xoff = float(global_offset_x_pix)
-    yoff = float(global_offset_y_pix)
+    xoff = global_offset_x_pix
+    yoff = global_offset_y_pix
 
     list_pol_lower_frontiers = []
     list_pol_upper_frontiers = []
@@ -1030,10 +1030,10 @@ def save_boundaries_from_params_ds9(params, parmodel,
         Number of points in which the X-range interval is subdivided
         in order to save each boundary as a connected set of line
         segments.
-    global_offset_x_pix : int or float
+    global_offset_x_pix : float
         Global offset in the X direction to be applied after computing
         the expected location.
-    global_offset_y_pix : int or float
+    global_offset_y_pix : float
         Global offset in the Y direction to be applied after computing
         the expected location.
 
@@ -1058,8 +1058,8 @@ def save_boundaries_from_params_ds9(params, parmodel,
         global_offset_y_pix))
 
     # duplicate to shorten the variable names
-    xoff = float(global_offset_x_pix)
-    yoff = float(global_offset_y_pix)
+    xoff = global_offset_x_pix
+    yoff = global_offset_y_pix
 
     if parmodel == "longslit":
         for dumpar in EXPECTED_PARAMETER_LIST:
@@ -1152,10 +1152,10 @@ def save_frontiers_from_params_ds9(params, parmodel,
         Number of points in which the X-range interval is subdivided
         in order to save each boundary as a connected set of line
         segments.
-    global_integer_offset_x_pix : int or float
+    global_offset_x_pix : float
         Global offset in the X direction to be applied after computing
         the expected location.
-    global_offset_y_pix : int or float
+    global_offset_y_pix : float
         Global offset in the Y direction to be applied after computing
         the expected location.
 
@@ -1180,8 +1180,8 @@ def save_frontiers_from_params_ds9(params, parmodel,
         global_offset_y_pix))
 
     # duplicate to shorten the variable names
-    xoff = float(global_offset_x_pix)
-    yoff = float(global_offset_y_pix)
+    xoff = global_offset_x_pix
+    yoff = global_offset_y_pix
 
     if parmodel == "longslit":
         for dumpar in EXPECTED_PARAMETER_LIST:

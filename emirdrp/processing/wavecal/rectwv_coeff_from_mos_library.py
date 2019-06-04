@@ -431,14 +431,14 @@ def main(args=None):
                              "the input FITS file",
                         type=lambda x: arg_file_is_new(parser, x, mode='wt'))
     # optional arguments
-    parser.add_argument("--global_integer_offset_x_pix",
+    parser.add_argument("--global_offset_x_pix",
                         help="Global integer offset in the X direction "
                              "(default=0)",
-                        default=0, type=int)
-    parser.add_argument("--global_integer_offset_y_pix",
+                        default=0, type=float)
+    parser.add_argument("--global_offset_y_pix",
                         help="Global integer offset in the Y direction "
                              "(default=0)",
-                        default=0, type=int)
+                        default=0, type=float)
     parser.add_argument("--ignore_dtu_configuration",
                         help="Ignore DTU configurations differences between "
                              "model and input image",
@@ -474,10 +474,10 @@ def main(args=None):
     )
 
     # set global offsets
-    rectwv_coeff.global_integer_offset_x_pix = \
-        args.global_integer_offset_x_pix
-    rectwv_coeff.global_integer_offset_y_pix = \
-        args.global_integer_offset_y_pix
+    rectwv_coeff.global_offset_x_pix = \
+        args.global_offset_x_pix
+    rectwv_coeff.global_offset_y_pix = \
+        args.global_offset_y_pix
 
     # save RectWaveCoeff object into JSON file
     rectwv_coeff.writeto(args.out_json.name)

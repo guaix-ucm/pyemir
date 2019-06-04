@@ -62,8 +62,8 @@ def generate_yaml_content(step_number, args, list_fileinfo, enabled=True):
             'refine_wavecalib_mode',
             'minimum_slitlet_width_mm',
             'maximum_slitlet_width_mm',
-            'global_integer_offset_x_pix',
-            'global_integer_offset_y_pix'
+            'global_offset_x_pix',
+            'global_offset_y_pix'
         ]
         for item in lrequirements:
             if args.__dict__[item] is None:
@@ -222,10 +222,10 @@ def main(args=None):
                         type=float)
     parser.add_argument("--maximum_slitlet_width_mm",
                         type=float)
-    parser.add_argument("--global_integer_offset_x_pix",
-                        type=int)
-    parser.add_argument("--global_integer_offset_y_pix",
-                        type=int)
+    parser.add_argument("--global_offset_x_pix",
+                        type=float)
+    parser.add_argument("--global_offset_y_pix",
+                        type=float)
     parser.add_argument("--obsid_prefix",
                         type=str)
     parser.add_argument("--rectwv_combined",

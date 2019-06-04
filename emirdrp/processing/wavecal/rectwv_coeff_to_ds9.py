@@ -339,8 +339,8 @@ def spectral_lines_to_ds9(rectwv_coeff,
     ds9_output += \
         '# filter..............: {0}\n'.format(rectwv_coeff.tags['filter'])
 
-    global_integer_offset_x_pix = rectwv_coeff.global_integer_offset_x_pix
-    global_integer_offset_y_pix = rectwv_coeff.global_integer_offset_y_pix
+    global_offset_x_pix = rectwv_coeff.global_offset_x_pix
+    global_offset_y_pix = rectwv_coeff.global_offset_y_pix
 
     for islitlet in range(1, EMIR_NBARS + 1):
         if islitlet not in rectwv_coeff.missing_slitlets:
@@ -422,19 +422,19 @@ def spectral_lines_to_ds9(rectwv_coeff,
                         pass
                 xx0, yy0 = fmap(ttd_order, aij, bij, np.array(x0),
                                 np.array(y0))
-                xx0 -= global_integer_offset_x_pix
+                xx0 -= global_offset_x_pix
                 yy0 += bb_ns1_orig
-                yy0 -= global_integer_offset_y_pix
+                yy0 -= global_offset_y_pix
                 xx1, yy1 = fmap(ttd_order, aij, bij, np.array(x1),
                                 np.array(y1))
-                xx1 -= global_integer_offset_x_pix
+                xx1 -= global_offset_x_pix
                 yy1 += bb_ns1_orig
-                yy1 -= global_integer_offset_y_pix
+                yy1 -= global_offset_y_pix
                 xx2, yy2 = fmap(ttd_order, aij, bij, np.array(x2),
                                 np.array(y2))
-                xx2 -= global_integer_offset_x_pix
+                xx2 -= global_offset_x_pix
                 yy2 += bb_ns1_orig
-                yy2 -= global_integer_offset_y_pix
+                yy2 -= global_offset_y_pix
                 for xx1_, xx2_, yy1_, yy2_ in zip(xx1, xx2, yy1, yy2):
                     ds9_output += \
                         'line {0} {1} {2} {3}'.format(
