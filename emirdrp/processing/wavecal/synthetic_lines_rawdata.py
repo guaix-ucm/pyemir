@@ -103,15 +103,11 @@ def synthetic_lines_rawdata(catlines_all_wave,
             pol_lower = Polynomial(dumdict['spectrail']['poly_coef_lower'])
             pol_upper = Polynomial(dumdict['spectrail']['poly_coef_upper'])
             xx1, yy1 = fmap(ttd_order, aij, bij, np.array(x1), np.array(y1))
-            yy1 = pol_lower(xx1) - global_integer_offset_y_pix
+            yy1 = pol_lower(xx1) - global_integer_offset_y_pix + 1
             xx1 -= global_integer_offset_x_pix
-            # yy1 += bb_ns1_orig
-            # yy1 -= global_integer_offset_y_pix
             xx2, yy2 = fmap(ttd_order, aij, bij, np.array(x2), np.array(y2))
-            yy2 = pol_upper(xx2) - global_integer_offset_y_pix
+            yy2 = pol_upper(xx2) - global_integer_offset_y_pix - 1
             xx2 -= global_integer_offset_x_pix
-            # yy2 += bb_ns1_orig
-            # yy2 -= global_integer_offset_y_pix
 
             for xx1_, xx2_, yy1_, yy2_, flux in zip(xx1, xx2, yy1, yy2, flist):
                 slope = (xx2_ - xx1_) / (yy2_ - yy1_)

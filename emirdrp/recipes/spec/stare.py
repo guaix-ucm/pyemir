@@ -11,8 +11,8 @@
 Spectroscopy mode, Stare Spectra
 """
 
-
-import numpy as np
+from astropy.io import fits
+from datetime import datetime
 
 from numina.core import Result
 from numina.core import Requirement, Parameter
@@ -20,8 +20,8 @@ from numina.array.combine import median
 import numina.processing as proc
 from numina.processing.combine import basic_processing_with_combination
 
-import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
+from emirdrp.instrument.csu_configuration import CsuConfiguration
 import emirdrp.products as prods
 from emirdrp.products import RectWaveCoeff
 from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff
@@ -29,13 +29,18 @@ from emirdrp.processing.wavecal.median_slitlets_rectified \
     import median_slitlets_rectified
 from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
     import rectwv_coeff_from_mos_library
+from emirdrp.processing.wavecal.retrieve_catlines import retrieve_catlines
+from emirdrp.processing.wavecal.synthetic_lines_rawdata import \
+    synthetic_lines_rawdata
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 \
     import save_spectral_lines_ds9
 from emirdrp.processing.wavecal.refine_rectwv_coeff import refine_rectwv_coeff
+import emirdrp.requirements as reqs
 
 from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
 from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
+from emirdrp.core import EMIR_NBARS
 
 
 class StareSpectraRecipe(EmirRecipe):
@@ -263,18 +268,6 @@ class GenerateRectwvCoeff(EmirRecipe):
             rinput.master_rectwv
         )
 
-        # set global offsets
-        rectwv_coeff.global_integer_offset_x_pix = \
-            rinput.global_integer_offset_x_pix
-        rectwv_coeff.global_integer_offset_y_pix = \
-            rinput.global_integer_offset_y_pix
-
-        # apply rectification and wavelength calibration
-        reduced_mos = apply_rectwv_coeff(
-            reduced_image,
-            rectwv_coeff
-        )
-
         # wavelength calibration refinement
         # 0 -> no refinement
         # 1 -> apply global offset to all the slitlets (using ARC lines)
@@ -282,29 +275,88 @@ class GenerateRectwvCoeff(EmirRecipe):
         # 11 -> apply global offset to all the slitlets (using OH lines)
         # 12 -> apply individual offset to each slitlet (using OH lines)
         if rinput.refine_wavecalib_mode != 0:
+            main_header = reduced_image[0].header
+
+            # determine useful slitlets
+            csu_config = CsuConfiguration.define_from_header(main_header)
+            # segregate slitlets
+            list_useful_slitlets = csu_config.widths_in_range_mm(
+                minwidth=rinput.minimum_slitlet_width_mm,
+                maxwidth=rinput.maximum_slitlet_width_mm
+            )
+            # remove missing slitlets
+            if len(rectwv_coeff.missing_slitlets) > 0:
+                for iremove in rectwv_coeff.missing_slitlets:
+                    if iremove in list_useful_slitlets:
+                        list_useful_slitlets.remove(iremove)
+
+            list_not_useful_slitlets = [i for i in
+                                        list(range(1, EMIR_NBARS + 1))
+                                        if i not in list_useful_slitlets]
+            self.logger.info('list of useful slitlets: {}'.format(
+                list_useful_slitlets))
+            self.logger.info('list of unusable slitlets: {}'.format(
+                list_not_useful_slitlets))
+
+            # retrieve arc/OH lines
+            catlines_all_wave, catlines_all_flux = retrieve_catlines(
+                rinput.refine_wavecalib_mode,
+                main_header['grism']
+            )
+
+            # generate synthetic image
+            synthetic_raw_data = synthetic_lines_rawdata(
+                catlines_all_wave,
+                catlines_all_flux,
+                list_useful_slitlets,
+                rectwv_coeff
+            )
+            synthetic_raw_header = main_header.copy()
+            synthetic_raw_header['DATE-OBS'] = \
+                datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+            chistory = 'Synthetic image'
+            synthetic_raw_header.add_history(chistory)
+            hdu = fits.PrimaryHDU(synthetic_raw_data.astype('float32'),
+                                  header=synthetic_raw_header)
+            synthetic_raw_image = fits.HDUList([hdu])
+            if self.intermediate_results:
+                self.save_intermediate_img(synthetic_raw_image,
+                                           'synthetic_raw_image.fits')
+
+            # set global offsets
+            rectwv_coeff.global_integer_offset_x_pix = \
+                rinput.global_integer_offset_x_pix
+            rectwv_coeff.global_integer_offset_y_pix = \
+                rinput.global_integer_offset_y_pix
+
+            # apply initial rectification and wavelength calibration
+            reduced_mos = apply_rectwv_coeff(
+                reduced_image,
+                rectwv_coeff
+            )
+
             self.logger.info(
                 'Refining wavelength calibration (mode={})'.format(
                     rinput.refine_wavecalib_mode
                 ))
             # refine RectWaveCoeff object
-            rectwv_coeff, synthetic_raw_image, expected_catalog_lines = \
-                refine_rectwv_coeff(
+            rectwv_coeff, expected_catalog_lines = refine_rectwv_coeff(
                 reduced_mos,
                 rectwv_coeff,
+                catlines_all_wave,
+                catlines_all_flux,
                 rinput.refine_wavecalib_mode,
-                rinput.minimum_slitlet_width_mm,
-                rinput.maximum_slitlet_width_mm,
+                list_useful_slitlets,
                 save_intermediate_results=self.intermediate_results
             )
-            self.save_intermediate_img(synthetic_raw_image,
-                                       'synthetic_raw_image.fits')
             self.save_intermediate_img(expected_catalog_lines,
                                        'expected_catalog_lines.fits')
-            # re-apply rectification and wavelength calibration
-            reduced_mos = apply_rectwv_coeff(
-                reduced_image,
-                rectwv_coeff
-            )
+
+        # apply rectification and wavelength calibration
+        reduced_mos = apply_rectwv_coeff(
+            reduced_image,
+            rectwv_coeff
+        )
 
         # ds9 region files (to be saved in the work directory)
         if self.intermediate_results:

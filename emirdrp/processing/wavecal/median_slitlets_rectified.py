@@ -42,10 +42,9 @@ from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
 def median_slitlets_rectified(
         input_image,
         mode=0,
-        minimum_slitlet_width_mm=EMIR_MINIMUM_SLITLET_WIDTH_MM,
-        maximum_slitlet_width_mm=EMIR_MAXIMUM_SLITLET_WIDTH_MM,
+        list_useful_slitlets=None,
         debugplot=0
-    ):
+):
     """Compute median spectrum for each slitlet.
 
     Parameters
@@ -61,10 +60,9 @@ def median_slitlets_rectified(
             each slitlet
         2 : single collapsed median spectrum, using exclusively the
             useful slitlets from the input image
-    minimum_slitlet_width_mm : float
-        Minimum slitlet width (mm) for a valid slitlet.
-    maximum_slitlet_width_mm : float
-        Maximum slitlet width (mm) for a valid slitlet.
+    list_useful_slitlets : list of integers or None
+        List of useful slitlets (from 1 to EMIR_NBARS). If None, the
+        list contains all the slitlets.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -114,21 +112,20 @@ def median_slitlets_rectified(
             image2d_median[i] = np.copy(sp_median)
 
     if mode == 2:
-        # get CSU configuration from FITS header
-        csu_config = CsuConfiguration.define_from_header(image_header)
-
         # define wavelength calibration parameters
         crpix1 = image_header['crpix1']
         crval1 = image_header['crval1']
         cdelt1 = image_header['cdelt1']
 
         # segregate slitlets
-        list_useful_slitlets = csu_config.widths_in_range_mm(
-            minwidth=minimum_slitlet_width_mm,
-            maxwidth=maximum_slitlet_width_mm
-        )
-        list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1))
-                                    if i not in list_useful_slitlets]
+        if list_useful_slitlets is None:
+            list_useful_slitlets = list(range(1, EMIR_NBARS + 1))
+            list_not_useful_slitlets = []
+        else:
+            list_not_useful_slitlets = [
+                i for i in list(range(1, EMIR_NBARS + 1))
+                if i not in list_useful_slitlets
+            ]
         if abs(debugplot) != 0:
             print('>>> list_useful_slitlets....:', list_useful_slitlets)
             print('>>> list_not_useful_slitlets:', list_not_useful_slitlets)
@@ -215,11 +212,19 @@ def main(args=None):
     # read input FITS file
     hdulist = fits.open(args.fitsfile)
 
+    # determine useful slitlets
+    main_header = hdulist[0].header
+    csu_config = CsuConfiguration.define_from_header(main_header)
+    # segregate slitlets
+    list_useful_slitlets = csu_config.widths_in_range_mm(
+        minwidth=args.minimum_slitlet_width_mm,
+        maxwidth=args.maximum_slitlet_width_mm
+    )
+
     image_median = median_slitlets_rectified(
         hdulist,
         mode=args.mode,
-        minimum_slitlet_width_mm=args.minimum_slitlet_width_mm,
-        maximum_slitlet_width_mm=args.maximum_slitlet_width_mm,
+        list_useful_slitlets=list_useful_slitlets,
         debugplot=args.debugplot
     )
 
