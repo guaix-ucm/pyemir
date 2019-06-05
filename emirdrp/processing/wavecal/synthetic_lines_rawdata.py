@@ -63,8 +63,8 @@ def synthetic_lines_rawdata(catlines_all_wave,
 
     simulated_image = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
 
-    global_offset_x_pix = rectwv_coeff.global_offset_x_pix
-    global_offset_y_pix = rectwv_coeff.global_offset_y_pix
+    global_integer_offset_x_pix = rectwv_coeff.global_integer_offset_x_pix
+    global_integer_offset_y_pix = rectwv_coeff.global_integer_offset_y_pix
 
     cout = '0'
     for islitlet in range(1, EMIR_NBARS + 1):
@@ -103,15 +103,15 @@ def synthetic_lines_rawdata(catlines_all_wave,
             pol_lower = Polynomial(dumdict['spectrail']['poly_coef_lower'])
             pol_upper = Polynomial(dumdict['spectrail']['poly_coef_upper'])
             xx1, yy1 = fmap(ttd_order, aij, bij, np.array(x1), np.array(y1))
-            yy1 = pol_lower(xx1) - global_offset_y_pix
-            xx1 -= global_offset_x_pix
+            yy1 = pol_lower(xx1) - global_integer_offset_y_pix
+            xx1 -= global_integer_offset_x_pix
             # yy1 += bb_ns1_orig
-            # yy1 -= global_offset_y_pix
+            # yy1 -= global_integer_offset_y_pix
             xx2, yy2 = fmap(ttd_order, aij, bij, np.array(x2), np.array(y2))
-            yy2 = pol_upper(xx2) - global_offset_y_pix
-            xx2 -= global_offset_x_pix
+            yy2 = pol_upper(xx2) - global_integer_offset_y_pix
+            xx2 -= global_integer_offset_x_pix
             # yy2 += bb_ns1_orig
-            # yy2 -= global_offset_y_pix
+            # yy2 -= global_integer_offset_y_pix
 
             for xx1_, xx2_, yy1_, yy2_, flux in zip(xx1, xx2, yy1, yy2, flist):
                 slope = (xx2_ - xx1_) / (yy2_ - yy1_)

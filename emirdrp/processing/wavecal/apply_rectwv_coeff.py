@@ -29,7 +29,7 @@ import numpy as np
 import sys
 
 from numina.array.display.logging_from_debugplot import logging_from_debugplot
-from numina.array.distortion import shift_image2d
+from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 from numina.array.wavecalib.resample import resample_image2d_flux
 from numina.tools.arg_file_is_new import arg_file_is_new
@@ -83,10 +83,10 @@ def apply_rectwv_coeff(reduced_image,
     image2d = reduced_image[0].data
 
     # apply global offsets
-    image2d = shift_image2d(
+    image2d = apply_integer_offsets(
         image2d=image2d,
-        xoffset=rectwv_coeff.global_offset_x_pix,
-        yoffset=rectwv_coeff.global_offset_y_pix
+        offx=rectwv_coeff.global_integer_offset_x_pix,
+        offy=rectwv_coeff.global_integer_offset_y_pix
     )
 
     # check grism and filter
@@ -295,14 +295,14 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x, mode='wb'))
 
     # optional arguments
-    parser.add_argument("--delta_global_offset_x_pix",
+    parser.add_argument("--delta_global_integer_offset_x_pix",
                         help="Delta global integer offset in the X direction "
                              "(default=0)",
-                        default=0, type=float)
-    parser.add_argument("--delta_global_offset_y_pix",
+                        default=0, type=int)
+    parser.add_argument("--delta_global_integer_offset_y_pix",
                         help="Delta global integer offset in the Y direction "
                              "(default=0)",
-                        default=0, type=float)
+                        default=0, type=int)
     parser.add_argument("--resampling",
                         help="Resampling method: 1 -> nearest neighbor, "
                              "2 -> linear interpolation (default)",
@@ -333,10 +333,10 @@ def main(args=None):
     rectwv_coeff = RectWaveCoeff._datatype_load(args.rectwv_coeff.name)
 
     # modify (when requested) global offsets
-    rectwv_coeff.global_offset_x_pix += \
-        args.delta_global_offset_x_pix
-    rectwv_coeff.global_offset_y_pix += \
-        args.delta_global_offset_y_pix
+    rectwv_coeff.global_integer_offset_x_pix += \
+        args.delta_global_integer_offset_x_pix
+    rectwv_coeff.global_integer_offset_y_pix += \
+        args.delta_global_integer_offset_y_pix
 
     # generate HDUList object
     # read FITS image and its corresponding header

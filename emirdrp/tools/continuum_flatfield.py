@@ -28,8 +28,8 @@ import sys
 
 from numina.array.display.ximplotxy import ximplotxy
 from numina.array.display.pause_debugplot import pause_debugplot
-from numina.array.distortion import shift_image2d
 from numina.array.numsplines import AdaptiveLSQUnivariateSpline
+from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.processing.wavecal.slitlet2d import Slitlet2D
@@ -87,14 +87,14 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x, mode='wb'))
 
     # optional arguments
-    parser.add_argument("--delta_global_offset_x_pix",
+    parser.add_argument("--delta_global_integer_offset_x_pix",
                         help="Delta global integer offset in the X direction "
                              "(default=0)",
-                        default=0, type=float)
-    parser.add_argument("--delta_global_offset_y_pix",
+                        default=0, type=int)
+    parser.add_argument("--delta_global_integer_offset_y_pix",
                         help="Delta global integer offset in the Y direction "
                              "(default=0)",
-                        default=0, type=float)
+                        default=0, type=int)
     parser.add_argument("--resampling",
                         help="Resampling method: 1 -> nearest neighbor, "
                              "2 -> linear interpolation (default)",
@@ -121,10 +121,10 @@ def main(args=None):
     rectwv_coeff = RectWaveCoeff._datatype_load(args.rectwv_coeff.name)
 
     # modify (when requested) global offsets
-    rectwv_coeff.global_offset_x_pix += \
-        args.delta_global_offset_x_pix
-    rectwv_coeff.global_offset_y_pix += \
-        args.delta_global_offset_y_pix
+    rectwv_coeff.global_integer_offset_x_pix += \
+        args.delta_global_integer_offset_x_pix
+    rectwv_coeff.global_integer_offset_y_pix += \
+        args.delta_global_integer_offset_y_pix
 
     # read FITS image and its corresponding header
     hdulist = fits.open(args.fitsfile)
@@ -133,10 +133,10 @@ def main(args=None):
     hdulist.close()
 
     # apply global offsets
-    image2d = shift_image2d(
+    image2d = apply_integer_offsets(
         image2d=image2d,
-        xoffset=rectwv_coeff.global_offset_x_pix,
-        yoffset=rectwv_coeff.global_offset_y_pix
+        offx=rectwv_coeff.global_integer_offset_x_pix,
+        offy=rectwv_coeff.global_integer_offset_y_pix
     )
 
     # protections
@@ -432,10 +432,10 @@ def main(args=None):
         print('OK!')
 
     # restore global offsets
-    image2d_flatfielded = shift_image2d(
+    image2d_flatfielded = apply_integer_offsets(
         image2d=image2d_flatfielded ,
-        xoffset=-rectwv_coeff.global_offset_x_pix,
-        yoffset=-rectwv_coeff.global_offset_y_pix
+        offx=-rectwv_coeff.global_integer_offset_x_pix,
+        offy=-rectwv_coeff.global_integer_offset_y_pix
     )
 
     # set pixels below minimum value to 1.0

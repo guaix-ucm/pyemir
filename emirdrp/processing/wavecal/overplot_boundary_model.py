@@ -55,7 +55,7 @@ def overplot_lines(ax,
                    catlines_all_wave,
                    list_valid_islitlets,
                    rectwv_coeff,
-                   global_offset_x_pix, global_offset_y_pix,
+                   global_integer_offset_x_pix, global_integer_offset_y_pix,
                    ds9_file, debugplot):
     """Overplot lines (arc/OH).
 
@@ -70,10 +70,10 @@ def overplot_lines(ax,
     rectwv_coeff : RectWaveCoeff instance
         Rectification and wavelength calibration coefficients for the
         particular CSU configuration.
-    global_offset_x_pix : float
+    global_integer_offset_x_pix : int
         Global offset in the X direction to be applied after computing
         the expected location.
-    global_offset_y_pix : float
+    global_integer_offset_y_pix : int
         Global offset in the Y direction to be applied after computing
         the expected location.
     ds9_file : file handler or None
@@ -123,17 +123,17 @@ def overplot_lines(ax,
                             x2.append(dum)
                             y2.append(max_row_rectified)
         xx0, yy0 = fmap(ttd_order, aij, bij, np.array(x0), np.array(y0))
-        xx0 -= global_offset_x_pix
+        xx0 -= global_integer_offset_x_pix
         yy0 += bb_ns1_orig
-        yy0 -= global_offset_y_pix
+        yy0 -= global_integer_offset_y_pix
         xx1, yy1 = fmap(ttd_order, aij, bij, np.array(x1), np.array(y1))
-        xx1 -= global_offset_x_pix
+        xx1 -= global_integer_offset_x_pix
         yy1 += bb_ns1_orig
-        yy1 -= global_offset_y_pix
+        yy1 -= global_integer_offset_y_pix
         xx2, yy2 = fmap(ttd_order, aij, bij, np.array(x2), np.array(y2))
-        xx2 -= global_offset_x_pix
+        xx2 -= global_integer_offset_x_pix
         yy2 += bb_ns1_orig
-        yy2 -= global_offset_y_pix
+        yy2 -= global_integer_offset_y_pix
 
         if abs(debugplot) % 10 != 0:
             if abs(debugplot) == 22:
@@ -170,14 +170,14 @@ def main(args=None):
                         type=argparse.FileType('rt'))
 
     # optional arguments
-    parser.add_argument("--global_offset_x_pix",
+    parser.add_argument("--global_integer_offset_x_pix",
                         help="Global integer offset in the X direction "
                              "(default=0)",
-                        default=0, type=float)
-    parser.add_argument("--global_offset_y_pix",
+                        default=0, type=int)
+    parser.add_argument("--global_integer_offset_y_pix",
                         help="Global integer offset in the Y direction "
                              "(default=0)",
-                        default=0, type=float)
+                        default=0, type=int)
     parser.add_argument("--arc_lines",
                         help="Overplot arc lines",
                         action="store_true")
@@ -293,10 +293,10 @@ def main(args=None):
     if args.arc_lines or args.oh_lines:
 
         rectwv_coeff = rectwv_coeff_from_mos_library(hdulist, master_rectwv)
-        rectwv_coeff.global_offset_x_pix = \
-            args.global_offset_x_pix
-        rectwv_coeff.global_offset_y_pix = \
-            args.global_offset_y_pix
+        rectwv_coeff.global_integer_offset_x_pix = \
+            args.global_integer_offset_x_pix
+        rectwv_coeff.global_integer_offset_y_pix = \
+            args.global_integer_offset_y_pix
         # rectwv_coeff.writeto('xxx.json')
 
         if args.arc_lines:
@@ -342,8 +342,8 @@ def main(args=None):
             grism=grism,
             spfilter=spfilter,
             ds9_filename=args.ds9_boundaries.name,
-            global_offset_x_pix=-args.global_offset_x_pix,
-            global_offset_y_pix=-args.global_offset_y_pix
+            global_offset_x_pix=-args.global_integer_offset_x_pix,
+            global_offset_y_pix=-args.global_integer_offset_y_pix
         )
 
     # generate output ds9 region file with slitlet frontiers
@@ -357,8 +357,8 @@ def main(args=None):
             grism=grism,
             spfilter=spfilter,
             ds9_filename=args.ds9_frontiers.name,
-            global_offset_x_pix=-args.global_offset_x_pix,
-            global_offset_y_pix=-args.global_offset_y_pix
+            global_offset_x_pix=-args.global_integer_offset_x_pix,
+            global_offset_y_pix=-args.global_integer_offset_y_pix
         )
 
     # ---
@@ -378,8 +378,8 @@ def main(args=None):
             parmodel=parmodel,
             list_islitlet=list_valid_islitlets,
             list_csu_bar_slit_center=list_csu_bar_slit_center,
-            global_offset_x_pix=-args.global_offset_x_pix,
-            global_offset_y_pix=-args.global_offset_y_pix
+            global_offset_x_pix=-args.global_integer_offset_x_pix,
+            global_offset_y_pix=-args.global_integer_offset_y_pix
         )
 
         # overplot frontiers
@@ -391,8 +391,8 @@ def main(args=None):
             list_csu_bar_slit_center=list_csu_bar_slit_center,
             micolors=('b', 'b'), linetype='-',
             labels=False,    # already displayed with the boundaries
-            global_offset_x_pix=-args.global_offset_x_pix,
-            global_offset_y_pix=-args.global_offset_y_pix
+            global_offset_x_pix=-args.global_integer_offset_x_pix,
+            global_offset_y_pix=-args.global_integer_offset_y_pix
         )
 
     else:
@@ -416,9 +416,9 @@ def main(args=None):
             ds9_file.write('# filter: {0}\n'.format(spfilter))
             ds9_file.write('# grism.: {0}\n'.format(grism))
             ds9_file.write('#\n# global_offset_x_pix: {0}\n'.format(
-                args.global_offset_x_pix))
+                args.global_integer_offset_x_pix))
             ds9_file.write('# global_offset_y_pix: {0}\n#\n'.format(
-                args.global_offset_y_pix))
+                args.global_integer_offset_y_pix))
             if parmodel == "longslit":
                 for dumpar in EXPECTED_PARAMETER_LIST:
                     parvalue = params[dumpar].value
@@ -432,8 +432,8 @@ def main(args=None):
                        catlines_all_wave,
                        list_valid_islitlets,
                        rectwv_coeff,
-                       args.global_offset_x_pix,
-                       args.global_offset_y_pix,
+                       args.global_integer_offset_x_pix,
+                       args.global_integer_offset_y_pix,
                        ds9_file,
                        args.debugplot
                        )
