@@ -184,9 +184,11 @@ class ABBASpectraRectwv(EmirRecipe):
                     list_values = []
                     for calib in list_rectwv_coeff:
                         list_values.append(calib.tags[item])
-                if len(set(list_values)) != 1:
-                    raise ValueError('list_rectwv_coeff contains coefficients'
-                                     'for different {}s')
+                    if len(set(list_values)) != 1:
+                        raise ValueError(
+                            'list_rectwv_coeff contains coefficients for '
+                            'different {}s'.format(item)
+                        )
         else:
             raise ValueError("Unexpected error!")
 

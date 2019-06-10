@@ -22,7 +22,6 @@ from __future__ import print_function
 
 import logging
 import numpy as np
-from numpy.polynomial import Polynomial
 from scipy.stats import norm
 
 from numina.array.distortion import fmap
