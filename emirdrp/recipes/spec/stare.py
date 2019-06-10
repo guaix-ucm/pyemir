@@ -298,6 +298,7 @@ class GenerateRectwvCoeff(EmirRecipe):
             self.logger.info('list of unusable slitlets: {}'.format(
                 list_not_useful_slitlets))
 
+            # ToDo: include additional airglow emission lines
             # retrieve arc/OH lines
             catlines_all_wave, catlines_all_flux = retrieve_catlines(
                 rinput.refine_wavecalib_mode,
@@ -323,6 +324,8 @@ class GenerateRectwvCoeff(EmirRecipe):
                 self.save_intermediate_img(synthetic_raw_image,
                                            'synthetic_raw_image.fits')
 
+            # ToDo: 2D crosscorrelation to determine better global offsets
+            
             # set global offsets
             rectwv_coeff.global_integer_offset_x_pix = \
                 rinput.global_integer_offset_x_pix
