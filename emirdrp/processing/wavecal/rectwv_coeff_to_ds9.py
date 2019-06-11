@@ -208,6 +208,7 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
                     )
                 xdum = np.linspace(1, EMIR_NAXIS1, num=numpix)
                 ydum = pol_lower(xdum)
+                ydum -= float(rectwv_coeff.global_integer_offset_y_pix)
                 for i in range(len(xdum) - 1):
                     ds9_output += \
                         'line {0} {1} {2} {3}'.format(
@@ -216,6 +217,7 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
                         )
                     ds9_output += ' # color={0}\n'.format(colorbox)
                 ydum = pol_upper(xdum)
+                ydum -= float(rectwv_coeff.global_integer_offset_y_pix)
                 for i in range(len(xdum) - 1):
                     ds9_output += \
                         'line {0} {1} {2} {3}'.format(
