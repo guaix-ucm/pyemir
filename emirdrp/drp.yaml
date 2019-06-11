@@ -145,6 +145,10 @@ modes:
   name: ABBA Spectra with Precomputed Wavelength Calibration (fast)
   summary: ABBA Spectra with Precomputed Wavelength Calibration (fast)
   description: ABBA Spectra with Precomputed Wavelength Calibration (fast)
+- key: SPEC_FLAT_PIX2PIX
+  name: Pixel-to-pixel spectroscopic flatfield
+  summary: Pixel-to-pixel spectroscopic flatfield
+  description: Pixel-to-pixel spectroscopic flatfield
 - key: LS_ABBA
   name: Long Slit ABBA
   summary: Spectroscopy ABBA
@@ -249,6 +253,7 @@ pipelines:
       STARE_SPECTRA_RECTWV: emirdrp.recipes.spec.stare.StareSpectraRectwv
       ABBA_SPECTRA_RECTWV: emirdrp.recipes.spec.abba.ABBASpectraRectwv
       ABBA_SPECTRA_FAST_RECTWV: emirdrp.recipes.spec.abba.ABBASpectraFastRectwv
+      SPEC_FLAT_PIX2PIX: emirdrp.recipes.spec.flatpix2pix.SpecFlatPix2Pix
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe
       LOAD_RECWAVE: emirdrp.recipes.auxiliary.load.RecWaveRecipe
