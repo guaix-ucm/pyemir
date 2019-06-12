@@ -14,23 +14,35 @@ Spectroscopy mode, compute pixel-to-pixel flatfield
 import astropy.io.fits as fits
 import contextlib
 import numpy as np
+from numpy.polynomial.polynomial import polyval
+from scipy import ndimage
 import uuid
 
 import numina.array.combine as combine
+from numina.array.display.ximplotxy import ximplotxy
+from numina.array.display.pause_debugplot import pause_debugplot
+from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.core import Parameter
 from numina.core import Result
 from numina.processing.combine import combine_imgs
 
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.datamodel
+from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
     import rectwv_coeff_from_mos_library
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 \
     import save_spectral_lines_ds9
+from emirdrp.processing.wavecal.slitlet2d import Slitlet2D
+from emirdrp.processing.wavecal.set_wv_parameters import set_wv_parameters
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
+from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
 
+from emirdrp.core import EMIR_NAXIS1
+from emirdrp.core import EMIR_NAXIS2
+from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
 from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
 
@@ -43,8 +55,8 @@ class SpecFlatPix2Pix(EmirRecipe):
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     master_bias = reqs.MasterBiasRequirement()
-    master_rectwv = reqs.MasterRectWaveRequirement(optional=True)
     rectwv_coeff = reqs.RectWaveCoeffRequirement(optional=True)
+    master_rectwv = reqs.MasterRectWaveRequirement(optional=True)
 
     # note that 'sum' is not allowed as combination method
     method = Parameter(
@@ -76,6 +88,34 @@ class SpecFlatPix2Pix(EmirRecipe):
         description='Global offset (pixels) in spatial direction (integer)',
         optional=True
     )
+    nwindow_median = Parameter(
+        5,
+        description='Window size to smooth median spectrum in the spectral '
+                    'direction',
+        optional=True
+    )
+    minimum_fraction = Parameter(
+        0.01,
+        description='Minimum allowed flatfielding value',
+        optional=True
+    )
+    minimum_value_in_output = Parameter(
+        0.01,
+        description='Minimum value allowed in output: pixels below this value'
+                    ' are set to 1.0',
+        optional=True
+    )
+    maximum_value_in_output = Parameter(
+        10.0,
+        description='Maximum value allowed in output: pixels above this value'
+                    ' are set to 1.0',
+        optional=True
+    )
+    debugplot = Parameter(
+        0,
+        description='Debugger parameter',
+        optional=True
+    )
 
     reduced_flatpix2pix = Result(prods.MasterSpectralFlat)
 
@@ -83,10 +123,10 @@ class SpecFlatPix2Pix(EmirRecipe):
 
         self.logger.info('starting generation of flatpix2pix')
 
-        self.logger.info('master_rectwv.........................: {}'.format(
-            rinput.master_rectwv))
         self.logger.info('rectwv_coeff..........................: {}'.format(
             rinput.rectwv_coeff))
+        self.logger.info('master_rectwv.........................: {}'.format(
+            rinput.master_rectwv))
         self.logger.info('Minimum slitlet width (mm)............: {}'.format(
             rinput.minimum_slitlet_width_mm))
         self.logger.info('Maximum slitlet width (mm)............: {}'.format(
@@ -95,6 +135,12 @@ class SpecFlatPix2Pix(EmirRecipe):
             rinput.global_integer_offset_x_pix))
         self.logger.info('Global offset Y direction (pixels)....: {}'.format(
             rinput.global_integer_offset_y_pix))
+        self.logger.info('Minimum fraction......................: {}'.format(
+            rinput.minimum_fraction))
+        self.logger.info('Minimum value in output...............: {}'.format(
+            rinput.minimum_value_in_output))
+        self.logger.info('Maximum value in output...............: {}'.format(
+            rinput.maximum_value_in_output))
 
         # check rectification and wavelength calibration information
         if rinput.master_rectwv is None and rinput.rectwv_coeff is None:
@@ -102,8 +148,13 @@ class SpecFlatPix2Pix(EmirRecipe):
                              'been provided')
         elif rinput.master_rectwv is not None and \
                 rinput.rectwv_coeff is not None:
-            raise ValueError('master_rectwv and rectwv_coeff cannot be '
-                             'use simultaneously')
+            self.logger.warning('rectwv_coeff will be used instead of '
+                                'master_rectwv')
+        if rinput.rectwv_coeff is not None and \
+                (rinput.global_integer_offset_x_pix != 0 or
+                 rinput.global_integer_offset_y_pix != 0):
+            raise ValueError('global_integer_offsets cannot be used '
+                             'simultaneously with rectwv_coeff')
 
         # check headers to detect lamp status (on/off)
         list_lampincd = []
@@ -193,8 +244,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                 reduced_data,
                 header_on,
                 header_off,
-                list_lampincd,
-                header_mos_onoff=None,
+                list_lampincd
             )
 
         # save intermediate image in work directory
@@ -206,13 +256,13 @@ class SpecFlatPix2Pix(EmirRecipe):
                 reduced_image,
                 rinput.master_rectwv
             )
+            # set global offsets
+            rectwv_coeff.global_integer_offset_x_pix = \
+                rinput.global_integer_offset_x_pix
+            rectwv_coeff.global_integer_offset_y_pix = \
+                rinput.global_integer_offset_y_pix
         else:
             rectwv_coeff = rinput.rectwv_coeff
-        # set global offsets
-        rectwv_coeff.global_integer_offset_x_pix = \
-            rinput.global_integer_offset_x_pix
-        rectwv_coeff.global_integer_offset_y_pix = \
-            rinput.global_integer_offset_y_pix
         # save as JSON in work directory
         self.save_structured_as_json(rectwv_coeff, 'rectwv_coeff.json')
         # ds9 region files (to be saved in the work directory)
@@ -220,13 +270,272 @@ class SpecFlatPix2Pix(EmirRecipe):
             save_four_ds9(rectwv_coeff)
             save_spectral_lines_ds9(rectwv_coeff)
 
-        # ToDo: continue here
-        # Include code from tools/continuum_flatfield.py
+        # apply global offsets
+        image2d = apply_integer_offsets(
+            image2d=reduced_data,
+            offx=rectwv_coeff.global_integer_offset_x_pix,
+            offy=rectwv_coeff.global_integer_offset_y_pix
+        )
+
+        # load CSU configuration
+        csu_conf = CsuConfiguration.define_from_header(
+            reduced_image[0].header
+        )
+
+        # valid slitlet numbers
+        list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
+        for idel in rectwv_coeff.missing_slitlets:
+            self.logger.info('-> Removing slitlet (not defined): ' + str(idel))
+            list_valid_islitlets.remove(idel)
+        # filter out slitlets with widths outside valid range
+        list_outside_valid_width = []
+        for islitlet in list_valid_islitlets:
+            slitwidth = csu_conf.csu_bar_slit_width(islitlet)
+            if (slitwidth < rinput.minimum_slitlet_width_mm) or \
+                    (slitwidth > rinput.maximum_slitlet_width_mm):
+                list_outside_valid_width.append(islitlet)
+                self.logger.info('-> Removing slitlet (invalid width): ' +
+                                 str(islitlet))
+        if len(list_outside_valid_width) > 0:
+            for idel in list_outside_valid_width:
+                list_valid_islitlets.remove(idel)
+
+        # initialize rectified image
+        image2d_flatfielded = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
+
+        # main loop
+        grism_name = rectwv_coeff.tags['grism']
+        filter_name = rectwv_coeff.tags['filter']
+        cout = '0'
+        debugplot = rinput.debugplot
+        for islitlet in list(range(1, EMIR_NBARS + 1)):
+            if islitlet in list_valid_islitlets:
+                # define Slitlet2D object
+                slt = Slitlet2D(islitlet=islitlet,
+                                rectwv_coeff=rectwv_coeff,
+                                debugplot=debugplot)
+
+                if abs(debugplot) >= 10:
+                    print(slt)
+
+                # extract (distorted) slitlet from the initial image
+                slitlet2d = slt.extract_slitlet2d(
+                    image_2k2k=image2d,
+                    subtitle='original image'
+                )
+
+                # rectify slitlet
+                slitlet2d_rect = slt.rectify(
+                    slitlet2d=slitlet2d,
+                    resampling=2,
+                    subtitle='original rectified'
+                )
+                naxis2_slitlet2d, naxis1_slitlet2d = slitlet2d_rect.shape
+
+                if naxis1_slitlet2d != EMIR_NAXIS1:
+                    print('naxis1_slitlet2d: ', naxis1_slitlet2d)
+                    print('EMIR_NAXIS1.....: ', EMIR_NAXIS1)
+                    raise ValueError("Unexpected naxis1_slitlet2d")
+
+                # for grism LR set to zero data beyond useful wavelength range
+                if grism_name == 'LR':
+                    wv_parameters = set_wv_parameters(filter_name,
+                                                      grism_name)
+                    x_pix = np.arange(1, naxis1_slitlet2d + 1)
+                    wl_pix = polyval(x_pix, slt.wpoly)
+                    lremove = wl_pix < wv_parameters['wvmin_useful']
+                    slitlet2d_rect[:, lremove] = 0.0
+                    lremove = wl_pix > wv_parameters['wvmax_useful']
+                    slitlet2d_rect[:, lremove] = 0.0
+
+                # get useful slitlet region (use boundaries instead of
+                # frontiers; note that the nscan_minmax_frontiers() works
+                # well independently of using frontiers of boundaries
+                # as arguments)
+                nscan_min, nscan_max = nscan_minmax_frontiers(
+                    slt.y0_reference_lower,
+                    slt.y0_reference_upper,
+                    resize=False
+                )
+                ii1 = nscan_min - slt.bb_ns1_orig
+                ii2 = nscan_max - slt.bb_ns1_orig + 1
+
+                # median spectrum
+                sp_collapsed = np.median(slitlet2d_rect[ii1:(ii2 + 1), :],
+                                         axis=0)
+
+                # smooth median spectrum along the spectral direction
+                sp_median = ndimage.median_filter(
+                    sp_collapsed,
+                    rinput.nwindow_median,
+                    mode='nearest'
+                )
+
+                ymax_spmedian = sp_median.max()
+                y_threshold = ymax_spmedian * rinput.minimum_fraction
+                sp_median[np.where(sp_median < y_threshold)] = 0.0
+
+                if abs(debugplot) > 10:
+                    xaxis1 = np.arange(1, naxis1_slitlet2d + 1)
+                    title = 'Slitlet#' + str(islitlet) + ' (median spectrum)'
+                    ax = ximplotxy(xaxis1, sp_collapsed,
+                                   title=title,
+                                   show=False,
+                                   **{'label': 'collapsed spectrum'})
+                    ax.plot(xaxis1, sp_median, label='fitted spectrum')
+                    ax.plot([1, naxis1_slitlet2d], 2 * [y_threshold],
+                            label='threshold')
+                    # ax.plot(xknots, yknots, 'o', label='knots')
+                    ax.legend()
+                    ax.set_ylim(-0.05 * ymax_spmedian, 1.05 * ymax_spmedian)
+                    pause_debugplot(debugplot,
+                                    pltshow=True, tight_layout=True)
+
+                # generate rectified slitlet region filled with the
+                # median spectrum
+                slitlet2d_rect_spmedian = np.tile(sp_median,
+                                                  (naxis2_slitlet2d, 1))
+                if abs(debugplot) > 10:
+                    slt.ximshow_rectified(
+                        slitlet2d_rect=slitlet2d_rect_spmedian,
+                        subtitle='rectified, filled with median spectrum'
+                    )
+
+                # unrectified image
+                slitlet2d_unrect_spmedian = slt.rectify(
+                    slitlet2d=slitlet2d_rect_spmedian,
+                    resampling=2,
+                    inverse=True,
+                    subtitle='unrectified, filled with median spectrum'
+                )
+
+                # normalize initial slitlet image (avoid division by zero)
+                slitlet2d_norm = np.zeros_like(slitlet2d)
+                for j in range(naxis1_slitlet2d):
+                    for i in range(naxis2_slitlet2d):
+                        den = slitlet2d_unrect_spmedian[i, j]
+                        if den == 0:
+                            slitlet2d_norm[i, j] = 1.0
+                        else:
+                            slitlet2d_norm[i, j] = slitlet2d[i, j] / den
+
+                if abs(debugplot) > 10:
+                    slt.ximshow_unrectified(
+                        slitlet2d=slitlet2d_norm,
+                        subtitle='unrectified, pixel-to-pixel'
+                    )
+
+                # check for pseudo-longslit with previous slitlet
+                if islitlet > 1:
+                    if (islitlet - 1) in list_valid_islitlets:
+                        c1 = csu_conf.csu_bar_slit_center(islitlet - 1)
+                        w1 = csu_conf.csu_bar_slit_width(islitlet - 1)
+                        c2 = csu_conf.csu_bar_slit_center(islitlet)
+                        w2 = csu_conf.csu_bar_slit_width(islitlet)
+                        if abs(w1 - w2) / w1 < 0.25:
+                            wmean = (w1 + w2) / 2.0
+                            if abs(c1 - c2) < wmean / 4.0:
+                                same_slitlet_below = True
+                            else:
+                                same_slitlet_below = False
+                        else:
+                            same_slitlet_below = False
+                    else:
+                        same_slitlet_below = False
+                else:
+                    same_slitlet_below = False
+
+                # check for pseudo-longslit with previous slitlet
+                if islitlet < EMIR_NBARS:
+                    if (islitlet + 1) in list_valid_islitlets:
+                        c1 = csu_conf.csu_bar_slit_center(islitlet)
+                        w1 = csu_conf.csu_bar_slit_width(islitlet)
+                        c2 = csu_conf.csu_bar_slit_center(islitlet + 1)
+                        w2 = csu_conf.csu_bar_slit_width(islitlet + 1)
+                        if abs(w1 - w2) / w1 < 0.25:
+                            wmean = (w1 + w2) / 2.0
+                            if abs(c1 - c2) < wmean / 4.0:
+                                same_slitlet_above = True
+                            else:
+                                same_slitlet_above = False
+                        else:
+                            same_slitlet_above = False
+                    else:
+                        same_slitlet_above = False
+                else:
+                    same_slitlet_above = False
+
+                for j in range(EMIR_NAXIS1):
+                    xchannel = j + 1
+                    y0_lower = slt.list_frontiers[0](xchannel)
+                    y0_upper = slt.list_frontiers[1](xchannel)
+                    n1, n2 = nscan_minmax_frontiers(y0_frontier_lower=y0_lower,
+                                                    y0_frontier_upper=y0_upper,
+                                                    resize=True)
+                    # note that n1 and n2 are scans (ranging from 1 to NAXIS2)
+                    nn1 = n1 - slt.bb_ns1_orig + 1
+                    nn2 = n2 - slt.bb_ns1_orig + 1
+                    image2d_flatfielded[(n1 - 1):n2, j] = \
+                        slitlet2d_norm[(nn1 - 1):nn2, j]
+
+                    # force to 1.0 region around frontiers
+                    if not same_slitlet_below:
+                        image2d_flatfielded[(n1 - 1):(n1 + 2), j] = 1
+                    if not same_slitlet_above:
+                        image2d_flatfielded[(n2 - 5):n2, j] = 1
+                cout += '.'
+            else:
+                cout += 'i'
+
+            if islitlet % 10 == 0:
+                if cout != 'i':
+                    cout = str(islitlet // 10)
+
+            self.logger.info(cout)
+
+        # restore global offsets
+        image2d_flatfielded = apply_integer_offsets(
+            image2d=image2d_flatfielded,
+            offx=-rectwv_coeff.global_integer_offset_x_pix,
+            offy=-rectwv_coeff.global_integer_offset_y_pix
+        )
+
+        # set pixels below minimum value to 1.0
+        filtered = np.where(image2d_flatfielded <
+                            rinput.minimum_value_in_output)
+        image2d_flatfielded[filtered] = 1.0
+
+        # set pixels above maximum value to 1.0
+        filtered = np.where(image2d_flatfielded >
+                            rinput.maximum_value_in_output)
+        image2d_flatfielded[filtered] = 1.0
+
+        # update image header
+        with contextlib.ExitStack() as stack:
+            hduls = [stack.enter_context(fname.open()) for fname in
+                     rinput.obresult.frames]
+            reduced_flatpix2pix = self.create_reduced_image(
+                hduls,
+                image2d_flatfielded,
+                header_on, header_off,
+                list_lampincd
+            )
+
+        # ds9 region files (to be saved in the work directory)
+        if self.intermediate_results:
+            save_four_ds9(rectwv_coeff)
+            save_spectral_lines_ds9(rectwv_coeff)
+
+        # save results in results directory
+        self.logger.info('end of flatpix2pix generation')
+        result = self.create_result(
+            reduced_flatpix2pix=reduced_flatpix2pix
+        )
+        return result
 
     def create_reduced_image(self, hduls, reduced_data,
                              header_on, header_off,
-                             list_lampincd,
-                             header_mos_onoff):
+                             list_lampincd):
         # Copy header of first image
         base_header = hduls[0][0].header.copy()
 
@@ -234,33 +543,6 @@ class SpecFlatPix2Pix(EmirRecipe):
         self.set_base_headers(hdu.header)
 
         self.logger.debug('update result header')
-        if header_mos_onoff is not None:
-            self.logger.debug('update result header')
-            crpix1 = header_mos_onoff['crpix1']
-            crval1 = header_mos_onoff['crval1']
-            cdelt1 = header_mos_onoff['cdelt1']
-
-            # update wavelength calibration in FITS header
-            for keyword in ['crval1', 'crpix1', 'crval2', 'crpix2']:
-                if keyword in hdu.header:
-                    hdu.header.remove(keyword)
-            hdu.header['crpix1'] = (crpix1, 'reference pixel')
-            hdu.header['crval1'] = (crval1, 'central wavelength at crpix1')
-            hdu.header['cdelt1'] = \
-                (cdelt1, 'linear dispersion (Angstrom/pixel)')
-            hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
-            hdu.header['ctype1'] = 'WAVELENGTH'
-            hdu.header['crpix2'] = (0.0, 'reference pixel')
-            hdu.header['crval2'] = (0.0, 'central value at crpix2')
-            hdu.header['cdelt2'] = (1.0, 'increment')
-            hdu.header['ctype2'] = 'PIXEL'
-            hdu.header['cunit2'] = ('Pixel', 'units along axis2')
-            for keyword in ['cd1_1', 'cd1_2', 'cd2_1', 'cd2_2',
-                            'PCD1_1', 'PCD1_2', 'PCD2_1', 'PCD2_2',
-                            'PCRPIX1', 'PCRPIX2']:
-                if keyword in hdu.header:
-                    hdu.header.remove(keyword)
-
         # update additional keywords
         hdu.header['UUID'] = str(uuid.uuid1())
         hdu.header['OBSMODE'] = 'flatpix2pix'
