@@ -22,11 +22,31 @@ from __future__ import print_function
 
 from astropy.io import fits
 from copy import deepcopy
-import numpy as np
 
 from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
 from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
+
+
+class LongSlit(object):
+    """Auxiliary class to store the minimum and maximum islitlet"""
+
+    def __init__(self, imin=None, imax=None):
+        self._imin = imin
+        self._imax = imax
+
+    def __repr__(self):
+        output = 'islitlet_min_max=({0:02d}, {1:02d})'.format(
+            self._imin, self._imax
+        )
+        return output
+
+    def __eq__(self, other):
+        if isinstance(other, LongSlit):
+            result = \
+                (self._imin == other._imin) and (self._imax == other._imax)
+            return result
+        return NotImplemented
 
 
 class CsuConfiguration(object):
@@ -69,11 +89,16 @@ class CsuConfiguration(object):
 
     def __eq__(self, other):
         if isinstance(other, CsuConfiguration):
+            ndig = 3
             result = \
-                (self._csu_bar_left == other._csu_bar_left) and \
-                (self._csu_bar_right == other._csu_bar_right) and \
-                (self._csu_bar_slit_center == other._csu_bar_slit_center) and \
-                (self._csu_bar_slit_width == other._csu_bar_slit_width)
+                (round(self._csu_bar_left, ndig) ==
+                 round(other._csu_bar_left, ndig)) and \
+                (round(self._csu_bar_right, ndig) ==
+                 round(other._csu_bar_right, ndig)) and \
+                (round(self._csu_bar_slit_center) ==
+                 round(other._csu_bar_slit_center)) and \
+                (round(self._csu_bar_slit_width, ndig) ==
+                 round(other._csu_bar_slit_width, ndig))
             return result
         return NotImplemented
 
@@ -205,6 +230,92 @@ class CsuConfiguration(object):
                 list_ok.append(i + 1)
 
         return list_ok
+
+    def pseudo_longslits(self, list_valid_slitlets=None,
+                         fracwidth=0.25, diffcenter=0.25):
+        """Return dictionary of LongSlit instances
+
+        Parameters
+        ----------
+        list_valid_slitlets : list of integers or 'all'
+            List containing valid slitlets. Slitlet numbers not
+            included in this list will be considered as individual
+            longslits. If this list is None, all the slitlets are
+            analysed.
+        fracwidth : float
+            Maximum fractional slitlet width difference allowed
+            to consider that two slitlets belong to the same longslit.
+        diffcenter : float
+            Maximum allowed difference between slitlet centers (in
+            units of the averaged slitlet widths).
+
+        Returns
+        -------
+        result : dictionary of LongSlit instances
+            Each LongSlit object provides the minimum and maximum
+            islitlet for each longslit.
+
+        """
+
+        if list_valid_slitlets is None:
+            list_valid_slitlets = range(1, EMIR_NBARS + 1)
+
+        result = dict()
+        for islitlet in range(1, EMIR_NBARS + 1):
+            result[islitlet] = LongSlit(islitlet, islitlet)
+
+        # check for pseudo-longslit with previous slitlet
+        for islitlet in range(2, EMIR_NBARS + 1):
+            if islitlet in list_valid_slitlets:
+                if (islitlet - 1) in list_valid_slitlets:
+                    c1 = self.csu_bar_slit_center(islitlet - 1)
+                    w1 = self.csu_bar_slit_width(islitlet - 1)
+                    c2 = self.csu_bar_slit_center(islitlet)
+                    w2 = self.csu_bar_slit_width(islitlet)
+                    wmean = (w1 + w2) / 2.0
+                    if abs(w1 - w2) / wmean < fracwidth:
+                        if abs(c1 - c2) < wmean * diffcenter:
+                            result[islitlet]._imin = \
+                                result[(islitlet - 1)]._imin
+
+        # check for pseudo-longslit with next slitlet
+        for islitlet in reversed(range(1, EMIR_NBARS)):
+            if islitlet in list_valid_slitlets:
+                if (islitlet + 1) in list_valid_slitlets:
+                    c1 = self.csu_bar_slit_center(islitlet)
+                    w1 = self.csu_bar_slit_width(islitlet)
+                    c2 = self.csu_bar_slit_center(islitlet + 1)
+                    w2 = self.csu_bar_slit_width(islitlet + 1)
+                    wmean = (w1 + w2) / 2.0
+                    if abs(w1 - w2) / wmean < fracwidth:
+                        if abs(c1 - c2) < wmean * diffcenter:
+                            result[islitlet]._imax = \
+                                result[(islitlet + 1)]._imax
+
+        return result
+
+    def display_pseudo_longslits(self, list_valid_slitlets=None,
+                                 fracwidth=0.25, diffcenter=0.25):
+        dict_longslits = self.pseudo_longslits(
+            list_valid_slitlets=list_valid_slitlets,
+            fracwidth=fracwidth,
+            diffcenter=diffcenter
+        )
+        for islitlet in range(1, EMIR_NBARS + 1):
+            longslit = dict_longslits[islitlet]
+            imin = longslit._imin
+            imax = longslit._imax
+            output = 'islitlet: {0:02d} '.format(islitlet)
+            output += '--> min: {0:02d}  max: {1:02d} '.format(imin, imax)
+            if imin == islitlet == imax:
+                output += '━'
+            elif imin == islitlet < imax:
+                output += '┓'
+            elif imin < islitlet == imax:
+                output += '┛'
+            else:
+                output += '┃'
+            print(output)
 
 
 def merge_odd_even_csu_configurations(conf_odd, conf_even):

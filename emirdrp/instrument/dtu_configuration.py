@@ -74,8 +74,8 @@ class DtuConfiguration(object):
         # note: set the precision (number of decimal places) to the same
         # number employed in __str__() function above to print out member
         # values
-        ndig = 3
         if isinstance(other, DtuConfiguration):
+            ndig = 3
             result = \
                 (round(self.xdtu, ndig) == round(other.xdtu, ndig)) and \
                 (round(self.ydtu, ndig) == round(other.ydtu, ndig)) and \

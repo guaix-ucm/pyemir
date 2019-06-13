@@ -23,7 +23,6 @@ from __future__ import print_function
 import argparse
 from astropy.io import fits
 import numpy as np
-from numpy.polynomial import Polynomial
 from sklearn.cluster import KMeans
 import sys
 
@@ -42,6 +41,7 @@ from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 def display_slitlet_arrangement(fileobj,
                                 grism=None,
                                 spfilter=None,
+                                longslits=False,
                                 bbox=None,
                                 adjust=None,
                                 geometry=None,
@@ -53,9 +53,11 @@ def display_slitlet_arrangement(fileobj,
     fileobj : file object
         FITS or TXT file object.
     grism : str
-        Grism.
-    grism : str
-        Filter.
+        Grism name.
+    spfilter : str
+        Filter name.
+    longslits : bool
+        If True, display (pseudo) longslits.
     bbox : tuple of 4 floats
         If not None, values for xmin, xmax, ymin and ymax.
     adjust : bool
@@ -140,6 +142,9 @@ def display_slitlet_arrangement(fileobj,
 
         # define slitlet arrangement
         csu_config = CsuConfiguration.define_from_fits(fileobj)
+        if longslits:
+            csu_config.display_pseudo_longslits()
+            pause_debugplot(debugplot)
 
     # determine calibration
     if grism in ["J", "OPEN"] and spfilter == "J":
@@ -343,6 +348,10 @@ def main(args=None):
     parser.add_argument("--n_clusters",
                         help="Display histogram of slitlet widths",
                         default=0, type=int)
+    parser.add_argument("--longslits",
+                        help="Display (pseudo) longslits built with "
+                             "consecutive slitlets",
+                        action="store_true")
     parser.add_argument("--bbox",
                         help="Bounding box tuple xmin,xmax,ymin,ymax "
                              "indicating plot limits")
@@ -386,7 +395,6 @@ def main(args=None):
         xmin, xmax, ymin, ymax = [int(str_bbox[i]) for i in range(4)]
         bbox = xmin, xmax, ymin, ymax
 
-    list_fits_file_objects = []
     # if input file is a single txt file, assume it is a list of FITS files
     if len(args.filename) == 1:
         list_fits_file_objects = [args.filename[0]]
@@ -412,6 +420,7 @@ def main(args=None):
                 fileobj,
                 grism=args.grism,
                 spfilter=args.filter,
+                longslits=args.longslits,
                 bbox=bbox,
                 adjust=args.adjust,
                 geometry=geometry,
