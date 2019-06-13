@@ -28,6 +28,7 @@ from scipy import ndimage
 import sys
 
 from numina.array.display.ximplotxy import ximplotxy
+from numina.array.display.ximshow import ximshow
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.numsplines import AdaptiveLSQUnivariateSpline
 from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
@@ -203,10 +204,10 @@ def main(args=None):
 
     # ---
 
-    # initialize rectified image
-    image2d_flatfielded = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
-
-    # main loop
+    # compute and store median spectrum (and masked region) for each
+    # individual slitlet
+    image2d_sp_median = np.zeros((EMIR_NBARS, EMIR_NAXIS1))
+    image2d_sp_mask = np.zeros((EMIR_NBARS, EMIR_NAXIS1), dtype=bool)
     for islitlet in list(range(1, EMIR_NBARS + 1)):
         if islitlet in list_valid_islitlets:
             if args.debugplot == 0:
@@ -238,15 +239,19 @@ def main(args=None):
                 print('EMIR_NAXIS1.....: ', EMIR_NAXIS1)
                 raise ValueError("Unexpected naxis1_slitlet2d")
 
+            sp_mask = np.zeros(naxis1_slitlet2d, dtype=bool)
+
             # for grism LR set to zero data beyond useful wavelength range
             if grism_name == 'LR':
                 wv_parameters = set_wv_parameters(filter_name, grism_name)
                 x_pix = np.arange(1, naxis1_slitlet2d + 1)
                 wl_pix = polyval(x_pix, slt.wpoly)
                 lremove = wl_pix < wv_parameters['wvmin_useful']
+                sp_mask[lremove] = True
                 slitlet2d_rect[:, lremove] = 0.0
                 lremove = wl_pix > wv_parameters['wvmax_useful']
                 slitlet2d_rect[:, lremove] = 0.0
+                sp_mask[lremove] = True
 
             # get useful slitlet region (use boundaries instead of frontiers;
             # note that the nscan_minmax_frontiers() works well independently
@@ -263,16 +268,13 @@ def main(args=None):
             sp_collapsed = np.median(slitlet2d_rect[ii1:(ii2 + 1), :], axis=0)
 
             # smooth median spectrum along the spectral direction
-            xaxis1 = np.arange(1, naxis1_slitlet2d + 1)
-            if args.nwindow_median is not None:
-                sp_median = ndimage.median_filter(
-                    sp_collapsed,
-                    args.nwindow_median,
-                    mode='nearest'
-                )
-                xknots = None
-                yknots = None
-            else:
+            sp_median = ndimage.median_filter(
+                sp_collapsed,
+                args.nwindow_median,
+                mode='nearest'
+            )
+
+            """
                 nremove = 5
                 spl = AdaptiveLSQUnivariateSpline(
                     x=xaxis1[nremove:-nremove],
@@ -331,12 +333,19 @@ def main(args=None):
                     adaptive=False
                 )
                 sp_median = splnew(xaxis1)
+            """
 
             ymax_spmedian = sp_median.max()
             y_threshold = ymax_spmedian * args.minimum_fraction
-            sp_median[np.where(sp_median < y_threshold)] = 0.0
+            lremove = np.where(sp_median < y_threshold)
+            sp_median[lremove] = 0.0
+            sp_mask[lremove] = True
 
-            if abs(args.debugplot) > 10:
+            image2d_sp_median[islitlet - 1, :] = sp_median
+            image2d_sp_mask[islitlet - 1, :] = sp_mask
+
+            if abs(args.debugplot) % 10 != 0:
+                xaxis1 = np.arange(1, naxis1_slitlet2d + 1)
                 title = 'Slitlet#' + str(islitlet) + ' (median spectrum)'
                 ax = ximplotxy(xaxis1, sp_collapsed,
                                title=title,
@@ -344,12 +353,93 @@ def main(args=None):
                 ax.plot(xaxis1, sp_median, label='fitted spectrum')
                 ax.plot([1, naxis1_slitlet2d], 2*[y_threshold],
                         label='threshold')
-                if args.nwindow_median is None:
-                    ax.plot(xknots, yknots, 'o', label='knots')
+                # ax.plot(xknots, yknots, 'o', label='knots')
                 ax.legend()
                 ax.set_ylim(-0.05*ymax_spmedian, 1.05*ymax_spmedian)
                 pause_debugplot(args.debugplot,
                                 pltshow=True, tight_layout=True)
+        else:
+            if args.debugplot == 0:
+                islitlet_progress(islitlet, EMIR_NBARS, ignore=True)
+
+    # ToDo: compute "average" spectrum for each pseudo-longslit, scaling
+    #       with the median signal in each slitlet; derive a particular
+    #       spectrum for each slitlet (scaling properly)
+
+    image2d_sp_median_masked = np.ma.masked_array(
+        image2d_sp_median,
+        mask=image2d_sp_mask
+    )
+    ycut_median = np.ma.median(image2d_sp_median_masked, axis=1).data
+    ycut_median_2d = np.repeat(ycut_median, EMIR_NAXIS1).reshape(
+        EMIR_NBARS, EMIR_NAXIS1)
+    image2d_sp_median_eq = image2d_sp_median_masked / ycut_median_2d
+    image2d_sp_median_eq = image2d_sp_median_eq.data
+
+    if True:
+        ximshow(image2d_sp_median, title='sp_median', debugplot=12)
+        ximplotxy(np.arange(1, EMIR_NBARS + 1), ycut_median, 'ro',
+                  title='median value of each spectrum', debugplot=12)
+        ximshow(image2d_sp_median_eq, title='sp_median_eq', debugplot=12)
+
+    csu_conf_fitsfile.display_pseudo_longslits(
+        list_valid_slitlets=list_valid_islitlets)
+    dict_longslits = csu_conf_fitsfile.pseudo_longslits()
+
+    # compute median spectrum for each longslit and insert (properly
+    # scaled) that spectrum in each slitlet belonging to that longslit
+    image2d_sp_median_longslit = np.zeros((EMIR_NBARS, EMIR_NAXIS1))
+    islitlet = 1
+    loop = True
+    while loop:
+        if islitlet in list_valid_islitlets:
+            imin = dict_longslits[islitlet].imin()
+            imax = dict_longslits[islitlet].imax()
+            print('--> imin, imax: ', imin, imax)
+            sp_median_longslit = np.median(
+                image2d_sp_median_eq[(imin - 1):imax, :], axis=0)
+            for i in range(imin, imax+1):
+                print('----> i: ', i)
+                image2d_sp_median_longslit[(i - 1), :] = \
+                    sp_median_longslit * ycut_median[i - 1]
+            islitlet = imax
+        else:
+            print('--> ignoring: ', islitlet)
+        if islitlet == EMIR_NBARS:
+            loop = False
+        else:
+            islitlet += 1
+    if True:
+        ximshow(image2d_sp_median_longslit, debugplot=12)
+
+    # initialize rectified image
+    image2d_flatfielded = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
+
+    # main loop
+    for islitlet in list(range(1, EMIR_NBARS + 1)):
+        if islitlet in list_valid_islitlets:
+            if args.debugplot == 0:
+                islitlet_progress(islitlet, EMIR_NBARS, ignore=False)
+            # define Slitlet2D object
+            slt = Slitlet2D(islitlet=islitlet,
+                            rectwv_coeff=rectwv_coeff,
+                            debugplot=args.debugplot)
+
+            # extract (distorted) slitlet from the initial image
+            slitlet2d = slt.extract_slitlet2d(
+                image_2k2k=image2d,
+                subtitle='original image'
+            )
+
+            # rectify slitlet
+            slitlet2d_rect = slt.rectify(
+                slitlet2d=slitlet2d,
+                resampling=args.resampling,
+                subtitle='original rectified'
+            )
+            naxis2_slitlet2d, naxis1_slitlet2d = slitlet2d_rect.shape
+
+            sp_median = image2d_sp_median_longslit[islitlet - 1, :]
 
             # generate rectified slitlet region filled with the median spectrum
             slitlet2d_rect_spmedian = np.tile(sp_median, (naxis2_slitlet2d, 1))
@@ -403,7 +493,7 @@ def main(args=None):
             else:
                 same_slitlet_below = False
 
-            # check for pseudo-longslit with previous slitlet
+            # check for pseudo-longslit with next slitlet
             if islitlet < EMIR_NBARS:
                 if (islitlet + 1) in list_valid_islitlets:
                     c1 = csu_conf_fitsfile.csu_bar_slit_center(islitlet)

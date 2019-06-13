@@ -48,6 +48,12 @@ class LongSlit(object):
             return result
         return NotImplemented
 
+    def imin(self):
+        return self._imin
+
+    def imax(self):
+        return self._imax
+
 
 class CsuConfiguration(object):
     """Configurable Slit Unit (CSU) Configuration class definition.
