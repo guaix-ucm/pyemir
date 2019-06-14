@@ -120,6 +120,10 @@ def main(args=None):
     if args.echo:
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
+    # This code is obsolete
+    raise ValueError('This code is obsolete: use recipe in '
+                     'emirdrp/recipes/spec/flatpix2pix.py')
+
     # read calibration structure from JSON file
     rectwv_coeff = RectWaveCoeff._datatype_load(args.rectwv_coeff.name)
 
