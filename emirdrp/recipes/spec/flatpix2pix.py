@@ -124,7 +124,6 @@ class SpecFlatPix2Pix(EmirRecipe):
     reduced_flatpix2pix = Result(prods.MasterSpectralFlat)
 
     def run(self, rinput):
-
         self.logger.info('starting generation of flatpix2pix')
 
         self.logger.info('rectwv_coeff..........................: {}'.format(
@@ -244,16 +243,13 @@ class SpecFlatPix2Pix(EmirRecipe):
         reduced_data = data_on - data_off
 
         # update reduced image header
-        with contextlib.ExitStack() as stack:
-            hduls = [stack.enter_context(fname.open()) for fname in
-                     rinput.obresult.frames]
-            reduced_image = self.create_reduced_image(
-                hduls,
-                reduced_data,
-                header_on,
-                header_off,
-                list_lampincd
-            )
+        reduced_image = self.create_reduced_image(
+            rinput,
+            reduced_data,
+            header_on,
+            header_off,
+            list_lampincd
+        )
 
         # save intermediate image in work directory
         self.save_intermediate_img(reduced_image, 'reduced_image.fits')
@@ -312,7 +308,7 @@ class SpecFlatPix2Pix(EmirRecipe):
             if (slitwidth < rinput.minimum_slitlet_width_mm) or \
                     (slitwidth > rinput.maximum_slitlet_width_mm):
                 list_outside_valid_width.append(islitlet)
-                self.logger.info('-> Removing slitlet (invalid width): ' +
+                self.logger.info('-> Removing slitlet (width out of range): ' +
                                  str(islitlet))
         if len(list_outside_valid_width) > 0:
             for idel in list_outside_valid_width:
@@ -609,15 +605,12 @@ class SpecFlatPix2Pix(EmirRecipe):
         image2d_flatfielded[filtered] = 1.0
 
         # update image header
-        with contextlib.ExitStack() as stack:
-            hduls = [stack.enter_context(fname.open()) for fname in
-                     rinput.obresult.frames]
-            reduced_flatpix2pix = self.create_reduced_image(
-                hduls,
-                image2d_flatfielded,
-                header_on, header_off,
-                list_lampincd
-            )
+        reduced_flatpix2pix = self.create_reduced_image(
+            rinput,
+            image2d_flatfielded,
+            header_on, header_off,
+            list_lampincd
+        )
 
         # ds9 region files (to be saved in the work directory)
         if self.intermediate_results:
@@ -631,29 +624,32 @@ class SpecFlatPix2Pix(EmirRecipe):
         )
         return result
 
-    def create_reduced_image(self, hduls, reduced_data,
+    def create_reduced_image(self, rinput, reduced_data,
                              header_on, header_off,
                              list_lampincd):
-        # Copy header of first image
-        base_header = hduls[0][0].header.copy()
+        with contextlib.ExitStack() as stack:
+            hduls = [stack.enter_context(fname.open()) for fname in
+                     rinput.obresult.frames]
+            # Copy header of first image
+            base_header = hduls[0][0].header.copy()
 
-        hdu = fits.PrimaryHDU(reduced_data, header=base_header)
-        self.set_base_headers(hdu.header)
+            hdu = fits.PrimaryHDU(reduced_data, header=base_header)
+            self.set_base_headers(hdu.header)
 
-        self.logger.debug('update result header')
-        # update additional keywords
-        hdu.header['UUID'] = str(uuid.uuid1())
-        hdu.header['OBSMODE'] = 'flatpix2pix'
-        hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
-        hdu.header['history'] = "Processed flatpix2pix"
-        hdu.header['NUM-NCOM'] = (len(hduls), 'Number of combined frames')
+            self.logger.debug('update result header')
+            # update additional keywords
+            hdu.header['UUID'] = str(uuid.uuid1())
+            hdu.header['OBSMODE'] = 'flatpix2pix'
+            hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
+            hdu.header['history'] = "Processed flatpix2pix"
+            hdu.header['NUM-NCOM'] = (len(hduls), 'Number of combined frames')
 
-        # update history
-        dm = emirdrp.datamodel.EmirDataModel()
-        for img, lampincd in zip(hduls, list_lampincd):
-            imgid = dm.get_imgid(img)
-            hdu.header['HISTORY'] = "Image '{}' has lampincd='{}'".format(
-                imgid, lampincd)
+            # update history
+            dm = emirdrp.datamodel.EmirDataModel()
+            for img, lampincd in zip(hduls, list_lampincd):
+                imgid = dm.get_imgid(img)
+                hdu.header['HISTORY'] = "Image '{}' has lampincd='{}'".format(
+                    imgid, lampincd)
         hdu.header['HISTORY'] = "Processed flatpix2pix"
         hdu.header['HISTORY'] = '--- Reduction of images with lamp ON ---'
         for line in header_on['HISTORY']:
@@ -662,6 +658,12 @@ class SpecFlatPix2Pix(EmirRecipe):
             hdu.header['HISTORY'] = '--- Reduction of images with lamp OFF ---'
             for line in header_off['HISTORY']:
                 hdu.header['HISTORY'] = line
+        hdu.header.add_history('--- numina_desc_val (BEGIN)---')
+        for item in rinput._numina_desc_val:
+            cline = '{}: {}'.format(item, rinput._numina_desc_val[item])
+            hdu.header.add_history(cline)
+        hdu.header.add_history('--- numina_desc_val (END)---')
+
         result = fits.HDUList([hdu])
         return result
 

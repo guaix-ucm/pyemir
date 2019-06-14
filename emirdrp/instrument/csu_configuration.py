@@ -316,11 +316,11 @@ class CsuConfiguration(object):
             if imin == islitlet == imax:
                 output += '<>'
             elif imin == islitlet < imax:
-                output += '<'
+                output += '<-'
             elif imin < islitlet == imax:
-                output += '>'
+                output += '->'
             else:
-                output += '-'
+                output += '--'
             print(output)
 
 
