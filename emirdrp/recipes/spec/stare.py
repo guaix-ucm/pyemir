@@ -13,6 +13,7 @@ Spectroscopy mode, Stare Spectra
 
 from astropy.io import fits
 from datetime import datetime
+from skimage.feature import register_translation
 
 from numina.core import Result
 from numina.core import Requirement, Parameter
@@ -167,7 +168,8 @@ class StareSpectraWaveRecipe(EmirRecipe):
             # Check if images have the same size.
             # if so, go ahead
             if msky[0].data.shape != stare_image[0].data.shape:
-                self.logger.warning("sky and current image don't have the same shape")
+                self.logger.warning(
+                    "sky and current image don't have the same shape")
             else:
                 sky_corrector = proc.SkyCorrector(
                     msky[0].data,
@@ -211,23 +213,33 @@ class GenerateRectwvCoeff(EmirRecipe):
     refine_wavecalib_mode = Parameter(
         0,
         description='Apply wavelength calibration refinement',
+        optional=True,
         choices=[0, 1, 2, 11, 12]
     )
     minimum_slitlet_width_mm = Parameter(
         float(EMIR_MINIMUM_SLITLET_WIDTH_MM),
         description='Minimum width (mm) for a valid slitlet',
+        optional=True
     )
     maximum_slitlet_width_mm = Parameter(
         float(EMIR_MAXIMUM_SLITLET_WIDTH_MM),
         description='Maximum width (mm) for a valid slitlet',
+        optional=True
+    )
+    global_integer_offsets_mode = Parameter(
+        'fixed',
+        description='Global integer offsets computation',
+        choices=['auto', 'fixed']
     )
     global_integer_offset_x_pix = Parameter(
         0,
-        description='Global offset (pixels) in wavelength direction (integer)',
+        description='Global integer offset (pixels) in wavelength direction',
+        optional=True
     )
     global_integer_offset_y_pix = Parameter(
         0,
-        description='Global offset (pixels) in spatial direction (integer)',
+        description='Global integer offset (pixels) in spatial direction',
+        optional=True
     )
 
     reduced_mos = Result(prods.ProcessedMOS)
@@ -237,16 +249,26 @@ class GenerateRectwvCoeff(EmirRecipe):
         self.logger.info('starting rect.+wavecal. reduction of stare spectra')
 
         self.logger.info(rinput.master_rectwv)
-        self.logger.info('Wavelength calibration refinement mode: {}'.format(
-            rinput.refine_wavecalib_mode))
-        self.logger.info('Minimum slitlet width (mm)............: {}'.format(
-            rinput.minimum_slitlet_width_mm))
-        self.logger.info('Maximum slitlet width (mm)............: {}'.format(
-            rinput.maximum_slitlet_width_mm))
-        self.logger.info('Global offset X direction (pixels)....: {}'.format(
-            rinput.global_integer_offset_x_pix))
-        self.logger.info('Global offset Y direction (pixels)....: {}'.format(
-            rinput.global_integer_offset_y_pix))
+        self.logger.info(
+            'Wavelength calibration refinement mode....: {}'.format(
+                rinput.refine_wavecalib_mode))
+        self.logger.info(
+            'Minimum slitlet width (mm)................: {}'.format(
+                rinput.minimum_slitlet_width_mm))
+        self.logger.info(
+            'Maximum slitlet width (mm)................: {}'.format(
+                rinput.maximum_slitlet_width_mm))
+        self.logger.info(
+            'Global integer offsets mode...............: {}'.format(
+                rinput.global_integer_offsets_mode
+            )
+        )
+        self.logger.info(
+            'Global integer offset X direction (pixels): {}'.format(
+                rinput.global_integer_offset_x_pix))
+        self.logger.info(
+            'Global integer offset Y direction (pixels): {}'.format(
+                rinput.global_integer_offset_y_pix))
 
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
@@ -298,39 +320,59 @@ class GenerateRectwvCoeff(EmirRecipe):
             self.logger.info('list of unusable slitlets: {}'.format(
                 list_not_useful_slitlets))
 
-            # ToDo: include additional airglow emission lines
             # retrieve arc/OH lines
             catlines_all_wave, catlines_all_flux = retrieve_catlines(
                 rinput.refine_wavecalib_mode,
                 main_header['grism']
             )
 
-            # generate synthetic image
-            synthetic_raw_data = synthetic_lines_rawdata(
-                catlines_all_wave,
-                catlines_all_flux,
-                list_useful_slitlets,
-                rectwv_coeff
-            )
-            synthetic_raw_header = main_header.copy()
-            synthetic_raw_header['DATE-OBS'] = \
-                datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-            chistory = 'Synthetic image'
-            synthetic_raw_header.add_history(chistory)
-            hdu = fits.PrimaryHDU(synthetic_raw_data.astype('float32'),
-                                  header=synthetic_raw_header)
-            synthetic_raw_image = fits.HDUList([hdu])
-            if self.intermediate_results:
-                self.save_intermediate_img(synthetic_raw_image,
-                                           'synthetic_raw_image.fits')
+            # global integer offsets
+            if rinput.global_integer_offsets_mode == 'auto':
+                if (rinput.global_integer_offset_x_pix != 0) or \
+                        (rinput.global_integer_offset_y_pix != 0):
+                    raise ValueError('Global integer offsets must be zero when'
+                                     ' mode=auto')
 
-            # ToDo: 2D crosscorrelation to determine better global offsets
-            
-            # set global offsets
-            rectwv_coeff.global_integer_offset_x_pix = \
-                rinput.global_integer_offset_x_pix
-            rectwv_coeff.global_integer_offset_y_pix = \
-                rinput.global_integer_offset_y_pix
+                # ToDo: include additional airglow emission lines
+
+                self.logger.info('computing synthetic image')
+                # generate synthetic image
+                synthetic_raw_data = synthetic_lines_rawdata(
+                    catlines_all_wave,
+                    catlines_all_flux,
+                    list_useful_slitlets,
+                    rectwv_coeff
+                )
+                synthetic_raw_header = main_header.copy()
+                synthetic_raw_header['DATE-OBS'] = \
+                    datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+                chistory = 'Synthetic image'
+                synthetic_raw_header.add_history(chistory)
+                hdu = fits.PrimaryHDU(synthetic_raw_data.astype('float32'),
+                                      header=synthetic_raw_header)
+                synthetic_raw_image = fits.HDUList([hdu])
+                if self.intermediate_results:
+                    self.save_intermediate_img(synthetic_raw_image,
+                                               'synthetic_raw_image.fits')
+
+                # cross-correlation to determine global integer offsets
+                shifts, error, diffphase = register_translation(
+                    reduced_image[0].data,
+                    synthetic_raw_data
+                )
+                rectwv_coeff.global_integer_offset_x_pix = -int(shifts[1]+0.5)
+                rectwv_coeff.global_integer_offset_y_pix = -int(shifts[0]+0.5)
+                self.logger.info('global_integer_offset_x_pix: {}'.format(
+                    rectwv_coeff.global_integer_offset_x_pix
+                ))
+                self.logger.info('global_integer_offset_y_pix: {}'.format(
+                    rectwv_coeff.global_integer_offset_y_pix
+                ))
+            else:
+                rectwv_coeff.global_integer_offset_x_pix = \
+                    rinput.global_integer_offset_x_pix
+                rectwv_coeff.global_integer_offset_y_pix = \
+                    rinput.global_integer_offset_y_pix
 
             # apply initial rectification and wavelength calibration
             reduced_mos = apply_rectwv_coeff(
