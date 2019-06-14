@@ -13,6 +13,7 @@ Spectroscopy mode, Stare Spectra
 
 from astropy.io import fits
 from datetime import datetime
+import numpy as np
 from skimage.feature import register_translation
 
 from numina.core import Result
@@ -358,16 +359,33 @@ class GenerateRectwvCoeff(EmirRecipe):
                 # cross-correlation to determine global integer offsets
                 shifts, error, diffphase = register_translation(
                     reduced_image[0].data,
-                    synthetic_raw_data
+                    synthetic_raw_data,
+                    100
                 )
-                rectwv_coeff.global_integer_offset_x_pix = -int(shifts[1]+0.5)
-                rectwv_coeff.global_integer_offset_y_pix = -int(shifts[0]+0.5)
+                self.logger.info('global_float_offset_x_pix..: {}'.format(
+                    -shifts[1]
+                ))
+                self.logger.info('global_float_offset_y_pix..: {}'.format(
+                    -shifts[0]
+                ))
+                rectwv_coeff.global_integer_offset_x_pix = \
+                    -int(round(shifts[1]))
+                rectwv_coeff.global_integer_offset_y_pix = \
+                    -int(round(shifts[0]))
                 self.logger.info('global_integer_offset_x_pix: {}'.format(
                     rectwv_coeff.global_integer_offset_x_pix
                 ))
                 self.logger.info('global_integer_offset_y_pix: {}'.format(
                     rectwv_coeff.global_integer_offset_y_pix
                 ))
+                if self.intermediate_results:
+                    data_product = np.fft.fft2(reduced_image[0].data) * \
+                                    np.fft.fft2(synthetic_raw_data).conj()
+                    cc_image = np.fft.fftshift(np.fft.ifft2(data_product))
+                    power = np.log10(cc_image.real)
+                    hdu_power = fits.PrimaryHDU(power)
+                    hdul_power = fits.HDUList([hdu_power])
+                    hdul_power.writeto('power.fits', overwrite=True)
             else:
                 rectwv_coeff.global_integer_offset_x_pix = \
                     rinput.global_integer_offset_x_pix
