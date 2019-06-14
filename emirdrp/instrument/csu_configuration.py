@@ -314,13 +314,13 @@ class CsuConfiguration(object):
             output = 'islitlet: {0:02d} '.format(islitlet)
             output += '--> min: {0:02d}  max: {1:02d} '.format(imin, imax)
             if imin == islitlet == imax:
-                output += '━'
+                output += u'━'
             elif imin == islitlet < imax:
-                output += '┓'
+                output += u'┓'
             elif imin < islitlet == imax:
-                output += '┛'
+                output += u'┛'
             else:
-                output += '┃'
+                output += u'┃'
             print(output)
 
 

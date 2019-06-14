@@ -20,7 +20,9 @@ import uuid
 
 import numina.array.combine as combine
 from numina.array.display.ximplotxy import ximplotxy
+from numina.array.display.ximshow import ximshow
 from numina.array.display.pause_debugplot import pause_debugplot
+from numina.array.robustfit import fit_theil_sen
 from numina.array.wavecalib.fix_pix_borders import fix_pix_borders
 from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.core import Parameter
@@ -61,13 +63,14 @@ class SpecFlatPix2Pix(EmirRecipe):
 
     # note that 'sum' is not allowed as combination method
     method = Parameter(
-        'mean',
+        'sigmaclip',
         description='Combination method',
         choices=['mean', 'median', 'sigmaclip']
     )
     method_kwargs = Parameter(
         dict(),
-        description='Arguments for combination method'
+        description='Arguments for combination method',
+        optional=True
     )
     minimum_slitlet_width_mm = Parameter(
         float(EMIR_MINIMUM_SLITLET_WIDTH_MM),
@@ -97,7 +100,7 @@ class SpecFlatPix2Pix(EmirRecipe):
     )
     minimum_fraction = Parameter(
         0.01,
-        description='Minimum allowed flatfielding value',
+        description='Minimum useful flatfielding value (fraction of maximum)',
         optional=True
     )
     minimum_value_in_output = Parameter(
@@ -179,8 +182,12 @@ class SpecFlatPix2Pix(EmirRecipe):
             raise ValueError('Number of images does not match!')
 
         # check combination method
-        if rinput.method != 'sigmaclip':
-            if rinput.method_kwargs != {}:
+        if rinput.method_kwargs == {}:
+            method_kwargs = None
+        else:
+            if rinput.method == 'sigmaclip':
+                method_kwargs = rinput.method_kwargs
+            else:
                 raise ValueError('Unexpected method_kwargs={}'.format(
                     rinput.method_kwargs))
 
@@ -206,7 +213,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                     reduced_image = combine_imgs(
                         hduls,
                         method=fmethod,
-                        method_kwargs=rinput.method_kwargs,
+                        method_kwargs=method_kwargs,
                         errors=False,
                         prolog=None
                     )
@@ -271,9 +278,17 @@ class SpecFlatPix2Pix(EmirRecipe):
             save_four_ds9(rectwv_coeff)
             save_spectral_lines_ds9(rectwv_coeff)
 
-        # apply global offsets
+        # clean (interpolate) defects
+        reduced_data_clean = self.clean_defects(reduced_data, debugplot=0)
+
+        # apply global offsets (to both, the original and the cleaned version)
         image2d = apply_integer_offsets(
             image2d=reduced_data,
+            offx=rectwv_coeff.global_integer_offset_x_pix,
+            offy=rectwv_coeff.global_integer_offset_y_pix
+        )
+        image2d_clean = apply_integer_offsets(
+            image2d=reduced_data_clean,
             offx=rectwv_coeff.global_integer_offset_x_pix,
             offy=rectwv_coeff.global_integer_offset_y_pix
         )
@@ -325,12 +340,16 @@ class SpecFlatPix2Pix(EmirRecipe):
                     image_2k2k=image2d,
                     subtitle='original image'
                 )
+                slitlet2d_clean = slt.extract_slitlet2d(
+                    image_2k2k=image2d_clean,
+                    subtitle='original (cleaned) image'
+                )
 
                 # rectify slitlet
                 slitlet2d_rect = slt.rectify(
-                    slitlet2d=slitlet2d,
+                    slitlet2d=slitlet2d_clean,
                     resampling=2,
-                    subtitle='original rectified'
+                    subtitle='original (cleaned) rectified'
                 )
                 naxis2_slitlet2d, naxis1_slitlet2d = slitlet2d_rect.shape
 
@@ -372,7 +391,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                 if abs(slt.debugplot) % 10 != 0:
                     slt.ximshow_rectified(
                         slitlet2d_rect=image2d_rect_masked.data,
-                        subtitle='original rectified and masked'
+                        subtitle='original (cleaned) rectified and masked'
                     )
                 ycut_median = np.ma.median(image2d_rect_masked, axis=1).data
                 ycut_median_median = np.median(ycut_median[ii1:(ii2 + 1)])
@@ -462,7 +481,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                     replacement_value=1.0
                 )
 
-                if abs(slt.debugplot) > 10:
+                if abs(slt.debugplot) % 10 != 0:
                     slt.ximshow_unrectified(
                         slitlet2d=slitlet2d_norm,
                         subtitle='unrectified, pixel-to-pixel'
@@ -516,7 +535,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                 # apply smooth surface to pix2pix
                 slitlet2d_norm /= slitlet2d_norm_smooth
 
-                if abs(slt.debugplot) > 10:
+                if abs(slt.debugplot) % 10 != 0:
                     slt.ximshow_unrectified(
                         slitlet2d=slitlet2d_norm_clipped,
                         subtitle='unrectified, pixel-to-pixel (clipped)'
@@ -651,3 +670,49 @@ class SpecFlatPix2Pix(EmirRecipe):
         # Update EXP to 0
         newhdr['EXP'] = 0
         return newhdr
+
+    def clean_defects(self, image2d, debugplot=0):
+        """Interpolate problematic image region"""
+
+        self.logger.debug('interpolating image defect')
+        # define output image
+        image2d_clean = image2d.copy()
+        # define region containing the "curved piece of hair"
+        j1, j2 = 980, 1050  # channel region (X direction)
+        i1, i2 = 750, 860   # scan region (Y direction)
+        subimage = image2d_clean[i1:(i2 + 1), j1:(j2 + 1)].copy()
+        if abs(debugplot) % 10 != 0:
+            ximshow(subimage, title='original image',
+                    first_pixel=(j1, i1), debugplot=debugplot)
+        # median filter in Y
+        subimage_filtered = ndimage.median_filter(subimage, size=(5, 1))
+        if abs(debugplot) % 10 != 0:
+            ximshow(subimage_filtered, title='median-filtered image',
+                    first_pixel=(j1, i1), debugplot=debugplot)
+        # fit image
+        xfit = np.arange(j1, j2 + 1, 1, dtype=float)
+        yfit = subimage_filtered.transpose()
+        coef = fit_theil_sen(xfit, yfit)
+        subimage_fitted = np.zeros_like(subimage)
+        nscans = i2 - i1 + 1
+        for i in range(nscans):
+            subimage_fitted[i, :] = coef[0, i] + coef[1, i] * xfit
+        if abs(debugplot) % 10 != 0:
+            ximshow(subimage_fitted, title='fitted image',
+                    first_pixel=(j1, i1), debugplot=debugplot)
+        # filtered_image/fitted_image
+        subimage_ratio = subimage_filtered / subimage_fitted
+        if abs(debugplot) % 10 != 0:
+            ximshow(subimage_ratio, title='image ratio',
+                    first_pixel=(j1, i1), debugplot=debugplot)
+        # mark bad pixels
+        badpix = np.where(subimage_ratio < 0.90)
+        # replace bad pixels by fitted image
+        subimage[badpix] = subimage_fitted[badpix]
+        if abs(debugplot) % 10 != 0:
+            ximshow(subimage, title='cleaned image',
+                    first_pixel=(j1, i1), debugplot=debugplot)
+        # replace interpolated region in original image
+        image2d_clean[i1:(i2 + 1), j1:(j2 + 1)] = subimage
+
+        return image2d_clean
