@@ -145,6 +145,10 @@ modes:
   name: ABBA Spectra with Precomputed Wavelength Calibration (fast)
   summary: ABBA Spectra with Precomputed Wavelength Calibration (fast)
   description: ABBA Spectra with Precomputed Wavelength Calibration (fast)
+- key: SPEC_FLAT_LOWFREQ
+  name: Low-frequency spectroscopic flatfield
+  summary: Low-frequency spectroscopic flatfield
+  description: Low-frequency spectroscopic flatfield
 - key: SPEC_FLAT_PIX2PIX
   name: Pixel-to-pixel spectroscopic flatfield
   summary: Pixel-to-pixel spectroscopic flatfield
@@ -253,6 +257,7 @@ pipelines:
       STARE_SPECTRA_RECTWV: emirdrp.recipes.spec.stare.StareSpectraRectwv
       ABBA_SPECTRA_RECTWV: emirdrp.recipes.spec.abba.ABBASpectraRectwv
       ABBA_SPECTRA_FAST_RECTWV: emirdrp.recipes.spec.abba.ABBASpectraFastRectwv
+      SPEC_FLAT_LOWFREQ: emirdrp.recipes.spec.flatlowfreq.SpecFlatLowFreq
       SPEC_FLAT_PIX2PIX: emirdrp.recipes.spec.flatpix2pix.SpecFlatPix2Pix
       LS_ABBA: emirdrp.recipes.spec.subs.BaseABBARecipe
       COMBINED_ABBA: emirdrp.recipes.spec.coadd.CoaddABBARecipe

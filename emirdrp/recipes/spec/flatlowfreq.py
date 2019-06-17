@@ -8,21 +8,18 @@
 #
 
 """
-Spectroscopy mode, compute pixel-to-pixel flatfield
+Spectroscopy mode, compute low-frequency flatfield
 """
 
 import astropy.io.fits as fits
 import contextlib
 import numpy as np
-from numpy.polynomial.polynomial import polyval
 from scipy import ndimage
 import uuid
 
 import numina.array.combine as combine
 from numina.array.display.ximplotxy import ximplotxy
-from numina.array.display.ximshow import ximshow
 from numina.array.display.pause_debugplot import pause_debugplot
-from numina.array.robustfit import fit_theil_sen
 from numina.array.wavecalib.fix_pix_borders import fix_pix_borders
 from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.core import Parameter
@@ -38,7 +35,6 @@ from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 \
     import save_spectral_lines_ds9
 from emirdrp.processing.wavecal.slitlet2d import Slitlet2D
-from emirdrp.processing.wavecal.set_wv_parameters import set_wv_parameters
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
@@ -50,7 +46,7 @@ from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
 from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
 
 
-class SpecFlatPix2Pix(EmirRecipe):
+class SpecFlatLowFreq(EmirRecipe):
     """Process continuum exposures of continuum lamp (lamp ON-OFF)
 
     """
@@ -58,6 +54,7 @@ class SpecFlatPix2Pix(EmirRecipe):
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     master_bias = reqs.MasterBiasRequirement()
+    master_flat = reqs.MasterSpectralFlatFieldRequirement()
     rectwv_coeff = reqs.RectWaveCoeffRequirement(optional=True)
     master_rectwv = reqs.MasterRectWaveRequirement(optional=True)
 
@@ -92,9 +89,15 @@ class SpecFlatPix2Pix(EmirRecipe):
         description='Global offset (pixels) in spatial direction (integer)',
         optional=True
     )
-    nwindow_median = Parameter(
-        5,
-        description='Window size to smooth median spectrum in the spectral '
+    nwindow_x_median = Parameter(
+        301,
+        description='Window size to smooth the flatfield in the spectral '
+                    'direction',
+        optional=True
+    )
+    nwindow_y_median = Parameter(
+        11,
+        description='Window size to smooth the flatfield in the spatial '
                     'direction',
         optional=True
     )
@@ -121,10 +124,10 @@ class SpecFlatPix2Pix(EmirRecipe):
         optional=True
     )
 
-    reduced_flatpix2pix = Result(prods.MasterSpectralFlat)
+    reduced_flatlowfreq = Result(prods.MasterSpectralFlat)
 
     def run(self, rinput):
-        self.logger.info('starting generation of flatpix2pix')
+        self.logger.info('starting generation of flatlowfreq')
 
         self.logger.info('rectwv_coeff..........................: {}'.format(
             rinput.rectwv_coeff))
@@ -138,6 +141,12 @@ class SpecFlatPix2Pix(EmirRecipe):
             rinput.global_integer_offset_x_pix))
         self.logger.info('Global offset Y direction (pixels)....: {}'.format(
             rinput.global_integer_offset_y_pix))
+        self.logger.info('nwindow_x_median......................: {}'.format(
+            rinput.nwindow_x_median
+        ))
+        self.logger.info('nwindow_y_median......................: {}'.format(
+            rinput.nwindow_y_median
+        ))
         self.logger.info('Minimum fraction......................: {}'.format(
             rinput.minimum_fraction))
         self.logger.info('Minimum value in output...............: {}'.format(
@@ -274,18 +283,9 @@ class SpecFlatPix2Pix(EmirRecipe):
             save_four_ds9(rectwv_coeff)
             save_spectral_lines_ds9(rectwv_coeff)
 
-        # clean (interpolate) defects
-        self.logger.debug('interpolating image defect')
-        reduced_data_clean = clean_defects(reduced_data, debugplot=0)
-
         # apply global offsets (to both, the original and the cleaned version)
         image2d = apply_integer_offsets(
             image2d=reduced_data,
-            offx=rectwv_coeff.global_integer_offset_x_pix,
-            offy=rectwv_coeff.global_integer_offset_y_pix
-        )
-        image2d_clean = apply_integer_offsets(
-            image2d=reduced_data_clean,
             offx=rectwv_coeff.global_integer_offset_x_pix,
             offy=rectwv_coeff.global_integer_offset_y_pix
         )
@@ -337,14 +337,10 @@ class SpecFlatPix2Pix(EmirRecipe):
                     image_2k2k=image2d,
                     subtitle='original image'
                 )
-                slitlet2d_clean = slt.extract_slitlet2d(
-                    image_2k2k=image2d_clean,
-                    subtitle='original (cleaned) image'
-                )
 
                 # rectify slitlet
                 slitlet2d_rect = slt.rectify(
-                    slitlet2d=slitlet2d_clean,
+                    slitlet2d=slitlet2d,
                     resampling=2,
                     subtitle='original (cleaned) rectified'
                 )
@@ -354,21 +350,6 @@ class SpecFlatPix2Pix(EmirRecipe):
                     print('naxis1_slitlet2d: ', naxis1_slitlet2d)
                     print('EMIR_NAXIS1.....: ', EMIR_NAXIS1)
                     raise ValueError("Unexpected naxis1_slitlet2d")
-
-                slitlet2d_rect_mask = np.zeros(
-                    (naxis2_slitlet2d, naxis1_slitlet2d), dtype=bool)
-
-                # for grism LR set to zero data beyond useful wavelength range
-                if grism_name == 'LR':
-                    wv_parameters = set_wv_parameters(filter_name, grism_name)
-                    x_pix = np.arange(1, naxis1_slitlet2d + 1)
-                    wl_pix = polyval(x_pix, slt.wpoly)
-                    lremove = wl_pix < wv_parameters['wvmin_useful']
-                    slitlet2d_rect[:, lremove] = 0.0
-                    slitlet2d_rect_mask[:, lremove] = True
-                    lremove = wl_pix > wv_parameters['wvmax_useful']
-                    slitlet2d_rect[:, lremove] = 0.0
-                    slitlet2d_rect_mask[:, lremove] = True
 
                 # get useful slitlet region (use boundaries)
                 spectrail = slt.list_spectrails[0]
@@ -380,24 +361,6 @@ class SpecFlatPix2Pix(EmirRecipe):
                       slt.corr_yrect_b * spectrail(slt.x0_reference)
                 ii2 = int(yy0 + 0.5) - slt.bb_ns1_orig
 
-                # median spatial profile along slitlet (to be used later)
-                image2d_rect_masked = np.ma.masked_array(
-                    slitlet2d_rect,
-                    mask=slitlet2d_rect_mask
-                )
-                if abs(slt.debugplot) % 10 != 0:
-                    slt.ximshow_rectified(
-                        slitlet2d_rect=image2d_rect_masked.data,
-                        subtitle='original (cleaned) rectified and masked'
-                    )
-                ycut_median = np.ma.median(image2d_rect_masked, axis=1).data
-                ycut_median_median = np.median(ycut_median[ii1:(ii2 + 1)])
-                ycut_median /= ycut_median_median
-                if abs(slt.debugplot) % 10 != 0:
-                    ximplotxy(np.arange(1, naxis2_slitlet2d + 1),
-                              ycut_median, 'o',
-                              title='median value at each scan', debugplot=12)
-
                 # median spectrum
                 sp_collapsed = np.median(slitlet2d_rect[ii1:(ii2 + 1), :],
                                          axis=0)
@@ -405,7 +368,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                 # smooth median spectrum along the spectral direction
                 sp_median = ndimage.median_filter(
                     sp_collapsed,
-                    rinput.nwindow_median,
+                    5,
                     mode='nearest'
                 )
 
@@ -438,50 +401,6 @@ class SpecFlatPix2Pix(EmirRecipe):
                     slt.ximshow_rectified(
                         slitlet2d_rect=slitlet2d_rect_spmedian,
                         subtitle='rectified, filled with median spectrum'
-                    )
-
-                # apply median ycut
-                for i in range(naxis2_slitlet2d):
-                    slitlet2d_rect_spmedian[i, :] *= ycut_median[i]
-
-                if abs(slt.debugplot) % 10 != 0:
-                    slt.ximshow_rectified(
-                        slitlet2d_rect=slitlet2d_rect_spmedian,
-                        subtitle='rectified, filled with rescaled median '
-                                 'spectrum'
-                    )
-
-                # unrectified image
-                slitlet2d_unrect_spmedian = slt.rectify(
-                    slitlet2d=slitlet2d_rect_spmedian,
-                    resampling=2,
-                    inverse=True,
-                    subtitle='unrectified, filled with median spectrum'
-                )
-
-                # normalize initial slitlet image (avoid division by zero)
-                slitlet2d_norm = np.zeros_like(slitlet2d)
-                for j in range(naxis1_slitlet2d):
-                    for i in range(naxis2_slitlet2d):
-                        den = slitlet2d_unrect_spmedian[i, j]
-                        if den == 0:
-                            slitlet2d_norm[i, j] = 1.0
-                        else:
-                            slitlet2d_norm[i, j] = slitlet2d[i, j] / den
-                # set to 1.0 one additional pixel at each side (since
-                # 'den' above is small at the borders and generates wrong
-                # bright pixels)
-                slitlet2d_norm = fix_pix_borders(
-                    image2d=slitlet2d_norm,
-                    nreplace=1,
-                    sought_value=1.0,
-                    replacement_value=1.0
-                )
-
-                if abs(slt.debugplot) % 10 != 0:
-                    slt.ximshow_unrectified(
-                        slitlet2d=slitlet2d_norm,
-                        subtitle='unrectified, pixel-to-pixel'
                     )
 
                 # compute smooth surface
@@ -526,11 +445,9 @@ class SpecFlatPix2Pix(EmirRecipe):
                 slitlet2d_norm_clipped = slitlet2d_norm_clipped.transpose()
                 slitlet2d_norm_smooth = ndimage.median_filter(
                     slitlet2d_norm_clipped,
-                    size=(5, 31),
+                    size=(rinput.nwindow_y_median, rinput.nwindow_x_median),
                     mode='nearest'
                 )
-                # apply smooth surface to pix2pix
-                slitlet2d_norm /= slitlet2d_norm_smooth
 
                 if abs(slt.debugplot) % 10 != 0:
                     slt.ximshow_unrectified(
@@ -540,10 +457,6 @@ class SpecFlatPix2Pix(EmirRecipe):
                     slt.ximshow_unrectified(
                         slitlet2d=slitlet2d_norm_smooth,
                         subtitle='unrectified, pixel-to-pixel (smoothed)'
-                    )
-                    slt.ximshow_unrectified(
-                        slitlet2d=slitlet2d_norm,
-                        subtitle='unrectified, pixel-to-pixel (improved)'
                     )
 
                 # ---
@@ -571,7 +484,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                     nn1 = n1 - slt.bb_ns1_orig + 1
                     nn2 = n2 - slt.bb_ns1_orig + 1
                     image2d_flatfielded[(n1 - 1):n2, j] = \
-                        slitlet2d_norm[(nn1 - 1):nn2, j]
+                        slitlet2d_norm_smooth[(nn1 - 1):nn2, j]
 
                     # force to 1.0 region around frontiers
                     if not same_slitlet_below:
@@ -606,7 +519,7 @@ class SpecFlatPix2Pix(EmirRecipe):
         image2d_flatfielded[filtered] = 1.0
 
         # update image header
-        reduced_flatpix2pix = self.create_reduced_image(
+        reduced_flatlowfreq = self.create_reduced_image(
             rinput,
             image2d_flatfielded,
             header_on, header_off,
@@ -619,9 +532,9 @@ class SpecFlatPix2Pix(EmirRecipe):
             save_spectral_lines_ds9(rectwv_coeff)
 
         # save results in results directory
-        self.logger.info('end of flatpix2pix generation')
+        self.logger.info('end of flatlowfreq generation')
         result = self.create_result(
-            reduced_flatpix2pix=reduced_flatpix2pix
+            reduced_flatlowfreq=reduced_flatlowfreq
         )
         return result
 
@@ -640,9 +553,9 @@ class SpecFlatPix2Pix(EmirRecipe):
             self.logger.debug('update result header')
             # update additional keywords
             hdu.header['UUID'] = str(uuid.uuid1())
-            hdu.header['OBSMODE'] = 'flatpix2pix'
+            hdu.header['OBSMODE'] = 'flatlowfreq'
             hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
-            hdu.header['history'] = "Processed flatpix2pix"
+            hdu.header['history'] = "Processed flatlowfreq"
             hdu.header['NUM-NCOM'] = (len(hduls), 'Number of combined frames')
 
             # update history
@@ -651,7 +564,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                 imgid = dm.get_imgid(img)
                 hdu.header['HISTORY'] = "Image '{}' has lampincd='{}'".format(
                     imgid, lampincd)
-        hdu.header['HISTORY'] = "Processed flatpix2pix"
+        hdu.header['HISTORY'] = "Processed flatlowfreq"
         hdu.header['HISTORY'] = '--- Reduction of images with lamp ON ---'
         for line in header_on['HISTORY']:
             hdu.header['HISTORY'] = line
@@ -669,53 +582,7 @@ class SpecFlatPix2Pix(EmirRecipe):
         return result
 
     def set_base_headers(self, hdr):
-        newhdr = super(SpecFlatPix2Pix, self).set_base_headers(hdr)
+        newhdr = super(SpecFlatLowFreq, self).set_base_headers(hdr)
         # Update EXP to 0
         newhdr['EXP'] = 0
         return newhdr
-
-
-def clean_defects(image2d, debugplot=0):
-    """Interpolate problematic image region"""
-
-    # define output image
-    image2d_clean = image2d.copy()
-    # define region containing the "curved piece of hair"
-    j1, j2 = 980, 1050  # channel region (X direction)
-    i1, i2 = 750, 860   # scan region (Y direction)
-    subimage = image2d_clean[i1:(i2 + 1), j1:(j2 + 1)].copy()
-    if abs(debugplot) % 10 != 0:
-        ximshow(subimage, title='original image',
-                first_pixel=(j1, i1), debugplot=debugplot)
-    # median filter in Y
-    subimage_filtered = ndimage.median_filter(subimage, size=(5, 1))
-    if abs(debugplot) % 10 != 0:
-        ximshow(subimage_filtered, title='median-filtered image',
-                first_pixel=(j1, i1), debugplot=debugplot)
-    # fit image
-    xfit = np.arange(j1, j2 + 1, 1, dtype=float)
-    yfit = subimage_filtered.transpose()
-    coef = fit_theil_sen(xfit, yfit)
-    subimage_fitted = np.zeros_like(subimage)
-    nscans = i2 - i1 + 1
-    for i in range(nscans):
-        subimage_fitted[i, :] = coef[0, i] + coef[1, i] * xfit
-    if abs(debugplot) % 10 != 0:
-        ximshow(subimage_fitted, title='fitted image',
-                first_pixel=(j1, i1), debugplot=debugplot)
-    # filtered_image/fitted_image
-    subimage_ratio = subimage_filtered / subimage_fitted
-    if abs(debugplot) % 10 != 0:
-        ximshow(subimage_ratio, title='image ratio',
-                first_pixel=(j1, i1), debugplot=debugplot)
-    # mark bad pixels
-    badpix = np.where(subimage_ratio < 0.90)
-    # replace bad pixels by fitted image
-    subimage[badpix] = subimage_fitted[badpix]
-    if abs(debugplot) % 10 != 0:
-        ximshow(subimage, title='cleaned image',
-                first_pixel=(j1, i1), debugplot=debugplot)
-    # replace interpolated region in original image
-    image2d_clean[i1:(i2 + 1), j1:(j2 + 1)] = subimage
-
-    return image2d_clean
