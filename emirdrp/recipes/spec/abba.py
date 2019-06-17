@@ -601,19 +601,16 @@ class ABBASpectraRectwv(EmirRecipe):
         reduced_mos_abba_data = data_a - data_b
 
         # update reduced mos image header
-        with contextlib.ExitStack() as stack:
-            hduls = [stack.enter_context(fname.open()) for fname in
-                     rinput.obresult.frames]
-            reduced_mos_abba = self.create_mos_abba_image(
-                hduls,
-                dict_rtas,
-                reduced_mos_abba_data,
-                header_a, header_b,
-                pattern,
-                full_set,
-                list_offsets,
-                voffset_pix=0
-            )
+        reduced_mos_abba = self.create_mos_abba_image(
+            rinput,
+            dict_rtas,
+            reduced_mos_abba_data,
+            header_a, header_b,
+            pattern,
+            full_set,
+            list_offsets,
+            voffset_pix=0
+        )
 
         # combine A and B data by shifting B on top of A
         if abs(ab_different_target) == 0:
@@ -681,19 +678,16 @@ class ABBASpectraRectwv(EmirRecipe):
             reduced_mos_abba_combined_data = None
 
         # update reduced mos combined image header
-        with contextlib.ExitStack() as stack:
-            hduls = [stack.enter_context(fname.open()) for fname in
-                     rinput.obresult.frames]
-            reduced_mos_abba_combined = self.create_mos_abba_image(
-                hduls,
-                dict_rtas,
-                reduced_mos_abba_combined_data,
-                header_a, header_b,
-                pattern,
-                full_set,
-                list_offsets,
-                voffset_pix
-            )
+        reduced_mos_abba_combined = self.create_mos_abba_image(
+            rinput,
+            dict_rtas,
+            reduced_mos_abba_combined_data,
+            header_a, header_b,
+            pattern,
+            full_set,
+            list_offsets,
+            voffset_pix
+        )
 
         # ds9 region files (to be saved in the work directory)
         if self.intermediate_results:
@@ -719,72 +713,81 @@ class ABBASpectraRectwv(EmirRecipe):
         )
         return result
 
-    def create_mos_abba_image(self, hduls, dict_rtas, reduced_mos_abba_data,
+    def create_mos_abba_image(self, rinput, dict_rtas, reduced_mos_abba_data,
                               header_a, header_b,
                               pattern, full_set, list_offsets, voffset_pix):
-        # Copy header of first image
-        base_header = hduls[0][0].header.copy()
+        with contextlib.ExitStack() as stack:
+            hduls = [stack.enter_context(fname.open()) for fname in
+                     rinput.obresult.frames]
+            # Copy header of first image
+            base_header = hduls[0][0].header.copy()
 
-        hdu = fits.PrimaryHDU(reduced_mos_abba_data, header=base_header)
-        self.set_base_headers(hdu.header)
+            hdu = fits.PrimaryHDU(reduced_mos_abba_data, header=base_header)
+            self.set_base_headers(hdu.header)
 
-        # check consistency of wavelength calibration paramenters
-        for param in ['crpix1', 'crval1', 'cdelt1']:
-            if header_a[param] != header_b[param]:
-                raise ValueError('Headers of A and B images have different '
-                                 'values of {}'.format(param))
-        self.logger.debug('update result header')
-        crpix1 = header_a['crpix1']
-        crval1 = header_a['crval1']
-        cdelt1 = header_a['cdelt1']
+            # check consistency of wavelength calibration paramenters
+            for param in ['crpix1', 'crval1', 'cdelt1']:
+                if header_a[param] != header_b[param]:
+                    raise ValueError('Headers of A and B images have different '
+                                     'values of {}'.format(param))
+            self.logger.debug('update result header')
+            crpix1 = header_a['crpix1']
+            crval1 = header_a['crval1']
+            cdelt1 = header_a['cdelt1']
 
-        # update wavelength calibration in FITS header
-        for keyword in ['crval1', 'crpix1', 'crval2', 'crpix2']:
-            if keyword in hdu.header:
-                hdu.header.remove(keyword)
-        hdu.header['crpix1'] = (crpix1, 'reference pixel')
-        hdu.header['crval1'] = (crval1, 'central wavelength at crpix1')
-        hdu.header['cdelt1'] = (cdelt1, 'linear dispersion (Angstrom/pixel)')
-        hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
-        hdu.header['ctype1'] = 'WAVELENGTH'
-        hdu.header['crpix2'] = (0.0, 'reference pixel')
-        hdu.header['crval2'] = (0.0, 'central value at crpix2')
-        hdu.header['cdelt2'] = (1.0, 'increment')
-        hdu.header['ctype2'] = 'PIXEL'
-        hdu.header['cunit2'] = ('Pixel', 'units along axis2')
-        for keyword in ['cd1_1', 'cd1_2', 'cd2_1', 'cd2_2',
-                        'PCD1_1', 'PCD1_2', 'PCD2_1', 'PCD2_2',
-                        'PCRPIX1', 'PCRPIX2']:
-            if keyword in hdu.header:
-                hdu.header.remove(keyword)
+            # update wavelength calibration in FITS header
+            for keyword in ['crval1', 'crpix1', 'crval2', 'crpix2']:
+                if keyword in hdu.header:
+                    hdu.header.remove(keyword)
+            hdu.header['crpix1'] = (crpix1, 'reference pixel')
+            hdu.header['crval1'] = (crval1, 'central wavelength at crpix1')
+            hdu.header['cdelt1'] = (cdelt1, 'linear dispersion (Angstrom/pixel)')
+            hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
+            hdu.header['ctype1'] = 'WAVELENGTH'
+            hdu.header['crpix2'] = (0.0, 'reference pixel')
+            hdu.header['crval2'] = (0.0, 'central value at crpix2')
+            hdu.header['cdelt2'] = (1.0, 'increment')
+            hdu.header['ctype2'] = 'PIXEL'
+            hdu.header['cunit2'] = ('Pixel', 'units along axis2')
+            for keyword in ['cd1_1', 'cd1_2', 'cd2_1', 'cd2_2',
+                            'PCD1_1', 'PCD1_2', 'PCD2_1', 'PCD2_2',
+                            'PCRPIX1', 'PCRPIX2']:
+                if keyword in hdu.header:
+                    hdu.header.remove(keyword)
 
-        # update additional keywords
-        hdu.header['UUID'] = str(uuid.uuid1())
-        hdu.header['OBSMODE'] = pattern + ' pattern'
-        hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
-        hdu.header['NUM-NCOM'] = (len(hduls), 'Number of combined frames')
+            # update additional keywords
+            hdu.header['UUID'] = str(uuid.uuid1())
+            hdu.header['OBSMODE'] = pattern + ' pattern'
+            hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
+            hdu.header['NUM-NCOM'] = (len(hduls), 'Number of combined frames')
 
-        # update history
-        hdu.header['HISTORY'] = "Processed " + pattern + " pattern"
-        hdu.header['HISTORY'] = '--- Reduction of A images ---'
-        for line in header_a['HISTORY']:
-            hdu.header['HISTORY'] = line
-        hdu.header['HISTORY'] = '--- Reduction of B images ---'
-        for line in header_b['HISTORY']:
-            hdu.header['HISTORY'] = line
-        hdu.header['HISTORY'] = '--- Combination of ABBA images ---'
-        for key in dict_rtas:
-            hdu.header['HISTORY'] = '{}: {}'.format(key, dict_rtas[key])
-        dm = emirdrp.datamodel.EmirDataModel()
-        for img, key, offset in zip(hduls, full_set, list_offsets):
-            imgid = dm.get_imgid(img)
-            hdu.header['HISTORY'] = \
-                "Image '{}' is '{}', with voffset_pix {}".format(
-                    imgid, key, offset)
+            # update history
+            hdu.header['HISTORY'] = "Processed " + pattern + " pattern"
+            hdu.header['HISTORY'] = '--- Reduction of A images ---'
+            for line in header_a['HISTORY']:
+                hdu.header['HISTORY'] = line
+            hdu.header['HISTORY'] = '--- Reduction of B images ---'
+            for line in header_b['HISTORY']:
+                hdu.header['HISTORY'] = line
+            hdu.header['HISTORY'] = '--- Combination of ABBA images ---'
+            for key in dict_rtas:
+                hdu.header['HISTORY'] = '{}: {}'.format(key, dict_rtas[key])
+            dm = emirdrp.datamodel.EmirDataModel()
+            for img, key, offset in zip(hduls, full_set, list_offsets):
+                imgid = dm.get_imgid(img)
+                hdu.header['HISTORY'] = \
+                    "Image '{}' is '{}', with voffset_pix {}".format(
+                        imgid, key, offset)
+
         if voffset_pix is not None and voffset_pix != 0:
             hdu.header['HISTORY'] = '--- Combination of AB spectra ---'
             hdu.header['HISTORY'] = "voffset_pix between A and B {}".format(
                 voffset_pix)
+        hdu.header.add_history('--- numina_desc_val (BEGIN) ---')
+        for item in rinput._numina_desc_val:
+            cline = '{}: {}'.format(item, rinput._numina_desc_val[item])
+            hdu.header.add_history(cline)
+        hdu.header.add_history('--- numina_desc_val (END) ---')
         result = fits.HDUList([hdu])
         return result
 
@@ -925,19 +928,16 @@ class ABBASpectraFastRectwv(EmirRecipe):
         reduced_data = data_a - data_b
 
         # update reduced image header
-        with contextlib.ExitStack() as stack:
-            hduls = [stack.enter_context(fname.open()) for fname in
-                     rinput.obresult.frames]
-            reduced_image = self.create_reduced_image(
-                hduls,
-                reduced_data,
-                header_a,
-                header_b,
-                rinput.pattern,
-                full_set,
-                voffset_pix=0,
-                header_mos_abba=None,
-            )
+        reduced_image = self.create_reduced_image(
+            rinput,
+            reduced_data,
+            header_a,
+            header_b,
+            rinput.pattern,
+            full_set,
+            voffset_pix=0,
+            header_mos_abba=None,
+        )
 
         # save intermediate image in work directory
         self.save_intermediate_img(reduced_image, 'reduced_image.fits')
@@ -969,19 +969,16 @@ class ABBASpectraFastRectwv(EmirRecipe):
             reduced_mos_abba_combined_data = None
 
         # update reduced combined image header
-        with contextlib.ExitStack() as stack:
-            hduls = [stack.enter_context(fname.open()) for fname in
-                     rinput.obresult.frames]
-            reduced_mos_abba_combined = self.create_reduced_image(
-                hduls,
-                reduced_mos_abba_combined_data,
-                header_a,
-                header_b,
-                rinput.pattern,
-                full_set,
-                voffset_pix,
-                header_mos_abba=header_mos_abba
-            )
+        reduced_mos_abba_combined = self.create_reduced_image(
+            rinput,
+            reduced_mos_abba_combined_data,
+            header_a,
+            header_b,
+            rinput.pattern,
+            full_set,
+            voffset_pix,
+            header_mos_abba=header_mos_abba
+        )
 
         # ds9 region files (to be saved in the work directory)
         if self.intermediate_results:
@@ -1007,56 +1004,60 @@ class ABBASpectraFastRectwv(EmirRecipe):
         )
         return result
 
-    def create_reduced_image(self, hduls, reduced_data,
+    def create_reduced_image(self, rinput, reduced_data,
                              header_a, header_b,
                              pattern, full_set,
                              voffset_pix, header_mos_abba):
-        # Copy header of first image
-        base_header = hduls[0][0].header.copy()
+        with contextlib.ExitStack() as stack:
+            hduls = [stack.enter_context(fname.open()) for fname in
+                     rinput.obresult.frames]
+            # Copy header of first image
+            base_header = hduls[0][0].header.copy()
 
-        hdu = fits.PrimaryHDU(reduced_data, header=base_header)
-        self.set_base_headers(hdu.header)
+            hdu = fits.PrimaryHDU(reduced_data, header=base_header)
+            self.set_base_headers(hdu.header)
 
-        self.logger.debug('update result header')
-        if header_mos_abba is not None:
             self.logger.debug('update result header')
-            crpix1 = header_mos_abba['crpix1']
-            crval1 = header_mos_abba['crval1']
-            cdelt1 = header_mos_abba['cdelt1']
+            if header_mos_abba is not None:
+                self.logger.debug('update result header')
+                crpix1 = header_mos_abba['crpix1']
+                crval1 = header_mos_abba['crval1']
+                cdelt1 = header_mos_abba['cdelt1']
 
-            # update wavelength calibration in FITS header
-            for keyword in ['crval1', 'crpix1', 'crval2', 'crpix2']:
-                if keyword in hdu.header:
-                    hdu.header.remove(keyword)
-            hdu.header['crpix1'] = (crpix1, 'reference pixel')
-            hdu.header['crval1'] = (crval1, 'central wavelength at crpix1')
-            hdu.header['cdelt1'] = \
-                (cdelt1, 'linear dispersion (Angstrom/pixel)')
-            hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
-            hdu.header['ctype1'] = 'WAVELENGTH'
-            hdu.header['crpix2'] = (0.0, 'reference pixel')
-            hdu.header['crval2'] = (0.0, 'central value at crpix2')
-            hdu.header['cdelt2'] = (1.0, 'increment')
-            hdu.header['ctype2'] = 'PIXEL'
-            hdu.header['cunit2'] = ('Pixel', 'units along axis2')
-            for keyword in ['cd1_1', 'cd1_2', 'cd2_1', 'cd2_2',
-                            'PCD1_1', 'PCD1_2', 'PCD2_1', 'PCD2_2',
-                            'PCRPIX1', 'PCRPIX2']:
-                if keyword in hdu.header:
-                    hdu.header.remove(keyword)
+                # update wavelength calibration in FITS header
+                for keyword in ['crval1', 'crpix1', 'crval2', 'crpix2']:
+                    if keyword in hdu.header:
+                        hdu.header.remove(keyword)
+                hdu.header['crpix1'] = (crpix1, 'reference pixel')
+                hdu.header['crval1'] = (crval1, 'central wavelength at crpix1')
+                hdu.header['cdelt1'] = \
+                    (cdelt1, 'linear dispersion (Angstrom/pixel)')
+                hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
+                hdu.header['ctype1'] = 'WAVELENGTH'
+                hdu.header['crpix2'] = (0.0, 'reference pixel')
+                hdu.header['crval2'] = (0.0, 'central value at crpix2')
+                hdu.header['cdelt2'] = (1.0, 'increment')
+                hdu.header['ctype2'] = 'PIXEL'
+                hdu.header['cunit2'] = ('Pixel', 'units along axis2')
+                for keyword in ['cd1_1', 'cd1_2', 'cd2_1', 'cd2_2',
+                                'PCD1_1', 'PCD1_2', 'PCD2_1', 'PCD2_2',
+                                'PCRPIX1', 'PCRPIX2']:
+                    if keyword in hdu.header:
+                        hdu.header.remove(keyword)
 
-        # update additional keywords
-        hdu.header['UUID'] = str(uuid.uuid1())
-        hdu.header['OBSMODE'] = pattern + ' pattern'
-        hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
-        hdu.header['history'] = "Processed " + pattern + " pattern"
-        hdu.header['NUM-NCOM'] = (len(hduls), 'Number of combined frames')
+            # update additional keywords
+            hdu.header['UUID'] = str(uuid.uuid1())
+            hdu.header['OBSMODE'] = pattern + ' pattern'
+            hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
+            hdu.header['history'] = "Processed " + pattern + " pattern"
+            hdu.header['NUM-NCOM'] = (len(hduls), 'Number of combined frames')
 
-        # update history
-        dm = emirdrp.datamodel.EmirDataModel()
-        for img, key in zip(hduls, full_set):
-            imgid = dm.get_imgid(img)
-            hdu.header['HISTORY'] = "Image '{}' is '{}'".format(imgid, key)
+            # update history
+            dm = emirdrp.datamodel.EmirDataModel()
+            for img, key in zip(hduls, full_set):
+                imgid = dm.get_imgid(img)
+                hdu.header['HISTORY'] = "Image '{}' is '{}'".format(imgid, key)
+
         hdu.header['HISTORY'] = "Processed " + pattern + " pattern"
         hdu.header['HISTORY'] = '--- Reduction of A images ---'
         for line in header_a['HISTORY']:
@@ -1068,6 +1069,11 @@ class ABBASpectraFastRectwv(EmirRecipe):
             hdu.header['HISTORY'] = '--- Combination of AB spectra ---'
             hdu.header['HISTORY'] = "voffset_pix between A and B {}".format(
                 voffset_pix)
+        hdu.header.add_history('--- numina_desc_val (BEGIN) ---')
+        for item in rinput._numina_desc_val:
+            cline = '{}: {}'.format(item, rinput._numina_desc_val[item])
+            hdu.header.add_history(cline)
+        hdu.header.add_history('--- numina_desc_val (END) ---')
         result = fits.HDUList([hdu])
         return result
 

@@ -658,11 +658,11 @@ class SpecFlatPix2Pix(EmirRecipe):
             hdu.header['HISTORY'] = '--- Reduction of images with lamp OFF ---'
             for line in header_off['HISTORY']:
                 hdu.header['HISTORY'] = line
-        hdu.header.add_history('--- numina_desc_val (BEGIN)---')
+        hdu.header.add_history('--- numina_desc_val (BEGIN) ---')
         for item in rinput._numina_desc_val:
             cline = '{}: {}'.format(item, rinput._numina_desc_val[item])
             hdu.header.add_history(cline)
-        hdu.header.add_history('--- numina_desc_val (END)---')
+        hdu.header.add_history('--- numina_desc_val (END) ---')
 
         result = fits.HDUList([hdu])
         return result
