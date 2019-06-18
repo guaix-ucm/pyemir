@@ -783,11 +783,12 @@ class ABBASpectraRectwv(EmirRecipe):
             hdu.header['HISTORY'] = '--- Combination of AB spectra ---'
             hdu.header['HISTORY'] = "voffset_pix between A and B {}".format(
                 voffset_pix)
-        hdu.header.add_history('--- numina_desc_val (BEGIN) ---')
-        for item in rinput._numina_desc_val:
-            cline = '{}: {}'.format(item, rinput._numina_desc_val[item])
+        hdu.header.add_history('--- rinput.stored() (BEGIN) ---')
+        for item in rinput.stored():
+            value = getattr(rinput, item)
+            cline = '{}: {}'.format(item, value)
             hdu.header.add_history(cline)
-        hdu.header.add_history('--- numina_desc_val (END) ---')
+        hdu.header.add_history('--- rinput.stored() (END) ---')
         result = fits.HDUList([hdu])
         return result
 
@@ -1069,11 +1070,12 @@ class ABBASpectraFastRectwv(EmirRecipe):
             hdu.header['HISTORY'] = '--- Combination of AB spectra ---'
             hdu.header['HISTORY'] = "voffset_pix between A and B {}".format(
                 voffset_pix)
-        hdu.header.add_history('--- numina_desc_val (BEGIN) ---')
-        for item in rinput._numina_desc_val:
-            cline = '{}: {}'.format(item, rinput._numina_desc_val[item])
+        hdu.header.add_history('--- rinput.stored() (BEGIN) ---')
+        for item in rinput.stored():
+            value = getattr(rinput, item)
+            cline = '{}: {}'.format(item, value)
             hdu.header.add_history(cline)
-        hdu.header.add_history('--- numina_desc_val (END) ---')
+        hdu.header.add_history('--- rinput.stored() (END) ---')
         result = fits.HDUList([hdu])
         return result
 
