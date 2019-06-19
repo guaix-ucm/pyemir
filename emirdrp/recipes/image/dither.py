@@ -211,11 +211,11 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 # Resizing target imgs
                 self.logger.debug("Resize to final offsets")
                 self.resize(target_info, baseshape, offsetsp2, finalshape2)
+                result = self.process_basic(images_info,
+                                            target_is_sky=target_is_sky,
+                                            extinction=extinction)
             except Exception as error:
                 self.logger.warning('Error during cross-correlation, %s', error)
-
-        result = self.process_basic(images_info, target_is_sky=target_is_sky,
-                                     extinction=extinction)
 
         step = 1
 
@@ -1105,7 +1105,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
                 data.append(hdulist['primary'].data[i.valid_region])
                 desc.append(hdulist)
-                #scales.append(numpy.median(data[-1]))
+                scales.append(numpy.median(data[-1]))
                 if i.objmask_data is not None:
                     masks.append(i.objmask_data)
                     self.logger.debug('object mask is shared')
@@ -1119,7 +1119,21 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     self.logger.warn('no object mask for %s', filename)
 
             self.logger.debug('computing background with %d frames', len(data))
-            sky, _, num = nacom.median(data, masks)#, scales=scales)
+            sky, _, num = nacom.median(data, masks, scales=scales)
+
+            with fits.open(frame.lastname) as hdulist:
+                data = hdulist['primary'].data
+                valid = data[frame.valid_region]
+
+                if frame.objmask_data is not None:
+                    self.logger.debug('object mask defined')
+                    msk = frame.objmask_data
+                    skymedian = numpy.median(valid[msk == 0])
+                else:
+                    self.logger.debug('object mask empty')
+                    skymedian = numpy.median(valid)
+                self.logger.debug('scaling with skymedian %s', skymedian)
+            sky *= skymedian
 
         finally:
             # Closing all FITS files
