@@ -144,11 +144,11 @@ class FullDitheredImagesRecipe(EmirRecipe):
         optional=True
     )
     refine_offsets = Parameter(False, 'Refine offsets by cross-correlation')
-    iterations = Parameter(2, 'Iterations of the recipe')
+    iterations = Parameter(0, 'Iterations of the recipe')
     extinction = Parameter(0.0, 'Mean atmospheric extinction')
 
     sky_images = Parameter(
-        5, 'Images used to estimate the '
+        0, 'Images used to estimate the '
            'background before and after current image')
 
     sky_images_sep_time = Parameter(
@@ -167,6 +167,15 @@ class FullDitheredImagesRecipe(EmirRecipe):
         baseshape = (2048, 2048)
         user_offsets = rinput.offsets
         extinction = rinput.extinction
+
+        # protections
+        if rinput.iterations == 0 and sky_images != 0:
+            raise ValueError('sky_images: {} not compatible with iterations: {}'.format(
+                sky_images, rinput.iterations
+            ))
+
+        if rinput.iterations > 0 and sky_images == 0:
+            raise ValueError('iterations != 0 requires sky_images > 0')
 
         images_info = self.initial_classification(obresult, target_is_sky)
 
@@ -202,13 +211,13 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 offsets_xy_t = offset_xy0 - offsets_xy_c
                 offsets_fc = numpy.fliplr(offsets_xy_t)
                 offsets_fc_t = numpy.round(offsets_fc).astype('int')
-                self.logger.debug('Total offsets: %s', offsets_xy_t)
+                self.logger.debug('Total offsets:\n%s', offsets_xy_t)
                 self.logger.info('Computing relative offsets from cross-corr')
                 finalshape2, offsetsp2 = narray.combine_shape(
                     baseshape, offsets_fc_t
                 )
                 #
-                self.logger.debug("Relative offsetsp (crosscorr) %s",
+                self.logger.debug("Relative offsetsp (crosscorr):\n%s",
                                   offsetsp2)
                 self.logger.info('Shape of resized array (crosscorr) is %s',
                                  finalshape2)
@@ -245,7 +254,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 arrs, regions,
                 refine=refine, order='xy', tol=tol
             )
-            self.logger.debug("offsets_xy cross-corr \n:%s", offsets_xy)
+            self.logger.debug("offsets_xy cross-corr:\n%s", offsets_xy)
         return offsets_xy
 
     def compute_size(self, images_info, baseshape, user_offsets=None):
@@ -281,7 +290,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         offsets = numpy.round(offsets).astype('int')
 
         finalshape, offsetsp = narray.combine_shape(baseshape, offsets)
-        self.logger.debug("Relative offsetsp %s", offsetsp)
+        self.logger.debug("Relative offsetsp:\n%s", offsetsp)
         self.logger.info('Shape of resized array is %s', finalshape)
         return finalshape, offsetsp, refpix, list_of_offsets
 
