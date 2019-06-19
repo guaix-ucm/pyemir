@@ -504,7 +504,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 masks = [segmask[frame.valid_region] for frame in images_info]
             else:
                 for frame in images_info:
-                    self.logger.debug('Step %d, opening resized mask %s',
+                    self.logger.debug('Step %d, opening resized mask  %s',
                                       step, frame.resized_mask)
                     hdulist = fits.open(
                          frame.resized_mask, memmap=True, mode='readonly')
@@ -513,7 +513,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 masks = None
 
             self.logger.debug('Step %d, combining %d frames', step, len(data))
-            sf_data, _sf_var, sf_num = nacom.median(
+            sf_data, _sf_var, sf_num = nacom.sigmaclip(
                 data, masks, scales=scales, dtype='float32',
                 # blank=1.0 / scales[0]
             )
@@ -587,11 +587,11 @@ class FullDitheredImagesRecipe(EmirRecipe):
             masks = [i['primary'].data for i in mskslll]
             headers = [i['primary'].header for i in frameslll]
 
-            out = nacom.median(data, masks, scales=extinc, dtype='float32', out=out)
+            out = nacom.sigmaclip(data, masks, scales=extinc, dtype='float32', out=out)
 
             base_header = headers[0]
             hdu = fits.PrimaryHDU(out[0], header=base_header)
-            hdu.header['history'] = "Combined %d images using '%s'" % (len(frameslll), 'median')
+            hdu.header['history'] = "Combined %d images using '%s'" % (len(frameslll), 'sigmaclip')
             hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
             for img in frameslll:
                 hdu.header['history'] = "Image {}".format(img[0].header['uuid'])
@@ -638,10 +638,9 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     frame.label, step)
                 frame.resized_base = framen
                 frame.resized_mask = maskn
-                self.logger.debug('%s, valid region is %s, relative offset is %s',
-                                  frame.label, custom_region_to_str(region),
-                                  rel_offset
-                                 )
+                self.logger.debug('%s', frame.label)
+                self.logger.debug('valid region is %s, relative offset is %s',
+                                  custom_region_to_str(region), rel_offset)
                 self.resize_frame_and_mask(
                     frame, finalshape, framen, maskn, window, scale)
 
@@ -655,7 +654,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             resize_fits(hdul, framen, finalshape, frame.valid_region,
                         window=window, scale=scale, dtype='float32')
 
-        self.logger.info('Resizing mask %s', frame.label)
+        self.logger.info('Resizing mask  %s', frame.label)
         # We don't conserve the sum of the values of the frame here, just
         # expand the mask
 
@@ -864,7 +863,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     self.logger.warn('no object mask for %s', filename)
 
             self.logger.debug('computing background with %d frames', len(data))
-            sky, _, num = nacom.median(data, masks, scales=scales)
+            sky, _, num = nacom.sigmaclip(data, masks, scales=scales)
 
             with fits.open(frame.lastname) as hdulist:
                 data = hdulist['primary'].data
