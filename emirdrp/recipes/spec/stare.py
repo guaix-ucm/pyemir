@@ -31,6 +31,7 @@ from emirdrp.processing.wavecal.median_slitlets_rectified \
     import median_slitlets_rectified
 from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
     import rectwv_coeff_from_mos_library
+from emirdrp.processing.wavecal.rescale_array_z1z2 import rescale_array_to_z1z2
 from emirdrp.processing.wavecal.retrieve_catlines import retrieve_catlines
 from emirdrp.processing.wavecal.synthetic_lines_rawdata import \
     synthetic_lines_rawdata
@@ -357,11 +358,16 @@ class GenerateRectwvCoeff(EmirRecipe):
                                                'synthetic_raw_image.fits')
 
                 # cross-correlation to determine global integer offsets
-                shifts, error, diffphase = register_translation(
-                    reduced_image[0].data,
-                    synthetic_raw_data,
-                    100
+                # (rescaling data arrays to [0, 1] before using skimage
+                # function)
+                data1_rs, coef1_rs = rescale_array_to_z1z2(
+                    reduced_image[0].data, (0, 1)
                 )
+                data2_rs, coef2_rs = rescale_array_to_z1z2(
+                    synthetic_raw_data, (0, 1)
+                )
+                shifts, error, diffphase = register_translation(
+                    data1_rs, data2_rs, 100)
                 self.logger.info('global_float_offset_x_pix..: {}'.format(
                     -shifts[1]
                 ))
@@ -379,8 +385,8 @@ class GenerateRectwvCoeff(EmirRecipe):
                     rectwv_coeff.global_integer_offset_y_pix
                 ))
                 if self.intermediate_results:
-                    data_product = np.fft.fft2(reduced_image[0].data) * \
-                                    np.fft.fft2(synthetic_raw_data).conj()
+                    data_product = np.fft.fft2(data1_rs) * \
+                                   np.fft.fft2(data2_rs).conj()
                     cc_image = np.fft.fftshift(np.fft.ifft2(data_product))
                     power = np.log10(cc_image.real)
                     hdu_power = fits.PrimaryHDU(power)
