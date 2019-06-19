@@ -26,14 +26,12 @@ import numina.array as narray
 import numina.array.utils as nautils
 import numina.array.combine as nacom
 import numina.frame.combine as nfcom
-import numina.processing as proc
 from numina.frame import resize_fits, custom_region_to_str
 
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
-from emirdrp.instrument.channels import FULL
 from emirdrp.processing.wcs import offsets_from_wcs_imgs
-from emirdrp.processing.corr import offsets_from_crosscor, offsets_from_crosscor_regions
+from emirdrp.processing.corr import offsets_from_crosscor_regions
 from emirdrp.core.recipe import EmirRecipe
 
 from .naming import (name_redimensioned_frames, name_object_mask,
@@ -56,7 +54,6 @@ class ImageInfo(object):
         self.resized_base = ""
         self.lastname = ""
         self.flat_corrected = ""
-
 
 
 class FullDitheredImagesRecipe(EmirRecipe):
@@ -135,7 +132,9 @@ class FullDitheredImagesRecipe(EmirRecipe):
        A better calibration might be computed using available stars (TBD).
 
     """
-    obresult = ObservationResultRequirement(query_opts=ResultOf('result_image', node='children'))
+    obresult = ObservationResultRequirement(
+        query_opts=ResultOf('result_image', node='children')
+    )
 
     master_bpm = reqs.MasterBadPixelMaskRequirement()
 
@@ -180,14 +179,16 @@ class FullDitheredImagesRecipe(EmirRecipe):
         self.resize(target_info, baseshape, offsetsp, finalshape)
 
         result = self.process_basic(images_info, target_is_sky=target_is_sky,
-                                     extinction=extinction)
+                                    extinction=extinction)
 
         if rinput.refine_offsets:
             self.logger.debug("Compute cross-correlation of images")
             # regions_c = self.compute_regions(finalshape, box=200, corners=True)
 
             # Regions frm bright objects
-            regions_c = self.compute_regions_from_objs(result[0].data, finalshape, box=40)
+            regions_c = self.compute_regions_from_objs(
+                result[0].data, finalshape, box=40
+            )
 
             try:
 
@@ -203,10 +204,14 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 offsets_fc_t = numpy.round(offsets_fc).astype('int')
                 self.logger.debug('Total offsets: %s', offsets_xy_t)
                 self.logger.info('Computing relative offsets from cross-corr')
-                finalshape2, offsetsp2 = narray.combine_shape(baseshape, offsets_fc_t)
+                finalshape2, offsetsp2 = narray.combine_shape(
+                    baseshape, offsets_fc_t
+                )
                 #
-                self.logger.debug("Relative offsetsp (crosscorr) %s", offsetsp2)
-                self.logger.info('Shape of resized array (crosscorr) is %s', finalshape2)
+                self.logger.debug("Relative offsetsp (crosscorr) %s",
+                                  offsetsp2)
+                self.logger.info('Shape of resized array (crosscorr) is %s',
+                                 finalshape2)
 
                 # Resizing target imgs
                 self.logger.debug("Resize to final offsets")
@@ -215,7 +220,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                                             target_is_sky=target_is_sky,
                                             extinction=extinction)
             except Exception as error:
-                self.logger.warning('Error during cross-correlation, %s', error)
+                self.logger.warning('Error during cross-correlation, %s',
+                                    error)
 
         step = 1
 
@@ -229,19 +235,17 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         return self.create_result(result_image=result)
 
-    def compute_offset_xy_crosscor_regions(self, iinfo, regions, refine=False, tol=0.5):
+    def compute_offset_xy_crosscor_regions(self, iinfo, regions, refine=False,
+                                           tol=0.5):
 
         names = [frame.lastname for frame in iinfo]
-        print(names)
-        print(regions)
         with nfcom.manage_fits(names) as imgs:
             arrs = [img[0].data for img in imgs]
             offsets_xy = offsets_from_crosscor_regions(
                 arrs, regions,
                 refine=refine, order='xy', tol=tol
             )
-            self.logger.debug("offsets_xy cross-corr %s", offsets_xy)
-            # Offsets in numpy order, swaping
+            self.logger.debug("offsets_xy cross-corr \n:%s", offsets_xy)
         return offsets_xy
 
     def compute_size(self, images_info, baseshape, user_offsets=None):
@@ -281,7 +285,6 @@ class FullDitheredImagesRecipe(EmirRecipe):
         self.logger.info('Shape of resized array is %s', finalshape)
         return finalshape, offsetsp, refpix, list_of_offsets
 
-
     def process_basic(self, images_info, target_is_sky=True, extinction=0.0):
 
         step = 0
@@ -299,7 +302,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         self.logger.info('Simple sky correction')
         if target_is_sky:
-                # Each frame is the closest sky frame available
+            # Each frame is the closest sky frame available
             for iinfo in images_info:
                 self.compute_simple_sky_for_frame(iinfo, iinfo)
         else:
@@ -313,9 +316,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         return result
 
-
     def process_advanced(self, images_info, result, step, target_is_sky=True,
-                maxsep=5.0, nframes=6, extinction=0):
+                         maxsep=5.0, nframes=6, extinction=0):
 
         seeing_fwhm = None
         baseshape = (2048, 2048)
@@ -364,7 +366,6 @@ class FullDitheredImagesRecipe(EmirRecipe):
         result = self.combine_frames(
             target_info, extinction, step=step)
         return result
-
 
     def compute_simple_sky_for_frame(self, frame, skyframe, step=0, save=True):
         self.logger.info('Correcting sky in frame %s', frame.lastname)
@@ -416,7 +417,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             os.rename(frame.resized_base, frame.flat_corrected)
 
         self.logger.info("Step %d, SF: apply superflat to frame %s",
-                     step, frame.flat_corrected)
+                         step, frame.flat_corrected)
         with fits.open(frame.flat_corrected, mode='update') as hdulist:
             data = hdulist['primary'].data
             datar = data[frame.valid_region]
@@ -461,21 +462,21 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 iinfo.itype = 'TARGET'
                 if iinfo.itype == 'TARGET':
                     iinfo.valid_target = True
-                    #targetframes.append(iinfo)
+                    # targetframes.append(iinfo)
                     if target_is_sky:
                         iinfo.valid_sky = True
-                        #skyframes.append(iinfo)
+                        # skyframes.append(iinfo)
                 if iinfo.itype == 'SKY':
                     iinfo.valid_sky = True
-                    #skyframes.append(iinfo)
+                    # skyframes.append(iinfo)
                 images_info.append(iinfo)
 
         return images_info
 
-
     def compute_superflat(self, images_info, segmask=None, step=0):
 
-        self.logger.info("Step %d, SF: combining the frames without offsets", step)
+        self.logger.info("Step %d, SF: combining the frames without offsets",
+                         step)
 
         base_imgs = [img.resized_base for img in images_info]
         with nfcom.manage_fits(base_imgs) as imgs:
@@ -485,7 +486,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
             for img, img_info in zip(imgs, images_info):
                 self.logger.debug('Step %d, opening resized frame %s',
-                              step, img_info.resized_base)
+                                  step, img_info.resized_base)
                 data.append(img['primary'].data[img_info.valid_region])
 
             scales = [numpy.median(d) for d in data]
@@ -498,289 +499,25 @@ class FullDitheredImagesRecipe(EmirRecipe):
                                       step, frame.resized_mask)
                     hdulist = fits.open(
                          frame.resized_mask, memmap=True, mode='readonly')
-                    #filelist.append(hdulist)
+                    # filelist.append(hdulist)
                     masks.append(hdulist['primary'].data[frame.valid_region])
                 masks = None
 
             self.logger.debug('Step %d, combining %d frames', step, len(data))
-            sf_data, _sf_var, sf_num = nacom.median(data, masks, scales=scales,
-                                                 dtype='float32',
-                                                 #blank=1.0 / scales[0]
-                                                 )
+            sf_data, _sf_var, sf_num = nacom.median(
+                data, masks, scales=scales, dtype='float32',
+                # blank=1.0 / scales[0]
+            )
 
         # Normalize, flat has mean = 1
         sf_data[sf_data == 0] = 1e-5
         sf_data /= sf_data.mean()
-        #sf_data[sf_data <= 0] = 1.0
+        # sf_data[sf_data <= 0] = 1.0
 
         # Auxiliary data
         sfhdu = fits.PrimaryHDU(sf_data)
         self.save_intermediate_img(sfhdu, name_skyflat('comb', step))
         return sf_data
-
-
-    def run_single(self, rinput):
-
-        # FIXME: remove this, is deprecated
-
-        obresult = rinput.obresult
-
-        # just in case images are in result, instead of frames
-        if not obresult.frames:
-            frames = obresult.results
-        else:
-            frames = obresult.frames
-
-        img_info = []
-        data_hdul = []
-        for f in frames:
-            img = f.open()
-            data_hdul.append(img)
-            info = {}
-            info['tstamp'] = img[0].header['tstamp']
-            info['airmass'] = img[0].header['airmass']
-            img_info.append(info)
-
-        channels = FULL
-
-        use_errors = True
-        # Initial checks
-        baseimg = data_hdul[0]
-        has_num_ext = 'NUM' in baseimg
-        has_bpm_ext = 'BPM' in baseimg
-        baseshape = baseimg[0].shape
-        subpixshape = baseshape
-        base_header = baseimg[0].header
-        compute_sky = 'NUM-SK' not in base_header
-        compute_sky_advanced = False
-
-        self.logger.debug('base image is: %s', self.datamodel.get_imgid(baseimg))
-        self.logger.debug('images have NUM extension: %s', has_num_ext)
-        self.logger.debug('images have BPM extension: %s', has_bpm_ext)
-        self.logger.debug('compute sky is needed: %s', compute_sky)
-
-        if compute_sky:
-            self.logger.info('compute sky simple')
-            sky_result = self.compute_sky_simple(data_hdul, use_errors=False)
-            self.save_intermediate_img(sky_result, 'sky_init.fits')
-            sky_result.writeto('sky_init.fits', overwrite=True)
-            sky_data = sky_result[0].data
-            self.logger.debug('sky image has shape %s', sky_data.shape)
-
-            self.logger.info('sky correction in individual images')
-            corrector = proc.SkyCorrector(
-                sky_data,
-                self.datamodel,
-                calibid=self.datamodel.get_imgid(sky_result)
-            )
-            # If we do not update keyword SKYADD
-            # there is no sky subtraction
-            for m in data_hdul:
-                m[0].header['SKYADD'] = True
-            # this is a little hackish
-            # sky corrected
-            data_hdul_s = [corrector(m) for m in data_hdul]
-            base_header = data_hdul_s[0][0].header
-        else:
-            sky_result = None
-            data_hdul_s = data_hdul
-
-        self.logger.info('Computing offsets from WCS information')
-
-        finalshape, offsetsp, refpix, offset_xy0 = self.compute_offset_wcs_imgs(
-            data_hdul_s,
-            baseshape,
-            subpixshape
-        )
-
-        self.logger.debug("Relative offsetsp %s", offsetsp)
-        self.logger.info('Shape of resized array is %s', finalshape)
-
-        # Resizing target imgs
-        data_arr_sr, regions = narray.resize_arrays(
-            [m[0].data for m in data_hdul_s],
-            subpixshape,
-            offsetsp,
-            finalshape,
-            fill=1
-        )
-
-        if has_num_ext:
-            self.logger.debug('Using NUM extension')
-            masks = [numpy.where(m['NUM'].data, 0, 1).astype('int16') for m in data_hdul]
-        elif has_bpm_ext:
-            self.logger.debug('Using BPM extension')
-            #
-            masks = [numpy.where(m['BPM'].data, 1, 0).astype('int16') for m in data_hdul]
-        else:
-            self.logger.warning('BPM missing, use zeros instead')
-            false_mask = numpy.zeros(baseshape, dtype='int16')
-            masks = [false_mask for _ in data_arr_sr]
-
-        self.logger.debug('resize bad pixel masks')
-        mask_arr_r, _ = narray.resize_arrays(masks, subpixshape, offsetsp, finalshape, fill=1)
-
-        if self.intermediate_results:
-            self.logger.debug('save resized intermediate img')
-            for idx, arr_r in enumerate(data_arr_sr):
-                self.save_intermediate_array(arr_r, 'interm1_%03d.fits' % idx)
-
-        hdulist = self.combine2(data_arr_sr, mask_arr_r, data_hdul, offsetsp, use_errors)
-
-        self.save_intermediate_img(hdulist, 'result_initial1.fits')
-
-        compute_cross_offsets = True
-        if compute_cross_offsets:
-
-            self.logger.debug("Compute cross-correlation of images")
-            # regions_c = self.compute_regions(finalshape, box=200, corners=True)
-
-            # Regions frm bright objects
-            regions_c = self.compute_regions_from_objs(hdulist[0].data, finalshape, box=20)
-
-            try:
-
-                offsets_xy_c = self.compute_offset_xy_crosscor_regions(
-                    data_arr_sr, regions_c, refine=True, tol=1
-                )
-                #
-                # Combined offsets
-                # Offsets in numpy order, swaping
-                offsets_xy_t = offset_xy0 - offsets_xy_c
-                offsets_fc = offsets_xy_t[:, ::-1]
-                offsets_fc_t = numpy.round(offsets_fc).astype('int')
-                self.logger.debug('Total offsets: %s', offsets_xy_t)
-                self.logger.info('Computing relative offsets from cross-corr')
-                finalshape, offsetsp = narray.combine_shape(subpixshape, offsets_fc_t)
-                #
-                self.logger.debug("Relative offsetsp (crosscorr) %s", offsetsp)
-                self.logger.info('Shape of resized array (crosscorr) is %s', finalshape)
-
-                # Resizing target imgs
-                self.logger.debug("Resize to final offsets")
-                data_arr_sr, regions = narray.resize_arrays(
-                    [m[0].data for m in data_hdul_s],
-                    subpixshape,
-                    offsetsp,
-                    finalshape,
-                    fill=1
-                )
-
-                if self.intermediate_results:
-                    self.logger.debug('save resized intermediate2 img')
-                    for idx, arr_r in enumerate(data_arr_sr):
-                        self.save_intermediate_array(arr_r, 'interm2_%03d.fits' % idx)
-
-                self.logger.debug('resize bad pixel masks')
-                mask_arr_r, _ = narray.resize_arrays(masks, subpixshape, offsetsp, finalshape, fill=1)
-
-                hdulist = self.combine2(data_arr_sr, mask_arr_r, data_hdul, offsetsp, use_errors)
-
-                self.save_intermediate_img(hdulist, 'result_initial2.fits')
-            except Exception as error:
-                self.logger.warning('Error during cross-correlation, %s', error)
-
-
-        catalog, objmask = self.create_object_catalog(hdulist[0].data, border=50)
-
-        data_arr_sky = [sky_result[0].data for _ in data_arr_sr]
-        data_arr_0 = [(d[r] + s) for d, r, s in zip(data_arr_sr, regions, data_arr_sky)]
-        data_arr_r = [d.copy() for d in data_arr_sr]
-
-        for inum in range(1, rinput.iterations + 1):
-            # superflat
-            sf_data = self.compute_superflat(data_arr_0, objmask, regions, channels)
-            fits.writeto('superflat_%d.fits' % inum, sf_data, overwrite=True)
-            # apply superflat
-            data_arr_rf = data_arr_r
-            for base, arr, reg in zip(data_arr_rf, data_arr_0, regions):
-                arr_f = arr / sf_data
-                #arr_f = arr
-                base[reg] = arr_f
-
-            # compute sky advanced
-            data_arr_sky = []
-            data_arr_rfs = []
-            self.logger.info('Step %d, SC: computing advanced sky', inum)
-            scale = rinput.sky_images_sep_time * 60
-            tstamps = numpy.array([info['tstamp'] for info in img_info])
-            for idx, hdu in enumerate(data_hdul):
-                diff1 = tstamps - tstamps[idx]
-                idxs1 = (diff1 > 0) & (diff1 < scale)
-                idxs2 = (diff1 < 0) & (diff1 > -scale)
-                l1, = numpy.nonzero(idxs1)
-                l2, = numpy.nonzero(idxs2)
-                limit1 = l1[-rinput.sky_images:]
-                limit2 = l2[:rinput.sky_images]
-                len_l1 =len(limit1)
-                len_l2 = len(limit2)
-                self.logger.info('For image %s, using %d-%d images)', idx,
-                                 len_l1, len_l2)
-                if len_l1 + len_l2 == 0:
-                    self.logger.error(
-                        'No sky image available for frame %d', idx)
-                    raise ValueError('No sky image')
-                skydata = []
-                skymasks = []
-                skyscales = []
-                my_region = regions[idx]
-                my_sky_scale = numpy.median(data_arr_rf[idx][my_region])
-                for i in numpy.concatenate((limit1, limit2)):
-                    region_s = regions[i]
-                    data_s = data_arr_rf[i][region_s]
-                    mask_s = objmask[region_s]
-                    scale_s = numpy.median(data_s)
-                    skydata.append(data_s)
-                    skymasks.append(mask_s)
-                    skyscales.append(scale_s)
-                self.logger.debug('computing background with %d frames', len(skydata))
-                sky, _, num = nacom.median(skydata, skymasks, scales=skyscales)
-                # rescale
-                sky *= my_sky_scale
-
-                binmask = num == 0
-
-                if numpy.any(binmask):
-                    # We have pixels without
-                    # sky background information
-                    self.logger.warn('pixels without sky information when correcting %d',
-                                 idx)
-
-                    # FIXME: during development, this is faster
-                    # sky[binmask] = sky[num != 0].mean()
-                    # To continue we interpolate over the patches
-                    narray.fixpix2(sky, binmask, out=sky, iterations=1)
-
-                name = 'sky_%d_%03d.fits' % (inum, idx)
-                fits.writeto(name, sky, overwrite=True)
-                name = 'sky_binmask_%d_%03d.fits' % (inum, idx)
-                fits.writeto(name, binmask.astype('int16'), overwrite=True)
-
-                data_arr_sky.append(sky)
-                arr = numpy.copy(data_arr_rf[idx])
-                arr[my_region] = data_arr_rf[idx][my_region] - sky
-                data_arr_rfs.append(arr)
-                # subtract sky advanced
-
-            if self.intermediate_results:
-                self.logger.debug('save resized intermediate img')
-                for idx, arr_r in enumerate(data_arr_rfs):
-                    self.save_intermediate_array(arr_r, 'interm_%d_%03d.fits' % (inum, idx))
-
-
-            hdulist = self.combine2(data_arr_rfs, mask_arr_r, data_hdul, offsetsp, use_errors)
-
-            self.save_intermediate_img(hdulist, 'result_%d.fits' % inum)
-
-            # For next step
-            catalog, objmask = self.create_object_catalog(hdulist[0].data, border=50)
-
-            data_arr_0 = [(d[r] + s) for d, r, s in zip(data_arr_rfs, regions, data_arr_sky)]
-            data_arr_r = [d.copy() for d in data_arr_rfs]
-
-        result = self.create_result(frame=hdulist)
-        self.logger.info('end of dither recipe')
-        return result
 
     def compute_sky_advanced(self, data_hdul, omasks, base_header, use_errors):
         method = narray.combine.mean
@@ -893,9 +630,9 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 frame.resized_base = framen
                 frame.resized_mask = maskn
                 self.logger.debug('%s, valid region is %s, relative offset is %s',
-                              frame.label, custom_region_to_str(region),
-                              rel_offset
-                              )
+                                  frame.label, custom_region_to_str(region),
+                                  rel_offset
+                                 )
                 self.resize_frame_and_mask(
                     frame, finalshape, framen, maskn, window, scale)
 
@@ -1068,7 +805,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             try:
                 tf = targetframes[tid]
                 self.logger.info('Step %d, SC: computing advanced sky for %s',
-                             step, tf.label)
+                                 step, tf.label)
                 # filter(lambda x: x < nsky, idss)
                 locskyframes = []
                 for si in idss:
@@ -1082,8 +819,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 self.compute_advanced_sky_for_frame(
                     tf, locskyframes, step=step, save=save)
             except IndexError:
-                self.logger.error(
-                    'No sky image available for frame %s', tf.lastname)
+                self.logger.error('No sky image available for frame %s', tf.lastname)
                 raise
 
     def compute_advanced_sky_for_frame(self, frame, skyframes,
@@ -1174,18 +910,17 @@ class FullDitheredImagesRecipe(EmirRecipe):
         catalog, mask = self.create_object_catalog(arr, border=300)
 
         self.save_intermediate_array(mask, 'objmask.fits')
-        # with the catalog, compute 5 objects
+        # with the catalog, compute NKEEP objects
 
         LIMIT_AREA = 5000
-        NKEEP = 1
+        NKEEP = 3
         idx_small = catalog['npix'] < LIMIT_AREA
         objects_small = catalog[idx_small]
         idx_flux = objects_small['flux'].argsort()
         objects_nth = objects_small[idx_flux][-NKEEP:]
         for obj in objects_nth:
-            print('ref is', obj['x'], obj['y'])
+            self.logger.debug('ref is %s %s', obj['x'], obj['y'])
             region = nautils.image_box2d(obj['x'], obj['y'], finalshape, (box, box))
-            print(region)
             regions.append(region)
         return regions
 
