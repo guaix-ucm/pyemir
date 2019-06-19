@@ -118,7 +118,7 @@ class DtuAxis(object):
 
     @property
     def coor_r(self):
-        return self.coor / self.coor_f - self.coor_0
+        return (self.coor - self.coor_0) / self.coor_f
 
     @classmethod
     def from_header(cls, hdr, name):
