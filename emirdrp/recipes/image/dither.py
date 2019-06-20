@@ -147,6 +147,17 @@ class FullDitheredImagesRecipe(EmirRecipe):
     iterations = Parameter(0, 'Iterations of the recipe')
     extinction = Parameter(0.0, 'Mean atmospheric extinction')
 
+    method = Parameter(
+        'sigmaclip',
+        description='Combination method',
+        choices=['mean', 'median', 'sigmaclip']
+    )
+    method_kwargs = Parameter(
+        dict(),
+        description='Arguments for combination method',
+        optional=True
+    )
+
     sky_images = Parameter(
         0, 'Images used to estimate the '
            'background before and after current image')
@@ -177,6 +188,15 @@ class FullDitheredImagesRecipe(EmirRecipe):
         if rinput.iterations > 0 and sky_images == 0:
             raise ValueError('iterations != 0 requires sky_images > 0')
 
+        # check combination method
+        if rinput.method != 'sigmaclip':
+            if rinput.method_kwargs != {}:
+                raise ValueError('Unexpected method_kwargs={}'.format(
+                    rinput.method_kwargs))
+        # combination method and arguments
+        method = getattr(nacom, rinput.method)
+        method_kwargs = rinput.method_kwargs
+
         images_info = self.initial_classification(obresult, target_is_sky)
 
         # Resizing target frames
@@ -188,7 +208,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         self.resize(target_info, baseshape, offsetsp, finalshape)
 
         result = self.process_basic(images_info, target_is_sky=target_is_sky,
-                                    extinction=extinction)
+                                    extinction=extinction,
+                                    method=method, method_kwargs=method_kwargs)
 
         if rinput.refine_offsets:
             self.logger.debug("Compute cross-correlation of images")
@@ -227,7 +248,9 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 self.resize(target_info, baseshape, offsetsp2, finalshape2)
                 result = self.process_basic(images_info,
                                             target_is_sky=target_is_sky,
-                                            extinction=extinction)
+                                            extinction=extinction,
+                                            method=method,
+                                            method_kwargs=method_kwargs)
             except Exception as error:
                 self.logger.warning('Error during cross-correlation, %s',
                                     error)
@@ -238,7 +261,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
             result = self.process_advanced(
                 images_info, result, step, target_is_sky,
                 maxsep=sky_images_sep_time, nframes=sky_images,
-                extinction=extinction
+                extinction=extinction,
+                method=method, method_kwargs=method_kwargs
             )
             step += 1
 
@@ -294,7 +318,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         self.logger.info('Shape of resized array is %s', finalshape)
         return finalshape, offsetsp, refpix, list_of_offsets
 
-    def process_basic(self, images_info, target_is_sky=True, extinction=0.0):
+    def process_basic(self, images_info, target_is_sky=True, extinction=0.0,
+                      method=None, method_kwargs=None):
 
         step = 0
 
@@ -302,7 +327,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         sky_info = [iinfo for iinfo in images_info if iinfo.valid_sky]
 
         self.logger.info("Step %d, SF: compute superflat", step)
-        sf_arr = self.compute_superflat(images_info)
+        sf_arr = self.compute_superflat(images_info,
+                                        method=method, method_kwargs=method_kwargs)
 
         # Apply superflat
         self.logger.info("Step %d, SF: apply superflat", step)
@@ -320,13 +346,15 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         # Combining the frames
         self.logger.info("Step %d, Combining target frames", step)
-        result = self.combine_frames(target_info, extinction=extinction)
+        result = self.combine_frames(target_info, extinction=extinction,
+                                     method=method, method_kwargs=method_kwargs)
         self.logger.info('Step %d, finished', step)
 
         return result
 
     def process_advanced(self, images_info, result, step, target_is_sky=True,
-                         maxsep=5.0, nframes=6, extinction=0):
+                         maxsep=5.0, nframes=6, extinction=0,
+                         method=None, method_kwargs=None):
 
         seeing_fwhm = None
         baseshape = (2048, 2048)
@@ -353,8 +381,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 frame.objmask_data = bogus_objmask
 
         self.logger.info("Step %d, SF: compute superflat", step)
-        sf_arr = self.compute_superflat(
-            sky_info, segmask=objmask, step=step)
+        sf_arr = self.compute_superflat(sky_info, segmask=objmask, step=step,
+                                        method=method, method_kwargs=method_kwargs)
 
         # Apply superflat
         self.logger.info("Step %d, SF: apply superflat", step)
@@ -367,13 +395,14 @@ class FullDitheredImagesRecipe(EmirRecipe):
                                   target_is_sky=target_is_sky,
                                   maxsep=maxsep,
                                   nframes=nframes,
-                                  step=step)
+                                  step=step,
+                                  method=method, method_kwargs=method_kwargs)
 
         # Combining the images
         self.logger.info("Step %d, Combining the images", step)
         # FIXME: only for science
-        result = self.combine_frames(
-            target_info, extinction, step=step)
+        result = self.combine_frames(target_info, extinction, step=step,
+                                     method=method, method_kwargs=method_kwargs)
         return result
 
     def compute_simple_sky_for_frame(self, frame, skyframe, step=0, save=True):
@@ -482,7 +511,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         return images_info
 
-    def compute_superflat(self, images_info, segmask=None, step=0):
+    def compute_superflat(self, images_info, segmask=None, step=0,
+                          method=None, method_kwargs=None):
 
         self.logger.info("Step %d, SF: combining the frames without offsets",
                          step)
@@ -512,10 +542,10 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     masks.append(hdulist['primary'].data[frame.valid_region])
                 masks = None
 
-            self.logger.debug('Step %d, combining %d frames', step, len(data))
-            sf_data, _sf_var, sf_num = nacom.sigmaclip(
-                data, masks, scales=scales, dtype='float32',
-                # blank=1.0 / scales[0]
+            self.logger.debug("Step %d, combining %d frames using '%s'",
+                              step, len(data), method.__name__)
+            sf_data, _sf_var, sf_num = method(
+                data, masks, scales=scales, dtype='float32', **method_kwargs
             )
 
         # Normalize, flat has mean = 1
@@ -528,10 +558,11 @@ class FullDitheredImagesRecipe(EmirRecipe):
         self.save_intermediate_img(sfhdu, name_skyflat('comb', step))
         return sf_data
 
+    '''
     def compute_sky_advanced(self, data_hdul, omasks, base_header, use_errors):
         method = narray.combine.mean
 
-        self.logger.info('recombine images with segmentation mask')
+        self.logger.info("recombine images with segmentation mask using '%s'", method.__name__)
         sky_data = method([m[0].data for m in data_hdul], masks=omasks, dtype='float32')
 
         hdu = fits.PrimaryHDU(sky_data[0], header=base_header)
@@ -565,8 +596,10 @@ class FullDitheredImagesRecipe(EmirRecipe):
             sky_result = fits.HDUList([hdu])
 
         return sky_result
+    '''
 
-    def combine_frames(self, frames, extinction, out=None, step=0):
+    def combine_frames(self, frames, extinction, out=None, step=0,
+                       method=None, method_kwargs=None):
         self.logger.debug('Step %d, opening sky-subtracted frames', step)
 
         def fits_open(name):
@@ -579,7 +612,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         mskslll = [fits_open(frame.resized_mask)
                    for frame in frames if frame.valid_target]
 
-        self.logger.debug('Step %d, combining %d frames', step, len(frameslll))
+        self.logger.debug("Step %d, combining %d frames using '%s'",
+                          step, len(frameslll), method.__name__)
         try:
             extinc = [pow(10, -0.4 * frame.metadata['airmass'] * extinction)
                       for frame in frames if frame.valid_target]
@@ -587,11 +621,12 @@ class FullDitheredImagesRecipe(EmirRecipe):
             masks = [i['primary'].data for i in mskslll]
             headers = [i['primary'].header for i in frameslll]
 
-            out = nacom.sigmaclip(data, masks, scales=extinc, dtype='float32', out=out)
+            out = method(data, masks, scales=extinc, dtype='float32', out=out,
+                         **method_kwargs)
 
             base_header = headers[0]
             hdu = fits.PrimaryHDU(out[0], header=base_header)
-            hdu.header['history'] = "Combined %d images using '%s'" % (len(frameslll), 'sigmaclip')
+            hdu.header['history'] = "Combined %d images using '%s'" % (len(frameslll), method.__name__)
             hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
             for img in frameslll:
                 hdu.header['history'] = "Image {}".format(img[0].header['uuid'])
@@ -662,7 +697,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             self.logger.warning('BPM missing, use zeros instead')
             false_mask = numpy.zeros(baseshape, dtype='int16')
             hdum = fits.HDUList(fits.PrimaryHDU(false_mask))
-            frame.mask = hdum #DataFrame(frame=hdum)
+            frame.mask = hdum  # DataFrame(frame=hdum)
         elif isinstance(frame.mask, nfcom.Extension):
             ename = frame.mask.name
             with frame.origin.open() as hdul:
@@ -780,7 +815,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                              skyframes=None, target_is_sky=False,
                              maxsep=5.0,
                              nframes=10,
-                             step=0, save=True):
+                             step=0, save=True,
+                             method=None, method_kwargs=None):
 
         if target_is_sky:
             skyframes = targetframes
@@ -812,8 +848,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         for tid, idss in enumerate(idxs):
             try:
                 tf = targetframes[tid]
-                self.logger.info('Step %d, SC: computing advanced sky for %s',
-                                 step, tf.label)
+                self.logger.info("Step %d, SC: computing advanced sky for %s using '%s'",
+                                 step, tf.label, method.__name__)
                 # filter(lambda x: x < nsky, idss)
                 locskyframes = []
                 for si in idss:
@@ -822,16 +858,18 @@ class FullDitheredImagesRecipe(EmirRecipe):
                         continue
                     if si < nsky:
                         self.logger.debug('Step %d, SC: %s is a sky frame',
-                                      step, skyframes[si].label)
+                                          step, skyframes[si].label)
                         locskyframes.append(skyframes[si])
                 self.compute_advanced_sky_for_frame(
-                    tf, locskyframes, step=step, save=save)
+                    tf, locskyframes, step=step, save=save,
+                    method=method, method_kwargs=method_kwargs
+                )
             except IndexError:
                 self.logger.error('No sky image available for frame %s', tf.lastname)
                 raise
 
-    def compute_advanced_sky_for_frame(self, frame, skyframes,
-                                       step=0, save=True):
+    def compute_advanced_sky_for_frame(self, frame, skyframes, step=0,
+                                       save=True, method=None, method_kwargs=None):
         self.logger.info('Correcting sky in frame %s', frame.lastname)
         self.logger.info('with sky computed from frames')
         for i in skyframes:
@@ -862,8 +900,9 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 else:
                     self.logger.warn('no object mask for %s', filename)
 
-            self.logger.debug('computing background with %d frames', len(data))
-            sky, _, num = nacom.sigmaclip(data, masks, scales=scales)
+            self.logger.debug("computing background with %d frames using '%s'",
+                              len(data), method.__name__)
+            sky, _, num = method(data, masks, scales=scales, **method_kwargs)
 
             with fits.open(frame.lastname) as hdulist:
                 data = hdulist['primary'].data
@@ -888,7 +927,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             # We have pixels without
             # sky background information
             self.logger.warning('pixels without sky information when correcting %s',
-                         frame.flat_corrected)
+                                frame.flat_corrected)
             binmask = num == 0
             # FIXME: during development, this is faster
             # sky[binmask] = sky[num != 0].mean()
@@ -912,7 +951,6 @@ class FullDitheredImagesRecipe(EmirRecipe):
             valid = data[frame.valid_region]
             valid -= sky
 
-
     def compute_regions_from_objs(self, arr, finalshape, box=50, corners=True):
         regions = []
         catalog, mask = self.create_object_catalog(arr, border=300)
@@ -931,7 +969,6 @@ class FullDitheredImagesRecipe(EmirRecipe):
             region = nautils.image_box2d(obj['x'], obj['y'], finalshape, (box, box))
             regions.append(region)
         return regions
-
 
     def create_object_catalog(self, arr, threshold=3.0, border=0):
 

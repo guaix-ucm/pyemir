@@ -566,14 +566,15 @@ class ABBASpectraRectwv(EmirRecipe):
                 raise ValueError('Unexpected char value: {}'.format(char))
 
         # combination method
-        fmethod = getattr(combine, rinput.method)
+        method = getattr(combine, rinput.method)
+        method_kwargs = rinput.method_kwargs
 
         # final combination of A images
         self.logger.info('combining individual A images')
         reduced_mos_image_a = combine_imgs(
             list_a,
-            method=fmethod,
-            method_kwargs=rinput.method_kwargs,
+            method=method,
+            method_kwargs=method_kwargs,
             errors=False,
             prolog=None
         )
@@ -584,8 +585,8 @@ class ABBASpectraRectwv(EmirRecipe):
         self.logger.info('combining individual B images')
         reduced_mos_image_b = combine_imgs(
             list_b,
-            method=fmethod,
-            method_kwargs=rinput.method_kwargs,
+            method=method,
+            method_kwargs=method_kwargs,
             errors=False,
             prolog=None
         )
@@ -881,7 +882,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
         flow = self.init_filters(rinput)
 
         # available combination methods
-        fmethod = getattr(combine, rinput.method)
+        method = getattr(combine, rinput.method)
+        method_kwargs = rinput.method_kwargs
 
         # basic reduction of A images
         list_a = [rinput.obresult.frames[i] for i, char in enumerate(full_set)
@@ -891,8 +893,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
             hduls = [stack.enter_context(fname.open()) for fname in list_a]
             reduced_image_a = combine_imgs(
                 hduls,
-                method=fmethod,
-                method_kwargs=rinput.method_kwargs,
+                method=method,
+                method_kwargs=method_kwargs,
                 errors=False,
                 prolog=None
             )
@@ -908,8 +910,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
             hduls = [stack.enter_context(fname.open()) for fname in list_b]
             reduced_image_b = combine_imgs(
                 hduls,
-                method=fmethod,
-                method_kwargs=rinput.method_kwargs,
+                method=method,
+                method_kwargs=method_kwargs,
                 errors=False,
                 prolog=None
             )
