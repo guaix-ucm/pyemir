@@ -30,7 +30,7 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 # auxiliary function to generate content of YAML files
 def generate_yaml_content(args, list_fileinfo, enabled=True):
 
-    step_number = args.step_number
+    step = args.step
 
     # obsid_prefix
     if args.obsid_prefix is None:
@@ -41,7 +41,7 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
     nimages = len(list_fileinfo)
 
     output = ''
-    if step_number == 0:
+    if step == 0:
         # initial rectification and wavelength calibration coefficients
         idlabel = list_fileinfo[0].filename[:10]
         if obsid_prefix == '':
@@ -58,7 +58,7 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
             output += 'enabled: True'
         else:
             output += 'enabled: False'
-    elif step_number == 1:
+    elif step == 1:
         # check that all the expected parameters have been provided
         lrequirements = [
             'refine_wavecalib_mode',
@@ -109,7 +109,7 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
                     output += 'enabled: False'
                 if i < nimages - 1:
                     output += '\n---\n'
-    elif step_number == 2:
+    elif step == 2:
         # apply rectification and wavelength calibration to each block
         if obsid_prefix == '':
             output += 'id: _abba_fast\n'
@@ -133,7 +133,7 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
         output += '    high: 3.0\n'
         output += '  voffset_pix: 0.0\n'
         output += 'enabled: True\n'
-    elif step_number == 3:
+    elif step == 3:
         # apply rectification and wavelength calibration to each block
         if obsid_prefix == '':
             output += 'id: _abba\n'
@@ -173,7 +173,7 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
         output += '    list_valid_wvregions_b: [ [TBD, TBD], [TBD, TBD] ]\n'
         output += 'enabled: True\n'
     else:
-        raise ValueError('Unexpected step_number={}'.format(args.step_number))
+        raise ValueError('Unexpected step={}'.format(step))
 
     return output
 
@@ -189,14 +189,14 @@ def main(args=None):
     parser.add_argument("filename",
                         help="TXT file with list of ABBA FITS files",
                         type=argparse.FileType('rt'))
-    parser.add_argument("step_number",
+    parser.add_argument("--step", required=True,
                         help=textwrap.dedent("""\
                         0: preliminary rectwv_coeff.json
                         1: refined rectwv_coeff.json
                         2: ABBA fast reduction
                         3: ABBA careful reduction"""),
                         type=int, choices=[0, 1, 2, 3])
-    parser.add_argument("outfile",
+    parser.add_argument("--outfile", required=True,
                         help="Output YAML file name",
                         type=lambda x: arg_file_is_new(parser, x))
 

@@ -30,12 +30,12 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 # auxiliary function to generate content of YAML files
 def generate_yaml_content(args, list_fileinfo, enabled=True):
 
-    step_number = args.step_number
+    step = args.step
 
     nimages = len(list_fileinfo)
 
     output = ''
-    if step_number in [0, 1]:
+    if step in [0, 1]:
         # initial reduction with STARE_IMAGE
         for i in range(nimages):
             if i % args.repeat == 0:
@@ -49,15 +49,14 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
                 output += 'frames:\n'
             output += ' - ' + list_fileinfo[i].filename + '\n'
             if (i + 1) % args.repeat == 0:
-                if step_number == 0:
+                if step == 0:
                     output += 'enabled: True\n'
-                elif step_number == 1:
+                elif step == 1:
                     output += 'enabled: False\n'
                 else:
-                    raise ValueError('Unexpected step_number={}'.format(
-                        step_number))
+                    raise ValueError('Unexpected step={}'.format(step))
 
-    if step_number == 1:
+    if step == 1:
         # combination with FULL_DITHERED_IMAGE
         output += '---\n'
         if args.obsid_combined is None:
@@ -87,16 +86,16 @@ def main(args=None):
         formatter_class=argparse.RawTextHelpFormatter
     )
 
-    # positional arguments
+    # positional or required arguments
     parser.add_argument("filename",
                         help="TXT file with list of ABBA FITS files",
                         type=argparse.FileType('rt'))
-    parser.add_argument("step_number",
+    parser.add_argument("--step", required=True,
                         help=textwrap.dedent("""\
                         0: preliminary STARE_IMAGE
                         1: combination with FULL_DITHERED_IMAGE"""),
                         type=int, choices=[0, 1])
-    parser.add_argument("outfile",
+    parser.add_argument("--outfile", required=True,
                         help="Output YAML file name",
                         type=lambda x: arg_file_is_new(parser, x))
 
