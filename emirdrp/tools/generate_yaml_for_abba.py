@@ -28,7 +28,9 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 
 
 # auxiliary function to generate content of YAML files
-def generate_yaml_content(step_number, args, list_fileinfo, enabled=True):
+def generate_yaml_content(args, list_fileinfo, enabled=True):
+
+    step_number = args.step_number
 
     # obsid_prefix
     if args.obsid_prefix is None:
@@ -204,7 +206,7 @@ def main(args=None):
                         default='ABBA',
                         choices=['A', 'AB', 'ABBA'])
     parser.add_argument("--repeat",
-                        help="Repetitions of each position",
+                        help="Repetitions at each position",
                         default=1, type=int)
     parser.add_argument("--npreliminary",
                         help="number of images to be combined to compute "
@@ -268,16 +270,7 @@ def main(args=None):
     print('Number of sequences......: {}'.format(nsequences))
     print('Full set of images.......: {}'.format(full_set))
 
-    if args.step_number == 0:
-        output = generate_yaml_content(0, args, list_fileinfo)
-    elif args.step_number == 1:
-        output = generate_yaml_content(1, args, list_fileinfo)
-    elif args.step_number == 2:
-        output = generate_yaml_content(2, args, list_fileinfo)
-    elif args.step_number == 3:
-        output = generate_yaml_content(3, args, list_fileinfo)
-    else:
-        raise ValueError('Unexpected step_number={}'.format(args.step_number))
+    output = generate_yaml_content(args, list_fileinfo)
 
     # generate YAML file
     with args.outfile as f:
