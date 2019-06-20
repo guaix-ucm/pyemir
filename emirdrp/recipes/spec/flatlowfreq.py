@@ -206,7 +206,7 @@ class SpecFlatLowFreq(EmirRecipe):
         flow = self.init_filters(rinput)
 
         # available combination methods
-        fmethod = getattr(combine, rinput.method)
+        method = getattr(combine, rinput.method)
 
         # basic reduction of images with lamp ON or OFF
         lampmode = {0: 'off', 1: 'on'}
@@ -223,7 +223,7 @@ class SpecFlatLowFreq(EmirRecipe):
                              in tmplist]
                     reduced_image = combine_imgs(
                         hduls,
-                        method=fmethod,
+                        method=method,
                         method_kwargs=method_kwargs,
                         errors=False,
                         prolog=None

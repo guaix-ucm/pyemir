@@ -19,7 +19,7 @@ from skimage.feature import register_translation
 
 from numina.core import Result
 from numina.core import Requirement, Parameter
-from numina.array.combine import median
+from numina.array.combine import sigmaclip
 import numina.processing as proc
 from numina.processing.combine import basic_processing_with_combination
 
@@ -67,7 +67,7 @@ class StareSpectraRecipe(EmirRecipe):
         flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow,
-                                                    method=median)
+                                                    method=sigmaclip)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         # Update EXP to 0
@@ -112,7 +112,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
 
         # apply bpm, bias, dark and flat
         reduced_image = basic_processing_with_combination(rinput, flow,
-                                                          method=median)
+                                                          method=sigmaclip)
         # update header with additional info
         hdr = reduced_image[0].header
         self.set_base_headers(hdr)
@@ -284,7 +284,7 @@ class GenerateRectwvCoeff(EmirRecipe):
 
         # apply bpm, bias, dark and flat
         reduced_image = basic_processing_with_combination(rinput, flow,
-                                                          method=median)
+                                                          method=sigmaclip)
         # update header with additional info
         hdr = reduced_image[0].header
         self.set_base_headers(hdr)
@@ -490,7 +490,7 @@ class StareSpectraRectwv(EmirRecipe):
 
         # apply bpm, bias, dark and flat
         reduced_image = basic_processing_with_combination(rinput, flow,
-                                                          method=median)
+                                                          method=sigmaclip)
         # update header with additional info
         hdr = reduced_image[0].header
         self.set_base_headers(hdr)
