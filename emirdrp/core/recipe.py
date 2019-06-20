@@ -31,7 +31,7 @@ class EmirRecipe(recipes.BaseRecipe):
     datamodel : EmirDataModel
 
     """
-    logger = logging.getLogger('numina.recipes.emir')
+    logger = logging.getLogger(__name__)
     datamodel = emirdrp.datamodel.EmirDataModel()
 
     def types_getter(self):
