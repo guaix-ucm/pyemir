@@ -18,6 +18,7 @@ import uuid
 import numpy
 import sep
 from astropy.io import fits
+from scipy import ndimage
 from scipy.spatial import KDTree as KDTree
 
 from numina.core import Result, Requirement, Parameter
@@ -40,6 +41,9 @@ from .naming import (name_redimensioned_frames, name_object_mask,
 from .naming import name_skybackgroundmask, name_skysub_proc, name_skyflat
 from .naming import name_skyflat_proc, name_segmask
 
+from emirdrp.core import EMIR_NAXIS1
+from emirdrp.core import EMIR_NAXIS2
+
 
 class ImageInfo(object):
     def __init__(self, origin):
@@ -55,6 +59,15 @@ class ImageInfo(object):
         self.resized_base = ""
         self.lastname = ""
         self.flat_corrected = ""
+
+    def __str__(self):
+        output = ''
+        for item in vars(self):
+            value = getattr(self, item)
+            output += '\n- {}: {}'.format(item, value)
+            if hasattr(value, 'shape'):
+                output += ' --> shape {}'.format(value.shape)
+        return output
 
 
 class FullDitheredImagesRecipe(EmirRecipe):
@@ -179,7 +192,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         obresult = rinput.obresult
         sky_images = rinput.sky_images
         sky_images_sep_time = rinput.sky_images_sep_time
-        baseshape = (2048, 2048)
+        baseshape = (EMIR_NAXIS2, EMIR_NAXIS1)
         user_offsets = rinput.offsets
         extinction = rinput.extinction
 
@@ -211,17 +224,24 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         self.resize(target_info, baseshape, offsetsp, finalshape)
 
-        result = self.process_basic(images_info, target_is_sky=target_is_sky,
-                                    extinction=extinction,
-                                    method=method, method_kwargs=method_kwargs)
+        step = 0
+
+        result = self.process_basic(
+            images_info,
+            step=step,
+            target_is_sky=target_is_sky,
+            extinction=extinction,
+            method=method,
+            method_kwargs=method_kwargs
+        )
 
         if rinput.refine_offsets:
             self.logger.debug("Compute cross-correlation of images")
             # regions_c = self.compute_regions(finalshape, box=200, corners=True)
 
-            # Regions frm bright objects
+            # Regions from bright objects
             regions_c = self.compute_regions_from_objs(
-                result[0].data, finalshape, box=40
+                step, result[0].data, finalshape, box=40
             )
 
             try:
@@ -244,17 +264,21 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 #
                 self.logger.debug("Relative offsetsp (crosscorr):\n%s",
                                   offsetsp2)
-                self.logger.info('Shape of resized array (crosscorr) is %s',
-                                 finalshape2)
+                self.logger.info('Shape of resized array (crosscorr) is '
+                                 '(NAXIS2, NAXIS1) = %s', finalshape2)
 
                 # Resizing target imgs
                 self.logger.debug("Resize to final offsets")
                 self.resize(target_info, baseshape, offsetsp2, finalshape2)
-                result = self.process_basic(images_info,
-                                            target_is_sky=target_is_sky,
-                                            extinction=extinction,
-                                            method=method,
-                                            method_kwargs=method_kwargs)
+                result = self.process_basic(
+                    images_info,
+                    step=step,
+                    target_is_sky=target_is_sky,
+                    extinction=extinction,
+                    method=method,
+                    method_kwargs=method_kwargs
+                )
+
             except Exception as error:
                 self.logger.warning('Error during cross-correlation, %s',
                                     error)
@@ -297,7 +321,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             base_ref = numpy.asarray(user_offsets)
             list_of_offsets = -(base_ref - base_ref[0])
         else:
-            self.logger.debug('Computing offsets from WCS information')
+            self.logger.info('Computing offsets from WCS information')
             with nfcom.manage_fits(img.origin for img in target_info) as images:
                 list_of_offsets = offsets_from_wcs_imgs(images, refpix)
 
@@ -319,20 +343,23 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         finalshape, offsetsp = narray.combine_shape(baseshape, offsets)
         self.logger.debug("Relative offsetsp:\n%s", offsetsp)
-        self.logger.info('Shape of resized array is %s', finalshape)
+        self.logger.info('Shape of resized array is (NAXIS2, NAXIS1) = %s',
+                         finalshape)
         return finalshape, offsetsp, refpix, list_of_offsets
 
-    def process_basic(self, images_info, target_is_sky=True, extinction=0.0,
+    def process_basic(self, images_info, step=None,
+                      target_is_sky=True,
+                      extinction=0.0,
                       method=None, method_kwargs=None):
-
-        step = 0
 
         target_info = [iinfo for iinfo in images_info if iinfo.valid_target]
         sky_info = [iinfo for iinfo in images_info if iinfo.valid_sky]
 
         self.logger.info("Step %d, SF: compute superflat", step)
-        sf_arr = self.compute_superflat(images_info,
-                                        method=method, method_kwargs=method_kwargs)
+        sf_arr = self.compute_superflat(
+            images_info,
+            method=method, method_kwargs=method_kwargs
+        )
 
         # Apply superflat
         self.logger.info("Step %d, SF: apply superflat", step)
@@ -361,7 +388,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                          method=None, method_kwargs=None):
 
         seeing_fwhm = None
-        baseshape = (2048, 2048)
+        baseshape = (EMIR_NAXIS2, EMIR_NAXIS1)
         target_info = [iinfo for iinfo in images_info if iinfo.valid_target]
         sky_info = [iinfo for iinfo in images_info if iinfo.valid_sky]
         self.logger.info('Step %d, generating segmentation image', step)
@@ -410,8 +437,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         return result
 
     def compute_simple_sky_for_frame(self, frame, skyframe, step=0, save=True):
-        self.logger.info('Correcting sky in frame %s', frame.lastname)
-        self.logger.info('with sky computed from frame %s', skyframe.lastname)
+        self.logger.info('Correcting sky in frame.....: %s', frame.lastname)
+        self.logger.info('with sky computed from frame: %s', skyframe.lastname)
 
         if hasattr(skyframe, 'median_sky'):
             sky = skyframe.median_sky
@@ -446,6 +473,9 @@ class FullDitheredImagesRecipe(EmirRecipe):
             data = hdulist['primary'].data
             valid = data[frame.valid_region]
             valid -= sky
+            self.logger.info('Sky-subtrated image in frame: %s',
+                             frame.lastname)
+            self.logger.info('---')
 
     def compute_simple_sky(self, frame, skyframe, step=0, save=True):
         raise NotImplementedError
@@ -474,7 +504,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         with obresult.frames[0].open() as baseimg:
             # Initial checks
             has_bpm_ext = 'BPM' in baseimg
-            self.logger.debug('images have BPM extension: %s', has_bpm_ext)
+            self.logger.info('images have BPM extension: %s', has_bpm_ext)
 
         images_info = []
         for f in obresult.frames:
@@ -665,6 +695,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
     def resize(self, frames, shape, offsetsp, finalshape, window=None,
                scale=1, step=0):
         self.logger.info('Resizing frames and masks')
+        self.logger.debug('shape, finalshape (NAXIS2, NAXIS1) = %s --> %s',
+                          shape, finalshape)
         for frame, rel_offset in zip(frames, offsetsp):
             if frame.valid_target:
                 region, _ = narray.subarray_match(finalshape, rel_offset, shape)
@@ -682,6 +714,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                                   custom_region_to_str(region), rel_offset)
                 self.resize_frame_and_mask(
                     frame, finalshape, framen, maskn, window, scale)
+                self.logger.debug('---')
 
     def resize_frame_and_mask(self, frame, finalshape,
                               framen, maskn, window, scale):
@@ -954,13 +987,23 @@ class FullDitheredImagesRecipe(EmirRecipe):
             data = hdulist['primary'].data
             valid = data[frame.valid_region]
             valid -= sky
+            # ToDo: ad hoc sky correction
+            adhoc_correction = False
+            if adhoc_correction:
+                print('---')
+                print(frame)
+                print('*** adhoc_correction ***')
+                skycorr = self.sky_adhoc_correction(valid, frame.objmask_data)
+                valid -= skycorr
 
-    def compute_regions_from_objs(self, arr, finalshape, box=50, corners=True):
+    def compute_regions_from_objs(self, step, arr, finalshape, box=50,
+                                  corners=True):
         regions = []
+        # create catalog of objects skipping a border around the image
         catalog, mask = self.create_object_catalog(arr, border=300)
 
-        self.save_intermediate_array(mask, 'objmask.fits')
-        # with the catalog, compute NKEEP objects
+        self.save_intermediate_array(mask, 'objmask_i{}.fits'.format(step))
+        # with the catalog, compute the brightest NKEEP objects
 
         LIMIT_AREA = 5000
         NKEEP = 3
@@ -969,7 +1012,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         idx_flux = objects_small['flux'].argsort()
         objects_nth = objects_small[idx_flux][-NKEEP:]
         for obj in objects_nth:
-            self.logger.debug('ref is %s %s', obj['x'], obj['y'])
+            self.logger.debug('ref is (x,y) = (%s, %s)', obj['x'], obj['y'])
             region = nautils.image_box2d(obj['x'], obj['y'], finalshape, (box, box))
             regions.append(region)
         return regions
@@ -992,3 +1035,96 @@ class FullDitheredImagesRecipe(EmirRecipe):
             segmentation_map=True
         )
         return objects, objmask
+
+    def sky_adhoc_correction(self, arr, objmask, nsample=10000):
+        self.logger.info('computing ad hoc sky correction')
+        skyfit = arr.copy()
+        # ToDo: remove next line
+        numpy.random.seed(2019)
+        # fit each quadrant
+        lim = [0, 1024, 2048]
+        for i in range(2):
+            i1 = lim[i]
+            i2 = lim[i + 1]
+            for j in range(2):
+                j1 = lim[j]
+                j2 = lim[j + 1]
+                print(i1, i2, j1, j2)
+                data_masked = numpy.where(objmask[i1:i2, j1:j2],
+                                          numpy.nan, skyfit[i1:i2, j1:j2])
+                print('filter1')
+                skyfit[i1:i2, j1:j2] = ndimage.generic_filter(
+                    data_masked,
+                    numpy.nanmedian,
+                    size=(1, 51),
+                    mode='nearest'
+                )
+                data_masked = numpy.where(objmask[i1:i2, j1:j2],
+                                          numpy.nan, skyfit[i1:i2, j1:j2])
+                print('filter2')
+                skyfit[i1:i2, j1:j2] = ndimage.generic_filter(
+                    data_masked,
+                    numpy.nanmedian,
+                    size=(51, 1),
+                    mode='nearest'
+                )
+                if False:
+                    # define arrays for fitting
+                    xarray = numpy.tile(numpy.arange(j1, j2), i2 - i1)
+                    yarray = numpy.repeat(numpy.arange(i1, i2), j2 - j1)
+                    farray = arr[i1:i2, j1:j2].flatten()
+                    print('initial number of pixels:', xarray.size)
+                    # remove pixels affected by objects
+                    usefulpix = (objmask[i1:i2, j1:j2].flatten() == 0)
+                    xarray = xarray[usefulpix]
+                    yarray = yarray[usefulpix]
+                    farray = farray[usefulpix]
+                    print('number of useful pixels.:', xarray.size)
+                    # random choice of nsample pixels
+                    ntotpix = xarray.size
+                    if (ntotpix != yarray.size) or (ntotpix != farray.size):
+                        raise ValueError('Unexpected sizes: {} {} {}'.format(
+                            ntotpix, yarray.size, farray.size
+                        ))
+                    if ntotpix > nsample:
+                        pixsample = numpy.random.choice(numpy.array(ntotpix),
+                                                        nsample)
+                    else:
+                        pixsample = numpy.array(ntotpix)
+                    xarray = xarray[pixsample]
+                    yarray = yarray[pixsample]
+                    farray = farray[pixsample]
+                    print('number of sampled pixels:', xarray.size)
+
+                    import itertools
+                    def polyfit2d(x, y, z, order=2):
+                        ncols = (order + 1) ** 2
+                        G = numpy.zeros((x.size, ncols))
+                        ij = itertools.product(range(order + 1), range(order + 1))
+                        for k, (i, j) in enumerate(ij):
+                            G[:, k] = x ** i * y ** j
+                        m, _, _, _ = numpy.linalg.lstsq(G, z)
+                        return m
+
+                    def polyval2d(x, y, m):
+                        order = int(numpy.sqrt(len(m))) - 1
+                        ij = itertools.product(range(order + 1), range(order + 1))
+                        z = numpy.zeros_like(x)
+                        for a, (i, j) in zip(m, ij):
+                            z += a * x ** i * y ** j
+                        return z
+                    m = polyfit2d(xarray, yarray, farray)
+                    print('m:', m)
+                    xx, yy = numpy.meshgrid(numpy.arange(j1, j2, dtype=float),
+                                            numpy.arange(i1, i2, dtype=float))
+                    zz = polyval2d(xx, yy, m)
+                    print(skyfit[i1:i2, j1:j2].shape, zz.shape)
+                    skyfit[i1:i2, j1:j2] = zz
+
+        hdu = fits.PrimaryHDU(arr.astype('float32'))
+        hdul = fits.HDUList([hdu])
+        hdul.writeto('xxx1.fits', overwrite=True)
+        hdu = fits.PrimaryHDU(skyfit.astype('float32'))
+        hdul = fits.HDUList([hdu])
+        hdul.writeto('xxx2.fits', overwrite=True)
+        return skyfit
