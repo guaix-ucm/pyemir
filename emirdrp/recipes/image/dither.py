@@ -18,7 +18,7 @@ import uuid
 import numpy
 import sep
 from astropy.io import fits
-from scipy import ndimage
+from scipy import interpolate
 from scipy.spatial import KDTree as KDTree
 
 from numina.core import Result, Requirement, Parameter
@@ -183,6 +183,10 @@ class FullDitheredImagesRecipe(EmirRecipe):
         10, 'Maximum time interval between target and sky images [minutes]'
     )
 
+    nside_adhoc_sky_correction = Parameter(
+        0, 'Ad hoc sky correction (number of subintervals in each quadrant)'
+    )
+
     result_image = Result(prods.ProcessedImage)
     result_sky = Result(prods.ProcessedImage, optional=True)
 
@@ -195,6 +199,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         baseshape = (EMIR_NAXIS2, EMIR_NAXIS1)
         user_offsets = rinput.offsets
         extinction = rinput.extinction
+        nside_adhoc_sky_correction = rinput.nside_adhoc_sky_correction
 
         # protections
         if rinput.iterations == 0 and sky_images != 0:
@@ -290,7 +295,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 images_info, result, step, target_is_sky,
                 maxsep=sky_images_sep_time, nframes=sky_images,
                 extinction=extinction,
-                method=method, method_kwargs=method_kwargs
+                method=method, method_kwargs=method_kwargs,
+                nside_adhoc_sky_correction=nside_adhoc_sky_correction
             )
             step += 1
 
@@ -385,7 +391,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
     def process_advanced(self, images_info, result, step, target_is_sky=True,
                          maxsep=5.0, nframes=6, extinction=0,
-                         method=None, method_kwargs=None):
+                         method=None, method_kwargs=None,
+                         nside_adhoc_sky_correction=0):
 
         seeing_fwhm = None
         baseshape = (EMIR_NAXIS2, EMIR_NAXIS1)
@@ -421,13 +428,17 @@ class FullDitheredImagesRecipe(EmirRecipe):
             self.correct_superflat(iinfo, sf_arr, step=step, save=True)
 
         self.logger.info('Step %d, advanced sky correction (SC)', step)
-        self.compute_advanced_sky(target_info, objmask,
-                                  skyframes=sky_info,
-                                  target_is_sky=target_is_sky,
-                                  maxsep=maxsep,
-                                  nframes=nframes,
-                                  step=step,
-                                  method=method, method_kwargs=method_kwargs)
+        self.compute_advanced_sky(
+            target_info, objmask,
+            skyframes=sky_info,
+            target_is_sky=target_is_sky,
+            maxsep=maxsep,
+            nframes=nframes,
+            step=step,
+            method=method,
+            method_kwargs=method_kwargs,
+            nside_adhoc_sky_correction=nside_adhoc_sky_correction
+        )
 
         # Combining the images
         self.logger.info("Step %d, Combining the images", step)
@@ -852,8 +863,9 @@ class FullDitheredImagesRecipe(EmirRecipe):
                              skyframes=None, target_is_sky=False,
                              maxsep=5.0,
                              nframes=10,
-                             step=0, save=True,
-                             method=None, method_kwargs=None):
+                             step=0,
+                             method=None, method_kwargs=None,
+                             nside_adhoc_sky_correction=0):
 
         if target_is_sky:
             skyframes = targetframes
@@ -898,15 +910,17 @@ class FullDitheredImagesRecipe(EmirRecipe):
                                           step, skyframes[si].label)
                         locskyframes.append(skyframes[si])
                 self.compute_advanced_sky_for_frame(
-                    tf, locskyframes, step=step, save=save,
-                    method=method, method_kwargs=method_kwargs
+                    tf, locskyframes, step=step,
+                    method=method, method_kwargs=method_kwargs,
+                    nside_adhoc_sky_correction=nside_adhoc_sky_correction
                 )
             except IndexError:
                 self.logger.error('No sky image available for frame %s', tf.lastname)
                 raise
 
     def compute_advanced_sky_for_frame(self, frame, skyframes, step=0,
-                                       save=True, method=None, method_kwargs=None):
+                                       method=None, method_kwargs=None,
+                                       nside_adhoc_sky_correction=0):
         self.logger.info('Correcting sky in frame %s', frame.lastname)
         self.logger.info('with sky computed from frames')
         for i in skyframes:
@@ -987,13 +1001,12 @@ class FullDitheredImagesRecipe(EmirRecipe):
             data = hdulist['primary'].data
             valid = data[frame.valid_region]
             valid -= sky
-            # ToDo: ad hoc sky correction
-            adhoc_correction = False
-            if adhoc_correction:
-                print('---')
-                print(frame)
-                print('*** adhoc_correction ***')
-                skycorr = self.sky_adhoc_correction(valid, frame.objmask_data)
+            if nside_adhoc_sky_correction > 0:
+                skycorr = self.adhoc_sky_correction(
+                    arr=valid,
+                    objmask=frame.objmask_data,
+                    nside=nside_adhoc_sky_correction
+                )
                 valid -= skycorr
 
     def compute_regions_from_objs(self, step, arr, finalshape, box=50,
@@ -1036,12 +1049,14 @@ class FullDitheredImagesRecipe(EmirRecipe):
         )
         return objects, objmask
 
-    def sky_adhoc_correction(self, arr, objmask, nsample=10000):
+    def adhoc_sky_correction(self, arr, objmask, nside=10):
+        # nside: number of subdivisions in each quadrant
+
         self.logger.info('computing ad hoc sky correction')
-        skyfit = arr.copy()
-        # ToDo: remove next line
-        numpy.random.seed(2019)
-        # fit each quadrant
+
+        skyfit = numpy.zeros_like(arr)
+
+        # fit each quadrant separately
         lim = [0, 1024, 2048]
         for i in range(2):
             i1 = lim[i]
@@ -1049,82 +1064,50 @@ class FullDitheredImagesRecipe(EmirRecipe):
             for j in range(2):
                 j1 = lim[j]
                 j2 = lim[j + 1]
-                print(i1, i2, j1, j2)
-                data_masked = numpy.where(objmask[i1:i2, j1:j2],
-                                          numpy.nan, skyfit[i1:i2, j1:j2])
-                print('filter1')
-                skyfit[i1:i2, j1:j2] = ndimage.generic_filter(
-                    data_masked,
-                    numpy.nanmedian,
-                    size=(1, 51),
-                    mode='nearest'
+                xyfit = []
+                zfit = []
+                limi = numpy.linspace(i1, i2, nside + 1, dtype=int)
+                limj = numpy.linspace(j1, j2, nside + 1, dtype=int)
+                for ii in range(nside):
+                    ii1 = limi[ii]
+                    ii2 = limi[ii+1]
+                    for jj in range(nside):
+                        jj1 = limj[jj]
+                        jj2 = limj[jj+1]
+                        tmprect = arr[ii1:ii2, jj1:jj2]
+                        tmpmask = objmask[ii1:ii2, jj1:jj2]
+                        usefulpix = tmprect[tmpmask == 0]
+                        if usefulpix.size > 0:
+                            x0 = (jj1 + jj2) / 2.0
+                            y0 = (ii1 + ii2) / 2.0
+                            z0 = numpy.median(usefulpix)
+                            xyfit.append([x0, y0])
+                            zfit.append(z0)
+                xyfit = numpy.array(xyfit)
+                zfit = numpy.array(zfit)
+                xgrid, ygrid = numpy.meshgrid(
+                    numpy.arange(j1, j2, dtype=float),
+                    numpy.arange(i1, i2, dtype=float))
+                surface_nearest = interpolate.griddata(
+                    xyfit, zfit, (xgrid, ygrid), method='nearest',
+                    rescale=True
                 )
-                data_masked = numpy.where(objmask[i1:i2, j1:j2],
-                                          numpy.nan, skyfit[i1:i2, j1:j2])
-                print('filter2')
-                skyfit[i1:i2, j1:j2] = ndimage.generic_filter(
-                    data_masked,
-                    numpy.nanmedian,
-                    size=(51, 1),
-                    mode='nearest'
+                surface_cubic = interpolate.griddata(
+                    xyfit, zfit, (xgrid, ygrid), method='cubic',
+                    fill_value=-1.0E30,
+                    rescale=True
                 )
-                if False:
-                    # define arrays for fitting
-                    xarray = numpy.tile(numpy.arange(j1, j2), i2 - i1)
-                    yarray = numpy.repeat(numpy.arange(i1, i2), j2 - j1)
-                    farray = arr[i1:i2, j1:j2].flatten()
-                    print('initial number of pixels:', xarray.size)
-                    # remove pixels affected by objects
-                    usefulpix = (objmask[i1:i2, j1:j2].flatten() == 0)
-                    xarray = xarray[usefulpix]
-                    yarray = yarray[usefulpix]
-                    farray = farray[usefulpix]
-                    print('number of useful pixels.:', xarray.size)
-                    # random choice of nsample pixels
-                    ntotpix = xarray.size
-                    if (ntotpix != yarray.size) or (ntotpix != farray.size):
-                        raise ValueError('Unexpected sizes: {} {} {}'.format(
-                            ntotpix, yarray.size, farray.size
-                        ))
-                    if ntotpix > nsample:
-                        pixsample = numpy.random.choice(numpy.array(ntotpix),
-                                                        nsample)
-                    else:
-                        pixsample = numpy.array(ntotpix)
-                    xarray = xarray[pixsample]
-                    yarray = yarray[pixsample]
-                    farray = farray[pixsample]
-                    print('number of sampled pixels:', xarray.size)
+                skyfit[i1:i2, j1:j2] = numpy.where(
+                    surface_cubic < -1.0E29,
+                    surface_nearest,
+                    surface_cubic
+                )
 
-                    import itertools
-                    def polyfit2d(x, y, z, order=2):
-                        ncols = (order + 1) ** 2
-                        G = numpy.zeros((x.size, ncols))
-                        ij = itertools.product(range(order + 1), range(order + 1))
-                        for k, (i, j) in enumerate(ij):
-                            G[:, k] = x ** i * y ** j
-                        m, _, _, _ = numpy.linalg.lstsq(G, z)
-                        return m
+        # hdu = fits.PrimaryHDU(arr.astype('float32'))
+        # hdul = fits.HDUList([hdu])
+        # hdul.writeto('xxx1.fits', overwrite=True)
+        # hdu = fits.PrimaryHDU(skyfit.astype('float32'))
+        # hdul = fits.HDUList([hdu])
+        # hdul.writeto('xxx2.fits', overwrite=True)
 
-                    def polyval2d(x, y, m):
-                        order = int(numpy.sqrt(len(m))) - 1
-                        ij = itertools.product(range(order + 1), range(order + 1))
-                        z = numpy.zeros_like(x)
-                        for a, (i, j) in zip(m, ij):
-                            z += a * x ** i * y ** j
-                        return z
-                    m = polyfit2d(xarray, yarray, farray)
-                    print('m:', m)
-                    xx, yy = numpy.meshgrid(numpy.arange(j1, j2, dtype=float),
-                                            numpy.arange(i1, i2, dtype=float))
-                    zz = polyval2d(xx, yy, m)
-                    print(skyfit[i1:i2, j1:j2].shape, zz.shape)
-                    skyfit[i1:i2, j1:j2] = zz
-
-        hdu = fits.PrimaryHDU(arr.astype('float32'))
-        hdul = fits.HDUList([hdu])
-        hdul.writeto('xxx1.fits', overwrite=True)
-        hdu = fits.PrimaryHDU(skyfit.astype('float32'))
-        hdul = fits.HDUList([hdu])
-        hdul.writeto('xxx2.fits', overwrite=True)
         return skyfit
