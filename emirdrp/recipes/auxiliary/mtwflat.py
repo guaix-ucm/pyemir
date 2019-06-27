@@ -20,12 +20,12 @@ from numina.array.combine import median
 from numina.array.robustfit import fit_theil_sen
 from numina.core import Result
 import numina.types.datatype as dt
+from numina.processing.combine import basic_processing_with_combination_frames
 
 from emirdrp.processing.info import gather_info_frames
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
-from emirdrp.processing.combine import basic_processing_with_combination_frames
 
 
 class MultiTwilightFlatRecipe(EmirRecipe):

@@ -41,7 +41,7 @@ from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 from emirdrp.core import EMIR_NBARS
 
 
-def islitlet_progress(islitlet, islitlet_max):
+def islitlet_progress(islitlet, islitlet_max, ignore=False):
     """Auxiliary function to print out progress in loop of slitlets.
 
     Parameters
@@ -50,12 +50,19 @@ def islitlet_progress(islitlet, islitlet_max):
         Current slitlet number.
     islitlet_max : int
         Maximum slitlet number.
+    ignore : bool
+        If True, display 'i'
 
     """
-    if islitlet % 10 == 0:
-        cout = str(islitlet // 10)
+
+    if ignore:
+        cout = 'i'
     else:
-        cout = '.'
+        if islitlet % 10 == 0:
+            cout = str(islitlet // 10)
+        else:
+            cout = '.'
+
     sys.stdout.write(cout)
     if islitlet == islitlet_max:
         sys.stdout.write('\n')
@@ -161,22 +168,25 @@ def main(args=None):
     # bb_nc2_orig) and ymargin_bb, and store the values for each slitlet
     dict_bb_param = {}
     print("Checking horizontal bounding box limits and ymargin_bb:")
-    for islitlet in list_valid_islitlets:
-        islitlet_progress(islitlet, EMIR_NBARS)
-        cslitlet = 'slitlet' + str(islitlet).zfill(2)
-        dict_bb_param[cslitlet] = {}
-        for par in ['bb_nc1_orig', 'bb_nc2_orig', 'ymargin_bb']:
-            value_initial = \
-                coef_rect_wpoly_first_longslit.contents[islitlet - 1][par]
-            for ifile in range(1, nfiles):
-                coef_rect_wpoly = RectWaveCoeff._datatype_load(
-                    list_json_files[ifile].filename)
-                value_tmp = coef_rect_wpoly.contents[islitlet - 1][par]
-                if value_initial != value_tmp:
-                    print(islitlet, value_initial, value_tmp)
-                    print(value_tmp)
-                    raise ValueError("Unexpected different " + par)
-                dict_bb_param[cslitlet][par] = value_initial
+    for islitlet in list(range(1, EMIR_NBARS + 1)):
+        if islitlet in list_valid_islitlets:
+            islitlet_progress(islitlet, EMIR_NBARS, ignore=False)
+            cslitlet = 'slitlet' + str(islitlet).zfill(2)
+            dict_bb_param[cslitlet] = {}
+            for par in ['bb_nc1_orig', 'bb_nc2_orig', 'ymargin_bb']:
+                value_initial = \
+                    coef_rect_wpoly_first_longslit.contents[islitlet - 1][par]
+                for ifile in range(1, nfiles):
+                    coef_rect_wpoly = RectWaveCoeff._datatype_load(
+                        list_json_files[ifile].filename)
+                    value_tmp = coef_rect_wpoly.contents[islitlet - 1][par]
+                    if value_initial != value_tmp:
+                        print(islitlet, value_initial, value_tmp)
+                        print(value_tmp)
+                        raise ValueError("Unexpected different " + par)
+                    dict_bb_param[cslitlet][par] = value_initial
+        else:
+            islitlet_progress(islitlet, EMIR_NBARS, ignore=True)
     print('OK!')
 
     # ---
@@ -292,22 +302,25 @@ def main(args=None):
 
     # csu_bar_slit_center values for each slitlet
     print("CSU_bar_slit_center values:")
-    for islitlet in list_valid_islitlets:
-        islitlet_progress(islitlet, EMIR_NBARS)
-        cslitlet = 'slitlet' + str(islitlet).zfill(2)
-        list_csu_bar_slit_center = []
-        for ifile in range(nfiles):
-            tmpdict = list_coef_rect_wpoly[ifile].contents[islitlet - 1]
-            csu_bar_slit_center = tmpdict['csu_bar_slit_center']
-            list_csu_bar_slit_center.append(csu_bar_slit_center)
-        # check that list_csu_bar_slit_center is properly sorted
-        if not np.all(list_csu_bar_slit_center[:-1] <=
-                  list_csu_bar_slit_center[1:]):
-            print('cslitlet: ', cslitlet)
-            print('list_csu_bar_slit_center: ', list_csu_bar_slit_center)
-            raise ValueError('Unsorted list_csu_bar_slit_center')
-        outdict['contents'][cslitlet]['list_csu_bar_slit_center'] = \
-            list_csu_bar_slit_center
+    for islitlet in list(range(1, EMIR_NBARS + 1)):
+        if islitlet in list_valid_islitlets:
+            islitlet_progress(islitlet, EMIR_NBARS, ignore=False)
+            cslitlet = 'slitlet' + str(islitlet).zfill(2)
+            list_csu_bar_slit_center = []
+            for ifile in range(nfiles):
+                tmpdict = list_coef_rect_wpoly[ifile].contents[islitlet - 1]
+                csu_bar_slit_center = tmpdict['csu_bar_slit_center']
+                list_csu_bar_slit_center.append(csu_bar_slit_center)
+            # check that list_csu_bar_slit_center is properly sorted
+            if not np.all(list_csu_bar_slit_center[:-1] <=
+                      list_csu_bar_slit_center[1:]):
+                print('cslitlet: ', cslitlet)
+                print('list_csu_bar_slit_center: ', list_csu_bar_slit_center)
+                raise ValueError('Unsorted list_csu_bar_slit_center')
+            outdict['contents'][cslitlet]['list_csu_bar_slit_center'] = \
+                list_csu_bar_slit_center
+        else:
+            islitlet_progress(islitlet, EMIR_NBARS, ignore=True)
     print('OK!')
 
     # ---
@@ -317,34 +330,38 @@ def main(args=None):
     # note: when aij and bij have not been computed, we use the modeled
     # version aij_longslit_model and bij_longslit_model
     print("Rectification polynomial coefficients:")
-    for islitlet in list_valid_islitlets:
-        islitlet_progress(islitlet, EMIR_NBARS)
-        cslitlet = 'slitlet' + str(islitlet).zfill(2)
-        outdict['contents'][cslitlet]['ttd_order'] = ttd_order
-        outdict['contents'][cslitlet]['ncoef_rect'] = ncoef_rect
-        for keycoef in ['ttd_aij', 'ttd_bij', 'tti_aij', 'tti_bij']:
-            for icoef in range(ncoef_rect):
-                ccoef = str(icoef).zfill(2)
-                list_cij = []
-                for ifile in range(nfiles):
-                    tmpdict = \
-                        list_coef_rect_wpoly[ifile].contents[islitlet - 1]
-                    cij = tmpdict[keycoef]
-                    if cij is not None:
-                        list_cij.append(cij[icoef])
-                    else:
-                        cij_modeled = tmpdict[keycoef + '_longslit_model']
-                        if cij_modeled is None:
-                            raise ValueError("Unexpected cij_modeled=None!")
+    for islitlet in list(range(1, EMIR_NBARS + 1)):
+        if islitlet in list_valid_islitlets:
+            islitlet_progress(islitlet, EMIR_NBARS, ignore=False)
+            cslitlet = 'slitlet' + str(islitlet).zfill(2)
+            outdict['contents'][cslitlet]['ttd_order'] = ttd_order
+            outdict['contents'][cslitlet]['ncoef_rect'] = ncoef_rect
+            for keycoef in ['ttd_aij', 'ttd_bij', 'tti_aij', 'tti_bij']:
+                for icoef in range(ncoef_rect):
+                    ccoef = str(icoef).zfill(2)
+                    list_cij = []
+                    for ifile in range(nfiles):
+                        tmpdict = \
+                            list_coef_rect_wpoly[ifile].contents[islitlet - 1]
+                        cij = tmpdict[keycoef]
+                        if cij is not None:
+                            list_cij.append(cij[icoef])
                         else:
-                            list_cij.append(cij_modeled[icoef])
-                        if abs(args.debugplot) >= 10:
-                            print("Warning: using " + keycoef +
-                                  "_longslit_model for " + cslitlet +
-                                  " in file " +
-                                  list_json_files[ifile].filename)
-                cdum = 'list_' + keycoef + '_' + ccoef
-                outdict['contents'][cslitlet][cdum] = list_cij
+                            cij_modeled = tmpdict[keycoef + '_longslit_model']
+                            if cij_modeled is None:
+                                raise ValueError("Unexpected cij_modeled=None!")
+                            else:
+                                list_cij.append(cij_modeled[icoef])
+                            if abs(args.debugplot) >= 10:
+                                print("Warning: using " + keycoef +
+                                      "_longslit_model for " + cslitlet +
+                                      " in file " +
+                                      list_json_files[ifile].filename)
+                    cdum = 'list_' + keycoef + '_' + ccoef
+                    outdict['contents'][cslitlet][cdum] = list_cij
+        else:
+            islitlet_progress(islitlet, EMIR_NBARS, ignore=True)
+
     print('OK!')
 
     # ---
@@ -354,31 +371,34 @@ def main(args=None):
     # note: when wpoly_coeff have not been computed, we use the
     # wpoly_coeff_longslit_model
     print("Wavelength calibration polynomial coefficients:")
-    for islitlet in list_valid_islitlets:
-        islitlet_progress(islitlet, EMIR_NBARS)
-        cslitlet = 'slitlet' + str(islitlet).zfill(2)
-        outdict['contents'][cslitlet]['wpoly_degree'] = poldeg_wavecal
-        for icoef in range(poldeg_wavecal + 1):
-            ccoef = str(icoef).zfill(2)
-            list_cij = []
-            for ifile in range(nfiles):
-                tmpdict = list_coef_rect_wpoly[ifile].contents[islitlet - 1]
-                cij = tmpdict['wpoly_coeff']
-                if cij is not None:
-                    list_cij.append(cij[icoef])
-                else:
-                    cij_modeled = tmpdict['wpoly_coeff_longslit_model']
-                    if cij_modeled is None:
-                        raise ValueError("Unexpected cij_modeled=None!")
+    for islitlet in list(range(1, EMIR_NBARS + 1)):
+        if islitlet in list_valid_islitlets:
+            islitlet_progress(islitlet, EMIR_NBARS, ignore=False)
+            cslitlet = 'slitlet' + str(islitlet).zfill(2)
+            outdict['contents'][cslitlet]['wpoly_degree'] = poldeg_wavecal
+            for icoef in range(poldeg_wavecal + 1):
+                ccoef = str(icoef).zfill(2)
+                list_cij = []
+                for ifile in range(nfiles):
+                    tmpdict = list_coef_rect_wpoly[ifile].contents[islitlet - 1]
+                    cij = tmpdict['wpoly_coeff']
+                    if cij is not None:
+                        list_cij.append(cij[icoef])
                     else:
-                        list_cij.append(cij_modeled[icoef])
-                    if abs(args.debugplot) >= 10:
-                        print("Warning: using wpoly_coeff_longslit_model" +
-                              " for " + cslitlet +
-                              " in file " +
-                              list_json_files[ifile].filename)
-            outdict['contents'][cslitlet]['list_wpoly_coeff_' + ccoef] = \
-                list_cij
+                        cij_modeled = tmpdict['wpoly_coeff_longslit_model']
+                        if cij_modeled is None:
+                            raise ValueError("Unexpected cij_modeled=None!")
+                        else:
+                            list_cij.append(cij_modeled[icoef])
+                        if abs(args.debugplot) >= 10:
+                            print("Warning: using wpoly_coeff_longslit_model" +
+                                  " for " + cslitlet +
+                                  " in file " +
+                                  list_json_files[ifile].filename)
+                outdict['contents'][cslitlet]['list_wpoly_coeff_' + ccoef] = \
+                    list_cij
+        else:
+            islitlet_progress(islitlet, EMIR_NBARS, ignore=True)
     print('OK!')
 
     # ---

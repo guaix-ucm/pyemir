@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -19,10 +19,10 @@ from numina.core.requirements import ObservationResultRequirement
 import numina.exceptions
 import numina.ext.gtc
 import numina.core.query as qmod
+from numina.processing.combine import basic_processing_with_combination
 
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
-from emirdrp.processing.combine import basic_processing_with_combination
 
 
 class CoaddABBARecipe(EmirRecipe):
@@ -30,14 +30,13 @@ class CoaddABBARecipe(EmirRecipe):
 
     obresult = ObservationResultRequirement(
         query_opts=qmod.ResultOf(
-            'STARE_SPECTRA.stare',
+            'LS_ABBA.reduced_mos_abba',
             node='children',
             id_field="stareSpectraIds"
         )
     )
 
-    spec_coadd_abba = Result(prods.ProcessedMOS)
-
+    reduced_mos_abba = Result(prods.ProcessedMOS)
 
     def build_recipe_input(self, obsres, dal):
         if numina.ext.gtc.check_gtc():
@@ -49,7 +48,6 @@ class CoaddABBARecipe(EmirRecipe):
                 obsres, dal
             )
 
-
     def build_recipe_input_gtc(self, obsres, dal):
         self.logger.debug('start recipe input builder')
         stareImagesIds = obsres.stareSpectraIds
@@ -57,7 +55,7 @@ class CoaddABBARecipe(EmirRecipe):
         stareImages = []
         for subresId in stareImagesIds:
             subres = dal.getRecipeResult(subresId)
-            stareImages.append(subres['elements']['spec_abba'])
+            stareImages.append(subres['elements']['reduced_mos_abba'])
 
         newOR = numina.core.ObservationResult()
         newOR.frames = stareImages
@@ -88,7 +86,7 @@ class CoaddABBARecipe(EmirRecipe):
         # Update SEC to 0
         # hdr['SEC'] = 0
 
-        result = self.create_result(spec_coadd_abba=hdulist)
+        result = self.create_result(reduced_mos_abba=hdulist)
         self.logger.info('end spectroscopy ABBA coadd reduction')
         return result
 
@@ -114,7 +112,7 @@ class CoaddRecipe(EmirRecipe):
         self.logger.debug('start recipe input builder')
 
         # This depends on the RecipeResult
-        result_field = 'spec_abba'
+        result_field = 'reduced_mos_abba'
 
         stareImagesIds = obsres.stareSpectraIds
         self.logger.debug('Coadd images IDS %s: ', stareImagesIds)

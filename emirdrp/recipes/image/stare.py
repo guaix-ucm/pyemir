@@ -19,12 +19,12 @@ from numina.array import combine
 from numina.core import Result
 from numina.core.query import Ignore
 from numina.core.recipes import timeit
+from numina.processing.combine import basic_processing_with_combination
 
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.core.extra as extra
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
-from emirdrp.processing.combine import basic_processing_with_combination
 import emirdrp.decorators
 
 

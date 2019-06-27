@@ -195,11 +195,12 @@ def offset_from_crosscor_regions(arr0, arr1, regions, refine=True, refine_box=3,
                                        order=order)
             values.append(res)
         except ValueError as error:
-            print('error in offset_from_crosscor_regions', error)
+            _logger.debug('error in offset_from_crosscor_regions: %s', error)
 
     if len(values) == 0:
         raise ValueError('No measurements to compute offset in any region')
     values = numpy.array(values)
+    _logger.debug('offsets from cross-correlation:\n%s', values)
     med_c = numpy.median(values, axis=0)
 
     dis = numpy.linalg.norm(values - med_c, axis=1)

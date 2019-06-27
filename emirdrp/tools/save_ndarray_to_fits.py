@@ -115,13 +115,13 @@ def save_ndarray_to_fits(array=None, file_name=None,
                              " must be a numpy.ndarray")
         if ihdu == 0:
             if list_cast_to_float[ihdu]:
-                hdu = fits.PrimaryHDU(data=tmp_array.astype(np.float),
+                hdu = fits.PrimaryHDU(data=tmp_array.astype(np.float32),
                                       header=main_header)
             else:
                 hdu = fits.PrimaryHDU(data=tmp_array, header=main_header)
         else:
             if list_cast_to_float[ihdu]:
-                hdu = fits.ImageHDU(data=tmp_array.astype(np.float))
+                hdu = fits.ImageHDU(data=tmp_array.astype(np.float32))
             else:
                 hdu = fits.ImageHDU(data=tmp_array)
 

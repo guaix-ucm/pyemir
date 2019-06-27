@@ -17,20 +17,22 @@ setup(name='pyemir',
       packages=find_packages(),
       package_data={
           'emirdrp.simulation': ['*.dat'],
-          'emirdrp.instrument': ['image_*.txt', 'spectrum_*.txt'],
           'emirdrp.instrument.configs': [
-              'Oliva_etal_2013.dat',
+              'bars_nominal_positions_test.txt',
+              'component-*.json',
+              'instrument-*.json',
               'lines_argon_neon_xenon_empirical.dat',
               'lines_argon_neon_xenon_empirical_LR.dat',
-              'instrument-*.json',
-              'component-*.json'
+              'Oliva_etal_2013.dat',
+              'setup-*.json'
+
           ],
           'emirdrp': ['drp.yaml'],
       },
       test_suite="emirdrp.tests",
       install_requires=[
           'setuptools>=36.2.1', 'numpy', 'scipy',
-          'numina>=0.19', 'astropy>=2',
+          'numina>=0.21', 'astropy>=2',
           'enum34;python_version<"3.4"',
           'matplotlib', 'six', 'photutils>=0.2',
           'sep>0.5', 'scikit-image>=0.11', 'scikit-learn>=0.19', 'lmfit'
@@ -56,6 +58,10 @@ setup(name='pyemir',
                   'emirdrp.tools.display_slitlet_arrangement:main',
               'pyemir-fit_boundaries = ' +
                   'emirdrp.tools.fit_boundaries:main',
+              'pyemir-generate_yaml_for_abba = ' +
+                  'emirdrp.tools.generate_yaml_for_abba:main',
+              'pyemir-generate_yaml_for_dithered_image = ' +
+                  'emirdrp.tools.generate_yaml_for_dithered_image:main',
               'pyemir-median_slitlets_rectified = ' +
                   'emirdrp.processing.wavecal.median_slitlets_rectified:main',
               'pyemir-merge_bounddict_files = ' +

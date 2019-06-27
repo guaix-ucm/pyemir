@@ -29,7 +29,7 @@ from astropy.io import fits
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import Parameter, DataFrame
 from numina.exceptions import RecipeError
-from numina.core import Product
+from numina.core import Result
 
 from emirdrp.core.recipe import EmirRecipe
 from emirdrp.instrument.channels import QUADRANTS
@@ -52,8 +52,8 @@ class GainRecipe1(EmirRecipe):
                        choices=['full', 'quadrant', 'channel']
                        )
 
-    gain = Product(MasterGainMap(None, None, None))
-    ron = Product(MasterRONMap(None, None))
+    gain = Result(MasterGainMap(None, None, None))
+    ron = Result(MasterRONMap(None, None))
 
     def region(self, reqs):
         mm = reqs['region'].tolower()

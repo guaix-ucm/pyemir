@@ -1,6 +1,8 @@
 language: python
 sudo: false
 
+dist: trusty
+
 env:
   global:
     - MPLBACKEND=TkAgg
@@ -22,6 +24,7 @@ install:
   - pip install "scikit-image>=0.12" scikit-learn photutils
   - pip install sep lmfit
   - pip install pytest
+  - pip install pytest-remotedata
   - pip install pytest-benchmark pytest-cov
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi

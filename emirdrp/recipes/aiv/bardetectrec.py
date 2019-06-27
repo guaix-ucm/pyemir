@@ -17,13 +17,13 @@ from numina.array.utils import coor_to_pix_1d
 from numina.core import Requirement, Result, Parameter
 import numina.exceptions
 import numina.types.array as tarray
+from numina.processing.combine import basic_processing_with_combination
 from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
 import emirdrp.datamodel as datamodel
 from emirdrp.core import EMIR_PIXSCALE
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.processing.combine import basic_processing_with_combination
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
 from emirdrp.processing.bardetect import find_position

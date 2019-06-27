@@ -17,11 +17,11 @@ import numpy
 import numina.exceptions
 from numina.core import Requirement, Result, Parameter
 import numina.types.array as tarray
+from numina.processing.combine import basic_processing_with_combination
 
 import emirdrp.datamodel as datamodel
 from emirdrp.core import EMIR_PIXSCALE
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.processing.combine import basic_processing_with_combination
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 from .common import pinhole_char, pinhole_char2

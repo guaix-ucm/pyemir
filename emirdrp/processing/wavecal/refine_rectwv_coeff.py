@@ -24,8 +24,6 @@ from astropy.io import fits
 from copy import deepcopy
 import logging
 import numpy as np
-import pkgutil
-from six import StringIO
 
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
@@ -47,9 +45,10 @@ from emirdrp.core import EMIR_NBARS
 
 
 def refine_rectwv_coeff(input_image, rectwv_coeff,
+                        catlines_all_wave,
+                        catlines_all_flux,
                         refine_wavecalib_mode,
-                        minimum_slitlet_width_mm,
-                        maximum_slitlet_width_mm,
+                        list_useful_slitlets,
                         save_intermediate_results=False,
                         debugplot=0):
     """Refine RectWaveCoeff object using a catalogue of lines
@@ -64,6 +63,10 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     rectwv_coeff : RectWaveCoeff instance
         Rectification and wavelength calibration coefficients for the
         particular CSU configuration.
+    catlines_all_wave : numpy array
+        Array with wavelengths
+    catlines_all_flux : numpy array
+        Array with fluxes.
     refine_wavecalib_mode : int
         Integer, indicating the type of refinement:
         0 : no refinement
@@ -71,10 +74,8 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         2 : apply individual offset to each slitlet (using ARC lines)
         11 : apply the same global offset to all the slitlets (using OH lines)
         12 : apply individual offset to each slitlet (using OH lines)
-    minimum_slitlet_width_mm : float
-        Minimum slitlet width (mm) for a valid slitlet.
-    maximum_slitlet_width_mm : float
-        Maximum slitlet width (mm) for a valid slitlet.
+    list_useful_slitlets : list of integers
+        List of useful slitlets.
     save_intermediate_results : bool
         If True, save plots in PDF files
     debugplot : int
@@ -88,7 +89,8 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         Refined rectification and wavelength calibration coefficients
         for the particular CSU configuration.
     expected_cat_image : HDUList object
-        Output 2D image with the expected catalogued lines.
+        Output 2D image (rectified and wavelength calibrated) with
+        the expected catalogue lines.
 
     """
 
@@ -105,40 +107,6 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     filter_name = main_header['filter']
     grism_name = main_header['grism']
 
-    # protections
-    if refine_wavecalib_mode not in [1, 2, 11, 12]:
-        logger.error('Wavelength calibration refinemente mode={}'. format(
-            refine_wavecalib_mode
-        ))
-        raise ValueError("Invalid wavelength calibration refinement mode")
-
-    # read tabulated lines
-    if refine_wavecalib_mode in [1, 2]:        # ARC lines
-        if grism_name == 'LR':
-            catlines_file = 'lines_argon_neon_xenon_empirical_LR.dat'
-        else:
-            catlines_file = 'lines_argon_neon_xenon_empirical.dat'
-        dumdata = pkgutil.get_data('emirdrp.instrument.configs', catlines_file)
-        arc_lines_tmpfile = StringIO(dumdata.decode('utf8'))
-        catlines = np.genfromtxt(arc_lines_tmpfile)
-        # define wavelength and flux as separate arrays
-        catlines_all_wave = catlines[:, 0]
-        catlines_all_flux = catlines[:, 1]
-        mode = refine_wavecalib_mode
-    elif refine_wavecalib_mode in [11, 12]:    # OH lines
-        dumdata = pkgutil.get_data(
-            'emirdrp.instrument.configs',
-            'Oliva_etal_2013.dat'
-        )
-        oh_lines_tmpfile = StringIO(dumdata.decode('utf8'))
-        catlines = np.genfromtxt(oh_lines_tmpfile)
-        # define wavelength and flux as separate arrays
-        catlines_all_wave = np.concatenate((catlines[:, 1], catlines[:, 0]))
-        catlines_all_flux = np.concatenate((catlines[:, 2], catlines[:, 2]))
-        mode = refine_wavecalib_mode - 10
-    else:
-        raise ValueError('Unexpected mode={}'.format(refine_wavecalib_mode))
-
     # initialize output
     refined_rectwv_coeff = deepcopy(rectwv_coeff)
 
@@ -147,8 +115,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     sp_median = median_slitlets_rectified(
         input_image,
         mode=2,
-        minimum_slitlet_width_mm=minimum_slitlet_width_mm,
-        maximum_slitlet_width_mm=maximum_slitlet_width_mm
+        list_useful_slitlets=list_useful_slitlets
     )[0].data
     sp_median /= sp_median.max()
 
@@ -180,15 +147,11 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     # estimate sigma to broaden catalogue lines
     csu_config = CsuConfiguration.define_from_header(main_header)
     # segregate slitlets
-    list_useful_slitlets = csu_config.widths_in_range_mm(
-        minwidth=minimum_slitlet_width_mm,
-        maxwidth=maximum_slitlet_width_mm
-    )
     list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1))
                                 if i not in list_useful_slitlets]
     logger.info('list of useful slitlets: {}'.format(
         list_useful_slitlets))
-    logger.info('list of not useful slitlets: {}'.format(
+    logger.info('list of unusable slitlets: {}'.format(
         list_not_useful_slitlets))
     tempwidths = np.array([csu_config.csu_bar_slit_width(islitlet)
                            for islitlet in list_useful_slitlets])
@@ -210,9 +173,12 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     sp_reference /= sp_reference.max()
 
     # generate image2d with expected lines
-    image2d_expected_lines = np.tile(sp_reference, (naxis2, 1))
-    hdu = fits.PrimaryHDU(data=image2d_expected_lines, header=main_header)
-    expected_cat_image = fits.HDUList([hdu])
+    if save_intermediate_results:
+        image2d_expected_lines = np.tile(sp_reference, (naxis2, 1))
+        hdu = fits.PrimaryHDU(data=image2d_expected_lines, header=main_header)
+        expected_cat_image = fits.HDUList([hdu])
+    else:
+        expected_cat_image = None
 
     if (abs(debugplot) % 10 != 0) or (pdf is not None):
         ax = ximplotxy(xwave, sp_median, 'C1-',
@@ -267,7 +233,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
 
     missing_slitlets = rectwv_coeff.missing_slitlets
 
-    if mode == 1:
+    if refine_wavecalib_mode in [1, 11]:
         # apply computed offset to obtain refined_rectwv_coeff_global
         for islitlet in range(1, EMIR_NBARS + 1):
             if islitlet not in missing_slitlets:
@@ -275,7 +241,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                 dumdict = refined_rectwv_coeff.contents[i]
                 dumdict['wpoly_coeff'][0] -= global_offset*cdelt1
 
-    elif mode == 2:
+    elif refine_wavecalib_mode in [2, 12]:
         # compute individual offset for each slitlet
         logger.info('Computing individual offsets')
         median_55sp = median_slitlets_rectified(input_image, mode=1)
@@ -290,19 +256,22 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                 i = islitlet - 1
                 sp_median = median_55sp[0].data[i, :]
                 lok = np.where(sp_median > 0)
-                baseline = np.percentile(sp_median[lok], q=10)
-                sp_median[lok] -= baseline
-                sp_median /= sp_median.max()
-                offset_array[i], fpeak = periodic_corr1d(
-                    sp_reference=sp_reference,
-                    sp_offset=median_55sp[0].data[i, :],
-                    fminmax=None,
-                    naround_zero=50,
-                    plottitle='slitlet #{0} (cross-correlation)'.format(
-                        islitlet),
-                    pdf=pdf,
-                    debugplot=debugplot
-                )
+                if np.any(lok):
+                    baseline = np.percentile(sp_median[lok], q=10)
+                    sp_median[lok] -= baseline
+                    sp_median /= sp_median.max()
+                    offset_array[i], fpeak = periodic_corr1d(
+                        sp_reference=sp_reference,
+                        sp_offset=median_55sp[0].data[i, :],
+                        fminmax=None,
+                        naround_zero=50,
+                        plottitle='slitlet #{0} (cross-correlation)'.format(
+                            islitlet),
+                        pdf=pdf,
+                        debugplot=debugplot
+                    )
+                else:
+                    offset_array[i] = 0.0
                 dumdict = refined_rectwv_coeff.contents[i]
                 dumdict['wpoly_coeff'][0] -= offset_array[i]*cdelt1
                 xplot.append(islitlet)
@@ -362,7 +331,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
             else:
                 pause_debugplot(debugplot=debugplot, pltshow=True)
     else:
-        raise ValueError('Unexpected mode={}'.format(mode))
+        raise ValueError('Unexpected mode={}'.format(refine_wavecalib_mode))
 
     # close output PDF file
     if pdf is not None:

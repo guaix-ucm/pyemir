@@ -19,7 +19,7 @@ from numina.types.linescatalog import LinesCatalog
 
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.decorators
-from emirdrp.processing.combine import basic_processing_with_combination
+from numina.processing.combine import basic_processing_with_combination
 from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff
 from emirdrp.processing.wavecal.rectwv_coeff_from_arc_image \
     import rectwv_coeff_from_arc_image

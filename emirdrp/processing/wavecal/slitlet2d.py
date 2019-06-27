@@ -313,13 +313,15 @@ class Slitlet2D(object):
 
         return output
 
-    def extract_slitlet2d(self, image_2k2k):
+    def extract_slitlet2d(self, image_2k2k, subtitle=None):
         """Extract slitlet 2d image from image with original EMIR dimensions.
 
         Parameters
         ----------
         image_2k2k : numpy array
             Original image (dimensions EMIR_NAXIS1 * EMIR_NAXIS2)
+        subtitle : string, optional
+            Subtitle for plot.
 
         Returns
         -------
@@ -345,12 +347,12 @@ class Slitlet2D(object):
 
         # display slitlet2d with boundaries and middle spectrum trail
         if abs(self.debugplot) in [21, 22]:
-            self.ximshow_unrectified(slitlet2d)
+            self.ximshow_unrectified(slitlet2d, subtitle)
 
         # return slitlet image
         return slitlet2d
 
-    def rectify(self, slitlet2d, resampling, inverse=False):
+    def rectify(self, slitlet2d, resampling, inverse=False, subtitle=None):
         """Rectify slitlet using computed transformation.
 
         Parameters
@@ -362,6 +364,8 @@ class Slitlet2D(object):
         inverse : bool
             If true, the inverse rectification transformation is
             employed.
+        subtitle : string, optional
+            Subtitle for plot.
 
         Returns
         -------
@@ -397,23 +401,27 @@ class Slitlet2D(object):
 
         if abs(self.debugplot % 10) != 0:
             if inverse:
-                self.ximshow_unrectified(slitlet2d_rect)
+                self.ximshow_unrectified(slitlet2d_rect, subtitle=subtitle)
             else:
-                self.ximshow_rectified(slitlet2d_rect)
+                self.ximshow_rectified(slitlet2d_rect, subtitle=subtitle)
 
         return slitlet2d_rect
 
-    def ximshow_unrectified(self, slitlet2d):
+    def ximshow_unrectified(self, slitlet2d, subtitle=None):
         """Display unrectified image with spectrails and frontiers.
 
         Parameters
         ----------
         slitlet2d : numpy array
             Array containing the unrectified slitlet image.
+        subtitle : string, optional
+            Subtitle for plot.
 
         """
 
         title = "Slitlet#" + str(self.islitlet)
+        if subtitle is not None:
+            title += ' (' + subtitle + ')'
         ax = ximshow(slitlet2d, title=title,
                      first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
                      show=False)
@@ -428,19 +436,25 @@ class Slitlet2D(object):
         ax.plot(xdum, ylower_frontier, 'b:')
         yupper_frontier = self.list_frontiers[1](xdum)
         ax.plot(xdum, yupper_frontier, 'b:')
+        if title is not None:
+            ax.set_title(title)
         pause_debugplot(debugplot=self.debugplot, pltshow=True)
 
-    def ximshow_rectified(self, slitlet2d_rect):
+    def ximshow_rectified(self, slitlet2d_rect, subtitle=None):
         """Display rectified image with spectrails and frontiers.
 
         Parameters
         ----------
         slitlet2d_rect : numpy array
-            Array containing the rectified slitlet image
+            Array containing the rectified slitlet image.
+        subtitle : string, optional
+            Subtitle for plot.
 
         """
 
-        title = "Slitlet#" + str(self.islitlet) + " (rectify)"
+        title = "Slitlet#" + str(self.islitlet)
+        if subtitle is not None:
+            title += ' (' + subtitle + ')'
         ax = ximshow(slitlet2d_rect, title=title,
                      first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
                      show=False)

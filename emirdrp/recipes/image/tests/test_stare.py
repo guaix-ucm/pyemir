@@ -48,7 +48,7 @@ def create_ob(value, nimages, exptime=100.0, starttime=0.0):
         off2 = off1 + exptime
         t1 = base + off1
         t2 = base + off2
-        keys = {'TSUTC1': t1, 'TSUTC2': t2}
+        keys = {'DATE-OBS': '2019-04-12T03:01:05.678', 'TSUTC1': t1, 'TSUTC2': t2}
         frame = numina.core.DataFrame(frame=create_frame(val=value, keys=keys))
         frames.append(frame)
 

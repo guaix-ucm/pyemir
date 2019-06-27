@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -11,35 +11,46 @@
 Spectroscopy mode, Stare Spectra
 """
 
-
+from astropy.io import fits
+from datetime import datetime
+import logging
 import numpy as np
+from skimage.feature import register_translation
 
 from numina.core import Result
 from numina.core import Requirement, Parameter
-from numina.array.combine import median
+from numina.array.combine import sigmaclip
 import numina.processing as proc
+from numina.processing.combine import basic_processing_with_combination
 
-import emirdrp.requirements as reqs
 from emirdrp.core.recipe import EmirRecipe
+from emirdrp.instrument.csu_configuration import CsuConfiguration
 import emirdrp.products as prods
 from emirdrp.products import RectWaveCoeff
-from emirdrp.processing.combine import basic_processing_with_combination
 from emirdrp.processing.wavecal.apply_rectwv_coeff import apply_rectwv_coeff
 from emirdrp.processing.wavecal.median_slitlets_rectified \
     import median_slitlets_rectified
 from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
     import rectwv_coeff_from_mos_library
+from emirdrp.processing.wavecal.rescale_array_z1z2 import rescale_array_to_z1z2
+from emirdrp.processing.wavecal.retrieve_catlines import retrieve_catlines
+from emirdrp.processing.wavecal.synthetic_lines_rawdata import \
+    synthetic_lines_rawdata
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 import save_four_ds9
 from emirdrp.processing.wavecal.rectwv_coeff_to_ds9 \
     import save_spectral_lines_ds9
 from emirdrp.processing.wavecal.refine_rectwv_coeff import refine_rectwv_coeff
+import emirdrp.requirements as reqs
 
 from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
 from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
+from emirdrp.core import EMIR_NBARS
 
 
 class StareSpectraRecipe(EmirRecipe):
     """Process images in Stare spectra mode"""
+
+    logger = logging.getLogger(__name__)
 
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
@@ -56,7 +67,7 @@ class StareSpectraRecipe(EmirRecipe):
         flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_combination(rinput, flow,
-                                                    method=median)
+                                                    method=sigmaclip)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         # Update EXP to 0
@@ -76,6 +87,8 @@ class StareSpectraWaveRecipe(EmirRecipe):
 
     """
 
+    logger = logging.getLogger(__name__)
+
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     master_bias = reqs.MasterBiasRequirement()
@@ -85,7 +98,9 @@ class StareSpectraWaveRecipe(EmirRecipe):
     master_sky = reqs.SpectralSkyRequirement(optional=True)
 
     reduced_image = Result(prods.ProcessedImage)
+    # FIXME: duplicated
     stare = Result(prods.ProcessedMOS)
+    reduced_mos = Result(prods.ProcessedMOS)
 
     def run(self, rinput):
         self.logger.info('starting reduction of stare spectra')
@@ -97,7 +112,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
 
         # apply bpm, bias, dark and flat
         reduced_image = basic_processing_with_combination(rinput, flow,
-                                                          method=median)
+                                                          method=sigmaclip)
         # update header with additional info
         hdr = reduced_image[0].header
         self.set_base_headers(hdr)
@@ -160,7 +175,8 @@ class StareSpectraWaveRecipe(EmirRecipe):
             # Check if images have the same size.
             # if so, go ahead
             if msky[0].data.shape != stare_image[0].data.shape:
-                self.logger.warning("sky and current image don't have the same shape")
+                self.logger.warning(
+                    "sky and current image don't have the same shape")
             else:
                 sky_corrector = proc.SkyCorrector(
                     msky[0].data,
@@ -175,6 +191,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
         # save results in results directory
         self.logger.info('end reduction of stare spectra')
         result = self.create_result(reduced_image=reduced_image,
+                                    reduced_mos=stare_image,
                                     stare=stare_image)
         return result
 
@@ -194,6 +211,8 @@ class GenerateRectwvCoeff(EmirRecipe):
 
     """
 
+    logger = logging.getLogger(__name__)
+
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     master_bias = reqs.MasterBiasRequirement()
@@ -203,23 +222,33 @@ class GenerateRectwvCoeff(EmirRecipe):
     refine_wavecalib_mode = Parameter(
         0,
         description='Apply wavelength calibration refinement',
+        optional=True,
         choices=[0, 1, 2, 11, 12]
     )
     minimum_slitlet_width_mm = Parameter(
         float(EMIR_MINIMUM_SLITLET_WIDTH_MM),
         description='Minimum width (mm) for a valid slitlet',
+        optional=True
     )
     maximum_slitlet_width_mm = Parameter(
         float(EMIR_MAXIMUM_SLITLET_WIDTH_MM),
         description='Maximum width (mm) for a valid slitlet',
+        optional=True
+    )
+    global_integer_offsets_mode = Parameter(
+        'fixed',
+        description='Global integer offsets computation',
+        choices=['auto', 'fixed']
     )
     global_integer_offset_x_pix = Parameter(
         0,
-        description='Global offset (pixels) in wavelength direction (integer)',
+        description='Global integer offset (pixels) in wavelength direction',
+        optional=True
     )
     global_integer_offset_y_pix = Parameter(
         0,
-        description='Global offset (pixels) in spatial direction (integer)',
+        description='Global integer offset (pixels) in spatial direction',
+        optional=True
     )
 
     reduced_mos = Result(prods.ProcessedMOS)
@@ -229,23 +258,33 @@ class GenerateRectwvCoeff(EmirRecipe):
         self.logger.info('starting rect.+wavecal. reduction of stare spectra')
 
         self.logger.info(rinput.master_rectwv)
-        self.logger.info('Wavelength calibration refinement mode: {}'.format(
-            rinput.refine_wavecalib_mode))
-        self.logger.info('Minimum slitlet width (mm)............: {}'.format(
-            rinput.minimum_slitlet_width_mm))
-        self.logger.info('Maximum slitlet width (mm)............: {}'.format(
-            rinput.maximum_slitlet_width_mm))
-        self.logger.info('Global offset X direction (pixels)....: {}'.format(
-            rinput.global_integer_offset_x_pix))
-        self.logger.info('Global offset Y direction (pixels)....: {}'.format(
-            rinput.global_integer_offset_y_pix))
+        self.logger.info(
+            'Wavelength calibration refinement mode....: {}'.format(
+                rinput.refine_wavecalib_mode))
+        self.logger.info(
+            'Minimum slitlet width (mm)................: {}'.format(
+                rinput.minimum_slitlet_width_mm))
+        self.logger.info(
+            'Maximum slitlet width (mm)................: {}'.format(
+                rinput.maximum_slitlet_width_mm))
+        self.logger.info(
+            'Global integer offsets mode...............: {}'.format(
+                rinput.global_integer_offsets_mode
+            )
+        )
+        self.logger.info(
+            'Global integer offset X direction (pixels): {}'.format(
+                rinput.global_integer_offset_x_pix))
+        self.logger.info(
+            'Global integer offset Y direction (pixels): {}'.format(
+                rinput.global_integer_offset_y_pix))
 
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
 
         # apply bpm, bias, dark and flat
         reduced_image = basic_processing_with_combination(rinput, flow,
-                                                          method=median)
+                                                          method=sigmaclip)
         # update header with additional info
         hdr = reduced_image[0].header
         self.set_base_headers(hdr)
@@ -260,18 +299,6 @@ class GenerateRectwvCoeff(EmirRecipe):
             rinput.master_rectwv
         )
 
-        # set global offsets
-        rectwv_coeff.global_integer_offset_x_pix = \
-            rinput.global_integer_offset_x_pix
-        rectwv_coeff.global_integer_offset_y_pix = \
-            rinput.global_integer_offset_y_pix
-
-        # apply rectification and wavelength calibration
-        reduced_mos = apply_rectwv_coeff(
-            reduced_image,
-            rectwv_coeff
-        )
-
         # wavelength calibration refinement
         # 0 -> no refinement
         # 1 -> apply global offset to all the slitlets (using ARC lines)
@@ -279,6 +306,111 @@ class GenerateRectwvCoeff(EmirRecipe):
         # 11 -> apply global offset to all the slitlets (using OH lines)
         # 12 -> apply individual offset to each slitlet (using OH lines)
         if rinput.refine_wavecalib_mode != 0:
+            main_header = reduced_image[0].header
+
+            # determine useful slitlets
+            csu_config = CsuConfiguration.define_from_header(main_header)
+            # segregate slitlets
+            list_useful_slitlets = csu_config.widths_in_range_mm(
+                minwidth=rinput.minimum_slitlet_width_mm,
+                maxwidth=rinput.maximum_slitlet_width_mm
+            )
+            # remove missing slitlets
+            if len(rectwv_coeff.missing_slitlets) > 0:
+                for iremove in rectwv_coeff.missing_slitlets:
+                    if iremove in list_useful_slitlets:
+                        list_useful_slitlets.remove(iremove)
+
+            list_not_useful_slitlets = [i for i in
+                                        list(range(1, EMIR_NBARS + 1))
+                                        if i not in list_useful_slitlets]
+            self.logger.info('list of useful slitlets: {}'.format(
+                list_useful_slitlets))
+            self.logger.info('list of unusable slitlets: {}'.format(
+                list_not_useful_slitlets))
+
+            # retrieve arc/OH lines
+            catlines_all_wave, catlines_all_flux = retrieve_catlines(
+                rinput.refine_wavecalib_mode,
+                main_header['grism']
+            )
+
+            # global integer offsets
+            if rinput.global_integer_offsets_mode == 'auto':
+                if (rinput.global_integer_offset_x_pix != 0) or \
+                        (rinput.global_integer_offset_y_pix != 0):
+                    raise ValueError('Global integer offsets must be zero when'
+                                     ' mode=auto')
+
+                # ToDo: include additional airglow emission lines
+
+                self.logger.info('computing synthetic image')
+                # generate synthetic image
+                synthetic_raw_data = synthetic_lines_rawdata(
+                    catlines_all_wave,
+                    catlines_all_flux,
+                    list_useful_slitlets,
+                    rectwv_coeff
+                )
+                synthetic_raw_header = main_header.copy()
+                synthetic_raw_header['DATE-OBS'] = \
+                    datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+                chistory = 'Synthetic image'
+                synthetic_raw_header.add_history(chistory)
+                hdu = fits.PrimaryHDU(synthetic_raw_data.astype('float32'),
+                                      header=synthetic_raw_header)
+                synthetic_raw_image = fits.HDUList([hdu])
+                if self.intermediate_results:
+                    self.save_intermediate_img(synthetic_raw_image,
+                                               'synthetic_raw_image.fits')
+
+                # cross-correlation to determine global integer offsets
+                # (rescaling data arrays to [0, 1] before using skimage
+                # function)
+                data1_rs, coef1_rs = rescale_array_to_z1z2(
+                    reduced_image[0].data, (0, 1)
+                )
+                data2_rs, coef2_rs = rescale_array_to_z1z2(
+                    synthetic_raw_data, (0, 1)
+                )
+                shifts, error, diffphase = register_translation(
+                    data1_rs, data2_rs, 100)
+                self.logger.info('global_float_offset_x_pix..: {}'.format(
+                    -shifts[1]
+                ))
+                self.logger.info('global_float_offset_y_pix..: {}'.format(
+                    -shifts[0]
+                ))
+                rectwv_coeff.global_integer_offset_x_pix = \
+                    -int(round(shifts[1]))
+                rectwv_coeff.global_integer_offset_y_pix = \
+                    -int(round(shifts[0]))
+                self.logger.info('global_integer_offset_x_pix: {}'.format(
+                    rectwv_coeff.global_integer_offset_x_pix
+                ))
+                self.logger.info('global_integer_offset_y_pix: {}'.format(
+                    rectwv_coeff.global_integer_offset_y_pix
+                ))
+                if self.intermediate_results:
+                    data_product = np.fft.fft2(data1_rs) * \
+                                   np.fft.fft2(data2_rs).conj()
+                    cc_image = np.fft.fftshift(np.fft.ifft2(data_product))
+                    power = np.log10(cc_image.real)
+                    hdu_power = fits.PrimaryHDU(power)
+                    hdul_power = fits.HDUList([hdu_power])
+                    hdul_power.writeto('power.fits', overwrite=True)
+            else:
+                rectwv_coeff.global_integer_offset_x_pix = \
+                    rinput.global_integer_offset_x_pix
+                rectwv_coeff.global_integer_offset_y_pix = \
+                    rinput.global_integer_offset_y_pix
+
+            # apply initial rectification and wavelength calibration
+            reduced_mos = apply_rectwv_coeff(
+                reduced_image,
+                rectwv_coeff
+            )
+
             self.logger.info(
                 'Refining wavelength calibration (mode={})'.format(
                     rinput.refine_wavecalib_mode
@@ -287,18 +419,20 @@ class GenerateRectwvCoeff(EmirRecipe):
             rectwv_coeff, expected_catalog_lines = refine_rectwv_coeff(
                 reduced_mos,
                 rectwv_coeff,
+                catlines_all_wave,
+                catlines_all_flux,
                 rinput.refine_wavecalib_mode,
-                rinput.minimum_slitlet_width_mm,
-                rinput.maximum_slitlet_width_mm,
+                list_useful_slitlets,
                 save_intermediate_results=self.intermediate_results
             )
             self.save_intermediate_img(expected_catalog_lines,
                                        'expected_catalog_lines.fits')
-            # re-apply rectification and wavelength calibration
-            reduced_mos = apply_rectwv_coeff(
-                reduced_image,
-                rectwv_coeff
-            )
+
+        # apply rectification and wavelength calibration
+        reduced_mos = apply_rectwv_coeff(
+            reduced_image,
+            rectwv_coeff
+        )
 
         # ds9 region files (to be saved in the work directory)
         if self.intermediate_results:
@@ -336,6 +470,7 @@ class StareSpectraRectwv(EmirRecipe):
     determined.
 
     """
+    logger = logging.getLogger(__name__)
 
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
@@ -355,7 +490,7 @@ class StareSpectraRectwv(EmirRecipe):
 
         # apply bpm, bias, dark and flat
         reduced_image = basic_processing_with_combination(rinput, flow,
-                                                          method=median)
+                                                          method=sigmaclip)
         # update header with additional info
         hdr = reduced_image[0].header
         self.set_base_headers(hdr)

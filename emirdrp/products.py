@@ -94,15 +94,7 @@ class ProcessedSpectrum(ProcessedFrame):
 
 
 class ProcessedImageProduct(prodtypes.DataProductMixin, ProcessedImage):
-    def convert_out(self, obj):
-        """Write EMIRUUID header on reduction"""
-        newobj = super(ProcessedImageProduct, self).convert_out(obj)
-        if newobj:
-            hdulist = newobj.open()
-            hdr = hdulist[0].header
-            if 'EMIRUUID' not in hdr:
-                hdr['EMIRUUID'] = str(uuid.uuid1())
-        return newobj
+    pass
 
 
 class ProcessedMOSProduct(prodtypes.DataProductMixin, ProcessedMOS):
@@ -111,13 +103,6 @@ class ProcessedMOSProduct(prodtypes.DataProductMixin, ProcessedMOS):
 
 class ProcessedSpectrumProduct(prodtypes.DataProductMixin, ProcessedSpectrum):
     pass
-
-
-
-class EMIRConfigurationType(obtypes.InstrumentConfigurationType):
-
-    def validate(self, value):
-        super(EMIRConfigurationType, self).validate(value)
 
 
 class MasterBadPixelMask(ProcessedImageProduct):

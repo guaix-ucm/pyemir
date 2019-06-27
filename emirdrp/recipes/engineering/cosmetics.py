@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2018 Universidad Complutense de Madrid
+# Copyright 2010-2019 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -33,7 +33,6 @@ from numina.exceptions import RecipeError
 from numina.core import Result
 from numina.array.cosmetics import cosmetics, PIXEL_DEAD, PIXEL_HOT
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.requirements import InstrumentConfigurationRequirement
 import numina.util.flow
 import numina.util.node
 import numina.processing as proc
@@ -76,7 +75,6 @@ class CosmeticsRecipe(EmirRecipe):
     """
 
     obresult = ObservationResultRequirement()
-    insconf = InstrumentConfigurationRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()

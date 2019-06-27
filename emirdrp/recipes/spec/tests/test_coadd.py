@@ -76,7 +76,7 @@ def test_coadd(nabba):
     )
 
     result = recipe.run(rinput)
-    hdu = result.spec_coadd_abba.frame[0]
+    hdu = result.reduced_mos_abba.frame[0]
     assert hdu.header['NUM-NCOM'] == nabba * 2
     assert hdu.header['TSUTC1'] == starttime
     assert hdu.header['TSUTC2'] == starttime + (nabba - 1) * 1000 + 4 * 100

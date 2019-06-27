@@ -67,7 +67,7 @@ class EmirDataModel(dm.DataModel):
             'uuid1': ('UUID', 'undefined'),
             'uuid2': ('EMIRUUID', 'undefined'),
             'skyadd': ('SKYADD', True),
-            'insconf': lambda img: 'default',
+            'insconf': ('INSCONF', None),
             'blckuuid': lambda img: None,
         }
 
@@ -118,7 +118,7 @@ class DtuAxis(object):
 
     @property
     def coor_r(self):
-        return self.coor / self.coor_f - self.coor_0
+        return (self.coor - self.coor_0) / self.coor_f
 
     @classmethod
     def from_header(cls, hdr, name):

@@ -14,9 +14,15 @@ Maintainers: sergiopr@fis.ucm.es, cardiel@ucm.es
 
 .. warning::
 
+   Please, note that Windows is not a currently supported operative system.
+
+.. warning::
+
    All the commands are assumed to be executed in a terminal running the **bash
    shell**
 
+
+.. _pyemir_installation_what_method:
 
 What method of installation should I use?
 -----------------------------------------
@@ -28,6 +34,8 @@ What method of installation should I use?
   `matplotlib <https://matplotlib.org/faq/osx_framework.html>`_, so we recommend setting up conda.
 
 - In Linux, virtualenv is easier to setup.
+
+.. _pyemir_installation_virtualenv:
 
 Install in virtualenv
 ---------------------
@@ -119,6 +127,8 @@ The steps to install and run PyEmir within a virtual environment are:
      (emir) bash$ deactivate
      bash$
 
+
+.. _pyemir_installation_conda:
 
 Install in Conda
 ----------------
@@ -225,6 +235,8 @@ instructions, the steps to execute and run PyEmir under conda are:
      bash$
 
 
+.. _pyemir_installation_development_version:
+
 Installing the development version (using conda)
 ------------------------------------------------
 
@@ -240,7 +252,7 @@ useful to add the AstroConda channel:
    bash$ $ conda config --add channels http://ssb.stsci.edu/astroconda
 
 It is easy to create a new environment and install the required
-packages using (in this example python 3.6 is defined as the default python
+packages using (in this example python 3.7 is defined as the default python
 interpreter):
 
 ::
@@ -268,15 +280,37 @@ Activate the new environment:
    bash$ conda activate emir
    (emir) bash$
 
+Install the following additional package:
+
+::
+
+   (emir) bash$ conda install -c conda-forge lmfit
+
+
 **Installing/updating numina**
 
-Download and install the development version using git:
+Download the development version using git:
 
 ::
 
    (emir) bash$ git clone https://github.com/guaix-ucm/numina.git
    (emir) bash$ cd numina
+
+Build numina:
+
+::
+
    (emir) bash$ python setup.py build
+
+.. note:: In macOS Mojave, the compilation will fail unless the following
+            environment variable is defined::
+
+               $ export MACOSX_DEPLOYMENT_TARGET=10.9
+
+Install numina:
+
+::
+
    (emir) bash$ python setup.py install
    (emir) bash$ cd ..
 
