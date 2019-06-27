@@ -10,7 +10,7 @@ Simple example: arc exposure
    shell**.
 
    Don't forget to activate the same Python environment employed to install
-   PyEmir.  In this document, the prompt ``(py36) $`` will indicate that this
+   PyEmir.  In this document, the prompt ``(emir) $`` will indicate that this
    is the case.
 
 The rectification and wavelength calibration of any EMIR spectroscopic image
@@ -70,17 +70,17 @@ Download and decompress the previous file:
 
 ::
 
-   (py36) $ tar zxvf EMIR_simple_example.tgz
+   (emir) $ tar zxvf EMIR_simple_example.tgz
    ...
    ...
-   (py36) $ rm EMIR_simple_example.tgz
+   (emir) $ rm EMIR_simple_example.tgz
 
 A new subdirectory named ``EMIR_simple_example`` should have appeared, with the
 following content:
 
 ::
 
-   (py36) $ tree EMIR_simple_example
+   (emir) $ tree EMIR_simple_example
    EMIR_simple_example
    ├── 00_simple_example.yaml
    ├── 01_simple_example.yaml
@@ -104,7 +104,7 @@ Move into the ``EMIR_simple_example`` directory:
 
 ::
 
-   (py36) $ cd EMIR_simple_example
+   (emir) $ cd EMIR_simple_example
 
 This directory contains a subdirectory ``data/`` with the following files:
 
@@ -132,7 +132,7 @@ You can easily examine the header of the three arc files using the utilities
 
 ::
 
-   (py36) $ dfits data/00010413*fits | fitsort object grism filter exptime date-obs
+   (emir) $ dfits data/00010413*fits | fitsort object grism filter exptime date-obs
    FILE                                    	OBJECT           	GRISM  FILTER  	EXPTIME 	DATE-OBS              	
    data/0001041345-20160917-EMIR-TEST0.fits	CSU_RETI ALL SPEC	J      J       	1.999288	2016-09-17T18:32:29.61	
    data/0001041348-20160917-EMIR-TEST0.fits	CSU_RETI ALL SPEC	J      J       	1.999288	2016-09-17T18:32:32.68	
@@ -144,7 +144,7 @@ numina:
    
 ::
 
-   (py36) $ numina-ximshow data/0001041345-20160917-EMIR-TEST0.fits
+   (emir) $ numina-ximshow data/0001041345-20160917-EMIR-TEST0.fits
 
 .. image:: images/0001041345_raw.png
    :width: 800
@@ -161,7 +161,7 @@ script ``pyemir-display_slitlet_arrangement``:
 
 ::
 
-   (py36) $ pyemir-display_slitlet_arrangement data/0001041345-20160917-EMIR-TEST0.fits
+   (emir) $ pyemir-display_slitlet_arrangement data/0001041345-20160917-EMIR-TEST0.fits
    ...
    ...
 
@@ -180,7 +180,7 @@ aligned slitlets forming a (pseudo) longslit.
 
    ::
    
-      (py36) $ numina run <observation_result_file.yaml> -r <requirements_file.yaml>
+      (emir) $ numina run <observation_result_file.yaml> -r <requirements_file.yaml>
 
    where ``<observation_result_file.yaml>`` is an observation result file in 
    YAML format, and ``<requirements_files.yaml>`` is a requirements file, also 
@@ -263,7 +263,7 @@ You are ready to execute the reduction recipe indicated in the file
 
 ::
 
-   (py36) $ numina run 00_simple_example.yaml -r control.yaml
+   (emir) $ numina run 00_simple_example.yaml -r control.yaml
    ...
    ...
 
@@ -280,7 +280,7 @@ The ``work`` subdirectory
 
 ::
 
-   (py36) $ tree obsid1345_work/
+   (emir) $ tree obsid1345_work/
    obsid1345_work/
    ├── 0001041345-20160917-EMIR-TEST0.fits
    ├── 0001041348-20160917-EMIR-TEST0.fits
@@ -365,7 +365,7 @@ The ``results`` subdirectory
 
 ::
 
-   (py36) $ tree obsid1345_results/
+   (emir) $ tree obsid1345_results/
    obsid1345_results/
    ├── processing.log
    ├── rectwv_coeff.json
@@ -390,7 +390,7 @@ provided with numina:
 
 ::
 
-   (py36) $ numina-ximshow obsid1345_results/reduced_mos.fits --z1z2 0,1000
+   (emir) $ numina-ximshow obsid1345_results/reduced_mos.fits --z1z2 0,1000
 
 
 .. image:: images/stare_preliminary_version.png
@@ -402,7 +402,7 @@ provided with numina:
 
   ::
 
-     (py36) $ dfits obsid1345_results/reduced_mos.fits | fitsort crpix1 crval1 cdelt1
+     (emir) $ dfits obsid1345_results/reduced_mos.fits | fitsort crpix1 crval1 cdelt1
      FILE                              	CRPIX1	CRVAL1 	CDELT1	
      obsid1345_results/reduced_mos.fits	1.0   	11200.0	0.77 
 
@@ -418,7 +418,7 @@ provided with numina:
 
   ::
 
-     (py36) $ dfits obsid1345_results/reduced_mos.fits | fitsort naxis1 naxis2
+     (emir) $ dfits obsid1345_results/reduced_mos.fits | fitsort naxis1 naxis2
      FILE                              	NAXIS1	NAXIS2	
      obsid1345_results/reduced_mos.fits	3400  	2090  
 
@@ -467,7 +467,7 @@ wavelength calibration between slitlets does not agree within roughtly 1 pixel:
 
 ::
 
-   (py36) $ numina-ximshow obsid1345_results/reduced_mos.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
+   (emir) $ numina-ximshow obsid1345_results/reduced_mos.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
 
 .. image:: images/stare_preliminary_zoom.png
    :width: 800
@@ -496,7 +496,7 @@ status keywords:
 
 ::
 
-   (py36) $ dfits obsid1345_results/reduced_mos.fits | fitsort lampxe1 lampne1 lamphg1 lampxe2 lampne2 lamphg2
+   (emir) $ dfits obsid1345_results/reduced_mos.fits | fitsort lampxe1 lampne1 lamphg1 lampxe2 lampne2 lamphg2
    FILE                              	LAMPXE1	LAMPNE1	LAMPHG1	LAMPXE2	LAMPNE2	LAMPHG2	
    obsid1345_results/reduced_mos.fits	1      	1      	1      	1      	1      	1
 
@@ -534,7 +534,7 @@ exactly the same configuration, we can choose any of them):
 
 ::
 
-   (py36) $ pyemir-overplot_boundary_model \
+   (emir) $ pyemir-overplot_boundary_model \
      data/0001041345-20160917-EMIR-TEST0.fits \
      --rect_wpoly_MOSlibrary data/rect_wpoly_MOSlibrary_grism_J_filter_J.json
 
@@ -602,7 +602,7 @@ Open ``ds9`` with the same image
 
 ::
 
-   (py36) $ ds9 data/0001041345-20160917-EMIR-TEST0.fits
+   (emir) $ ds9 data/0001041345-20160917-EMIR-TEST0.fits
 
 and load the two region files:
 
@@ -635,7 +635,7 @@ additional parameter ``--arc_lines``:
 
 ::
 
-   (py36) $ pyemir-overplot_boundary_model \
+   (emir) $ pyemir-overplot_boundary_model \
      data/0001041345-20160917-EMIR-TEST0.fits \
      --rect_wpoly_MOSlibrary data/rect_wpoly_MOSlibrary_grism_J_filter_J.json \
      --arc_lines
@@ -660,7 +660,7 @@ image:
 
 ::
 
-   (py36) $ ds9 data/0001041345-20160917-EMIR-TEST0.fits
+   (emir) $ ds9 data/0001041345-20160917-EMIR-TEST0.fits
 
 and load the region file:
 
@@ -731,7 +731,7 @@ Execute the reduction recipe using the new observation result file:
 
 ::
 
-   (py36) $ numina run 01_simple_example.yaml -r control.yaml
+   (emir) $ numina run 01_simple_example.yaml -r control.yaml
    ...
    ...
 
@@ -743,7 +743,7 @@ The new ``reduced_mos.fits`` image now does exhibit a much better wavelength cal
 
 ::
 
-   (py36) $ numina-ximshow obsid1345refined_results/reduced_mos.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
+   (emir) $ numina-ximshow obsid1345refined_results/reduced_mos.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
 
 
 .. image:: images/stare_refined_zoom.png
@@ -760,7 +760,7 @@ from 0.0 to 1.0):
 
 ::
 
-   (py36) $ numina-ximshow obsid1345refined_work/expected_catalog_lines.fits --bbox 1920,2050,1,2090 --z1z2 0,0.4
+   (emir) $ numina-ximshow obsid1345refined_work/expected_catalog_lines.fits --bbox 1920,2050,1,2090 --z1z2 0,0.4
 
 
 .. image:: images/stare_expected_refined_zoom.png
@@ -778,7 +778,7 @@ slitlets by number.
 
 ::
 
-   (py36) $ ds9 obsid1345refined_results/reduced_mos.fits
+   (emir) $ ds9 obsid1345refined_results/reduced_mos.fits
 
 and load the region files:
 

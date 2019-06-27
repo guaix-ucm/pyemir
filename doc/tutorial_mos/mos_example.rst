@@ -10,7 +10,7 @@ MOS example
    shell**.
 
    Don't forget to activate the same Python environment employed to install
-   PyEmir.  In this document, the prompt ``(py36) $`` will indicate that this
+   PyEmir.  In this document, the prompt ``(emir) $`` will indicate that this
    is the case.
 
 .. note::
@@ -30,17 +30,17 @@ Decompress the previous file:
 
 ::
 
-   (py36) $ tar zxvf EMIR_mos_example.tgz
+   (emir) $ tar zxvf EMIR_mos_example.tgz
    ...
    ...
-   (py36) $ rm EMIR_mos_example.tgz
+   (emir) $ rm EMIR_mos_example.tgz
 
 A new subdirectory named ``EMIR_mos_exmaple`` should have appeared, with the
 following content:
 
 ::
 
-   (py36) $ tree EMIR_mos_example
+   (emir) $ tree EMIR_mos_example
    EMIR_mos_example/
    ├── 00_mos_example.yaml
    ├── 01_mos_example.yaml
@@ -74,7 +74,7 @@ Move into the ``EMIR_mos_example`` directory:
 
 ::
 
-   (py36) $ cd EMIR_mos_example
+   (emir) $ cd EMIR_mos_example
 
 This directory contains a subdirectory ``data/`` with the following files:
 
@@ -104,7 +104,7 @@ You can easily examine the header of the 12 science files using the utilities
 
 ::
 
-   (py36) $ dfits data/0001572* | fitsort object grism filter exptime date-obs
+   (emir) $ dfits data/0001572* | fitsort object grism filter exptime date-obs
    FILE                                            	OBJECT     	GRISM   	FILTER  	EXPTIME   	DATE-OBS              	
    data/0001572158-20180530-EMIR-STARE_SPECTRA.fits	MOS example	J       	J       	359.986465	2018-05-30T22:50:16.03	
    data/0001572187-20180530-EMIR-STARE_SPECTRA.fits	MOS example	J       	J       	359.986465	2018-05-30T22:56:25.08	
@@ -125,7 +125,7 @@ numina:
    
 ::
 
-   (py36) $ numina-ximshow data/0001572158-20180530-EMIR-STARE_SPECTRA.fits
+   (emir) $ numina-ximshow data/0001572158-20180530-EMIR-STARE_SPECTRA.fits
 
 .. image:: images/0001572158_raw.png
    :width: 800
@@ -147,7 +147,7 @@ the use in this case of the additional parameter ``--n_clusters 2``):
 
 ::
 
-   (py36) $ pyemir-display_slitlet_arrangement \
+   (emir) $ pyemir-display_slitlet_arrangement \
      data/0001572158-20180530-EMIR-STARE_SPECTRA.fits \
      --n_clusters 2
    ...
@@ -208,7 +208,7 @@ Execute the reduction recipe:
 
 ::
 
-   (py36) $ numina run 00_mos_example.yaml -r control.yaml
+   (emir) $ numina run 00_mos_example.yaml -r control.yaml
    ...
    ...
 
@@ -217,7 +217,7 @@ As expected, two new subdirectories have been created:
 
 ::
 
-   (py36) $ numina-ximshow obsid2158preliminary_results/reduced_mos.fits
+   (emir) $ numina-ximshow obsid2158preliminary_results/reduced_mos.fits
 
 
 .. image:: images/0001572158_preliminary.png
@@ -253,7 +253,7 @@ preliminary rectification and wavelength calibration, over the raw image:
 
 ::
 
-   (py36) $ ds9 data/0001572158-20180530-EMIR-STARE_SPECTRA.fits &
+   (emir) $ ds9 data/0001572158-20180530-EMIR-STARE_SPECTRA.fits &
 
 - select ``scale --> zscale``
 
@@ -372,7 +372,7 @@ Execute the reduction recipe:
 
 ::
 
-   (py36) $ numina run 01_mos_example.yaml -r control.yaml
+   (emir) $ numina run 01_mos_example.yaml -r control.yaml
    ...
    ...
 
@@ -381,7 +381,7 @@ As expected, two new subdirectories have been created:
 
 ::
 
-   (py36) $ numina-ximshow obsid2158refined_results/reduced_mos.fits
+   (emir) $ numina-ximshow obsid2158refined_results/reduced_mos.fits
 
 
 .. image:: images/0001572158_refined.png
@@ -394,7 +394,7 @@ range from 0.0 to 1.0):
 
 ::
 
-   (py36) $ numina-ximshow obsid2158refined_work/expected_catalog_lines.fits --z1z2 0,0.3
+   (emir) $ numina-ximshow obsid2158refined_work/expected_catalog_lines.fits --z1z2 0,0.3
 
 
 .. image:: images/0001572158_expected_ohlines.png
@@ -453,7 +453,7 @@ rename it in order to avoid overwritting it by accident:
 
 ::
 
-   (py36) $ cp obsid2158refined_results/rectwv_coeff.json data/rectwv_coeff_2158refined.json
+   (emir) $ cp obsid2158refined_results/rectwv_coeff.json data/rectwv_coeff_2158refined.json
 
 Preparing the observation result file
 -------------------------------------
@@ -604,7 +604,7 @@ described in the previous subsection:
 
 ::
 
-   (py36) $ numina run 02_mos_example.yaml -r control.yaml
+   (emir) $ numina run 02_mos_example.yaml -r control.yaml
    ...
    ...
 
@@ -614,7 +614,7 @@ computer speed). The final image will be stored in the
 
 ::
 
-  (py36) $ ds9 obsidABBA_combined_results/result.fits
+  (emir) $ ds9 obsidABBA_combined_results/result.fits
 
 - select ``region --> load ->
   obsid2158refined_work/ds9_boundaries_rectified.reg``

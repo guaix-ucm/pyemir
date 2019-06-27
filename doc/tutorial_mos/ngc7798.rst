@@ -10,7 +10,7 @@ NGC7798
    shell**.
 
    Don't forget to activate the same Python environment employed to install
-   PyEmir.  In this document, the prompt ``(py36) $`` will indicate that this
+   PyEmir.  In this document, the prompt ``(emir) $`` will indicate that this
    is the case.
 
 .. note::
@@ -40,17 +40,17 @@ Decompress the previous file:
 
 ::
 
-   (py36) $ tar zxvf EMIR_ngc7798_example.tgz
+   (emir) $ tar zxvf EMIR_ngc7798_example.tgz
    ...
    ...
-   (py36) $ rm EMIR_ngc7798_example.tgz
+   (emir) $ rm EMIR_ngc7798_example.tgz
 
 A new subdirectory named ``EMIR_ngc7798_example`` should have appeared, with
 the following content:
 
 ::
 
-   (py36) $ tree EMIR_ngc7798_example/
+   (emir) $ tree EMIR_ngc7798_example/
    EMIR_ngc7798_example/
    ├── 00_stare_hd209290.yaml
    ├── 00_stare_ngc7798.yaml
@@ -86,7 +86,7 @@ Move into the ``EMIR_ngc7798_example`` directory:
 
 ::
 
-   (py36) $ cd EMIR_ngc7798_example
+   (emir) $ cd EMIR_ngc7798_example
 
 
 This directory contains a subdirectory ``data/`` with the following files:
@@ -118,7 +118,7 @@ You can easily examine the header of the 12 science files using the utilities
 
 ::
 
-   (py36) $ dfits data/0001005* | fitsort object grism filter exptime
+   (emir) $ dfits data/0001005* | fitsort object grism filter exptime
    FILE                                    	OBJECT  	GRISM   	FILTER  	EXPTIME   	
    data/0001005178-20160727-EMIR-TEST0.fits	NGC7798 	J       	J       	119.991601	
    data/0001005189-20160727-EMIR-TEST0.fits	NGC7798 	J       	J       	119.991601	
@@ -138,7 +138,7 @@ auxiliary PyEmir script ``pyemir-display_slitlet_arrangement``:
 
 ::
 
-   (py36) $ pyemir-display_slitlet_arrangement data/0001005*
+   (emir) $ pyemir-display_slitlet_arrangement data/0001005*
    ...
 
 12 plots are displayed, one for each raw image. The additional information
@@ -169,7 +169,7 @@ Execute the reduction recipe:
 
 ::
 
-   (py36) $ numina run 00_stare_hd209290.yaml -r control.yaml
+   (emir) $ numina run 00_stare_hd209290.yaml -r control.yaml
    ...
    ...
 
@@ -183,16 +183,16 @@ betwen images of the same size):
 
 ::
 
-   (py36) $ numina-imath obsid5278_results/reduced_mos.fits - obsid5275_results/reduced_mos.fits grismJ_hd209290_A-B.fits
-   (py36) $ numina-imath obsid5269_results/reduced_mos.fits - obsid5272_results/reduced_mos.fits grismH_hd209290_A-B.fits
-   (py36) $ numina-imath obsid5266_results/reduced_mos.fits - obsid5263_results/reduced_mos.fits grismK_hd209290_A-B.fits
+   (emir) $ numina-imath obsid5278_results/reduced_mos.fits - obsid5275_results/reduced_mos.fits grismJ_hd209290_A-B.fits
+   (emir) $ numina-imath obsid5269_results/reduced_mos.fits - obsid5272_results/reduced_mos.fits grismH_hd209290_A-B.fits
+   (emir) $ numina-imath obsid5266_results/reduced_mos.fits - obsid5263_results/reduced_mos.fits grismK_hd209290_A-B.fits
 
 Display the result to check that you get two spectra (one with positive counts
 and another with negavite counts) in each case:
 
 ::
 
-   (py36) $ ds9 grismJ_hd209290_A-B.fits
+   (emir) $ ds9 grismJ_hd209290_A-B.fits
 
 .. image:: images/ds9_grismJ_hd209290_A-B.png
    :width: 800
@@ -223,7 +223,7 @@ Execute the reduction recipe:
 
 ::
 
-   (py36) $ numina run 00_stare_ngc7798.yaml -r control.yaml
+   (emir) $ numina run 00_stare_ngc7798.yaml -r control.yaml
    ...
    ...
 
@@ -237,16 +237,16 @@ betwen images of the same size):
 
 ::
 
-   (py36) $ numina-imath obsid5178_results/reduced_mos.fits - obsid5189_results/reduced_mos.fits grismJ_ngc7798_A-B.fits
-   (py36) $ numina-imath obsid5211_results/reduced_mos.fits - obsid5200_results/reduced_mos.fits grismH_ngc7798_A-B.fits
-   (py36) $ numina-imath obsid5222_results/reduced_mos.fits - obsid5233_results/reduced_mos.fits grismK_ngc7798_A-B.fits
+   (emir) $ numina-imath obsid5178_results/reduced_mos.fits - obsid5189_results/reduced_mos.fits grismJ_ngc7798_A-B.fits
+   (emir) $ numina-imath obsid5211_results/reduced_mos.fits - obsid5200_results/reduced_mos.fits grismH_ngc7798_A-B.fits
+   (emir) $ numina-imath obsid5222_results/reduced_mos.fits - obsid5233_results/reduced_mos.fits grismK_ngc7798_A-B.fits
 
 Display the result to check that you get two spectra (one with positive counts
 and another with negavite counts) in each case:
 
 ::
 
-   (py36) $ ds9 grismJ_ngc7798_A-B.fits
+   (emir) $ ds9 grismJ_ngc7798_A-B.fits
 
 .. image:: images/ds9_grismJ_ngc7798_A-B.png
    :width: 800

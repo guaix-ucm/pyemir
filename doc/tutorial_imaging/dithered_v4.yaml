@@ -1,0 +1,121 @@
+id: _0001877553
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877553-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877559
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877559-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877565
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877565-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877571
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877571-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877577
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877577-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877583
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877583-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877589
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877589-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877595
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877595-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877601
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877601-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877607
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877607-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877613
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877613-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877619
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877619-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877625
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877625-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _0001877631
+instrument: EMIR
+mode: STARE_IMAGE
+frames:
+ - 0001877631-20181217-EMIR-STARE_IMAGE.fits
+enabled: False
+---
+id: _combined_v4
+instrument: EMIR
+mode: FULL_DITHERED_IMAGE
+children:
+ - _0001877553
+ - _0001877559
+ - _0001877565
+ - _0001877571
+ - _0001877577
+ - _0001877583
+ - _0001877589
+ - _0001877595
+ - _0001877601
+ - _0001877607
+ - _0001877613
+ - _0001877619
+ - _0001877625
+ - _0001877631
+requirements:
+  iterations: 1
+  sky_images: 6
+  refine_offsets: True
+enabled: True

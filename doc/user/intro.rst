@@ -4,8 +4,8 @@
 PyEmir Installation
 *******************
 
-PyEmir, the data reduction pipeline for EMIR, is a Python package for Python
-2.7 and Python 3.5 or greater.
+PyEmir, the data reduction pipeline for EMIR, is a Python package
+(Python 3.5 or greater is recommended).
 
 The easiest method of installing PyEmir is using prebuilt packages. You can
 also build from the development version. 

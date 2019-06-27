@@ -1,0 +1,22 @@
+version: 1
+products:
+  EMIR:
+  - {id: 2, type: 'MasterBadPixelMask', tags: {}, content: 'master_bpm.fits'}
+  - {id: 3, type: 'MasterDark', tags: {}, content: 'master_dark_zeros.fits'}
+  - {id: 4, type: 'MasterIntensityFlat', tags: {}, content: 'master_flat_spec.fits'}
+  - {id: 5, type: 'MasterSpectralFlat', tags: {}, content: 'master_flat_spec.fits'}
+  - {id: 11, type: 'MasterRectWave', tags: {grism: J, filter: J}, content: 'rect_wpoly_MOSlibrary_grism_J_filter_J.json'}
+  - {id: 12, type: 'MasterRectWave', tags: {grism: H, filter: H}, content: 'rect_wpoly_MOSlibrary_grism_H_filter_H.json'}
+  - {id: 13, type: 'MasterRectWave', tags: {grism: K, filter: Ksp}, content: 'rect_wpoly_MOSlibrary_grism_K_filter_Ksp.json'}
+  - {id: 14, type: 'MasterRectWave', tags: {grism: LR, filter: YJ}, content: 'rect_wpoly_MOSlibrary_grism_LR_filter_YJ.json'}
+  - {id: 15, type: 'MasterRectWave', tags: {grism: LR, filter: HK}, content: 'rect_wpoly_MOSlibrary_grism_LR_filter_HK.json'}
+  - {id: 21, type: 'RefinedBoundaryModelParam', tags: {grism: J, filter: J}, content: 'final_multislit_bound_param_grism_J_filter_J.json'}
+  - {id: 22, type: 'RefinedBoundaryModelParam', tags: {grism: H, filter: H}, content: 'final_multislit_bound_param_grism_H_filter_H.json'}
+  - {id: 23, type: 'RefinedBoundaryModelParam', tags: {grism: K, filter: Ksp}, content: 'final_multislit_bound_param_grism_K_filter_Ksp.json'}
+  - {id: 24, type: 'RefinedBoundaryModelParam', tags: {grism: LR, filter: YJ}, content: 'final_multislit_bound_param_grism_LR_filter_YJ.json'}
+  - {id: 25, type: 'RefinedBoundaryModelParam', tags: {grism: LR, filter: HK}, content: 'final_multislit_bound_param_grism_LR_filter_HK.json'}
+requirements:
+  EMIR:
+    default:
+     FULL_DITHERED_IMAGE:
+      - {name: 'x_offsets', tags: {}, content: 'ref_object_pos.txt'}

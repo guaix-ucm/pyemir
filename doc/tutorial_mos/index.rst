@@ -60,7 +60,6 @@ then facing the proper reduction of MOS observations.
 .. toctree::
    :maxdepth: 2
 
-   preliminaries
    understanding
    simple_example
    mos_example
