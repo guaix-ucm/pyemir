@@ -1,9 +1,9 @@
 
 .. _IMAGING_tutorial:
 
-############################
-PyEmir Imaging Mode Tutorial
-############################
+########################################################
+Imaging mode tutorial: combination of dithered exposures
+########################################################
 
 .. warning::
 
@@ -15,7 +15,7 @@ PyEmir Imaging Mode Tutorial
    is the case.
 
 This tutorial provides an easy introduction to the use of PyEmir (via Numina),
-focusing on the combination of dithered images.
+focusing on the combination of dithered exposures.
 
 For detailed documentation concerning the installation of PyEmir, see the
 :ref:`pyemir_installation` guide.

@@ -5,7 +5,7 @@ Welcome. This is the Documentation for PyEmir (version |version|),
 
 EMIR is a **wide-field, near-infrared, multi-object spectrograph** (MOS)
 installed at the Nasmyth focus of GTC_. Its MOS mode allows observers to obtain
-**tens of intermediate resolution spectra simultaneously** in the nIR bands *Z,
+**tens of intermediate resolution spectra simultaneously** in the nIR bands *Y,
 J, H* and *K*. EMIR is designed to address the science goals of the proposing
 team and of the Spanish community at large.
 

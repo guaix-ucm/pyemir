@@ -1,9 +1,9 @@
 
 .. _MOS_tutorial:
 
-###################
-PyEmir MOS Tutorial
-###################
+#####################################
+Spectroscopic mode tutorial: MOS data
+#####################################
 
 This tutorial provides an easy introduction to the use of PyEmir (via Numina),
 focusing on the rectification and wavelength calibration of EMIR spectroscopic
