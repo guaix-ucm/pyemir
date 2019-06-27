@@ -86,7 +86,17 @@ The subdirectory ``data`` contains the following calibration files:
   spectroscopic exposures of 2000 lamp ON-OFF tungsten exposures. The small
   variations of the pixel response with wavelength indicate that for most
   purposes it can be used with any filter configuration and observing mode
-  (imaging or spectroscopy).
+  (imaging or spectroscopy). The following plots show the flatfield value in
+  around 2 million pixels (common detector region of the flatfield images using
+  distinct grism + filter combinations) deduced from spectroscopy observations
+  using grism J + filter J (X axis) in comparison with the values deduced using
+  grism H + filter H, grism K + filter Ksp, grism LR + filter YJ and grism LR +
+  filter HK (Y axis). Note that the color scale is given in logarithmic units
+  (i.e., most pixels fall in the interval around 1.0 in the 1:1 diagonal line).
+
+  .. image:: pixel2pixel.png
+     :width: 750
+     :alt: variation in the pixel2pixel response using different filters
 
 - ``rect_wpoly_MOSlibrary_grism*.json``: empirical distortion and wavelength
   callibrations for the reduction of spectroscopic data. These calibrations
