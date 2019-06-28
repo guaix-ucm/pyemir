@@ -67,14 +67,14 @@ again with this new observation result file:
 
 .. generada con --geometry 0,0,850,1200
 .. convert combined_v1.png -trim combined_v1_trimmed.png
-.. convert -delay 50 -loop 0 combined_v[01]_trimmed.png comparison_v1.gif
+.. convert -delay 100 -loop 0 combined_v[01]_trimmed.png comparison_v1.gif
 .. image:: comparison_v1.gif
    :width: 800
    :alt: combined image, version 1 compared with version 0
 
 .. generada con --geometry 0,0,850,1200 --bbox 1100,1600,800,1300
 .. convert combined_v1_zoom.png -trim combined_v1_zoom_trimmed.png
-.. convert -delay 50 -loop 0 combined_v[01]_zoom_trimmed.png comparison_v1_zoom.gif
+.. convert -delay 100 -loop 0 combined_v[01]_zoom_trimmed.png comparison_v1_zoom.gif
 .. image:: comparison_v1_zoom.gif
    :width: 800
    :alt: combined image, version 1 compared with version 0
@@ -130,14 +130,14 @@ Execute numina to obtain the new version of the combined image:
 
 .. generada con --geometry 0,0,850,1200
 .. convert combined_v2.png -trim combined_v2_trimmed.png
-.. convert -delay 50 -loop 0 combined_v[02]_trimmed.png comparison_v2.gif
+.. convert -delay 100 -loop 0 combined_v[02]_trimmed.png comparison_v2.gif
 .. image:: comparison_v2.gif
    :width: 800
    :alt: combined image, version 2 compared with version 0
 
 .. generada con --geometry 0,0,850,1200 --bbox 1100,1600,800,1300
 .. convert combined_v2_zoom.png -trim combined_v2_zoom_trimmed.png
-.. convert -delay 50 -loop 0 combined_v[02]_zoom_trimmed.png comparison_v2_zoom.gif
+.. convert -delay 100 -loop 0 combined_v[02]_zoom_trimmed.png comparison_v2_zoom.gif
 .. image:: comparison_v2_zoom.gif
    :width: 800
    :alt: combined image, version 2 compared with version 0
@@ -174,14 +174,14 @@ the same result.
 
 .. generada con --geometry 0,0,850,1200
 .. convert combined_v3.png -trim combined_v3_trimmed.png
-.. convert -delay 50 -loop 0 combined_v[13]_trimmed.png comparison_v3.gif
+.. convert -delay 100 -loop 0 combined_v[13]_trimmed.png comparison_v3.gif
 .. image:: comparison_v3.gif
    :width: 800
    :alt: combined image, version 3 compared with version 1
 
 .. generada con --geometry 0,0,850,1200 --bbox 1100,1600,800,1300
 .. convert combined_v3_zoom.png -trim combined_v3_zoom_trimmed.png
-.. convert -delay 50 -loop 0 combined_v[13]_zoom_trimmed.png comparison_v3_zoom.gif
+.. convert -delay 100 -loop 0 combined_v[13]_zoom_trimmed.png comparison_v3_zoom.gif
 .. image:: comparison_v3_zoom.gif
    :width: 800
    :alt: combined image, version 3 compared with version 1
@@ -238,7 +238,7 @@ It is useful to subtract the new result from the one derived previously:
 .. generada con --geometry 0,0,850,1200
 .. convert combined_v4.png -trim combined_v4_trimmed.png
 .. convert difference_v4.png -trim difference_v4_trimmed.png
-.. convert -delay 50 -loop 0 combined_v[14]_trimmed.png difference_v4_trimmed.png comparison_v4.gif
+.. convert -delay 100 -loop 0 combined_v[14]_trimmed.png difference_v4_trimmed.png comparison_v4.gif
 .. image:: comparison_v4.gif
    :width: 800
    :alt: combined image, version 4 compared with version 1
@@ -246,7 +246,7 @@ It is useful to subtract the new result from the one derived previously:
 .. generada con --geometry 0,0,850,1200 --bbox 1100,1600,800,1300
 .. convert combined_v4_zoom.png -trim combined_v4_zoom_trimmed.png
 .. convert difference_v4_zoom.png -trim difference_v4_zoom_trimmed.png
-.. convert -delay 50 -loop 0 combined_v[14]_zoom_trimmed.png difference_v4_zoom_trimmed.png comparison_v4_zoom.gif
+.. convert -delay 100 -loop 0 combined_v[14]_zoom_trimmed.png difference_v4_zoom_trimmed.png comparison_v4_zoom.gif
 .. image:: comparison_v4_zoom.gif
    :width: 800
    :alt: combined image, version 4 compared with version 1
@@ -260,9 +260,24 @@ Improving the sky background (problem #2)
 In all the previous examples, the combined images always exhibit variations in
 the sky background that are clearly visible in the image borders. The reason
 for that is that some individual exposures (in particular the first two
-individual images), have a wrong image background. This can be seen examining
-the sky-subtracted individual images (files ending in ``_rfs_i?.fits`` within
-the ``work`` subdirectories):
+individual images), have a wrong image background. 
+
+The problem is more severe in the regions where the number of images used for
+the combination is lower:
+
+.. convert combined_v4_npix.png -trim combined_v4_npix_trimmed.png
+.. convert +smush 40 combined_v4_trimmed.png combined_v4_npix_trimmed.png data_npix_v4.png
+
+.. image:: data_npix_v4.png
+   :width: 800
+   :alt: combined data and number of pixels used in combination, version 4
+
+.. image:: combined_v4_statistics.png
+   :width: 800
+   :alt: combined data version 4, statistical analysis
+
+It is also possible to examine the sky-subtracted individual images (files
+ending in ``_rfs_i?.fits`` within the ``work`` subdirectories):
 
 .. cd obsid_combined_v4_work
 .. numina-ximshow result_image_*_rfs_i1.fits --z1z2 [-200,300] --pdf skysub_v4.pdf --figuredict "{'figsize':(8, 10), 'dpi':100}"
@@ -307,3 +322,12 @@ objects) and a smooth spline surface is fitted to that collection of points.
    :width: 800
    :alt: combined image, version 5 compared with version 4
 
+.. image:: combined_v5_statistics.png
+   :width: 800
+   :alt: combined data version 5, statistical analysis
+
+In the last combination (v5) the sky background level is much flatter around
+zero, except for those pixels in the combined image where only one single
+exposure is available. By looking at the file ``result_i1_npix.fits`` it is
+possible to check that those pixels are just at the borders of the combined
+image.
