@@ -46,6 +46,12 @@ can be obtained with two levels of quality:
 Preliminary rectification and wavelength calibration
 ====================================================
 
+.. warning::
+
+   Before continuing, make sure that you have already initialize the file tree
+   structure by following the instructions provided in the
+   :ref:`initial_file_tree` section of this documentation.
+
 Assume you want to perform the rectification and wavelength calibration of the
 following raw spectroscopic images (corresponding in this case to spectral arc
 lamps):
@@ -63,69 +69,46 @@ will be generated from that median image.
 
 Those three files (together with some additional files that you will need to
 follow this simple example) are available as a compressed tgz file:
-`EMIR_simple_example.tgz 
-<http://nartex.fis.ucm.es/~ncl/emir/EMIR_simple_example.tgz>`_.
+`pyemir_arc_calibration_tutorial_v1.tgz
+<http://nartex.fis.ucm.es/data/pyemir/pyemir_arc_calibration_tutorial_v1.tgz>`_.
 
-Download and decompress the previous file:
 
-::
+Move to the directory where you have deployed the initial file tree structure
+containing the basic PyEmir calibration files (see  :ref:`initial_file_tree`).
 
-   (emir) $ tar zxvf EMIR_simple_example.tgz
-   ...
-   ...
-   (emir) $ rm EMIR_simple_example.tgz
 
-A new subdirectory named ``EMIR_simple_example`` should have appeared, with the
-following content:
+Decompress there the previously mentioned tgz file:
 
 ::
 
-   (emir) $ tree EMIR_simple_example
-   EMIR_simple_example
-   ├── 00_simple_example.yaml
-   ├── 01_simple_example.yaml
+   (emir) $ tar zxvf pyemir_arc_calibration_tutorial_v1.tgz
+   ...
+   ...
+   (emir) $ rm pyemir_arc_calibration_tutorial_v1.tgz
+
+This action should have populated the file tree with the 3 arc exposures
+(placed wihtin the ``data`` subdirectory) and some additional auxiliary files:
+
+::
+
+   (emir) $ tree
+   .
+   ├── 0_preliminary_calibration.yaml
+   ├── 1_refined_calibration.yaml
    ├── control.yaml
    └── data
        ├── 0001041345-20160917-EMIR-TEST0.fits
        ├── 0001041348-20160917-EMIR-TEST0.fits
        ├── 0001041351-20160917-EMIR-TEST0.fits
        ├── master_bpm.fits
-       ├── master_dark.fits
-       ├── master_flat.fits
+       ├── master_dark_zeros.fits
+       ├── master_flat_ones.fits
+       ├── master_flat_spec.fits
        ├── rect_wpoly_MOSlibrary_grism_H_filter_H.json
        ├── rect_wpoly_MOSlibrary_grism_J_filter_J.json
        ├── rect_wpoly_MOSlibrary_grism_K_filter_Ksp.json
        ├── rect_wpoly_MOSlibrary_grism_LR_filter_HK.json
        └── rect_wpoly_MOSlibrary_grism_LR_filter_YJ.json
-
-   1 directory, 14 files
-
-Move into the ``EMIR_simple_example`` directory:
-
-::
-
-   (emir) $ cd EMIR_simple_example
-
-This directory contains a subdirectory ``data/`` with the following files:
-
-- The first three FITS files ``00010413*.FITS`` correspond to the arc exposures.
-
-- ``master_bpm.fits`` is a preliminary bad-pixel-mask image (pixels in this
-  image with values different from zero are interpolated).
-
-- ``master_dark.fits`` is a dummy 2048x2048 image of zeros (this image is
-  typically not necessary since in the IR the reduction of science observations
-  usually requires de subtraction of consecutive images).
-
-- ``master_flat.fits`` is a dummy 2048x2048 image of ones (in a more realistic
-  reduction this image should have been obtained previously).
-
-- The ``rect_wpoly_MOSlibrary_grism*.json`` files contain the empirical
-  calibration for rectification and wavelength calibration for different
-  grism+filter configurations.
-
-Remain in the ``EMIR_simple_example`` directory. From here you are going to
-execute the pipeline.
 
 You can easily examine the header of the three arc files using the utilities 
 ``dfits`` and ``fitsort`` (previously mentioned):
@@ -190,89 +173,68 @@ aligned slitlets forming a (pseudo) longslit.
    `YAML Syntax
    <https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html>`_)
 
-The directory ``EMIR_simple_example`` contains the following two files required
+The current directory contains the following two files required
 to execute the reduction recipe needed in this case:
 
-- ``00_simple_example.yaml``: this is what we call an observation result
-  file, which basically contains the reduction recipe to be applied and the
-  images involved.
+**The observation result file:** ``0_preliminary_calibration.yaml``
 
-   ::
+This is what we call an observation result file, which basically
+contains the reduction recipe to be applied and the images involved.
 
-      id: 1345
-      instrument: EMIR
-      mode: GENERATE_RECTWV_COEFF
-      frames:
-       - 0001041345-20160917-EMIR-TEST0.fits
-       - 0001041348-20160917-EMIR-TEST0.fits
-       - 0001041351-20160917-EMIR-TEST0.fits
-      enabled: True
+.. literalinclude:: 0_preliminary_calibration.yaml
+   :linenos:
+   :lineno-start: 1
 
-   - The ``id`` value is a label that is employed to generate the name of two
-     auxiliary subdirectories. In this example the two subdirectories will be
-     named ``obsid1345_work`` and ``obsid1345_results`` (see below), where the
-     intermediate results and the final results are going to be stored,
-     respectively. Note that we have arbitrarily chosen the last 4 digits of
-     the unique running number assigned to each image obtained with the GTC.
+
+- The ``id`` value is an arbitrary label that is employed to generate the name
+  of two auxiliary subdirectories. In this example the two subdirectories will
+  be named ``obsid_0001041345_work`` and ``obsid_0001041345_results`` (see
+  below), where the intermediate results and the final results are going to be
+  stored, respectively. Note that we have arbitrarily chosen the 10 digits of
+  the unique running number assigned to the first image of this set.
    
-   - Not surprisingly, the key ``instrument`` is set to EMIR (do not forget
-     that Numina also is at present also employed to reduce MEGARA data, and
-     hopefully, future GTC instruments).
+- Not surprisingly, the key ``instrument`` is set to EMIR (do not forget that
+  Numina also is at present also employed to reduce MEGARA data, and hopefully,
+  future GTC instruments).
    
-   - The key ``mode`` indicates the identification of the reduction recipe
-     (``GENERATE_RECTWV_COEFF`` in this example). 
+- The key ``mode`` indicates the identification of the reduction recipe
+  (``GENERATE_RECTWV_COEFF`` in this example). 
      
-   - The key ``frames`` lists the images to be combined (median). 
+- The key ``frames`` lists the images to be combined.
    
-   - The key ``enabled: True`` indicates that this block is going to be
-     reduced. As it is going to be shown later, it is possible to concatenate 
-     several blocks in the same observation result file; the user can easily
-     activate/deactivate the execution of particular reduction recipes (i.e.
-     blocks in this file) just by modifying this flag.
+- The key ``enabled: True`` indicates that this block is going to be reduced.
+  As it is going to be shown later, it is possible to concatenate several
+  blocks in the same observation result file; the user can easily
+  activate/deactivate the execution of particular reduction recipes (i.e.
+  blocks in this file) just by modifying this flag.
 
-- ``control.yaml``: this is the requirements file, containing the expected name
-  of generic calibration files.
+**The requirements file:** ``control.yaml``
 
-   ::
+This is the requirements file, containing the expected name
+of generic calibration files. You do not need to modify anything here.
 
-      version: 1
-      products:
-        EMIR:
-         - {id: 2, type: 'MasterBadPixelMask', tags: {}, content: 'master_bpm.fits'}
-         - {id: 3, type: 'MasterDark', tags: {}, content: 'master_dark.fits'}
-         - {id: 4, type: 'MasterSpectralFlat', tags: {}, content: 'master_flat.fits'}
-         - {id: 11, type: 'MasterRectWave', tags: {grism: J, filter: J}, content: 'rect_wpoly_MOSlibrary_grism_J_filter_J.json'}
-         - {id: 12, type: 'MasterRectWave', tags: {grism: H, filter: H}, content: 'rect_wpoly_MOSlibrary_grism_H_filter_H.json'}
-         - {id: 13, type: 'MasterRectWave', tags: {grism: K, filter: Ksp}, content: 'rect_wpoly_MOSlibrary_grism_K_filter_Ksp.json'}
-         - {id: 14, type: 'MasterRectWave', tags: {grism: LR, filter: YJ}, content: 'rect_wpoly_MOSlibrary_grism_LR_filter_YJ.json'}
-         - {id: 15, type: 'MasterRectWave', tags: {grism: LR, filter: HK}, content: 'rect_wpoly_MOSlibrary_grism_LR_filter_HK.json'}
-         - {id: 21, type: 'RefinedBoundaryModelParam', tags: {grism: J, filter: J}, content: 'final_multislit_bound_param_grism_J_filter_J.json'}
-         - {id: 22, type: 'RefinedBoundaryModelParam', tags: {grism: H, filter: H}, content: 'final_multislit_bound_param_grism_H_filter_H.json'}
-         - {id: 23, type: 'RefinedBoundaryModelParam', tags: {grism: K, filter: Ksp}, content: 'final_multislit_bound_param_grism_K_filter_Ksp.json'}
-         - {id: 24, type: 'RefinedBoundaryModelParam', tags: {grism: LR, filter: YJ}, content: 'final_multislit_bound_param_grism_LR_filter_YJ.json'}
-         - {id: 25, type: 'RefinedBoundaryModelParam', tags: {grism: LR, filter: HK}, content: 'final_multislit_bound_param_grism_LR_filter_HK.json'}
-      requirements:
-        EMIR:
-          default:
-            {
-            }
+.. literalinclude:: control.yaml
+   :linenos:
+   :lineno-start: 1
+
+**Numina execution**
       
 You are ready to execute the reduction recipe indicated in the file
-``00_simple_example.yaml`` (in this case the reduccion recipe named
+``0_preliminary_calibration.yaml`` (in this case the reduccion recipe named
 ``GENERATE_RECTWV_COEFF``):
 
 ::
 
-   (emir) $ numina run 00_simple_example.yaml -r control.yaml
+   (emir) $ numina run 0_preliminary_calibration.yaml -r control.yaml
    ...
    ...
 
 After the execution of the previous command line, two subdirectories should
 have been created:
 
-- a work subdirectory: ``obsid1345_work/``
+- a work subdirectory: ``obsid_0001041345_work/``
 
-- a results subdirectory: ``obsid1345_results/``
+- a results subdirectory: ``obsid_0001041345_results/``
 
 
 The ``work`` subdirectory
@@ -280,8 +242,8 @@ The ``work`` subdirectory
 
 ::
 
-   (emir) $ tree obsid1345_work/
-   obsid1345_work/
+   (emir) $ tree obsid_0001041345_work/
+   obsid_0001041345_work/
    ├── 0001041345-20160917-EMIR-TEST0.fits
    ├── 0001041348-20160917-EMIR-TEST0.fits
    ├── 0001041351-20160917-EMIR-TEST0.fits
@@ -295,26 +257,57 @@ The ``work`` subdirectory
    ├── ds9_oh_rectified.reg
    ├── index.pkl
    ├── master_bpm.fits
-   ├── master_dark.fits
-   ├── master_flat.fits
+   ├── master_dark_zeros.fits
+   ├── master_flat_spec.fits
    ├── median_spectra_full.fits
    ├── median_spectra_slitlets.fits
    ├── median_spectrum_slitlets.fits
    └── reduced_image.fits
-   
-   0 directories, 19 files
 
 All the relevant raw images ``00010413*-EMIR-TEST0.fits`` have been copied into
 this working directory in order to preserve the original files.
 
+*When disk space is an issue, it is possible to execute numina indicating that
+links (instead of actual copies of the original raw files) must be placed in
+the ``work`` subdirectory.* This behaviour is set using the parameter
+``--link-files``:
+
+::
+
+   (emir) $ numina run 0_preliminary_calibration.yaml --link-files -r control.yaml
+   ...
+   ...
+   (emir) $ tree obsid_0001041345_work/
+   obsid_0001041345_work/
+   ├── 0001041345-20160917-EMIR-TEST0.fits -> /Users/cardiel/w/GTC/emir/work/z_tutorials_201907/w_arc_calibration_tutorial/data/0001041345-20160917-EMIR-TEST0.fits
+   ├── 0001041348-20160917-EMIR-TEST0.fits -> /Users/cardiel/w/GTC/emir/work/z_tutorials_201907/w_arc_calibration_tutorial/data/0001041348-20160917-EMIR-TEST0.fits
+   ├── 0001041351-20160917-EMIR-TEST0.fits -> /Users/cardiel/w/GTC/emir/work/z_tutorials_201907/w_arc_calibration_tutorial/data/0001041351-20160917-EMIR-TEST0.fits
+   ├── ds9_arc_rawimage.reg
+   ├── ds9_arc_rectified.reg
+   ├── ds9_boundaries_rawimage.reg
+   ├── ds9_boundaries_rectified.reg
+   ├── ds9_frontiers_rawimage.reg
+   ├── ds9_frontiers_rectified.reg
+   ├── ds9_oh_rawimage.reg
+   ├── ds9_oh_rectified.reg
+   ├── index.pkl
+   ├── master_bpm.fits -> /Users/cardiel/w/GTC/emir/work/z_tutorials_201907/w_arc_calibration_tutorial/data/master_bpm.fits
+   ├── master_dark_zeros.fits -> /Users/cardiel/w/GTC/emir/work/z_tutorials_201907/w_arc_calibration_tutorial/data/master_dark_zeros.fits
+   ├── master_flat_spec.fits -> /Users/cardiel/w/GTC/emir/work/z_tutorials_201907/w_arc_calibration_tutorial/data/master_flat_spec.fits
+   ├── median_spectra_full.fits
+   ├── median_spectra_slitlets.fits
+   ├── median_spectrum_slitlets.fits
+   └── reduced_image.fits
+
+
 In addition, some intermediate images are also stored here during the execution
 of the reduction recipe. In particular:
 
-- ``reduced_image.fits``: result of applying, to the median combination of the
+- ``reduced_image.fits``: result of applying, to the combination of the
   three ``00010413*fits files``, the bad-pixel mask, bias, dark and flatfield.
-  Note that, albeit its name, this is not a rectified and wavelength calibrated
-  image. This is simply a temporary image, stored in this working directory for
-  double-checking purposes.
+  **Note that, albeit its name, this is not a rectified and wavelength
+  calibrated image.** This is simply a temporary image, stored in this working
+  directory for double-checking purposes.
 
 - ds9-region files for raw images (before rectification and wavelength
   calibration):
@@ -365,15 +358,13 @@ The ``results`` subdirectory
 
 ::
 
-   (emir) $ tree obsid1345_results/
-   obsid1345_results/
+   (emir) $ tree obsid_0001401345_results/
+   obsid_0001401345_results/
    ├── processing.log
    ├── rectwv_coeff.json
    ├── reduced_mos.fits
-   ├── result.yaml
-   └── task.yaml
-   
-   0 directories, 5 files
+   ├── result.json
+   └── task.json
 
 The main results are stored separately in this last subdirectory. The
 important files here are:
@@ -390,7 +381,7 @@ provided with numina:
 
 ::
 
-   (emir) $ numina-ximshow obsid1345_results/reduced_mos.fits --z1z2 0,1000
+   (emir) $ numina-ximshow obsid_0001041345_results/reduced_mos.fits --z1z2 0,1000
 
 
 .. image:: images/stare_preliminary_version.png
@@ -402,9 +393,9 @@ provided with numina:
 
   ::
 
-     (emir) $ dfits obsid1345_results/reduced_mos.fits | fitsort crpix1 crval1 cdelt1
-     FILE                              	CRPIX1	CRVAL1 	CDELT1	
-     obsid1345_results/reduced_mos.fits	1.0   	11200.0	0.77 
+     (emir) $ dfits obsid_0001041345_results/reduced_mos.fits | fitsort crpix1 crval1 cdelt1
+     FILE                                     	CRPIX1	CRVAL1 	CDELT1	
+     obsid_0001041345_results/reduced_mos.fits	1.0   	11200.0	0.77  
 
   Prefixed ``CRVAL1`` and ``CDELT1`` values have been stablished for the
   different grism+filter combinations (``CRPIX1=1`` is employed in all cases).
@@ -418,9 +409,9 @@ provided with numina:
 
   ::
 
-     (emir) $ dfits obsid1345_results/reduced_mos.fits | fitsort naxis1 naxis2
-     FILE                              	NAXIS1	NAXIS2	
-     obsid1345_results/reduced_mos.fits	3400  	2090  
+     (emir) $ dfits obsid_0001041345_results/reduced_mos.fits | fitsort naxis1 naxis2
+     FILE                                     	NAXIS1	NAXIS2	
+     obsid_0001041345_results/reduced_mos.fits	3400  	2090  
 
   ``NAXIS1`` has been enlarged in order to accommodate wavelength calibrated
   spectra for slitlets in different locations along the spectral direction
@@ -467,7 +458,7 @@ wavelength calibration between slitlets does not agree within roughtly 1 pixel:
 
 ::
 
-   (emir) $ numina-ximshow obsid1345_results/reduced_mos.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
+   (emir) $ numina-ximshow obsid_0001041345_results/reduced_mos.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
 
 .. image:: images/stare_preliminary_zoom.png
    :width: 800
@@ -496,9 +487,9 @@ status keywords:
 
 ::
 
-   (emir) $ dfits obsid1345_results/reduced_mos.fits | fitsort lampxe1 lampne1 lamphg1 lampxe2 lampne2 lamphg2
-   FILE                              	LAMPXE1	LAMPNE1	LAMPHG1	LAMPXE2	LAMPNE2	LAMPHG2	
-   obsid1345_results/reduced_mos.fits	1      	1      	1      	1      	1      	1
+   (emir) $ dfits obsid_0001041345_results/reduced_mos.fits | fitsort lampxe1 lampne1 lamphg1 lampxe2 lampne2 lamphg2
+   FILE                                     	LAMPXE1	LAMPNE1	LAMPHG1	LAMPXE2	LAMPNE2	LAMPHG2	
+   obsid_0001041345_results/reduced_mos.fits	1      	1      	1      	1      	1      	1      	
 
 Note that the EMIR calibration unit has 3 types of arc lamps: Xe, Ne, and Hg
 (actually two lamps of each type). In principle the six lamps should be ON
@@ -589,8 +580,8 @@ data:
    :alt: Overplot boundary 5
 
 If you prefer to use ``ds9`` for this task, remember that some useful auxiliary
-ds9-region files have been created under the ``obsid1345_work`` subdirectory.
-In particular:
+ds9-region files have been created under the ``obsid_0001041345_work``
+subdirectory.  In particular:
 
 - ``ds9_frontiers_rawimage.reg``: the ds9-region file with the frontiers for
   the raw image
@@ -606,9 +597,9 @@ Open ``ds9`` with the same image
 
 and load the two region files:
 
-- select ``region --> load -> obsid1345_work/ds9_frontiers_rawimage.reg``
+- select ``region --> load -> obsid_0001041345_work/ds9_frontiers_rawimage.reg``
 
-- select ``region --> load -> obsid1345_work/ds9_boundaries_rawimage.reg``
+- select ``region --> load -> obsid_0001041345_work/ds9_boundaries_rawimage.reg``
 
 .. image:: images/ds9_frontiers1.png
    :width: 800
@@ -655,8 +646,8 @@ locations (marked by the cyan circles).
 
 If you prefer to use ``ds9`` for this task, it is also possible to use the
 auxiliary ds9-region with the expected location of the arc lines, created under
-the ``obsid1345_work`` subdirectory. In this case, open ``ds9`` with the same
-image:
+the ``obsid_0001041345_work`` subdirectory. In this case, open ``ds9`` with the
+same image:
 
 ::
 
@@ -664,7 +655,7 @@ image:
 
 and load the region file:
 
-- select ``region --> load -> obsid1345_work/ds9_arc_rawimage.reg``
+- select ``region --> load -> obsid_0001041345_work/ds9_arc_rawimage.reg``
 
 .. image:: images/ds9_arclines1.png
    :width: 800
@@ -691,27 +682,16 @@ In our case, we have estimated that there is no offset in the spatial direction
 (Y axis), and an offset of around 3 pixels in the wavelength direction (X
 axis). Those offsets should be introduced in the observation result file. For
 that purpose, we have created a modified version of
-``00_simple_example.yaml`` with the name ``01_simple_example.yaml``:
+``0_preliminary_calibrationyaml`` with the name ``1_refined_calibration.yaml``:
 
-::
+.. literalinclude:: 1_refined_calibration.yaml
+   :linenos:
+   :lineno-start: 1
 
-   id: 1345refined
-   instrument: EMIR
-   mode: GENERATE_RECTWV_COEFF
-   frames:
-    - 0001041345-20160917-EMIR-TEST0.fits
-    - 0001041348-20160917-EMIR-TEST0.fits
-    - 0001041351-20160917-EMIR-TEST0.fits
-   enabled: True
-   requirements:
-     refine_wavecalib_mode: 2
-     global_integer_offset_x_pix : 3 
-     global_integer_offset_y_pix : 0 
-
-This file is the same as ``00_simple_example.yaml`` but with a different
-``id`` (to generate different `work` and `results` subdirectories that do not
-overwrite the initial reduction), and four extra lines at the end. In
-particular, we are specifying a few parameters that are going to modify the
+This file is the same as ``0_preliminary_calibration.yaml`` but with a
+different ``id`` (to generate different `work` and `results` subdirectories
+that do not overwrite the initial reduction), and four extra lines at the end.
+In particular, we are specifying a few parameters that are going to modify the
 behavior of the reduction recipe:
 
 - ``refine_wavecalib_mode``: 2: this indicates that the image correspond to an
@@ -731,36 +711,38 @@ Execute the reduction recipe using the new observation result file:
 
 ::
 
-   (emir) $ numina run 01_simple_example.yaml -r control.yaml
+   (emir) $ numina run 1_refined_calibration.yaml --link-files -r control.yaml
    ...
    ...
 
 Now the execution of the code takes longer (the median spectrum of each slitlet
 is crosscorrelated with an expected arc spectrum in order to guarantee that the
-wavelength calibration of the different slitlets match).
+wavelength calibration of the different slitlets matches).
 
 The new ``reduced_mos.fits`` image now does exhibit a much better wavelength calibration:
 
 ::
 
-   (emir) $ numina-ximshow obsid1345refined_results/reduced_mos.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
+   (emir) $ numina-ximshow obsid_0001041345_refined_results/reduced_mos.fits \
+     --bbox 1920,2050,1,2090 --z1z2 0,11000
 
 
 .. image:: images/stare_refined_zoom.png
    :width: 800
    :alt: stare image refined zoom
 
-Within the ``obsid1345refined_work`` subdirectory you can find a new auxiliary
-file called ``expected_catalog_lines.fits`` which contains the expected
-locations of the arc lines in the rectified and wavelength calibrated sampling
-(i.e., with the same dimensions as ``reduced_mos.fits``). We can then display
-that new image zooming into the same region employed in the last plot (note
-that the intensity of the arc lines in ``expected_catalog_lines.fits`` ranges
-from 0.0 to 1.0):
+Within the ``obsid_0001041345_refined_work`` subdirectory you can find a new
+auxiliary file called ``expected_catalog_lines.fits`` which contains the
+expected locations of the arc lines in the rectified and wavelength calibrated
+sampling (i.e., with the same dimensions as ``reduced_mos.fits``). We can then
+display that new image zooming into the same region employed in the last plot
+(note that the intensity of the arc lines in ``expected_catalog_lines.fits``
+ranges from 0.0 to 1.0):
 
 ::
 
-   (emir) $ numina-ximshow obsid1345refined_work/expected_catalog_lines.fits --bbox 1920,2050,1,2090 --z1z2 0,0.4
+   (emir) $ numina-ximshow obsid_0001041345_refined_work/expected_catalog_lines.fits \
+     --bbox 1920,2050,1,2090 --z1z2 0,0.4
 
 
 .. image:: images/stare_expected_refined_zoom.png
@@ -778,13 +760,13 @@ slitlets by number.
 
 ::
 
-   (emir) $ ds9 obsid1345refined_results/reduced_mos.fits
+   (emir) $ ds9 obsid_0001041345_refined_results/reduced_mos.fits
 
 and load the region files:
 
-- select ``region --> load -> obsid1345refined_work/ds9_boundaries_rectified.reg``
-- select ``region --> load -> obsid1345refined_work/ds9_frontiers_rectified.reg``
-- select ``region --> load -> obsid1345refined_work/ds9_arc_rectified.reg``
+- select ``region --> load -> obsid_0001041345_refined_work/ds9_boundaries_rectified.reg``
+- select ``region --> load -> obsid_0001041345_refined_work/ds9_frontiers_rectified.reg``
+- select ``region --> load -> obsid_0001041345_refined_work/ds9_arc_rectified.reg``
 
 .. image:: images/ds9_rectified.png
    :width: 800
@@ -796,10 +778,16 @@ Zooming:
    :width: 800
    :alt: ds9 rectified image zoom
 
-In the ``obsid1345refined_work`` subdirectory you should also find a new file
-named ``crosscorrelation.pdf`` which contains a graphical summary of the
-cross-correlation process. In particular, you have an individual plot for each
-slitlet showing the cross-correlation function:
+In the ``obsid_0001041345_refined_work`` subdirectory you should also find a
+new file named ``crosscorrelation.pdf`` which contains a graphical summary of
+the cross-correlation process. In particular, you have an individual plot for
+each slitlet showing the cross-correlation function:
+
+.. howto:
+   convert -density 200 crosscorrelation.pdf[118] 0001041345_crosscorrelation0.png
+   convert -density 200 crosscorrelation.pdf[119] 0001041345_crosscorrelation1.png
+   convert -density 200 crosscorrelation.pdf[120] 0001041345_crosscorrelation2.png
+   convert -density 200 crosscorrelation.pdf[163] 0001041345_crosscorrelation3.png
 
 .. image:: images/0001041345_crosscorrelation0.png
    :width: 800

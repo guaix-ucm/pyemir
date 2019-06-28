@@ -182,7 +182,7 @@ highlighting the first block (first six lines):
   block will generate two subdirectories named ``obsid_0001877553_work`` and
   ``obsid_0001877553_results``, where the intermediate results and the final
   results are going to be stored, respectively. Note that we have arbitrarily
-  chosen the last 10 digits of the unique running number assigned to each image
+  chosen the 10 digits of the unique running number assigned to each image
   obtained with the GTC to build the label.
  
 - Not surprisingly, the key ``instrument`` is set to EMIR (do not forget that
@@ -288,8 +288,9 @@ In particular, for the first block:
    └── master_flatframe.fits
 
 *When disk space is an issue, it is possible to execute numina indicating that
-links (instead of actual copies of the files) must be placed in the ``work``
-subdirectory.* This behaviour is set using the parameter ``--link-files``:
+links (instead of actual copies of the original raw files) must be placed in the
+``work`` subdirectory.* This behaviour is set using the parameter
+``--link-files``:
 
 ::
 
