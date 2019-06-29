@@ -1,0 +1,155 @@
+id: _0001572158_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572158-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572187_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572187-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572216_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572216-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572245_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572245-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572274_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572274-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572303_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572303-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572332_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572332-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572361_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572361-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572414_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572414-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572443_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572443-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572472_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572472-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
+---
+id: _0001572501_rectwv
+instrument: EMIR
+mode: GENERATE_RECTWV_COEFF
+frames:
+ - 0001572501-20180530-EMIR-STARE_SPECTRA.fits
+requirements:
+  refine_wavecalib_mode: 12
+  minimum_slitlet_width_mm: 1.295
+  maximum_slitlet_width_mm: 2.0
+  global_integer_offset_x_pix: 9
+  global_integer_offset_y_pix: -3
+enabled: True
