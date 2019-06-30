@@ -1,0 +1,71 @@
+id: _abba
+instrument: EMIR
+mode: ABBA_SPECTRA_RECTWV
+frames:
+ - 0002004226-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004255-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004284-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004313-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004342-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004371-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004400-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004429-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004458-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004487-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004516-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004545-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004574-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004603-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004632-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004661-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004690-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004719-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004748-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004777-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004806-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004835-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004864-20190424-EMIR-STARE_SPECTRA.fits
+ - 0002004893-20190424-EMIR-STARE_SPECTRA.fits
+requirements:
+  pattern: ABBA
+  list_rectwv_coeff:
+    - ../obsid_0002004226_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004255_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004284_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004313_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004342_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004371_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004400_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004429_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004458_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004487_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004516_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004545_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004574_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004603_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004632_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004661_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004690_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004719_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004748_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004777_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004806_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004835_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004864_rectwv_results/rectwv_coeff.json
+    - ../obsid_0002004893_rectwv_results/rectwv_coeff.json
+  method: sigmaclip
+  method_kwargs:
+    low: 3.0
+    high: 3.0
+  refine_target_along_slitlet:
+    npix_removed_near_ohlines: 3
+    nwidth_medfilt: 11
+    save_individual_images: 0
+    ab_different_target: TBD
+    vpix_region_a_target: [TBD, TBD]
+    vpix_region_a_sky: [TBD, TBD]
+    vpix_region_b_target: [TBD, TBD]
+    vpix_region_b_sky: [TBD, TBD]
+    list_valid_wvregions_a: [ [TBD, TBD], [TBD, TBD] ]
+    list_valid_wvregions_b: [ [TBD, TBD], [TBD, TBD] ]
+enabled: True
