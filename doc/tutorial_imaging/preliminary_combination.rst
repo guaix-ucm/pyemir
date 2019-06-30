@@ -157,13 +157,13 @@ Let's have a look to each of them separately.
 **The observation result file:** ``dithered_ini.yaml``
 
 This is what we call an observation result file, which basically contains the
-reduction recipes to be applied and the images involved. Note that the file,
-written in YAML format, contains 14 blocks, one for each individual image. 
+reduction recipes to be applied and the images involved. Note that this
+particular file contains 14 blocks, one for each individual image. 
 
 Each block is separated by a line containing just three dashes (``---``):
 
-- Do not forget the separation line between blocks (otherwise the pipeline will
-  no recognize where one block ends and the next one begins).
+- Do not forget the separation line ``---`` between blocks (otherwise the 
+  pipeline will not recognize where one block ends and the next one begins).
 
 - This separation line must not appear after the last block.
 
@@ -217,7 +217,8 @@ highlighting the first block (first six lines):
       (emir) $ cd data/
       (emir) $ ls 0001877*fits > list_images.txt
       (emir) $ cd ..
-      (emir) $ pyemir-generate_yaml_for_dithered_image data/list_images.txt --step 0 --outfile dithered_ini.yaml
+      (emir) $ pyemir-generate_yaml_for_dithered_image \
+        data/list_images.txt --step 0 --outfile dithered_ini.yaml
 
 
    Note that a temporary file ``list_images.txt`` is created with a list of the
@@ -439,7 +440,7 @@ tool shipped with numina based on matplotlib), or with any other tool:
    :alt: combined image, version 0
 
 It is clear that this combined image is far from perfect. In particular, there
-are inhomogeneities in the background level, which are easier to at the
+are inhomogeneities in the background level, which are easier to see at the
 image borders. In addition, the objects appear elongated, which indicates that
 the offsets between individual exposures, determined from the WCS header
 information, are not suficiently precise. The zoomed region shown in the next

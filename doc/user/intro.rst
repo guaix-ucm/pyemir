@@ -54,13 +54,13 @@ The steps to install and run PyEmir within a virtual environment are:
 
   ::
   
-     bash$ python3 -m venv emir /path/to/emir
+     $ python3 -m venv emir /path/to/emir
 
   With ``virtualenv``:
   
   ::
 
-     bash$ virtualenv /path/to/emir
+     $ virtualenv /path/to/emir
 
   The directory ``/path/to/emir`` represents the location of the environment.
   It can be any valid directory path.
@@ -75,13 +75,13 @@ The steps to install and run PyEmir within a virtual environment are:
 
   ::
   
-     bash$ source /path/to/emir/bin/activate
+     $ source /path/to/emir/bin/activate
 
   which yields a different system prompt to the user:
 
   ::
   
-     (emir) bash$
+     (emir) $
 
   Now, the name of the environment appears before the standard prompt. We can
   use the environment only on the consoles or terminals where we have
@@ -95,7 +95,7 @@ The steps to install and run PyEmir within a virtual environment are:
 
   ::
   
-     (emir) bash$ pip install pyemir
+     (emir) $ pip install pyemir
      ...
      ...
 
@@ -105,8 +105,8 @@ The steps to install and run PyEmir within a virtual environment are:
 
   ::
 
-     (emir) bash$ numina
-     DEBUG: Numina simple recipe runner version 0.19
+     (emir) $ numina
+     DEBUG: Numina simple recipe runner version 0.21
 
 5. **Update within the environment**
 
@@ -115,7 +115,7 @@ The steps to install and run PyEmir within a virtual environment are:
   
   ::
   
-     (emir) bash$ pip install -U pyemir
+     (emir) $ pip install -U pyemir
 
 6. **Deactivate the environment**
   
@@ -124,8 +124,8 @@ The steps to install and run PyEmir within a virtual environment are:
 
   ::
   
-     (emir) bash$ deactivate
-     bash$
+     (emir) $ deactivate
+     $
 
 
 .. _pyemir_installation_conda:
@@ -149,13 +149,13 @@ installation, you can call conda commands directly in the shell, like this:
 
 ::
 
-   bash$ conda info
+   $ conda info
 
 If not, you will need the add the path to the command, like:
 
 ::
 
-  bash$ /path/to/conda/bin/conda info
+  $ /path/to/conda/bin/conda info
 
 
 In this guide we will write the commands without the full path, for simplicity.
@@ -171,14 +171,14 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   ::
 
-     bash$ conda create --name emir
+     $ conda create --name emir python=3
 
-  The Pyhton interpreter used in this environment is the same version
-  currently used by conda. You can select a different version with
+  Here we are asking that environment to be install under the last version of
+  Python 3. You can select a particular Python version with
 
   ::
 
-     bash$ conda create --name emir python=3.6
+     $ conda create --name emir python=3.6
 
 2. **Activate the environment**
 
@@ -186,13 +186,13 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   ::
 
-     bash$ conda activate emir
+     $ conda activate emir
 
   which yields a different system prompt to the user:
 
   ::
 
-     (emir) bash$ 
+     (emir) $ 
 
 3. **Install PyEmir with conda**
 
@@ -202,7 +202,7 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   ::
 
-     (emir) bash$ conda install -c conda-forge pyemir
+     (emir) $ conda install -c conda-forge pyemir
      ...
      ...
 
@@ -212,8 +212,8 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   ::
 
-     (emir) bash$ numina
-     DEBUG: Numina simple recipe runner version 0.19
+     (emir) $ numina
+     DEBUG: Numina simple recipe runner version 0.21
 
 5. **Update within the environment**
 
@@ -222,7 +222,7 @@ instructions, the steps to execute and run PyEmir under conda are:
   
   ::
   
-     (emir) bash$ conda update pyemir
+     (emir) $ conda update pyemir
 
 6. **Deactivate the environment**
   
@@ -231,8 +231,8 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   ::
   
-     (emir) bash$ conda deactivate
-     bash$
+     (emir) $ conda deactivate
+     $
 
 
 .. _pyemir_installation_development_version:
@@ -249,7 +249,7 @@ useful to add the AstroConda channel:
 
 ::
 
-   bash$ $ conda config --add channels http://ssb.stsci.edu/astroconda
+   $ conda config --add channels http://ssb.stsci.edu/astroconda
 
 It is easy to create a new environment and install the required
 packages using (in this example python 3.7 is defined as the default python
@@ -257,7 +257,7 @@ interpreter):
 
 ::
 
-   bash$ conda create --name emir python=3.7 \
+   $ conda create --name emir python=3.7 \
    astropy \
    cython \
    ipython \
@@ -277,14 +277,14 @@ Activate the new environment:
 
 ::
 
-   bash$ conda activate emir
-   (emir) bash$
+   $ conda activate emir
+   (emir) $
 
 Install the following additional package:
 
 ::
 
-   (emir) bash$ conda install -c conda-forge lmfit
+   (emir) $ conda install -c conda-forge lmfit
 
 
 **Installing/updating numina**
@@ -293,14 +293,14 @@ Download the development version using git:
 
 ::
 
-   (emir) bash$ git clone https://github.com/guaix-ucm/numina.git
-   (emir) bash$ cd numina
+   (emir) $ git clone https://github.com/guaix-ucm/numina.git
+   (emir) $ cd numina
 
 Build numina:
 
 ::
 
-   (emir) bash$ python setup.py build
+   (emir) $ python setup.py build
 
 .. note:: In macOS Mojave, the compilation will fail unless the following
             environment variable is defined::
@@ -311,8 +311,8 @@ Install numina:
 
 ::
 
-   (emir) bash$ python setup.py install
-   (emir) bash$ cd ..
+   (emir) $ python setup.py install
+   (emir) $ cd ..
 
 If you have numina already installed in your system, but want to update the
 code with the latest version, you need to move to the same directory where you
@@ -320,11 +320,11 @@ previously downloaded numina and reinstall it:
 
 ::
 
-   (emir) bash$ cd numina
-   (emir) bash$ git pull
-   (emir) bash$ python setup.py build
-   (emir) bash$ python setup.py install
-   (emir) bash$ cd ..
+   (emir) $ cd numina
+   (emir) $ git pull
+   (emir) $ python setup.py build
+   (emir) $ python setup.py install
+   (emir) $ cd ..
 
 Note: when updating numina, remember to update also pyemir (see next).
 
@@ -335,11 +335,11 @@ previously described for numina:
 
 ::
    
-   (emir) bash$ git clone https://github.com/guaix-ucm/pyemir.git
-   (emir) bash$ cd pyemir
-   (emir) bash$ python setup.py build
-   (emir) bash$ python setup.py install
-   (emir) bash$ cd ..
+   (emir) $ git clone https://github.com/guaix-ucm/pyemir.git
+   (emir) $ cd pyemir
+   (emir) $ python setup.py build
+   (emir) $ python setup.py install
+   (emir) $ cd ..
 
 If you have pyemir already installed in your system, but want to update the
 code with the latest version, you need to move to the same directory where you
@@ -347,11 +347,11 @@ previously downloaded pyemir and reinstall it:
 
 ::
 
-   (emir) bash$ cd pyemir
-   (emir) bash$ git pull
-   (emir) bash$ python setup.py build
-   (emir) bash$ python setup.py install
-   (emir) bash$ cd ..
+   (emir) $ cd pyemir
+   (emir) $ git pull
+   (emir) $ python setup.py build
+   (emir) $ python setup.py install
+   (emir) $ cd ..
 
 Note: when updating pyemir, remember to update numina first (see above).
 

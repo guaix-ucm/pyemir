@@ -45,9 +45,9 @@ Improving offsets (method #1)
 We can activate the use of 2D cross-correlation of subimages around bright
 targets to obtain refined offsets. This method works only if the initial
 offsets (either derived from the WCS information in the image headers or from
-an external file provided by the user) are a reasonable approximation of the
-refined values. To set this option it it necessary to set the requirement
-``refine_offsets: True`` in the observation file.
+an external file provided by the user) are a reasonable approximation to the
+refined values. To activate this option it it necessary to set the requirement
+``refine_offsets: True`` in the observation result file.
 
 This option is already set in line number 120 of the file ``dithered_v1.yaml``,
 available in the downloaded package for this tutorial.
