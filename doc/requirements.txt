@@ -1,0 +1,11 @@
+numpy
+scipy
+numina>=0.21
+astropy
+matplotlib
+six
+photutils
+sep
+scikit-image
+scikit-learn
+lmfit
