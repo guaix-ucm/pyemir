@@ -38,7 +38,7 @@ nIR bands Z, J, H and K. A multi-slit mask unit will be used for target acquisit
 EMIR is designed to address the science goals of the proposing team and 
 of the Spanish community at large. 
 
-Webpage: https://readthedocs.org/projects/pyemir/?badge=latest
+Webpage: https://pyemir.readthedocs.io/en/latest/
 
 Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
       
