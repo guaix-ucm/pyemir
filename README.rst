@@ -2,7 +2,7 @@
 PyEmir
 =======
 
-|docs| |zenodo|
+|zenodo| |docs| |pypi| 
 
 .. image:: https://travis-ci.org/guaix-ucm/pyemir.svg?branch=master
     :target: https://travis-ci.org/guaix-ucm/pyemir
@@ -23,7 +23,8 @@ be able to be installed and work properly:
  - numpy (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
  - astropy >= 2(http://www.astropy.org/)
- - numina >= 0.17 (https://github.com/guaix-ucm/numina)
+ - numina >= 0.21 (https://github.com/guaix-ucm/numina)
+ - matplotlib (https://matplotlib.org/)
  - photutils >=0.2 (https://github.com/astropy/photutils)
  - sep (https://github.com/kbarbary/sep)
  - scikit-image >= 0.11 (http://scikit-image.org/)
@@ -48,3 +49,5 @@ Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
 .. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.593642.svg
    :target: http://dx.doi.org/10.5281/zenodo.593642
 
+.. |pypi| image:: https://badge.fury.io/py/pyemir.svg
+    :target: https://badge.fury.io/py/pyemir
