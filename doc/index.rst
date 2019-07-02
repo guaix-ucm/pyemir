@@ -18,6 +18,7 @@ Document index:
    preliminaries/preliminaries
    tutorial_imaging/index
    tutorial_mos/index
+   tutorial_flat/index
    user/index 
    reference/index
    glossary
