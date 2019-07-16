@@ -81,25 +81,26 @@ This action should have populated the file tree with 12 science exposures
        ├── rect_wpoly_MOSlibrary_grism_LR_filter_HK.json
        └── rect_wpoly_MOSlibrary_grism_LR_filter_YJ.json
 
-You can easily examine the header of the 12 science files using the utilities 
-``dfits`` and ``fitsort`` (previously mentioned):
+You can easily examine the header of the 12 science files using the astropy
+utility ``fitsheader``:
 
 ::
 
-   (emir) $ dfits data/0001005* | fitsort object grism filter exptime
-   FILE                                    	OBJECT  	GRISM   	FILTER  	EXPTIME   	
-   data/0001005178-20160727-EMIR-TEST0.fits	NGC7798 	J       	J       	119.991601	
-   data/0001005189-20160727-EMIR-TEST0.fits	NGC7798 	J       	J       	119.991601	
-   data/0001005200-20160727-EMIR-TEST0.fits	NGC7798 	H       	H       	119.991601	
-   data/0001005211-20160727-EMIR-TEST0.fits	NGC7798 	H       	H       	119.991601	
-   data/0001005222-20160727-EMIR-TEST0.fits	NGC7798 	K       	Ksp     	119.991601	
-   data/0001005233-20160727-EMIR-TEST0.fits	NGC7798 	K       	Ksp     	119.991601	
-   data/0001005263-20160727-EMIR-TEST0.fits	HD209290	K       	Ksp     	9.999289  	
-   data/0001005266-20160727-EMIR-TEST0.fits	HD209290	K       	Ksp     	9.999289  	
-   data/0001005269-20160727-EMIR-TEST0.fits	HD209290	H       	H       	9.999289  	
-   data/0001005272-20160727-EMIR-TEST0.fits	HD209290	H       	H       	9.999289  	
-   data/0001005275-20160727-EMIR-TEST0.fits	HD209290	J       	J       	9.999289  	
-   data/0001005278-20160727-EMIR-TEST0.fits	HD209290	J       	J       	9.999289 
+   (emir) $ fitsheader data/0001005* -k object -k grism -k filter -k exptime -f
+                   filename                  OBJECT  GRISM FILTER  EXPTIME  
+   ---------------------------------------- -------- ----- ------ ----------
+   data/0001005178-20160727-EMIR-TEST0.fits  NGC7798     J      J 119.991601
+   data/0001005189-20160727-EMIR-TEST0.fits  NGC7798     J      J 119.991601
+   data/0001005200-20160727-EMIR-TEST0.fits  NGC7798     H      H 119.991601
+   data/0001005211-20160727-EMIR-TEST0.fits  NGC7798     H      H 119.991601
+   data/0001005222-20160727-EMIR-TEST0.fits  NGC7798     K    Ksp 119.991601
+   data/0001005233-20160727-EMIR-TEST0.fits  NGC7798     K    Ksp 119.991601
+   data/0001005263-20160727-EMIR-TEST0.fits HD209290     K    Ksp   9.999289
+   data/0001005266-20160727-EMIR-TEST0.fits HD209290     K    Ksp   9.999289
+   data/0001005269-20160727-EMIR-TEST0.fits HD209290     H      H   9.999289
+   data/0001005272-20160727-EMIR-TEST0.fits HD209290     H      H   9.999289
+   data/0001005275-20160727-EMIR-TEST0.fits HD209290     J      J   9.999289
+   data/0001005278-20160727-EMIR-TEST0.fits HD209290     J      J   9.999289
 
 The slitlet configuration can be easily displayed with the help of the
 auxiliary PyEmir script ``pyemir-display_slitlet_arrangement``:

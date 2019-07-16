@@ -53,70 +53,72 @@ This action should have populated the file tree with 24 science exposures
    (emir) $ tree
    ...
 
-You can easily examine the header of the 12 science files using the utilities 
-``dfits`` and ``fitsort`` (previously mentioned):
+You can easily examine the header of the 12 science files using the astropy 
+utility ``fitsheader``:
 
 ::
 
-   (emir) $ dfits data/0002004* | fitsort object grism filter exptime date-obs
-   FILE                                            	OBJECT       	GRISM   	FILTER  	EXPTIME   	DATE-OBS              	
-   data/0002004226-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T00:40:52.36	
-   data/0002004255-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T00:46:58.26	
-   data/0002004284-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T00:53:02.05	
-   data/0002004313-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T00:59:09.00	
-   data/0002004342-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T01:05:30.72	
-   data/0002004371-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T01:11:37.67	
-   data/0002004400-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T01:17:41.46	
-   data/0002004429-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T01:23:49.46	
-   data/0002004458-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T01:30:12.23	
-   data/0002004487-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T01:36:20.24	
-   data/0002004516-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T01:42:24.03	
-   data/0002004545-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T01:48:32.03	
-   data/0002004574-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T01:54:54.80	
-   data/0002004603-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T02:01:02.81	
-   data/0002004632-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T02:07:06.59	
-   data/0002004661-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T02:13:14.60	
-   data/0002004690-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T02:19:37.37	
-   data/0002004719-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T02:25:45.38	
-   data/0002004748-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T02:31:49.16	
-   data/0002004777-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T02:37:57.17	
-   data/0002004806-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T02:44:19.93	
-   data/0002004835-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T02:50:27.94	
-   data/0002004864-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T02:56:31.73	
-   data/0002004893-20190424-EMIR-STARE_SPECTRA.fits	goya_mask1a_J	J       	J       	359.986465	2019-04-25T03:02:40.79
+   (emir) $ fitsheader data/0002004* -k object -k grism -k filter -k exptime -k date-obs -f
+                       filename                         OBJECT    GRISM FILTER  EXPTIME          DATE-OBS       
+   ------------------------------------------------ ------------- ----- ------ ---------- ----------------------
+   data/0002004226-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T00:40:52.36
+   data/0002004255-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T00:46:58.26
+   data/0002004284-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T00:53:02.05
+   data/0002004313-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T00:59:09.00
+   data/0002004342-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T01:05:30.72
+   data/0002004371-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T01:11:37.67
+   data/0002004400-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T01:17:41.46
+   data/0002004429-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T01:23:49.46
+   data/0002004458-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T01:30:12.23
+   data/0002004487-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T01:36:20.24
+   data/0002004516-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T01:42:24.03
+   data/0002004545-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T01:48:32.03
+   data/0002004574-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T01:54:54.80
+   data/0002004603-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T02:01:02.81
+   data/0002004632-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T02:07:06.59
+   data/0002004661-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T02:13:14.60
+   data/0002004690-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T02:19:37.37
+   data/0002004719-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T02:25:45.38
+   data/0002004748-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T02:31:49.16
+   data/0002004777-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T02:37:57.17
+   data/0002004806-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T02:44:19.93
+   data/0002004835-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T02:50:27.94
+   data/0002004864-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T02:56:31.73
+   data/0002004893-20190424-EMIR-STARE_SPECTRA.fits goya_mask1a_J     J      J 359.986465 2019-04-25T03:02:40.79
  
 It is also useful to display additional FITS keywords that store relevant
 information concerning the observation strategy:
 
 ::
 
-   (emir) $ dfits data/0002004*fits | fitsort  OBSBLOCK NIMGOBBL IMGOBBL NFRSEC FRSEC READMODE
-   FILE                                            	OBSBLOCK	NIMGOBBL	IMGOBBL	NFRSEC	FRSEC	READMODE
-   data/0002004226-20190424-EMIR-STARE_SPECTRA.fits	1       	4       	1      	28    	0    	RAMP    	
-   data/0002004255-20190424-EMIR-STARE_SPECTRA.fits	1       	4       	2      	28    	0    	RAMP    	
-   data/0002004284-20190424-EMIR-STARE_SPECTRA.fits	1       	4       	3      	28    	0    	RAMP    	
-   data/0002004313-20190424-EMIR-STARE_SPECTRA.fits	1       	4       	4      	28    	0    	RAMP    	
-   data/0002004342-20190424-EMIR-STARE_SPECTRA.fits	2       	4       	1      	28    	0    	RAMP    	
-   data/0002004371-20190424-EMIR-STARE_SPECTRA.fits	2       	4       	2      	28    	0    	RAMP    	
-   data/0002004400-20190424-EMIR-STARE_SPECTRA.fits	2       	4       	3      	28    	0    	RAMP    	
-   data/0002004429-20190424-EMIR-STARE_SPECTRA.fits	2       	4       	4      	28    	0    	RAMP    	
-   data/0002004458-20190424-EMIR-STARE_SPECTRA.fits	3       	4       	1      	28    	0    	RAMP    	
-   data/0002004487-20190424-EMIR-STARE_SPECTRA.fits	3       	4       	2      	28    	0    	RAMP    	
-   data/0002004516-20190424-EMIR-STARE_SPECTRA.fits	3       	4       	3      	28    	0    	RAMP    	
-   data/0002004545-20190424-EMIR-STARE_SPECTRA.fits	3       	4       	4      	28    	0    	RAMP    	
-   data/0002004574-20190424-EMIR-STARE_SPECTRA.fits	4       	4       	1      	28    	0    	RAMP    	
-   data/0002004603-20190424-EMIR-STARE_SPECTRA.fits	4       	4       	2      	28    	0    	RAMP    	
-   data/0002004632-20190424-EMIR-STARE_SPECTRA.fits	4       	4       	3      	28    	0    	RAMP    	
-   data/0002004661-20190424-EMIR-STARE_SPECTRA.fits	4       	4       	4      	28    	0    	RAMP    	
-   data/0002004690-20190424-EMIR-STARE_SPECTRA.fits	5       	4       	1      	28    	0    	RAMP    	
-   data/0002004719-20190424-EMIR-STARE_SPECTRA.fits	5       	4       	2      	28    	0    	RAMP    	
-   data/0002004748-20190424-EMIR-STARE_SPECTRA.fits	5       	4       	3      	28    	0    	RAMP    	
-   data/0002004777-20190424-EMIR-STARE_SPECTRA.fits	5       	4       	4      	28    	0    	RAMP    	
-   data/0002004806-20190424-EMIR-STARE_SPECTRA.fits	6       	4       	1      	28    	0    	RAMP    	
-   data/0002004835-20190424-EMIR-STARE_SPECTRA.fits	6       	4       	2      	28    	0    	RAMP    	
-   data/0002004864-20190424-EMIR-STARE_SPECTRA.fits	6       	4       	3      	28    	0    	RAMP    	
-   data/0002004893-20190424-EMIR-STARE_SPECTRA.fits	6       	4       	4      	28    	0    	RAMP   
- 
+   (emir) $ fitsheader data/0002004*fits -k OBSBLOCK -k NIMGOBBL -k IMGOBBL -k NFRSEC -k FRSEC -k READMODE -f
+                    filename                     OBSBLOCK NIMGOBBL IMGOBBL NFRSEC FRSEC READMODE
+   ------------------------------------------------ -------- -------- ------- ------ ----- --------
+   data/0002004226-20190424-EMIR-STARE_SPECTRA.fits        1        4       1     28     0     RAMP
+   data/0002004255-20190424-EMIR-STARE_SPECTRA.fits        1        4       2     28     0     RAMP
+   data/0002004284-20190424-EMIR-STARE_SPECTRA.fits        1        4       3     28     0     RAMP
+   data/0002004313-20190424-EMIR-STARE_SPECTRA.fits        1        4       4     28     0     RAMP
+   data/0002004342-20190424-EMIR-STARE_SPECTRA.fits        2        4       1     28     0     RAMP
+   data/0002004371-20190424-EMIR-STARE_SPECTRA.fits        2        4       2     28     0     RAMP
+   data/0002004400-20190424-EMIR-STARE_SPECTRA.fits        2        4       3     28     0     RAMP
+   data/0002004429-20190424-EMIR-STARE_SPECTRA.fits        2        4       4     28     0     RAMP
+   data/0002004458-20190424-EMIR-STARE_SPECTRA.fits        3        4       1     28     0     RAMP
+   data/0002004487-20190424-EMIR-STARE_SPECTRA.fits        3        4       2     28     0     RAMP
+   data/0002004516-20190424-EMIR-STARE_SPECTRA.fits        3        4       3     28     0     RAMP
+   data/0002004545-20190424-EMIR-STARE_SPECTRA.fits        3        4       4     28     0     RAMP
+   data/0002004574-20190424-EMIR-STARE_SPECTRA.fits        4        4       1     28     0     RAMP
+   data/0002004603-20190424-EMIR-STARE_SPECTRA.fits        4        4       2     28     0     RAMP
+   data/0002004632-20190424-EMIR-STARE_SPECTRA.fits        4        4       3     28     0     RAMP
+   data/0002004661-20190424-EMIR-STARE_SPECTRA.fits        4        4       4     28     0     RAMP
+   data/0002004690-20190424-EMIR-STARE_SPECTRA.fits        5        4       1     28     0     RAMP
+   data/0002004719-20190424-EMIR-STARE_SPECTRA.fits        5        4       2     28     0     RAMP
+   data/0002004748-20190424-EMIR-STARE_SPECTRA.fits        5        4       3     28     0     RAMP
+   data/0002004777-20190424-EMIR-STARE_SPECTRA.fits        5        4       4     28     0     RAMP
+   data/0002004806-20190424-EMIR-STARE_SPECTRA.fits        6        4       1     28     0     RAMP
+   data/0002004835-20190424-EMIR-STARE_SPECTRA.fits        6        4       2     28     0     RAMP
+   data/0002004864-20190424-EMIR-STARE_SPECTRA.fits        6        4       3     28     0     RAMP
+   data/0002004893-20190424-EMIR-STARE_SPECTRA.fits        6        4       4     28     0     RAMP
+   
 The last summary shows that:
 
 - ``OBSBLOCK``: (counter of the block sequence) runs from 1 to 6
@@ -880,7 +882,7 @@ region:
 
 ::
 
-   (emir) $ list_a=`dfits data/0002004*.fits | fitsort IMGOBBL | awk '$2 == 1 || $2 == 4 {print $1}'`
+   (emir) $ list_a=`fitsheader data/0002004*.fits -k IMGOBBL -f | awk '$2 == 1 || $2 == 4 {print $1}'`
 
    (emir) $  numina-ximshow $list_a \
     --bbox 86,2047,9,70 \
@@ -893,7 +895,7 @@ is either 1 or 4 (A images). The second command generates a PDF file in which
 a zoom around slitlet number 2 is displayed for all the selected images.
 
 .. howto:
-   list_a=`dfits data/0002004*.fits | fitsort IMGOBBL | awk '$2 == 1 || $2 == 4 {print $1}'`
+   list_a=`fitsheader data/0002004*.fits -k IMGOBBL -f | awk '$2 == 1 || $2 == 4 {print $1}'`
    numina-ximshow $list_a \
     --bbox 86,2047,9,70 \
     --z1z2 0,1100 \
@@ -988,7 +990,10 @@ all the *To Be Defined* ``TBD`` values):
 - ``npix_removed_near_ohlines``: before computing the spatial profiles of the
   selected targets in the A and B images, the bright OH lines are masked. This
   parameter indicates the number of pixels (at each side of the expected
-  location of the lines) that are masked.
+  location of the lines) that are masked. For grism J, H and K (high
+  resolution), a reasonable number is 2 or 3. For grism LR (low resolution)
+  this number should be 1 or even 0 (zero means that only the central pixel is
+  masked), since the number of pixels between OH lines is not too large.
 
 - ``nwidth_medfilt``: after masking the bright OH lines, a median filter is
   applied in the spectral direction with a size given by this parameter.

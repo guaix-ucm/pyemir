@@ -103,33 +103,34 @@ subdirectory) and some additional auxiliary files:
    └── dithered_v5.yaml
 
 You can easily examine the header of the scientific FITS images using the
-utilities ``dfits`` and ``fitsort`` (see section :ref:`dfits_fitsort`)
+astropy utility ``fitsheader``:
 
 ::
 
-   (emir) $ dfits data/0001877*.fits | fitsort obsblock imgobbl nimgobbl object exptime readmode
-   FILE                                          	OBSBLOCK	IMGOBBL	NIMGOBBL	OBJECT  	EXPTIME 	READMODE	
-   data/0001877553-20181217-EMIR-STARE_IMAGE.fits	1       	1      	7       	TEST    	29.99926	RAMP    	
-   data/0001877559-20181217-EMIR-STARE_IMAGE.fits	1       	2      	7       	TEST    	29.99926	RAMP    	
-   data/0001877565-20181217-EMIR-STARE_IMAGE.fits	1       	3      	7       	TEST    	29.99926	RAMP    	
-   data/0001877571-20181217-EMIR-STARE_IMAGE.fits	1       	4      	7       	TEST    	29.99926	RAMP    	
-   data/0001877577-20181217-EMIR-STARE_IMAGE.fits	1       	5      	7       	TEST    	29.99926	RAMP    	
-   data/0001877583-20181217-EMIR-STARE_IMAGE.fits	1       	6      	7       	TEST    	29.99926	RAMP    	
-   data/0001877589-20181217-EMIR-STARE_IMAGE.fits	1       	7      	7       	TEST    	29.99926	RAMP    	
-   data/0001877595-20181217-EMIR-STARE_IMAGE.fits	2       	1      	7       	TEST    	29.99926	RAMP    	
-   data/0001877601-20181217-EMIR-STARE_IMAGE.fits	2       	2      	7       	TEST    	29.99926	RAMP    	
-   data/0001877607-20181217-EMIR-STARE_IMAGE.fits	2       	3      	7       	TEST    	29.99926	RAMP    	
-   data/0001877613-20181217-EMIR-STARE_IMAGE.fits	2       	4      	7       	TEST    	29.99926	RAMP    	
-   data/0001877619-20181217-EMIR-STARE_IMAGE.fits	2       	5      	7       	TEST    	29.99926	RAMP    	
-   data/0001877625-20181217-EMIR-STARE_IMAGE.fits	2       	6      	7       	TEST    	29.99926	RAMP    	
-   data/0001877631-20181217-EMIR-STARE_IMAGE.fits	2       	7      	7       	TEST    	29.99926	RAMP 
+   (emir) $ fitsheader data/0001877*.fits -k obsblock -k imgobbl -k nimgobbl -k object -k exptime -k readmode -f
+                      filename                    OBSBLOCK IMGOBBL NIMGOBBL OBJECT EXPTIME  READMODE
+   ---------------------------------------------- -------- ------- -------- ------ -------- --------
+   data/0001877553-20181217-EMIR-STARE_IMAGE.fits        1       1        7   TEST 29.99926     RAMP
+   data/0001877559-20181217-EMIR-STARE_IMAGE.fits        1       2        7   TEST 29.99926     RAMP
+   data/0001877565-20181217-EMIR-STARE_IMAGE.fits        1       3        7   TEST 29.99926     RAMP
+   data/0001877571-20181217-EMIR-STARE_IMAGE.fits        1       4        7   TEST 29.99926     RAMP
+   data/0001877577-20181217-EMIR-STARE_IMAGE.fits        1       5        7   TEST 29.99926     RAMP
+   data/0001877583-20181217-EMIR-STARE_IMAGE.fits        1       6        7   TEST 29.99926     RAMP
+   data/0001877589-20181217-EMIR-STARE_IMAGE.fits        1       7        7   TEST 29.99926     RAMP
+   data/0001877595-20181217-EMIR-STARE_IMAGE.fits        2       1        7   TEST 29.99926     RAMP
+   data/0001877601-20181217-EMIR-STARE_IMAGE.fits        2       2        7   TEST 29.99926     RAMP
+   data/0001877607-20181217-EMIR-STARE_IMAGE.fits        2       3        7   TEST 29.99926     RAMP
+   data/0001877613-20181217-EMIR-STARE_IMAGE.fits        2       4        7   TEST 29.99926     RAMP
+   data/0001877619-20181217-EMIR-STARE_IMAGE.fits        2       5        7   TEST 29.99926     RAMP
+   data/0001877625-20181217-EMIR-STARE_IMAGE.fits        2       6        7   TEST 29.99926     RAMP
+   data/0001877631-20181217-EMIR-STARE_IMAGE.fits        2       7        7   TEST 29.99926     RAMP
 
 Note that:
 
-- the keyword ``OBSBLOCK`` gives the observing block number
+- the keyword ``OBSBLOCK`` gives the observing block number.
 
 - the keyword ``NIMGOBBL`` provides the total number of images in each
-  dithering pattern (7 in this case)
+  dithering pattern (7 in this case).
 
 - ``IMGOBBL`` indicates the sequential number within each pattern.
 

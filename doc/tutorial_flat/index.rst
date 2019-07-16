@@ -172,32 +172,33 @@ subdirectory) and some additional auxiliary files:
    └── flatpix2pix.yaml
    
 You can easily examine the header of the scientific FITS images using the
-utilities ``dfits`` and ``fitsort`` (see section :ref:`dfits_fitsort`)
+astropy utility ``fitsheader``:
 
 ::
 
-   (emir) $ dfits data/0002069*.fits | fitsort object lampincd lampintn
-   FILE                                            	OBJECT       	LAMPINCD	LAMPINTN        	
-   data/0002069432-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	1       	8.99973011016846	
-   data/0002069435-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	1       	8.99973011016846	
-   data/0002069438-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	1       	8.99973011016846	
-   data/0002069441-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	1       	8.99973011016846	
-   data/0002069444-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	1       	8.99973011016846	
-   data/0002069447-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	1       	8.99973011016846	
-   data/0002069450-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	1       	8.99973011016846	
-   data/0002069453-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	1       	8.99973011016846	
-   data/0002069456-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	1       	8.99973011016846	
-   data/0002069459-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	1       	8.99973011016846	
-   data/0002069552-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	0       	0.              	
-   data/0002069555-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	0       	0.              	
-   data/0002069558-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	0       	0.              	
-   data/0002069561-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	0       	0.              	
-   data/0002069564-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	0       	0.              	
-   data/0002069567-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	0       	0.              	
-   data/0002069570-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	0       	0.              	
-   data/0002069573-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	0       	0.              	
-   data/0002069576-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	0       	0.              	
-   data/0002069579-20190519-EMIR-STARE_SPECTRA.fits	Goya Mask1b H	0       	0.  
+   (emir) $ fitsheader data/0002069*.fits -k object -k lampincd -k lampintn -f
+                       filename                         OBJECT    LAMPINCD     LAMPINTN    
+   ------------------------------------------------ ------------- -------- ----------------
+   data/0002069432-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        1 8.99973011016846
+   data/0002069435-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        1 8.99973011016846
+   data/0002069438-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        1 8.99973011016846
+   data/0002069441-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        1 8.99973011016846
+   data/0002069444-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        1 8.99973011016846
+   data/0002069447-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        1 8.99973011016846
+   data/0002069450-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        1 8.99973011016846
+   data/0002069453-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        1 8.99973011016846
+   data/0002069456-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        1 8.99973011016846
+   data/0002069459-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        1 8.99973011016846
+   data/0002069552-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        0              0.0
+   data/0002069555-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        0              0.0
+   data/0002069558-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        0              0.0
+   data/0002069561-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        0              0.0
+   data/0002069564-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        0              0.0
+   data/0002069567-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        0              0.0
+   data/0002069570-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        0              0.0
+   data/0002069573-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        0              0.0
+   data/0002069576-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        0              0.0
+   data/0002069579-20190519-EMIR-STARE_SPECTRA.fits Goya Mask1b H        0              0.0
 
 The value of the following keywords provide the required information to know
 what type of images we are handling:

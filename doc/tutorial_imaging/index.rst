@@ -26,7 +26,8 @@ attempting to refine the combination procedure.
 
 .. note::
 
-   Two aspects that are still not covered by PyEmir are the following:
+   Two aspects that are still not covered by PyEmir in imaging mode are the 
+   following:
 
    - Only integer offsets between images are considered: this is not especially
      important considering that the PSF is well oversampled. The benefit of
@@ -37,7 +38,9 @@ attempting to refine the combination procedure.
      images appear distorted (sorry!). The inclusion of this correction will
      imply the use of fractions of pixels for a proper image rectification
      prior to the combination, which will probably make the reduction more cpu
-     demanding.
+     demanding. Meanwhile, a temporary solution may be to combine the images
+     using offsets between images computed using as references objects located
+     in the image region where one requires the best image alignment.
 
 
 **Tutorial index:**

@@ -10,7 +10,8 @@ PyEmir, the data reduction pipeline for EMIR, is a Python package
 The easiest method of installing PyEmir is using prebuilt packages. You can
 also build from the development version. 
 
-Maintainers: sergiopr@fis.ucm.es, cardiel@ucm.es
+Maintainers: Sergio Pascual (sergiopr@fis.ucm.es), and Nicolás Cardiel
+(cardiel@ucm.es)
 
 .. warning::
 
@@ -19,7 +20,17 @@ Maintainers: sergiopr@fis.ucm.es, cardiel@ucm.es
 .. warning::
 
    All the commands are assumed to be executed in a terminal running the **bash
-   shell**
+   shell**.
+
+Index:
+
+- :ref:`pyemir_installation_what_method`
+
+- :ref:`pyemir_installation_virtualenv`
+
+- :ref:`pyemir_installation_conda`
+
+- :ref:`pyemir_installation_development_version`
 
 
 .. _pyemir_installation_what_method:
@@ -30,10 +41,32 @@ What method of installation should I use?
 - If you are familiar with one method, use it (conda or virtualenv), since both
   are fully supported.
 
-- In macOS, there is a well-known compatibility problem between virtualenv and
-  `matplotlib <https://matplotlib.org/faq/osx_framework.html>`_, so we recommend setting up conda.
+- In Linux, virtualenv is easier to setup (note: for still unknown reasons,
+  some people using particular Ubuntu versions have faced some problems running
+  --not installing-- the pipeline; we suggest those users to try the
+  installation using conda).
 
-- In Linux, virtualenv is easier to setup.
+- In macOS, there is a well-known compatibility problem between virtualenv and
+  `matplotlib <https://matplotlib.org/faq/osx_framework.html>`_, so we
+  recommend setting up conda.
+
+**You do not need root privileges to install the software.
+Everything will be installed under your home directory.**
+
+We are explaining how to install the sofware using **environments**.
+Environments allow the installation of software packages in isolated *work
+places*, avoiding collisions between already installed software packages in
+your computer. This approach has several advantages:
+
+- You do not need to worry about using the correct python version because the
+  environment will include the appropriate version.
+
+- Additional python packages, required for the execution of the pipeline, will
+  also be installed under your selected environment. If other versions of these
+  packages are already installed in your computer, there will be no collisions
+  between these different versions.
+
+- Environments can be easily created and removed.
 
 .. _pyemir_installation_virtualenv:
 
@@ -127,6 +160,15 @@ The steps to install and run PyEmir within a virtual environment are:
      (emir) $ deactivate
      $
 
+If at a given point you need to remove the environment, deactivate that
+environment and delete the whole directory where the environment was created
+(be careful with the use of this command; make sure you are deleting the
+correct directory!):
+
+::
+
+   $ rm -fr /path/to/emir
+
 
 .. _pyemir_installation_conda:
 
@@ -173,8 +215,9 @@ instructions, the steps to execute and run PyEmir under conda are:
 
      $ conda create --name emir python=3
 
-  Here we are asking that environment to be install under the last version of
-  Python 3. You can select a particular Python version with
+  Here we are asking that environment to be created including the last version
+  of Python 3. If for any reason you need a particular Python version, you can
+  specify it; for example, to force the use of Python 3.6:
 
   ::
 
@@ -234,6 +277,13 @@ instructions, the steps to execute and run PyEmir under conda are:
      (emir) $ conda deactivate
      $
 
+If at a given point you need to remove the environment, deactivate that
+environment and remove it through conda:
+
+::
+
+   $ conda remove --name emir --all
+
 
 .. _pyemir_installation_development_version:
 
@@ -252,12 +302,11 @@ useful to add the AstroConda channel:
    $ conda config --add channels http://ssb.stsci.edu/astroconda
 
 It is easy to create a new environment and install the required
-packages using (in this example python 3.7 is defined as the default python
-interpreter):
+packages using:
 
 ::
 
-   $ conda create --name emir python=3.7 \
+   $ conda create --name emir python=3 \
    astropy \
    cython \
    ipython \

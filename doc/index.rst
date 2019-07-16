@@ -5,7 +5,7 @@ Welcome. This is the Documentation for PyEmir (version |version|),
 
 EMIR is a **wide-field, near-infrared, multi-object spectrograph** (MOS)
 installed at the Nasmyth focus of GTC_. Its MOS mode allows observers to obtain
-**tens of intermediate resolution spectra simultaneously** in the nIR bands *Y,
+**tens of intermediate-resolution spectra simultaneously** in the nIR bands *Y,
 J, H* and *K*. EMIR is designed to address the science goals of the proposing
 team and of the Spanish community at large.
 
@@ -24,6 +24,19 @@ Document index:
    glossary
 
 
-Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
-   
+Maintainers: Sergio Pascual (sergiopr@fis.ucm.es), and Nicolás Cardiel
+(cardiel@ucm.es)
+
+
+.. warning::
+
+   If you are reducing EMIR data obtained with read-out mode RAMP, please, have a look to
+   the instructions provided at 
+   http://research.iac.es/proyecto/emir/pages/observing-with-emir/observing-utilities/checking-ramp-raw-data.php
+
+   It is very easy to check the employed read-out mode using the auxiliary
+   script ``fitsheader`` (provided in the astropy package). For example:
+
+   ``$ fitsheader *.fits -k readmode -f``
+
 .. _GTC: http://www.gtc.iac.es

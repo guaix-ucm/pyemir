@@ -39,7 +39,8 @@ Initial file tree
 -----------------
 
 Here you can find the initial file structure with basic calibrations, required
-to start the data reduction with PyEmir.
+to start the data reduction with PyEmir, either in imaging or spectroscopic
+mode.
 
 Download the following file: `pyemir_initial_tree_v1.tgz 
 <http://nartex.fis.ucm.es/data/pyemir/pyemir_initial_tree_v1.tgz>`_.
@@ -114,12 +115,22 @@ The subdirectory ``data`` contains the following calibration files:
 
 .. _dfits_fitsort:
 
-Installing dfits and fitsort
-----------------------------
+Installing dfits and fitsort (no longer necessary!)
+---------------------------------------------------
 
-Two very useful utilities (used in the tutorials) are ``dfits`` and
-``fitsort``. They will allow you to quickly examine the header content of a set
-of FITS files. 
+.. warning::
+
+   ``dfits`` and ``fitsort`` are no longer employed in these tutorials. These
+   auxiliary programs have been superseded by the auxiliary script
+   ``fitsheader``, automatically installed in your computing when installing
+   the astropy package (required by PyEmir).
+
+   In any case, we still provide here the former programs for those users that
+   feel more comfortable with them.
+
+Two very useful utilities (used in previous versions of the tutorials) are
+``dfits`` and ``fitsort``. They allow you to quickly examine the header content
+of a set of FITS files.
 
 These two utilities belong to the ESO eclipse library. If you do
 not have eclipse installed in your system, you can download the following
@@ -174,11 +185,11 @@ home directory):
 If that file does not exist, generate it with the above line.
 
 In most interactive matplotlib plots created by Numina and Pyemir you can press
-``?`` over the plotting window to retrieve a quick help concerning the use of
+``?`` over the graphical window to retrieve a quick help concerning the use of
 some keystrokes to perform useful plot actions, like zooming, panning, setting
 background and foreground levels, etc. Note that some of these actions are
 already available in the navigation toolbar that appears at the top of the
-plotting windows.
+graphical windows.
 
 
 

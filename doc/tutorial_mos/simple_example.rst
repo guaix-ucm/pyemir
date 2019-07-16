@@ -110,16 +110,17 @@ This action should have populated the file tree with the 3 arc exposures
        ├── rect_wpoly_MOSlibrary_grism_LR_filter_HK.json
        └── rect_wpoly_MOSlibrary_grism_LR_filter_YJ.json
 
-You can easily examine the header of the three arc files using the utilities 
-``dfits`` and ``fitsort`` (previously mentioned):
+You can easily examine the header of the three arc files using the astropy 
+utility ``fitsheader``:
 
 ::
 
-   (emir) $ dfits data/00010413*fits | fitsort object grism filter exptime date-obs
-   FILE                                    	OBJECT           	GRISM  FILTER  	EXPTIME 	DATE-OBS              	
-   data/0001041345-20160917-EMIR-TEST0.fits	CSU_RETI ALL SPEC	J      J       	1.999288	2016-09-17T18:32:29.61	
-   data/0001041348-20160917-EMIR-TEST0.fits	CSU_RETI ALL SPEC	J      J       	1.999288	2016-09-17T18:32:32.68	
-   data/0001041351-20160917-EMIR-TEST0.fits	CSU_RETI ALL SPEC	J      J       	1.999288	2016-09-17T18:32:35.74
+   (emir) $ fitsheader data/00010413*fits -k object -k grism -k filter -k exptime -k date-obs -f
+                   filename                       OBJECT      GRISM FILTER EXPTIME         DATE-OBS       
+   ---------------------------------------- ----------------- ----- ------ -------- ----------------------
+   data/0001041345-20160917-EMIR-TEST0.fits CSU_RETI ALL SPEC     J      J 1.999288 2016-09-17T18:32:29.61
+   data/0001041348-20160917-EMIR-TEST0.fits CSU_RETI ALL SPEC     J      J 1.999288 2016-09-17T18:32:32.68
+   data/0001041351-20160917-EMIR-TEST0.fits CSU_RETI ALL SPEC     J      J 1.999288 2016-09-17T18:32:35.74
 
 Have a look to any of the tree raw arc images (the three images are similar).
 For that purpose you can use ``ds9`` or the visualization tool provided with
@@ -393,9 +394,10 @@ provided with numina:
 
   ::
 
-     (emir) $ dfits obsid_0001041345_results/reduced_mos.fits | fitsort crpix1 crval1 cdelt1
-     FILE                                     	CRPIX1	CRVAL1 	CDELT1	
-     obsid_0001041345_results/reduced_mos.fits	1.0   	11200.0	0.77  
+     (emir) $ fitsheader obsid_0001041345_results/reduced_mos.fits -k crpix1 -k crval1 -k cdelt1 -f
+                      filename                 CRPIX1  CRVAL1 CDELT1
+     ----------------------------------------- ------ ------- ------
+     obsid_0001041345_results/reduced_mos.fits    1.0 11200.0   0.77
 
   Prefixed ``CRVAL1`` and ``CDELT1`` values have been stablished for the
   different grism+filter combinations (``CRPIX1=1`` is employed in all cases).
@@ -409,9 +411,10 @@ provided with numina:
 
   ::
 
-     (emir) $ dfits obsid_0001041345_results/reduced_mos.fits | fitsort naxis1 naxis2
-     FILE                                     	NAXIS1	NAXIS2	
-     obsid_0001041345_results/reduced_mos.fits	3400  	2090  
+     (emir) $ fitsheader obsid_0001041345_results/reduced_mos.fits -k naxis* -f
+                      filename                 NAXIS NAXIS1 NAXIS2
+     ----------------------------------------- ----- ------ ------
+     obsid_0001041345_results/reduced_mos.fits     2   3400   2090
 
   ``NAXIS1`` has been enlarged in order to accommodate wavelength calibrated
   spectra for slitlets in different locations along the spectral direction
@@ -487,9 +490,10 @@ status keywords:
 
 ::
 
-   (emir) $ dfits obsid_0001041345_results/reduced_mos.fits | fitsort lampxe1 lampne1 lamphg1 lampxe2 lampne2 lamphg2
-   FILE                                     	LAMPXE1	LAMPNE1	LAMPHG1	LAMPXE2	LAMPNE2	LAMPHG2	
-   obsid_0001041345_results/reduced_mos.fits	1      	1      	1      	1      	1      	1      	
+   (emir) $ fitsheader obsid_0001041345_results/reduced_mos.fits -k lampxe* -k lampne* -k lamphg* -f
+                    filename                 LAMPXE1 LAMPXE2 LAMPNE1 LAMPNE2 LAMPHG1 LAMPHG2
+   ----------------------------------------- ------- ------- ------- ------- ------- -------
+   obsid_0001041345_results/reduced_mos.fits       1       1       1       1       1       1
 
 Note that the EMIR calibration unit has 3 types of arc lamps: Xe, Ne, and Hg
 (actually two lamps of each type). In principle the six lamps should be ON
