@@ -6,4 +6,8 @@
    :members:
    :undoc-members:
 
+.. automodule:: emirdrp.core.recipe
+   :members:
+   :undoc-members:
+
 

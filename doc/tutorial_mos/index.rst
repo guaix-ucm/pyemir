@@ -13,7 +13,7 @@ For detailed documentation concerning the installation of PyEmir, see the
 :ref:`pyemir_installation` guide.
 
 .. image:: pyemir_mos_scheme.png
-   :width: 800
+   :width: 100% 
    :alt: PyEmir MOS Scheme
 
 As shown in the previous diagram, PyEmir helps to generate a rectified and
@@ -21,7 +21,7 @@ wavelength calibrated 2D image. From this point, the astronomer can use her
 favourite software tools to proceed with the spectra extraction and analysis.
 
 .. image:: pyemir_mos_example.jpg
-   :width: 800
+   :width: 100%
    :alt: PyEmir MOS Scheme
 
 The rectification and wavelength calibration of the original 2048x2048-size raw

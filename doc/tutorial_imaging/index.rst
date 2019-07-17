@@ -43,11 +43,13 @@ attempting to refine the combination procedure.
      in the image region where one requires the best image alignment.
 
 
-**Tutorial index:**
+.. only:: html
 
+   **Tutorial index:**
+   
 .. toctree::
    :maxdepth: 2
-
+   
    preliminary_combination
    refined_combination
-
+   

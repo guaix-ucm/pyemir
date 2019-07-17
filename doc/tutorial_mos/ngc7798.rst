@@ -26,7 +26,7 @@ in the central region of the HII galaxy NGC7798 using the J, H and K grisms.
 simulating a single (pseudo) longslit.**
 
 .. image:: images/ngc7798.png
-   :width: 800
+   :width: 100%
    :alt: NGC 7798
 
 Since we plan to obtained flux calibrated results, we are also going to reduce
@@ -115,7 +115,7 @@ displayed in the terminal show that the CSU configuration was the same for the
 12 images.
 
 .. image:: images/0001005178_csu_configuration.png
-   :width: 800
+   :width: 100%
    :alt: 0001005178 csu configuration
 
 
@@ -169,7 +169,7 @@ and another with negavite counts) in each case:
    (emir) $ ds9 grismJ_hd209290_A-B.fits
 
 .. image:: images/ds9_grismJ_hd209290_A-B.png
-   :width: 800
+   :width: 100%
    :alt: ds9 grismJ A-B
 
 **From this point, we continue the reduction of the spectrophotometric standard
@@ -228,7 +228,7 @@ and another with negavite counts) in each case:
    (emir) $ ds9 grismJ_ngc7798_A-B.fits
 
 .. image:: images/ds9_grismJ_ngc7798_A-B.png
-   :width: 800
+   :width: 100%
    :alt: ds9 grismJ A-B
 
 **From this point, we continue the reduction of the galaxy spectra using 
@@ -237,6 +237,6 @@ See `final reduction of NGC7798
 <http://nartex.fis.ucm.es/~ncl/emir/reduction_ngc7798.html>`_.
 
 .. image:: images/plot_JHK_ngc7798.png
-   :width: 800
+   :width: 100%
    :alt: ds9 grismJ A-B
 

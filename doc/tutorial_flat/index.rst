@@ -218,11 +218,11 @@ Let's have a look to the CSU configuration:
      --longslits --n_clusters 2
 
 .. image:: 0002069432_slitlet_arrangement.png
-   :width: 800
+   :width: 100%
    :alt: original 0002069432 slitlet arrangement
 
 .. image:: 0002069432_slitlet_width_histo.png
-   :width: 800
+   :width: 100%
    :alt: original 0002069432 slitlet width histogram
 
 The previous histogram indicates that the valid slitlet widths for the present
@@ -237,13 +237,13 @@ We can also display the first image with lamp ON and the first with lamp OFF:
 .. numina-ximshow data/0002069432-20190519-EMIR-STARE_SPECTRA.fits --geometry 0,0,650,850
    
 .. image:: 0002069432_original.png
-   :width: 800
+   :width: 100%
    :alt: original 0002069432 image
 
 .. numina-ximshow data/0002069552-20190519-EMIR-STARE_SPECTRA.fits --geometry 0,0,650,850
    
 .. image:: 0002069552_original.png
-   :width: 800
+   :width: 100%
    :alt: original 0002069552 image
 
 An estimate of the integer vertical offset (in pixels) can be obtained using:
@@ -254,13 +254,13 @@ An estimate of the integer vertical offset (in pixels) can be obtained using:
      --rect_wpoly_MOSlibrary data/rect_wpoly_MOSlibrary_grism_H_filter_H.json
 
 .. image:: 0002069432_boundary_model.png
-   :width: 800
+   :width: 100%
    :alt: 0002069432 with boundary model
 
 Zooming in the previous image:
 
 .. image:: 0002069432_boundary_model_zoom.png
-   :width: 800
+   :width: 100%
    :alt: 0002069432 with boundary model
 
 From this examination we estimate ``global_integer_offset_y_pix: -2``. Note
@@ -329,7 +329,7 @@ The resulting pixel-to-pixel flatfield can be found in the corresponding
    (emir) $ numina-ximshow obsid_flat_results/reduced_flatpix2pix.fits
 
 .. image:: flatpix2pix.png
-   :width: 800
+   :width: 100%
    :alt: flat pixel-to-pixel
 
 It is very illustrative to compare the derived flatfield with the file
@@ -340,9 +340,21 @@ look to that comparison in a small image region:
    numina-ximshow data/master_flat_spec.fits --geometry 0,0,650,850 --bbox 884,1182,732,1063 --z1z2 0.80,1.20  --> xxx2.png
    convert -delay 100 -loop 0 xxx[12].png comparison_flatpix2pix.gif
 
-.. image:: comparison_flatpix2pix.gif
-   :width: 800
-   :alt: flat pixel-to-pixel
+.. only:: html
+
+   .. image:: comparison_flatpix2pix.gif
+      :width: 800
+      :alt: flat pixel-to-pixel
+
+.. only:: latex
+
+   |pic_comparison_flatpix2pix_0| |pic_comparison_flatpix2pix_1|
+
+   .. |pic_comparison_flatpix2pix_0| image:: comparison_flatpix2pix_0.png
+      :width: 48%
+
+   .. |pic_comparison_flatpix2pix_1| image:: comparison_flatpix2pix_1.png
+      :width: 48%
 
 This comparison reveals that the flatfield just computed exhibits:
 

@@ -96,7 +96,7 @@ The subdirectory ``data`` contains the following calibration files:
   (i.e., most pixels fall in the interval around 1.0 in the 1:1 diagonal line).
 
   .. image:: pixel2pixel.png
-     :width: 750
+     :width: 100%
      :alt: variation in the pixel2pixel response using different filters
 
 - ``rect_wpoly_MOSlibrary_grism*.json``: empirical distortion and wavelength

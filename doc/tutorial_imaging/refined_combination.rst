@@ -68,17 +68,42 @@ again with this new observation result file:
 .. generada con --geometry 0,0,850,1200
 .. convert combined_v1.png -trim combined_v1_trimmed.png
 .. convert -delay 100 -loop 0 combined_v[01]_trimmed.png comparison_v1.gif
-.. image:: comparison_v1.gif
-   :width: 800
-   :alt: combined image, version 1 compared with version 0
+
+.. only:: html
+
+   .. image:: comparison_v1.gif
+      :width: 100%
+      :alt: combined image, version 1 compared with version 0
+
+.. only:: latex
+
+   |pic_combined_v0_trimmed| |pic_combined_v1_trimmed|
+
+   .. |pic_combined_v0_trimmed| image:: combined_v0_trimmed.png
+      :width: 48%
+
+   .. |pic_combined_v1_trimmed| image:: combined_v1_trimmed.png
+      :width: 48%
 
 .. generada con --geometry 0,0,850,1200 --bbox 1100,1600,800,1300
 .. convert combined_v1_zoom.png -trim combined_v1_zoom_trimmed.png
 .. convert -delay 100 -loop 0 combined_v[01]_zoom_trimmed.png comparison_v1_zoom.gif
-.. image:: comparison_v1_zoom.gif
-   :width: 800
-   :alt: combined image, version 1 compared with version 0
 
+.. only:: html
+
+   .. image:: comparison_v1_zoom.gif
+      :width: 100%
+      :alt: combined image, version 1 compared with version 0
+
+.. only:: latex
+
+   |pic_combined_v0_zoom_trimmed| |pic_combined_v1_zoom_trimmed|
+
+   .. |pic_combined_v0_zoom_trimmed| image:: combined_v0_zoom_trimmed.png
+      :width: 48%
+
+   .. |pic_combined_v1_zoom_trimmed| image:: combined_v1_zoom_trimmed.png
+      :width: 48%
 
 .. _improving_offsets_2:
 
@@ -131,16 +156,42 @@ Execute numina to obtain the new version of the combined image:
 .. generada con --geometry 0,0,850,1200
 .. convert combined_v2.png -trim combined_v2_trimmed.png
 .. convert -delay 100 -loop 0 combined_v[02]_trimmed.png comparison_v2.gif
-.. image:: comparison_v2.gif
-   :width: 800
-   :alt: combined image, version 2 compared with version 0
+
+.. only:: html
+
+   .. image:: comparison_v2.gif
+      :width: 100%
+      :alt: combined image, version 2 compared with version 0
+
+.. only:: latex
+
+   |pic_combined_v0_trimmed| |pic_combined_v2_trimmed|
+
+   .. |pic_combined_v0_trimmed| image:: combined_v0_trimmed.png
+      :width: 48%
+
+   .. |pic_combined_v2_trimmed| image:: combined_v2_trimmed.png
+      :width: 48%
 
 .. generada con --geometry 0,0,850,1200 --bbox 1100,1600,800,1300
 .. convert combined_v2_zoom.png -trim combined_v2_zoom_trimmed.png
 .. convert -delay 100 -loop 0 combined_v[02]_zoom_trimmed.png comparison_v2_zoom.gif
-.. image:: comparison_v2_zoom.gif
-   :width: 800
-   :alt: combined image, version 2 compared with version 0
+
+.. only:: html
+
+   .. image:: comparison_v2_zoom.gif
+      :width: 100%
+      :alt: combined image, version 2 compared with version 0
+
+.. only:: latex
+
+   |pic_combined_v0_zoom_trimmed| |pic_combined_v2_zoom_trimmed|
+
+   .. |pic_combined_v0_zoom_trimmed| image:: combined_v0_zoom_trimmed.png
+      :width: 48%
+
+   .. |pic_combined_v2_zoom_trimmed| image:: combined_v2_zoom_trimmed.png
+      :width: 48%
 
 
 
@@ -175,16 +226,42 @@ the same result.
 .. generada con --geometry 0,0,850,1200
 .. convert combined_v3.png -trim combined_v3_trimmed.png
 .. convert -delay 100 -loop 0 combined_v[13]_trimmed.png comparison_v3.gif
-.. image:: comparison_v3.gif
-   :width: 800
-   :alt: combined image, version 3 compared with version 1
+
+
+.. only:: html
+
+   .. image:: comparison_v3.gif
+      :width: 100%
+      :alt: combined image, version 3 compared with version 1
+
+.. only:: latex
+
+   |pic_combined_v1_trimmed| |pic_combined_v3_trimmed|
+
+   .. |pic_combined_v1_trimmed| image:: combined_v1_trimmed.png
+      :width: 48%
+
+   .. |pic_combined_v3_trimmed| image:: combined_v3_trimmed.png
+      :width: 48%
 
 .. generada con --geometry 0,0,850,1200 --bbox 1100,1600,800,1300
 .. convert combined_v3_zoom.png -trim combined_v3_zoom_trimmed.png
 .. convert -delay 100 -loop 0 combined_v[13]_zoom_trimmed.png comparison_v3_zoom.gif
-.. image:: comparison_v3_zoom.gif
-   :width: 800
-   :alt: combined image, version 3 compared with version 1
+
+.. only:: html
+   .. image:: comparison_v3_zoom.gif
+      :width: 100%
+      :alt: combined image, version 3 compared with version 1
+
+.. only:: latex
+
+   |pic_combined_v1_zoom_trimmed| |pic_combined_v3_zoom_trimmed|
+
+   .. |pic_combined_v1_zoom_trimmed| image:: combined_v1_zoom_trimmed.png
+      :width: 48%
+
+   .. |pic_combined_v3_zoom_trimmed| image:: combined_v3_zoom_trimmed.png
+      :width: 48%
 
 .. note::
 
@@ -239,17 +316,51 @@ It is useful to subtract the new result from the one derived previously:
 .. convert combined_v4.png -trim combined_v4_trimmed.png
 .. convert difference_v4.png -trim difference_v4_trimmed.png
 .. convert -delay 100 -loop 0 combined_v[14]_trimmed.png difference_v4_trimmed.png comparison_v4.gif
-.. image:: comparison_v4.gif
-   :width: 800
-   :alt: combined image, version 4 compared with version 1
+
+.. only:: html
+
+   .. image:: comparison_v4.gif
+      :width: 100%
+      :alt: combined image, version 4 compared with version 1
+
+.. only:: latex
+
+   |pic_combined_v1_trimmed| |pic_combined_v4_trimmed|
+
+   .. |pic_combined_v1_trimmed| image:: combined_v1_trimmed.png
+      :width: 48%
+
+   .. |pic_combined_v4_trimmed| image:: combined_v4_trimmed.png
+      :width: 48%
+
+   .. image:: difference_v4_trimmed.png
+      :width: 48%
+      :align: center
 
 .. generada con --geometry 0,0,850,1200 --bbox 1100,1600,800,1300
 .. convert combined_v4_zoom.png -trim combined_v4_zoom_trimmed.png
 .. convert difference_v4_zoom.png -trim difference_v4_zoom_trimmed.png
 .. convert -delay 100 -loop 0 combined_v[14]_zoom_trimmed.png difference_v4_zoom_trimmed.png comparison_v4_zoom.gif
-.. image:: comparison_v4_zoom.gif
-   :width: 800
-   :alt: combined image, version 4 compared with version 1
+
+.. only:: html
+
+   .. image:: comparison_v4_zoom.gif
+      :width: 100%
+      :alt: combined image, version 4 compared with version 1
+
+.. only:: latex
+
+   |pic_combined_v1_zoom_trimmed| |pic_combined_v4_zoom_trimmed|
+
+   .. |pic_combined_v1_zoom_trimmed| image:: combined_v1_zoom_trimmed.png
+      :width: 48%
+
+   .. |pic_combined_v4_zoom_trimmed| image:: combined_v4_zoom_trimmed.png
+      :width: 48%
+
+   .. image:: difference_v4_zoom_trimmed.png
+      :width: 48%
+      :align: center
 
 
 .. _improving_skybackground_2:
@@ -269,23 +380,84 @@ the combination is lower:
 .. convert +smush 40 combined_v4_trimmed.png combined_v4_npix_trimmed.png data_npix_v4.png
 
 .. image:: data_npix_v4.png
-   :width: 800
+   :width: 100%
    :alt: combined data and number of pixels used in combination, version 4
 
-.. image:: combined_v4_statistics.png
-   :width: 800
-   :alt: combined data version 4, statistical analysis
+.. only:: html
 
+   .. image:: combined_v4_statistics.png
+      :width: 100%
+      :alt: combined data version 4, statistical analysis
+   
+.. only:: latex
+
+   .. image:: combined_v4_statistics.png
+      :width: 82%
+      :alt: combined data version 4, statistical analysis
+   
 It is also possible to examine the sky-subtracted individual images (files
 ending in ``_rfs_i?.fits`` within the ``work`` subdirectories):
 
 .. cd obsid_combined_v4_work
 .. numina-ximshow result_image_*_rfs_i1.fits --z1z2 [-200,300] --pdf skysub_v4.pdf --figuredict "{'figsize':(8, 10), 'dpi':100}"
 .. convert -delay 50 -loop 0 skysub_v4.pdf skysub_v4.gif
+.. convert skysub_v4.gif skysub_v4-%d.png
 
-.. image:: skysub_v4.gif
-   :width: 800
-   :alt: individual sky-subtracted images
+.. only:: html
+
+   .. image:: skysub_v4.gif
+      :width: 100%
+      :alt: individual sky-subtracted images
+
+.. only:: latex
+
+   |pic_v4_0| |pic_v4_1| |pic_v4_2|
+   |pic_v4_3| |pic_v4_4| |pic_v4_5|
+   |pic_v4_6| |pic_v4_7| |pic_v4_8|
+   |pic_v4_9| |pic_v4_10| |pic_v4_11|
+   |pic_v4_12| |pic_v4_13|
+
+   .. |pic_v4_0| image:: skysub_v4-0.png
+      :width: 24%
+
+   .. |pic_v4_1| image:: skysub_v4-1.png
+      :width: 24%
+
+   .. |pic_v4_2| image:: skysub_v4-2.png
+      :width: 24%
+
+   .. |pic_v4_3| image:: skysub_v4-3.png
+      :width: 24%
+
+   .. |pic_v4_4| image:: skysub_v4-4.png
+      :width: 24%
+
+   .. |pic_v4_5| image:: skysub_v4-5.png
+      :width: 24%
+
+   .. |pic_v4_6| image:: skysub_v4-6.png
+      :width: 24%
+
+   .. |pic_v4_7| image:: skysub_v4-7.png
+      :width: 24%
+
+   .. |pic_v4_8| image:: skysub_v4-8.png
+      :width: 24%
+
+   .. |pic_v4_9| image:: skysub_v4-9.png
+      :width: 24%
+
+   .. |pic_v4_10| image:: skysub_v4-10.png
+      :width: 24%
+
+   .. |pic_v4_11| image:: skysub_v4-11.png
+      :width: 24%
+
+   .. |pic_v4_12| image:: skysub_v4-12.png
+      :width: 24%
+
+   .. |pic_v4_13| image:: skysub_v4-13.png
+      :width: 24%
 
 One possibility is to remove the first two images from the list of images to be
 reduced. This is undesirable because it obviously reduces the depth of the
@@ -318,13 +490,34 @@ objects) and a smooth spline surface is fitted to that collection of points.
 .. generada con --geometry 0,0,850,1200
 .. convert combined_v5.png -trim combined_v5_trimmed.png
 .. convert -delay 50 -loop 0 combined_v[45]_trimmed.png comparison_v5.gif
-.. image:: comparison_v5.gif
-   :width: 800
-   :alt: combined image, version 5 compared with version 4
 
-.. image:: combined_v5_statistics.png
-   :width: 800
-   :alt: combined data version 5, statistical analysis
+.. only:: html
+
+   .. image:: comparison_v5.gif
+      :width: 100%
+      :alt: combined image, version 5 compared with version 4
+
+.. only:: latex
+
+   |pic_combined_v4_trimmed| |pic_combined_v5_trimmed|
+
+   .. |pic_combined_v4_trimmed| image:: combined_v4_trimmed.png
+      :width: 48%
+
+   .. |pic_combined_v5_trimmed| image:: combined_v5_trimmed.png
+      :width: 48%
+
+.. only:: html
+
+   .. image:: combined_v5_statistics.png
+      :width: 100%
+      :alt: combined data version 5, statistical analysis
+
+.. only:: latex
+
+   .. image:: combined_v5_statistics.png
+      :width: 82%
+      :alt: combined data version 5, statistical analysis
 
 In the last combination (v5) the sky background level is much flatter around
 zero, except for those pixels in the combined image where only one single

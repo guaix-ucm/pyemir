@@ -442,7 +442,7 @@ tool shipped with numina based on matplotlib), or with any other tool:
 .. generada con --geometry 0,0,850,1200
 .. convert image.png -trim image_trimmed.png
 .. image:: combined_v0_trimmed.png
-   :width: 800
+   :width: 100%
    :alt: combined image, version 0
 
 It is clear that this combined image is far from perfect. In particular, there
@@ -455,7 +455,7 @@ image reveals that the problem is not negligible:
 .. generada con --geometry 0,0,850,1200 --bbox 1100,1600,800,1300
 .. convert image.png -trim image_trimmed.png
 .. image:: combined_v0_zoom_trimmed.png
-   :width: 800
+   :width: 100%
    :alt: combined image, version 0
 
 In the next section we are showing several alternatives to improve the

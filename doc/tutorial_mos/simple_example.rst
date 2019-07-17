@@ -131,7 +131,7 @@ numina:
    (emir) $ numina-ximshow data/0001041345-20160917-EMIR-TEST0.fits
 
 .. image:: images/0001041345_raw.png
-   :width: 800
+   :width: 100%
    :alt: Image 0001041345 raw
 
 The wavelength direction corresponds to the horizontal axis, whereas the
@@ -151,7 +151,7 @@ script ``pyemir-display_slitlet_arrangement``:
 
 
 .. image:: images/0001041345_csu_configuration.png
-   :width: 800
+   :width: 100%
    :alt: Image 0001041345 csu configuration
 
 The above image clearly shows that all CSU bars were configured to create
@@ -386,7 +386,7 @@ provided with numina:
 
 
 .. image:: images/stare_preliminary_version.png
-   :width: 800
+   :width: 100%
    :alt: Stare image preliminary version
 
 - The wavelength calibration coefficientes are stored in the usual FITS
@@ -464,7 +464,7 @@ wavelength calibration between slitlets does not agree within roughtly 1 pixel:
    (emir) $ numina-ximshow obsid_0001041345_results/reduced_mos.fits --bbox 1920,2050,1,2090 --z1z2 0,11000
 
 .. image:: images/stare_preliminary_zoom.png
-   :width: 800
+   :width: 100%
    :alt: Stare image preliminary zoom
 
 In addition, the absolute wavelength calibration is also wrong by a few pixels,
@@ -534,25 +534,25 @@ exactly the same configuration, we can choose any of them):
      --rect_wpoly_MOSlibrary data/rect_wpoly_MOSlibrary_grism_J_filter_J.json
 
 .. image:: images/overplot_boundary1.png
-   :width: 800
+   :width: 100%
    :alt: Overplot boundary 1
 
 Zooming in the lower region:
 
 .. image:: images/overplot_boundary2.png
-   :width: 800
+   :width: 100%
    :alt: Overplot boundary 2
 
 Zooming in the middle region:
 
 .. image:: images/overplot_boundary3.png
-   :width: 800
+   :width: 100%
    :alt: Overplot boundary 3
 
 Zooming in the upper region:
 
 .. image:: images/overplot_boundary4.png
-   :width: 800
+   :width: 100%
    :alt: Overplot boundary 4
 
 The above plots show the selected image with the **frontiers** and
@@ -580,7 +580,7 @@ check that the predicted frontiers (blue lines) properly separate the slitlet
 data:
 
 .. image:: images/overplot_boundary5.png
-   :width: 800
+   :width: 100%
    :alt: Overplot boundary 5
 
 If you prefer to use ``ds9`` for this task, remember that some useful auxiliary
@@ -606,13 +606,13 @@ and load the two region files:
 - select ``region --> load -> obsid_0001041345_work/ds9_boundaries_rawimage.reg``
 
 .. image:: images/ds9_frontiers1.png
-   :width: 800
+   :width: 100%
    :alt: ds9 frontiers 1
 
 Zooming to check the slitlet frontiers:
 
 .. image:: images/ds9_frontiers2.png
-   :width: 800
+   :width: 100%
    :alt: ds9 frontiers 2
 
 Checking the wavelength direction (X axis)
@@ -636,13 +636,13 @@ additional parameter ``--arc_lines``:
      --arc_lines
 
 .. image:: images/overplot_arclines1.png
-   :width: 800
+   :width: 100%
    :alt: overplot arclines 1
 
 Zooming:
 
 .. image:: images/overplot_arclines2.png
-   :width: 800
+   :width: 100%
    :alt: overplot arclines 2
 
 The observed arc lines appear around 3 pixels towards the left of the predicted
@@ -662,13 +662,13 @@ and load the region file:
 - select ``region --> load -> obsid_0001041345_work/ds9_arc_rawimage.reg``
 
 .. image:: images/ds9_arclines1.png
-   :width: 800
+   :width: 100%
    :alt: ds9 arc lines 1
 
 Zooming:
 
 .. image:: images/ds9_arclines2.png
-   :width: 800
+   :width: 100%
    :alt: ds9 arc lines 2
 
 Here it is also clear that the observed arc lines appear around 3 pixels
@@ -732,7 +732,7 @@ The new ``reduced_mos.fits`` image now does exhibit a much better wavelength cal
 
 
 .. image:: images/stare_refined_zoom.png
-   :width: 800
+   :width: 100%
    :alt: stare image refined zoom
 
 Within the ``obsid_0001041345_refined_work`` subdirectory you can find a new
@@ -750,7 +750,7 @@ ranges from 0.0 to 1.0):
 
 
 .. image:: images/stare_expected_refined_zoom.png
-   :width: 800
+   :width: 100%
    :alt: expected stare image refined zoom
 
 Remember that in the work directory you can still find the ds9-region files
@@ -773,13 +773,13 @@ and load the region files:
 - select ``region --> load -> obsid_0001041345_refined_work/ds9_arc_rectified.reg``
 
 .. image:: images/ds9_rectified.png
-   :width: 800
+   :width: 100%
    :alt: ds9 rectified image
 
 Zooming:
 
 .. image:: images/ds9_rectified_zoom.png
-   :width: 800
+   :width: 100%
    :alt: ds9 rectified image zoom
 
 In the ``obsid_0001041345_refined_work`` subdirectory you should also find a
@@ -794,19 +794,19 @@ each slitlet showing the cross-correlation function:
    convert -density 200 crosscorrelation.pdf[163] 0001041345_crosscorrelation3.png
 
 .. image:: images/0001041345_crosscorrelation0.png
-   :width: 800
+   :width: 100%
    :alt: cross-correlation example 0
 
 .. image:: images/0001041345_crosscorrelation1.png
-   :width: 800
+   :width: 100%
    :alt: cross-correlation example 1
 
 .. image:: images/0001041345_crosscorrelation2.png
-   :width: 800
+   :width: 100%
    :alt: cross-correlation example 2
 
 .. image:: images/0001041345_crosscorrelation3.png
-   :width: 800
+   :width: 100%
    :alt: cross-correlation example 3
 
 

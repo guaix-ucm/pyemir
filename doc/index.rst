@@ -9,20 +9,6 @@ installed at the Nasmyth focus of GTC_. Its MOS mode allows observers to obtain
 J, H* and *K*. EMIR is designed to address the science goals of the proposing
 team and of the Spanish community at large.
 
-Document index:
-
-.. toctree::
-   :maxdepth: 1
-
-   installation/index
-   preliminaries/preliminaries
-   tutorial_imaging/index
-   tutorial_mos/index
-   tutorial_flat/index
-   user/index 
-   reference/index
-   glossary
-
 
 Maintainers: Sergio Pascual (sergiopr@fis.ucm.es), and Nicolás Cardiel
 (cardiel@ucm.es)
@@ -38,6 +24,22 @@ Maintainers: Sergio Pascual (sergiopr@fis.ucm.es), and Nicolás Cardiel
    script ``fitsheader`` (provided in the astropy package). For example:
 
    ``$ fitsheader *.fits -k readmode -f``
+
+.. only:: html
+
+   Document index:
+
+.. toctree::
+   :maxdepth: 1
+   
+   installation/index
+   preliminaries/preliminaries
+   tutorial_imaging/index
+   tutorial_mos/index
+   tutorial_flat/index
+   user/index 
+   reference/index
+   glossary
 
 .. _GTC: http://www.gtc.iac.es
 .. _EMIR: http://www.gtc.iac.es/instruments/emir

@@ -50,7 +50,7 @@ is plotted upto 4-sigma. Overplotted in green are the regions at
 mask.
 
 .. image:: ../images/cosmetics.png
-      :width: 800
+      :width: 100%
       :alt: Histogram of the ratio of two flat field images
 
 .. note::

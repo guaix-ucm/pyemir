@@ -154,7 +154,7 @@ the visualization tool provided with numina:
 .. numina-ximshow data/0002004226-20190424-EMIR-STARE_SPECTRA.fits --geometry 0,0,650,850
 
 .. image:: images/0002004226_raw.png
-   :width: 800
+   :width: 100%
    :alt: Image 0002004226 raw
 
 
@@ -182,13 +182,13 @@ the use in this case of the additional parameter ``--n_clusters 2``):
    ---> separator:   1.475
 
 .. image:: images/0002004226_csu_configuration.png
-   :width: 800
+   :width: 100%
    :alt: Image 0002004226 csu configuration
 
 The first figure displays the slitlet arrangement.
 
 .. image:: images/0002004226_slitlet_widths.png
-   :width: 800
+   :width: 100%
    :alt: Image 0002004226 slitlet widths
 
 Note that in this case we have employed the parameter ``--n_clusters 2``, that
@@ -331,7 +331,7 @@ As expected, two new subdirectories have been created:
 
 
 .. image:: images/0002004226_preliminary.png
-   :width: 800
+   :width: 100%
    :alt: Image 0002004226 preliminary
 
 
@@ -389,13 +389,13 @@ preliminary rectification and wavelength calibration, over the raw image:
   obsid_0002004226_rectwv_preliminary_work/ds9_frontiers_rawimage.reg``
 
 .. image:: images/0002004226_overplot1.png
-   :width: 800
+   :width: 100%
    :alt: Image 0002004226 overplot 1
 
 Zooming:
 
 .. image:: images/0002004226_overplot2.png
-   :width: 800
+   :width: 100%
    :alt: Image 0002004226 overplot 2
 
 From this visual examination one concludes that ``global_integer_offset_y_pix:
@@ -421,7 +421,7 @@ the airglow (OH) emission lines:
   obsid_0002004226_rectwv_preliminary_work/ds9_oh_rawimage.reg``
 
 .. image:: images/0002004226_overplot3.png
-   :width: 800
+   :width: 100%
    :alt: Image 0002004226 overplot 3
 
 Note that the location of only the brightest OH lines are displayed. The visual
@@ -565,7 +565,7 @@ We can have a look to the reduced image:
 .. numina-ximshow obsid_0002004226_rectwv_combined_results/reduced_mos.fits --geometry 0,0,1060,850
 
 .. image:: images/0002004226_refined.png
-   :width: 800
+   :width: 100%
    :alt: Image 0002004226 refined
 
 Comparing this new result with the preliminary rectified and wavelength
@@ -578,9 +578,21 @@ direction:
    numina-ximshow obsid_0002004226_rectwv_combined_results/reduced_mos.fits --geometry 0,0,1060,850 --z1z2 0,1200 --bbox 1190,1250,1,2090 --> xxx2.png
    convert -delay 100 -loop 0 xxx[12].png 0002004226_rectwv_comparison.gif
 
-.. image:: images/0002004226_rectwv_comparison.gif
-   :width: 800
-   :alt: Image 0002004226 comparison rectification and wavelength calibration
+.. only:: html
+
+   .. image:: images/0002004226_rectwv_comparison.gif
+      :width: 800
+      :alt: Image 0002004226 comparison rectification and wavelength calibration
+
+.. only:: latex
+
+   |pic_comparison_rectwv_1| |pic_comparison_rectwv_2|
+
+   .. |pic_comparison_rectwv_1| image:: images/0002004226_rectwv_comparison_1.png
+      :width: 48%
+
+   .. |pic_comparison_rectwv_2| image:: images/0002004226_rectwv_comparison_2.png
+      :width: 48%
 
 It is also possible to display the synthetic image, generated during the
 execution of the reduction recipe, with the expected location of the airglow
@@ -594,7 +606,7 @@ execution of the reduction recipe, with the expected location of the airglow
 .. numina-ximshow obsid_0002004226_rectwv_combined_work/expected_catalog_lines.fits --geometry 0,0,1060,850 --z1z2 [-0.1,0.4]
 
 .. image:: images/0002004226_expected_oh_lines.png
-   :width: 800
+   :width: 100%
    :alt: Image 0002004226 expected oh lines
 
 In the ``obsid_0002004226_rectwv_combined_work`` subdirectory you can also find
@@ -610,19 +622,19 @@ A few pages of that file are the following:
 
 
 .. image:: images/0002004226_crosscorrelation0.png
-   :width: 800
+   :width: 100%
    :alt: cross-correlation example 0
 
 .. image:: images/0002004226_crosscorrelation1.png
-   :width: 800
+   :width: 100%
    :alt: cross-correlation example 1
 
 .. image:: images/0002004226_crosscorrelation2.png
-   :width: 800
+   :width: 100%
    :alt: cross-correlation example 2
 
 .. image:: images/0002004226_crosscorrelation3.png
-   :width: 800
+   :width: 100%
    :alt: cross-correlation example 3
 
 
@@ -683,7 +695,7 @@ expected location of the OH lines. This image is stored in the
    cd ..
 
 .. image:: images/0002004226_synthetic.png
-   :width: 800
+   :width: 100%
    :alt: synthetic images with OH lines
 
 .. howto:
@@ -692,9 +704,22 @@ expected location of the OH lines. This image is stored in the
    numina-ximshow reduced_image.fits  --geometry 0,0,650,850 --bbox 1100,1400,1100,1400 --z1z2 0,1200 --> xxx2.png
    convert -delay 100 -loop 0 xxx[12].png 0002004226_synthetic_comparison.gif
    cd ..
-.. image:: images/0002004226_synthetic_comparison.gif
-   :width: 800
-   :alt: comparison between synthetic and original image
+
+.. only:: html
+
+   .. image:: images/0002004226_synthetic_comparison.gif
+      :width: 800
+      :alt: comparison between synthetic and original image
+
+.. only:: latex
+
+   |pic_comparison_synthetic_1| |pic_comparison_synthetic_2|
+
+   .. |pic_comparison_rectwv_1| image:: images/0002004226_synthetic_comparison_1.png
+      :width: 48%
+
+   .. |pic_comparison_rectwv_2| image:: images/0002004226_synthetic_comparison_2.png
+      :width: 48%
 
 The automatic procedure has determined the following offset values:
 
@@ -806,7 +831,7 @@ Two results are produced by this recipe (see subdirectory
 .. numina-ximshow obsid_abba_fast_results/reduced_mos_abba.fits --geometry 0,0,650,850 --z1z2 [-5,5]
 
 .. image:: images/0002004226_abba_fast.png
-   :width: 800
+   :width: 100%
    :alt: fast combination of ABBA images
 
 Making a zoom in the resulting combined image, we estimate that the vertical
@@ -845,7 +870,7 @@ negative (black spectra) and one in positive (white spectrum in between the
 black ones).
 
 .. image:: images/0002004226_abba_fast_combined.png
-   :width: 800
+   :width: 100%
    :alt: fast combination of ABBA images (A on top of B)
 
 .. warning::
@@ -903,9 +928,63 @@ a zoom around slitlet number 2 is displayed for all the selected images.
     --keystitle ra,dec,rotang."RA: %s, DEC: %s, rotang: %5.2f"
    convert -delay 100 -loop 0 brightspectrum_a.pdf brightspectrum_a.gif
 
-.. image:: images/brightspectrum_a.gif
-   :width: 800
-   :alt: variation of brightspectrum of A images
+.. only:: html
+
+   .. image:: images/brightspectrum_a.gif
+      :width: 800
+      :alt: variation of brightspectrum of A images
+
+.. only:: latex
+
+   |pic_brightspec_0|
+   |pic_brightspec_1|
+   |pic_brightspec_2|
+   |pic_brightspec_3|
+   |pic_brightspec_4|
+   |pic_brightspec_5|
+   |pic_brightspec_6|
+   |pic_brightspec_7|
+   |pic_brightspec_8|
+   |pic_brightspec_9|
+   |pic_brightspec_10|
+   |pic_brightspec_11|
+
+   .. |pic_brightspec_0| image:: images/brightspectrum_a_0.png
+      :width: 32%
+
+   .. |pic_brightspec_1| image:: images/brightspectrum_a_1.png
+      :width: 32%
+
+   .. |pic_brightspec_2| image:: images/brightspectrum_a_2.png
+      :width: 32%
+
+   .. |pic_brightspec_3| image:: images/brightspectrum_a_3.png
+      :width: 32%
+
+   .. |pic_brightspec_4| image:: images/brightspectrum_a_4.png
+      :width: 32%
+
+   .. |pic_brightspec_5| image:: images/brightspectrum_a_5.png
+      :width: 32%
+
+   .. |pic_brightspec_6| image:: images/brightspectrum_a_6.png
+      :width: 32%
+
+   .. |pic_brightspec_7| image:: images/brightspectrum_a_7.png
+      :width: 32%
+
+   .. |pic_brightspec_8| image:: images/brightspectrum_a_8.png
+      :width: 32%
+
+   .. |pic_brightspec_9| image:: images/brightspectrum_a_9.png
+      :width: 32%
+
+   .. |pic_brightspec_10| image:: images/brightspectrum_a_10.png
+      :width: 32%
+
+   .. |pic_brightspec_11| image:: images/brightspectrum_a_11.png
+      :width: 32%
+
 
 It is clear that the actual location of the A spectra changed along the
 sequence. Unfortunately, there were no bright spectra in the B images to check
@@ -1107,7 +1186,7 @@ faster ``ABBA_SPECTRA_FAST_RECTWV`` recipe because now:
 .. numina-ximshow obsid_abba_results/reduced_mos_abba_combined.fits --geometry 0,0,650,850 --z1z2 [-5,5]
 
 .. image:: images/0002004226_abba_combined.png
-   :width: 800
+   :width: 100%
    :alt: careful combination of ABBA images (A on top of B)
 
 Using a different rectification and wavelength calibration for each image
@@ -1133,9 +1212,110 @@ direction) when comparing different images. These variations are easy to detect
 .. numina-ximshow data/0002004*fits --bbox 1180,1320,1180,1280  --z1z2 0,1100 --pdffile abba_imageoffsets.pdf  --keystitle ra,dec,rotang."RA: %s, DEC: %s, rotang: %5.2f"
    convert -delay 50 -loop 0 abba_imageoffsets.pdf abba_imageoffsets.gif
 
-.. image:: images/abba_imageoffsets.gif
-   :width: 800
-   :alt: looking for offsets between individual images
+.. only:: html
+
+   .. image:: images/abba_imageoffsets.gif
+      :width: 800
+      :alt: looking for offsets between individual images
+
+.. only:: latex
+
+   |pic_abba_offset_0|
+   |pic_abba_offset_1|
+   |pic_abba_offset_2|
+   |pic_abba_offset_3|
+   |pic_abba_offset_4|
+   |pic_abba_offset_5|
+   |pic_abba_offset_6|
+   |pic_abba_offset_7|
+   |pic_abba_offset_8|
+   |pic_abba_offset_9|
+   |pic_abba_offset_10|
+   |pic_abba_offset_11|
+   |pic_abba_offset_12|
+   |pic_abba_offset_13|
+   |pic_abba_offset_14|
+   |pic_abba_offset_15|
+   |pic_abba_offset_16|
+   |pic_abba_offset_17|
+   |pic_abba_offset_18|
+   |pic_abba_offset_19|
+   |pic_abba_offset_20|
+   |pic_abba_offset_21|
+   |pic_abba_offset_22|
+   |pic_abba_offset_23|
+
+   .. |pic_abba_offset_0| image:: images/abba_imageoffsets_0.png
+      :width: 24%
+
+   .. |pic_abba_offset_1| image:: images/abba_imageoffsets_1.png
+      :width: 24%
+
+   .. |pic_abba_offset_2| image:: images/abba_imageoffsets_2.png
+      :width: 24%
+
+   .. |pic_abba_offset_3| image:: images/abba_imageoffsets_3.png
+      :width: 24%
+
+   .. |pic_abba_offset_4| image:: images/abba_imageoffsets_4.png
+      :width: 24%
+
+   .. |pic_abba_offset_5| image:: images/abba_imageoffsets_5.png
+      :width: 24%
+
+   .. |pic_abba_offset_6| image:: images/abba_imageoffsets_6.png
+      :width: 24%
+
+   .. |pic_abba_offset_7| image:: images/abba_imageoffsets_7.png
+      :width: 24%
+
+   .. |pic_abba_offset_8| image:: images/abba_imageoffsets_8.png
+      :width: 24%
+
+   .. |pic_abba_offset_9| image:: images/abba_imageoffsets_9.png
+      :width: 24%
+
+   .. |pic_abba_offset_10| image:: images/abba_imageoffsets_10.png
+      :width: 24%
+
+   .. |pic_abba_offset_11| image:: images/abba_imageoffsets_11.png
+      :width: 24%
+
+   .. |pic_abba_offset_12| image:: images/abba_imageoffsets_12.png
+      :width: 24%
+
+   .. |pic_abba_offset_13| image:: images/abba_imageoffsets_13.png
+      :width: 24%
+
+   .. |pic_abba_offset_14| image:: images/abba_imageoffsets_14.png
+      :width: 24%
+
+   .. |pic_abba_offset_15| image:: images/abba_imageoffsets_15.png
+      :width: 24%
+
+   .. |pic_abba_offset_16| image:: images/abba_imageoffsets_16.png
+      :width: 24%
+
+   .. |pic_abba_offset_17| image:: images/abba_imageoffsets_17.png
+      :width: 24%
+
+   .. |pic_abba_offset_18| image:: images/abba_imageoffsets_18.png
+      :width: 24%
+
+   .. |pic_abba_offset_19| image:: images/abba_imageoffsets_19.png
+      :width: 24%
+
+   .. |pic_abba_offset_20| image:: images/abba_imageoffsets_20.png
+      :width: 24%
+
+   .. |pic_abba_offset_21| image:: images/abba_imageoffsets_21.png
+      :width: 24%
+
+   .. |pic_abba_offset_22| image:: images/abba_imageoffsets_22.png
+      :width: 24%
+
+   .. |pic_abba_offset_23| image:: images/abba_imageoffsets_23.png
+      :width: 24%
 
 Although the previous animation does not show an apparent variation in the
 location of the OH lines throughout the whole ABBA sequence, we are going to
@@ -1270,9 +1450,21 @@ with the one derived using the same ``rectwv_coeff.json`` for all of them:
 .. numina-ximshow obsid_abba_individual_results/reduced_mos_abba_combined.fits obsid_abba_results/reduced_mos_abba_combined.fits --bbox 500,1500,795,890 --pdffile abba_combined_comparison.pdf --z1z2 [-7,7] --figuredict "{'figsize':(8, 10), 'dpi':100}"
    convert -delay 50 -loop 0 abba_combined_comparison.pdf abba_combinedcomparison.gif
 
-.. image:: images/abba_combinedcomparison.gif
-   :width: 800
-   :alt: comparison between using single of multiple rectwv_coeff.json files
+.. only:: html
+
+   .. image:: images/abba_combinedcomparison.gif
+      :width: 800
+      :alt: comparison between using single of multiple rectwv_coeff.json files
+
+.. only:: latex
+
+   |pic_abba_combined_comparison_0| |pic_abba_combined_comparison_1|
+
+   .. |pic_abba_combined_comparison_0| image:: images/abba_combinedcomparison_0.png
+      :width: 48%
+
+   .. |pic_abba_combined_comparison_1| image:: images/abba_combinedcomparison_1.png
+      :width: 48%
 
 Not surprisingly, the combination obtained after using the 24 individual
 ``rectwv_coeff.json`` files is not very different from the one derived

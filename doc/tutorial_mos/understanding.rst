@@ -7,7 +7,7 @@ with EMIR exhibit geometric distortions, specially noticeable near the borders
 of the spatial direction.
 
 .. image:: images/image_distortions.png
-   :width: 800
+   :width: 100%
    :alt: Image Distortions
 
 The previous image corresponds to a continuum exposure where the even-numbered
@@ -37,10 +37,11 @@ different slitlet configurations in the following videos:
 
    <iframe width="640" height="480" src="https://www.youtube.com/embed/BdcnlTJYZsI?rel=0" frameborder="0" allowfullscreen></iframe>
 
-- Video 1: Variation of the frontiers between slitlets 3 and 4 as a function of
-  the location of the slitlets (along the wavelength direction) in the Cold
-  Slit Unit, using grism J and filter J. The varying numbers at the top of the
-  image indicate the location of both slitlets (in mm).
+- `Video 1: <https://www.youtube.com/embed/BdcnlTJYZsI>`_ Variation of the
+  frontiers between slitlets 3 and 4 as a function of the location of the
+  slitlets (along the wavelength direction) in the Cold Slit Unit, using grism
+  J and filter J. The varying numbers at the top of the image indicate the
+  location of both slitlets (in mm).
 
 .. raw:: html
 
@@ -50,6 +51,6 @@ different slitlet configurations in the following videos:
 
    <iframe width="640" height="480" src="https://www.youtube.com/embed/whWaEtFQlkk?rel=0" frameborder="0" allowfullscreen></iframe>
 
-- Video 2: Same as the previous video, but zooming in the frontier between
-  slitlet 3 and 4.
+- `Video 2: <https://www.youtube.com/embed/whWaEtFQlkk>`_ Same as the previous
+  video, but zooming in the frontier between slitlet 3 and 4.
 

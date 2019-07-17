@@ -204,8 +204,6 @@ latex_elements = {
 latex_documents = [
   ('index', 'pyemir.tex', u'PyEmir Documentation',
    u'Sergio Pascual, Nicolás Cardiel', 'manual'),
-  ('reference/recipes', 'recipes.tex', u'EMIR Recipes',
-   u'Sergio Pascual, Nicolás Cardiel', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
