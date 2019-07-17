@@ -5,15 +5,21 @@ High Level description of the EMIR Data Reduction Pipeline
 
 :author: Nicolás Cardiel, Sergio Pascual
 :revision: 1
-:date: |today|
+:date: 2008-02-09
+
+.. warning::
+
+   The following content is an overall description of the relevant processes
+   initially planned to be incorporated into PyEmir. Note, however, that the
+   final implementation of the data reduction pipeline may differ with respect
+   to these initial guidelines.
+
 
 Introduction
 ============
 
-This is an overall description of the relevant processes involved in the Data Reduction Pipeline of 
-EMIR (basically from the point of view of the astronomers). In this sense, the information 
-here contained follows the contents of the `EMIR Observing Strategies 
-<http://guaix.fis.ucm.es/projects/emir/attachment/wiki/private/
+The information here contained follows the contents of the `EMIR Observing
+Strategies <http://guaix.fis.ucm.es/projects/emir/attachment/wiki/private/
 HighLevel/EMIR_ObservingStrategies.pdf>`_ document.
 
 

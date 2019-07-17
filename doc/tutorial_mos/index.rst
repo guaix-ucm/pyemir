@@ -35,15 +35,18 @@ CSU (Cold Slit Unit).
 At present, PyEmir is able to work with raw images obtained with the following
 spectroscopic configurations:
 
-=====   ======
-Grism   Filter
-=====   ======
-HR J    J
-HR H    H
-HR K    Ksp
-LR      YJ
-LR      HK
-=====   ======
+=====   ======  ===============  ======  ======  ======  ======
+Grism   Filter  Useful slitlets  CRVAL1  CDELT1  NAXIS1  NAXIS2
+=====   ======  ===============  ======  ======  ======  ======
+HR J    J       2 - 54           11200    0.77    3400    2090
+HR H    H       2 - 54           14500    1.22    3400    2090
+HR K    Ksp     2 - 54           19100    1.73    3400    2090
+LR      YJ      4 - 55            8900    3.56    1270    2090
+LR      HK      4 - 55           14500    6.83    1435    2090
+=====   ======  ===============  ======  ======  ======  ======
+
+In the previous table, ``CRVAL1``, ``CDELT1``, ``NAXIS1`` and ``NAXIS2``
+correspond to the values for the rectified and wavelength calibrated images.
 
 We strongly recommend to follow the different sections of this tutorial in the
 provided order, starting with the simple handling of (pseudo) longslit data and

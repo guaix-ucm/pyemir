@@ -14,7 +14,7 @@ Document index:
 .. toctree::
    :maxdepth: 1
 
-   user/intro
+   installation/index
    preliminaries/preliminaries
    tutorial_imaging/index
    tutorial_mos/index
@@ -30,9 +30,9 @@ Maintainers: Sergio Pascual (sergiopr@fis.ucm.es), and Nicolás Cardiel
 
 .. warning::
 
-   If you are reducing EMIR data obtained with read-out mode RAMP, please, have a look to
-   the instructions provided at 
-   http://research.iac.es/proyecto/emir/pages/observing-with-emir/observing-utilities/checking-ramp-raw-data.php
+   If you are reducing EMIR data obtained with read-out mode RAMP, please,
+   have a look to the instructions provided at `Checking the RAMPs
+   <http://research.iac.es/proyecto/emir/pages/observing-with-emir/observing-utilities/checking-ramp-raw-data.php>`_.
 
    It is very easy to check the employed read-out mode using the auxiliary
    script ``fitsheader`` (provided in the astropy package). For example:
