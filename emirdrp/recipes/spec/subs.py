@@ -276,6 +276,7 @@ class BaseABBARecipe(EmirRecipe):
         hdu = hdulist[0]
         hdu.header['history'] = "Processed ABBA"
         hdu.header['NUM-NCOM'] = (2, 'Number of combined frames')
+        hdu.header['IMGOBBL'] = 0
         dm = emirdrp.datamodel.EmirDataModel()
         for img, key in zip(images, ['A', 'B', 'B', 'A']):
             imgid = dm.get_imgid(img)
