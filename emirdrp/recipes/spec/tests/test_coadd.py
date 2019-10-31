@@ -22,14 +22,14 @@ def create_frame(val=0, pos=3, keys=None):
 def create_frame_dark():
     data = numpy.zeros((10, 10))
     hdu = fits.PrimaryHDU(data)
-    hdu.header['EMIRUUID'] = '11111111111111111111111111111111'
+    hdu.header['UUID'] = '11111111111111111111111111111111'
     return fits.HDUList([hdu])
 
 
 def create_frame_flat():
     data = numpy.ones((10, 10))
     hdu = fits.PrimaryHDU(data)
-    hdu.header['EMIRUUID'] = '2222222222222222222222222222222'
+    hdu.header['UUID'] = '2222222222222222222222222222222'
     return fits.HDUList([hdu])
 
 

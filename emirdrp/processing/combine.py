@@ -126,7 +126,7 @@ def create_proc_hdulist(cdata, data_array):
 
     hdu = fits.PrimaryHDU(data_array, header=base_header)
     # self.set_base_headers(hdu.header)
-    hdu.header['EMIRUUID'] = str(uuid.uuid1())
+    hdu.header['UUID'] = str(uuid.uuid1())
     # Update obsmode in header
     #hdu.header['OBSMODE'] = 'LS_ABBA'
     # Headers of last image

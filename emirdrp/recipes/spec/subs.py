@@ -291,7 +291,7 @@ class BaseABBARecipe(EmirRecipe):
 
         hdu = fits.PrimaryHDU(data_array, header=base_header)
         self.set_base_headers(hdu.header)
-        hdu.header['EMIRUUID'] = str(uuid.uuid1())
+        hdu.header['UUID'] = str(uuid.uuid1())
         # Update obsmode in header
         hdu.header['OBSMODE'] = 'LS_ABBA'
         # Headers of last image
@@ -307,7 +307,7 @@ class BaseABBARecipe(EmirRecipe):
         hdu = fits.PrimaryHDU(data_array_n[0], header=base_header)
         hdr = hdu.header
         self.set_base_headers(hdr)
-        hdu.header['EMIRUUID'] = str(uuid.uuid1())
+        hdu.header['UUID'] = str(uuid.uuid1())
         hdr['IMGOBBL'] = 0
         hdr['TSUTC2'] = cdata[-1][0].header['TSUTC2']
 
