@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2018 Universidad Complutense de Madrid
+# Copyright 2013-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -67,7 +67,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
             rotang = hdr['ROTANG']
             detpa = hdr['DETPA']
             dtupa = hdr['DTUPA']
-            dtub, dtur = datamodel.get_dtur_from_header(hdr)
+            dtub, dtur = datamodel.get_dtur_from_img(hdulist)
 
         except KeyError as error:
             self.logger.error(error)
@@ -178,7 +178,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
             rotang = hdr['ROTANG']
             detpa = hdr['DETPA']
             dtupa = hdr['DTUPA']
-            dtub, dtur = datamodel.get_dtur_from_header(hdr)
+            dtub, dtur = datamodel.get_dtur_from_img(hdulist)
 
         except KeyError as error:
             self.logger.error(error)

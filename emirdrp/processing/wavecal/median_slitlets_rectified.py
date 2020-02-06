@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -25,6 +25,7 @@ from astropy.io import fits
 import numpy as np
 import sys
 
+import emirdrp.datamodel as datamodel
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 
 from numina.array.display.ximshow import ximshow
@@ -213,8 +214,8 @@ def main(args=None):
     hdulist = fits.open(args.fitsfile)
 
     # determine useful slitlets
-    main_header = hdulist[0].header
-    csu_config = CsuConfiguration.define_from_header(main_header)
+    mecs_header = datamodel.get_mecs_header(hdulist)
+    csu_config = CsuConfiguration.define_from_header(mecs_header)
     # segregate slitlets
     list_useful_slitlets = csu_config.widths_in_range_mm(
         minwidth=args.minimum_slitlet_width_mm,

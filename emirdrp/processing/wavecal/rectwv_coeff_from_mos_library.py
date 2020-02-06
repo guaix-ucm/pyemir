@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -36,6 +36,7 @@ from numina.array.distortion import ncoef_fmap
 from numina.tools.arg_file_is_new import arg_file_is_new
 import numina.types.qc
 
+import emirdrp.datamodel as datamodel
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import MasterRectWave
@@ -88,12 +89,13 @@ def rectwv_coeff_from_mos_library(reduced_image,
 
     # header
     header = reduced_image[0].header
+    mecs_header = datamodel.get_mecs_header(reduced_image)
 
     # read the CSU configuration from the image header
-    csu_conf = CsuConfiguration.define_from_header(header)
+    csu_conf = CsuConfiguration.define_from_header(mecs_header)
 
     # read the DTU configuration from the image header
-    dtu_conf = DtuConfiguration.define_from_header(header)
+    dtu_conf = DtuConfiguration.define_from_header(mecs_header)
 
     # retrieve DTU configuration from MasterRectWave object
     dtu_conf_calib = DtuConfiguration.define_from_dictionary(

@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -34,6 +34,7 @@ from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 from numina.array.wavecalib.resample import resample_image2d_flux
 from numina.tools.arg_file_is_new import arg_file_is_new
 
+import emirdrp.datamodel as datamodel
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import RectWaveCoeff
 
@@ -100,7 +101,8 @@ def apply_rectwv_coeff(reduced_image,
         raise ValueError('Grism name does not match!')
 
     # read the DTU configuration from the image header
-    dtu_conf = DtuConfiguration.define_from_header(header)
+    mecs_header = datamodel.get_mecs_header(reduced_image)
+    dtu_conf = DtuConfiguration.define_from_header(mecs_header)
 
     # retrieve DTU configuration from RectWaveCoeff object
     dtu_conf_calib = DtuConfiguration.define_from_dictionary(

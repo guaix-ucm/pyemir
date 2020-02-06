@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -73,8 +73,9 @@ class BarDetectionRecipe(EmirRecipe):
         try:
             rotang = hdr['ROTANG']
             tsutc1 = hdr['TSUTC1']
-            dtub, dtur = datamodel.get_dtur_from_header(hdr)
-            csupos = datamodel.get_csup_from_header(hdr)
+            mecs_hdr = datamodel.get_mecs_header(hdulist)
+            dtub, dtur = datamodel.get_dtur_from_header(mecs_hdr)
+            csupos = datamodel.get_csup_from_header(mecs_hdr)
             if len(csupos) != 2 * EMIR_NBARS:
                 raise RecipeError('Number of CSUPOS != 2 * NBARS')
             csusens = datamodel.get_cs_from_header(hdr)

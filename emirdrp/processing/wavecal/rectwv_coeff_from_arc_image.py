@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -41,6 +41,7 @@ from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.tools.arg_file_is_new import arg_file_is_new
 import numina.types.qc
 
+import emirdrp.datamodel as datamodel
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.products import RefinedBoundaryModelParam
@@ -138,6 +139,7 @@ def rectwv_coeff_from_arc_image(reduced_image,
 
     # header and data array
     header = reduced_image[0].header
+    mecs_header = datamodel.get_mecs_header(reduced_image)
     image2d = reduced_image[0].data
 
     # check grism and filter
@@ -151,11 +153,11 @@ def rectwv_coeff_from_arc_image(reduced_image,
         raise ValueError('Grism name does not match!')
 
     # read the CSU configuration from the image header
-    csu_conf = CsuConfiguration.define_from_header(header)
+    csu_conf = CsuConfiguration.define_from_header(mecs_header)
     logger.debug(csu_conf)
 
     # read the DTU configuration from the image header
-    dtu_conf = DtuConfiguration.define_from_header(header)
+    dtu_conf = DtuConfiguration.define_from_header(mecs_header)
     logger.debug(dtu_conf)
 
     # set boundary parameters

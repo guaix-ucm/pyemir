@@ -241,10 +241,10 @@ class MaskCheckRecipe(EmirRecipe):
 
     def load_csu_conf(self, hdulist, bars_nominal_positions):
         # Get slits
-        hdr = hdulist[0].header
+        # hdr = hdulist[0].header
         # Extract DTU and CSU information from headers
 
-        dtuconf = self.datamodel.get_dtur_from_header(hdr)
+        dtuconf = self.datamodel.get_dtur_from_img(hdulist)
 
         # coordinates transformation from DTU coordinates
         # to image coordinates
@@ -259,7 +259,16 @@ class MaskCheckRecipe(EmirRecipe):
 
         self.logger.debug('create bar model')
         barmodel = csuconf.create_bar_models(bars_nominal_positions)
-        csu_conf = csuconf.read_csu_3(barmodel, hdr)
+        if 'MECS' in hdulist:
+            # Get header from extension
+            self.logger.debug('CSU info in MECS extension header')
+            hdr_csu = hdulist['MECS'].header
+        else:
+            # Get header from main header
+            self.logger.debug('CSU info in PRIMARY header')
+            hdr_csu = hdulist[0].header
+
+        csu_conf = csuconf.read_csu_3(barmodel, hdr_csu)
 
         if self.intermediate_results:
             # FIXME: coordinates are in VIRT pixels

@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -294,8 +294,9 @@ class SpecFlatPix2Pix(EmirRecipe):
         )
 
         # load CSU configuration
+        mecs_header = emirdrp.datamodel.get_mecs_header(reduced_image)
         csu_conf = CsuConfiguration.define_from_header(
-            reduced_image[0].header
+            mecs_header
         )
         # determine (pseudo) longslits
         dict_longslits = csu_conf.pseudo_longslits()

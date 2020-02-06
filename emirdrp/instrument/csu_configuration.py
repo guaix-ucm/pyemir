@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -109,7 +109,7 @@ class CsuConfiguration(object):
         return NotImplemented
 
     @classmethod
-    def define_from_fits(cls, fitsobj, extnum=0):
+    def define_from_fits(cls, fitsobj, extnum=None):
         """Define class members from header information in FITS file.
 
         Parameters
@@ -117,13 +117,19 @@ class CsuConfiguration(object):
         fitsobj: file object
             FITS file whose header contains the CSU bar information
             needed to initialise the members of this class.
-        extnum : int
-            Extension number (first extension is 0)
+        extnum : None or int or str
+            Extension number or extension name. If None, select 'MECS' extension
+            if available. If not, use priamry extension
 
         """
 
         # read input FITS file
         with fits.open(fitsobj) as hdulist:
+            if extnum is None:
+                if 'MECS' in hdulist:
+                    extnum = 'MECS'
+                else:
+                    extnum = 0
             image_header = hdulist[extnum].header
             return cls.define_from_header(image_header)
 

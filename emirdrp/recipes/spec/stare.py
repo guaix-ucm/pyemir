@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -23,6 +23,7 @@ from numina.array.combine import sigmaclip
 import numina.processing as proc
 from numina.processing.combine import basic_processing_with_combination
 
+import emirdrp.datamodel as datamodel
 from emirdrp.core.recipe import EmirRecipe
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 import emirdrp.products as prods
@@ -307,9 +308,9 @@ class GenerateRectwvCoeff(EmirRecipe):
         # 12 -> apply individual offset to each slitlet (using OH lines)
         if rinput.refine_wavecalib_mode != 0:
             main_header = reduced_image[0].header
-
+            mecs_header = datamodel.get_mecs_header(reduced_image)
             # determine useful slitlets
-            csu_config = CsuConfiguration.define_from_header(main_header)
+            csu_config = CsuConfiguration.define_from_header(mecs_header)
             # segregate slitlets
             list_useful_slitlets = csu_config.widths_in_range_mm(
                 minwidth=rinput.minimum_slitlet_width_mm,

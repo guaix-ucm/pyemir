@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -76,9 +76,10 @@ class MaskImagingRecipe(EmirRecipe):
         try:
             rotang = hdr['ROTANG']
             tsutc1 = hdr['TSUTC1']
-            dtub, dtur = datamodel.get_dtur_from_header(hdr)
-            csupos = datamodel.get_csup_from_header(hdr)
-            csusens = datamodel.get_cs_from_header(hdr)
+            mecs_hdr = datamodel.get_mecs_header(hdulist)
+            dtub, dtur = datamodel.get_dtur_from_header(mecs_hdr)
+            csupos = datamodel.get_csup_from_header(mecs_hdr)
+            csusens = datamodel.get_cs_from_header(mecs_hdr)
 
         except KeyError as error:
             self.logger.error(error)
