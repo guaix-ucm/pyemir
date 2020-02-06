@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -106,6 +106,15 @@ class EmirDataModel(dm.DataModel):
 
         return DtuConf.from_header(hdr)
 
+    def get_dtur_from_img(self, hdulist):
+
+        if 'MECS' in hdulist:
+            hdr = hdulist['MECS'].header
+        else:
+            hdr = hdulist[0].header
+
+        return self.get_dtur_from_header(hdr)
+
 
 class DtuAxis(object):
     def __init__(self, name, coor, coor_f=1.0, coor_0=0.0):
@@ -207,6 +216,19 @@ class DtuConf(object):
 
     def __ne__(self, other):
         return not self == other
+
+
+def get_mecs_header(hdulist):
+    if 'MECS' in hdulist:
+        return hdulist['MECS'].header
+    else:
+        return hdulist[0].header
+
+
+def get_dtur_from_img(hdulist):
+
+    mecs_header = get_mecs_header(hdulist)
+    return get_dtur_from_header(mecs_header)
 
 
 def get_dtur_from_header(hdr):
