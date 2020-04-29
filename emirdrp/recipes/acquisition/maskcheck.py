@@ -226,14 +226,16 @@ class MaskCheckRecipe(EmirRecipe):
             qc = QC.GOOD
 
         # Convert mm to m
-        offset_out = np.array(offset) / 1000.0
+        # offset_out = np.array(offset) / 1000.0
+        offset_out = offset
         # Convert DEG to RAD
-        angle_out = np.deg2rad(angle)
+        # angle_out = np.deg2rad(angle)
+        angle_out = angle
         result = self.create_result(
             slit_image=hdulist_slit,
             object_image=hdulist_object,
-            offset=offset_out,
-            angle=angle_out,
+            offset=offset_out, # offset is in milimeters
+            angle=angle_out, # angle is in degrees
             qc=qc
         )
         self.logger.info('end processing for image acquisition')
@@ -503,8 +505,8 @@ def compute_off_rotation(data, csu_conf, slits_bb=None, rotaxis=(0, 0),
     logger.info('rot angle %5.2f deg', angle)
 
     o_mm = offset * EMIR_PLATESCALE_PIX / EMIR_PLATESCALE
-    angle = np.deg2rad(EMIR_REF_IPA)
-    ipa_rot = create_rot2d(angle)
+    angle_ipa = np.deg2rad(EMIR_REF_IPA)
+    ipa_rot = create_rot2d(angle_ipa)
     logger.info('OFF (mm) %s', o_mm)
     logger.info('Default IPA is %s', EMIR_REF_IPA)
     o_mm_ipa = np.dot(ipa_rot, o_mm)
@@ -519,7 +521,8 @@ def compute_off_rotation(data, csu_conf, slits_bb=None, rotaxis=(0, 0),
         logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', pq1.mean(axis=0))
         logger.debug('MEAN pf REF-MEASURED (VIRT) %s', pq2.mean(axis=0))
 
-    return offset, angle, qc
+    return o_mm_ipa, angle, qc
+    # return offset, angle, qc
 
 
 def calc_bars_borders(image, sob, prow, px1, px2, regionw, h=16, refine=False,
