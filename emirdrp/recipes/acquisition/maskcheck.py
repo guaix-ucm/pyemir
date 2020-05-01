@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -32,7 +32,8 @@ import numina.types.array as tarray
 from numina.core.requirements import ObservationResultRequirement
 import numina.core.query as qmod
 
-from emirdrp.core import EMIR_NBARS, EMIR_PLATESCALE_PIX, EMIR_PLATESCALE
+from emirdrp.core import EMIR_NBARS
+from emirdrp.core import EMIR_PIXSIZE_CSU
 from emirdrp.core import EMIR_PIXSCALE, EMIR_REF_IPA
 from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.combine import basic_processing_, combine_images
@@ -214,6 +215,7 @@ class MaskCheckRecipe(EmirRecipe):
 
             self.logger.debug('center of rotation (from CRPIX) is %s', rotaxis)
 
+            # angle in deg, offset in pixels on the CSU
             offset, angle, qc = compute_off_rotation(
                 image_sep, csu_conf, slits_bb,
                 rotaxis=rotaxis, logger=self.logger,
@@ -225,11 +227,23 @@ class MaskCheckRecipe(EmirRecipe):
             angle = 0.0
             qc = QC.GOOD
 
-        # Convert mm to m
-        # offset_out = np.array(offset) / 1000.0
-        offset_out = offset
+        pixsize_csu = hdulist_object[0].header.get("PXSZCSU", EMIR_PIXSIZE_CSU)
+        self.logger.debug("pixsize in the CSU: %s", pixsize_csu)
+        o_mm = offset * pixsize_csu
+        ipa_deg = hdulist_object[0].header.get("ROTOFF", EMIR_REF_IPA)
+        ipa_rad = np.deg2rad(ipa_deg)
+        ipa_rot = create_rot2d(ipa_rad)
+        self.logger.info('OFF (mm) %s', o_mm)
+        self.logger.info('Default IPA is %s', ipa_deg)
+        o_mm_ipa = np.dot(ipa_rot, o_mm)
+
+        self.logger.info('=========================================')
+        self.logger.info('Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
+        self.logger.info('=========================================')
+
+        # Value in mm
+        offset_out = o_mm_ipa
         # Convert DEG to RAD
-        # angle_out = np.deg2rad(angle)
         angle_out = angle
         result = self.create_result(
             slit_image=hdulist_slit,
@@ -504,25 +518,13 @@ def compute_off_rotation(data, csu_conf, slits_bb=None, rotaxis=(0, 0),
     logger.info('rot matrix is %s', rot)
     logger.info('rot angle %5.2f deg', angle)
 
-    o_mm = offset * EMIR_PLATESCALE_PIX / EMIR_PLATESCALE
-    angle_ipa = np.deg2rad(EMIR_REF_IPA)
-    ipa_rot = create_rot2d(angle_ipa)
-    logger.info('OFF (mm) %s', o_mm)
-    logger.info('Default IPA is %s', EMIR_REF_IPA)
-    o_mm_ipa = np.dot(ipa_rot, o_mm)
-
-    logger.info('=========================================')
-    logger.info('Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
-    logger.info('=========================================')
-
     pq1 = np.subtract(p1, q1)
     pq2 = np.subtract(p2, q2)
     if len(pq1) != 0:
         logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', pq1.mean(axis=0))
         logger.debug('MEAN pf REF-MEASURED (VIRT) %s', pq2.mean(axis=0))
 
-    return o_mm_ipa, angle, qc
-    # return offset, angle, qc
+    return offset, angle, qc
 
 
 def calc_bars_borders(image, sob, prow, px1, px2, regionw, h=16, refine=False,
