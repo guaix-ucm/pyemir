@@ -3,18 +3,8 @@
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Datamodel for EMIR and related functions"""
@@ -103,120 +93,10 @@ class EmirDataModel(dm.DataModel):
         return img
 
     def get_dtur_from_header(self, hdr):
-
-        return DtuConf.from_header(hdr)
+        return get_dtur_from_header(hdr)
 
     def get_dtur_from_img(self, hdulist):
-
-        if 'MECS' in hdulist:
-            hdr = hdulist['MECS'].header
-        else:
-            hdr = hdulist[0].header
-
-        return self.get_dtur_from_header(hdr)
-
-
-class DtuAxis(object):
-    def __init__(self, name, coor, coor_f=1.0, coor_0=0.0):
-        if name.lower() not in ['x', 'y', 'z']:
-            raise ValueError('"name" must be "X", "Y" or "Z')
-        self.name = name
-        self.coor = coor
-        self.coor_f = coor_f
-        self.coor_0 = coor_0
-
-    @property
-    def coor_r(self):
-        return (self.coor - self.coor_0) / self.coor_f
-
-    @classmethod
-    def from_header(cls, hdr, name):
-        if name.lower() not in ['x', 'y', 'z']:
-            raise ValueError('"name" must be "X", "Y" or "Z')
-        coor = hdr['{}DTU'.format(name)]
-        coor_f = hdr.get('{}DTU_F'.format(name), 1.0)
-        coor_0 = hdr.get('{}DTU_0'.format(name), 0.0)
-        return DtuAxis(name, coor, coor_f, coor_0)
-
-    def allclose(self, other, rtol=1e-05, atol=1e-08, equal_nan=False):
-        import numpy
-        a = [self.coor, self.coor_f, self.coor_0]
-        b = [other.coor, other.coor_f, other.coor_0]
-        return numpy.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
-
-    def closeto(self, other, abserror):
-        return self.allclose(other, rtol=0.0, atol=abserror, equal_nan=False)
-
-    def __eq__(self, other):
-        # note: set the precision (number of decimal places) to the same
-        # number employed in __str__() function above to print out member
-        # values
-        ndig = 3
-        # FIXME: this is eqv to allclose with atol=1e-4?
-        if isinstance(other, DtuAxis):
-            result = \
-                self.name.lower() == other.name.lower() and \
-                (round(self.coor, ndig) == round(other.coor, ndig)) and \
-                (round(self.coor_f, ndig) == round(other.coor_f, ndig)) and \
-                (round(self.coor_0, ndig) == round(other.coor_0, ndig))
-
-            return result
-        return NotImplemented
-
-    def __ne__(self, other):
-        return not self == other
-
-
-class DtuConf(object):
-    def __init__(self, xaxis, yaxis, zaxis):
-        self.xaxis = xaxis
-        self.yaxis = yaxis
-        self.zaxis = zaxis
-
-    @property
-    def xdtu_r(self):
-        return self.xaxis.coor_r
-
-    @property
-    def ydtu_r(self):
-        return self.yaxis.coor_r
-
-    @property
-    def zdtu_r(self):
-        return self.zaxis.coor_r
-
-    @property
-    def coor_r(self):
-        return [self.xaxis.coor_r, self.yaxis.coor_r, self.zaxis.coor_r]
-
-    def allclose(self, other, rtol=1e-05, atol=1e-08, equal_nan=False):
-        return (self.xaxis.allclose(other.xaxis, rtol=rtol, atol=atol, equal_nan=equal_nan) and
-                self.yaxis.allclose(other.yaxis, rtol=rtol, atol=atol, equal_nan=equal_nan) and
-                self.zaxis.allclose(other.zaxis, rtol=rtol, atol=atol, equal_nan=equal_nan)
-                )
-
-    def closeto(self, other, abserror):
-        return self.allclose(other, rtol=0.0, atol=abserror, equal_nan=False)
-
-    @classmethod
-    def from_header(cls, hdr):
-        xaxis = DtuAxis.from_header(hdr, name='X')
-        yaxis = DtuAxis.from_header(hdr, name='Y')
-        zaxis = DtuAxis.from_header(hdr, name='Z')
-        dtuconf = DtuConf(xaxis, yaxis, zaxis)
-        return dtuconf
-
-    def __eq__(self, other):
-        if isinstance(other, DtuConf):
-            return (self.xaxis == other.xaxis and
-                    self.yaxis == other.yaxis and
-                    self.zaxis == other.zaxis)
-
-        return NotImplemented
-
-    def __ne__(self, other):
-        return not self == other
-
+        return get_dtur_from_img(hdulist)
 
 def get_mecs_header(hdulist):
     if 'MECS' in hdulist:
@@ -289,63 +169,3 @@ def get_cs_from_header(hdr):
         values.append(hdr.get(key, default))
 
     return values
-
-
-def create_dtu_wcs_header(hdr):
-
-    # get DTU things from header
-    xdtu = hdr['XDTU']
-    ydtu = hdr['YDTU']
-
-    # Defined even if not in the header
-    xdtuf = hdr.get('XDTU_F', 1.0)
-    ydtuf = hdr.get('YDTU_F', 1.0)
-    xdtu0 = hdr.get('XDTU_0', 0.0)
-    ydtu0 = hdr.get('YDTU_0', 0.0)
-
-    xdtur = (xdtu / xdtuf - xdtu0)
-    ydtur = (ydtu / ydtuf - ydtu0)
-
-    xfac = xdtur / emirdrp.instrument.EMIR_PIXSCALE
-    yfac = -ydtur / emirdrp.instrument.EMIR_PIXSCALE
-
-    # xout = xin + yfac
-    # yout = yin + xfac
-
-    dtuwcs = astropy.wcs.WCS(naxis=2)
-    dtuwcs.wcs.name = 'DTU WCS'
-    dtuwcs.wcs.crpix = [0, 0]
-    dtuwcs.wcs.cdelt = [1, 1]
-    dtuwcs.wcs.crval = [yfac, xfac]
-    dtuwcs.wcs.ctype = ['linear', 'linear']
-
-    return dtuwcs
-
-
-def create_dtu_wcs_header_um(hdr):
-
-    # get DTU things from header
-    xdtu = hdr['XDTU']
-    ydtu = hdr['YDTU']
-
-    # Defined even if not in the header
-    xdtuf = hdr.get('XDTU_F', 1.0)
-    ydtuf = hdr.get('YDTU_F', 1.0)
-    xdtu0 = hdr.get('XDTU_0', 0.0)
-    ydtu0 = hdr.get('YDTU_0', 0.0)
-
-    xdtur = (xdtu / xdtuf - xdtu0)
-    ydtur = (ydtu / ydtuf - ydtu0)
-
-    xfac = xdtur
-    yfac = -ydtur
-
-    dtuwcs = astropy.wcs.WCS(naxis=2)
-    dtuwcs.wcs.name = 'DTU WCS um'
-    dtuwcs.wcs.crpix = [0, 0]
-    dtuwcs.wcs.cdelt = [1, 1]
-    dtuwcs.wcs.crval = [yfac, xfac]
-    dtuwcs.wcs.ctype = ['linear', 'linear']
-    dtuwcs.wcs.cunit = ['um', 'um']
-
-    return dtuwcs

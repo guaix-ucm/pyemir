@@ -2,8 +2,8 @@
 import numpy
 import pytest
 
-from emirdrp.datamodel import DtuConf, DtuAxis
-
+from ..dtuconf import DtuConf, DtuAxis
+from ..dtuconf import get_dtur_from_header
 
 # header fragment
 
@@ -35,13 +35,13 @@ def test_dtuc_shift():
 
     # Value in microns in DTU coords
     header = dtu_header()
-    expected = [-0.030338424356226815, -0.008643582758960445, 0.055023193358977096]
+    expected = [-17.206285211909773, -0.7186057740102463, 0.055023193358977096]
     dtuconf = DtuConf.from_header(header)
 
     coor_r = dtuconf.coor_r
     assert numpy.allclose(coor_r, expected)
 
-    expected_pix = [0.0004802, -0.00168547, 0.00305684]
+    expected_pix = [ 0.03992254, -0.95590473,  0.00305684]
     # Value in pixels in image coords
     trans3 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]  # T3 = T2 * T1
 
@@ -69,3 +69,16 @@ def test_dtuaxis_header_raise():
 
     with pytest.raises(ValueError):
         DtuAxis.from_header(header, name='R')
+
+
+def test_dtur():
+    header = dtu_header()
+    dtu, dtur = get_dtur_from_header(header)
+    # dtuconf = DtuConf.from_header(header)
+
+    x_dtu = [-205.679000854492, -24.4878005981445, -463.765991210938]
+    x_dtu_r =  [-17.206285211909773, -0.7186057740102463, 0.055023193358977096]
+
+    assert numpy.allclose(x_dtu, dtu)
+
+    assert numpy.allclose(x_dtu_r, dtur)
