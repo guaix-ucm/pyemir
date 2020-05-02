@@ -99,8 +99,6 @@ class StareSpectraWaveRecipe(EmirRecipe):
     master_sky = reqs.SpectralSkyRequirement(optional=True)
 
     reduced_image = Result(prods.ProcessedImage)
-    # FIXME: duplicated
-    stare = Result(prods.ProcessedMOS)
     reduced_mos = Result(prods.ProcessedMOS)
 
     def run(self, rinput):
@@ -192,8 +190,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
         # save results in results directory
         self.logger.info('end reduction of stare spectra')
         result = self.create_result(reduced_image=reduced_image,
-                                    reduced_mos=stare_image,
-                                    stare=stare_image)
+                                    reduced_mos=stare_image)
         return result
 
     def set_base_headers(self, hdr):
