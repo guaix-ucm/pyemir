@@ -93,10 +93,18 @@ class EmirDataModel(dm.DataModel):
         return img
 
     def get_dtur_from_header(self, hdr):
-        return get_dtur_from_header(hdr)
+        from emirdrp.instrument.dtuconf import DtuConf
+        return DtuConf.from_header(hdr)
 
     def get_dtur_from_img(self, hdulist):
-        return get_dtur_from_img(hdulist)
+
+        if 'MECS' in hdulist:
+            hdr = hdulist['MECS'].header
+        else:
+            hdr = hdulist[0].header
+
+        return self.get_dtur_from_header(hdr)
+
 
 def get_mecs_header(hdulist):
     if 'MECS' in hdulist:
@@ -112,7 +120,13 @@ def get_dtur_from_img(hdulist):
 
 
 def get_dtur_from_header(hdr):
+    from emirdrp.instrument.dtuconf import DtuConf
+    dtuconf = DtuConf.from_header(hdr)
+    return dtuconf.coor, dtuconf.coor_r
 
+
+def get_dtur_from_header_(hdr):
+    # TODO: delete this
     # get DTU things from header
     _logger.info('getting DTU position from header')
     xdtu = hdr['XDTU']
@@ -122,7 +136,6 @@ def get_dtur_from_header(hdr):
     ydtu = hdr['YDTU']
     ydtuf = hdr.get('YDTU_F', 1.0)
     ydtu0 = hdr.get('YDTU_0', 0.0)
-
 
     zdtu = hdr['ZDTU']
     zdtuf = hdr.get('ZDTU_F', 1.0)
@@ -169,3 +182,63 @@ def get_cs_from_header(hdr):
         values.append(hdr.get(key, default))
 
     return values
+
+
+def create_dtu_wcs_header(hdr):
+
+    # get DTU things from header
+    xdtu = hdr['XDTU']
+    ydtu = hdr['YDTU']
+
+    # Defined even if not in the header
+    xdtuf = hdr.get('XDTU_F', 1.0)
+    ydtuf = hdr.get('YDTU_F', 1.0)
+    xdtu0 = hdr.get('XDTU_0', 0.0)
+    ydtu0 = hdr.get('YDTU_0', 0.0)
+
+    xdtur = (xdtu / xdtuf - xdtu0)
+    ydtur = (ydtu / ydtuf - ydtu0)
+
+    xfac = xdtur / emirdrp.instrument.EMIR_PIXSCALE
+    yfac = -ydtur / emirdrp.instrument.EMIR_PIXSCALE
+
+    # xout = xin + yfac
+    # yout = yin + xfac
+
+    dtuwcs = astropy.wcs.WCS(naxis=2)
+    dtuwcs.wcs.name = 'DTU WCS'
+    dtuwcs.wcs.crpix = [0, 0]
+    dtuwcs.wcs.cdelt = [1, 1]
+    dtuwcs.wcs.crval = [yfac, xfac]
+    dtuwcs.wcs.ctype = ['linear', 'linear']
+
+    return dtuwcs
+
+
+def create_dtu_wcs_header_um(hdr):
+
+    # get DTU things from header
+    xdtu = hdr['XDTU']
+    ydtu = hdr['YDTU']
+
+    # Defined even if not in the header
+    xdtuf = hdr.get('XDTU_F', 1.0)
+    ydtuf = hdr.get('YDTU_F', 1.0)
+    xdtu0 = hdr.get('XDTU_0', 0.0)
+    ydtu0 = hdr.get('YDTU_0', 0.0)
+
+    xdtur = (xdtu / xdtuf - xdtu0)
+    ydtur = (ydtu / ydtuf - ydtu0)
+
+    xfac = xdtur
+    yfac = -ydtur
+
+    dtuwcs = astropy.wcs.WCS(naxis=2)
+    dtuwcs.wcs.name = 'DTU WCS um'
+    dtuwcs.wcs.crpix = [0, 0]
+    dtuwcs.wcs.cdelt = [1, 1]
+    dtuwcs.wcs.crval = [yfac, xfac]
+    dtuwcs.wcs.ctype = ['linear', 'linear']
+    dtuwcs.wcs.cunit = ['um', 'um']
+
+    return dtuwcs

@@ -11,17 +11,26 @@
 
 from __future__ import division
 
-import logging
+import contextlib
 
+import numpy
 import astropy.wcs
 
-import emirdrp.instrument
 
-
-_logger = logging.getLogger(__name__)
+@contextlib.contextmanager
+def managed_ndig(obj, ndig):
+    """Context manager to handle ndig"""
+    old_ndig = obj.get_ndig()
+    obj.set_ndig(ndig)
+    try:
+        yield ndig
+    finally:
+        # Code to release resource, e.g.:
+        obj.set_ndig(old_ndig)
 
 
 class DtuAxis(object):
+    """Represents one DTU axis of movement"""
     def __init__(self, name, coor, coor_f=1.0, coor_0=0.0):
         if name.lower() not in ['x', 'y', 'z']:
             raise ValueError('"name" must be "X", "Y" or "Z')
@@ -29,6 +38,7 @@ class DtuAxis(object):
         self.coor = coor
         self.coor_f = coor_f
         self.coor_0 = coor_0
+        self.ndig = 3
 
     @property
     def coor_r(self):
@@ -52,18 +62,23 @@ class DtuAxis(object):
     def closeto(self, other, abserror):
         return self.allclose(other, rtol=0.0, atol=abserror, equal_nan=False)
 
+    def set_ndig(self, ndig):
+        self.ndig = ndig
+
+    def get_ndig(self):
+        return self.ndig
+
     def __eq__(self, other):
         # note: set the precision (number of decimal places) to the same
         # number employed in __str__() function above to print out member
         # values
-        ndig = 3
         # FIXME: this is eqv to allclose with atol=1e-4?
         if isinstance(other, DtuAxis):
             result = \
                 self.name.lower() == other.name.lower() and \
-                (round(self.coor, ndig) == round(other.coor, ndig)) and \
-                (round(self.coor_f, ndig) == round(other.coor_f, ndig)) and \
-                (round(self.coor_0, ndig) == round(other.coor_0, ndig))
+                (round(self.coor, self.ndig) == round(other.coor, self.ndig)) and \
+                (round(self.coor_f, self.ndig) == round(other.coor_f, self.ndig)) and \
+                (round(self.coor_0, self.ndig) == round(other.coor_0, self.ndig))
 
             return result
         return NotImplemented
@@ -73,10 +88,19 @@ class DtuAxis(object):
 
 
 class DtuConf(object):
+    """Represents the three DTU axes of movement"""
     def __init__(self, xaxis, yaxis, zaxis):
         self.xaxis = xaxis
         self.yaxis = yaxis
         self.zaxis = zaxis
+
+    def set_ndig(self, ndig):
+        self.xaxis.set_ndig(ndig)
+        self.yaxis.set_ndig(ndig)
+        self.zaxis.set_ndig(ndig)
+
+    def get_ndig(self):
+        return self.xaxis.get_ndig()
 
     @property
     def xdtu_r(self):
@@ -126,91 +150,70 @@ class DtuConf(object):
     def __ne__(self, other):
         return not self == other
 
+    def describe(self, ndig=None):
+        # note: set the number of decimal figures in output to the precision
+        # value employed in __eq__() function below
+        if ndig is None:
+            ndig = self.xaxis.ndig
 
-def get_dtur_from_header(hdr):
+        output = (
+            "<DtuConf instance>\n"
+              "- XDTU..: {0.xaxis.coor:{width}.{prec}f}\n"
+              "- YDTU..: {0.yaxis.coor:{width}.{prec}f}\n"
+              "- ZDTU..: {0.zaxis.coor:{width}.{prec}f}\n"
+              "- XDTU_0: {0.xaxis.coor_0:{width}.{prec}f}\n"
+              "- YDTU_0: {0.yaxis.coor_0:{width}.{prec}f}\n"
+              "- ZDTU_0: {0.zaxis.coor_0:{width}.{prec}f}\n"
+              "- XDTU_F: {0.xaxis.coor_f:{width}.{prec}f}\n"
+              "- YDTU_F: {0.yaxis.coor_f:{width}.{prec}f}\n"
+              "- ZDTU_F: {0.zaxis.coor_f:{width}.{prec}f}\n"
+        )
+        return output.format(self, width=8, prec=ndig)
 
-    # get DTU things from header
-    _logger.info('getting DTU position from header')
-    xdtu = hdr['XDTU']
-    xdtuf = hdr.get('XDTU_F', 1.0)
-    xdtu0 = hdr.get('XDTU_0', 0.0)
+    def to_wcs(self):
+        """Create a WCS structure for DTU measurements"""
+        dtur = self.coor_r
+        xfac = dtur[0]
+        yfac = -dtur[1]
 
-    ydtu = hdr['YDTU']
-    ydtuf = hdr.get('YDTU_F', 1.0)
-    ydtu0 = hdr.get('YDTU_0', 0.0)
+        dtuwcs = astropy.wcs.WCS(naxis=2)
+        dtuwcs.wcs.name = 'DTU WCS'
+        dtuwcs.wcs.crpix = [0, 0]
+        dtuwcs.wcs.cdelt = [1, 1]
+        dtuwcs.wcs.crval = [yfac, xfac]
+        dtuwcs.wcs.ctype = ['linear', 'linear']
+        dtuwcs.wcs.cunit = ['um', 'um']
 
-    zdtu = hdr['ZDTU']
-    zdtuf = hdr.get('ZDTU_F', 1.0)
-    zdtu0 = hdr.get('ZDTU_0', 0.0)
-
-    _logger.info('XDTU=%6.2f YDTU=%6.2f ZDTU=%6.2f', xdtu, ydtu, zdtu)
-    _logger.info('XDTU_F=%6.2f YDTU_F=%6.2f ZDTU_F=%6.2f', xdtuf, ydtuf, zdtuf)
-    _logger.info('XDTU_0=%6.2f YDTU_0=%6.2f ZDTU_F=%6.2f', xdtu0, ydtu0, zdtu0)
-
-    xdtur = (xdtu / xdtuf - xdtu0)
-    ydtur = (ydtu / ydtuf - ydtu0)
-    zdtur = (zdtu / zdtuf - zdtu0)
-    _logger.info('XDTU_R=%6.2f YDTU_R=%6.2f ZDTU_R=%6.2f', xdtur, ydtur, zdtur)
-    dtu = [xdtu, ydtu, zdtu]
-    dtur = [xdtur, ydtur, zdtur]
-    return dtu, dtur
-
-
-def create_dtu_wcs_header(hdr):
-
-    # get DTU things from header
-    xdtu = hdr['XDTU']
-    ydtu = hdr['YDTU']
-
-    # Defined even if not in the header
-    xdtuf = hdr.get('XDTU_F', 1.0)
-    ydtuf = hdr.get('YDTU_F', 1.0)
-    xdtu0 = hdr.get('XDTU_0', 0.0)
-    ydtu0 = hdr.get('YDTU_0', 0.0)
-
-    xdtur = (xdtu / xdtuf - xdtu0)
-    ydtur = (ydtu / ydtuf - ydtu0)
-
-    xfac = xdtur / emirdrp.instrument.EMIR_PIXSCALE
-    yfac = -ydtur / emirdrp.instrument.EMIR_PIXSCALE
-
-    # xout = xin + yfac
-    # yout = yin + xfac
-
-    dtuwcs = astropy.wcs.WCS(naxis=2)
-    dtuwcs.wcs.name = 'DTU WCS'
-    dtuwcs.wcs.crpix = [0, 0]
-    dtuwcs.wcs.cdelt = [1, 1]
-    dtuwcs.wcs.crval = [yfac, xfac]
-    dtuwcs.wcs.ctype = ['linear', 'linear']
-
-    return dtuwcs
+        return dtuwcs
 
 
-def create_dtu_wcs_header_um(hdr):
+def apply_on_axis(func, args):
+    """Apply a function to the members of a sequence of DtuAxis"""
+    coor_avg = float(func([arg.coor for arg in args]))
+    coor_f_avg = float(func([arg.coor_f for arg in args]))
+    coor_0_avg = float(func([arg.coor_0 for arg in args]))
+    names = [arg.name for arg in args]
+    if names:
+        name = names[0]
+    else:
+        # empty list, fallback
+        name = "X"
+    return DtuAxis(name, coor=coor_avg, coor_f=coor_f_avg, coor_0=coor_0_avg)
 
-    # get DTU things from header
-    xdtu = hdr['XDTU']
-    ydtu = hdr['YDTU']
 
-    # Defined even if not in the header
-    xdtuf = hdr.get('XDTU_F', 1.0)
-    ydtuf = hdr.get('YDTU_F', 1.0)
-    xdtu0 = hdr.get('XDTU_0', 0.0)
-    ydtu0 = hdr.get('YDTU_0', 0.0)
+def average(*args):
+    """Return DtuConf instance with averaged values."""
+    xaxis_avg = apply_on_axis(numpy.mean, [arg.xaxis for arg in args])
+    yaxis_avg = apply_on_axis(numpy.mean, [arg.yaxis for arg in args])
+    zaxis_avg = apply_on_axis(numpy.mean, [arg.zaxis for arg in args])
 
-    xdtur = (xdtu / xdtuf - xdtu0)
-    ydtur = (ydtu / ydtuf - ydtu0)
+    return DtuConf(xaxis_avg, yaxis_avg, zaxis_avg)
 
-    xfac = xdtur
-    yfac = -ydtur
 
-    dtuwcs = astropy.wcs.WCS(naxis=2)
-    dtuwcs.wcs.name = 'DTU WCS um'
-    dtuwcs.wcs.crpix = [0, 0]
-    dtuwcs.wcs.cdelt = [1, 1]
-    dtuwcs.wcs.crval = [yfac, xfac]
-    dtuwcs.wcs.ctype = ['linear', 'linear']
-    dtuwcs.wcs.cunit = ['um', 'um']
+def maxdiff(*args):
+    """Return DtuConf instance with maximum differences."""
+    xaxis_avg = apply_on_axis(numpy.ptp, [arg.xaxis for arg in args])
+    yaxis_avg = apply_on_axis(numpy.ptp, [arg.yaxis for arg in args])
+    zaxis_avg = apply_on_axis(numpy.ptp, [arg.zaxis for arg in args])
 
-    return dtuwcs
+    return DtuConf(xaxis_avg, yaxis_avg, zaxis_avg)

@@ -3,10 +3,10 @@ import numpy
 import pytest
 
 from ..dtuconf import DtuConf, DtuAxis
-from ..dtuconf import get_dtur_from_header
+from ..dtuconf import managed_ndig
+from ..dtuconf import average, apply_on_axis
 
 # header fragment
-
 def dtu_header():
     header = {}
     header['XDTU_F'] = 0.922918
@@ -18,6 +18,20 @@ def dtu_header():
     header['XDTU_0'] = -205.651000976562
     header['YDTU_0'] = -24.4794006347656
     header['ZDTU_0'] = -463.821014404297
+    return header
+
+
+def dtu_header2():
+    header = {}
+    header['XDTU_F'] = 0.922918
+    header['YDTU_F'] = 0.971815
+    header['ZDTU_F'] = 1.0
+    header['XDTU'] = -215.670
+    header['YDTU'] = -241.487
+    header['ZDTU'] = -263.765
+    header['XDTU_0'] = -205.651
+    header['YDTU_0'] = -24.4794
+    header['ZDTU_0'] = -422.821
     return header
 
 
@@ -73,12 +87,75 @@ def test_dtuaxis_header_raise():
 
 def test_dtur():
     header = dtu_header()
-    dtu, dtur = get_dtur_from_header(header)
-    # dtuconf = DtuConf.from_header(header)
-
+    dtuconf = DtuConf.from_header(header)
     x_dtu = [-205.679000854492, -24.4878005981445, -463.765991210938]
     x_dtu_r =  [-17.206285211909773, -0.7186057740102463, 0.055023193358977096]
 
-    assert numpy.allclose(x_dtu, dtu)
+    assert numpy.allclose(x_dtu, dtuconf.coor)
 
-    assert numpy.allclose(x_dtu_r, dtur)
+    assert numpy.allclose(x_dtu_r, dtuconf.coor_r)
+
+
+def test_dtu_formatter():
+    expected = (
+        "<DtuConf instance>\n"
+        "- XDTU..: -205.679\n"
+        "- YDTU..:  -24.488\n"
+        "- ZDTU..: -463.766\n"
+        "- XDTU_0: -205.651\n"
+        "- YDTU_0:  -24.479\n"
+        "- ZDTU_0: -463.821\n"
+        "- XDTU_F:    0.923\n"
+        "- YDTU_F:    0.972\n"
+        "- ZDTU_F:    1.000\n"
+    )
+    header = dtu_header()
+    dtuconf = DtuConf.from_header(header)
+    val = dtuconf.describe()
+    assert val == expected
+
+
+def test_dtu_managed():
+    header = dtu_header()
+    dtuconf = DtuConf.from_header(header)
+    with managed_ndig(dtuconf, 4):
+        assert dtuconf.get_ndig() == 4
+
+    assert dtuconf.get_ndig() == 3
+
+
+def test_dtu_apply():
+    axis1 = DtuAxis("X", 100.0)
+    axis2 = DtuAxis("X", 120.0)
+
+    axis3 = apply_on_axis(numpy.mean, [axis1, axis2])
+    assert axis3.coor == 110.0
+    assert axis3.coor_f == 1.0
+    assert axis3.coor_0 == 0.0
+    assert axis3.name == "X"
+
+
+def test_dtu_apply0():
+    """Test on an empty list"""
+    axis3 = apply_on_axis(numpy.mean, [])
+    assert numpy.isnan(axis3.coor)
+    assert numpy.isnan(axis3.coor_f)
+    assert numpy.isnan(axis3.coor_0)
+    assert axis3.name == "X"
+
+
+def test_dtu_average():
+    header1 = dtu_header()
+    dtuconf1 = DtuConf.from_header(header1)
+    header2 = dtu_header2()
+    dtuconf2 = DtuConf.from_header(header2)
+
+    dtuconf = average(dtuconf1, dtuconf2)
+
+    assert isinstance(dtuconf, DtuConf)
+
+def test_dtu_average0():
+
+    dtuconf = average()
+
+    assert isinstance(dtuconf, DtuConf)
