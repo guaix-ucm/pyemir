@@ -3,14 +3,13 @@ import pkgutil
 
 import pytest
 
-from emirdrp.core import EMIR_NBARS
-
 from ..csuconf import CSUConf
 from ..csuconf import CSUBarModel, CSUBarModelL, CSUBarModelR
 from ..csuconf import PhysicalBar, PhysicalBarL, PhysicalBarR
 from ..csuconf import LogicalSlit, TargetType
-from ..csuconf import create_bar_models, read_csu_3
+from ..csuconf import create_bar_models, read_csu_from_header
 from ..csuconf import merge_slits
+from ..csuconf import EMIR_NBARS
 
 
 import numpy
@@ -70,7 +69,7 @@ def test_csubar(hdr, nslits):
     ss = S.StringIO(dumdata.decode('utf8'))
     bars_nominal_positions = numpy.loadtxt(ss)
     barmodel = create_bar_models(bars_nominal_positions)
-    csu_conf = read_csu_3(barmodel, hdr)
+    csu_conf = read_csu_from_header(barmodel, hdr)
     assert len(csu_conf.slits) == nslits
 
 
@@ -106,5 +105,5 @@ def test_csuconf1():
     bars_nominal_positions = numpy.loadtxt(ss)
     hdr = create_test_header1()
     barmodel = create_bar_models(bars_nominal_positions)
-    csu_conf = read_csu_3(barmodel, hdr)
+    csu_conf = read_csu_from_header(barmodel, hdr)
     assert csu_conf.is_open()

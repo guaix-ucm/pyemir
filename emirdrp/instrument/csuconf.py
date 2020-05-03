@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -14,8 +14,7 @@ import numpy
 
 from numina.array.bbox import BoundingBox
 
-from emirdrp.core import EMIR_NBARS
-
+EMIR_NBARS = 55
 
 class CSUConf(object):
     """Information about the configuration of slits in the CSU"""
@@ -27,6 +26,7 @@ class CSUConf(object):
         # Indices
         self.LBARS = list(range(1, EMIR_NBARS + 1))
         self.RBARS = [(i + EMIR_NBARS) for i in self.LBARS]
+        self.NBARS = EMIR_NBARS
         self.bars = barmodel
         # CSU is open if
         self.L_LIMIT = 6
@@ -64,7 +64,7 @@ class CSUConf(object):
 
         # Slits.
         # For the moment we will fuse only reference slits
-
+        OUTPOS = -100
         # clean existing slits
         self.slits = {}
         mm = []
@@ -77,12 +77,12 @@ class CSUConf(object):
             except KeyError:
                 target_type = TargetType.UNKNOWN
 
-            xref = hdr.get("XRSLI%d" % idx, -100) - 1
-            yref = hdr.get("YRSLI%d" % idx, -100) - 1
+            xref = hdr.get("XRSLI%d" % idx, OUTPOS) - 1
+            yref = hdr.get("YRSLI%d" % idx, OUTPOS) - 1
             target_coordinates = (xref, yref)
 
-            xref = hdr.get("XVSLI%d" % idx, -100) - 1
-            yref = hdr.get("YVSLI%d" % idx, -100) - 1
+            xref = hdr.get("XVSLI%d" % idx, OUTPOS) - 1
+            yref = hdr.get("YVSLI%d" % idx, OUTPOS) - 1
             target_coordinates_v = (xref, yref)
 
             mm.append((idx, target_type, target_coordinates, target_coordinates_v))
@@ -196,9 +196,10 @@ class PhysicalBarR(PhysicalBar):
 class LogicalSlit(object):
     """Slit formed from combination of PhysicalBarL and PhysicalBarR"""
     def __init__(self, idx, lbars, rbars, target_type=TargetType.UNKNOWN):
+        UNDEFPOS = -100
         self.target_type = target_type
-        self.target_coordinates = (-100, -100)
-        self.target_coordinates_v = (-100, -100)
+        self.target_coordinates = (UNDEFPOS, UNDEFPOS)
+        self.target_coordinates_v = (UNDEFPOS, UNDEFPOS)
         self.idx = idx
         self.lbars = lbars
         self.rbars = rbars
@@ -245,6 +246,7 @@ class LogicalSlit(object):
 
 
 def create_bar_models(barstab):
+    """Create a dictionary of models of bars using a table"""
     bars = {}
     for params in barstab:
         barid = int(params[0])
@@ -259,61 +261,26 @@ def create_bar_models(barstab):
     return bars
 
 
-def read_csu_2(barmodel, hdr):
-    """Read CSU information and slits from header"""
-    conf = CSUConf(barmodel)
-
-    conf.conf_f = hdr.get('CSUCONFF', 'UNKNOWN')
-    # Read CSUPOS and set position in model
-    # The bars
-    for idx in conf.bars:
-        key = "CSUP{}".format(idx)
-        # UNIT of CSUPOS?
-        # who knows
-
-        # set CSUPOS for BAR
-        # Using the model, this sets the X,Y coordinate
-        conf.bars[idx].csupos = hdr[key]
-        # print('read_csu {}, position is {}'.format(idx, conf.bars[idx].current_pos))
-
-    # Slits. We dont have keywords to fuse slitlets into larger logical slits
-    # so there is one slitslet for each pair of bars
-    for idx in range(1, EMIR_NBARS + 1):
-        l_ids = [idx]
-        r_ids = [idx + EMIR_NBARS]
-
-        lbars = {lid: conf.bars[lid] for lid in l_ids}
-        rbars = {rid: conf.bars[rid] for rid in r_ids}
-
-        this = LogicalSlit(idx, lbars=lbars, rbars=rbars)
-        # References from header
-        try:
-            slit_t = hdr["SLIFL%d" % idx]
-            this.target_type = TargetType(slit_t)
-        except KeyError as err:
-            # print('warning', err)
-            this.target_type = TargetType.UNKNOWN
-
-        xref = hdr.get("XRSLI%d" % this.idx, -100) - 1
-        yref = hdr.get("YRSLI%d" % this.idx, -100) - 1
-        this.target_coordinates = (xref, yref)
-
-        xref = hdr.get("XVSLI%d" % this.idx, -100) - 1
-        yref = hdr.get("YVSLI%d" % this.idx, -100) - 1
-        this.target_coordinates_v = (xref, yref)
-        conf.slits[idx] = this
-
-    return conf
-
-
-def read_csu_3(barmodel, hdr):
+def read_csu_from_header(barmodel, hdr):
     """Read CSU information and slits from header"""
     conf = CSUConf(barmodel)
     conf.set_state(hdr)
     return conf
 
 
+def read_csu_from_image(barmodel, img):
+    """Read CSU information and slits from FITS"""
+    if 'MECS' in img:
+        # Get header from extension
+        hdr_csu = img['MECS'].header
+    else:
+        # Get header from main header
+        hdr_csu = img[0].header
+    return read_csu_from_header(barmodel, hdr_csu)
+
+
 def merge_slits(mm, max_slits=3, tol=1e-2):
+    """"Merge contiguous REFERENCE slits"""
     cx1 = 0
     bag = {}
     while True:

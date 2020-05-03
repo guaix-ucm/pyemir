@@ -133,11 +133,22 @@ class DtuConf(object):
 
     @classmethod
     def from_header(cls, hdr):
+        """Create a DtuConf object from map-like header"""
         xaxis = DtuAxis.from_header(hdr, name='X')
         yaxis = DtuAxis.from_header(hdr, name='Y')
         zaxis = DtuAxis.from_header(hdr, name='Z')
         dtuconf = DtuConf(xaxis, yaxis, zaxis)
         return dtuconf
+
+    @classmethod
+    def from_img(cls, img):
+        """Create a DtuConf object from a FITS image"""
+        if 'MECS' in img:
+            hdr = img['MECS'].header
+        else:
+            hdr = img[0].header
+
+        return cls.from_header(hdr)
 
     def __eq__(self, other):
         if isinstance(other, DtuConf):

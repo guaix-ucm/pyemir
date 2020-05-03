@@ -92,19 +92,6 @@ class EmirDataModel(dm.DataModel):
         img[0].header['NUMUTC2'] = time2.isoformat()
         return img
 
-    def get_dtur_from_header(self, hdr):
-        from emirdrp.instrument.dtuconf import DtuConf
-        return DtuConf.from_header(hdr)
-
-    def get_dtur_from_img(self, hdulist):
-
-        if 'MECS' in hdulist:
-            hdr = hdulist['MECS'].header
-        else:
-            hdr = hdulist[0].header
-
-        return self.get_dtur_from_header(hdr)
-
 
 def get_mecs_header(hdulist):
     if 'MECS' in hdulist:
