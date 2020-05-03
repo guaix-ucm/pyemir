@@ -2,6 +2,7 @@ include LICENSE.txt
 include README.rst
 include NEWS.rst
 include AUTHORS.rst
+include pyproject.toml
 recursive-include doc *
 include tools/*.py
 
