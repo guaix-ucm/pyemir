@@ -18,8 +18,8 @@ import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 import sep
+import astropy.units as u
 import skimage.filters as filt
-
 import skimage.feature as feat
 from scipy import ndimage as ndi
 from numina.array.utils import coor_to_pix_1d
@@ -32,10 +32,11 @@ import numina.types.array as tarray
 from numina.core.requirements import ObservationResultRequirement
 import numina.core.query as qmod
 
-from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_PIXSIZE_CSU
-from emirdrp.core import EMIR_PIXSCALE, EMIR_REF_IPA
+
+import emirdrp.instrument.constants as cons
 from emirdrp.core.recipe import EmirRecipe
+from emirdrp.core.utils import create_rot2d
 from emirdrp.processing.combine import basic_processing_, combine_images
 from emirdrp.processing.combine import process_ab, process_abba
 import emirdrp.requirements as reqs
@@ -43,22 +44,6 @@ import emirdrp.products as prods
 import emirdrp.instrument.distortions as dist
 from emirdrp.instrument.csuconf import TargetType
 import emirdrp.instrument.csuconf as csuconf
-
-
-def create_rot2d(angle):
-    """Create 2D rotation matrix"""
-    ca = math.cos(angle)
-    sa = math.sin(angle)
-    return np.array([[ca, -sa], [sa, ca]])
-
-
-def pix2virt(pos, origin=1):
-    ddef_o = 1
-    off = ddef_o - origin
-    pos = np.atleast_2d(pos) + off
-    nx, ny = dist.pvex(pos[:, 0], pos[:, 1])
-    res = np.stack((nx, ny), axis=1)
-    return res - off
 
 
 def comp_centroid(data, bounding_box, debug_plot=False, plot_reference=None, logger=None):
@@ -229,14 +214,17 @@ class MaskCheckRecipe(EmirRecipe):
             coords = ([], [], [], [])
             qc = QC.GOOD
 
-        pixsize_csu = hdulist_object[0].header.get("PXSZCSU", EMIR_PIXSIZE_CSU)
-        self.logger.debug("pixsize in the CSU: %s", pixsize_csu)
-        o_mm = offset * pixsize_csu
-        ipa_deg = hdulist_object[0].header.get("ROTOFF", EMIR_REF_IPA)
-        ipa_rad = np.deg2rad(ipa_deg)
-        ipa_rot = create_rot2d(ipa_rad)
+        pixsize_na = cons.EMIR_PIXSCALE / cons.GTC_NASMYTH_A_PLATESCALE
+        self.logger.debug('Pixel size in NASMYTH_A %s', pixsize_na)
+        # Offset is returned without units
+        o_mm = ((offset * u.pixel) * pixsize_na).to(u.mm)
+        # Missing units in header
+        # ipa_deg = hdulist_object[0].header.get("ROTOFF", cons.EMIR_REF_IPA)
+        ipa_deg = cons.EMIR_REF_IPA
+        # ipa_rad = np.deg2rad(ipa_deg)
+        ipa_rot = create_rot2d(ipa_deg.to('', equivalencies=u.dimensionless_angles()))
         self.logger.info('OFF (mm) %s', o_mm)
-        self.logger.info('Default IPA is %s', ipa_deg)
+        self.logger.info('Default IPA is %s', ipa_deg.value)
         o_mm_ipa = np.dot(ipa_rot, o_mm)
 
         self.logger.info('=========================================')
@@ -253,7 +241,7 @@ class MaskCheckRecipe(EmirRecipe):
         centroids_virt = np.hstack([p_v, q_v])
 
         # Value in mm
-        offset_out = o_mm_ipa
+        offset_out = o_mm_ipa.to(u.mm).value
         # Convert DEG to RAD
         angle_out = angle
         result = self.create_result(
@@ -283,7 +271,7 @@ class MaskCheckRecipe(EmirRecipe):
         # trans2 = [[0,1,0], [1,0,0], [0,0,1]]
         trans3 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]  # T3 = T2 * T1
 
-        vec = np.dot(trans3, dtuconf.coor_r) / EMIR_PIXSCALE
+        vec = np.dot(trans3, dtuconf.coor_r) * u.micron/ cons.EMIR_PIXSIZE
         self.logger.debug('DTU shift is %s', vec)
 
         self.logger.debug('create bar model')
@@ -359,9 +347,9 @@ class MaskCheckRecipe(EmirRecipe):
 
         mask1 = np.zeros_like(hdulist[0].data)
 
-        for idx in range(EMIR_NBARS):
+        for idx in range(csuconf.EMIR_NBARS):
             lbarid = idx + 1
-            rbarid = lbarid + EMIR_NBARS
+            rbarid = lbarid + csuconf.EMIR_NBARS
             ref_x_l_v, ref_y_l_v = all_coords_virt[lbarid - 1]
             ref_x_r_v, ref_y_r_v = all_coords_virt[rbarid - 1]
 
@@ -501,7 +489,7 @@ def compute_off_rotation(data, csu_conf, slits_bb=None, rotaxis=(0, 0),
         angle = 0.0
     else:
         logger.debug('convert coordinates to virtual, ie, focal plane')
-        q2 = pix2virt(q1, origin=0)
+        q2 = dist.pix2virt(q1, origin=0)
         # Move from objects to reference
         logger.debug('compute transform from measured objects to reference coordinates')
         offset, rot = fit_offset_and_rotation(q2, p2)

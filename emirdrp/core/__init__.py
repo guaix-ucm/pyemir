@@ -14,8 +14,8 @@ EMIR_PLATESCALE = 0.1944 # arcsec/pixel
 
 # plate scale, focal plane NASMYTH_A, arcsec / mm
 # keyword PSCFP
-NASMYTH_A_PS = 1.1746 ## arcsec / mm
-EMIR_CSU_PS = NASMYTH_A_PS  ## arcsec / mm
+NASMYTH_A_PS = 1.212 ## arcsec / mm
+EMIR_CSU_PS = 1.1746 ## arcsec / mm
 
 # plate scale, detector, arcsec / mm
 EMIR_DETECTOR_PS = 10.8
@@ -32,9 +32,6 @@ EMIR_PIXSIZE_CSU = EMIR_PLATESCALE / EMIR_CSU_PS
 
 # plate scale, detector, arcsec / pix
 EMIR_DET_PS_PIX = EMIR_DETECTOR_PS * EMIR_PIXSIZE_DETECTOR
-
-# This value is stored in keyword ROTOFF
-EMIR_REF_IPA = 90.0552 # deg
 
 EMIR_GAIN = 5.0 # ADU / e-
 EMIR_RON = 5.69 # ADU

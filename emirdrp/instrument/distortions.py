@@ -1,26 +1,18 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 import numpy
+import astropy.units as U
 
+import emirdrp.instrument.constants as cons
 
-from . import EMIR_PLATESCALE_RADS
+EMIR_PLATESCALE_RADS = cons.EMIR_PIXSCALE.to(U.rad / U.pixel).value
 
 
 def exvp(pos_x, pos_y):
@@ -30,7 +22,7 @@ def exvp(pos_x, pos_y):
     # convert virtual pixel to real pixel
     # convert world coordinate to pixel
     center = [1024.5, 1024.5]
-    cf  = EMIR_PLATESCALE_RADS
+    cf = EMIR_PLATESCALE_RADS
     pos_base_x = pos_x - center[0]
     pos_base_y = pos_y - center[1]
     ra = numpy.hypot(pos_base_x, pos_base_y)

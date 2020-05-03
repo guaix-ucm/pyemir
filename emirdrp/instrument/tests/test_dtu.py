@@ -1,6 +1,7 @@
 
 import numpy
 import pytest
+import astropy.units as U
 
 from ..dtuconf import DtuConf, DtuAxis
 from ..dtuconf import managed_ndig
@@ -45,7 +46,7 @@ def test_dtuc():
 
 
 def test_dtuc_shift():
-    from emirdrp.core import EMIR_PIXSCALE
+    import emirdrp.instrument.constants as cons
 
     # Value in microns in DTU coords
     header = dtu_header()
@@ -59,7 +60,7 @@ def test_dtuc_shift():
     # Value in pixels in image coords
     trans3 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]  # T3 = T2 * T1
 
-    vec = numpy.dot(trans3, dtuconf.coor_r) / EMIR_PIXSCALE
+    vec = numpy.dot(trans3, dtuconf.coor_r) * U.micron / cons.EMIR_PIXSIZE
     assert numpy.allclose(vec, expected_pix)
 
 
