@@ -153,6 +153,7 @@ class MaskCheckRecipe(EmirRecipe):
     object_image = Result(prods.ProcessedImage)
     offset = Result(tarray.ArrayType)
     angle = Result(float)
+    centroids = Result(tarray.ArrayType, description="Centroids measured in the detector")
 
     def run(self, rinput):
         self.logger.info('starting processing for image acquisition')
@@ -216,7 +217,7 @@ class MaskCheckRecipe(EmirRecipe):
             self.logger.debug('center of rotation (from CRPIX) is %s', rotaxis)
 
             # angle in deg, offset in pixels on the CSU
-            offset, angle, qc = compute_off_rotation(
+            offset, angle, qc, coords = compute_off_rotation(
                 image_sep, csu_conf, slits_bb,
                 rotaxis=rotaxis, logger=self.logger,
                 debug_plot=False, intermediate_results=self.intermediate_results
@@ -225,6 +226,7 @@ class MaskCheckRecipe(EmirRecipe):
             self.logger.info('CSU is open, not detecting slits')
             offset = [0.0, 0.0]
             angle = 0.0
+            coords = ([], [], [], [])
             qc = QC.GOOD
 
         pixsize_csu = hdulist_object[0].header.get("PXSZCSU", EMIR_PIXSIZE_CSU)
@@ -241,6 +243,15 @@ class MaskCheckRecipe(EmirRecipe):
         self.logger.info('Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
         self.logger.info('=========================================')
 
+        # P2 Pos REF VIRT
+        # P1 Pos REF DET
+        # Q1 Pos Measured DET
+        # Q2 Pos Measured VIRT
+
+        p_d, p_v, q_d, q_v = coords
+        centroids_det = np.hstack([p_d, q_d])
+        centroids_virt = np.hstack([p_v, q_v])
+
         # Value in mm
         offset_out = o_mm_ipa
         # Convert DEG to RAD
@@ -250,17 +261,19 @@ class MaskCheckRecipe(EmirRecipe):
             object_image=hdulist_object,
             offset=offset_out, # offset is in milimeters
             angle=angle_out, # angle is in degrees
-            qc=qc
+            qc=qc,
+            centroids=centroids_det
         )
         self.logger.info('end processing for image acquisition')
         return result
 
     def load_csu_conf(self, hdulist, bars_nominal_positions):
+        from emirdrp.instrument.dtuconf import DtuConf
         # Get slits
         # hdr = hdulist[0].header
         # Extract DTU and CSU information from headers
 
-        dtuconf = self.datamodel.get_dtur_from_img(hdulist)
+        dtuconf = DtuConf.from_img(hdulist)
 
         # coordinates transformation from DTU coordinates
         # to image coordinates
@@ -275,16 +288,8 @@ class MaskCheckRecipe(EmirRecipe):
 
         self.logger.debug('create bar model')
         barmodel = csuconf.create_bar_models(bars_nominal_positions)
-        if 'MECS' in hdulist:
-            # Get header from extension
-            self.logger.debug('CSU info in MECS extension header')
-            hdr_csu = hdulist['MECS'].header
-        else:
-            # Get header from main header
-            self.logger.debug('CSU info in PRIMARY header')
-            hdr_csu = hdulist[0].header
 
-        csu_conf = csuconf.read_csu_3(barmodel, hdr_csu)
+        csu_conf = csuconf.read_csu_from_image(barmodel, hdulist)
 
         if self.intermediate_results:
             # FIXME: coordinates are in VIRT pixels
@@ -524,7 +529,7 @@ def compute_off_rotation(data, csu_conf, slits_bb=None, rotaxis=(0, 0),
         logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', pq1.mean(axis=0))
         logger.debug('MEAN pf REF-MEASURED (VIRT) %s', pq2.mean(axis=0))
 
-    return offset, angle, qc
+    return offset, angle, qc, (p1,p2, q1, q2)
 
 
 def calc_bars_borders(image, sob, prow, px1, px2, regionw, h=16, refine=False,
