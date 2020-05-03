@@ -1,6 +1,39 @@
 
 import numpy
-from emirdrp.instrument.distortions import exvp, pvex
+import astropy.units as u
+
+import emirdrp.instrument.constants as cons
+from ..distortions import exvp, pvex
+from ..distortions import wcs_exvp, wcs_pvex
+
+
+def create_wcs(fppa=270 * u.deg):
+
+    import astropy.wcs
+
+    w = astropy.wcs.WCS(naxis=2)
+    ipa = cons.EMIR_REF_IPA
+    angle = fppa - ipa
+    # scale = numpy.cos(numpy.deg2rad(ipa - fppa))
+    w.wcs.ctype = ['RA---ZPN', 'DEC--ZPN']
+    w.wcs.crval = [86.3712733276122, 28.9182815703162]
+    w.wcs.crpix = [1022.68, 1016.70]
+    # scale = cons.EMIR_PIXSCALE.to(u.deg / u.pixel).value
+    scale1 = 0.194279723 / 3600
+    scale2 = 0.194264445 / 3600
+    #w.wcs.cdelt = [scale, scale]
+    pc11 = scale1 * numpy.cos(angle)
+    pc22 = scale2 * numpy.cos(angle)
+    pc12 = -scale1 *numpy.sin(angle)
+    pc21 = scale2 * numpy.sin(angle)
+    w.wcs.cd = [[pc11, pc12],
+                [pc21, pc22]]
+    w.wcs.set_pv([
+        (2, 1, 0.9998), (2, 2, 0.0), (2, 3, 13824.76),
+        (2, 4, 0.0), (2, 5, 3491446467)
+    ])
+    w.wcs.radesys = 'FK5'
+    return w
 
 
 def test_distortions_ex1():
@@ -55,3 +88,52 @@ def test_distortions_pc2():
 
     assert numpy.allclose(x0, p_x0, rtol=2e-2)
     assert numpy.allclose(y0, p_y0, rtol=2e-2)
+
+
+def test_distortions_wcs_ex():
+
+    w = create_wcs()
+
+    e_x1 = [ -15.73469527,   88.61357533, 1000.58521175, 2024.25873613]
+    e_y1 = [1201.96995355,  897.6454293 ,  192.4567596 ,  -28.81253997]
+    x0 = [1, 100, 1000, 1990]
+    y0 = [1200, 900, 200, 5]
+    x1, y1 = wcs_exvp(w, x0, y0)
+
+    assert numpy.allclose(x1, e_x1)
+    assert numpy.allclose(y1, e_y1)
+
+
+def test_distortions_wcs_pc():
+
+    w = create_wcs()
+
+    p_x1 = [  16.87732924,  110.93407453,  999.42297684, 1959.34745267]
+    p_y1 = [1198.15178941,  902.27528867,  207.32346469,   35.16785173]
+    x0 = [1, 100, 1000, 1990]
+    y0 = [1200, 900, 200, 5]
+
+    x1, y1 = wcs_pvex(w, x0, y0)
+
+    assert numpy.allclose(x1, p_x1)
+    assert numpy.allclose(y1, p_y1)
+
+
+def test_consistency_wcs():
+    x0 = [1, 1, 2000, 2000]
+    y0 = [1, 2000, 2000, 1]
+
+    w = create_wcs()
+
+    v_x1 = [  33.61421368,   34.25887803, 1971.56801359, 1968.54383359]
+    v_y1 = [  35.31658127, 1969.82615199, 1969.55586265,   31.79447425]
+
+    x1, y1 = wcs_pvex(w, x0, y0)
+
+    x2, y2 = wcs_exvp(w, x1, y1)
+
+    assert numpy.allclose(x1, v_x1)
+    assert numpy.allclose(y1, v_y1)
+
+    assert numpy.allclose(x2, x0)
+    assert numpy.allclose(y2, y0)
