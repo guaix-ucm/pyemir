@@ -1,4 +1,5 @@
 
+import pytest
 import numpy
 import astropy.units as u
 
@@ -32,6 +33,31 @@ def create_wcs(fppa=270 * u.deg):
         (2, 1, 0.9998), (2, 2, 0.0), (2, 3, 13824.76),
         (2, 4, 0.0), (2, 5, 3491446467)
     ])
+    w.wcs.radesys = 'FK5'
+    return w
+
+
+def create_wcs_alt(fppa=270 * u.deg):
+    """Candidate alternate WCS to pass to virtual pixels, not working"""
+    import astropy.wcs
+
+    w = astropy.wcs.WCS(naxis=2)
+    ipa = cons.EMIR_REF_IPA
+    angle = fppa - ipa
+    # scale = numpy.cos(numpy.deg2rad(ipa - fppa))
+    w.wcs.ctype = ['', '']
+    w.wcs.crval = [86.3712733276122, 28.9182815703162]
+    w.wcs.crpix = [1022.68, 1016.70]
+    # scale = cons.EMIR_PIXSCALE.to(u.deg / u.pixel).value
+    scale1 = 0.194279723 / 3600
+    scale2 = 0.194264445 / 3600
+    #w.wcs.cdelt = [scale, scale]
+    pc11 = scale1 * numpy.cos(angle)
+    pc22 = scale2 * numpy.cos(angle)
+    pc12 = -scale1 *numpy.sin(angle)
+    pc21 = scale2 * numpy.sin(angle)
+    w.wcs.cd = [[pc11, pc12],
+                [pc21, pc22]]
     w.wcs.radesys = 'FK5'
     return w
 
@@ -137,3 +163,22 @@ def test_consistency_wcs():
 
     assert numpy.allclose(x2, x0)
     assert numpy.allclose(y2, y0)
+
+
+@pytest.mark.xfail(reason="feature not yet working")
+def test_consistency2_wcs():
+    """check converting Real<->Virtual using 2 WCS structures"""
+    x0 = [1, 1, 2000, 2000]
+    y0 = [1, 2000, 2000, 1]
+
+    wcs1 = create_wcs()
+    wcs2 = create_wcs_alt()
+
+    v_x1 = [  33.61421368,   34.25887803, 1971.56801359, 1968.54383359]
+    v_y1 = [  35.31658127, 1969.82615199, 1969.55586265,   31.79447425]
+
+    ra_i, dec_i = wcs1.all_pix2world(x0, y0, 1)
+    x1, y1 = wcs2.all_world2pix(ra_i, dec_i, 1)
+
+    assert numpy.allclose(x1, v_x1)
+    assert numpy.allclose(y1, v_y1)
