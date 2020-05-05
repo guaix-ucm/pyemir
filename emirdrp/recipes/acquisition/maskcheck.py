@@ -180,14 +180,9 @@ class MaskCheckRecipe(EmirRecipe):
         # For other axis, offset is changed
         # (Off - raxis) = Rot * (Offnew - raxis)
         wcs = astropy.wcs.WCS(hdulist_slit[0].header)
-        # FIXME: this is redundant
-        # already in wcs
-        crpix1 = hdulist_slit[0].header['CRPIX1']
-        crpix2 = hdulist_slit[0].header['CRPIX2']
+        rotaxis = wcs.wcs.crpix - 1
 
-        rotaxis = np.array((crpix1 - 1, crpix2 - 1))
-
-        self.logger.debug('center of rotation (from CRPIX) is %s', rotaxis)
+        self.logger.debug('center of rotation (from CRPIX) is %s', wcs.wcs.crpix)
 
         csu_conf = self.load_csu_conf(hdulist_slit, rinput.bars_nominal_positions)
 
@@ -201,7 +196,7 @@ class MaskCheckRecipe(EmirRecipe):
             slits_bb = None
             image_sep = hdulist_object[0].data.astype('float32')
 
-            self.logger.debug('center of rotation (from CRPIX) is %s', rotaxis)
+            self.logger.debug('center of rotation (from CRPIX) is %s', wcs.wcs.crpix)
 
             # angle in deg, offset in pixels on the CSU
             offset, angle, qc, coords = compute_off_rotation(
