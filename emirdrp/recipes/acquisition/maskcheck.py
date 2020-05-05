@@ -19,6 +19,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sep
 import astropy.units as u
+import astropy.wcs
 import skimage.filters as filt
 import skimage.feature as feat
 from scipy import ndimage as ndi
@@ -31,8 +32,6 @@ from numina.types.qc import QC
 import numina.types.array as tarray
 from numina.core.requirements import ObservationResultRequirement
 import numina.core.query as qmod
-
-from emirdrp.core import EMIR_PIXSIZE_CSU
 
 import emirdrp.instrument.constants as cons
 from emirdrp.core.recipe import EmirRecipe
@@ -180,6 +179,9 @@ class MaskCheckRecipe(EmirRecipe):
         # Rotation around (0,0)
         # For other axis, offset is changed
         # (Off - raxis) = Rot * (Offnew - raxis)
+        wcs = astropy.wcs.WCS(hdulist_slit[0].header)
+        # FIXME: this is redundant
+        # already in wcs
         crpix1 = hdulist_slit[0].header['CRPIX1']
         crpix2 = hdulist_slit[0].header['CRPIX2']
 
@@ -203,7 +205,7 @@ class MaskCheckRecipe(EmirRecipe):
 
             # angle in deg, offset in pixels on the CSU
             offset, angle, qc, coords = compute_off_rotation(
-                image_sep, csu_conf, slits_bb,
+                image_sep, wcs, csu_conf, slits_bb,
                 rotaxis=rotaxis, logger=self.logger,
                 debug_plot=False, intermediate_results=self.intermediate_results
             )
@@ -308,6 +310,7 @@ class MaskCheckRecipe(EmirRecipe):
         self.logger.debug('finding borders of slits')
         self.logger.debug('not strictly necessary...')
         data = hdulist[0].data
+        wcs = astropy.wcs.WCS(hdulist[0].header)
         self.logger.debug('dtype of data %s', data.dtype)
 
         self.logger.debug('median filter (3x3)')
@@ -334,7 +337,7 @@ class MaskCheckRecipe(EmirRecipe):
             all_coords_virt[bar.idx - 1] = bar.xpos, bar.y0
 
         # Origin of coordinates is 1 for this function
-        _x, _y = dist.exvp(all_coords_virt[:, 0], all_coords_virt[:, 1])
+        _x, _y = dist.wcs_exvp(wcs, all_coords_virt[:, 0], all_coords_virt[:, 1])
         all_coords_real[:, 0] = _x
         all_coords_real[:, 1] = _y
 
@@ -406,13 +409,13 @@ class MaskCheckRecipe(EmirRecipe):
             # print('pos1', comp_l, comp_r)
             # print('pos2', comp2_l, comp2_r)
 
-            xpos1_virt, _ = dist.pvex(comp2_l + 1, ref_y_l_d)
-            xpos2_virt, _ = dist.pvex(comp2_r + 1, ref_y_r_d)
+            xpos1_virt, _ = dist.wcs_pvex(wcs, comp2_l + 1, ref_y_l_d)
+            xpos2_virt, _ = dist.wcs_pvex(wcs, comp2_r + 1, ref_y_r_d)
 
             y1_virt = ref_y_l_v - slit_h_virt - slit_h_tol
             y2_virt = ref_y_r_v + slit_h_virt + slit_h_tol
-            _, y1 = dist.exvp(xpos1_virt + 1, y1_virt)
-            _, y2 = dist.exvp(xpos2_virt + 1, y2_virt)
+            _, y1 = dist.wcs_exvp(wcs, xpos1_virt + 1, y1_virt)
+            _, y2 = dist.wcs_exvp(wcs, xpos2_virt + 1, y2_virt)
             # print(comp2_l, comp2_r, y1 - 1, y2 - 1)
             cbb = BoundingBox.from_coordinates(comp2_l, comp2_r, y1 - 1, y2 - 1)
             slits_bb[lbarid] = cbb
@@ -422,7 +425,7 @@ class MaskCheckRecipe(EmirRecipe):
         return slits_bb
 
 
-def compute_off_rotation(data, csu_conf, slits_bb=None, rotaxis=(0, 0),
+def compute_off_rotation(data, wcs, csu_conf, slits_bb=None, rotaxis=(0, 0),
                          logger=None, debug_plot=False,
                          intermediate_results=True
                          ):
@@ -489,7 +492,7 @@ def compute_off_rotation(data, csu_conf, slits_bb=None, rotaxis=(0, 0),
         angle = 0.0
     else:
         logger.debug('convert coordinates to virtual, ie, focal plane')
-        q2 = dist.pix2virt(q1, origin=0)
+        q2 = dist.wcs_pix2virt(wcs, q1, origin=0)
         # Move from objects to reference
         logger.debug('compute transform from measured objects to reference coordinates')
         offset, rot = fit_offset_and_rotation(q2, p2)
