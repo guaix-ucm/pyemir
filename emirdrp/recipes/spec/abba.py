@@ -747,7 +747,7 @@ class ABBASpectraRectwv(EmirRecipe):
             hdu.header['crval1'] = (crval1, 'central wavelength at crpix1')
             hdu.header['cdelt1'] = (cdelt1, 'linear dispersion (Angstrom/pixel)')
             hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
-            hdu.header['ctype1'] = 'WAVELENGTH'
+            hdu.header['ctype1'] = 'WAVE'
             hdu.header['crpix2'] = (0.0, 'reference pixel')
             hdu.header['crval2'] = (0.0, 'central value at crpix2')
             hdu.header['cdelt2'] = (1.0, 'increment')
@@ -1041,7 +1041,7 @@ class ABBASpectraFastRectwv(EmirRecipe):
                 hdu.header['cdelt1'] = \
                     (cdelt1, 'linear dispersion (Angstrom/pixel)')
                 hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
-                hdu.header['ctype1'] = 'WAVELENGTH'
+                hdu.header['ctype1'] = 'WAVE'
                 hdu.header['crpix2'] = (0.0, 'reference pixel')
                 hdu.header['crval2'] = (0.0, 'central value at crpix2')
                 hdu.header['cdelt2'] = (1.0, 'increment')

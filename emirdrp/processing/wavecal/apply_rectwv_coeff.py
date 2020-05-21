@@ -245,7 +245,7 @@ def apply_rectwv_coeff(reduced_image,
     header['crval1'] = (crval1_enlarged, 'central wavelength at crpix1')
     header['cdelt1'] = (cdelt1_enlarged, 'linear dispersion (Angstrom/pixel)')
     header['cunit1'] = ('Angstrom', 'units along axis1')
-    header['ctype1'] = 'WAVELENGTH'
+    header['ctype1'] = 'WAVE'
     header['crpix2'] = (0.0, 'reference pixel')
     header['crval2'] = (0.0, 'central value at crpix2')
     header['cdelt2'] = (1.0, 'increment')
