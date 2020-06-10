@@ -259,7 +259,7 @@ class BaseABBARecipe(EmirRecipe):
         return result
 
     def process_abba(self, images):
-        # Process four images in ABBA mode
+        """Process four images in ABBA mode"""
         dataA0 = images[0][0].data.astype('float32')
         dataB0 = images[1][0].data.astype('float32')
 
@@ -297,7 +297,14 @@ class BaseABBARecipe(EmirRecipe):
         hdu.header['OBSMODE'] = 'LS_ABBA'
         # Headers of last image
         hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
-        result = fits.HDUList([hdu])
+        hdul = [hdu]
+
+        # Copy MECS extension if available
+        if 'MECS' in cdata[0]:
+            mecs_ext = cdata[0]['MECS']
+            hdul.append(mecs_ext)
+
+        result = fits.HDUList(hdul)
         return result
 
     def create_accum_hdulist(self, cdata, data_array_n,
