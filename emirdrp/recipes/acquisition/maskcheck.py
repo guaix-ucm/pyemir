@@ -137,6 +137,7 @@ class MaskCheckRecipe(EmirRecipe):
     object_image = Result(prods.ProcessedImage)
     offset = Result(tarray.ArrayType)
     angle = Result(float)
+    matched_slits = Result(tarray.ArrayType, description="Centroids measured in the detector")
     centroids = Result(tarray.ArrayType, description="Centroids measured in the detector")
 
     def run(self, rinput):
@@ -208,7 +209,7 @@ class MaskCheckRecipe(EmirRecipe):
             self.logger.info('CSU is open, not detecting slits')
             offset = [0.0, 0.0]
             angle = 0.0
-            coords = ([], [], [], [])
+            coords = ([], [], [], [], [])
             qc = QC.GOOD
 
         pixsize_na = cons.EMIR_PIXSCALE / cons.GTC_NASMYTH_A_PLATESCALE
@@ -233,7 +234,7 @@ class MaskCheckRecipe(EmirRecipe):
         # Q1 Pos Measured DET
         # Q2 Pos Measured VIRT
 
-        p_d, p_v, q_d, q_v = coords
+        matched_slits, p_d, p_v, q_d, q_v = coords
         centroids_det = np.hstack([p_d, q_d])
         centroids_virt = np.hstack([p_v, q_v])
 
@@ -247,6 +248,7 @@ class MaskCheckRecipe(EmirRecipe):
             offset=offset_out, # offset is in milimeters
             angle=angle_out, # angle is in degrees
             qc=qc,
+            matched_slits=matched_slits,
             centroids=centroids_det
         )
         self.logger.info('end processing for image acquisition')
@@ -439,6 +441,7 @@ def compute_off_rotation(data, wcs, csu_conf, slits_bb=None, rotaxis=(0, 0),
     refslits = [slit for slit in csu_conf.slits.values() if slit.target_type is TargetType.REFERENCE]
     logger.info('we have %s reference slits', len(refslits))
 
+    slits = []
     p2 = []  # Pos REF VIRT
     p1 = []  # Pos REF DET
     q1 = []  # Pos Measured DET
@@ -473,6 +476,7 @@ def compute_off_rotation(data, wcs, csu_conf, slits_bb=None, rotaxis=(0, 0),
         m_y = res[1] + region[0].start
 
         logger.debug('in slit %s, object is (%s, %s)', this.idx, m_x, m_y)
+        slits.append(this.idx)
         p1.append(this.target_coordinates)
         p2.append(this.target_coordinates_v)
         q1.append((m_x, m_y))
@@ -515,7 +519,7 @@ def compute_off_rotation(data, wcs, csu_conf, slits_bb=None, rotaxis=(0, 0),
         logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', pq1.mean(axis=0))
         logger.debug('MEAN pf REF-MEASURED (VIRT) %s', pq2.mean(axis=0))
 
-    return offset, angle, qc, (p1,p2, q1, q2)
+    return offset, angle, qc, (slits, p1,p2, q1, q2)
 
 
 def calc_bars_borders(image, sob, prow, px1, px2, regionw, h=16, refine=False,
