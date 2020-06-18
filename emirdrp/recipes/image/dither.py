@@ -28,7 +28,7 @@ import numina.array as narray
 import numina.array.utils as nautils
 import numina.array.combine as nacom
 import numina.frame.combine as nfcom
-from numina.util import manage_fits
+from numina.util.context import manage_fits
 from numina.frame import resize_fits, custom_region_to_str
 
 import emirdrp.requirements as reqs
