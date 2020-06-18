@@ -28,6 +28,7 @@ import numina.array as narray
 import numina.array.utils as nautils
 import numina.array.combine as nacom
 import numina.frame.combine as nfcom
+from numina.util import manage_fits
 from numina.frame import resize_fits, custom_region_to_str
 
 import emirdrp.requirements as reqs
@@ -306,7 +307,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                                            tol=0.5):
 
         names = [frame.lastname for frame in iinfo]
-        with nfcom.manage_fits(names) as imgs:
+        with manage_fits(names) as imgs:
             arrs = [img[0].data for img in imgs]
             offsets_xy = offsets_from_crosscor_regions(
                 arrs, regions,
@@ -328,7 +329,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             list_of_offsets = -(base_ref - base_ref[0])
         else:
             self.logger.info('Computing offsets from WCS information')
-            with nfcom.manage_fits(img.origin for img in target_info) as images:
+            with manage_fits(img.origin for img in target_info) as images:
                 list_of_offsets = offsets_from_wcs_imgs(images, refpix)
 
         # FIXME: I am using offsets in row/columns
@@ -563,7 +564,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                          step)
 
         base_imgs = [img.resized_base for img in images_info]
-        with nfcom.manage_fits(base_imgs) as imgs:
+        with manage_fits(base_imgs) as imgs:
 
             data = []
             masks = []
