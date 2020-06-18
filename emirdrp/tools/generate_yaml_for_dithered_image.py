@@ -82,8 +82,7 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
 def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description='description: display arrangement of EMIR CSU bars',
-        formatter_class=argparse.RawTextHelpFormatter
+        description='description: generate observation result YAML file',
     )
 
     # positional or required arguments

@@ -107,32 +107,46 @@ astropy utility ``fitsheader``:
 
 ::
 
-   (emir) $ fitsheader data/0001877*.fits -k obsblock -k imgobbl -k nimgobbl -k object -k exptime -k readmode -f
-                      filename                    OBSBLOCK IMGOBBL NIMGOBBL OBJECT EXPTIME  READMODE
-   ---------------------------------------------- -------- ------- -------- ------ -------- --------
-   data/0001877553-20181217-EMIR-STARE_IMAGE.fits        1       1        7   TEST 29.99926     RAMP
-   data/0001877559-20181217-EMIR-STARE_IMAGE.fits        1       2        7   TEST 29.99926     RAMP
-   data/0001877565-20181217-EMIR-STARE_IMAGE.fits        1       3        7   TEST 29.99926     RAMP
-   data/0001877571-20181217-EMIR-STARE_IMAGE.fits        1       4        7   TEST 29.99926     RAMP
-   data/0001877577-20181217-EMIR-STARE_IMAGE.fits        1       5        7   TEST 29.99926     RAMP
-   data/0001877583-20181217-EMIR-STARE_IMAGE.fits        1       6        7   TEST 29.99926     RAMP
-   data/0001877589-20181217-EMIR-STARE_IMAGE.fits        1       7        7   TEST 29.99926     RAMP
-   data/0001877595-20181217-EMIR-STARE_IMAGE.fits        2       1        7   TEST 29.99926     RAMP
-   data/0001877601-20181217-EMIR-STARE_IMAGE.fits        2       2        7   TEST 29.99926     RAMP
-   data/0001877607-20181217-EMIR-STARE_IMAGE.fits        2       3        7   TEST 29.99926     RAMP
-   data/0001877613-20181217-EMIR-STARE_IMAGE.fits        2       4        7   TEST 29.99926     RAMP
-   data/0001877619-20181217-EMIR-STARE_IMAGE.fits        2       5        7   TEST 29.99926     RAMP
-   data/0001877625-20181217-EMIR-STARE_IMAGE.fits        2       6        7   TEST 29.99926     RAMP
-   data/0001877631-20181217-EMIR-STARE_IMAGE.fits        2       7        7   TEST 29.99926     RAMP
+   (emir) $ fitsheader data/0001877*.fits -k nobsblck -k obsblock -k nimgobbl -k imgobbl -k exp -k object -k exptime -k readmode -f
+                      filename                    NOBSBLCK OBSBLOCK NIMGOBBL IMGOBBL EXP OBJECT EXPTIME  READMODE
+   ---------------------------------------------- -------- -------- -------- ------- --- ------ -------- --------
+   data/0001877553-20181217-EMIR-STARE_IMAGE.fits       18        1        7       1   1   TEST 29.99926     RAMP
+   data/0001877559-20181217-EMIR-STARE_IMAGE.fits       18        1        7       2   1   TEST 29.99926     RAMP
+   data/0001877565-20181217-EMIR-STARE_IMAGE.fits       18        1        7       3   1   TEST 29.99926     RAMP
+   data/0001877571-20181217-EMIR-STARE_IMAGE.fits       18        1        7       4   1   TEST 29.99926     RAMP
+   data/0001877577-20181217-EMIR-STARE_IMAGE.fits       18        1        7       5   1   TEST 29.99926     RAMP
+   data/0001877583-20181217-EMIR-STARE_IMAGE.fits       18        1        7       6   1   TEST 29.99926     RAMP
+   data/0001877589-20181217-EMIR-STARE_IMAGE.fits       18        1        7       7   1   TEST 29.99926     RAMP
+   data/0001877595-20181217-EMIR-STARE_IMAGE.fits       18        2        7       1   1   TEST 29.99926     RAMP
+   data/0001877601-20181217-EMIR-STARE_IMAGE.fits       18        2        7       2   1   TEST 29.99926     RAMP
+   data/0001877607-20181217-EMIR-STARE_IMAGE.fits       18        2        7       3   1   TEST 29.99926     RAMP
+   data/0001877613-20181217-EMIR-STARE_IMAGE.fits       18        2        7       4   1   TEST 29.99926     RAMP
+   data/0001877619-20181217-EMIR-STARE_IMAGE.fits       18        2        7       5   1   TEST 29.99926     RAMP
+   data/0001877625-20181217-EMIR-STARE_IMAGE.fits       18        2        7       6   1   TEST 29.99926     RAMP
+   data/0001877631-20181217-EMIR-STARE_IMAGE.fits       18        2        7       7   1   TEST 29.99926     RAMP
 
 Note that:
 
-- the keyword ``OBSBLOCK`` gives the observing block number.
+- ``NOBSBLCK`` indicates the requested number of blocks in the
+  observation sequence. In this case this number is 18, which means that 18
+  dithering patterns were requested when the observation sequence started. Note
+  that in this example we are going to reduce only the first 2 blocks (i.e.,
+  the first 2 dithering patterns) in order to reduce the execution time.
 
-- the keyword ``NIMGOBBL`` provides the total number of images in each
+- ``OBSBLOCK`` is the counter of the block sequence. In this
+  example this numbers runs from 1 to 2 (although as just explained above, the
+  whole image sequence is composed of 18 blocks). Thus, the 14 images encompass
+  two complete dithering patterns of 7 images (see next keyword).
+
+- ``NIMGOBBL`` provides the total number of images in each
   dithering pattern (7 in this case).
 
-- ``IMGOBBL`` indicates the sequential number within each pattern.
+- ``IMGOBBL`` indicates the sequential number within each dithering pattern.
+
+- ``EXP`` gives the exposure sequential number at each location within the
+  dithering pattern. In this simple example this number is always 1, which
+  means that a single exposure was performed before moving from one location
+  to the next one within the dithering pattern.
 
 The first step in the reduction process will be the bad-pixel mask
 and flatfield corrections.
@@ -233,6 +247,23 @@ highlighting the first block (first six lines):
    observation result file ``dithered_ini.yaml`` (the parameter ``--step 0``
    indicates that the reduction recipe to be used here is ``STARE_IMAGE``,
    which corresponds to the preliminary image reduction).
+
+.. warning::
+
+   In this simple example, there is a single exposure at each dithering
+   location (before moving to the next location within the same dithering
+   cycle, at a fixed ``OBSBLOCK`` value). In a more general case, where the
+   number of individual exposures at each location can be larger than 1, the
+   ``EXP`` keyword will increase from 1 up to the repetition value. For
+   example, if 5 exposures were performed at each dithering location, ``EXP``
+   will run from 1 to 5 at a fixed ``IMGOBBL`` value. The preliminary reduction
+   should combine these 5 individual exposures into a single image before
+   trying to combine the resulting images at different locations. In order to
+   do this, the parameter ``--repeat`` must be used when executing
+   ``pyemir-generate_yaml_for_dithered_image`` (by default ``--repeat 1`` is
+   assumed). In particular, if 5 individual exposures were obtained at each
+   dithering location for a particular dithering cycle, ``--repeat 5`` should
+   be used.
 
 
 **The requirements file:** ``control.yaml``
