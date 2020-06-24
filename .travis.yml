@@ -30,16 +30,20 @@ install:
   - pip install git+git://github.com/guaix-ucm/numina.git#egg=numina
   - pip install "scikit-image>=0.12" scikit-learn photutils
   - pip install sep lmfit
-  - pip install pytest
-  - pip install pytest-remotedata
-  - pip install pytest-benchmark pytest-cov
-  - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
-  - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
+  - pip install pytest pytest-remotedata
+  - pip install pytest-benchmark
+  - |
+    if [[ $COVERAGE == true ]]; then
+      pip install codeclimate-test-reporter coveralls;
+    fi
 
-
-script: 
-  - py.test -s -v emirdrp
-  - if [[ $COVERAGE == true ]]; then py.test emirdrp --cov=emirdrp; fi
+script:
+  - |
+    if [[ $COVERAGE == true ]]; then
+      coverage run --source emirdrp -m pytest
+    else
+      py.test -s -v emirdrp
+    fi
 
 after_success:
   - if [[ $COVERAGE == true ]]; then coveralls; fi
