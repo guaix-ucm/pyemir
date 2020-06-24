@@ -2,13 +2,9 @@
 
 from setuptools import setup, find_packages
 
-import emirdrp
-
-version = emirdrp.__version__
-
 
 setup(name='pyemir',
-      version=version,
+      version='0.15.dev1',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='https://github.com/guaix-ucm/pyemir',
@@ -38,7 +34,10 @@ setup(name='pyemir',
           'sep>0.5', 'scikit-image>=0.11', 'scikit-learn>=0.19', 'lmfit'
       ],
       extras_require={
-        'tools':  ["PyQt5"],
+          'tools':  ["PyQt5"],
+          'docs': ["sphinx"],
+          'test': ['pytest', 'pytest-remotedata']
+
       },
       zip_safe=False,
       entry_points={
