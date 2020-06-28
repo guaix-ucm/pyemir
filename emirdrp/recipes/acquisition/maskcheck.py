@@ -152,19 +152,19 @@ class MaskCheckRecipe(EmirRecipe):
         if nframes not in [1, 2, 4]:
             raise ValueError("expected 1, 2 or 4 frames, got {}".format(nframes))
 
-        interm = basic_processing_(frames, flow, self.datamodel)
+        interm = basic_processing_(frames, flow)
 
         if nframes == 1:
-            hdulist_slit = combine_images(interm[:], self.datamodel)
+            hdulist_slit = combine_images(interm[:])
             hdulist_object = hdulist_slit
             # background_subs = False
         elif nframes == 2:
-            hdulist_slit = combine_images(interm[0:], self.datamodel)
-            hdulist_object = process_ab(interm, self.datamodel)
+            hdulist_slit = combine_images(interm[0:])
+            hdulist_object = process_ab(interm)
             # background_subs = True
         elif nframes == 4:
-            hdulist_slit = combine_images(interm[0::3], self.datamodel)
-            hdulist_object = process_abba(interm, self.datamodel)
+            hdulist_slit = combine_images(interm[0::3])
+            hdulist_object = process_abba(interm)
             # background_subs = True
         else:
             raise ValueError("expected 1, 2 or 4 frames, got {}".format(nframes))
@@ -282,7 +282,7 @@ class MaskCheckRecipe(EmirRecipe):
             # FIXME: coordinates are in VIRT pixels
             self.logger.debug('create bar mask from predictions')
             mask = np.ones_like(hdulist[0].data)
-            for i in itertools.chain(csu_conf.lbars, csu_conf.rbars):
+            for i in itertools.chain(csu_conf.LBARS, csu_conf.RBARS):
                 bar = csu_conf.bars[i]
                 mask[bar.bbox().slice] = 0
             self.save_intermediate_array(mask, 'mask_bars.fits')

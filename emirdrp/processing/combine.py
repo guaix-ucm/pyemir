@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2019 Universidad Complutense de Madrid
+# Copyright 2013-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -28,11 +28,12 @@ import uuid
 
 import numpy
 from astropy.io import fits
+import numina.datamodel as datam
+from numina.frame.utils import copy_img
 from numina.array import combine
 from numina.array import combine_shape
 
 from emirdrp.processing.wcs import offsets_from_wcs
-from emirdrp.datamodel import EmirDataModel
 #
 
 
@@ -40,13 +41,38 @@ _logger = logging.getLogger(__name__)
 
 
 def basic_processing(rinput, flow):
-    datamodel = EmirDataModel()
-    return basic_processing_(rinput.obresult.images, flow, datamodel)
+    """
+
+    Parameters
+    ----------
+    rinput : RecipeInput
+    flow
+
+    Returns
+    -------
+
+    """
+    return basic_processing_(rinput.obresult.images, flow)
 
 
-def process_abba(images, datamodel, errors=False, prolog=None):
-    base_header = images[0][0].header.copy()
+def process_abba(images, errors=False, prolog=None):
+    """
+    Process images in ABBA sequence
+
+    Parameters
+    ----------
+    images
+    errors
+    prolog
+
+    Returns
+    -------
+
+    """
     cnum = len(images)
+    result = copy_img(images[0])
+    base_header = result[0].header.copy()
+
     now = datetime.datetime.utcnow()
     _logger.info("processing ABBA")
     ###
@@ -66,25 +92,41 @@ def process_abba(images, datamodel, errors=False, prolog=None):
     hdu.header['history'] = "Processed ABBA"
     hdu.header['history'] = 'Combination time {}'.format(now.isoformat())
     for img in images:
-        hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
+        hdu.header['history'] = "Image {}".format(datam.get_imgid(img))
     prevnum = base_header.get('NUM-NCOM', 1)
     hdu.header['NUM-NCOM'] = prevnum * cnum // 2
     hdu.header['UUID'] = str(uuid.uuid1())
     # Headers of last image
     hdu.header['TSUTC2'] = images[-1][0].header['TSUTC2']
-
+    # Not sure why this is needed
+    hdu.header['EXTEND'] = True
     for img, key in zip(images, ['A', 'B', 'B', 'A']):
-        imgid = datamodel.get_imgid(img)
+        imgid = datam.get_imgid(img)
         hdu.header['history'] = "Image '{}' is '{}'".format(imgid, key)
 
-    hdulist = fits.HDUList([hdu])
+    # Update primary extension
+    result[0] = hdu
 
-    return hdulist
+    return result
 
 
-def process_ab(images, datamodel, errors=False, prolog=None):
-    base_header = images[0][0].header.copy()
+def process_ab(images, errors=False, prolog=None):
+    """
+    Process images in AB sequence
+
+    Parameters
+    ----------
+    images
+    errors
+    prolog
+
+    Returns
+    -------
+
+    """
     cnum = len(images)
+    result = copy_img(images[0])
+    base_header = result[0].header.copy()
     now = datetime.datetime.utcnow()
     _logger.info("processing AB")
     ###
@@ -101,7 +143,7 @@ def process_ab(images, datamodel, errors=False, prolog=None):
     hdu.header['history'] = "Processed AB"
     hdu.header['history'] = 'Combination time {}'.format(now.isoformat())
     for img in images:
-        hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
+        hdu.header['history'] = "Image {}".format(datam.get_imgid(img))
     prevnum = base_header.get('NUM-NCOM', 1)
     hdu.header['NUM-NCOM'] = prevnum * cnum // 2
     hdu.header['UUID'] = str(uuid.uuid1())
@@ -109,20 +151,21 @@ def process_ab(images, datamodel, errors=False, prolog=None):
     hdu.header['TSUTC2'] = images[-1][0].header['TSUTC2']
 
     for img, key in zip(images, ['A', 'B']):
-        imgid = datamodel.get_imgid(img)
+        imgid = datam.get_imgid(img)
         hdu.header['history'] = "Image '{}' is '{}'".format(imgid, key)
 
-    hdulist = fits.HDUList([hdu])
+    # Update primary extension
+    # Not sure why this is needed
+    hdu.header['EXTEND'] = True
+    result[0] = hdu
 
-    return hdulist
+    return result
 
 
-def create_proc_hdulist(cdata, data_array):
-    import astropy.io.fits as fits
-    import uuid
-
-    # Copy header of first image
-    base_header = cdata[0][0].header.copy()
+def create_proc_hdulist(images, data_array):
+    cnum = len(images)
+    result = copy_img(images[0])
+    base_header = result[0].header.copy()
 
     hdu = fits.PrimaryHDU(data_array, header=base_header)
     # self.set_base_headers(hdu.header)
@@ -130,18 +173,31 @@ def create_proc_hdulist(cdata, data_array):
     # Update obsmode in header
     #hdu.header['OBSMODE'] = 'LS_ABBA'
     # Headers of last image
-    hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
-    result = fits.HDUList([hdu])
+    hdu.header['TSUTC2'] = images[-1][0].header['TSUTC2']
+    # Not sure why this is needed
+    hdu.header['EXTEND'] = True
+    result[0] = hdu
     return result
 
 
-def basic_processing_(frames, flow, datamodel):
+def basic_processing_(frames, flow):
+    """
+
+    Parameters
+    ----------
+    frames
+    flow
+
+    Returns
+    -------
+
+    """
 
     cdata = []
     _logger.info('processing input frames')
     for frame in frames:
         hdulist = frame.open()
-        fname = datamodel.get_imgid(hdulist)
+        fname = datam.get_imgid(hdulist)
         _logger.info('input is %s', fname)
         final = flow(hdulist)
         _logger.debug('output is input: %s', final is hdulist)
@@ -151,10 +207,24 @@ def basic_processing_(frames, flow, datamodel):
     return cdata
 
 
-def combine_images(images, datamodel, method=combine.mean, errors=False, prolog=None):
+def combine_images(images, method=combine.mean, errors=False, prolog=None):
+    """
 
-    base_header = images[0][0].header.copy()
+    Parameters
+    ----------
+    images
+    method
+    errors : bool (optional)
+    prolog
+
+    Returns
+    -------
+
+    """
     cnum = len(images)
+    result = copy_img(images[0])
+    base_header = result[0].header.copy()
+
     now = datetime.datetime.utcnow()
     _logger.info("stacking %d images using '%s'", cnum, method.__name__)
     data = method([d[0].data for d in images], dtype='float32')
@@ -165,18 +235,20 @@ def combine_images(images, datamodel, method=combine.mean, errors=False, prolog=
     hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method.__name__)
     hdu.header['history'] = 'Combination time {}'.format(now.isoformat())
     for img in images:
-        hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
+        hdu.header['history'] = "Image {}".format(datam.get_imgid(img))
     prevnum = base_header.get('NUM-NCOM', 1)
     hdu.header['NUM-NCOM'] = prevnum * cnum
     hdu.header['UUID'] = str(uuid.uuid1())
     # Headers of last image
     hdu.header['TSUTC2'] = images[-1][0].header['TSUTC2']
+    # Not sure why this is needed
+    hdu.header['EXTEND'] = True
+    result[0] = hdu
     if errors:
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
+        result.append(varhdu)
         num = fits.ImageHDU(data[2], name='MAP')
-        result = fits.HDUList([hdu, varhdu, num])
-    else:
-        result = fits.HDUList([hdu])
+        result.append(num)
 
     return result
 
@@ -233,12 +305,11 @@ def basic_processing_with_segmentation(rinput, flow,
 
     odata = []
     cdata = []
-    datamodel = EmirDataModel()
     try:
         _logger.info('processing input images')
         for frame in rinput.obresult.images:
             hdulist = frame.open()
-            fname = datamodel.get_imgid(hdulist)
+            fname = datam.get_imgid(hdulist)
             _logger.info('input is %s', fname)
             final = flow(hdulist)
             _logger.debug('output is input: %s', final is hdulist)
