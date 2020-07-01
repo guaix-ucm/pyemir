@@ -2,41 +2,29 @@
 PyEmir
 =======
 
-|zenodo| |docs| |pypi| 
-
-.. image:: https://travis-ci.org/guaix-ucm/pyemir.svg?branch=master
-    :target: https://travis-ci.org/guaix-ucm/pyemir
-
-.. image:: https://coveralls.io/repos/guaix-ucm/pyemir/badge.svg?branch=master&service=github 
-    :target: https://coveralls.io/github/guaix-ucm/pyemir?branch=master
+|zenodo| |docs| |pypi| |travis| |coveralls|
 
 This is PyEmir, the data reduction pipeline for EMIR. 
 
-PyEmir is distributed under GNU GPL, either version 3 of the License, 
+EMIR is a wide-field, near-infrared, multi-object spectrograph
+designed for the Gran telescopio Canarias (GTC).
+
+You can install `pyemir` using
+the `released code in PyPI <https://pypi.org/project/pyemir/>`_ or
+the `development version in Github <https://github.com/guaix-ucm/pyemir>`_.
+
+The installation instructions are available in the
+`online documentation <https://pyemir.readthedocs.io/en/latest/installation/index.html>`_
+or `doc/installation/index.rst <doc/installation/index.rst>`_ in the source distribution.
+
+Licensing
+---------
+`pyemir` is distributed under GNU GPL, either version 3 of the License,
 or (at your option) any later version. See the file LICENSE.txt 
 for details.
 
-PyEmir requires the following packages installed in order to
-be able to be installed and work properly:
-
- - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
- - numpy (http://numpy.scipy.org/) 
- - scipy (http://www.scipy.org)
- - astropy >= 2(http://www.astropy.org/)
- - numina >= 0.21 (https://github.com/guaix-ucm/numina)
- - matplotlib (https://matplotlib.org/)
- - photutils >=0.2 (https://github.com/astropy/photutils)
- - sep (https://github.com/kbarbary/sep)
- - scikit-image >= 0.11 (http://scikit-image.org/)
- - scikit-learn >= 0.19 (http://scikit-learn.org/)
- - lmfit (http://lmfit.github.io/lmfit-py/)
-
-EMIR is a wide-field, near-infrared, multi-object spectrograph proposed 
-for the Nasmyth focus of GTC. It will allow observers to obtain from tens to 
-hundreds of intermediate resolution spectra simultaneously, in the 
-nIR bands Z, J, H and K. A multi-slit mask unit will be used for target acquisition. 
-EMIR is designed to address the science goals of the proposing team and 
-of the Spanish community at large. 
+Authors
+-------
 
 Webpage: https://pyemir.readthedocs.io/en/latest/
 
@@ -44,10 +32,20 @@ Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
       
 .. |docs| image:: https://readthedocs.org/projects/pyemir/badge/?version=latest
    :target: https://readthedocs.org/projects/pyemir/?badge=latest
-   :alt: Documentation Status
+   :alt: pyemir's Documentation Status
 
 .. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.593642.svg
    :target: http://dx.doi.org/10.5281/zenodo.593642
+   :alt: pyemir's Zenodo DOI
 
 .. |pypi| image:: https://badge.fury.io/py/pyemir.svg
     :target: https://badge.fury.io/py/pyemir
+    :alt: pyemir's PyPI Status
+
+.. |travis| image:: https://img.shields.io/travis/guaix-ucm/pyemir/master?logo=travis%20ci&logoColor=white&label=Travis%20CI
+    :target: https://travis-ci.org/guaix-ucm/pyemir
+    :alt: pyemir's Travis CI Status
+
+.. |coveralls| image:: https://coveralls.io/repos/guaix-ucm/pyemir/badge.svg?branch=master&service=github
+    :target: https://coveralls.io/github/guaix-ucm/megaradrp?branch=master
+     :alt: pyemir's Coverall Status
