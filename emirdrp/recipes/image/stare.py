@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -20,11 +20,13 @@ from numina.core import Result
 from numina.core.query import Ignore
 from numina.core.recipes import timeit
 from numina.processing.combine import basic_processing_with_combination
+from numina.util.context import manage_fits
 
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.core.extra as extra
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
+import emirdrp.processing.combine as comb
 import emirdrp.decorators
 
 
@@ -46,10 +48,9 @@ class StareImageRecipe2(EmirRecipe):
         self.logger.info('starting stare image reduction (offline)')
 
         frames = rinput.obresult.frames
-        datamodel = self.datamodel
 
-        with extra.manage_frame(frames) as list_of:
-            c_img = extra.combine_frames(list_of, datamodel, method=combine.mean, errors=False)
+        with manage_fits(frames) as list_of:
+            c_img = comb.combine_images(list_of, method=combine.mean, errors=False)
 
         flow = self.init_filters(rinput)
 

@@ -3,18 +3,8 @@
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Combination routines"""
@@ -22,7 +12,7 @@
 from __future__ import division
 
 import datetime
-#
+import functools
 import logging
 import uuid
 
@@ -34,7 +24,6 @@ from numina.array import combine
 from numina.array import combine_shape
 
 from emirdrp.processing.wcs import offsets_from_wcs
-#
 
 
 _logger = logging.getLogger(__name__)
@@ -85,7 +74,8 @@ def process_abba(images, errors=False, prolog=None):
     dataAB1 = dataA1 - dataB1
     data = dataAB0 + dataAB1
     ###
-    hdu = fits.PrimaryHDU(data, header=base_header)
+    hdu = result[0]
+    hdu.data = data
     _logger.debug('update result header')
     if prolog:
         hdu.header['history'] = prolog
@@ -207,13 +197,37 @@ def basic_processing_(frames, flow):
     return cdata
 
 
-def combine_images(images, method=combine.mean, errors=False, prolog=None):
+def scale_with_median(method):
+    """Adapt combine method to scale with median
     """
+    @functools.wraps(method)
+    def wrapper(data_list, dtype='float32'):
+        medians = numpy.array([numpy.median(d) for d in data_list])
+        scales = medians / medians.max()
+        data_com = method(data_list, dtype=dtype, scales=scales)
+        return data_com
+    # Adapt __name__
+    rename = "scaled_" + wrapper.__name__
+    wrapper.__name__ = rename
+
+    return wrapper
+
+
+# FIXME: use the function in numina
+def combine_images(images, method=combine.mean, method_kwargs=None,
+                   errors=False, prolog=None):
+    """Combine a sequence of HDUList objects.
+
+    Using the following keywords:
+     * NUM-NCOM
+     * UUID, TSUTC1, TSUTC2
+     * VARIANCE, MAP
 
     Parameters
     ----------
     images
     method
+    method_kwargs : dict (optional)
     errors : bool (optional)
     prolog
 
@@ -228,7 +242,8 @@ def combine_images(images, method=combine.mean, errors=False, prolog=None):
     now = datetime.datetime.utcnow()
     _logger.info("stacking %d images using '%s'", cnum, method.__name__)
     data = method([d[0].data for d in images], dtype='float32')
-    hdu = fits.PrimaryHDU(data[0], header=base_header)
+    hdu = result[0]
+    hdu.data = data[0]
     _logger.debug('update result header')
     if prolog:
         hdu.header['history'] = prolog
@@ -247,14 +262,30 @@ def combine_images(images, method=combine.mean, errors=False, prolog=None):
     if errors:
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
         result.append(varhdu)
-        num = fits.ImageHDU(data[2], name='MAP')
+        num = fits.ImageHDU(data[2].astype('int16'), name='MAP')
         result.append(num)
-
     return result
 
 
 def resize_hdul(hdul, newshape, region, extensions=None, window=None,
                     scale=1, fill=0.0, conserve=True):
+    """
+
+    Parameters
+    ----------
+    hdul
+    newshape
+    region
+    extensions
+    window
+    scale
+    fill
+    conserve
+
+    Returns
+    -------
+
+    """
     from numina.frame import resize_hdu
 
     if extensions is None:
@@ -274,6 +305,20 @@ def resize_hdul(hdul, newshape, region, extensions=None, window=None,
 
 
 def resize(frames, shape, offsetsp, finalshape, window=None):
+    """
+
+    Parameters
+    ----------
+    frames
+    shape
+    offsetsp
+    finalshape
+    window
+
+    Returns
+    -------
+
+    """
     from numina.array import subarray_match
     _logger.info('Resizing frames and masks')
     rframes = []
@@ -287,6 +332,20 @@ def resize(frames, shape, offsetsp, finalshape, window=None):
 
 
 def resize_hdulists(hdulists, shape, offsetsp, finalshape, window=None):
+    """
+
+    Parameters
+    ----------
+    hdulists
+    shape
+    offsetsp
+    finalshape
+    window
+
+    Returns
+    -------
+
+    """
     from numina.array import subarray_match
     _logger.info('Resizing frames and masks')
     rhdulist = []

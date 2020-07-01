@@ -15,6 +15,7 @@ from numina.array.combine import median
 from numina.core import DataFrame
 from numina.core import Result
 from numina.exceptions import RecipeError
+from numina.util.context import manage_fits
 
 from emirdrp.core import EMIR_BIAS_MODES
 from emirdrp.core.recipe import EmirRecipe
@@ -23,7 +24,8 @@ import emirdrp.products as prods
 import emirdrp.requirements as reqs
 
 from numina.processing.combine import basic_processing_with_combination
-from emirdrp.processing.combine import  basic_processing_with_segmentation
+from emirdrp.processing.combine import basic_processing_with_segmentation
+from emirdrp.processing.combine import combine_images, scale_with_median
 
 
 _logger = logging.getLogger('numina.recipes.emir')
@@ -212,16 +214,15 @@ class IntensityFlatRecipe2(EmirRecipe):
     master_flatframe = Result(prods.MasterIntensityFlat)
 
     def run(self, rinput):
-        import emirdrp.core.extra as extra
         from numina.array import combine
 
         _logger.info('starting flat reduction')
 
         frames = rinput.obresult.frames
-        datamodel = self.datamodel
 
-        with extra.manage_frame(frames) as list_of:
-            c_img = extra.combine_frames2(list_of, datamodel, method=combine.mean, errors=False)
+        with manage_fits(frames) as list_of:
+            scaled_mean = scale_with_median(combine.mean)
+            c_img = combine_images(list_of, method=scaled_mean, errors=False)
 
         self.save_intermediate_img(c_img, 'p0.fits')
 
