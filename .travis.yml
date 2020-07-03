@@ -22,12 +22,8 @@ matrix:
 cache: pip
 
 install:
-  - pip install Cython
-# The preinstalled numpy 1.15 with python 3.5 breaks something
-# probably a wheel
   - pip install "numpy>=1.16"
-  - pip install scipy astropy "six>=1.7"
-  - pip install git+git://github.com/guaix-ucm/numina.git#egg=numina
+  - pip install numina
   - pip install "scikit-image>=0.12" scikit-learn photutils
   - pip install sep lmfit
   - pip install pytest pytest-remotedata

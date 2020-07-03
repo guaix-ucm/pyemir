@@ -2,6 +2,10 @@
 
 from setuptools import setup, find_packages
 
+import emirdrp
+
+version = emirdrp.__version__
+
 
 setup(name='pyemir',
       version='0.15.dev2',
