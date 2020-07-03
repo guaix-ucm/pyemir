@@ -230,8 +230,8 @@ class MaskCheckRecipe(EmirRecipe):
         o_mm_rotoff = np.dot(rotoff_rot, o_mm)
 
         self.logger.info('=========================================')
-        self.logger.info('Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
-        self.logger.info('(WITH ROTOFF) Offset Target in Focal Plane Frame %s mm', o_mm_rotoff)
+        self.logger.info('(WITH IPA) Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
+        self.logger.info('Offset Target in Focal Plane Frame %s mm', o_mm_rotoff)
         self.logger.info('=========================================')
 
         # P2 Pos REF VIRT
@@ -244,7 +244,7 @@ class MaskCheckRecipe(EmirRecipe):
         centroids_virt = np.hstack([p_v, q_v])
 
         # Value in mm
-        offset_out = o_mm_ipa.to(u.mm).value
+        offset_out = o_mm_rotoff.to(u.mm).value
         # Convert DEG to RAD
         angle_out = angle
         result = self.create_result(
