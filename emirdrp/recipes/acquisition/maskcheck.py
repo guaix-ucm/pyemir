@@ -213,20 +213,24 @@ class MaskCheckRecipe(EmirRecipe):
             qc = QC.GOOD
 
         pixsize_na = cons.EMIR_PIXSCALE / cons.GTC_NASMYTH_A_PLATESCALE
-        self.logger.debug('Pixel size in NASMYTH_A %s', pixsize_na)
+        self.logger.debug('Pixel size in NASMYTH_A %s mm', pixsize_na)
         # Offset is returned without units
         o_mm = ((offset * u.pixel) * pixsize_na).to(u.mm)
         # Missing units in header
-        # ipa_deg = hdulist_object[0].header.get("ROTOFF", cons.EMIR_REF_IPA)
-        ipa_deg = cons.EMIR_REF_IPA
-        # ipa_rad = np.deg2rad(ipa_deg)
+        ipa_deg = hdulist_object[0].header.get("IPA", cons.EMIR_REF_IPA) * u.deg
+        rotoff_deg = hdulist_object[0].header.get("ROTOFF", cons.EMIR_REF_IPA) * u.deg
+
         ipa_rot = create_rot2d(ipa_deg.to('', equivalencies=u.dimensionless_angles()))
+        rotoff_rot = create_rot2d(rotoff_deg.to('', equivalencies=u.dimensionless_angles()))
+        self.logger.info('IPA is %s deg', ipa_deg.value)
+        self.logger.info('ROTOFF is %s deg', rotoff_deg.value)
         self.logger.info('OFF (mm) %s', o_mm)
-        self.logger.info('Default IPA is %s', ipa_deg.value)
         o_mm_ipa = np.dot(ipa_rot, o_mm)
+        o_mm_rotoff = np.dot(rotoff_rot, o_mm)
 
         self.logger.info('=========================================')
         self.logger.info('Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
+        self.logger.info('(WITH ROTOFF) Offset Target in Focal Plane Frame %s mm', o_mm_rotoff)
         self.logger.info('=========================================')
 
         # P2 Pos REF VIRT
@@ -276,8 +280,10 @@ class MaskCheckRecipe(EmirRecipe):
         self.logger.debug('create bar model')
         barmodel = csuconf.create_bar_models(bars_nominal_positions)
 
-        csu_conf = csuconf.read_csu_from_image(barmodel, hdulist)
+        csu_conf = csuconf.CSUConf(barmodel)
+        csu_conf.set_state_from_img(hdulist)
 
+        self.logger.info('loaded CSU named: %s', csu_conf.conf_f)
         if self.intermediate_results:
             # FIXME: coordinates are in VIRT pixels
             self.logger.debug('create bar mask from predictions')
@@ -461,6 +467,7 @@ def compute_off_rotation(data, wcs, csu_conf, slits_bb=None, rotaxis=(0, 0),
         res = comp_centroid(data, bb, debug_plot=debug_plot, plot_reference=target_coordinates)
         logger.debug('slit %s is formed by bars %s %s', this.idx, this.lbars_ids, this.rbars_ids)
         logger.debug('in slit %s, reference is %s', this.idx, target_coordinates)
+        logger.debug('in slit %s, reference (v) is %s', this.idx, this.target_coordinates_v)
 
         if res is None:
             logger.warning('no object found in slit %s, skipping', this.idx)
@@ -492,6 +499,9 @@ def compute_off_rotation(data, wcs, csu_conf, slits_bb=None, rotaxis=(0, 0),
     else:
         logger.debug('convert coordinates to virtual, ie, focal plane')
         q2 = dist.wcs_pix2virt(wcs, q1, origin=0)
+        logger.debug('converted virtual coordinates')
+        for idx, c in zip(slits, q2):
+            logger.debug('in slit %s, object (v) is %s', idx, c)
         # Move from objects to reference
         logger.debug('compute transform from measured objects to reference coordinates')
         offset, rot = fit_offset_and_rotation(q2, p2)

@@ -28,5 +28,5 @@ EMIR_CSU_PLATESCALE = 1.1746 * u.arcsec / u.mm
 # plate scale, detector, arcsec / mm
 EMIR_DETECTOR_PLATESCALE = 10.8  * u.arcsec / u.mm
 
-# This value is stored in keyword ROTOFF
+# This value is stored in keyword IPA
 EMIR_REF_IPA = 90.0552 * u.deg # deg

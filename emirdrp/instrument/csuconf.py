@@ -43,10 +43,30 @@ class CSUConf(object):
     def is_closed(self):
         return not self.is_open()
 
+    def set_state_from_img(self, img):
+        """Set state using a FITS image"""
+
+        # FIXME: CSUCONFF is in primary
+        hdr0 = img[0].header
+        self.conf_f = hdr0['CSUCONFF']
+
+        if 'MECS' in img:
+            # Get header from extension
+            hdr_csu = img['MECS'].header
+        else:
+            # Get header from main header
+            hdr_csu = img[0].header
+        self.set_state(hdr_csu)
+
     def set_state(self, hdr):
         """Read CSU information and slits from header"""
 
-        self.conf_f = hdr.get('CSUCONFF', 'UNKNOWN')
+        # FIXME: this keyword in only in primary
+        # it should be duplicated in MECS
+        try:
+            self.conf_f = hdr['CSUCONFF']
+        except KeyError:
+            pass
         # Read CSUPOS and set position in model
         # The bars
         for idx in self.bars:
@@ -263,20 +283,17 @@ def create_bar_models(barstab):
 
 def read_csu_from_header(barmodel, hdr):
     """Read CSU information and slits from header"""
-    conf = CSUConf(barmodel)
-    conf.set_state(hdr)
-    return conf
+    # FIXME: CSUCONFF is in primary
+    csu_conf = CSUConf(barmodel)
+    csu_conf.set_state(hdr)
+    return csu_conf
 
 
 def read_csu_from_image(barmodel, img):
     """Read CSU information and slits from FITS"""
-    if 'MECS' in img:
-        # Get header from extension
-        hdr_csu = img['MECS'].header
-    else:
-        # Get header from main header
-        hdr_csu = img[0].header
-    return read_csu_from_header(barmodel, hdr_csu)
+    csu_conf = CSUConf(barmodel)
+    csu_conf.set_state_from_img(img)
+    return csu_conf
 
 
 def merge_slits(mm, max_slits=3, tol=1e-2):
