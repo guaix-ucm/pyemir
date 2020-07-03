@@ -182,6 +182,8 @@ class MaskCheckRecipe(EmirRecipe):
         # (Off - raxis) = Rot * (Offnew - raxis)
         wcs = astropy.wcs.WCS(hdulist_slit[0].header)
         rotaxis = wcs.wcs.crpix - 1
+        ipa_deg = hdulist_object[0].header.get("IPA", cons.EMIR_REF_IPA) * u.deg
+        rotoff_deg = hdulist_object[0].header.get("ROTOFF", cons.EMIR_REF_IPA) * u.deg
 
         self.logger.debug('center of rotation (from CRPIX) is %s', wcs.wcs.crpix)
 
@@ -198,10 +200,13 @@ class MaskCheckRecipe(EmirRecipe):
             image_sep = hdulist_object[0].data.astype('float32')
 
             self.logger.debug('center of rotation (from CRPIX) is %s', wcs.wcs.crpix)
-
+            self.logger.debug('create adapted WCS from header WCS')
+            wcsa = dist.adapt_wcs(wcs, ipa_deg=ipa_deg.value, rotang_deg=rotoff_deg.value)
+            self.logger.debug('CD matrix of WCS %s', wcs.wcs.cd)
+            self.logger.debug('CD matrix of adapted WCS %s', wcsa.wcs.cd)
             # angle in deg, offset in pixels on the CSU
             offset, angle, qc, coords = compute_off_rotation(
-                image_sep, wcs, csu_conf, slits_bb,
+                image_sep, wcsa, csu_conf, slits_bb,
                 rotaxis=rotaxis, logger=self.logger,
                 debug_plot=False, intermediate_results=self.intermediate_results
             )
@@ -216,10 +221,6 @@ class MaskCheckRecipe(EmirRecipe):
         self.logger.debug('Pixel size in NASMYTH_A %s mm', pixsize_na)
         # Offset is returned without units
         o_mm = ((offset * u.pixel) * pixsize_na).to(u.mm)
-        # Missing units in header
-        ipa_deg = hdulist_object[0].header.get("IPA", cons.EMIR_REF_IPA) * u.deg
-        rotoff_deg = hdulist_object[0].header.get("ROTOFF", cons.EMIR_REF_IPA) * u.deg
-
         ipa_rot = create_rot2d(ipa_deg.to('', equivalencies=u.dimensionless_angles()))
         rotoff_rot = create_rot2d(rotoff_deg.to('', equivalencies=u.dimensionless_angles()))
         self.logger.info('IPA is %s deg', ipa_deg.value)
@@ -428,7 +429,7 @@ class MaskCheckRecipe(EmirRecipe):
         return slits_bb
 
 
-def compute_off_rotation(data, wcs, csu_conf, slits_bb=None, rotaxis=(0, 0),
+def compute_off_rotation(data, wcsa, csu_conf, slits_bb=None, rotaxis=(0, 0),
                          logger=None, debug_plot=False,
                          intermediate_results=True
                          ):
@@ -498,7 +499,7 @@ def compute_off_rotation(data, wcs, csu_conf, slits_bb=None, rotaxis=(0, 0),
         angle = 0.0
     else:
         logger.debug('convert coordinates to virtual, ie, focal plane')
-        q2 = dist.wcs_pix2virt(wcs, q1, origin=0)
+        q2 = dist.wcs_pix2virt(wcsa, q1, origin=0)
         logger.debug('converted virtual coordinates')
         for idx, c in zip(slits, q2):
             logger.debug('in slit %s, object (v) is %s', idx, c)

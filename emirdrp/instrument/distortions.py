@@ -15,6 +15,22 @@ import emirdrp.instrument.constants as cons
 EMIR_PLATESCALE_RADS = cons.EMIR_PIXSCALE.to(U.rad / U.pixel).value
 
 
+def adapt_wcs(wcs, rotang_deg, ipa_deg):
+    """Adapt WCS to use in distortions"""
+    wcsa = wcs.deepcopy()
+    wcsa.wcs.crval = [0, 0]
+    cdelt = numpy.sqrt(numpy.linalg.det(wcs.wcs.cd))
+    angle = numpy.arctan2(wcs.wcs.cd[1, 0], wcs.wcs.cd[0, 0])
+    nangle = angle + (ipa_deg - rotang_deg) / 180.0 * numpy.pi
+    pc11 = cdelt * numpy.cos(nangle)
+    pc22 = cdelt * numpy.cos(nangle)
+    pc12 = -cdelt * numpy.sin(nangle)
+    pc21 = cdelt * numpy.sin(nangle)
+    wcsa.wcs.cd = [[pc11, pc12],
+                   [pc21, pc22]]
+    return wcsa
+
+
 def exvp(pos_x, pos_y):
     """Convert virtual pixel to real pixel
 

@@ -2,10 +2,12 @@
 import pytest
 import numpy
 import astropy.units as u
+import astropy.wcs
 
 import emirdrp.instrument.constants as cons
 from ..distortions import exvp, pvex
 from ..distortions import wcs_exvp, wcs_pvex
+from ..distortions import adapt_wcs
 
 
 def create_wcs(fppa=270 * u.deg):
@@ -35,6 +37,32 @@ def create_wcs(fppa=270 * u.deg):
     ])
     w.wcs.radesys = 'FK5'
     return w
+
+
+def create_wcs_new():
+    """From EMIR image as 2020-07-05"""
+    w = astropy.wcs.WCS(naxis=2)
+    w.wcs.ctype = ['RA---ZPN', 'DEC--ZPN']
+    w.wcs.crval = [297.591888896875, 30.7466139938489]
+    w.wcs.crpix = [1022.46378968092, 1016.55073697444]
+    pc11 = -5.39644538444764E-05
+    pc22 = -5.39644538444764E-05
+    pc12 = -5.19905444897492E-08
+    pc21 =  5.19905444897492E-08
+    w.wcs.cd = [[pc11, pc12],
+                [pc21, pc22]]
+    w.wcs.set_pv([
+        (2, 1, 1), (2, 2, 0.0), (2, 3, 14584.8),
+        (2, 4, 6.93534705104727E-310), (2, 5, 1755295542.4)
+    ])
+    w.wcs.radesys = 'FK5'
+    return w
+
+
+def test_adapt_wcs():
+    wcs = create_wcs()
+    wcsa = adapt_wcs(wcs, 90.0552, 90.0552)
+    assert id(wcsa.wcs) != id(wcs.wcs)
 
 
 def create_wcs_alt(fppa=270 * u.deg):
