@@ -101,7 +101,7 @@ class DtuConfiguration(object):
             needed to initialise the members of this class.
         extnum : None or int or str
             Extension number or extension name. If None, select 'MECS' extension
-            if available. If not, use priamry extension
+            if available. If not, use primary extension
 
         """
 
@@ -114,6 +114,26 @@ class DtuConfiguration(object):
                     extnum = 0
             image_header = hdulist[extnum].header
             return cls.define_from_header(image_header)
+
+    @classmethod
+    def define_from_img(cls, img):
+        """Define class object from header information in HDUList object.
+
+        Parameters
+        ----------
+        img: HDUList
+            FITS image whose header contains the DTU information
+            needed to initialise the members of this class.
+
+        """
+
+        # read input FITS file
+        if 'MECS' in img:
+            extnum = 'MECS'
+        else:
+            extnum = 0
+        image_header = img[extnum].header
+        return cls.define_from_header(image_header)
 
     @classmethod
     def define_from_header(cls, image_header):
