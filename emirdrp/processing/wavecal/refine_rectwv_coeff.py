@@ -35,6 +35,7 @@ from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
 from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 
+import emirdrp.datamodel as datamodel
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.processing.wavecal.median_slitlets_rectified \
     import median_slitlets_rectified
@@ -104,6 +105,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
 
     # image header
     main_header = input_image[0].header
+    mecs_header = datamodel.get_mecs_header(input_image)
     filter_name = main_header['filter']
     grism_name = main_header['grism']
 
@@ -145,7 +147,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     catlines_reference_flux /= catlines_reference_flux.max()
 
     # estimate sigma to broaden catalogue lines
-    csu_config = CsuConfiguration.define_from_fits(input_image)
+    csu_config = CsuConfiguration.define_from_header(mecs_header)
     # segregate slitlets
     list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1))
                                 if i not in list_useful_slitlets]
