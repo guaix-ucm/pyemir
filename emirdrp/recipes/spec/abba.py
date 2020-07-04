@@ -1019,10 +1019,11 @@ class ABBASpectraFastRectwv(EmirRecipe):
         with contextlib.ExitStack() as stack:
             hduls = [stack.enter_context(fname.open()) for fname in
                      rinput.obresult.frames]
-            # Copy header of first image
-            base_header = hduls[0][0].header.copy()
 
-            hdu = fits.PrimaryHDU(reduced_data, header=base_header)
+            # Copy the first image
+            result_img = fits.HDUList([ext.copy() for ext in hduls[0]])
+            hdu = result_img[0]
+            hdu.data = reduced_data
             self.set_base_headers(hdu.header)
 
             self.logger.debug('update result header')
@@ -1083,8 +1084,7 @@ class ABBASpectraFastRectwv(EmirRecipe):
             cline = '{}: {}'.format(item, value)
             hdu.header.add_history(cline)
         hdu.header.add_history('--- rinput.stored() (END) ---')
-        result = fits.HDUList([hdu])
-        return result
+        return result_img
 
     def set_base_headers(self, hdr):
         newhdr = super(ABBASpectraFastRectwv, self).set_base_headers(hdr)
