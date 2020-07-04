@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -341,8 +341,8 @@ class ABBASpectraRectwv(EmirRecipe):
                                                           nimages))
             self.logger.info('image: {}'.format(frame.filename))
             with frame.open() as f:
-                base_header = f[0].header.copy()
-                data = f[0].data.astype('float32')
+                newimg = fits.HDUList([ext.copy() for ext in f])
+            base_header = newimg[0].header
             grism_name_ = base_header['grism']
             if grism_name_ != grism_name:
                 raise ValueError('Incompatible grism name in '
@@ -351,11 +351,10 @@ class ABBASpectraRectwv(EmirRecipe):
             if filter_name_ != filter_name:
                 raise ValueError('Incompatible filter name in '
                                  'rectwv_coeff.json file and FITS image')
-            hdu = fits.PrimaryHDU(data, header=base_header)
+            hdu = newimg[0]
             hdu.header['UUID'] = str(uuid.uuid1())
-            hdul = fits.HDUList([hdu])
             # basic reduction
-            reduced_image = flow(hdul)
+            reduced_image = flow(newimg)
             hdr = reduced_image[0].header
             self.set_base_headers(hdr)
             # rectification and wavelength calibration
@@ -723,10 +722,10 @@ class ABBASpectraRectwv(EmirRecipe):
         with contextlib.ExitStack() as stack:
             hduls = [stack.enter_context(fname.open()) for fname in
                      rinput.obresult.frames]
-            # Copy header of first image
-            base_header = hduls[0][0].header.copy()
-
-            hdu = fits.PrimaryHDU(reduced_mos_abba_data, header=base_header)
+            # Copy the first image
+            result_img = fits.HDUList([ext.copy() for ext in hduls[0]])
+            hdu = result_img[0]
+            hdu.data = reduced_mos_abba_data
             self.set_base_headers(hdu.header)
 
             # check consistency of wavelength calibration paramenters
@@ -793,8 +792,7 @@ class ABBASpectraRectwv(EmirRecipe):
             cline = '{}: {}'.format(item, value)
             hdu.header.add_history(cline)
         hdu.header.add_history('--- rinput.stored() (END) ---')
-        result = fits.HDUList([hdu])
-        return result
+        return result_img
 
     def set_base_headers(self, hdr):
         newhdr = super(ABBASpectraRectwv, self).set_base_headers(hdr)
