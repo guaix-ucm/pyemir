@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -19,6 +19,7 @@ import astropy.io.fits as fits
 from numina.array.combine import median
 from numina.array.robustfit import fit_theil_sen
 from numina.core import Result
+from numina.frame.utils import copy_img
 import numina.types.datatype as dt
 from numina.processing.combine import basic_processing_with_combination_frames
 
@@ -216,10 +217,12 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         self.logger.debug('update result header')
         cnum = len(imgs)
         method_name = 'Theil-Sen'
-        base_header = imgs[0][0].header
+        result = copy_img(imgs[0])
+        base_header = result[0].header
         cdata = imgs
 
-        hdu = fits.PrimaryHDU(data=slope_scaled, header=base_header)
+        hdu = result[0]
+        hdu.data = slope_scaled
         self.set_base_headers(hdu.header)
 
         hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method_name)
@@ -242,13 +245,11 @@ class MultiTwilightFlatRecipe(EmirRecipe):
 
         if errors:
             varhdu = fits.ImageHDU(slope_scaled_var, name='VARIANCE')
+            result.append(varhdu)
             num = fits.ImageHDU(slope_scaled_num, name='MAP')
+            result.append(num)
             self.logger.debug('normalize VAR extension')
             varhdu.data /= (mm * mm)
-            result = fits.HDUList([hdu, varhdu, num])
-        else:
-            result = fits.HDUList([hdu])
-
         return result
 
 

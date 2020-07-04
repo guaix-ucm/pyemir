@@ -28,6 +28,7 @@ from numina.array.wavecalib.fix_pix_borders import fix_pix_borders
 from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.core import Parameter
 from numina.core import Result
+from numina.frame.utils import copy_img
 from numina.processing.combine import combine_imgs
 
 from emirdrp.core.recipe import EmirRecipe
@@ -636,9 +637,9 @@ class SpecFlatPix2Pix(EmirRecipe):
             hduls = [stack.enter_context(fname.open()) for fname in
                      rinput.obresult.frames]
             # Copy header of first image
-            base_header = hduls[0][0].header.copy()
-
-            hdu = fits.PrimaryHDU(reduced_data, header=base_header)
+            result = copy_img(hduls[0])
+            hdu = result[0]
+            hdu.data = reduced_data
             self.set_base_headers(hdu.header)
 
             self.logger.debug('update result header')
@@ -669,8 +670,6 @@ class SpecFlatPix2Pix(EmirRecipe):
             cline = '{}: {}'.format(item, value)
             hdu.header.add_history(cline)
         hdu.header.add_history('--- rinput.stored() (END) ---')
-
-        result = fits.HDUList([hdu])
         return result
 
     def set_base_headers(self, hdr):

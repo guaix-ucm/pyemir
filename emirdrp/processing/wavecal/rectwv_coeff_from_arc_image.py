@@ -38,6 +38,7 @@ from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.wavecalib.__main__ import read_wv_master_from_array
 from numina.array.wavecalib.__main__ import wvcal_spectrum
 from numina.array.wavecalib.arccalibration import refine_arccalibration
+from numina.frame.utils import copy_img
 from numina.tools.arg_file_is_new import arg_file_is_new
 import numina.types.qc
 
@@ -430,7 +431,9 @@ def rectwv_coeff_from_arc_image(reduced_image,
 
     # generate FITS file structure with 55 spectra corresponding to the
     # median spectrum for each slitlet
-    reduced_55sp = fits.PrimaryHDU(data=image2d_55sp)
+    reduced_55sp_l = copy_img(reduced_image)
+    reduced_55sp = reduced_55sp_l[0]
+    reduced_55sp.data = image2d_55sp
     reduced_55sp.header['crpix1'] = (0.0, 'reference pixel')
     reduced_55sp.header['crval1'] = (0.0, 'central value at crpix2')
     reduced_55sp.header['cdelt1'] = (1.0, 'increment')

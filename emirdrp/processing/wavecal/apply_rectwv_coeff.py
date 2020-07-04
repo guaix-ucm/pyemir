@@ -22,7 +22,6 @@ from __future__ import print_function
 
 import argparse
 from astropy.io import fits
-import copy
 from datetime import datetime
 import logging
 import numpy as np
@@ -32,6 +31,7 @@ from numina.array.display.logging_from_debugplot import logging_from_debugplot
 from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 from numina.array.wavecalib.resample import resample_image2d_flux
+from numina.frame.utils import copy_img
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 import emirdrp.datamodel as datamodel
@@ -78,7 +78,7 @@ def apply_rectwv_coeff(reduced_image,
 
     logger = logging.getLogger(__name__)
 
-    rectwv_image = fits.HDUList([ext.copy() for ext in reduced_image])
+    rectwv_image = copy_img(reduced_image)
     header = rectwv_image[0].header
     image2d = rectwv_image[0].data
 
@@ -268,6 +268,8 @@ def apply_rectwv_coeff(reduced_image,
                         + datetime.now().isoformat()
 
     logger.info('Generating rectified and wavelength calibrated image')
+    rectwv_image[0].data = image2d_rectwv
+    return rectwv_image
 
     rectwv_image[0].data = image2d_rectwv
     rectwv_image[0].header = header

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -10,18 +10,20 @@
 """
 Spectroscopy mode, ABBA
 """
+import uuid
 
 import astropy.io.fits as fits
+import numpy
+
 import numina.core
 import numina.exceptions
-import numpy
 import numina.core.query as qmod
 import numina.ext.gtc
-
 from numina.array import combine
 from numina.core import Result, Requirement
 from numina.exceptions import RecipeError
 from numina.core.requirements import ObservationResultRequirement
+from numina.frame.utils import copy_img
 
 import emirdrp.datamodel
 import emirdrp.decorators
@@ -260,6 +262,7 @@ class BaseABBARecipe(EmirRecipe):
 
     def process_abba(self, images):
         """Process four images in ABBA mode"""
+        # FIXME: Duplicated in processing
         dataA0 = images[0][0].data.astype('float32')
         dataB0 = images[1][0].data.astype('float32')
 
@@ -285,34 +288,25 @@ class BaseABBARecipe(EmirRecipe):
         return hdulist
 
     def create_proc_hdulist(self, cdata, data_array):
-        import astropy.io.fits as fits
-        import uuid
         # Copy header of first image
-        base_header = cdata[0][0].header.copy()
+        result = copy_img(cdata[0])
 
-        hdu = fits.PrimaryHDU(data_array, header=base_header)
+        hdu = result[0]
+        hdu.data = data_array
         self.set_base_headers(hdu.header)
         hdu.header['UUID'] = str(uuid.uuid1())
         # Update obsmode in header
         hdu.header['OBSMODE'] = 'LS_ABBA'
         # Headers of last image
         hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
-        hdul = [hdu]
-
-        # Copy MECS extension if available
-        if 'MECS' in cdata[0]:
-            mecs_ext = cdata[0]['MECS']
-            hdul.append(mecs_ext)
-
-        result = fits.HDUList(hdul)
         return result
 
     def create_accum_hdulist(self, cdata, data_array_n,
                              method_name='unkwnow', use_errors=False):
-        import uuid
-
-        base_header = cdata[0][0].header.copy()
-        hdu = fits.PrimaryHDU(data_array_n[0], header=base_header)
+        # FIXME: duplicated
+        result = copy_img(cdata[0])
+        hdu = result[0]
+        hdu.data = data_array_n[0]
         hdr = hdu.header
         self.set_base_headers(hdr)
         hdu.header['UUID'] = str(uuid.uuid1())
@@ -331,16 +325,13 @@ class BaseABBARecipe(EmirRecipe):
         for hdul in cdata:
             ncom += hdul[0].header['NUM-NCOM']
         hdr['NUM-NCOM'] = ncom
-
         #
         if use_errors:
             varhdu = fits.ImageHDU(data_array_n[1], name='VARIANCE')
+            result.append(varhdu)
             num = fits.ImageHDU(data_array_n[2], name='MAP')
-            hdulist = fits.HDUList([hdu, varhdu, num])
-        else:
-            hdulist = fits.HDUList([hdu])
-
-        return hdulist
+            result.append(num)
+        return result
 
     def aggregate_result(self, partial_result, rinput):
         obresult = rinput.obresult

@@ -30,6 +30,7 @@ from emirdrp.instrument.csu_configuration import CsuConfiguration
 
 from numina.array.display.ximshow import ximshow
 from numina.array.wavecalib.fix_pix_borders import define_mask_borders
+from numina.frame.utils import copy_img
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.core import EMIR_NBARS
@@ -76,6 +77,7 @@ def median_slitlets_rectified(
 
     """
 
+    result = copy_img(input_image)
     image_header = input_image[0].header
     image2d = input_image[0].data
 
@@ -155,14 +157,11 @@ def median_slitlets_rectified(
         # median spectrum
         image1d_median = np.ma.median(image2d_masked, axis=0).data
 
-        image_median = fits.PrimaryHDU(data=image1d_median.astype('float32'),
-                                       header=image_header)
-
+        result[0].data = image1d_median.astype('float32')
     else:
-        image_median = fits.PrimaryHDU(data=image2d_median.astype('float32'),
-                                       header=image_header)
+        result[0].data = image2d_median.astype('float32')
 
-    return fits.HDUList([image_median])
+    return result
 
 
 def main(args=None):

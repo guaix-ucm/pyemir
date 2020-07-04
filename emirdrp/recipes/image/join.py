@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2019 Universidad Complutense de Madrid
+# Copyright 2014-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -29,6 +29,7 @@ from numina.array.utils import coor_to_pix, image_box2d
 import numina.processing as proc
 from numina.core.query import ResultOf
 from numina.array import fixpix2
+from numina.frame.utils import copy_img
 
 from emirdrp.instrument.channels import FULL
 import emirdrp.products as prods
@@ -224,12 +225,15 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         return result
 
     def combine(self, data_arr_sr, data_hdul, finalshape, offsetsp, refpix, use_errors):
+        # FIXME: this is mostly duplicated
+        # in processing.combine
         baseimg = data_hdul[0]
         has_num_ext = 'NUM' in baseimg
         has_bpm_ext = 'BPM' in baseimg
         baseshape = baseimg[0].shape
         subpixshape = baseshape
         base_header = baseimg[0].header
+        result = copy_img(baseimg)
 
         if has_num_ext:
             self.logger.debug('Using NUM extension')
@@ -255,7 +259,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         out = method(data_arr_sr, masks=mask_arr_r, dtype='float32')
 
         self.logger.debug('create result image')
-        hdu = fits.PrimaryHDU(out[0], header=base_header)
+        result[0].data = out[0]
+        hdu = result[0]
         self.logger.debug('update result header')
         hdr = hdu.header
         self.set_base_headers(hdr)
@@ -276,22 +281,25 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
             ncom += img[0].header.get('NUM-NCOM', 1)
         hdr['NUM-NCOM'] = ncom
+        hdr['UUID'] = str(uuid.uuid1())
+
         # Update WCS, approximate solution
         hdr['CRPIX1'] += offsetsp[0][0]
         hdr['CRPIX2'] += offsetsp[0][1]
-
         #
         if use_errors:
             varhdu = fits.ImageHDU(out[1], name='VARIANCE')
-            num = fits.ImageHDU(out[2], name='MAP')
-            hdulist = fits.HDUList([hdu, varhdu, num])
-        else:
-            hdulist = fits.HDUList([hdu])
-        return hdulist
+            result.append(varhdu)
+            num = fits.ImageHDU(out[2].astype('int16'), name='MAP')
+            result.append(num)
+        return result
 
     def combine2(self, data, masks, data_hdul, offsetsp, use_errors):
+        # FIXME: this is mostly duplicated
+        # in processing.combine
         baseimg = data_hdul[0]
         base_header = baseimg[0].header
+        result = copy_img(baseimg)
 
         self.logger.info('Combine target images (final)')
         method = combine.median
@@ -301,12 +309,14 @@ class JoinDitheredImagesRecipe(EmirRecipe):
                            dtype='float32', out=out, fclip=0.1)
 
         self.logger.debug('create result image')
-        hdu = fits.PrimaryHDU(out[0], header=base_header)
+        hdu = result[0]
+        hdu.data = out[0]
         self.logger.debug('update result header')
         hdr = hdu.header
         self.set_base_headers(hdr)
 
         hdr['TSUTC2'] = data_hdul[-1][0].header['TSUTC2']
+        hdr['UUID'] = str(uuid.uuid1())
         # Update obsmode in header
 
         hdu.header['history'] = "Combined %d images using '%s'" % (
@@ -329,11 +339,10 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         #
         if use_errors:
             varhdu = fits.ImageHDU(out[1], name='VARIANCE')
-            num = fits.ImageHDU(out[2], name='MAP')
-            hdulist = fits.HDUList([hdu, varhdu, num])
-        else:
-            hdulist = fits.HDUList([hdu])
-        return hdulist
+            result.append(varhdu)
+            num = fits.ImageHDU(out[2].astype('int16'), name='MAP')
+            result.append(num)
+        return result
 
     def set_base_headers(self, hdr):
         """Set metadata in FITS headers."""
@@ -513,7 +522,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # Initial checks
         fframe = frames[0]
         img = fframe.open()
-        base_header = img[0].header
+        result = copy_img(img)
+        base_header = result[0].header
 
         imgs = []
         for f in frames:
@@ -563,11 +573,11 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         scales = [1.0 / weight_accum, 1.0 / weight_frame]
         self.logger.debug("weights for 'accum' and 'frame', %s", scales)
         method = combine.mean
-
         out = method(data_arr_sr, masks=mask_arr_r, scales=scales, dtype='float32')
 
         self.logger.debug('create result image')
-        hdu = fits.PrimaryHDU(out[0], header=base_header)
+        hdu = result[0]
+        hdu.data = out[0]
         self.logger.debug('update result header')
         hdr = hdu.header
         self.set_base_headers(hdr)
@@ -596,12 +606,10 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         #
         if use_errors:
             varhdu = fits.ImageHDU(out[1], name='VARIANCE')
-            num = fits.ImageHDU(out[2], name='MAP')
-            hdulist = fits.HDUList([hdu, varhdu, num])
-        else:
-            hdulist = fits.HDUList([hdu])
-
-        return hdulist
+            result.append(varhdu)
+            num = fits.ImageHDU(out[2].astype('int16'), name='MAP')
+            result.append(num)
+        return result
 
     def compute_regions_from_objs(self, arr, finalshape, box=50, corners=True):
         regions = []
