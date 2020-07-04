@@ -78,10 +78,9 @@ def apply_rectwv_coeff(reduced_image,
 
     logger = logging.getLogger(__name__)
 
-    # header and data array (use deepcopy to avoid modifying
-    # reduced_image[0].header as a side effect)
-    header = copy.deepcopy(reduced_image[0].header)
-    image2d = reduced_image[0].data
+    rectwv_image = fits.HDUList([ext.copy() for ext in reduced_image])
+    header = rectwv_image[0].header
+    image2d = rectwv_image[0].data
 
     # apply global offsets
     image2d = apply_integer_offsets(
@@ -270,9 +269,9 @@ def apply_rectwv_coeff(reduced_image,
 
     logger.info('Generating rectified and wavelength calibrated image')
 
-    rectwv_image = fits.PrimaryHDU(data=image2d_rectwv, header=header)
-
-    return fits.HDUList([rectwv_image])
+    rectwv_image[0].data = image2d_rectwv
+    rectwv_image[0].header = header
+    return rectwv_image
 
 
 def main(args=None):
