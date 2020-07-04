@@ -145,7 +145,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     catlines_reference_flux /= catlines_reference_flux.max()
 
     # estimate sigma to broaden catalogue lines
-    csu_config = CsuConfiguration.define_from_header(main_header)
+    csu_config = CsuConfiguration.define_from_fits(input_image)
     # segregate slitlets
     list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1))
                                 if i not in list_useful_slitlets]
