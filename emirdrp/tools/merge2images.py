@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -26,6 +26,7 @@ import numpy as np
 import sys
 
 from numina.array.wavecalib.fix_pix_borders import find_pix_borders
+from numina.frame.utils import copy_img
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
@@ -54,6 +55,7 @@ def merge2images(hdu1, hdu2, debugplot):
 
     # check image dimensions
     image_header = hdu1[0].header
+    image_merged = copy_img(hdu1)
     image_header_ = hdu2[0].header
     #
     naxis = image_header['naxis']
@@ -100,9 +102,7 @@ def merge2images(hdu1, hdu2, debugplot):
             image2d_merged[i, jmineff:(jmaxeff+1)] /= 2
 
     # return result
-    image_merged = fits.PrimaryHDU(data=image2d_merged.astype(np.float32),
-                                   header=image_header)
-
+    image_merged[0].data = image2d_merged.astype(np.float32)
     return image_merged
 
 

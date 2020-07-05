@@ -27,7 +27,6 @@ from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 
 from emirdrp.instrument.csu_configuration import CsuConfiguration
-from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.instrument.dtuconf import DtuConf
 
 from emirdrp.core import EMIR_NBARS
@@ -296,7 +295,6 @@ def compute_slitlet_boundaries(
     # read CSU configuration from FITS header
     csu_config = CsuConfiguration.define_from_fits(filename)
     # read DTU configuration from FITS header
-    # dtu_config = DtuConfiguration.define_from_fits(filename)
     with fits.open(filename) as img:
         dtu2_config = DtuConf.from_img(img)
 

@@ -34,7 +34,6 @@ import numina.types.qc
 
 import emirdrp.datamodel as datamodel
 from emirdrp.instrument.csu_configuration import CsuConfiguration
-from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.instrument.dtuconf import DtuConf
 from emirdrp.products import RefinedBoundaryModelParam
 from emirdrp.products import RectWaveCoeff
@@ -149,7 +148,6 @@ def rectwv_coeff_from_arc_image(reduced_image,
     logger.debug(csu_conf)
 
     # read the DTU configuration from the image header
-    # dtu_conf = DtuConfiguration.define_from_header(mecs_header)
     dtu2_conf = DtuConf.from_img(reduced_image)
     logger.debug("%s", dtu2_conf)
 

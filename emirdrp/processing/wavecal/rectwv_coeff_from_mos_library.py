@@ -38,7 +38,7 @@ import numina.types.qc
 
 import emirdrp.datamodel as datamodel
 from emirdrp.instrument.csu_configuration import CsuConfiguration
-from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.instrument.dtuconf import DtuConf
 from emirdrp.products import MasterRectWave
 from emirdrp.products import RectWaveCoeff
 from emirdrp.tools.fit_boundaries import bound_params_from_dict
@@ -95,11 +95,11 @@ def rectwv_coeff_from_mos_library(reduced_image,
     csu_conf = CsuConfiguration.define_from_header(mecs_header)
 
     # read the DTU configuration from the image header
-    dtu_conf = DtuConfiguration.define_from_header(mecs_header)
+    dtu_conf = DtuConf.from_img(reduced_image)
 
     # retrieve DTU configuration from MasterRectWave object
-    dtu_conf_calib = DtuConfiguration.define_from_dictionary(
-        master_rectwv.meta_info['dtu_configuration']
+    dtu_conf_calib = DtuConf.from_values(
+        **master_rectwv.meta_info['dtu_configuration']
     )
     # check that the DTU configuration employed to obtain the calibration
     # corresponds to the DTU configuration in the input FITS file

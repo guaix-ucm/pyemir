@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -37,10 +37,7 @@ from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 from emirdrp.core import EMIR_NBARS
-from emirdrp.instrument.dtu_configuration import DtuConfiguration
-from emirdrp.instrument.dtu_configuration import average_dtu_configurations
-from emirdrp.instrument.dtu_configuration import maxdiff_dtu_configurations
-
+import emirdrp.instrument.dtuconf as dtuconf
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
@@ -165,12 +162,12 @@ def integrity_check(bounddict, max_dtu_offset):
                                  "boundary_xmin_upper")
             if first_dtu:
                 first_dtu_configuration = \
-                    DtuConfiguration.define_from_dictionary(tmp_dict)
+                    dtuconf.DtuConf.from_values(**tmp_dict)
                 first_dtu = False
                 list_dtu_configurations.append(first_dtu_configuration)
             else:
                 last_dtu_configuration = \
-                    DtuConfiguration.define_from_dictionary(tmp_dict)
+                    dtuconf.DtuConf.from_values(**tmp_dict)
                 if not first_dtu_configuration.closeto(
                         last_dtu_configuration,
                         abserror=max_dtu_offset
@@ -188,9 +185,9 @@ def integrity_check(bounddict, max_dtu_offset):
 
     print("* Integrity check OK!")
 
-    averaged_dtu_configuration = average_dtu_configurations(
+    averaged_dtu_configuration = dtuconf.average(
         list_dtu_configurations)
-    maxdiff_dtu_configuration = maxdiff_dtu_configurations(
+    maxdiff_dtu_configuration = dtuconf.maxdiff(
         list_dtu_configurations
     )
 

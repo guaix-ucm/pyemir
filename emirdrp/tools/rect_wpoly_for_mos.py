@@ -32,7 +32,7 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 from numina.tools.check_setstate_getstate import check_setstate_getstate
 import numina.types.qc
 
-from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.instrument.dtuconf import DtuConf
 from emirdrp.products import RefinedBoundaryModelParam
 from emirdrp.products import RectWaveCoeff
 from emirdrp.products import MasterRectWave
@@ -128,8 +128,8 @@ def main(args=None):
         list_json_files[0].filename)
     filter_name = coef_rect_wpoly_first_longslit.tags['filter']
     grism_name = coef_rect_wpoly_first_longslit.tags['grism']
-    dtu_conf = DtuConfiguration.define_from_dictionary(
-        coef_rect_wpoly_first_longslit.meta_info['dtu_configuration']
+    dtu_conf = DtuConf.from_values(
+        **coef_rect_wpoly_first_longslit.meta_info['dtu_configuration']
     )
     list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
     for idel in coef_rect_wpoly_first_longslit.missing_slitlets:
@@ -149,8 +149,8 @@ def main(args=None):
             raise ValueError("Unexpected different grism found")
         coef_rect_wpoly = RectWaveCoeff._datatype_load(
             list_json_files[ifile].filename)
-        dtu_conf_tmp = DtuConfiguration.define_from_dictionary(
-            coef_rect_wpoly.meta_info['dtu_configuration']
+        dtu_conf_tmp = DtuConf.from_values(
+            **coef_rect_wpoly.meta_info['dtu_configuration']
         )
         if dtu_conf != dtu_conf_tmp:
             print(dtu_conf)

@@ -25,7 +25,6 @@ from numina.frame.utils import copy_img
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 import emirdrp.datamodel as datamodel
-from emirdrp.instrument.dtu_configuration import DtuConfiguration
 from emirdrp.instrument.dtuconf import DtuConf
 from emirdrp.products import RectWaveCoeff
 
@@ -92,12 +91,11 @@ def apply_rectwv_coeff(reduced_image,
 
     # read the DTU configuration from the image header
     mecs_header = datamodel.get_mecs_header(reduced_image)
-    dtu_conf = DtuConfiguration.define_from_header(mecs_header)
-    dtu_conf2 = DtuConf.from_img(reduced_image)
+    dtu_conf = DtuConf.from_img(reduced_image)
 
     # retrieve DTU configuration from RectWaveCoeff object
-    dtu_conf_calib = DtuConfiguration.define_from_dictionary(
-        rectwv_coeff.meta_info['dtu_configuration']
+    dtu_conf_calib = DtuConf.from_values(
+        **rectwv_coeff.meta_info['dtu_configuration']
     )
     # check that the DTU configuration employed to obtain the calibration
     # corresponds to the DTU configuration in the input FITS file

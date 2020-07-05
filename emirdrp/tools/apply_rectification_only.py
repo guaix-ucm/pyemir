@@ -27,7 +27,7 @@ import sys
 
 from numina.tools.arg_file_is_new import arg_file_is_new
 
-from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.instrument.dtuconf import DtuConf
 from emirdrp.products import RectWaveCoeff
 from emirdrp.processing.wavecal.slitlet2d import Slitlet2D
 from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
@@ -117,9 +117,11 @@ def main(args=None):
         print('>>> filter......:', filter_name)
 
     # check that the DTU configurations are compatible
-    dtu_conf_fitsfile = DtuConfiguration.define_from_fits(args.fitsfile)
-    dtu_conf_jsonfile = DtuConfiguration.define_from_dictionary(
-        rectwv_coeff.meta_info['dtu_configuration'])
+    with fits.open(args.fitsfile) as hdulist:
+        dtu_conf_fitsfile = DtuConf.from_img(hdulist)
+    dtu_conf_jsonfile = DtuConf.from_values(
+        **rectwv_coeff.meta_info['dtu_configuration']
+    )
     if dtu_conf_fitsfile != dtu_conf_jsonfile:
         print('DTU configuration (FITS file):\n\t', dtu_conf_fitsfile)
         print('DTU configuration (JSON file):\n\t', dtu_conf_jsonfile)
