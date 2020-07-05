@@ -155,6 +155,19 @@ class DtuConf(object):
         return dtuconf
 
     @classmethod
+    def from_values(cls, **kwargs):
+        """Create a DtuConf object from values"""
+
+        # xdtu, ydtu and zdtu must be defined
+        for req in ['xdtu', 'ydtu', 'zdtu']:
+            if req not in kwargs:
+                raise ValueError("missing required value {}".format(req))
+        # Convert keys to upper case
+        kwargs_u = dict((k.upper(),v) for k,v in kwargs.items())
+        dtuconf = DtuConf.from_header(kwargs_u)
+        return dtuconf
+
+    @classmethod
     def from_img(cls, img):
         """Create a DtuConf object from a FITS image"""
         if 'MECS' in img:
@@ -165,11 +178,22 @@ class DtuConf(object):
         return cls.from_header(hdr)
 
     def __eq__(self, other):
+        from .dtu_configuration import DtuConfiguration
         if isinstance(other, DtuConf):
             return (self.xaxis == other.xaxis and
                     self.yaxis == other.yaxis and
                     self.zaxis == other.zaxis)
-
+        elif isinstance(other, DtuConfiguration):
+            # Notice that coor_f is mising
+            ndig = 3
+            result = \
+                (round(self.xaxis.coor, ndig) == round(other.xdtu, ndig)) and \
+                (round(self.yaxis.coor, ndig) == round(other.ydtu, ndig)) and \
+                (round(self.zaxis.coor, ndig) == round(other.zdtu, ndig)) and \
+                (round(self.xaxis.coor_0, ndig) == round(other.xdtu_0, ndig)) and \
+                (round(self.yaxis.coor_0, ndig) == round(other.ydtu_0, ndig)) and \
+                (round(self.zaxis.coor_0, ndig) == round(other.zdtu_0, ndig))
+            return result
         return NotImplemented
 
     def __ne__(self, other):
@@ -194,6 +218,18 @@ class DtuConf(object):
               "- ZDTU_F: {0.zaxis.coor_f:{width}.{prec}f}\n"
         )
         return output.format(self, width=8, prec=ndig)
+
+    def outdict(self, ndigits=3):
+        """Return dictionary structure rounded to a given precision."""
+        output = {
+            'xdtu': round(self.xaxis.coor, ndigits),
+            'xdtu_0': round(self.xaxis.coor_0, ndigits),
+            'ydtu': round(self.yaxis.coor, ndigits),
+            'ydtu_0': round(self.yaxis.coor_0, ndigits),
+            'zdtu': round(self.zaxis.coor, ndigits),
+            'zdtu_0': round(self.zaxis.coor_0, ndigits),
+        }
+        return output
 
     def to_wcs(self):
         """Create a WCS structure for DTU measurements"""

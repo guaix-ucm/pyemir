@@ -3,18 +3,8 @@
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 from __future__ import division
@@ -36,6 +26,7 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 
 import emirdrp.datamodel as datamodel
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.instrument.dtuconf import DtuConf
 from emirdrp.products import RectWaveCoeff
 
 from .set_wv_parameters import set_wv_parameters
@@ -102,6 +93,7 @@ def apply_rectwv_coeff(reduced_image,
     # read the DTU configuration from the image header
     mecs_header = datamodel.get_mecs_header(reduced_image)
     dtu_conf = DtuConfiguration.define_from_header(mecs_header)
+    dtu_conf2 = DtuConf.from_img(reduced_image)
 
     # retrieve DTU configuration from RectWaveCoeff object
     dtu_conf_calib = DtuConfiguration.define_from_dictionary(

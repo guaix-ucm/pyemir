@@ -3,18 +3,8 @@
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 from __future__ import division
@@ -38,6 +28,7 @@ from numina.array.display.ximshow import ximshow
 
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.instrument.dtuconf import DtuConf
 
 from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_VALID_GRISMS
@@ -254,7 +245,7 @@ def compute_slitlet_boundaries(
     Parameters
     ----------
     filename : string
-        Input continumm lamp image.
+        Input continuum lamp image.
     grism : string
         Grism name. It must be one in EMIR_VALID_GRISMS.
     spfilter : string
@@ -304,9 +295,10 @@ def compute_slitlet_boundaries(
 
     # read CSU configuration from FITS header
     csu_config = CsuConfiguration.define_from_fits(filename)
-
     # read DTU configuration from FITS header
-    dtu_config = DtuConfiguration.define_from_fits(filename)
+    # dtu_config = DtuConfiguration.define_from_fits(filename)
+    with fits.open(filename) as img:
+        dtu2_config = DtuConf.from_img(img)
 
     # read grism
     grism_in_header = image_header['grism']
@@ -545,12 +537,12 @@ def compute_slitlet_boundaries(
             'csu_bar_slit_center': csu_config.csu_bar_slit_center(islitlet),
             'csu_bar_slit_width': csu_config.csu_bar_slit_width(islitlet),
             'rotang': rotang,
-            'xdtu': dtu_config.xdtu,
-            'ydtu': dtu_config.ydtu,
-            'zdtu': dtu_config.zdtu,
-            'xdtu_0': dtu_config.xdtu_0,
-            'ydtu_0': dtu_config.ydtu_0,
-            'zdtu_0': dtu_config.zdtu_0,
+            'xdtu': dtu2_config.xaxis.coor,
+            'ydtu': dtu2_config.yaxis.coor,
+            'zdtu': dtu2_config.zaxis.coor,
+            'xdtu_0': dtu2_config.xaxis.coorx_0,
+            'ydtu_0': dtu2_config.yaxis.coory_0,
+            'zdtu_0': dtu2_config.zaxis.coor_0,
             'zzz_info1': os.getlogin() + '@' + socket.gethostname(),
             'zzz_info2': datetime.now().isoformat()
         }

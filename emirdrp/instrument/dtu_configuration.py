@@ -87,8 +87,7 @@ class DtuConfiguration(object):
         return NotImplemented
 
     def __ne__(self, other):
-        result = not self.__eq__(other)
-        return result
+        return not self == other
 
     @classmethod
     def define_from_fits(cls, fitsobj, extnum=0):
@@ -141,12 +140,12 @@ class DtuConfiguration(object):
 
         Parameters
         ----------
-        image_header : instance of hdulist.header
+        image_header : instance of fits.Header
             Header content from a FITS file.
 
         """
-
-        return cls.define_from_dictionary(image_header)
+        img_h_u = dict((k.lower(), v) for k, v in image_header.items())
+        return cls.define_from_dictionary(img_h_u)
 
     @classmethod
     def define_from_dictionary(cls, inputdict):

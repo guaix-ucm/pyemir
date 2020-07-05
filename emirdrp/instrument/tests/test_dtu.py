@@ -6,50 +6,38 @@ import astropy.units as U
 from ..dtuconf import DtuConf, DtuAxis
 from ..dtuconf import managed_ndig
 from ..dtuconf import average, apply_on_axis
-
-# header fragment
-def dtu_header():
-    header = {}
-    header['XDTU_F'] = 0.922918
-    header['YDTU_F'] = 0.971815
-    header['ZDTU_F'] = 1.0
-    header['XDTU'] = -205.679000854492
-    header['YDTU'] = -24.4878005981445
-    header['ZDTU'] = -463.765991210938
-    header['XDTU_0'] = -205.651000976562
-    header['YDTU_0'] = -24.4794006347656
-    header['ZDTU_0'] = -463.821014404297
-    return header
+from .dtuheader import HEADERS
 
 
-def dtu_header2():
-    header = {}
-    header['XDTU_F'] = 0.922918
-    header['YDTU_F'] = 0.971815
-    header['ZDTU_F'] = 1.0
-    header['XDTU'] = -215.670
-    header['YDTU'] = -241.487
-    header['ZDTU'] = -263.765
-    header['XDTU_0'] = -205.651
-    header['YDTU_0'] = -24.4794
-    header['ZDTU_0'] = -422.821
-    return header
-
-
-def test_dtuc():
-
-    header = dtu_header()
-
-    dtuconf = DtuConf.from_header(header)
-
+@pytest.mark.parametrize("hdr", HEADERS)
+def test_dtuc(hdr):
+    dtuconf = DtuConf.from_header(hdr)
     assert isinstance(dtuconf, DtuConf)
+
+
+def test_dtu_values():
+    dtuconf = DtuConf.from_values(xdtu=1.0, ydtu=1.0, zdtu=1.0)
+    assert isinstance(dtuconf, DtuConf)
+
+
+def test_dtu_values_raises():
+    with pytest.raises(ValueError):
+        DtuConf.from_values(xdtu=1.0, zdtu=1.0)
+
+
+@pytest.mark.parametrize("hdr", HEADERS)
+def test_dtu_eq(hdr):
+    dtuconf1 = DtuConf.from_header(hdr)
+    kwvals = {(k.lower()): v for k, v in hdr.items()}
+    dtuconf2 = DtuConf.from_values(**kwvals)
+    assert dtuconf1 == dtuconf2
 
 
 def test_dtuc_shift():
     import emirdrp.instrument.constants as cons
 
     # Value in microns in DTU coords
-    header = dtu_header()
+    header = HEADERS[0]
     expected = [-17.206285211909773, -0.7186057740102463, 0.055023193358977096]
     dtuconf = DtuConf.from_header(header)
 
@@ -71,23 +59,21 @@ def test_dtuaxis_raise():
 
 def test_dtuaxis_header():
 
-    header = dtu_header()
+    header = HEADERS[0]
 
     dtuaxis_x = DtuAxis.from_header(header, name='X')
 
     assert isinstance(dtuaxis_x, DtuAxis)
 
 
-def test_dtuaxis_header_raise():
-
-    header = dtu_header()
-
+@pytest.mark.parametrize("hdr", HEADERS)
+def test_dtuaxis_header_raise(hdr):
     with pytest.raises(ValueError):
-        DtuAxis.from_header(header, name='R')
+        DtuAxis.from_header(hdr, name='R')
 
 
 def test_dtur():
-    header = dtu_header()
+    header = HEADERS[0]
     dtuconf = DtuConf.from_header(header)
     x_dtu = [-205.679000854492, -24.4878005981445, -463.765991210938]
     x_dtu_r =  [-17.206285211909773, -0.7186057740102463, 0.055023193358977096]
@@ -110,15 +96,15 @@ def test_dtu_formatter():
         "- YDTU_F:    0.972\n"
         "- ZDTU_F:    1.000\n"
     )
-    header = dtu_header()
+    header = HEADERS[0]
     dtuconf = DtuConf.from_header(header)
     val = dtuconf.describe()
     assert val == expected
 
 
-def test_dtu_managed():
-    header = dtu_header()
-    dtuconf = DtuConf.from_header(header)
+@pytest.mark.parametrize("hdr", HEADERS)
+def test_dtu_managed(hdr):
+    dtuconf = DtuConf.from_header(hdr)
     with managed_ndig(dtuconf, 4):
         assert dtuconf.get_ndig() == 4
 
@@ -146,17 +132,16 @@ def test_dtu_apply0():
 
 
 def test_dtu_average():
-    header1 = dtu_header()
+    header1 = HEADERS[0]
     dtuconf1 = DtuConf.from_header(header1)
-    header2 = dtu_header2()
+    header2 = HEADERS[1]
     dtuconf2 = DtuConf.from_header(header2)
 
     dtuconf = average(dtuconf1, dtuconf2)
 
     assert isinstance(dtuconf, DtuConf)
 
+
 def test_dtu_average0():
-
     dtuconf = average()
-
     assert isinstance(dtuconf, DtuConf)

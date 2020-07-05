@@ -3,18 +3,8 @@
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """
@@ -45,6 +35,7 @@ import numina.types.qc
 import emirdrp.datamodel as datamodel
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.instrument.dtu_configuration import DtuConfiguration
+from emirdrp.instrument.dtuconf import DtuConf
 from emirdrp.products import RefinedBoundaryModelParam
 from emirdrp.products import RectWaveCoeff
 from emirdrp.tools.fit_boundaries import bound_params_from_dict
@@ -158,8 +149,9 @@ def rectwv_coeff_from_arc_image(reduced_image,
     logger.debug(csu_conf)
 
     # read the DTU configuration from the image header
-    dtu_conf = DtuConfiguration.define_from_header(mecs_header)
-    logger.debug(dtu_conf)
+    # dtu_conf = DtuConfiguration.define_from_header(mecs_header)
+    dtu2_conf = DtuConf.from_img(reduced_image)
+    logger.debug("%s", dtu2_conf)
 
     # set boundary parameters
     parmodel = bound_param.meta_info['parmodel']
@@ -465,7 +457,7 @@ def rectwv_coeff_from_arc_image(reduced_image,
     outdict['tags']['filter'] = filter_name
     outdict['tags']['islitlet_min'] = islitlet_min
     outdict['tags']['islitlet_max'] = islitlet_max
-    outdict['dtu_configuration'] = dtu_conf.outdict()
+    outdict['dtu_configuration'] = dtu2_conf.outdict()
     outdict['uuid'] = str(uuid4())
     outdict['contents'] = {}
 
