@@ -72,17 +72,6 @@ class EmirDataModel(dm.DataModel):
     def shape(self):
         return (2048, 2048)
 
-    def get_imgid(self, img):
-        hdr = self.get_header(img)
-        if 'UUID' in hdr:
-            return 'uuid:{}'.format(hdr['UUID'])
-        elif 'EMIRUUID' in hdr:
-            return 'uuid:{}'.format(hdr['EMIRUUID'])
-        elif 'TSUTC1' in hdr:
-            return 'tsutc:{:16.5f}'.format(hdr['TSUTC1'])
-        else:
-            return super(EmirDataModel, self).get_imgid(img)
-
     def do_sky_correction(self, img):
         header = img['primary'].header
         return header.get('SKYADD', True)
