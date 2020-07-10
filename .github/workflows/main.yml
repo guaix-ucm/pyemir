@@ -24,7 +24,7 @@ jobs:
 
       - name: Install wheel
         run: |
-          python -m pip install setuptools wheel
+          python -m pip install setuptools wheel numpy
       - name: Build wheels
         run: |
           python -m pip wheel . -w wheelhouse
