@@ -12,6 +12,7 @@ import logging
 
 import numpy
 import numina.util.node
+import numina.datamodel as dm
 import numina.processing as proc
 
 import emirdrp.core as c
@@ -32,7 +33,7 @@ def get_corrector_p(rinput, meta, ins, datamodel):
             corrector = corrector_class(
                 hdul[0].data,
                 datamodel=datamodel,
-                calibid=datamodel.get_imgid(hdul)
+                calibid=dm.get_imgid(hdul, prefix=True)
             )
     else:
         _logger.info('"%s" not provided, ignored', key)
@@ -65,7 +66,7 @@ def get_corrector_b(rinput, meta, ins, datamodel):
             bias_corrector = proc.BiasCorrector(
                 mbias,
                 datamodel=datamodel,
-                calibid = datamodel.get_imgid(hdul)
+                calibid=dm.get_imgid(hdul, prefix=True)
             )
     else:
         _logger.info('ignoring bias')
@@ -86,7 +87,7 @@ def get_corrector_s(rinput, meta, ins, datamodel):
             sky_corrector = proc.SkyCorrector(
                 hdul[0].data,
                 datamodel=datamodel,
-                calibid=datamodel.get_imgid(hdul)
+                calibid=dm.get_imgid(hdul, prefix=True)
             )
         return sky_corrector
 
@@ -106,9 +107,11 @@ def get_corrector_f(rinput, meta, ins, datamodel):
             _logger.warning('flat has %d values below 0', mask1.sum())
         if numpy.any(mask2):
             _logger.warning('flat has %d NaN', mask2.sum())
-        flat_corrector = FlatFieldCorrector(mflat,
-                                            datamodel=datamodel,
-                                            calibid=datamodel.get_imgid(hdul))
+        flat_corrector = FlatFieldCorrector(
+            mflat,
+            datamodel=datamodel,
+            calibid=dm.get_imgid(hdul, prefix=True)
+        )
 
     return flat_corrector
 
@@ -130,7 +133,7 @@ def get_corrector_sf(rinput, meta, ins, datamodel):
             _logger.warning('flat has %d NaN', mask2.sum())
         flat_corrector = FlatFieldCorrector(mflat,
                                             datamodel=datamodel,
-                                            calibid=datamodel.get_imgid(hdul))
+                                            calibid=dm.get_imgid(hdul, prefix=True))
 
     return flat_corrector
 
@@ -158,7 +161,7 @@ def get_corrector_gen(rinput, datamodel, CorrectorClass, key):
             datac = hdul['primary'].data
             corrector = CorrectorClass(
                 datac,
-                calibid=datamodel.get_imgid(hdul),
+                calibid=dm.get_imgid(hdul, prefix=True),
                 datamodel=datamodel
             )
         return corrector
