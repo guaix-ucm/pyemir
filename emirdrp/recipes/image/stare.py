@@ -42,7 +42,7 @@ class StareImageRecipe2(EmirRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
 
-    result_image = Result(prods.ProcessedImage)
+    reduced_image = Result(prods.ProcessedImage)
 
     def run(self, rinput):
         self.logger.info('starting stare image reduction (offline)')
@@ -75,7 +75,7 @@ class StareImageRecipe2(EmirRecipe):
         # Append the BPM to the result
         processed_img.append(hdu_bpm)
         self.logger.info('end stare image (off) reduction')
-        result = self.create_result(result_image=processed_img)
+        result = self.create_result(reduced_image=processed_img)
 
         return result
 

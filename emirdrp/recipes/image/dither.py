@@ -151,7 +151,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
     logger = logging.getLogger(__name__)
 
     obresult = ObservationResultRequirement(
-        query_opts=ResultOf('result_image', node='children')
+        query_opts=ResultOf('reduced_image', node='children')
     )
 
     master_bpm = reqs.MasterBadPixelMaskRequirement()
@@ -188,7 +188,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         0, 'Ad hoc sky correction (number of subintervals in each quadrant)'
     )
 
-    result_image = Result(prods.ProcessedImage)
+    reduced_image = Result(prods.ProcessedImage)
     result_sky = Result(prods.ProcessedImage, optional=True)
 
     def run(self, rinput):
@@ -301,7 +301,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             )
             step += 1
 
-        return self.create_result(result_image=result)
+        return self.create_result(reduced_image=result)
 
     def compute_offset_xy_crosscor_regions(self, iinfo, regions, refine=False,
                                            tol=0.5):
@@ -535,7 +535,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 finfo['airmass'] = hdr['airmass']
                 finfo['mjd'] = hdr['tstamp']
 
-                iinfo.label = 'result_image_{}'.format(finfo['uuid'])
+                iinfo.label = 'reduced_image_{}'.format(finfo['uuid'])
                 iinfo.mask = nfcom.Extension("BPM")
                 # Insert pixel offsets between frames
                 iinfo.objmask_data = None

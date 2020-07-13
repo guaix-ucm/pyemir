@@ -45,7 +45,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
     """Combine single exposures obtained in dithered mode"""
 
     obresult = ObservationResultRequirement(query_opts=ResultOf(
-        'STARE_IMAGE.result_image', node='children', id_field="stareImagesIds"))
+        'STARE_IMAGE.reduced_image', node='children', id_field="stareImagesIds"))
     accum_in = Requirement(prods.ProcessedImage,
                            description='Accumulated result',
                            optional=True,
