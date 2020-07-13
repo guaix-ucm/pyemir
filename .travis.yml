@@ -1,6 +1,6 @@
 language: python
-sudo: false
 
+os: linux
 dist: xenial
 # https://docs.travis-ci.com/user/gui-and-headless-browsers/#Using-xvfb-to-Run-Tests-That-Require-a-GUI
 services:
@@ -10,7 +10,7 @@ env:
   global:
     - MPLBACKEND=TkAgg
 
-matrix:
+jobs:
   include:
     - python: "2.7"
     - python: "3.5"
@@ -22,11 +22,7 @@ matrix:
 cache: pip
 
 install:
-  - pip install "numpy>=1.16"
-  - pip install numina
-  - pip install "scikit-image>=0.12" scikit-learn photutils
-  - pip install sep lmfit
-  - pip install pytest pytest-remotedata
+  - pip install .[test]
   - pip install pytest-benchmark
   - |
     if [[ $COVERAGE == true ]]; then
