@@ -13,15 +13,22 @@ env:
 jobs:
   include:
     - python: "2.7"
+      env: DEPS="numpy>=1.16"
     - python: "3.5"
+      env: DEPS="numpy>=1.16"
     - python: "3.6"
+      env: DEPS="numpy>=1.16"
     - python: "3.7"
-      env:  COVERAGE=true
+      env: DEPS="numpy>=1.16" COVERAGE=true
     - python: "3.8"
+      env: DEPS="numpy>=1.16"
 
 cache: pip
 
 install:
+  # Have to install manually numpy>=1.16 for astropy
+  # Pip is not doing it
+  - pip install $DEPS
   - pip install .[test]
   - pip install pytest-benchmark
   - |
