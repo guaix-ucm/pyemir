@@ -131,6 +131,20 @@ class DtuConf(object):
     def closeto(self, other, abserror):
         return self.allclose(other, rtol=0.0, atol=abserror, equal_nan=False)
 
+    def vector_shift(self):
+        import astropy.units as u
+        import emirdrp.instrument.constants as cons
+
+        # coordinates transformation from DTU coordinates
+        # to image coordinates
+        # Y inverted
+        # XY switched
+        # trans1 = [[1, 0, 0], [0,-1, 0], [0,0,1]]
+        # trans2 = [[0,1,0], [1,0,0], [0,0,1]]
+        trans3 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]  # T3 = T2 * T1
+        vec = numpy.dot(trans3, self.coor_r) * u.micron / cons.EMIR_PIXSIZE
+        return vec
+
     @classmethod
     def from_header(cls, hdr):
         """Create a DtuConf object from map-like header"""

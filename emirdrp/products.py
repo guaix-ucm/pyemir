@@ -263,6 +263,19 @@ class NominalPositions(prodtypes.DataProductMixin, CoordinateList2DType):
     pass
 
 
+def default_nominal_positions():
+    """Read default value of bnp"""
+    import pkgutil
+    try:
+        import StringIO as S
+    except ImportError:
+        import io as S
+    bardata = pkgutil.get_data('emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
+    ss = S.StringIO(bardata.decode('utf8'))
+    bars_nominal_positions = numpy.loadtxt(ss)
+    return bars_nominal_positions
+
+
 class MSMPositions(DataProductType):
     def __init__(self):
         super(MSMPositions, self).__init__(ptype=list)
