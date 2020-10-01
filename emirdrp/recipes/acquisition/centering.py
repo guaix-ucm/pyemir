@@ -119,8 +119,9 @@ def compute_flux(data, csu_conf, hcols=2, hrows=4, logger=None):
         logger = logging.getLogger(__name__)
 
     logger.debug('we have %s slits', len(csu_conf.slits))
-    refslits = [slit for slit in csu_conf.slits.values() if slit.target_type is TargetType.REFERENCE]
-    logger.debug('we have %s reference slits', len(refslits))
+    accept_type = [TargetType.REFERENCE, TargetType.SOURCE]
+    refslits = [slit for slit in csu_conf.slits.values() if slit.target_type in accept_type]
+    logger.debug('we have %s reference and source slits', len(refslits))
 
     for slit in refslits:
         target_coordinates = slit.target_coordinates
