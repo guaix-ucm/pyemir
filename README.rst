@@ -47,5 +47,5 @@ Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
     :alt: pyemir's Travis CI Status
 
 .. |coveralls| image:: https://coveralls.io/repos/guaix-ucm/pyemir/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/guaix-ucm/megaradrp?branch=master
+    :target: https://coveralls.io/github/guaix-ucm/pyemir?branch=master
      :alt: pyemir's Coverall Status
