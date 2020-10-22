@@ -33,13 +33,17 @@ Maintainers: Sergio Pascual (sergiopr@fis.ucm.es), and Nicolás Cardiel
    :maxdepth: 1
    
    installation/index
-   preliminaries/preliminaries
-   tutorial_imaging/index
-   tutorial_mos/index
-   tutorial_flat/index
+   Preliminaries <https://guaix-ucm.github.io/pyemir-tutorials/preliminaries/preliminaries.html>
+   Imaging mode tutorial: combination of dithered exposures <https://guaix-ucm.github.io/pyemir-tutorials/tutorial_imaging/index.html>
+   Spectroscopic mode tutorial: MOS data <https://guaix-ucm.github.io/pyemir-tutorials/tutorial_mos/index.html>
+   Flatfield generation <https://guaix-ucm.github.io/pyemir-tutorials/tutorial_flat/index.html>
    user/index 
    reference/index
    glossary
 
 .. _GTC: http://www.gtc.iac.es
 .. _EMIR: http://www.gtc.iac.es/instruments/emir
+.. _tut_prep: https://guaix-ucm.github.io/pyemir-tutorials/preliminaries/preliminaries.html
+.. _tut_img: https://guaix-ucm.github.io/pyemir-tutorials/tutorial_imaging/index.html
+.. _tut_spec: https://guaix-ucm.github.io/pyemir-tutorials/tutorial_mos/index.html
+.. _tut_flat: https://guaix-ucm.github.io/pyemir-tutorials/tutorial_flat/index.html
