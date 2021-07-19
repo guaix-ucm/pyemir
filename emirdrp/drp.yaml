@@ -54,7 +54,7 @@ modes:
   name: Simple Bias
   summary: Summary of Simple Bias
 - description: Does nothing
-  key: TEST0
+  key: FRAME
   name: Test success
   summary: Summary
 - description: Bias correct
@@ -70,11 +70,11 @@ modes:
   name: Test Flat Correct
   summary: Summary
 - description: Sky subtracction
-  key: TEST5
+  key: SKY_CORRECT
   name: Test sky subtraction
   summary: Summary
 - description: Flat correct
-  key: TEST6
+  key: POINT_SOURCE
   name: Test pinhole extraction
   summary: Summary
 - description: Simple sky background
@@ -86,7 +86,7 @@ modes:
   name: Test slit extraction
   summary: Summary
 - description: Simultaneous flat in several bands
-  key: TEST8
+  key: FLAT
   name: Multiflat
   summary: Multiflat
 - description: Wavelength calibration from arc
@@ -110,8 +110,8 @@ modes:
   name: TEST11
   summary: MOS mask check
 - description: Checks the positions of reference stars in MOS mask
-  key: TEST12
-  name: TEST12
+  key: BAR_POS
+  name: BAR_POS
   summary: Positions of CSU bars
 - key: TEST13
   name: TEST13
@@ -237,19 +237,19 @@ pipelines:
       gain_mode1: emirdrp.recipes.engineering.detectorgain.GainRecipe1
       cosmetics: emirdrp.recipes.engineering.cosmetics.CosmeticsRecipe
       simple_bias: emirdrp.recipes.aiv.SimpleBiasRecipe
-      TEST0: numina.core.utils.AlwaysSuccessRecipe
+      FRAME: numina.core.utils.AlwaysSuccessRecipe
       TEST1: emirdrp.recipes.aiv.TestBiasCorrectRecipe
       TEST2: emirdrp.recipes.aiv.TestDarkCorrectRecipe
       TEST3: emirdrp.recipes.aiv.TestFlatCorrectRecipe
       TEST4: emirdrp.recipes.aiv.TestFlatCorrectRecipe
-      TEST5: emirdrp.recipes.aiv.sky.TestSkyCorrectRecipe
-      TEST6: emirdrp.recipes.aiv.pointsources.TestPointSourceRecipe
+      SKY_CORRECT: emirdrp.recipes.aiv.sky.TestSkyCorrectRecipe
+      POINT_SOURCE: emirdrp.recipes.aiv.pointsources.TestPointSourceRecipe
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
-      TEST8: emirdrp.recipes.auxiliary.mtwflat.MultiTwilightFlatRecipe
+      FLAT: emirdrp.recipes.auxiliary.mtwflat.MultiTwilightFlatRecipe
       TEST9: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       TEST10: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       TEST11: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
-      TEST12: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe
+      BAR_POS: emirdrp.recipes.acquisition.bargrad.BarDetectionRecipe
       TEST13: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       IMG_ACQ: emirdrp.recipes.acquisition.maskcheck.MaskCheckRecipe
       FINE_CENTERING: emirdrp.recipes.acquisition.centering.FineCenteringRecipe
