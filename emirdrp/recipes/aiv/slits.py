@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2020 Universidad Complutense de Madrid
+# Copyright 2013-2022 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -19,7 +19,6 @@ from numina.exceptions import RecipeError
 import numina.types.array as tarray
 from numina.processing.combine import basic_processing_with_combination
 from scipy import ndimage
-from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
 import emirdrp.datamodel as datamodel
@@ -59,7 +58,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, flow=flow)
+        hdulist = basic_processing_with_combination(rinput, flow)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
 
@@ -75,7 +74,6 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
         self.logger.debug('finding slits')
 
-
         # Filter values below 0.0
         self.logger.debug('Filter values below 0')
         data1 = hdulist[0].data[:]
@@ -86,7 +84,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
         canny_sigma = rinput.canny_sigma
 
         self.logger.debug('Median filter with box %d', median_filter_size)
-        data2 = median_filter(data1, size=median_filter_size)
+        data2 = ndimage.median_filter(data1, size=median_filter_size)
 
         # Grey level image
         img_grey = normalize_raw(data2)
@@ -170,7 +168,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, flow=flow)
+        hdulist = basic_processing_with_combination(rinput, flow)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
 
@@ -194,7 +192,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
 
         data1 = hdulist[0].data
         self.logger.debug('Median filter with box %d', median_filter_size)
-        data2 = median_filter(data1, size=median_filter_size)
+        data2 = ndimage.median_filter(data1, size=median_filter_size)
 
         # Grey level image
         img_grey = normalize_raw(data2)
@@ -212,7 +210,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
                       low_threshold=low_threshold)
         # Fill edges
         self.logger.debug('Fill holes')
-        fill_slits =  ndimage.binary_fill_holes(edges)
+        fill_slits = ndimage.binary_fill_holes(edges)
 
         self.logger.debug('Label objects')
         label_objects, nb_labels = ndimage.label(fill_slits)
@@ -236,7 +234,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
         mm.shape = label_objects.shape
 
         fill_slits_clean = numpy.where(mm, 1, 0)
-        #plt.imshow(fill_slits_clean)
+        # plt.imshow(fill_slits_clean)
 
         # and relabel
         self.logger.debug('Label filtered objects')
@@ -262,4 +260,3 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
                                     )
 
         return result
-

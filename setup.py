@@ -27,11 +27,10 @@ setup(name='pyemir',
       },
       test_suite="emirdrp.tests",
       install_requires=[
-          'setuptools>=36.2.1', 'numpy', 'scipy',
-          'numina>=0.22', 'astropy>=2',
-          'enum34;python_version<"3.4"',
+          'setuptools>=36.2.1', 'numpy', 'scipy>=0.18',
+          'numina>=0.22', 'astropy',
           'matplotlib', 'six', 'photutils>=0.2',
-          'sep>0.5', 'scikit-image>=0.11', 'scikit-learn>=0.19', 'lmfit'
+          'sep>0.5', 'scikit-image>=0.18', 'scikit-learn>=0.19', 'lmfit'
       ],
       extras_require={
           'tools':  ["PyQt5"],
@@ -88,8 +87,6 @@ setup(name='pyemir',
               ],
       },
       classifiers=[
-          "Programming Language :: Python :: 2.7",
-          "Programming Language :: Python :: 3.5",
           "Programming Language :: Python :: 3.6",
           "Programming Language :: Python :: 3.7",
           "Programming Language :: Python :: 3.8",

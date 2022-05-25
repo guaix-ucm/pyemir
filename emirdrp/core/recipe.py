@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -8,6 +8,7 @@
 #
 
 import logging
+import collections.abc
 
 import numina.ext.gtc
 import numina.core.recipes as recipes
@@ -48,14 +49,13 @@ class EmirRecipe(recipes.BaseRecipe):
         return imgtypes, getters
 
     def get_filters(self):
-        import collections
         imgtypes, getters = self.types_getter()
         used_getters = []
         for rtype, getter in zip(imgtypes, getters):
             self.logger.debug('get_filters, %s  %s', rtype, getter)
             if rtype is None:
                 # Unconditional
-                if isinstance(getter, collections.Iterable):
+                if isinstance(getter, collections.abc.Iterable):
                     used_getters.extend(getter)
                 else:
                     used_getters.append(getter)
@@ -63,7 +63,7 @@ class EmirRecipe(recipes.BaseRecipe):
                 # Search
                 for key, val in self.RecipeInput.stored().items():
                     if isinstance(val.type, rtype):
-                        if isinstance(getter, collections.Iterable):
+                        if isinstance(getter, collections.abc.Iterable):
                             used_getters.extend(getter)
                         else:
                             used_getters.append(getter)

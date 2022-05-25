@@ -1,6 +1,6 @@
 numpy
 scipy
-numina>=0.21
+numina>=0.22
 astropy
 matplotlib
 six

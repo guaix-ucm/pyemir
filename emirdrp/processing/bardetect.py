@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -23,16 +23,14 @@ import logging
 import itertools
 
 import numpy
-
-import emirdrp.instrument.distortions as dist
-import scipy.ndimage.measurements as mes
-import scipy.ndimage.morphology as morph
-
+import scipy.ndimage
 from numina.array.utils import expand_region
 import numina.array.fwhm as fmod
 from numina.array.utils import coor_to_pix_1d
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from numina.array.utils import slice_create
+
+import emirdrp.instrument.distortions as dist
 
 
 def find_position(edges, prow, bstart, bend, total=5):
@@ -40,7 +38,7 @@ def find_position(edges, prow, bstart, bend, total=5):
 
     Parameters
     ==========
-    edges; ndarray,
+    edges: ndarray,
         a 2d image with 1 where is a border, 0 otherwise
     prow: int,
         reference 'row' of the bars
@@ -65,10 +63,10 @@ def find_position(edges, prow, bstart, bend, total=5):
 
     s2edges = edges[prow-nt:prow+nt+1, bstart:bend]
 
-    structure = morph.generate_binary_structure(2,2) # 8 way conection
-    har, num_f = mes.label(s2edges, structure=structure)
+    structure = scipy.ndimage.generate_binary_structure(2,2) # 8 way conection
+    har, num_f = scipy.ndimage.label(s2edges, structure=structure)
 
-    cen_of_mass = mes.center_of_mass(s2edges, labels=har, index=range(1, num_f + 1))
+    cen_of_mass = scipy.ndimage.center_of_mass(s2edges, labels=har, index=range(1, num_f + 1))
 
     # center_of_mass returns y, x coordinates
 

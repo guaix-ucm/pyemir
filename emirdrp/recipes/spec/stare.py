@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2022 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -15,7 +15,7 @@ from astropy.io import fits
 from datetime import datetime
 import logging
 import numpy as np
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 
 from numina.core import Result
 from numina.core import Requirement, Parameter
@@ -371,8 +371,8 @@ class GenerateRectwvCoeff(EmirRecipe):
                 data2_rs, coef2_rs = rescale_array_to_z1z2(
                     synthetic_raw_data, (0, 1)
                 )
-                shifts, error, diffphase = register_translation(
-                    data1_rs, data2_rs, 100)
+                shifts, error, diffphase = phase_cross_correlation(
+                    data1_rs, data2_rs, upsample_factor=100)
                 self.logger.info('global_float_offset_x_pix..: {}'.format(
                     -shifts[1]
                 ))

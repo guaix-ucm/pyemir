@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2022 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -21,7 +21,7 @@
 import numpy
 from numina.array.utils import coor_to_pix_1d
 from scipy.ndimage import convolve1d
-from scipy.ndimage.filters import median_filter
+from scipy.ndimage import median_filter
 
 import emirdrp.instrument.distortions as dist
 from emirdrp.core import EMIR_PIXSCALE, EMIR_NBARS, EMIR_RON
