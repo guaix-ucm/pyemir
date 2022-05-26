@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='pyemir',
-      version='0.16.0',
+      version='0.17.dev0',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='https://github.com/guaix-ucm/pyemir',
