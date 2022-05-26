@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='pyemir',
-      version='0.16.dev0',
+      version='0.16.0',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='https://github.com/guaix-ucm/pyemir',
@@ -90,6 +90,8 @@ setup(name='pyemir',
           "Programming Language :: Python :: 3.6",
           "Programming Language :: Python :: 3.7",
           "Programming Language :: Python :: 3.8",
+          "Programming Language :: Python :: 3.9",
+          "Programming Language :: Python :: 3.10",
           'Development Status :: 3 - Alpha',
           "Environment :: Console",
           "Intended Audience :: Science/Research",
