@@ -30,7 +30,9 @@ Index:
 
 - :ref:`pyemir_installation_conda`
 
-- :ref:`pyemir_installation_development_version`
+- :ref:`pyemir_installation_development_version_venv`
+
+- :ref:`pyemir_installation_development_version_conda`
 
 
 .. _pyemir_installation_what_method:
@@ -285,14 +287,31 @@ environment and remove it through conda:
    $ conda remove --name emir --all
 
 
-.. _pyemir_installation_development_version:
+
+.. _pyemir_installation_development_version_venv:
+
+Installing the development version (using venv)
+------------------------------------------------
+
+The development version is the most updated working version of the code (use it
+at your own risk!). 
+
+::
+
+   $ python3 -m venv venv_emir
+   $ source venv_emir/bin/activate
+   (venv_emir) $ git clone https://github.com/guaix-ucm/pyemir.git
+   (venv_emir) $ cd pyemir
+   (venv_emir) $ pip install -e .
+
+
+.. _pyemir_installation_development_version_conda:
 
 Installing the development version (using conda)
 ------------------------------------------------
 
-The development version is the most updated working version of the code (use it
-at your own risk!). For this version to work properly, some additinal python
-packages must have been already installed in your system. 
+(*Note:* the following instructions have not been recently updated. We advise
+to follow the previous instructions using venv.)
 
 In order to facilitate the installation of the additional packages, it is
 useful to add the AstroConda channel:
