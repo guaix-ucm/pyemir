@@ -32,8 +32,6 @@ Index:
 
 - :ref:`pyemir_installation_development_version_venv`
 
-- :ref:`pyemir_installation_development_version_conda`
-
 
 .. _pyemir_installation_what_method:
 
@@ -72,8 +70,8 @@ your computer. This approach has several advantages:
 
 .. _pyemir_installation_virtualenv:
 
-Install in virtualenv
----------------------
+Install in virtualenv (or venv)
+-------------------------------
 
 `Virtualenv <https:virtualenv.pypa.io/en/stable/installation/>`_ is a tool that
 allows to create isolated Python environments.
@@ -141,7 +139,20 @@ The steps to install and run PyEmir within a virtual environment are:
   ::
 
      (emir) $ numina
-     DEBUG: Numina simple recipe runner version 0.22
+     DEBUG: Numina simple recipe runner version 0.30
+
+  The current PyEmir version can also be easily displayed using:
+
+  ::
+
+     (emir) $ numina show-instruments
+     INFO: Numina simple recipe runner version 0.30.0
+     Instrument: EMIR
+      version is '0.16.0'
+      has configuration 'Default configuration' uuid=225fcaf2-7f6f-49cc-972a-70fd0aee8e96
+      has datamodel 'emirdrp.datamodel.EmirDataModel'
+      has pipeline 'default', version 1
+     
 
 5. **Update within the environment**
 
@@ -219,11 +230,11 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   Here we are asking that environment to be created including the last version
   of Python 3. If for any reason you need a particular Python version, you can
-  specify it; for example, to force the use of Python 3.6:
+  specify it; for example, to force the use of Python 3.9:
 
   ::
 
-     $ conda create --name emir python=3.6
+     $ conda create --name emir python=3.9
 
 2. **Activate the environment**
 
@@ -258,7 +269,7 @@ instructions, the steps to execute and run PyEmir under conda are:
   ::
 
      (emir) $ numina
-     DEBUG: Numina simple recipe runner version 0.22
+     DEBUG: Numina simple recipe runner version 0.30
 
 5. **Update within the environment**
 
@@ -303,123 +314,4 @@ at your own risk!).
    (venv_emir) $ git clone https://github.com/guaix-ucm/pyemir.git
    (venv_emir) $ cd pyemir
    (venv_emir) $ pip install -e .
-
-
-.. _pyemir_installation_development_version_conda:
-
-Installing the development version (using conda)
-------------------------------------------------
-
-(*Note:* the following instructions have not been recently updated. We advise
-to follow the previous instructions using venv.)
-
-In order to facilitate the installation of the additional packages, it is
-useful to add the AstroConda channel:
-
-::
-
-   $ conda config --add channels http://ssb.stsci.edu/astroconda
-
-It is easy to create a new environment and install the required
-packages using:
-
-::
-
-   $ conda create --name emir python=3 \
-   astropy \
-   cython \
-   ipython \
-   jupyter \
-   matplotlib \
-   numpy \
-   photutils \
-   pytest \
-   PyYaml \
-   scikit-image \
-   scipy \
-   setuptools \
-   six \
-   sphinx
-
-Activate the new environment:
-
-::
-
-   $ conda activate emir
-   (emir) $
-
-Install the following additional package:
-
-::
-
-   (emir) $ conda install -c conda-forge lmfit
-
-
-**Installing/updating numina**
-
-Download the development version using git:
-
-::
-
-   (emir) $ git clone https://github.com/guaix-ucm/numina.git
-   (emir) $ cd numina
-
-Build numina:
-
-::
-
-   (emir) $ python setup.py build
-
-.. note:: In macOS Mojave, the compilation will fail unless the following
-            environment variable is defined::
-
-               $ export MACOSX_DEPLOYMENT_TARGET=10.9
-
-Install numina:
-
-::
-
-   (emir) $ python setup.py install
-   (emir) $ cd ..
-
-If you have numina already installed in your system, but want to update the
-code with the latest version, you need to move to the same directory where you
-previously downloaded numina and reinstall it:
-
-::
-
-   (emir) $ cd numina
-   (emir) $ git pull
-   (emir) $ python setup.py build
-   (emir) $ python setup.py install
-   (emir) $ cd ..
-
-Note: when updating numina, remember to update also pyemir (see next).
-
-**Installing/updating pyemir**
-
-After installing numina, you can install pyemir, following the same procedure
-previously described for numina:
-
-::
-   
-   (emir) $ git clone https://github.com/guaix-ucm/pyemir.git
-   (emir) $ cd pyemir
-   (emir) $ python setup.py build
-   (emir) $ python setup.py install
-   (emir) $ cd ..
-
-If you have pyemir already installed in your system, but want to update the
-code with the latest version, you need to move to the same directory where you
-previously downloaded pyemir and reinstall it:
-
-::
-
-   (emir) $ cd pyemir
-   (emir) $ git pull
-   (emir) $ python setup.py build
-   (emir) $ python setup.py install
-   (emir) $ cd ..
-
-Note: when updating pyemir, remember to update numina first (see above).
 
