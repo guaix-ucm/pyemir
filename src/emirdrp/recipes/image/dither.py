@@ -19,6 +19,7 @@ import numpy
 import sep
 from astropy.io import fits
 from scipy import interpolate
+from scipy.ndimage import median_filter
 from scipy.spatial import KDTree as KDTree
 
 from numina.core import Result, Requirement, Parameter
@@ -172,6 +173,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
     )
     refine_offsets = Parameter(False, 'Refine offsets by cross-correlation')
     iterations = Parameter(0, 'Iterations of the recipe')
+    fit_doughnut = Parameter(False, 'Fit doughnut-like shape in superflat')
     extinction = Parameter(0.0, 'Mean atmospheric extinction')
 
     method = Parameter(
@@ -247,7 +249,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
             target_is_sky=target_is_sky,
             extinction=extinction,
             method=method,
-            method_kwargs=method_kwargs
+            method_kwargs=method_kwargs,
+            fit_doughnut=rinput.fit_doughnut
         )
 
         if rinput.refine_offsets:
@@ -289,7 +292,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     target_is_sky=target_is_sky,
                     extinction=extinction,
                     method=method,
-                    method_kwargs=method_kwargs
+                    method_kwargs=method_kwargs,
+                    fit_doughnut=rinput.fit_doughnut
                 )
 
             except Exception as error:
@@ -303,7 +307,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 maxsep_time=sky_images_sep_time, nframes=sky_images,
                 extinction=extinction,
                 method=method, method_kwargs=method_kwargs,
-                nside_adhoc_sky_correction=nside_adhoc_sky_correction
+                nside_adhoc_sky_correction=nside_adhoc_sky_correction,
+                fit_doughnut=rinput.fit_doughnut
             )
             step += 1
 
@@ -361,15 +366,17 @@ class FullDitheredImagesRecipe(EmirRecipe):
     def process_basic(self, images_info, step=None,
                       target_is_sky=True,
                       extinction=0.0,
-                      method=None, method_kwargs=None):
+                      method=None, method_kwargs=None,
+                      fit_doughnut=False):
 
         target_info = [iinfo for iinfo in images_info if iinfo.valid_target]
         sky_info = [iinfo for iinfo in images_info if iinfo.valid_sky]
 
         self.logger.info(f"Step {step}, SF: compute superflat")
-        sf_arr = self.compute_superflat(
+        sf_arr, doughnut_arr = self.compute_superflat(
             images_info,
-            method=method, method_kwargs=method_kwargs
+            method=method, method_kwargs=method_kwargs,
+            fit_doughnut=fit_doughnut
         )
 
         # Apply superflat
@@ -383,7 +390,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             # Each frame is the closest sky frame available
             for ii, iinfo in enumerate(images_info):
                 self.logger.info(f'image {ii+1} / {len(images_info)}')
-                self.compute_simple_sky_for_frame(iinfo, iinfo, step)
+                self.compute_simple_sky_for_frame(iinfo, iinfo, doughnut_arr, step)
                 self.logger.info('---')
         else:
             # Not implemented
@@ -401,7 +408,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
     def process_advanced(self, images_info, result, step, target_is_sky=True,
                          maxsep_time=5.0, nframes=6, extinction=0,
                          method=None, method_kwargs=None,
-                         nside_adhoc_sky_correction=0):
+                         nside_adhoc_sky_correction=0,
+                         fit_doughnut=False):
 
         seeing_fwhm = None
         baseshape = (EMIR_NAXIS2, EMIR_NAXIS1)
@@ -435,8 +443,14 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 frame.objmask_data = bogus_objmask + footprint
 
         self.logger.info(f"Step {step}, SF: compute superflat")
-        sf_arr = self.compute_superflat(sky_info, segmask=objmask, step=step,
-                                        method=method, method_kwargs=method_kwargs)
+        sf_arr, doughnut_arr = self.compute_superflat(
+            sky_info,
+            segmask=objmask,
+            step=step,
+            method=method,
+            method_kwargs=method_kwargs,
+            fit_doughnut=fit_doughnut
+        )
 
         # Apply superflat
         self.logger.info(f"Step {step}, SF: apply superflat")
@@ -464,7 +478,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                                      method=method, method_kwargs=method_kwargs)
         return result
 
-    def compute_simple_sky_for_frame(self, frame, skyframe, step=0, save=True):
+    def compute_simple_sky_for_frame(self, frame, skyframe, doughnut_arr=None, step=0, save=True):
         self.logger.info(f'Correcting sky in frame.....: {frame.lastname}')
         self.logger.info(f'with sky computed from frame: {skyframe.lastname}')
 
@@ -502,7 +516,14 @@ class FullDitheredImagesRecipe(EmirRecipe):
         with fits.open(frame.lastname, mode='update') as hdulist:
             data = hdulist['primary'].data
             valid = data[frame.valid_region]
-            valid -= sky
+            if doughnut_arr is None:
+                valid -= sky
+            else:
+                # since the doughnut_arr was computed when deriving the superflat,
+                # its averaged signal is around 1.0; for that reason here we
+                # scale it by the median sky value
+                self.logger.debug(f'subtracting (median sky value) * doughnut_fit')
+                valid -= sky * doughnut_arr
             self.logger.info(f'Sky-subtrated image in frame: {frame.lastname}')
 
     def compute_simple_sky(self, frame, skyframe, step=0, save=True):
@@ -578,7 +599,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         return images_info
 
     def compute_superflat(self, images_info, segmask=None, step=0,
-                          method=None, method_kwargs=None):
+                          method=None, method_kwargs=None, fit_doughnut=False):
 
         self.logger.info(f"Step {step}, SF: combining the frames without offsets")
 
@@ -639,7 +660,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         mean_signal = numpy.median(sf_data[sf_data > 0])   # avoid region outside footprint
         sf_data /= mean_signal
         # avoid division by zero when using the superflat
-        sf_data[sf_data <= 0] = 1e-5
+        sf_data[sf_data <= 0] = 1E-5
         # sf_data[sf_data <= 0] = 1.0   # do not use this
 
         # Save superflat
@@ -647,7 +668,143 @@ class FullDitheredImagesRecipe(EmirRecipe):
         tmp_filename = name_skyflat('comb', step)
         self.logger.debug(f"Step {step}, saving {tmp_filename}")
         self.save_intermediate_img(sfhdu, tmp_filename)
-        return sf_data
+
+        # Compute doughnut fit
+        if fit_doughnut:
+            self.logger.debug(f"Step {step}, fitting doughnut-like surface")
+            doughnut_arr = self.fit_sf_doughnut(image=sf_data, method='linear', fill_with_nearest=True)
+            # save doughnut fit
+            sfdhdu = fits.PrimaryHDU(doughnut_arr)
+            tmp_filename = name_skyflat('doughnut', step)
+            self.logger.debug(f"Step {step}, saving {tmp_filename}")
+            self.save_intermediate_img(sfdhdu, tmp_filename)
+            # recompute superflat
+            sf_data /= doughnut_arr
+            # save dougnut-corrected superflat
+            sfhdu = fits.PrimaryHDU(sf_data)
+            tmp_filename = name_skyflat('comb_dc', step)
+            self.logger.debug(f"Step {step}, saving {tmp_filename}")
+            self.save_intermediate_img(sfhdu, tmp_filename)
+        else:
+            doughnut_arr = None
+
+        # Return superflat
+        return sf_data, doughnut_arr
+
+    def fit_sf_doughnut(self, image, method=None, fill_with_nearest=True):
+
+        if method not in ['test', 'rg_linear', 'nearest', 'linear', 'cubic']:
+            raise ValueError(f'Unexpected reconstruction_method={method}')
+
+        # avoid undefined regions (due to image reprojection, for example)
+        # note: we have employed 1E-5 in compute_superflat() to avoid
+        #       division by zero; for that reason here we use 2E-5
+        footprint_useful = (image > 2E-5)
+
+        # image dimensions and center
+        naxis2, naxis1 = image.shape
+        xc = naxis1 / 2 + 0.5
+        yc = naxis2 / 2 + 0.5
+
+        pixel_x = numpy.arange(1, naxis1 + 1)
+        pixel_y = numpy.arange(1, naxis2 + 1)
+
+        ix_array = numpy.meshgrid(pixel_x, pixel_y)[0].flatten()
+        iy_array = numpy.meshgrid(pixel_x, pixel_y)[1].flatten()
+
+        # polar coordinates
+        r = numpy.sqrt((ix_array - xc) ** 2 + (iy_array - yc) ** 2)
+        theta = numpy.arctan2(iy_array - yc, ix_array - xc)
+
+        # 2D histogram using r, theta
+        nbins_r = 140
+        r_bins = numpy.linspace(0, max(r), nbins_r + 1)
+
+        nbins_theta_per_quarter = 90
+        nbins_theta = nbins_theta_per_quarter * 4
+        theta_bins = numpy.linspace(-180, 180, nbins_theta + 1) * numpy.pi / 180
+
+        hist2d = numpy.zeros((nbins_theta, nbins_r))
+
+        imax = -numpy.ones(nbins_theta, dtype=int)
+        for i in range(nbins_r):
+            iok = (r >= r_bins[i]) & (r < r_bins[i + 1])
+            if numpy.sum(iok) > 0:
+                xdum = r[iok]
+                ydum = theta[iok]
+                zdum = image.flatten()[iok]
+                fdum = footprint_useful.flatten()[iok]
+                for j in range(nbins_theta):
+                    jok = (ydum >= theta_bins[j]) & (ydum < theta_bins[j + 1]) & fdum
+                    if numpy.sum(jok) > 0:
+                        hist2d[j, i] = numpy.median(zdum[jok])
+                        if i > imax[j]:
+                            imax[j] = i
+                    else:
+                        hist2d[j, i] = -1
+            else:
+                for j in range(nbins_theta):
+                    hist2d[j, i] = -1
+
+        # fill rows
+        for j in range(nbins_theta):
+            for i in range(imax[j] + 1, nbins_r):
+                hist2d[j, i] = hist2d[j, imax[j]]
+
+        # for the first radii (with empty data in some bins), average all
+        # undefined values with the median within each quadrant
+        j1, j2, j3, j4, j5 = numpy.arange(5 * nbins_theta_per_quarter, step=nbins_theta_per_quarter)
+        for i in range(nbins_r):
+            if len(numpy.argwhere(hist2d[:, i] == -1)) > 0:
+                for jj1, jj2 in zip([j1, j2, j3, j4],
+                                    [j2, j3, j4, j5]):
+                    minicolumn = hist2d[jj1:jj2, i]
+                    hist2d[jj1:jj2, i] = numpy.median(minicolumn[minicolumn > -1])
+
+        # smooth result in theta
+        hist2d_smooth = median_filter(hist2d, size=(21, 1), mode='wrap')
+
+        # reconstruct doughnut
+        if method == 'test':
+            # assign to each pixel the value corresponding to hist2d_smooth
+            ii = numpy.searchsorted(r_bins, r) - 1
+            jj = numpy.searchsorted(theta_bins, theta) - 1
+            image2d = hist2d_smooth[jj, ii].reshape(naxis2, naxis1)
+        elif method == 'rg_linear':
+            # centers of the bins used to compute hist2d_smooth
+            r_values = (r_bins[:-1] + r_bins[1:]) / 2
+            theta_values = (theta_bins[:-1] + theta_bins[1:]) / 2
+            interp = interpolate.RegularGridInterpolator(
+                (r_values, theta_values),
+                hist2d_smooth.T,
+                bounds_error=False
+            )
+            image2d = interp(numpy.column_stack([r, theta]), method='linear').reshape(naxis2, naxis1)
+        else:
+            # use scipy.interpolate.gridddata
+            zfit = hist2d_smooth.flatten()
+            # centers of the bins used to compute hist2d_smooth
+            r_values = (r_bins[:-1] + r_bins[1:]) / 2
+            theta_values = (theta_bins[:-1] + theta_bins[1:]) / 2
+            # cartesian coordinates
+            tmp_r = numpy.meshgrid(r_values, theta_values)[0].flatten()
+            tmp_theta = numpy.meshgrid(r_values, theta_values)[1].flatten()
+            xx = tmp_r * numpy.cos(tmp_theta) + xc
+            yy = tmp_r * numpy.sin(tmp_theta) + yc
+            # perform fit
+            grid_x, grid_y = numpy.mgrid[0:naxis1, 0:naxis2]
+            xyfit = numpy.column_stack((xx - 1, yy - 1))
+            image2d = interpolate.griddata(xyfit, zfit, (grid_x, grid_y), method=method)
+            if fill_with_nearest:
+                image2d_fill = interpolate.griddata(xyfit, zfit, (grid_x, grid_y), method='nearest')
+                invalid = numpy.isnan(image2d)
+                image2d[invalid] = image2d_fill[invalid]
+            # important: note that here we are using np.mgrid() instead of np.meshgrid()
+            # (see discussion in http://louistiao.me/posts/numpy-mgrid-vs-meshgrid/)
+            # and we need to take the transpose
+            image2d = image2d.T
+
+        return image2d
 
     '''
     def compute_sky_advanced(self, data_hdul, omasks, base_header, use_errors):
