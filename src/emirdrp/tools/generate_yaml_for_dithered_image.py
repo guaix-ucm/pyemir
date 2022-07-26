@@ -42,19 +42,21 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
                 if i != 0:
                     output += '---\n'
                 idlabel = list_fileinfo[i].filename[:10]
-                output += 'id: _{}'.format(idlabel)
+                output += f'id: _{idlabel}'
                 output += '\n'
                 output += 'instrument: EMIR\n'
                 output += 'mode: STARE_IMAGE\n'
                 output += 'frames:\n'
-            output += ' - ' + list_fileinfo[i].filename + '\n'
+            output += f' - {list_fileinfo[i].filename}\n'
             if (i + 1) % args.repeat == 0:
+                output += 'requirements:\n'
+                output += f'  reprojection_method: {args.reprojection}\n'
                 if step == 0:
                     output += 'enabled: True\n'
                 elif step == 1:
                     output += 'enabled: False\n'
                 else:
-                    raise ValueError('Unexpected step={}'.format(step))
+                    raise ValueError(f'Unexpected step={step}')
 
     if step == 1:
         # combination with FULL_DITHERED_IMAGE
@@ -62,14 +64,14 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
         if args.obsid_combined is None:
             output += 'id: _combined' + '\n'
         else:
-            output += 'id: _' + args.obsid_combined + '\n'
+            output += f'id: _{args.obsid_combined}\n'
         output += 'instrument: EMIR\n'
         output += 'mode: FULL_DITHERED_IMAGE\n'
         output += 'children:\n'
         for i in range(nimages):
             if i % args.repeat == 0:
                 idlabel = list_fileinfo[i].filename[:10]
-                output += ' - _' + idlabel + '\n'
+                output += f' - _{idlabel}\n'
         output += 'requirements:\n'
         output += '  iterations: 0\n'
         output += '  sky_images: 0\n'
@@ -99,6 +101,10 @@ def main(args=None):
                         type=lambda x: arg_file_is_new(parser, x))
 
     # optional arguments
+    parser.add_argument("--reprojection",
+                        help="Reprojection method",
+                        default="interp", type=str,
+                        choices=["interp", "adaptive", "exact", "none"])
     parser.add_argument("--repeat",
                         help="Repetitions at each position",
                         default=1, type=int)

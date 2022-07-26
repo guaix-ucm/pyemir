@@ -102,7 +102,7 @@ class StareImageRecipe2(EmirRecipe):
             else:
                 raise ValueError(f'Unexpected astrometric_reprojection value: {reprojection_method}')
             # reproject data
-            self.logger.debug(f'... reprojecting data using reproject_{reprojection_method}')
+            self.logger.debug('starting image reprojection')
             hdr_original = deepcopy(hdr)
             wcs_original = WCS(hdr_original)
             # remove PV2_2, PV2_3,... PV2_5
@@ -129,7 +129,7 @@ class StareImageRecipe2(EmirRecipe):
             else:
                 surface_brightness_data = processed_img[0].data
             # reprojection itself
-            self.logger.debug(f'... reprojecting surface brightness')
+            self.logger.debug(f'... reprojecting surface brightness using reproject_{reprojection_method}')
             data_final, footprint = reproject_function(
                 input_data=(surface_brightness_data, wcs_original),
                 output_projection=wcs_final,
