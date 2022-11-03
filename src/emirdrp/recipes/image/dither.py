@@ -655,6 +655,12 @@ class FullDitheredImagesRecipe(EmirRecipe):
             sf_data, _sf_var, sf_num = method(
                 data, masks, scales=scales, dtype='float32', **method_kwargs
             )
+            # avoid pixels without flatfield information
+            if numpy.any(sf_num == 0):
+                self.logger.warning('pixels without flatfield information found: potential problem!')
+                self.logger.warning('interpolating missing flatfield pixels using neighbouring data')
+                binmask = sf_num == 0
+                narray.fixpix2(sf_data, binmask, out=sf_data, iterations=1)
 
         # Normalize, flat has mean = 1
         mean_signal = numpy.median(sf_data[sf_data > 0])   # avoid region outside footprint
@@ -1207,6 +1213,11 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 skymedian = numpy.median(valid[msk == 0])
                 self.logger.debug(f'rescaling background with skymedian {skymedian}')
 
+            # avoid pixels without sky information
+            if numpy.any(num == 0):
+                self.logger.warning('pixels without sky information found (set to skymedian)')
+                sky[num == 0] = 1.0
+
             # rescale sky to have a mean value equal to skymedian
             sky *= skymedian
 
@@ -1215,8 +1226,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
             for hdl in desc:
                 hdl.close()
 
-        # the following code is not necessary because the reprojected
-        # footprint leaves pixels where num == 0, but this is not a problem
+        # the following code is not necessary because we have already avoided
+        # those pixels where num == 0
         """
         if numpy.any(num == 0):
             # We have pixels without
