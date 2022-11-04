@@ -125,7 +125,8 @@ class DirectImageCommon(EmirRecipe):
         import matplotlib.pyplot as plt
 
         self._figure = plt.figure(facecolor='white')
-        self._figure.canvas.set_window_title('Recipe Plots')
+        # FigureCanvasAgg has no set_window_title
+        # self._figure.canvas.set_window_title('Recipe Plots')
         self._figure.canvas.draw()
 
     def process(self, ri,
