@@ -2,7 +2,7 @@
 PyEmir
 =======
 
-|zenodo| |docs| |pypi| |travis| |coveralls|
+|zenodo| |docs| |pypi| |coveralls|
 
 This is PyEmir, the data reduction pipeline for EMIR. 
 
@@ -41,10 +41,6 @@ Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
 .. |pypi| image:: https://badge.fury.io/py/pyemir.svg
     :target: https://badge.fury.io/py/pyemir
     :alt: pyemir's PyPI Status
-
-.. |travis| image:: https://img.shields.io/travis/guaix-ucm/pyemir/master?logo=travis%20ci&logoColor=white&label=Travis%20CI
-    :target: https://travis-ci.org/guaix-ucm/pyemir
-    :alt: pyemir's Travis CI Status
 
 .. |coveralls| image:: https://coveralls.io/repos/guaix-ucm/pyemir/badge.svg?branch=master&service=github
     :target: https://coveralls.io/github/guaix-ucm/pyemir?branch=master
