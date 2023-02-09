@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -228,7 +228,7 @@ def extract_slitlet2d(image_2k2k, sltlim):
                            (sltlim.bb_nc1_orig - 1):sltlim.bb_nc2_orig]
 
     # transform to float
-    slitlet2d = slitlet2d.astype(np.float)
+    slitlet2d = slitlet2d.astype(float)
 
     # return slitlet image
     return slitlet2d

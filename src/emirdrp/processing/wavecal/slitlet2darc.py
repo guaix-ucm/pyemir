@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -549,7 +549,7 @@ class Slitlet2dArc(object):
                                (self.bb_nc1_orig - 1):self.bb_nc2_orig]
 
         # transform to float
-        slitlet2d = slitlet2d.astype(np.float)
+        slitlet2d = slitlet2d.astype(float)
 
         # display slitlet2d with boundaries and middle spectrum trail
         if abs(self.debugplot) in [21, 22]:
@@ -1010,7 +1010,7 @@ class Slitlet2dArc(object):
             ax.plot(self.x_inter_rect, self.y_inter_rect, 'bo')
             # grid with fitted transformation: spectrum trails
             xx = np.arange(0, self.bb_nc2_orig - self.bb_nc1_orig + 1,
-                           dtype=np.float)
+                           dtype=float)
             for spectrail in self.list_spectrails:
                 yy0 = self.corr_yrect_a + \
                       self.corr_yrect_b * spectrail.y_rectified
@@ -1030,7 +1030,7 @@ class Slitlet2dArc(object):
             yy = np.linspace(ylower_line - self.bb_ns1_orig,
                              yupper_line - self.bb_ns1_orig,
                              num=n_points,
-                             dtype=np.float)
+                             dtype=float)
             for arc_line in self.list_arc_lines:
                 xline = arc_line.x_rectified - self.bb_nc1_orig
                 xx = np.array([xline] * n_points)
@@ -1111,7 +1111,7 @@ class Slitlet2dArc(object):
                 ax.plot(self.x_inter_rect, self.y_inter_rect, 'bo')
             # grid with fitted transformation: spectrum trails
             xx = np.arange(0, self.bb_nc2_orig - self.bb_nc1_orig + 1,
-                           dtype=np.float)
+                           dtype=float)
             for spectrail in self.list_spectrails:
                 yy0 = self.corr_yrect_a + \
                       self.corr_yrect_b * spectrail.y_rectified
@@ -1133,7 +1133,7 @@ class Slitlet2dArc(object):
             yy = np.linspace(ylower_line - self.bb_ns1_orig,
                              yupper_line - self.bb_ns1_orig,
                              num=n_points,
-                             dtype=np.float)
+                             dtype=float)
             if self.list_arc_lines is not None:
                 for arc_line in self.list_arc_lines:
                     xline = arc_line.x_rectified - self.bb_nc1_orig

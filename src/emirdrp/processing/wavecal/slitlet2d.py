@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -343,7 +343,7 @@ class Slitlet2D(object):
                                (self.bb_nc1_orig - 1):self.bb_nc2_orig]
 
         # transform to float
-        slitlet2d = slitlet2d.astype(np.float)
+        slitlet2d = slitlet2d.astype(float)
 
         # display slitlet2d with boundaries and middle spectrum trail
         if abs(self.debugplot) in [21, 22]:
@@ -460,7 +460,7 @@ class Slitlet2D(object):
                      show=False)
         # grid with fitted transformation: spectrum trails
         xx = np.arange(0, self.bb_nc2_orig - self.bb_nc1_orig + 1,
-                       dtype=np.float)
+                       dtype=float)
         for spectrail in self.list_spectrails:
             yy0 = self.corr_yrect_a + \
                   self.corr_yrect_b * spectrail(self.x0_reference)
