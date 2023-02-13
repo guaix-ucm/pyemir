@@ -222,9 +222,11 @@ def main(args=None):
 
     # read input FITS file
     hdulist = fits.open(args.fitsfile)
+    for item in hdulist:
+        print(item)
     image_header = hdulist[0].header
     image2d = hdulist[0].data
-    hdulist.close()
+    # hdulist.close()
 
     naxis1 = image_header['naxis1']
     naxis2 = image_header['naxis2']
