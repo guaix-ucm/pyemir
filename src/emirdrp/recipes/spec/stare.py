@@ -371,8 +371,14 @@ class GenerateRectwvCoeff(EmirRecipe):
                 data2_rs, coef2_rs = rescale_array_to_z1z2(
                     synthetic_raw_data, (0, 1)
                 )
-                shifts, error, diffphase = phase_cross_correlation(
-                    data1_rs, data2_rs, upsample_factor=100)
+                reference_mask = np.ones(data1_rs.shape, dtype=bool)
+                moving_mask = (data2_rs > 0)
+                # the number of arguments returned by phase_cross_correlation
+                # is only 1 when reference_mask and moving_mask are used
+                shifts = phase_cross_correlation(
+                    data1_rs, data2_rs, upsample_factor=100,
+                    reference_mask=reference_mask,
+                    moving_mask=moving_mask, overlap_ratio=0.9)
                 self.logger.info('global_float_offset_x_pix..: {}'.format(
                     -shifts[1]
                 ))
