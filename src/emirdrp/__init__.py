@@ -11,7 +11,9 @@
 
 import logging
 
-__version__ = '0.19'
+import emirdrp._version
+
+__version__ = emirdrp._version.__version__
 
 
 # Top level NullHandler
