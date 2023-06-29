@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2020 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -69,7 +69,7 @@ class BarDetectionRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, flow=flow)
+        hdulist = basic_processing_with_combination(rinput, reduction_flow=flow)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
