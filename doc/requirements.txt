@@ -9,3 +9,4 @@ sep
 scikit-image
 scikit-learn
 lmfit
+sphinx<7.0.0
