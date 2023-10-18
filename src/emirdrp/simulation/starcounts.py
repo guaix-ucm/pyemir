@@ -1,36 +1,18 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
-from __future__ import print_function
+import math
 
-from math import sin, cos, tan, pi
-import pkgutil
+import importlib_resources
 
-from six import StringIO
-
-from scipy import array
+import numpy
 import scipy.interpolate as sil
-from scipy import loadtxt
-
-
-# Classes are new style
-__metaclass__ = type
 
 
 class Counts:
@@ -48,32 +30,39 @@ class PhotometricFilter:
     FILTER_K = 6
 
 
-class RBModel:
+class BaseModel:
+    def __init__(self, name):
+        self.name = name
+
+
+class RBModel(BaseModel):
     """Star counts model from Ratnatunga & Bahcall.
 
     Number of stars per square arc minute
     """
-    _counts = array(
-        [
-            [12, 14, 16, 18, 20, 22, 24, 26, 28],
-            [0.0, 1.3e-2, 1.8e-2, 4.8e-2, 1.1e-1,
-                9.0e-2, 2.7e-2, 3.4e-3, 1.6e-4],
-            [0.0, 8.2e-3, 2.6e-2, 2.6e-2, 4.5e-2,
-                1.2e-1, 1.1e-1, 3.9e-2, 5.6e-3],
-            [0.0, 2.0e-3, 1.0e-2, 4.4e-2, 1.1e-1,
-                2.2e-1, 4.6e-1, 8.1e-1, 1.1e-0]
-        ]
-    )
-    # Order 3 spline
-    _spl = [sil.splrep(_counts[0], _counts[i]) for i in (1, 2, 3)]
-    _min = _counts[0, 0]
-    del _counts
 
-    _null = [0.0, 0.0, 0.0]
-    _colorsVK = [4.7, 2.5, 1.4]
+    def __init__(self):
+        super().__init__('Ratnatunga & Bahcall')
 
-    name = 'Ratnatunga & Bahcall'
-    filters = [PhotometricFilter.FILTER_K]
+        _counts = numpy.array(
+            [
+                [12, 14, 16, 18, 20, 22, 24, 26, 28],
+                [0.0, 1.3e-2, 1.8e-2, 4.8e-2, 1.1e-1,
+                    9.0e-2, 2.7e-2, 3.4e-3, 1.6e-4],
+                [0.0, 8.2e-3, 2.6e-2, 2.6e-2, 4.5e-2,
+                    1.2e-1, 1.1e-1, 3.9e-2, 5.6e-3],
+                [0.0, 2.0e-3, 1.0e-2, 4.4e-2, 1.1e-1,
+                    2.2e-1, 4.6e-1, 8.1e-1, 1.1e-0]
+            ]
+        )
+        # Order 3 spline
+        self._spl = [sil.splrep(_counts[0], _counts[i]) for i in (1, 2, 3)]
+        self._min = _counts[0, 0]
+
+        self._null = [0.0, 0.0, 0.0]
+        self._colorsVK = [4.7, 2.5, 1.4]
+
+        self.filters = [PhotometricFilter.FILTER_K]
 
     def differential_counts(self, mag, filter=PhotometricFilter.FILTER_K):
         if filter == PhotometricFilter.FILTER_V:
@@ -86,108 +75,100 @@ class RBModel:
             return self._integral_counts_color(mag, self._colorsVK)
         return 0.
 
-    @classmethod
-    def _integral_counts_color(cls, mag, colors):
+    def _integral_counts_color(self, mag, colors):
         def subint(i):
-            return max(sil.splint(cls._min + colors[i],
+            return max(sil.splint(self._min + colors[i],
                                   mag + colors[i],
-                                  cls._spl[i]),
+                                  self._spl[i]),
                        0.0
                        )
         return sum(subint(i) for i in (0, 1, 2))
 
-    @classmethod
-    def _differential_counts_color(cls, mag, colors):
+    def _differential_counts_color(self, mag, colors):
         def subspl(i):
-            return max(sil.splev(mag, cls._spl[i]), 0.0)
+            return max(sil.splev(mag, self._spl[i]), 0.0)
         return sum(subspl(i) for i in (0, 1, 2))
 
 
-class SpagnaModel:
+class SpagnaModel(BaseModel):
     """Star counts model from Spagna 1999.
 
     Number of stars per square arc minute
     """
 
-    _J_counts_data = loadtxt(StringIO(
-        pkgutil.get_data('emirdrp.simulation', 'spagna-J.dat')
-        )
-    )
-    # Data in file is for square degree
-    _J_counts_data[:, 1:3] /= 3600.0
-    _spl_J_1 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 1])
-    _spl_J_2 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 2])
-    del _J_counts_data
+    def __init__(self):
+        super().__init__('Spagna 1999')
 
-    _K_counts_data = loadtxt(StringIO(
-        pkgutil.get_data('emirdrp.simulation', 'spagna-K.dat')
-        )
-    )
+        res = importlib_resources.files('emirdrp.simulation').joinpath('spagna-J.dat')
+        with open(res) as fd:
+            _J_counts_data = numpy.loadtxt(fd)
 
-    # Data in file is for square degree
-    _K_counts_data[:, 1:3] /= 3600.0
-    _spl_K_1 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 1])
-    _spl_K_2 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 2])
-    del _K_counts_data
+            # Data in file is for square degree
+            _J_counts_data[:, 1:3] /= 3600.0
+            self._spl_J_1 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 1])
+            self._spl_J_2 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 2])
 
-    name = 'Spagna 1999'
-    filters = [PhotometricFilter.FILTER_K, PhotometricFilter.FILTER_J]
+        res = importlib_resources.files('emirdrp.simulation').joinpath('spagna-K.dat')
+        with open(res) as fd:
+            _K_counts_data = numpy.loadtxt(fd)
+            # Data in file is for square degree
+            _K_counts_data[:, 1:3] /= 3600.0
+            self._spl_K_1 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 1])
+            self._spl_K_2 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 2])
 
-    @classmethod
-    def integral_counts(cls, mag, filter=PhotometricFilter.FILTER_K):
+        self.filters = [PhotometricFilter.FILTER_K, PhotometricFilter.FILTER_J]
+
+    def integral_counts(self, mag, filter=PhotometricFilter.FILTER_K):
         if filter == PhotometricFilter.FILTER_J:
-            return sil.splev(mag, cls._spl_J_2)
+            return sil.splev(mag, self._spl_J_2)
         elif filter == PhotometricFilter.FILTER_K:
-            return sil.splev(mag, cls._spl_K_2)
+            return sil.splev(mag, self._spl_K_2)
         else:
             return 0.
 
-    @classmethod
-    def differential_counts(cls, mag, filter=PhotometricFilter.FILTER_K):
+    def differential_counts(self, mag, filter=PhotometricFilter.FILTER_K):
         if filter == PhotometricFilter.FILTER_J:
-            return sil.splev(mag, cls._spl_J_1) / 3600.0
+            return sil.splev(mag, self._spl_J_1) / 3600.0
         elif filter == PhotometricFilter.FILTER_K:
-            return sil.splev(mag, cls._spl_K_1) / 3600.0
+            return sil.splev(mag, self._spl_K_1) / 3600.0
         else:
             return 0.
 
 
-class BSModel:
+class BSModel(BaseModel):
     """Star counts model from Bahcall & Soneira.
 
     Number of stars per square arc minute
     """
-    name = "Bahcall & Soneira"
-    params = array(
-        [
-            [200, - 0.2, 0.01, 2, 15, 400, - 0.26, 0.065, 1.5, 17.5],
-            [925, - 0.132, 0.035, 3, 15.75, 1050, - 0.18, 0.087, 2.5, 17.5],
-            [235, - 0.227, 0.0, 1.5, 17, 370, - 0.175, 0.06, 2.0, 18],
-            [950, - 0.124, 0.027, 3.1, 16.60, 910, - 0.167, 0.083, 2.5, 18]
-        ]
-    )
+    def __init__(self):
+        super().__init__("Bahcall & Soneira")
+        self.params = numpy.array(
+            [
+                [200, - 0.2, 0.01, 2, 15, 400, - 0.26, 0.065, 1.5, 17.5],
+                [925, - 0.132, 0.035, 3, 15.75, 1050, - 0.18, 0.087, 2.5, 17.5],
+                [235, - 0.227, 0.0, 1.5, 17, 370, - 0.175, 0.06, 2.0, 18],
+                [950, - 0.124, 0.027, 3.1, 16.60, 910, - 0.167, 0.083, 2.5, 18]
+            ]
+        )
 
-    @classmethod
-    def integral_counts(cls, mag, filter=PhotometricFilter.FILTER_V):
+    def integral_counts(self, mag, filter=PhotometricFilter.FILTER_V):
         if filter == PhotometricFilter.FILTER_V:
-            return cls.dFunction(mag, 0., 0.5 * pi, *cls.params[1])
+            return self.dFunction(mag, 0., 0.5 * math.pi, *self.params[1])
         elif filter == PhotometricFilter.FILTER_B:
-            return cls.dFunction(mag, 0., 0.5 * pi, *cls.params[4])
+            return self.dFunction(mag, 0., 0.5 * math.pi, *self.params[4])
         else:
             return 0.
 
-    @classmethod
-    def differential_counts(cls, mag, filter=PhotometricFilter.FILTER_V):
+    def differential_counts(self, mag, filter=PhotometricFilter.FILTER_V):
         if filter == PhotometricFilter.FILTER_V:
-            return cls.dFunction(mag, 0., 0.5 * pi, *cls.params[0])
+            return self.dFunction(mag, 0., 0.5 * math.pi, *self.params[0])
         elif filter == PhotometricFilter.FILTER_B:
-            return cls.dFunction(mag, 0., 0.5 * pi, *cls.params[3])
+            return self.dFunction(mag, 0., 0.5 * math.pi, *self.params[3])
         else:
             return 0.
 
-    @staticmethod
-    def mu(magnitude):
-        """Compute parameter \mu of Appendix B."""
+    def mu(self, magnitude):
+        """Compute parameter \\mu of Appendix B."""
         if magnitude <= 12.:
             return 0.03
         if magnitude <= 20:
@@ -195,8 +176,7 @@ class BSModel:
         # if magnitude > 20:
         return 0.09
 
-    @staticmethod
-    def gamma(magnitude):
+    def gamma(self, magnitude):
         if magnitude <= 12.:
             return 0.36
         if magnitude <= 20:
@@ -204,30 +184,28 @@ class BSModel:
         # if magnitude > 20:
         return 0.04
 
-    @staticmethod
-    def sigma(galacticLongitude, galacticLatitude):
-        return 1.45 - 0.20 * cos(galacticLongitude) * cos(galacticLatitude)
+    def sigma(self, galacticLongitude, galacticLatitude):
+        return 1.45 - 0.20 * math.cos(galacticLongitude) * math.cos(galacticLatitude)
 
-    @classmethod
-    def dFunction(cls, mag, glongitude, glatitude, C1, alpha, beta, delta,
+    def dFunction(self, mag, glongitude, glatitude, C1, alpha, beta, delta,
                   mStar, C2, kappa, eta, lambdax, mDagger):
         firstTerm = (C1 * pow(10., beta * (mag - mStar)) /
                      pow(1 + pow(10., alpha * (mag - mStar)), delta) /
-                     pow(sin(glatitude) *
-                         (1 - cls.mu(mag) / tan(glatitude) * cos(glongitude)),
-                         3.0 - 5 * cls.gamma(mag))
+                     pow(math.sin(glatitude) *
+                         (1 - self.mu(mag) / math.tan(glatitude) * math.cos(glongitude)),
+                         3.0 - 5 * self.gamma(mag))
                      )
         secondTerm = (C2 * pow(10., eta * (mag - mDagger)) /
                       pow(1 + pow(10., kappa * (mag - mDagger)), lambdax) /
-                      pow(1 - cos(glatitude) * cos(glongitude),
-                          cls.sigma(glongitude, glatitude))
+                      pow(1 - math.cos(glatitude) * math.cos(glongitude),
+                          self.sigma(glongitude, glatitude))
                       )
         return (firstTerm + secondTerm) / 3600.0
 
 
 if __name__ == '__main__':
     import numpy as np
-    import np.random
+    import numpy.random
     from math import sqrt, log
 
     rbmodel = RBModel()
@@ -242,6 +220,7 @@ if __name__ == '__main__':
 
     class GeneralRandom:
         """ Recipe from http://code.activestate.com/recipes/576556/."""
+
         def __init__(self, x, p, Nrl=1000):
             self.x = x
             self.pdf = p / p.sum()
@@ -249,7 +228,7 @@ if __name__ == '__main__':
             self.inversecdfbins = Nrl
             self.Nrl = Nrl
             y = np.arange(Nrl) / float(Nrl)
-            _delta = 1.0 / Nrl
+            # _delta = 1.0 / Nrl
             self.inversecdf = np.zeros(Nrl)
             self.inversecdf[0] = self.x[0]
             cdf_idx = 0
@@ -268,7 +247,7 @@ if __name__ == '__main__':
                     break
             self.delta_inversecdf = np.concatenate(
                 (np.diff(self.inversecdf), [0])
-                )
+            )
 
         def random(self, N=1000):
             idx_f = np.random.uniform(size=N, high=self.Nrl - 1)
