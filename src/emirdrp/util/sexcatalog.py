@@ -136,6 +136,7 @@ Examples:
 
 from six.moves import builtins as __builtin__
 
+# flake8: noqa
 
 # ======================================================================
 
@@ -673,7 +674,7 @@ class SExtractorfile:
         if self.mode != 'r':
             raise ValueError(
                 'only read-only access is now implemented.'
-                )
+            )
 
         self._file = __builtin__.open(self.name, self.mode)
         self.closed = False
@@ -684,7 +685,7 @@ class SExtractorfile:
         if not(self._line):
             raise WrongSExtractorfileException(
                 'not a SExtractor text catalog (empty file)'
-                )
+            )
 
         while (self._line):
             __ll = (self._line).replace('\n', '')
@@ -693,13 +694,13 @@ class SExtractorfile:
                 if len(columns) < 3:
                     raise WrongSExtractorfileException(
                         'not a SExtractor text catalog (invalid header)'
-                        )
+                    )
                 name = columns[2]
                 if name not in SExtractorfile._SE_keys:
                     raise WrongSExtractorfileException(
                         'not a SExtractor text catalog (unknown keyword %s)'
                         % name
-                        )
+                    )
                 self._keys_positions[name] = int(columns[1]) - 1
                 self._keys.append(name)
             else:
@@ -709,7 +710,7 @@ class SExtractorfile:
         if not(self._keys):
             raise WrongSExtractorfileException(
                 'not a SExtractor text catalog (empty header)'
-                )
+            )
 
         self._outdict = dict([(k, None) for k in self._keys])
         self._firstline = True

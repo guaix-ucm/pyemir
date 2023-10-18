@@ -130,8 +130,8 @@ class SlitletLimits(object):
                              " and filter " + str(spfilter))
 
         # expected boundaries of the rectangle enclosing the 2D image
-        coeff_bb_ns1 =  [-8.03677111e+01, 3.98169266e+01, -7.77949391e-02,
-                         9.00823598e-04]
+        coeff_bb_ns1 = [-8.03677111e+01, 3.98169266e+01, -7.77949391e-02,
+                        9.00823598e-04]
         delta_bb_ns2 = 84
         # offset measured overplotting ds9_bounddict.reg (created with the
         # script fit_boundaries) corresponding to grism J and filter J
@@ -277,13 +277,12 @@ def compute_slitlet_boundaries(
         print('>>> NAXIS1:', naxis1)
         print('>>> NAXIS2:', naxis2)
 
-
     # ToDo: replace this by application of cosmetic defect mask!
     for j in range(1024):
         image2d[1024, j] = (image2d[1023, j] + image2d[1025, j]) / 2
         image2d[1023, j + 1024] = (image2d[1022, j + 1024] +
                                    image2d[1024, j + 1024]) / 2
-        
+
     # remove path from filename
     sfilename = os.path.basename(filename)
 
@@ -327,10 +326,10 @@ def compute_slitlet_boundaries(
         if debugplot % 10 != 0:
             ximshow(slitlet2d,
                     title=sfilename + " [original]"
-                          "\nslitlet=" + str(islitlet) +
-                          ", grism=" + grism +
-                          ", filter=" + spfilter +
-                          ", rotang=" + str(round(rotang, 2)),
+                    "\nslitlet=" + str(islitlet) +
+                    ", grism=" + grism +
+                    ", filter=" + spfilter +
+                    ", rotang=" + str(round(rotang, 2)),
                     first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
                     debugplot=debugplot)
 
@@ -344,10 +343,10 @@ def compute_slitlet_boundaries(
         if debugplot % 10 != 0:
             ximshow(slitlet2d_smooth,
                     title=sfilename + " [smoothed]"
-                          "\nslitlet=" + str(islitlet) +
-                          ", grism=" + grism +
-                          ", filter=" + spfilter +
-                          ", rotang=" + str(round(rotang, 2)),
+                    "\nslitlet=" + str(islitlet) +
+                    ", grism=" + grism +
+                    ", filter=" + spfilter +
+                    ", rotang=" + str(round(rotang, 2)),
                     first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
                     debugplot=debugplot)
 
@@ -366,10 +365,10 @@ def compute_slitlet_boundaries(
         if debugplot % 10 != 0:
             ximshow(slitlet2d_savgol,
                     title=sfilename + " [S.-G.filt.]"
-                          "\nslitlet=" + str(islitlet) +
-                          ", grism=" + grism +
-                          ", filter=" + spfilter +
-                          ", rotang=" + str(round(rotang, 2)),
+                    "\nslitlet=" + str(islitlet) +
+                    ", grism=" + grism +
+                    ", filter=" + spfilter +
+                    ", rotang=" + str(round(rotang, 2)),
                     first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
                     z1z2=(q50-times_sigma_threshold*sigmag,
                           q50+times_sigma_threshold*sigmag),
@@ -410,10 +409,10 @@ def compute_slitlet_boundaries(
             ximshow(labels2d_objects,
                     z1z2=(0, no_objects),
                     title=sfilename + " [objects]"
-                                     "\nslitlet=" + str(islitlet) +
-                          ", grism=" + grism +
-                          ", filter=" + spfilter +
-                          ", rotang=" + str(round(rotang, 2)),
+                    "\nslitlet=" + str(islitlet) +
+                    ", grism=" + grism +
+                    ", filter=" + spfilter +
+                    ", rotang=" + str(round(rotang, 2)),
                     first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
                     cbar_label="Object number",
                     debugplot=debugplot)
@@ -502,10 +501,10 @@ def compute_slitlet_boundaries(
             ):
                 ax = ximshow(tmp_img,
                              title=sfilename + tmp_label +
-                                   "\nslitlet=" + str(islitlet) +
-                                   ", grism=" + grism +
-                                   ", filter=" + spfilter +
-                                   ", rotang=" + str(round(rotang, 2)),
+                             "\nslitlet=" + str(islitlet) +
+                             ", grism=" + grism +
+                             ", filter=" + spfilter +
+                             ", rotang=" + str(round(rotang, 2)),
                              first_pixel=(sltlim.bb_nc1_orig,
                                           sltlim.bb_ns1_orig),
                              show=False,

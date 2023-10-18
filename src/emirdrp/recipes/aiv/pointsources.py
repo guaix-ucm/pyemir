@@ -69,7 +69,8 @@ class TestPointSourceRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, reduction_flow=flow)
+        hdulist = basic_processing_with_combination(
+            rinput, reduction_flow=flow)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -114,7 +115,8 @@ class TestPointSourceRecipe(EmirRecipe):
 
         self.logger.info('reference fwhm is %5.1f pixels', fwhm)
         self.logger.info('detect threshold, %3.1f over background', snr_detect)
-        self.logger.info('convolve with gaussian kernel, FWHM %3.1f pixels', fwhm)
+        self.logger.info(
+            'convolve with gaussian kernel, FWHM %3.1f pixels', fwhm)
         sigma = fwhm * gaussian_fwhm_to_sigma
         #
         kernel = Gaussian2DKernel(sigma)
@@ -129,7 +131,7 @@ class TestPointSourceRecipe(EmirRecipe):
         self.logger.info('detected %d objects', len(objects))
 
         # Hardcoded values
-        rs2 = 15.0
+        # rs2 = 15.0
         fit_rad = 10.0
         flux_min = 1000.0
         flux_max = 30000.0
@@ -172,16 +174,16 @@ class TestPointSourceRecipe(EmirRecipe):
         self.logger.info('end processing for object detection')
 
         result = self.create_result(frame=hdulist,
-                                positions=positions_alt,
-                                positions_alt=positions_alt,
-                                filter=filtername,
-                                DTU=dtub,
-                                readmode=readmode,
-                                ROTANG=rotang,
-                                DETPA=detpa,
-                                DTUPA=dtupa,
-                                param_recenter=rinput.recenter,
-                                param_max_recenter_radius=rinput.max_recenter_radius,
-                                param_box_half_size=rinput.box_half_size
-                                )
+                                    positions=positions_alt,
+                                    positions_alt=positions_alt,
+                                    filter=filtername,
+                                    DTU=dtub,
+                                    readmode=readmode,
+                                    ROTANG=rotang,
+                                    DETPA=detpa,
+                                    DTUPA=dtupa,
+                                    param_recenter=rinput.recenter,
+                                    param_max_recenter_radius=rinput.max_recenter_radius,
+                                    param_box_half_size=rinput.box_half_size
+                                    )
         return result

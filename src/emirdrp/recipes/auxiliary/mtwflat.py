@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -82,8 +82,8 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         errors = True
         self.logger.debug('using errors: %s', errors)
         hdulist = basic_processing_with_combination_frames(frames, flow,
-                                                    method=median,
-                                                    errors=errors)
+                                                           method=median,
+                                                           errors=errors)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -139,19 +139,20 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         elif ngood_images < 2:
             self.logger.warning('We have only %d good images', ngood_images)
             # Reference image
-            ref_image = imgs[0]
+            # ref_image = imgs[0]
             slope_scaled = numpy.ones(bshape) * exptime_frames[0]
 
             if errors:
                 slope_scaled_var = numpy.zeros_like(slope_scaled)
-                slope_scaled_num = numpy.zeros_like(slope_scaled, dtype='int16') + ngood_images
+                slope_scaled_num = numpy.zeros_like(
+                    slope_scaled, dtype='int16') + ngood_images
         else:
             nsaturated = nimages - good_images.sum()
             if nsaturated > 0:
                 self.logger.debug('we have %d images with median value over saturation (%f)',
-                                  nsaturated , saturation)
+                                  nsaturated, saturation)
 
-            m = flat_frames[:,:, good_images]
+            m = flat_frames[:, :, good_images]
             # Reshape array to obtain a 2D array
             m_r = m.reshape((bshape[0] * bshape[1], ngood_images))
             self.logger.debug('fitting slopes with Theil-Sen')
@@ -160,21 +161,23 @@ class MultiTwilightFlatRecipe(EmirRecipe):
             ll = self.filter_nsigma(median_frames[good_images], m_r.T)
 
             slope = ll[1].reshape(bshape)
-            base = ll[0].reshape(bshape)
+            # base = ll[0].reshape(bshape)
 
             # First good frame
             index_of_first_good = numpy.nonzero(good_images)[0][0]
             slope_scaled = slope * exptime_frames[index_of_first_good]
             if errors:
                 slope_scaled_var = numpy.zeros_like(slope_scaled)
-                slope_scaled_num = numpy.zeros_like(slope_scaled, dtype='int16') + ngood_images
+                slope_scaled_num = numpy.zeros_like(
+                    slope_scaled, dtype='int16') + ngood_images
 
         cdata = []
         for idx, img in enumerate(imgs):
             if good_images[idx]:
                 cdata.append(img)
 
-        result = self.compose_result(cdata, slope_scaled, errors, slope_scaled_var, slope_scaled_num)
+        result = self.compose_result(
+            cdata, slope_scaled, errors, slope_scaled_var, slope_scaled_num)
 
         return result
 
@@ -187,7 +190,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
             # Prediction
             self.logger.debug('loop %d', ni + 1)
             base, slope = ll
-            image_val_pred = base + median_val[:,numpy.newaxis] * slope
+            image_val_pred = base + median_val[:, numpy.newaxis] * slope
             image_diff = image_val - image_val_pred
             # Compute MAD
             mad = compute_mad(image_diff)
@@ -225,11 +228,14 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         hdu.data = slope_scaled
         self.set_base_headers(hdu.header)
 
-        hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method_name)
-        hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdu.header['history'] = "Combined %d images using '%s'" % (
+            cnum, method_name)
+        hdu.header['history'] = 'Combination time {}'.format(
+            datetime.datetime.utcnow().isoformat())
 
         for img in cdata:
-            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
+            hdu.header['history'] = "Image {}".format(
+                self.datamodel.get_imgid(img))
 
         prevnum = base_header.get('NUM-NCOM', 1)
         hdu.header['NUM-NCOM'] = prevnum * cnum

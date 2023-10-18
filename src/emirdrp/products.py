@@ -1,25 +1,14 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Data products produced by the EMIR pipeline."""
 
-import uuid
 import copy
 
 import six
@@ -32,7 +21,6 @@ from numina.types.linescatalog import LinesCatalog
 import numina.exceptions
 import numina.types.product as prodtypes
 import numina.types.structured
-import numina.types.obsresult as obtypes
 
 import emirdrp.datamodel
 
@@ -45,14 +33,14 @@ base_schema_description = {
                      },
         'EXPTIME': {'value': float},
         'NUMINAID': {'value': int}
-        }
     }
+}
 
 gtc_proc_schema_description = {
     'keywords': {
         'NUMINAID': {'mandatory': True, 'value': int}
-        }
     }
+}
 
 emir_schema_description = {
     'keywords': {
@@ -63,14 +51,15 @@ emir_schema_description = {
                      },
         'BUNIT': {'value': ['ADU', 'ADU/s']},
         'IMGTYPE': {'mandatory': True, 'type': 'string'},
-        }
     }
+}
 
 
 class EmirFrame(DataFrameType):
 
     def __init__(self, *args, **kwargs):
-        super(EmirFrame, self).__init__(datamodel=emirdrp.datamodel.EmirDataModel)
+        super(EmirFrame, self).__init__(
+            datamodel=emirdrp.datamodel.EmirDataModel)
 
 
 class ProcessedFrame(EmirFrame):
@@ -129,6 +118,7 @@ class SkyLinesCatalog(LinesCatalog):
 
 class MasterIntensityFlat(ProcessedImageProduct):
     __tags__ = ['filter']
+
 
 class MasterSpectralFlat(ProcessedImageProduct):
     __tags__ = ['grism', 'filter']
@@ -270,7 +260,8 @@ def default_nominal_positions():
         import StringIO as S
     except ImportError:
         import io as S
-    bardata = pkgutil.get_data('emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
+    bardata = pkgutil.get_data(
+        'emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
     ss = S.StringIO(bardata.decode('utf8'))
     bars_nominal_positions = numpy.loadtxt(ss)
     return bars_nominal_positions
@@ -288,12 +279,14 @@ class SourcesCatalog(DataProductType):
 
 class CentroidsTableType(DataProductType):
     """Table with information about focus centroids."""
+
     def __init__(self):
         super(CentroidsTableType, self).__init__(ptype=numpy.ndarray)
 
 
 class ChannelLevelStatistics(DataProductType):
     """A list of exposure time, mean, std dev and median per channel"""
+
     def __init__(self, exposure, statistics):
         self.exposure = exposure
         self.statistics = statistics
@@ -314,9 +307,9 @@ class ChannelLevelStatistics(DataProductType):
         return fname
 
 
-
 class ChannelLevelStatisticsType(DataProductType):
     """A list of exposure time, mean, std dev and median per channel"""
+
     def __init__(self):
         super(ChannelLevelStatisticsType,
               self).__init__(ptype=ChannelLevelStatistics)
@@ -330,6 +323,7 @@ class LinesCatalog(DataProductType):
 class RefinedBoundaryModelParam(numina.types.structured.BaseStructuredCalibration):
     """Refined parameters of MOS model
     """
+
     def __init__(self, instrument='unknown'):
         super(RefinedBoundaryModelParam, self).__init__(instrument)
         self.tags = {
@@ -360,6 +354,7 @@ class RefinedBoundaryModelParam(numina.types.structured.BaseStructuredCalibratio
 class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
     """Rectification and Wavelength Calibration Coefficients
     """
+
     def __init__(self, instrument='unknown'):
         super(RectWaveCoeff, self).__init__(instrument)
         self.tags = {
@@ -405,6 +400,7 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
 class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
     """Rectification and Wavelength Calibration Library Product
     """
+
     def __init__(self, instrument='unknown'):
         import numina.core.tagexpr as tagexpr
 
@@ -473,6 +469,7 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
 
     def tag_names(self):
         return ['grism', 'filter']
+
 
 try:
     # FIXME: put this where it makes sense

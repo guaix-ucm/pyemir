@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -13,7 +13,6 @@ Extra functions
 """
 
 import logging
-import contextlib
 
 import numpy
 import astropy.io.fits as fits

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -31,6 +31,7 @@ def managed_ndig(obj, ndig):
 
 class DtuAxis(object):
     """Represents one DTU axis of movement"""
+
     def __init__(self, name, coor, coor_f=1.0, coor_0=0.0):
         if name.lower() not in ['x', 'y', 'z']:
             raise ValueError('"name" must be "X", "Y" or "Z')
@@ -89,6 +90,7 @@ class DtuAxis(object):
 
 class DtuConf(object):
     """Represents the three DTU axes of movement"""
+
     def __init__(self, xaxis, yaxis, zaxis):
         self.xaxis = xaxis
         self.yaxis = yaxis
@@ -125,7 +127,8 @@ class DtuConf(object):
     def allclose(self, other, rtol=1e-05, atol=1e-08, equal_nan=False):
         return (self.xaxis.allclose(other.xaxis, rtol=rtol, atol=atol, equal_nan=equal_nan) and
                 self.yaxis.allclose(other.yaxis, rtol=rtol, atol=atol, equal_nan=equal_nan) and
-                self.zaxis.allclose(other.zaxis, rtol=rtol, atol=atol, equal_nan=equal_nan)
+                self.zaxis.allclose(other.zaxis, rtol=rtol,
+                                    atol=atol, equal_nan=equal_nan)
                 )
 
     def closeto(self, other, abserror):
@@ -163,7 +166,7 @@ class DtuConf(object):
             if req not in kwargs:
                 raise ValueError("missing required value {}".format(req))
         # Convert keys to upper case
-        kwargs_u = dict((k.upper(),v) for k,v in kwargs.items())
+        kwargs_u = dict((k.upper(), v) for k, v in kwargs.items())
         dtuconf = DtuConf.from_header(kwargs_u)
         return dtuconf
 
@@ -207,15 +210,15 @@ class DtuConf(object):
 
         output = (
             "<DtuConf instance>\n"
-              "- XDTU..: {0.xaxis.coor:{width}.{prec}f}\n"
-              "- YDTU..: {0.yaxis.coor:{width}.{prec}f}\n"
-              "- ZDTU..: {0.zaxis.coor:{width}.{prec}f}\n"
-              "- XDTU_0: {0.xaxis.coor_0:{width}.{prec}f}\n"
-              "- YDTU_0: {0.yaxis.coor_0:{width}.{prec}f}\n"
-              "- ZDTU_0: {0.zaxis.coor_0:{width}.{prec}f}\n"
-              "- XDTU_F: {0.xaxis.coor_f:{width}.{prec}f}\n"
-              "- YDTU_F: {0.yaxis.coor_f:{width}.{prec}f}\n"
-              "- ZDTU_F: {0.zaxis.coor_f:{width}.{prec}f}\n"
+            "- XDTU..: {0.xaxis.coor:{width}.{prec}f}\n"
+            "- YDTU..: {0.yaxis.coor:{width}.{prec}f}\n"
+            "- ZDTU..: {0.zaxis.coor:{width}.{prec}f}\n"
+            "- XDTU_0: {0.xaxis.coor_0:{width}.{prec}f}\n"
+            "- YDTU_0: {0.yaxis.coor_0:{width}.{prec}f}\n"
+            "- ZDTU_0: {0.zaxis.coor_0:{width}.{prec}f}\n"
+            "- XDTU_F: {0.xaxis.coor_f:{width}.{prec}f}\n"
+            "- YDTU_F: {0.yaxis.coor_f:{width}.{prec}f}\n"
+            "- ZDTU_F: {0.zaxis.coor_f:{width}.{prec}f}\n"
         )
         return output.format(self, width=8, prec=ndig)
 

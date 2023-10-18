@@ -1,21 +1,12 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 from __future__ import division
 from __future__ import print_function
@@ -120,7 +111,7 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
     grism_name = rectwv_coeff.tags['grism']
     filter_name = rectwv_coeff.tags['filter']
     wv_parameters = set_wv_parameters(filter_name, grism_name)
-    naxis1_enlarged = wv_parameters['naxis1_enlarged']
+    # naxis1_enlarged = wv_parameters['naxis1_enlarged']
     crpix1_enlarged = wv_parameters['crpix1_enlarged']
     crval1_enlarged = wv_parameters['crval1_enlarged']
     cdelt1_enlarged = wv_parameters['cdelt1_enlarged']
@@ -166,11 +157,11 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
                     ydum_lower = dumdict['y0_reference_lower_expected']
                     ydum_upper = dumdict['y0_reference_upper_expected']
                 wave_ini = crval1_linear + \
-                           (0.5 - crpix1_linear) * cdelt1_linear
+                    (0.5 - crpix1_linear) * cdelt1_linear
                 xdum_ini = (wave_ini - crval1_enlarged) / cdelt1_enlarged
                 xdum_ini += crpix1_enlarged
                 wave_end = crval1_linear + \
-                           (EMIR_NAXIS1 + 0.5 - crpix1_linear) * cdelt1_linear
+                    (EMIR_NAXIS1 + 0.5 - crpix1_linear) * cdelt1_linear
                 xdum_end = (wave_end - crval1_enlarged) / cdelt1_enlarged
                 xdum_end += crpix1_enlarged
                 for ydum in [ydum_lower, ydum_upper]:
@@ -184,7 +175,7 @@ def rectwv_coeff_to_ds9(rectwv_coeff,
                 ydum_label = (ydum_lower + ydum_upper) / 2.0
                 xdum_label = EMIR_NAXIS1 / 2 + 0.5
                 wave_center = crval1_linear + \
-                              (xdum_label - crpix1_linear) * cdelt1_linear
+                    (xdum_label - crpix1_linear) * cdelt1_linear
                 xdum_label = (wave_center - crval1_enlarged) / cdelt1_enlarged
                 xdum_label += crpix1_enlarged
                 ds9_output += 'text {0} {1} {{{2}}} # color={3} ' \
@@ -267,8 +258,8 @@ def save_spectral_lines_ds9(rectwv_coeff, debugplot=0):
 
 
 def spectral_lines_to_ds9(rectwv_coeff,
-                    spectral_lines=None,
-                    rectified=False):
+                          spectral_lines=None,
+                          rectified=False):
     """Generate ds9 region output with requested spectral lines
 
     Parameters
@@ -305,7 +296,7 @@ def spectral_lines_to_ds9(rectwv_coeff,
         catlines = np.genfromtxt(arc_lines_tmpfile)
         # define wavelength and flux as separate arrays
         catlines_all_wave = catlines[:, 0]
-        catlines_all_flux = catlines[:, 1]
+        # catlines_all_flux = catlines[:, 1]
     elif spectral_lines == 'oh':
         dumdata = pkgutil.get_data('emirdrp.instrument.configs',
                                    'Oliva_etal_2013.dat')
@@ -314,8 +305,7 @@ def spectral_lines_to_ds9(rectwv_coeff,
         # define wavelength and flux as separate arrays
         catlines_all_wave = np.concatenate((catlines[:, 1],
                                             catlines[:, 0]))
-        catlines_all_flux = np.concatenate((catlines[:, 2],
-                                            catlines[:, 2]))
+        # catlines_all_flux = np.concatenate((catlines[:, 2], catlines[:, 2]))
     else:
         raise ValueError('This should not happen!')
 
@@ -323,7 +313,7 @@ def spectral_lines_to_ds9(rectwv_coeff,
     grism_name = rectwv_coeff.tags['grism']
     filter_name = rectwv_coeff.tags['filter']
     wv_parameters = set_wv_parameters(filter_name, grism_name)
-    naxis1_enlarged = wv_parameters['naxis1_enlarged']
+    # naxis1_enlarged = wv_parameters['naxis1_enlarged']
     crpix1_enlarged = wv_parameters['crpix1_enlarged']
     crval1_enlarged = wv_parameters['crval1_enlarged']
     cdelt1_enlarged = wv_parameters['cdelt1_enlarged']
@@ -361,9 +351,9 @@ def spectral_lines_to_ds9(rectwv_coeff,
             crval1_linear = dumdict['crval1_linear']
             cdelt1_linear = dumdict['cdelt1_linear']
             wave_ini = crval1_linear + \
-                       (0.5 - crpix1_linear) * cdelt1_linear
+                (0.5 - crpix1_linear) * cdelt1_linear
             wave_end = crval1_linear + \
-                       (EMIR_NAXIS1 + 0.5 - crpix1_linear) * cdelt1_linear
+                (EMIR_NAXIS1 + 0.5 - crpix1_linear) * cdelt1_linear
             if rectified:
                 ydum_lower = dumdict['y0_reference_lower_expected']
                 ydum_upper = dumdict['y0_reference_upper_expected']
@@ -382,7 +372,7 @@ def spectral_lines_to_ds9(rectwv_coeff,
                 ydum_label = (ydum_lower + ydum_upper) / 2.0
                 xdum_label = EMIR_NAXIS1 / 2 + 0.5
                 wave_center = crval1_linear + \
-                              (xdum_label - crpix1_linear) * cdelt1_linear
+                    (xdum_label - crpix1_linear) * cdelt1_linear
                 xdum_label = (wave_center - crval1_enlarged) / cdelt1_enlarged
                 xdum_label += crpix1_enlarged
                 ds9_output += 'text {0} {1} {{{2}}} # color={3} ' \

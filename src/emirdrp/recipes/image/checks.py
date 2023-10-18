@@ -1,21 +1,12 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """Routines shared by image mode recipes"""
 
@@ -54,6 +45,7 @@ def default_action(img):
         'Image %s accepted, has correct flux in objects', img.baselabel)
     img.valid_science = True
 
+
 # Actions
 _dactions = {'warn': warn_action,
              'reject': reject_action, 'default': default_action}
@@ -65,7 +57,7 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
                      check_photometry_actions=['warn', 'warn', 'default'],
                      figure=None):
     # Check photometry of few objects
-    weigthmap = 'weights4rms.fits'
+    # weigthmap = 'weights4rms.fits'
 
     wmap = numpy.ones_like(sf_data[0], dtype='bool')
 
@@ -73,7 +65,7 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
     wmap[border:-border, border:-border] = 0
     # fits.writeto(weigthmap, wmap.astype('uintt8'), overwrite=True)
 
-    basename = 'result_i%0d.fits' % (step)
+    basename = 'result_i%0d.fits' % step
 
     data_res = fits.getdata(basename)
     data_res = data_res.byteswap().newbyteorder()
@@ -106,7 +98,7 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
     for idx, frame in enumerate(frames):
         imagename = name_skysub_proc(frame.baselabel, step)
 
-        #sex.config['CATALOG_NAME'] = ('catalogue-%s-i%01d.cat' %
+        # sex.config['CATALOG_NAME'] = ('catalogue-%s-i%01d.cat' %
         #                              (frame.baselabel, step))
 
         # Lauch SExtractor on a FITS file
@@ -125,7 +117,6 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
                                                    objects_nth['x'], objects_nth['y'],
                                                    3.0, err=bkg_i.globalrms)
 
-
         # Extinction correction
         excor = pow(10, -0.4 * frame.airmass * extinction)
 
@@ -138,7 +129,7 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
     errors_a = numpy.array(errors)
     fluxes_n = fluxes_a / fluxes_a[0]
     errors_a = errors_a / fluxes_a[0]  # sigma
-    w = 1.0 / (errors_a) ** 2
+    w = 1.0 / errors_a**2
 
     # weighted mean of the flux values
     wdata = numpy.average(fluxes_n, axis=1, weights=w)
@@ -157,7 +148,8 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
         figure = plt.figure()
         ax = figure.add_subplot(111)
 
-        plot_photometry_check(ax, vals, wsigma, check_photometry_levels, nsig * sigma)
+        plot_photometry_check(
+            ax, vals, wsigma, check_photometry_levels, nsig * sigma)
         plt.savefig('figure-relative-flux_i%01d.png' % step)
 
     for x, _, t in vals:
@@ -171,9 +163,9 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
 
 
 def check_photometry_categorize(x, y, levels, tags=None):
-    '''Put every point in its category.
+    """Put every point in its category.
 
-    levels must be sorted.'''
+    levels must be sorted."""
     x = numpy.asarray(x)
     y = numpy.asarray(y)
     ys = y.copy()
@@ -188,8 +180,8 @@ def check_photometry_categorize(x, y, levels, tags=None):
     if tags is None:
         tags = list(six.moves.range(len(levels) + 1))
 
-    for l, t in zip(levels, tags):
-        indc = y < l
+    for ll, t in zip(levels, tags):
+        indc = y < ll
         if indc.any():
             x1 = x[indc]
             y1 = y[indc]
@@ -220,10 +212,8 @@ def plot_photometry_check(ax, vals, errors, levels, nsigma):
     return ax
 
 
-
-
 def check_position(images_info, sf_data, seeing_fwhm, step=0):
-        # FIXME: this method has to be updated
+    # FIXME: this method has to be updated
 
     _logger.info('Checking positions')
     # Check position of bright objects
@@ -262,7 +252,7 @@ def check_position(images_info, sf_data, seeing_fwhm, step=0):
         catalog, key=operator.itemgetter('FLUX_BEST'), reverse=True)
 
     # set of indices of the N first objects
-    OBJS_I_KEEP = 10
+    # OBJS_I_KEEP = 10
 
     # master = [(obj['X_IMAGE'], obj['Y_IMAGE'])
     #    for obj in catalog[:OBJS_I_KEEP]]

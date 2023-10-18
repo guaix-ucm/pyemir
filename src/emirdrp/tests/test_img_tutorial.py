@@ -35,6 +35,7 @@ reduction_reqs2 = {
     'sky_images': 3
 }
 
+
 @pytest.mark.result_compare
 @pytest.mark.remote_data
 @pytest.mark.parametrize("obsid", [20101])

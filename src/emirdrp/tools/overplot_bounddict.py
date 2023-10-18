@@ -1,21 +1,12 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 from __future__ import division
 from __future__ import print_function
@@ -100,8 +91,8 @@ def get_boundaries(bounddict_file, slitlet_number):
 
     # return result
     return pol_lower_boundary, pol_upper_boundary, \
-           xmin_lower, xmax_lower, xmin_upper, xmax_upper, \
-           csu_bar_slit_center
+        xmin_lower, xmax_lower, xmin_upper, xmax_upper, \
+        csu_bar_slit_center
 
 
 def main(args=None):
@@ -184,15 +175,15 @@ def main(args=None):
     # display full image
     ax = ximshow(image2d=image2d,
                  title=sfitsfile + "\ngrism=" + grism +
-                       ", filter=" + spfilter +
-                       ", rotang=" + str(round(rotang, 2)),
+                 ", filter=" + spfilter +
+                 ", rotang=" + str(round(rotang, 2)),
                  image_bbox=(1, naxis1, 1, naxis2), show=False)
 
     # overplot boundaries for each slitlet
     for slitlet_number in list_slitlets:
         pol_lower_boundary, pol_upper_boundary, \
-        xmin_lower, xmax_lower, xmin_upper, xmax_upper,  \
-        csu_bar_slit_center = \
+            xmin_lower, xmax_lower, xmin_upper, xmax_upper,  \
+            csu_bar_slit_center = \
             get_boundaries(args.bounddict, slitlet_number)
         if (pol_lower_boundary is not None) and \
                 (pol_upper_boundary is not None):

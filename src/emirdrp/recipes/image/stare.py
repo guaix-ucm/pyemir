@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2022 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -62,7 +62,8 @@ class StareImageRecipe2(EmirRecipe):
         frames = rinput.obresult.frames
 
         with manage_fits(frames) as list_of:
-            c_img = comb.combine_images(list_of, method=combine.mean, errors=False)
+            c_img = comb.combine_images(
+                list_of, method=combine.mean, errors=False)
 
         flow = self.init_filters(rinput)
 
@@ -100,7 +101,8 @@ class StareImageRecipe2(EmirRecipe):
             elif reprojection_method == 'exact':
                 reproject_function = reproject_exact
             else:
-                raise ValueError(f'Unexpected astrometric_reprojection value: {reprojection_method}')
+                raise ValueError(
+                    f'Unexpected astrometric_reprojection value: {reprojection_method}')
             # reproject data
             self.logger.debug('starting image reprojection')
             hdr_original = deepcopy(hdr)
@@ -108,9 +110,11 @@ class StareImageRecipe2(EmirRecipe):
             # remove PV2_2, PV2_3,... PV2_5
             for item in wcs_original.wcs.get_pv():
                 if item[1] == 1:
-                    self.logger.debug(f'... preserving keyword PV{item[0]}_{item[1]}={item[2]}')
+                    self.logger.debug(
+                        f'... preserving keyword PV{item[0]}_{item[1]}={item[2]}')
                 elif item[1] > 1:
-                    self.logger.debug(f'... removing   keyword PV{item[0]}_{item[1]}={item[2]}')
+                    self.logger.debug(
+                        f'... removing   keyword PV{item[0]}_{item[1]}={item[2]}')
                     del hdr[f'PV{item[0]}_{item[1]}']
                 else:
                     raise ValueError('Unexpected PVi_j value')
@@ -118,25 +122,27 @@ class StareImageRecipe2(EmirRecipe):
             naxis2, naxis1 = processed_img[0].data.shape
             if convert_to_surface_brightness:
                 # solid angle subtended by every pixel
-                self.logger.debug(f'... computing solid angle of every pixel in the original WCS')
+                self.logger.debug('... computing solid angle of every pixel in the original WCS')
                 pixel_solid_angle_original = pixel_solid_angle_arcsec2(
                     wcs=wcs_original,
                     naxis1=naxis1,
                     naxis2=naxis2,
                     kernel_size=(11, 11)
                 )
-                surface_brightness_data = processed_img[0].data / pixel_solid_angle_original
+                surface_brightness_data = processed_img[0].data / \
+                    pixel_solid_angle_original
             else:
                 surface_brightness_data = processed_img[0].data
             # reprojection itself
-            self.logger.debug(f'... reprojecting surface brightness using reproject_{reprojection_method}')
+            self.logger.debug(
+                f'... reprojecting surface brightness using reproject_{reprojection_method}')
             data_final, footprint = reproject_function(
                 input_data=(surface_brightness_data, wcs_original),
                 output_projection=wcs_final,
                 shape_out=processed_img[0].data.shape,
             )
             if convert_to_surface_brightness:
-                self.logger.debug(f'... computing solid angle of every pixel in the final WCS')
+                self.logger.debug('... computing solid angle of every pixel in the final WCS')
                 pixel_solid_angle_final = pixel_solid_angle_arcsec2(
                     wcs=wcs_final,
                     naxis1=naxis1,
@@ -149,20 +155,25 @@ class StareImageRecipe2(EmirRecipe):
             # but with a non-negligible dispersion below 0.01 (for safety, here we use
             # a threshold of 0.98)
             minimum_footprint = 0.98
-            data_final[footprint < minimum_footprint] = 0  # avoid undefined values
+            # avoid undefined values
+            data_final[footprint < minimum_footprint] = 0
             processed_img[0].data = data_final
             mask_footprint = (footprint < minimum_footprint).astype('uint8')
             # reproject mask
-            self.logger.debug(f'... reprojecting mask using reproject_{reprojection_method}')
+            self.logger.debug(
+                f'... reprojecting mask using reproject_{reprojection_method}')
             mask_reprojected, footprint = reproject_function(
                 input_data=(hdu_bpm.data, wcs_original),
                 output_projection=wcs_final,
                 shape_out=hdu_bpm.data.shape,
             )
-            mask_reprojected[footprint < minimum_footprint] = 0  # avoid undefined values
-            self.logger.debug('... merging existing mask with footprint from reproject')
+            # avoid undefined values
+            mask_reprojected[footprint < minimum_footprint] = 0
+            self.logger.debug(
+                '... merging existing mask with footprint from reproject')
             # there is no need to recompute mask_footprint (is the one computed for data)
-            hdu_bpm.data = (mask_reprojected > 0).astype('uint8') + mask_footprint
+            hdu_bpm.data = (mask_reprojected > 0).astype(
+                'uint8') + mask_footprint
             # update header
             hdr['history'] = f'Reprojection using reproject_{reprojection_method}()'
             hdr['history'] = f'Reprojection time {datetime.datetime.utcnow().isoformat()}'
@@ -262,14 +273,16 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, kernel_size=None):
     z = result_spherical.cartesian.z.value.reshape(naxis2 + 1, naxis1 + 1)
 
     # dot product of consecutive points along NAXIS1
-    dot_product_naxis1 = x[:, :-1] * x[:, 1:] + y[:, :-1] * y[:, 1:] + z[:, :-1] * z[:, 1:]
+    dot_product_naxis1 = x[:, :-1] * x[:, 1:] + \
+        y[:, :-1] * y[:, 1:] + z[:, :-1] * z[:, 1:]
     # distance (arcsec) between consecutive points along NAXIS1
     result_naxis1 = np.arccos(dot_product_naxis1) * 180 / np.pi * 3600
     # average distances corresponding to the upper and lower sides of each pixel
     pixel_size_naxis1 = (result_naxis1[:-1, :] + result_naxis1[1:, :]) / 2
 
     # dot product of consecutive points along NAXIS2
-    dot_product_naxis2 = x[:-1, :] * x[1:, :] + y[:-1, :] * y[1:, :] + z[:-1, :] * z[1:, :]
+    dot_product_naxis2 = x[:-1, :] * x[1:, :] + \
+        y[:-1, :] * y[1:, :] + z[:-1, :] * z[1:, :]
     # distance (arcsec) between consecutive points along NAXIS2
     result_naxis2 = np.arccos(dot_product_naxis2) * 180 / np.pi * 3600
     # averange distances corresponding to the left and right sides of each pixel

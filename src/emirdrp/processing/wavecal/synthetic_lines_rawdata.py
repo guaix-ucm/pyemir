@@ -1,21 +1,12 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 from __future__ import division
 from __future__ import print_function
@@ -36,7 +27,7 @@ def synthetic_lines_rawdata(catlines_all_wave,
                             list_useful_slitlets,
                             rectwv_coeff,
                             ycorrection_pix=2.0,
-                            sigma_gauss_pix = 1.5):
+                            sigma_gauss_pix=1.5):
     """Generate synthetic MOS data with arc/OH lines.
 
     Parameters

@@ -1,23 +1,13 @@
 #
-# Copyright 2014-2015 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
-'''AIV Recipes for EMIR'''
+"""AIV Recipes for EMIR"""
 
 from __future__ import division, print_function
 
@@ -41,17 +31,18 @@ from numina.constants import FWHM_G
 
 
 def encloses_annulus(x_min, x_max, y_min, y_max, nx, ny, r_in, r_out):
-    '''Encloses function backported from old photutils'''
+    """Encloses function backported from old photutils"""
 
-    gout = circular_overlap_grid(x_min, x_max, y_min, y_max, nx, ny, r_out, 1, 1)
+    gout = circular_overlap_grid(
+        x_min, x_max, y_min, y_max, nx, ny, r_out, 1, 1)
     gin = circular_overlap_grid(x_min, x_max, y_min, y_max, nx, ny, r_in, 1, 1)
     return gout - gin
 
 
 def comp_back_with_annulus(img, xc, yc, r_in, r_out, frac=0.1):
-    '''
+    """
     center: [x,y], center of first pixel is [0,0]
-    '''
+    """
 
     x_min = -0.5 - xc
     x_max = img.shape[1] - 0.5 - xc
@@ -245,7 +236,7 @@ def rim(data, xinit, yinit,
             box=(1, 1),
             maxdist=2*math.sqrt(2),
             nloop=1
-            )
+        )
         print('C final', x1, y1)
 
     sl = image_box2d(x0, y0, data.shape, plot_half_box)
@@ -303,7 +294,7 @@ def rim(data, xinit, yinit,
     print('P, annulus background:', bck, 'radii', rs1, rs2)
     eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(
         part_s, xx0, yy0, maxrad=rs1
-        )
+    )
     print('Enclosed fit, peak:', epeak, 'fwhm', efwhm)
     print('Radial fit, peak:', rpeak, 'fwhm', rfwhm)
     print('Direct enclosed, peak:', dpeak, 'dfwhm', dfwhm)

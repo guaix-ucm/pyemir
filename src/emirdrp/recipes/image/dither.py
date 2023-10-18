@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2022 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -40,7 +40,7 @@ from emirdrp.core.recipe import EmirRecipe
 
 from .naming import (name_redimensioned_frames, name_object_mask,
                      name_skybackground)
-from .naming import name_skybackgroundmask, name_skysub_proc, name_skyflat
+from .naming import name_skysub_proc, name_skyflat
 from .naming import name_skyflat_proc, name_segmask
 
 from emirdrp.core import EMIR_NAXIS1
@@ -280,8 +280,10 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     baseshape, offsets_fc_t
                 )
                 #
-                self.logger.debug(f"Relative offsetsp (crosscorr):\n{offsetsp2}"),
-                self.logger.info(f'Shape of resized array (crosscorr) is (NAXIS2, NAXIS1) = {finalshape2}')
+                self.logger.debug(
+                    f"Relative offsetsp (crosscorr):\n{offsetsp2}"),
+                self.logger.info(
+                    f'Shape of resized array (crosscorr) is (NAXIS2, NAXIS1) = {finalshape2}')
 
                 # Resizing target imgs
                 self.logger.debug("Resize to final offsets")
@@ -352,15 +354,18 @@ class FullDitheredImagesRecipe(EmirRecipe):
         for iinfo, yx_offset in zip(target_info, list_of_offsets):
             # Insert pixel offsets between frames
             iinfo.pix_offset = yx_offset
-            self.logger.debug(f'Frame {iinfo.label}, offset [Y, X] = {yx_offset}')
+            self.logger.debug(
+                f'Frame {iinfo.label}, offset [Y, X] = {yx_offset}')
 
         self.logger.info('Computing relative offsets')
         offsets = [iinfo.pix_offset for iinfo in target_info]
         offsets = numpy.round(offsets).astype('int')
 
         finalshape, offsetsp = narray.combine_shape(baseshape, offsets)
-        self.logger.debug(f"Relative offsetsp [Y, X] (from lower left corner):\n{offsetsp}")
-        self.logger.info(f'Shape of resized array is (NAXIS2, NAXIS1) = {finalshape}')
+        self.logger.debug(
+            f"Relative offsetsp [Y, X] (from lower left corner):\n{offsetsp}")
+        self.logger.info(
+            f'Shape of resized array is (NAXIS2, NAXIS1) = {finalshape}')
         return finalshape, offsetsp, list_of_offsets
 
     def process_basic(self, images_info, step=None,
@@ -390,7 +395,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
             # Each frame is the closest sky frame available
             for ii, iinfo in enumerate(images_info):
                 self.logger.info(f'image {ii+1} / {len(images_info)}')
-                self.compute_simple_sky_for_frame(iinfo, iinfo, doughnut_arr, step)
+                self.compute_simple_sky_for_frame(
+                    iinfo, iinfo, doughnut_arr, step)
                 self.logger.info('---')
         else:
             # Not implemented
@@ -423,10 +429,12 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         for frame in target_info:
             frame.objmask = name_object_mask(frame.label, step)
-            self.logger.info(f'Step {step}, create object mask (+ footprint) {frame.objmask}')
+            self.logger.info(
+                f'Step {step}, create object mask (+ footprint) {frame.objmask}')
             footprint = frame.mask[0].data
             if footprint.shape != baseshape:
-                raise ValueError(f'Unexpected footprint.shape: {footprint.shape} != {baseshape}')
+                raise ValueError(
+                    f'Unexpected footprint.shape: {footprint.shape} != {baseshape}')
             # important: include footprint in objmask
             frame.objmask_data = objmask[frame.valid_region] + footprint
             fits.writeto(
@@ -439,7 +447,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
             for frame in sky_info:
                 footprint = frame.mask[0].data
                 if footprint.shape != baseshape:
-                    raise ValueError(f'Unexpected footprint.shape: {footprint.shape} != {baseshape}')
+                    raise ValueError(
+                        f'Unexpected footprint.shape: {footprint.shape} != {baseshape}')
                 frame.objmask_data = bogus_objmask + footprint
 
         self.logger.info(f"Step {step}, SF: compute superflat")
@@ -492,10 +501,12 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 valid = data[frame.valid_region]
 
                 if skyframe.objmask_data is not None:
-                    self.logger.debug('object mask defined (it must include the footprint)')
+                    self.logger.debug(
+                        'object mask defined (it must include the footprint)')
                     msk = frame.objmask_data
                 else:
-                    self.logger.debug('object mask empty (using only footprint)')
+                    self.logger.debug(
+                        'object mask empty (using only footprint)')
                     footprint = skyframe.mask[0].data
                     msk = footprint
                 sky = numpy.median(valid[msk == 0])
@@ -522,7 +533,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 # since the doughnut_arr was computed when deriving the superflat,
                 # its averaged signal is around 1.0; for that reason here we
                 # scale it by the median sky value
-                self.logger.debug(f'subtracting (median sky value) * doughnut_fit')
+                self.logger.debug('subtracting (median sky value) * doughnut_fit')
                 valid -= sky * doughnut_arr
             self.logger.info(f'Sky-subtrated image in frame: {frame.lastname}')
 
@@ -537,7 +548,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         else:
             os.rename(frame.resized_base, frame.flat_corrected)
 
-        self.logger.info(f"Step {step}, SF: apply superflat, generating {frame.flat_corrected}")
+        self.logger.info(
+            f"Step {step}, SF: apply superflat, generating {frame.flat_corrected}")
         with fits.open(frame.flat_corrected, mode='update') as hdulist:
             data = hdulist['primary'].data
             datar = data[frame.valid_region]
@@ -601,7 +613,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
     def compute_superflat(self, images_info, segmask=None, step=0,
                           method=None, method_kwargs=None, fit_doughnut=False):
 
-        self.logger.info(f"Step {step}, SF: combining the frames without offsets")
+        self.logger.info(
+            f"Step {step}, SF: combining the frames without offsets")
 
         base_imgs = [img.resized_base for img in images_info]
         with manage_fits(base_imgs) as imgs:
@@ -610,13 +623,15 @@ class FullDitheredImagesRecipe(EmirRecipe):
             scales = []
             for img, img_info in zip(imgs, images_info):
                 # read resized data and select valid_region
-                self.logger.debug(f'Step {step}, opening resized frame {img_info.resized_base}')
+                self.logger.debug(
+                    f'Step {step}, opening resized frame {img_info.resized_base}')
                 tmp_data = img['primary'].data[img_info.valid_region]
                 data.append(tmp_data)
                 # to compute the proper scale, it is important to skip the
                 # masked pixels (and those outside the image footprint);
                 # read resized mask and select valid_region
-                self.logger.debug(f'Step {step}, opening resized mask  {img_info.resized_mask}')
+                self.logger.debug(
+                    f'Step {step}, opening resized mask  {img_info.resized_mask}')
                 with fits.open(img_info.resized_mask, mode='readonly') as hdul:
                     tmp_mask = hdul['primary'].data[img_info.valid_region]
                 scales.append(numpy.median(tmp_data[tmp_mask == 0]))
@@ -651,19 +666,23 @@ class FullDitheredImagesRecipe(EmirRecipe):
             # be combined (the computed superflat is initially zero in those
             # pixels outside the footprint region: for that reason these pixels
             # are set to a small, but not zero, value below)
-            self.logger.debug(f"Step {step}, combining {len(data)} frames using '{method.__name__}'")
+            self.logger.debug(
+                f"Step {step}, combining {len(data)} frames using '{method.__name__}'")
             sf_data, _sf_var, sf_num = method(
                 data, masks, scales=scales, dtype='float32', **method_kwargs
             )
             # avoid pixels without flatfield information
             if numpy.any(sf_num == 0):
-                self.logger.warning('pixels without flatfield information found: potential problem!')
-                self.logger.warning('interpolating missing flatfield pixels using neighbouring data')
+                self.logger.warning(
+                    'pixels without flatfield information found: potential problem!')
+                self.logger.warning(
+                    'interpolating missing flatfield pixels using neighbouring data')
                 binmask = sf_num == 0
                 narray.fixpix2(sf_data, binmask, out=sf_data, iterations=1)
 
         # Normalize, flat has mean = 1
-        mean_signal = numpy.median(sf_data[sf_data > 0])   # avoid region outside footprint
+        # avoid region outside footprint
+        mean_signal = numpy.median(sf_data[sf_data > 0])
         sf_data /= mean_signal
         # avoid division by zero when using the superflat
         sf_data[sf_data <= 0] = 1E-5
@@ -678,7 +697,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         # Compute doughnut fit
         if fit_doughnut:
             self.logger.debug(f"Step {step}, fitting doughnut-like surface")
-            doughnut_arr = self.fit_sf_doughnut(image=sf_data, method='linear', fill_with_nearest=True)
+            doughnut_arr = self.fit_sf_doughnut(
+                image=sf_data, method='linear', fill_with_nearest=True)
             # save doughnut fit
             sfdhdu = fits.PrimaryHDU(doughnut_arr)
             tmp_filename = name_skyflat('doughnut', step)
@@ -728,7 +748,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         nbins_theta_per_quarter = 90
         nbins_theta = nbins_theta_per_quarter * 4
-        theta_bins = numpy.linspace(-180, 180, nbins_theta + 1) * numpy.pi / 180
+        theta_bins = numpy.linspace(-180, 180,
+                                    nbins_theta + 1) * numpy.pi / 180
 
         hist2d = numpy.zeros((nbins_theta, nbins_r))
 
@@ -736,12 +757,13 @@ class FullDitheredImagesRecipe(EmirRecipe):
         for i in range(nbins_r):
             iok = (r >= r_bins[i]) & (r < r_bins[i + 1])
             if numpy.sum(iok) > 0:
-                xdum = r[iok]
+                # xdum = r[iok]
                 ydum = theta[iok]
                 zdum = image.flatten()[iok]
                 fdum = footprint_useful.flatten()[iok]
                 for j in range(nbins_theta):
-                    jok = (ydum >= theta_bins[j]) & (ydum < theta_bins[j + 1]) & fdum
+                    jok = (ydum >= theta_bins[j]) & (
+                        ydum < theta_bins[j + 1]) & fdum
                     if numpy.sum(jok) > 0:
                         hist2d[j, i] = numpy.median(zdum[jok])
                         if i > imax[j]:
@@ -759,13 +781,15 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         # for the first radii (with empty data in some bins), average all
         # undefined values with the median within each quadrant
-        j1, j2, j3, j4, j5 = numpy.arange(5 * nbins_theta_per_quarter, step=nbins_theta_per_quarter)
+        j1, j2, j3, j4, j5 = numpy.arange(
+            5 * nbins_theta_per_quarter, step=nbins_theta_per_quarter)
         for i in range(nbins_r):
             if len(numpy.argwhere(hist2d[:, i] == -1)) > 0:
                 for jj1, jj2 in zip([j1, j2, j3, j4],
                                     [j2, j3, j4, j5]):
                     minicolumn = hist2d[jj1:jj2, i]
-                    hist2d[jj1:jj2, i] = numpy.median(minicolumn[minicolumn > -1])
+                    hist2d[jj1:jj2, i] = numpy.median(
+                        minicolumn[minicolumn > -1])
 
         # smooth result in theta
         hist2d_smooth = median_filter(hist2d, size=(21, 1), mode='wrap')
@@ -785,7 +809,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 hist2d_smooth.T,
                 bounds_error=False
             )
-            image2d = interp(numpy.column_stack([r, theta]), method='linear').reshape(naxis2, naxis1)
+            image2d = interp(numpy.column_stack(
+                [r, theta]), method='linear').reshape(naxis2, naxis1)
         else:
             # use scipy.interpolate.gridddata
             zfit = hist2d_smooth.flatten()
@@ -800,9 +825,11 @@ class FullDitheredImagesRecipe(EmirRecipe):
             # perform fit
             grid_x, grid_y = numpy.mgrid[0:naxis1, 0:naxis2]
             xyfit = numpy.column_stack((xx - 1, yy - 1))
-            image2d = interpolate.griddata(xyfit, zfit, (grid_x, grid_y), method=method)
+            image2d = interpolate.griddata(
+                xyfit, zfit, (grid_x, grid_y), method=method)
             if fill_with_nearest:
-                image2d_fill = interpolate.griddata(xyfit, zfit, (grid_x, grid_y), method='nearest')
+                image2d_fill = interpolate.griddata(
+                    xyfit, zfit, (grid_x, grid_y), method='nearest')
                 invalid = numpy.isnan(image2d)
                 image2d[invalid] = image2d_fill[invalid]
             # important: note that here we are using np.mgrid() instead of np.meshgrid()
@@ -868,7 +895,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         mskslll = [fits_open(frame.resized_mask)
                    for frame in frames if frame.valid_target]
 
-        self.logger.debug(f"Step {step}, combining {len(frameslll)} frames using '{method.__name__}'")
+        self.logger.debug(
+            f"Step {step}, combining {len(frameslll)} frames using '{method.__name__}'")
         try:
             extinc = [pow(10, -0.4 * frame.metadata['airmass'] * extinction)
                       for frame in frames if frame.valid_target]
@@ -885,16 +913,22 @@ class FullDitheredImagesRecipe(EmirRecipe):
             hdu = fits.PrimaryHDU(out[0], header=base_header)
             # remove previous HISTORY entries
             # (corresponding to the reduction of the first indidivual exposure)
-            self.logger.debug(f"Step {step}, preserving primary header from first exposure")
-            self.logger.debug(f"Step {step}, removing HISTORY entries in previous header")
+            self.logger.debug(
+                f"Step {step}, preserving primary header from first exposure")
+            self.logger.debug(
+                f"Step {step}, removing HISTORY entries in previous header")
             while 'HISTORY' in hdu.header:
                 hdu.header.remove('history')
             # define new HISTORY entries with the id of the combined images
-            self.logger.debug(f"Step {step}, updating HISTORY entries with list of individual exposures")
-            hdu.header['history'] = "Combined %d images using '%s'" % (len(frameslll), method.__name__)
-            hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+            self.logger.debug(
+                f"Step {step}, updating HISTORY entries with list of individual exposures")
+            hdu.header['history'] = "Combined %d images using '%s'" % (
+                len(frameslll), method.__name__)
+            hdu.header['history'] = 'Combination time {}'.format(
+                datetime.datetime.utcnow().isoformat())
             for img in frameslll:
-                hdu.header['history'] = "Image {}".format(img[0].header['uuid'])
+                hdu.header['history'] = "Image {}".format(
+                    img[0].header['uuid'])
             prevnum = base_header.get('NUM-NCOM', 1)
             hdu.header['NUM-NCOM'] = prevnum * len(frameslll)
             hdu.header['NUMRNAM'] = 'FullDitheredImagesRecipe'
@@ -910,7 +944,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
             # saving the three extensions
             fits.writeto('result_i%0d.fits' % step, out[0], overwrite=True)
             fits.writeto('result_i%0d_var.fits' % step, out[1], overwrite=True)
-            fits.writeto('result_i%0d_npix.fits' % step, out[2], overwrite=True)
+            fits.writeto('result_i%0d_npix.fits' %
+                         step, out[2], overwrite=True)
             # saving the combined image (result)
             result.writeto('result_i%0d_full.fits' % step, overwrite=True)
             return result
@@ -924,22 +959,25 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 f.close()
 
     def resize_all(self, target_info, shape, offsetsp, finalshape, window=None,
-               scale=1, step=0):
+                   scale=1, step=0):
         """Insert each exposure within an array with the final shape """
 
         self.logger.info('Resizing frames and masks')
-        self.logger.debug(f'shape, finalshape (NAXIS2, NAXIS1) = {shape} --> {finalshape}')
+        self.logger.debug(
+            f'shape, finalshape (NAXIS2, NAXIS1) = {shape} --> {finalshape}')
         self.logger.debug('---')
         for iframe, (iinfo, rel_offset) in enumerate(zip(target_info, offsetsp)):
             if iinfo.valid_target:
                 self.logger.debug(f'image {iframe+1} / {len(offsetsp)}')
-                region, _ = narray.subarray_match(finalshape, rel_offset, shape)
+                region, _ = narray.subarray_match(
+                    finalshape, rel_offset, shape)
                 # Valid region
                 iinfo.valid_region = region
                 # Relative offset
                 iinfo.rel_offset = rel_offset
                 # names of frame and mask
-                frame_name, mask_name = name_redimensioned_frames(iinfo.label, step)
+                frame_name, mask_name = name_redimensioned_frames(
+                    iinfo.label, step)
                 iinfo.resized_base = frame_name
                 iinfo.resized_mask = mask_name
                 self.logger.debug(f'{iinfo.label}')
@@ -1034,7 +1072,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         self.logger.info('Running source extraction in previous result')
         objects, objmask = sep.extract(data_sub, 1.5, err=bkg.globalrms,
                                        mask=border, segmentation_map=True)
-        self.logger.debug(f'... saving segmentation mask: {name_segmask(step)}')
+        self.logger.debug(
+            f'... saving segmentation mask: {name_segmask(step)}')
         fits.writeto(name_segmask(step), objmask, overwrite=True)
 
         # # Plot objects
@@ -1127,7 +1166,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
             self.logger.info('---')
             self.logger.info(f'image {tid + 1} / {len(idxs)}')
             tf = targetframes[tid]
-            self.logger.info(f"Step {step}, SC: computing advanced sky for {tf.label} using '{method.__name__}'")
+            self.logger.info(
+                f"Step {step}, SC: computing advanced sky for {tf.label} using '{method.__name__}'")
             try:
                 # filter(lambda x: x < nsky, idss)
                 locskyframes = []
@@ -1136,7 +1176,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                         # this sky frame it is the current frame, reject
                         continue
                     if si < nsky:
-                        self.logger.debug(f'Step {step}, SC: {skyframes[si].label} is a sky frame')
+                        self.logger.debug(
+                            f'Step {step}, SC: {skyframes[si].label} is a sky frame')
                         locskyframes.append(skyframes[si])
                 self.compute_advanced_sky_for_frame(
                     tf, locskyframes, step=step,
@@ -1144,7 +1185,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     nside_adhoc_sky_correction=nside_adhoc_sky_correction
                 )
             except IndexError:
-                self.logger.error(f'No sky image available for frame {tf.lastname}')
+                self.logger.error(
+                    f'No sky image available for frame {tf.lastname}')
                 raise
 
     def compute_advanced_sky_for_frame(self, frame, skyframes, step=0,
@@ -1171,7 +1213,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 if i.objmask_data is not None:
                     msk = i.objmask_data
                     masks.append(msk)
-                    self.logger.debug('object mask (including footprint) is shared')
+                    self.logger.debug(
+                        'object mask (including footprint) is shared')
                 elif i.objmask is not None:
                     hdulistmask = fits.open(
                         i.objmask, mode='readonly', memmap=True)
@@ -1181,19 +1224,23 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     msk = hdulistmask['primary'].data
                     masks.append(msk)
                     desc.append(hdulistmask)
-                    self.logger.debug('object mask is particular (it must contain the footprint)')
+                    self.logger.debug(
+                        'object mask is particular (it must contain the footprint)')
                     self.logger.debug(f'reading {i.objmask}')
                 else:
                     footprint = i.mask[0].data
                     msk = footprint
-                    self.logger.warning(f'no object mask (using only footprint) for {filename}')
+                    self.logger.warning(
+                        f'no object mask (using only footprint) for {filename}')
 
-                if msk is None:   # this should never happen now (after including the footprint)
+                # this should never happen now (after including the footprint)
+                if msk is None:
                     scales.append(numpy.median(data[-1]))
                 else:
                     scales.append(numpy.median(data[-1][msk == 0]))
 
-            self.logger.debug(f"computing scaled background with {len(data)} frames using '{method.__name__}'")
+            self.logger.debug(
+                f"computing scaled background with {len(data)} frames using '{method.__name__}'")
             self.logger.debug(f"... scales: {scales}")
             # note: this sky is scaled to have a mean value of 1.0 (using the unmasked pixels)
             sky, _, num = method(data, masks, scales=scales, **method_kwargs)
@@ -1203,19 +1250,23 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 valid = data[frame.valid_region]
 
                 if frame.objmask_data is not None:
-                    self.logger.debug('object mask defined (including footprint)')
+                    self.logger.debug(
+                        'object mask defined (including footprint)')
                     msk = frame.objmask_data
                 else:
-                    self.logger.debug('object mask empty (using only footprint)')
+                    self.logger.debug(
+                        'object mask empty (using only footprint)')
                     footprint = frame.mask[0].data
                     msk = footprint
 
                 skymedian = numpy.median(valid[msk == 0])
-                self.logger.debug(f'rescaling background with skymedian {skymedian}')
+                self.logger.debug(
+                    f'rescaling background with skymedian {skymedian}')
 
             # avoid pixels without sky information
             if numpy.any(num == 0):
-                self.logger.warning('pixels without sky information found (set to skymedian)')
+                self.logger.warning(
+                    'pixels without sky information found (set to skymedian)')
                 sky[num == 0] = 1.0
 
             # rescale sky to have a mean value equal to skymedian
@@ -1285,7 +1336,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         objects_nth = objects_small[idx_flux][-NKEEP:]
         for obj in objects_nth:
             self.logger.debug('ref is (x,y) = (%s, %s)', obj['x'], obj['y'])
-            region = nautils.image_box2d(obj['x'], obj['y'], finalshape, (box, box))
+            region = nautils.image_box2d(
+                obj['x'], obj['y'], finalshape, (box, box))
             regions.append(region)
         return regions
 

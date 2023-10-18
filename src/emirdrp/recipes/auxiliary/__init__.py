@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -54,7 +54,7 @@ class BiasRecipe(EmirRecipe):
     combining them with a median algorithm.
 
     """
-    
+
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     obresult = reqs.ObservationResultRequirement()
 
@@ -72,7 +72,7 @@ class BiasRecipe(EmirRecipe):
                 _logger.error(msg)
                 raise RecipeError(msg)
 
-        flow = lambda x: x
+        def flow(x): return x
         hdulist = basic_processing_with_combination(rinput, flow,
                                                     method=median,
                                                     errors=False)
@@ -238,7 +238,8 @@ class IntensityFlatRecipe2(EmirRecipe):
         import scipy.ndimage.filters
 
         _logger.info('median filter')
-        data_smooth = scipy.ndimage.filters.median_filter(processed_img[0].data, size=11)
+        data_smooth = scipy.ndimage.filters.median_filter(
+            processed_img[0].data, size=11)
 
         self.save_intermediate_array(data_smooth, 'smooth.fits')
 
@@ -266,7 +267,6 @@ class SimpleSkyRecipe(EmirRecipe):
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
 
     skyframe = Result(prods.MasterSky)
-
 
     def run(self, rinput):
         _logger.info('starting sky reduction')
@@ -298,7 +298,6 @@ class DitherSkyRecipe(EmirRecipe):
 
     skyframe = Result(prods.MasterSky)
 
-
     def run(self, rinput):
         _logger.debug('instrument %s, mode %s', rinput.obresult.instrument,
                       rinput.obresult.mode
@@ -308,8 +307,8 @@ class DitherSkyRecipe(EmirRecipe):
         flow = self.init_filters(rinput)
 
         hdulist = basic_processing_with_segmentation(rinput, flow,
-                                                    method=median,
-                                                    errors=True)
+                                                     method=median,
+                                                     errors=True)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -328,7 +327,7 @@ class SpectralFlatRecipe(EmirRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
-    
+
     flatframe = Result(prods.MasterSpectralFlat)
 
     def run(self, rinput):
@@ -364,7 +363,6 @@ class SlitTransmissionRecipe(EmirRecipe):
 
     def run(self, rinput):
         return self.create_result(slit=prods.SlitTransmissionCalibration())
-
 
 
 class WavelengthCalibrationRecipe(EmirRecipe):

@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2018 Universidad Complutense de Madrid
+# Copyright 2013-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -10,6 +10,7 @@
 """AIV Recipes for EMIR"""
 
 
+from numina.core import ObservationResult
 from numina.array.combine import median
 from numina.core import Result, Requirement
 from numina.processing.combine import basic_processing_with_combination
@@ -26,7 +27,8 @@ class TestSkyCorrectRecipe(EmirRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
-    master_sky = Requirement(prods.MasterIntensityFlat, 'Master Sky calibration')
+    master_sky = Requirement(prods.MasterIntensityFlat,
+                             'Master Sky calibration')
 
     frame = Result(prods.ProcessedImage)
 
@@ -35,17 +37,16 @@ class TestSkyCorrectRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+        hdulist = basic_processing_with_combination(
+            rinput, flow, method=median)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         # Update SEC to 0
         hdr['SEC'] = 0
-        
+
         result = self.create_result(frame=hdulist)
 
         return result
-
-from numina.core import ObservationResult
 
 
 class StareImageRecipeInputBuilder(object):
@@ -64,7 +65,8 @@ class StareImageRecipeInputBuilder(object):
 
         if self.sky_image is None:
             print('obtaining SKY image')
-            sky_cal_result = self.dal.getLastRecipeResult("EMIR", "EMIR", "IMAGE_SKY")
+            sky_cal_result = self.dal.getLastRecipeResult(
+                "EMIR", "EMIR", "IMAGE_SKY")
             self.sky_image = sky_cal_result['elements']['skyframe']
 
         obsres['master_sky'] = self.sky_image

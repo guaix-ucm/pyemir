@@ -1,5 +1,5 @@
 #
-# Copyright 2020 Universidad Complutense de Madrid
+# Copyright 2020-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -25,8 +25,10 @@ class FineCenteringRecipe(EmirRecipe):
         prods.NominalPositions, 'Nominal positions of the bars',
         optional=True, default=None
     )
-    box_row_size = Parameter(7, 'Number of rows to sum for fine centering (odd)')
-    box_col_size = Parameter(7, 'Number of columns to sum for fine centering (odd)')
+    box_row_size = Parameter(
+        7, 'Number of rows to sum for fine centering (odd)')
+    box_col_size = Parameter(
+        7, 'Number of columns to sum for fine centering (odd)')
 
     img_max = Result(int)
     img_max_uuid = Result(str)
@@ -57,9 +59,11 @@ class FineCenteringRecipe(EmirRecipe):
                 vec = dtuconf.vector_shift()
                 self.logger.debug('DTU shift is %s', vec)
                 csu_conf = self.load_csu_conf(bars_nominal_positions, hdulist)
-                self.logger.info('image {} has CSU conf from file: {}'.format(idx, csu_conf.conf_f))
+                self.logger.info(
+                    'image {} has CSU conf from file: {}'.format(idx, csu_conf.conf_f))
                 if not csu_conf.is_open():
-                    slitdic = compute_flux(hdulist[0].data, csu_conf, hcols=hcols, hrows=hrows)
+                    slitdic = compute_flux(
+                        hdulist[0].data, csu_conf, hcols=hcols, hrows=hrows)
                     slitids_col.update(slitdic.keys())
                     images[idx] = slitdic
                 else:
@@ -73,7 +77,8 @@ class FineCenteringRecipe(EmirRecipe):
                 flux = slits[key]
                 fluxes.append((flux, img))
             res = max(fluxes)
-            msg = "For slit {0}, max is in image {1[1]} with value {1[0]}".format(key, res)
+            msg = "For slit {0}, max is in image {1[1]} with value {1[0]}".format(
+                key, res)
             cd[res[1]] += 1
             self.logger.info(msg)
         # Find image with more maxima
@@ -120,12 +125,14 @@ def compute_flux(data, csu_conf, hcols=2, hrows=4, logger=None):
 
     logger.debug('we have %s slits', len(csu_conf.slits))
     accept_type = [TargetType.REFERENCE, TargetType.SOURCE]
-    refslits = [slit for slit in csu_conf.slits.values() if slit.target_type in accept_type]
+    refslits = [slit for slit in csu_conf.slits.values(
+    ) if slit.target_type in accept_type]
     logger.debug('we have %s reference and source slits', len(refslits))
 
     for slit in refslits:
         target_coordinates = slit.target_coordinates
-        logger.debug('slit %s is formed by bars %s %s', slit.idx, slit.lbars_ids, slit.rbars_ids)
+        logger.debug('slit %s is formed by bars %s %s',
+                     slit.idx, slit.lbars_ids, slit.rbars_ids)
         logger.debug('slit %s has reference %s', slit.idx, target_coordinates)
         # There is a function for this:
 

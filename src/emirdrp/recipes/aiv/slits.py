@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2022 Universidad Complutense de Madrid
+# Copyright 2013-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -13,7 +13,7 @@ from __future__ import division
 
 
 import numpy
-import six
+# import six
 from numina.core import Result, Parameter
 from numina.exceptions import RecipeError
 import numina.types.array as tarray
@@ -40,8 +40,10 @@ class TestSlitDetectionRecipe(EmirRecipe):
 
     median_filter_size = Parameter(5, 'Size of the median box')
     canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
-    canny_high_threshold = Parameter(0.04, 'High threshold for the Canny algorithm')
-    canny_low_threshold = Parameter(0.01, 'High threshold for the Canny algorithm')
+    canny_high_threshold = Parameter(
+        0.04, 'High threshold for the Canny algorithm')
+    canny_low_threshold = Parameter(
+        0.01, 'High threshold for the Canny algorithm')
 
     # Recipe Results
     frame = Result(prods.ProcessedImage)
@@ -95,12 +97,13 @@ class TestSlitDetectionRecipe(EmirRecipe):
         # value x (2**16 - 1)
         high_threshold = rinput.canny_high_threshold
         low_threshold = rinput.canny_low_threshold
-        self.logger.debug('Find edges, Canny high threshold %f', high_threshold)
+        self.logger.debug(
+            'Find edges, Canny high threshold %f', high_threshold)
         self.logger.debug('Find edges, Canny low threshold %f', low_threshold)
         edges = canny(img_grey, sigma=canny_sigma,
                       high_threshold=high_threshold,
                       low_threshold=low_threshold)
-        
+
         # Fill edges
         self.logger.debug('Fill holes')
         # I do a dilation and erosion to fill
@@ -112,13 +115,11 @@ class TestSlitDetectionRecipe(EmirRecipe):
         self.logger.debug('Label objects')
         label_objects, nb_labels = ndimage.label(fill_slits)
         self.logger.debug('%d objects found', nb_labels)
-        ids = list(six.moves.range(1, nb_labels + 1))
+        # ids = list(six.moves.range(1, nb_labels + 1))
 
         self.logger.debug('Find regions and centers')
         regions = ndimage.find_objects(label_objects)
-        centers = ndimage.center_of_mass(data2, labels=label_objects,
-                                         index=ids
-                                         )
+        # centers = ndimage.center_of_mass(data2, labels=label_objects, index=ids)
 
         table = char_slit(data2, regions,
                           slit_size_ratio=-1.0
@@ -147,11 +148,14 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
 
     median_filter_size = Parameter(5, 'Size of the median box')
     canny_sigma = Parameter(3.0, 'Sigma for the Canny algorithm')
-    canny_high_threshold = Parameter(0.04, 'High threshold for the Canny algorithm')
-    canny_low_threshold = Parameter(0.01, 'High threshold for the Canny algorithm')
+    canny_high_threshold = Parameter(
+        0.04, 'High threshold for the Canny algorithm')
+    canny_low_threshold = Parameter(
+        0.01, 'High threshold for the Canny algorithm')
     obj_min_size = Parameter(200, 'Minimum size of the slit')
     obj_max_size = Parameter(3000, 'Maximum size of the slit')
-    slit_size_ratio = Parameter(4.0, 'Minimum ratio between height and width for slits')
+    slit_size_ratio = Parameter(
+        4.0, 'Minimum ratio between height and width for slits')
 
     # Recipe Results
     frame = Result(prods.DataFrameType)
@@ -203,7 +207,8 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
         # value x (2**16 - 1)
         high_threshold = rinput.canny_high_threshold
         low_threshold = rinput.canny_low_threshold
-        self.logger.debug('Find edges, Canny high threshold %f', high_threshold)
+        self.logger.debug(
+            'Find edges, Canny high threshold %f', high_threshold)
         self.logger.debug('Find edges, Canny low threshold %f', low_threshold)
         edges = canny(img_grey, sigma=canny_sigma,
                       high_threshold=high_threshold,
@@ -240,13 +245,11 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
         self.logger.debug('Label filtered objects')
         relabel_objects, nb_labels = ndimage.label(fill_slits_clean)
         self.logger.debug('%d objects found after filtering', nb_labels)
-        ids = list(six.moves.range(1, nb_labels + 1))
+        # ids = list(six.moves.range(1, nb_labels + 1))
 
         self.logger.debug('Find regions and centers')
         regions = ndimage.find_objects(relabel_objects)
-        centers = ndimage.center_of_mass(data2, labels=relabel_objects,
-                                         index=ids
-                                         )
+        # centers = ndimage.center_of_mass(data2, labels=relabel_objects, index=ids)
 
         table = char_slit(data2, regions,
                           slit_size_ratio=rinput.slit_size_ratio

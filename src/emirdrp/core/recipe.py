@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2021 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -83,7 +83,8 @@ class EmirRecipe(recipes.BaseRecipe):
         self.logger.debug('obresult info')
         for entry in meta['obresult']:
             self.logger.debug('frame info is %s', entry)
-        correctors = [getter(rinput, meta, ins, self.datamodel) for getter in getters]
+        correctors = [getter(rinput, meta, ins, self.datamodel)
+                      for getter in getters]
         flow = flowmod.SerialFlow(correctors)
         return flow
 

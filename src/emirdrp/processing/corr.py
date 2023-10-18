@@ -1,26 +1,17 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """Offsets from cross-correlation"""
 
 
-from __future__  import print_function
+from __future__ import print_function
 
 import logging
 
@@ -52,8 +43,8 @@ def vertex_of_quadratic(coeffs):
     if det <= 0:
         raise ValueError('quadratic has no maximum')
 
-    xm = -(2*B*C- D*E) / det
-    ym = -(2*A*D- C*E) / det
+    xm = -(2*B*C - D*E) / det
+    ym = -(2*A*D - C*E) / det
     return xm, ym
 
 
@@ -126,7 +117,7 @@ def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order='i
     data2 = filter_region(arr1[region])
     d2 = standarize(data2)
     # fits.writeto('cutout_%d.fits' % idx, d2, overwrite=True)
-    #corr = scipy.signal.correlate2d(d1, d2, mode='same', boundary='fill', fillvalue=fillvalue)
+    # corr = scipy.signal.correlate2d(d1, d2, mode='same', boundary='fill', fillvalue=fillvalue)
     # correlation is equivalent to convolution with inverted image
     corr = scipy.signal.fftconvolve(d1, d2[::-1, ::-1], mode='same')
     # normalize
@@ -145,14 +136,15 @@ def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order='i
     if peakvalue < threshold:
         raise ValueError('Peak below threshold')
 
-    #baseoff = dcenter - numpy.asarray(maxindex)
+    # baseoff = dcenter - numpy.asarray(maxindex)
     # Pixel (0,0) in reference corresponds to baseoff in image
     # print("Pixel (0,0) in reference corresponds to %s in image" % baseoff)
 
     if refine:
         # Refine to subpixel
         # Fit a 2D surface to the peak of the crosscorr
-        region_ref = utils.image_box(maxindex, shape, box=(refine_box, refine_box))
+        region_ref = utils.image_box(
+            maxindex, shape, box=(refine_box, refine_box))
 
         coeffs, = imsurfit.imsurfit(corr[region_ref], order=2)
         # coefss are a + b *x + c * y + d*x**2 + e * x* y + f * y**2

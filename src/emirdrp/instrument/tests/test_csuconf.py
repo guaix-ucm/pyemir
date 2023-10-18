@@ -3,10 +3,8 @@ import pkgutil
 
 import pytest
 
-from ..csuconf import CSUConf
-from ..csuconf import CSUBarModel, CSUBarModelL, CSUBarModelR
-from ..csuconf import PhysicalBar, PhysicalBarL, PhysicalBarR
-from ..csuconf import LogicalSlit, TargetType
+
+from ..csuconf import TargetType
 from ..csuconf import create_bar_models, read_csu_from_header
 from ..csuconf import merge_slits
 from ..csuconf import EMIR_NBARS
@@ -63,9 +61,10 @@ def create_test_header1():
     return hdr
 
 
-@pytest.mark.parametrize("hdr, nslits",[(create_test_header0(), 55), (create_test_header1(), 53)])
+@pytest.mark.parametrize("hdr, nslits", [(create_test_header0(), 55), (create_test_header1(), 53)])
 def test_csubar(hdr, nslits):
-    dumdata = pkgutil.get_data('emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
+    dumdata = pkgutil.get_data(
+        'emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
     ss = S.StringIO(dumdata.decode('utf8'))
     bars_nominal_positions = numpy.loadtxt(ss)
     barmodel = create_bar_models(bars_nominal_positions)
@@ -73,7 +72,7 @@ def test_csubar(hdr, nslits):
     assert len(csu_conf.slits) == nslits
 
 
-@pytest.mark.parametrize("hdr, nslits",[(create_test_header0(), 55), (create_test_header1(), 53)])
+@pytest.mark.parametrize("hdr, nslits", [(create_test_header0(), 55), (create_test_header1(), 53)])
 def test_merge_bars(hdr, nslits):
     mm = []
     for idx in range(1, EMIR_NBARS + 1):
@@ -100,7 +99,8 @@ def test_merge_bars(hdr, nslits):
 
 
 def test_csuconf1():
-    dumdata = pkgutil.get_data('emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
+    dumdata = pkgutil.get_data(
+        'emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
     ss = S.StringIO(dumdata.decode('utf8'))
     bars_nominal_positions = numpy.loadtxt(ss)
     hdr = create_test_header1()

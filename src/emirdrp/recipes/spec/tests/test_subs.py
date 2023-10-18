@@ -8,6 +8,7 @@ import numina.exceptions
 
 from ..subs import BaseABBARecipe
 
+
 def create_frame_noise(val=0, std=100, pos=3, keys=None):
     size = (100, 100)
     data = numpy.random.normal(val, std, size)
@@ -30,6 +31,7 @@ def create_frame(val=0, std=100, pos=3, keys=None):
             hdu.header[k] = v
 
     return fits.HDUList([hdu])
+
 
 def create_ob_abba(value, exptime=100.0, starttime=0.0):
     pos = [20, 30, 30, 20]
@@ -63,13 +65,17 @@ def test_subs():
     expected_data[5] = 4
     expected_data[3] = -4
     keys = {'TSUTC1': 1000000001.00034, 'TSUTC2': 1000000100.00034}
-    frames1 = numina.core.DataFrame(frame=create_frame(val=2, pos=5, keys=keys))
+    frames1 = numina.core.DataFrame(
+        frame=create_frame(val=2, pos=5, keys=keys))
     keys = {'TSUTC1': 1000000101.00034, 'TSUTC2': 1000000200.00034}
-    frames2 = numina.core.DataFrame(frame=create_frame(val=2, pos=3, keys=keys))
+    frames2 = numina.core.DataFrame(
+        frame=create_frame(val=2, pos=3, keys=keys))
     keys = {'TSUTC1': 1000000201.00034, 'TSUTC2': 1000000300.00034}
-    frames3 = numina.core.DataFrame(frame=create_frame(val=2, pos=3, keys=keys))
+    frames3 = numina.core.DataFrame(
+        frame=create_frame(val=2, pos=3, keys=keys))
     keys = {'TSUTC1': 1000000301.00034, 'TSUTC2': 1000000400.00034}
-    frames4 = numina.core.DataFrame(frame=create_frame(val=2, pos=5, keys=keys))
+    frames4 = numina.core.DataFrame(
+        frame=create_frame(val=2, pos=5, keys=keys))
 
     obsresult = numina.core.ObservationResult()
     obsresult.frames = [frames1, frames2, frames3, frames4]
@@ -94,7 +100,8 @@ def test_subs_raise():
     expected_data[5] = 4
     expected_data[3] = -4
     keys = {'TSUTC1': 1000000001.00034, 'TSUTC2': 1000000100.00034}
-    frames1 = numina.core.DataFrame(frame=create_frame(val=2, pos=5, keys=keys))
+    frames1 = numina.core.DataFrame(
+        frame=create_frame(val=2, pos=5, keys=keys))
 
     obsresult = numina.core.ObservationResult()
     obsresult.frames = [frames1]
@@ -123,14 +130,14 @@ def test_init_aggregate_result(nimages):
         obresult=obsresult,
     )
 
-    #import logging
-    #logging.basicConfig(level=logging.DEBUG)
+    # import logging
+    # logging.basicConfig(level=logging.DEBUG)
     result1 = recipe.run(rinput)
 
     frame_hdul = result1.reduced_mos_abba.open()
     accum_hdul = result1.accum.open()
 
-    assert(len(frame_hdul) == len(accum_hdul))
+    assert len(frame_hdul) == len(accum_hdul)
 
     for key in ['NUM-NCOM', 'TSUTC1', 'TSUTC2']:
         assert frame_hdul[0].header[key] == accum_hdul[0].header[key]
@@ -163,9 +170,12 @@ def test_accum_spec(naccum):
         frame_hdul = result.reduced_mos_abba.open()
         assert frame_hdul[0].header['NUM-NCOM'] == nimages * nstare
         accum_hdul = result.accum.open()
-        # print('frame', obsresult.naccum, frame_hdul[0].data.mean(), frame_hdul[0].data.std(), 2*(1.0/obsresult.naccum))
-        # print('acuum', obsresult.naccum, accum_hdul[0].data.mean(), accum_hdul[0].data.std(), 2*(1-1.0/obsresult.naccum))
-        assert accum_hdul[0].header['NUM-NCOM'] == nimages * nstare * obsresult.naccum
+        # print('frame', obsresult.naccum, frame_hdul[0].data.mean(),
+        # frame_hdul[0].data.std(), 2*(1.0/obsresult.naccum))
+        # print('acuum', obsresult.naccum, accum_hdul[0].data.mean(),
+        # accum_hdul[0].data.std(), 2*(1-1.0/obsresult.naccum))
+        assert accum_hdul[0].header['NUM-NCOM'] == nimages * \
+            nstare * obsresult.naccum
 
         if obsresult.naccum < naccum:
             # Init next loop

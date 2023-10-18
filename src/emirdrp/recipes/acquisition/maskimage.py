@@ -45,9 +45,12 @@ class MaskImagingRecipe(EmirRecipe):
                                          'Nominal positions of the bars'
                                          )
     median_filter_size = Parameter(5, 'Size of the median box')
-    average_box_row_size = Parameter(7, 'Number of rows to average for fine centering (odd)')
-    average_box_col_size = Parameter(21, 'Number of columns to extract for fine centering (odd)')
-    fit_peak_npoints = Parameter(3, 'Number of points to use for fitting the peak (odd)')
+    average_box_row_size = Parameter(
+        7, 'Number of rows to average for fine centering (odd)')
+    average_box_col_size = Parameter(
+        21, 'Number of columns to extract for fine centering (odd)')
+    fit_peak_npoints = Parameter(
+        3, 'Number of points to use for fitting the peak (odd)')
 
     # Recipe Products
     frame = Result(prods.ProcessedImage)
@@ -68,7 +71,8 @@ class MaskImagingRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, reduction_flow=flow)
+        hdulist = basic_processing_with_combination(
+            rinput, reduction_flow=flow)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -119,12 +123,13 @@ class MaskImagingRecipe(EmirRecipe):
         # These other parameters cab be tuned also
         bstart = 1
         bend = 2047
-        self.logger.debug('ignoring columns outside %d - %d',bstart, bend-1)
+        self.logger.debug('ignoring columns outside %d - %d', bstart, bend-1)
 
         # extract a region to average
         wy = (rinput.average_box_row_size // 2)
         wx = (rinput.average_box_col_size // 2)
-        self.logger.debug('extraction window is %d rows, %d cols',2*wy+1, 2*wx+1)
+        self.logger.debug(
+            'extraction window is %d rows, %d cols', 2*wy+1, 2*wx+1)
         # Fit the peak with these points
         wfit = 2 * (rinput.fit_peak_npoints // 2) + 1
         self.logger.debug('fit with %d points', wfit)
@@ -163,7 +168,7 @@ class MaskImagingRecipe(EmirRecipe):
                 ref_y_coor = coords[1] + vec[1]
                 poly_coeffs = coords[2:]
                 prow = coor_to_pix_1d(ref_y_coor) - 1
-                fits_row = prow + 1 # FITS pixel index
+                fits_row = prow + 1  # FITS pixel index
 
                 # A function that returns the center of the bar
                 # given its X position
@@ -171,13 +176,16 @@ class MaskImagingRecipe(EmirRecipe):
                     # Pixel values are 0-based
                     return polyval(x+1-vec[0], poly_coeffs) + vec[1] - 1
 
-                self.logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
-                self.logger.debug('reference y position is Y %7.2f', ref_y_coor)
+                self.logger.debug(
+                    'looking for bars with ids %d - %d', lbarid, rbarid)
+                self.logger.debug(
+                    'reference y position is Y %7.2f', ref_y_coor)
 
                 # if ref_y_coor is outlimits, skip this bar
                 # ref_y_coor is in FITS format
                 if (ref_y_coor >= 2047) or (ref_y_coor <= 1):
-                    self.logger.debug('reference y position is outlimits, skipping')
+                    self.logger.debug(
+                        'reference y position is outlimits, skipping')
                     positions.append([lbarid, fits_row, fits_row, 1, 0, 3])
                     positions.append([rbarid, fits_row, fits_row, 1, 0, 3])
                     continue
@@ -188,13 +196,15 @@ class MaskImagingRecipe(EmirRecipe):
                 centery, xpos, fwhm, st = char_bar_peak_l(arr_deriv, prow, bstart, bend, threshold,
                                                           center_of_bar, wx=wx, wy=wy, wfit=wfit)
                 xpos1 = xpos
-                positions.append([lbarid, centery+1, fits_row, xpos+1, fwhm, st])
+                positions.append(
+                    [lbarid, centery+1, fits_row, xpos+1, fwhm, st])
 
                 # Right bar
                 self.logger.debug('measure rigth border (%d)', rbarid)
                 centery, xpos, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart, bend, threshold,
                                                           center_of_bar, wx=wx, wy=wy, wfit=wfit)
-                positions.append([rbarid, centery+1, fits_row, xpos+1, fwhm, st])
+                positions.append(
+                    [rbarid, centery+1, fits_row, xpos+1, fwhm, st])
                 xpos2 = xpos
                 #
                 if st == 0:
@@ -203,7 +213,8 @@ class MaskImagingRecipe(EmirRecipe):
                         y1, y2, statusy = char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold,
                                                           wh=35, wfit=wfit)
                     except Exception as error:
-                        self.logger.warning('Error computing height: %s', error)
+                        self.logger.warning(
+                            'Error computing height: %s', error)
                         statusy = 44
 
                     if statusy in [0, 40]:
@@ -220,16 +231,21 @@ class MaskImagingRecipe(EmirRecipe):
 
                 # Update positions
 
-                self.logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-2])
-                self.logger.debug('bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-1])
+                self.logger.debug(
+                    'bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-2])
+                self.logger.debug(
+                    'bar %d centroid-y %9.4f, row %d x-pos %9.4f, FWHM %6.3f, status %d', *positions[-1])
 
                 if ks == 5:
-                    slits[lbarid - 1] = [xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1]
+                    slits[lbarid - 1] = [xpos1, y2,
+                                         xpos2, y2, xpos2, y1, xpos1, y1]
                     # FITS coordinates
                     slits[lbarid - 1] += 1.0
-                    self.logger.debug('inserting bars %d-%d into "slits"', lbarid, rbarid)
+                    self.logger.debug(
+                        'inserting bars %d-%d into "slits"', lbarid, rbarid)
 
-            allpos[ks] = numpy.asarray(positions, dtype='float') # GCS doesn't like lists of lists
+            # GCS doesn't like lists of lists
+            allpos[ks] = numpy.asarray(positions, dtype='float')
 
         self.logger.debug('end finding bars')
         result = self.create_result(frame=hdulist,

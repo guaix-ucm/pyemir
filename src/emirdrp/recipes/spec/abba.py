@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2020 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -744,7 +744,8 @@ class ABBASpectraRectwv(EmirRecipe):
                     hdu.header.remove(keyword)
             hdu.header['crpix1'] = (crpix1, 'reference pixel')
             hdu.header['crval1'] = (crval1, 'central wavelength at crpix1')
-            hdu.header['cdelt1'] = (cdelt1, 'linear dispersion (Angstrom/pixel)')
+            hdu.header['cdelt1'] = (
+                cdelt1, 'linear dispersion (Angstrom/pixel)')
             hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
             hdu.header['ctype1'] = 'WAVE'
             hdu.header['crpix2'] = (0.0, 'reference pixel')

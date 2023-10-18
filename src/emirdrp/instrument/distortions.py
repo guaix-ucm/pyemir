@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2020 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -47,7 +47,7 @@ def exvp(pos_x, pos_y):
     ra = numpy.hypot(pos_base_x, pos_base_y)
     thet = numpy.arctan2(pos_base_y, pos_base_x)
 
-    r  = cf * ra
+    r = cf * ra
 
     rr1 = 1 + 14606.7 * r**2 + 1739716115.1 * r**4
 
@@ -90,7 +90,7 @@ def pvex(pos_x, pos_y):
     ra = numpy.hypot(pos_base_x, pos_base_y)
     thet = numpy.arctan2(pos_base_y, pos_base_x)
 
-    r  = cf * ra
+    r = cf * ra
     rr1 = 1.000051 - 14892 * r**2 - 696254464 * r**4
 
     nx1 = rr1 * ra * numpy.cos(thet) + center[0]

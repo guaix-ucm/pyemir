@@ -69,7 +69,8 @@ class TestPinholeRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, reduction_flow=flow)
+        hdulist = basic_processing_with_combination(
+            rinput, reduction_flow=flow)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)

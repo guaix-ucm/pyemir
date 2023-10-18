@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2020 Universidad Complutense de Madrid
+# Copyright 2013-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -153,7 +153,7 @@ def process_ab(images, errors=False, prolog=None):
 
 
 def create_proc_hdulist(images, data_array):
-    cnum = len(images)
+    # cnum = len(images)
     result = copy_img(images[0])
     base_header = result[0].header.copy()
 
@@ -161,7 +161,7 @@ def create_proc_hdulist(images, data_array):
     # self.set_base_headers(hdu.header)
     hdu.header['UUID'] = str(uuid.uuid1())
     # Update obsmode in header
-    #hdu.header['OBSMODE'] = 'LS_ABBA'
+    # hdu.header['OBSMODE'] = 'LS_ABBA'
     # Headers of last image
     hdu.header['TSUTC2'] = images[-1][0].header['TSUTC2']
     # Not sure why this is needed
@@ -247,7 +247,8 @@ def combine_images(images, method=combine.mean, method_kwargs=None,
     _logger.debug('update result header')
     if prolog:
         hdu.header['history'] = prolog
-    hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method.__name__)
+    hdu.header['history'] = "Combined %d images using '%s'" % (
+        cnum, method.__name__)
     hdu.header['history'] = 'Combination time {}'.format(now.isoformat())
     for img in images:
         hdu.header['history'] = "Image {}".format(datam.get_imgid(img))
@@ -268,7 +269,7 @@ def combine_images(images, method=combine.mean, method_kwargs=None,
 
 
 def resize_hdul(hdul, newshape, region, extensions=None, window=None,
-                    scale=1, fill=0.0, conserve=True):
+                scale=1, fill=0.0, conserve=True):
     """
 
     Parameters
@@ -359,8 +360,8 @@ def resize_hdulists(hdulists, shape, offsetsp, finalshape, window=None):
 
 
 def basic_processing_with_segmentation(rinput, flow,
-                                          method=combine.mean,
-                                          errors=True, bpm=None):
+                                       method=combine.mean,
+                                       errors=True, bpm=None):
 
     odata = []
     cdata = []
@@ -386,7 +387,8 @@ def basic_processing_with_segmentation(rinput, flow,
         subpixshape = cdata[0][0].data.shape
 
         _logger.info('Computing offsets from WCS information')
-        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
+        refpix = numpy.divide(numpy.array(
+            [baseshape], dtype='int'), 2).astype('float')
         offsets_xy = offsets_from_wcs(rinput.obresult.frames, refpix)
         _logger.debug("offsets_xy %s", offsets_xy)
         # Offsets in numpy order, swaping
@@ -399,9 +401,11 @@ def basic_processing_with_segmentation(rinput, flow,
 
         _logger.info('Shape of resized array is %s', finalshape)
         # Resizing target frames
-        rhduls, regions = resize_hdulists(cdata, subpixshape, offsetsp, finalshape)
+        rhduls, regions = resize_hdulists(
+            cdata, subpixshape, offsetsp, finalshape)
 
-        _logger.info("stacking %d images, with offsets using '%s'", len(cdata), method.__name__)
+        _logger.info("stacking %d images, with offsets using '%s'",
+                     len(cdata), method.__name__)
         data1 = method([d[0].data for d in rhduls], dtype='float32')
 
         segmap = segmentation_combined(data1[0])
@@ -411,17 +415,22 @@ def basic_processing_with_segmentation(rinput, flow,
         else:
             masks = [((segmap[region] > 0) & bpm) for region in regions]
 
-        _logger.info("stacking %d images, with objects mask using '%s'", len(cdata), method.__name__)
-        data2 = method([d[0].data for d in cdata], masks=masks, dtype='float32')
+        _logger.info("stacking %d images, with objects mask using '%s'", len(
+            cdata), method.__name__)
+        data2 = method([d[0].data for d in cdata],
+                       masks=masks, dtype='float32')
         hdu = fits.PrimaryHDU(data2[0], header=base_header)
         points_no_data = (data2[2] == 0).sum()
 
         _logger.debug('update result header')
         hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
-        hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.__name__)
-        hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdu.header['history'] = "Combined %d images using '%s'" % (
+            len(cdata), method.__name__)
+        hdu.header['history'] = 'Combination time {}'.format(
+            datetime.datetime.utcnow().isoformat())
         hdu.header['UUID'] = str(uuid.uuid1())
-        _logger.info("missing points, total: %d, fraction: %3.1f", points_no_data, points_no_data / data2[2].size)
+        _logger.info("missing points, total: %d, fraction: %3.1f",
+                     points_no_data, points_no_data / data2[2].size)
 
         if errors:
             varhdu = fits.ImageHDU(data2[1], name='VARIANCE')

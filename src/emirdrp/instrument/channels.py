@@ -1,20 +1,10 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 def braid(*iterables):
@@ -36,7 +26,7 @@ def braid(*iterables):
 
 _P1 = slice(0, 1024)
 _P2 = slice(1024, 2048)
-_O1 = [slice(i*128,(i+1)*128) for i in range(8)]
+_O1 = [slice(i*128, (i+1)*128) for i in range(8)]
 _O2 = [slice(1024 + (7-i)*128, 1024+(8-i)*128) for i in range(8)]
 
 
@@ -51,9 +41,10 @@ CHANNELS_1 = CHANNELS
 # Channels as they are populated during reconstruction
 CHANNELS_2 = [chan for chans in [_CH3, _CH4, _CH1, _CH2] for chan in chans]
 # Channels as listed in Carlos Gonzalez Ph. D. Thesis
-CHANNELS_3 = [chan for chans in [_CH2, _CH3, _CH4, _CH1] for chan in reversed(chans)]
+CHANNELS_3 = [chan for chans in [_CH2, _CH3, _CH4, _CH1]
+              for chan in reversed(chans)]
 # Channels in readout order
-CHANNELS_READOUT = list(braid(_CH3,_CH4, _CH1, _CH2))
+CHANNELS_READOUT = list(braid(_CH3, _CH4, _CH1, _CH2))
 
 RCHANNELS_1 = [chan for chans in [_CH3, _CH1, _CH2, _CH4] for chan in chans]
 FULL = RCHANNELS_1

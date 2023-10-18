@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2020 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -323,8 +323,8 @@ class SpecFlatLowFreq(EmirRecipe):
         image2d_flatfielded = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
 
         # main loop
-        grism_name = rectwv_coeff.tags['grism']
-        filter_name = rectwv_coeff.tags['filter']
+        # grism_name = rectwv_coeff.tags['grism']
+        # filter_name = rectwv_coeff.tags['filter']
         cout = '0'
         debugplot = rinput.debugplot
         for islitlet in list(range(1, EMIR_NBARS + 1)):
@@ -358,11 +358,11 @@ class SpecFlatLowFreq(EmirRecipe):
                 # get useful slitlet region (use boundaries)
                 spectrail = slt.list_spectrails[0]
                 yy0 = slt.corr_yrect_a + \
-                      slt.corr_yrect_b * spectrail(slt.x0_reference)
+                    slt.corr_yrect_b * spectrail(slt.x0_reference)
                 ii1 = int(yy0 + 0.5) - slt.bb_ns1_orig
                 spectrail = slt.list_spectrails[2]
                 yy0 = slt.corr_yrect_a + \
-                      slt.corr_yrect_b * spectrail(slt.x0_reference)
+                    slt.corr_yrect_b * spectrail(slt.x0_reference)
                 ii2 = int(yy0 + 0.5) - slt.bb_ns1_orig
 
                 # median spectrum
@@ -549,7 +549,7 @@ class SpecFlatLowFreq(EmirRecipe):
             hduls = [stack.enter_context(fname.open()) for fname in
                      rinput.obresult.frames]
             # Copy header of first image
-            base_header = hduls[0][0].header.copy()
+            # base_header = hduls[0][0].header.copy()
             result = copy_img(hduls[0])
             hdu = result[0]
             hdu.data = reduced_data

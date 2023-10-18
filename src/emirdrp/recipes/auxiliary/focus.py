@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -111,10 +111,10 @@ class DTUFocusRecipe(EmirRecipe):
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
     objects = Parameter([], 'List of x-y pair of object coordinates'),
     msm_pattern = Parameter([], 'List of x-y pair of slit coordinates'),
-    dtu_focus_range = Parameter([], 'Focus range of the DTU: begin, end and step')
+    dtu_focus_range = Parameter(
+        [], 'Focus range of the DTU: begin, end and step')
 
     focus = Result(prods.DTUFocus)
-
 
     def run(self, rinput):
         return self.create_result(focus=prods.DTUFocus())

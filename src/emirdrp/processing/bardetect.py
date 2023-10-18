@@ -1,20 +1,10 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Bar detection procedures for EMIR"""
@@ -34,7 +24,7 @@ import emirdrp.instrument.distortions as dist
 
 
 def find_position(edges, prow, bstart, bend, total=5):
-    """Find a EMIR CSU bar position in a edge image.
+    """Find a EMIR CSU bar position in an edge image.
 
     Parameters
     ==========
@@ -63,14 +53,16 @@ def find_position(edges, prow, bstart, bend, total=5):
 
     s2edges = edges[prow-nt:prow+nt+1, bstart:bend]
 
-    structure = scipy.ndimage.generate_binary_structure(2,2) # 8 way conection
+    structure = scipy.ndimage.generate_binary_structure(
+        2, 2)  # 8 way conection
     har, num_f = scipy.ndimage.label(s2edges, structure=structure)
 
-    cen_of_mass = scipy.ndimage.center_of_mass(s2edges, labels=har, index=range(1, num_f + 1))
+    cen_of_mass = scipy.ndimage.center_of_mass(
+        s2edges, labels=har, index=range(1, num_f + 1))
 
     # center_of_mass returns y, x coordinates
 
-    cen_of_mass_off = [(x + bstart, prow-nt + y) for y,x in cen_of_mass]
+    cen_of_mass_off = [(x + bstart, prow-nt + y) for y, x in cen_of_mass]
 
     return cen_of_mass_off
 
@@ -81,7 +73,7 @@ def calc_fwhm(img, region, fexpand=3, axis=0):
     # We compute know the FWHM of the slit
     # Given the computed position of the slit
     # Expand 'fexpand' pixels around
-    # and cut an slice in the median filtered image
+    # and cut a slice in the median filtered image
 
     xpregion = expand_region(region, fexpand, fexpand)
     cslit = img[xpregion]
@@ -110,9 +102,9 @@ def simple_prot(x, start):
 
     # start must b >= 1
 
-    for i in range(start,len(x)-1):
-        a,b,c =  x[i-1], x[i], x[i+1]
-        if b - a > 0 and b -c >= 0:
+    for i in range(start, len(x)-1):
+        a, b, c = x[i-1], x[i], x[i+1]
+        if b - a > 0 and b - c >= 0:
             return i
     else:
         return None
@@ -268,7 +260,8 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, sign=1):
     centery = yvpix
     logger.debug('centery is %7.2f at position %7.2f', centery+1,  centerx+1)
     # Refine at the computed center
-    xl, fwhm_x, st = refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, th, sign)
+    xl, fwhm_x, st = refine_bar_centroid(
+        arr_deriv, centerx, centery, wx, wy, th, sign)
     logger.debug('measured values %7.2f (FWHM %7.2f)', xl, fwhm_x)
 
     if st != 0:
@@ -276,15 +269,19 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, sign=1):
         # Exiting now, can't refine the centroid
         return centery, centery, xl, xl, fwhm_x, st
 
-    # This is basically to build a list of centers that dont overlap
+    # This is basically to build a list of centers that don't overlap
     for off in offs:
         if 0 <= centery + off <= 2047:
-            logger.debug('looping, off %d, measuring at %7.2f', off, centery + off + 1)
-            res = refine_bar_centroid(arr_deriv, centerx, centery + off, wx, wy, th, sign)
-            logger.debug('looping, measured values %7.2f (FWHM %7.2f)', res[0], res[1])
+            logger.debug('looping, off %d, measuring at %7.2f',
+                         off, centery + off + 1)
+            res = refine_bar_centroid(
+                arr_deriv, centerx, centery + off, wx, wy, th, sign)
+            logger.debug(
+                'looping, measured values %7.2f (FWHM %7.2f)', res[0], res[1])
             newrefine.append(res)
         else:
-            logger.debug('looping, off %d, skipping position %7.2f', off, centery + off + 1)
+            logger.debug('looping, off %d, skipping position %7.2f',
+                         off, centery + off + 1)
 
     # this goes in FITS pix coordinates, adding 1
     # filter values with status != 0
@@ -318,7 +315,7 @@ def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
     # Refine values
     logger = logging.getLogger('emir.recipes.bardetect')
 
-    logger.debug('collapsing a %d x %d region', 2 * wx + 1 , 2 * wy + 1)
+    logger.debug('collapsing a %d x %d region', 2 * wx + 1, 2 * wy + 1)
     #
     slicey = slice_create(centery, wy, start=1, stop=2047)
     slicex = slice_create(centerx, wx, start=1, stop=2047)
@@ -365,8 +362,8 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
     ref_pcentery = pcentery - slicey.start
     mm = arr_deriv_alt[slicey, xpos1:xpos2 + 1].mean(axis=-1)
 
-    idxs_t = find_peaks_indexes(mm, window_width=3,threshold=threshold)
-    idxs_u = find_peaks_indexes(-mm, window_width=3,threshold=threshold)
+    idxs_t = find_peaks_indexes(mm, window_width=3, threshold=threshold)
+    idxs_u = find_peaks_indexes(-mm, window_width=3, threshold=threshold)
     # Peaks on the right
 
     status = 0
@@ -393,7 +390,7 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
             else:
                 idmax = y_u.argmax()
                 b2 = x_u[idmax]
-                b2val = y_u[idmax]
+                # b2val = y_u[idmax]
                 logger.debug('main border in %f', slicey.start + b2)
 
     # peaks on the left
@@ -419,7 +416,7 @@ def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit
             else:
                 idmax = y_t.argmax()
                 b1 = x_t[idmax]
-                b1val = y_t[idmax]
+                # b1val = y_t[idmax]
                 logger.debug('second border in %f', slicey.start + b1)
 
     return slicey.start + b1, slicey.start + b2, status

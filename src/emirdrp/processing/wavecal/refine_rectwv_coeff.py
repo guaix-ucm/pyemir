@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -305,7 +305,7 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         logger.info('- median.....: {0:7.3f}'.format(stat_summary['median']))
         logger.info('- std........: {0:7.3f}'.format(stat_summary['std']))
         logger.info('- robust_std.: {0:7.3f}'.format(stat_summary[
-                                                        'robust_std']))
+            'robust_std']))
         if (abs(debugplot) % 10 != 0) or (pdf is not None):
             ax = ximplotxy(xplot, yplot,
                            linestyle='', marker='o', color='C0',

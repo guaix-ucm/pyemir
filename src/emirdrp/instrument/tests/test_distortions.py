@@ -24,10 +24,10 @@ def create_wcs(fppa=270 * u.deg):
     # scale = cons.EMIR_PIXSCALE.to(u.deg / u.pixel).value
     scale1 = 0.194279723 / 3600
     scale2 = 0.194264445 / 3600
-    #w.wcs.cdelt = [scale, scale]
+    # w.wcs.cdelt = [scale, scale]
     pc11 = scale1 * numpy.cos(angle)
     pc22 = scale2 * numpy.cos(angle)
-    pc12 = -scale1 *numpy.sin(angle)
+    pc12 = -scale1 * numpy.sin(angle)
     pc21 = scale2 * numpy.sin(angle)
     w.wcs.cd = [[pc11, pc12],
                 [pc21, pc22]]
@@ -48,7 +48,7 @@ def create_wcs_new():
     pc11 = -5.39644538444764E-05
     pc22 = -5.39644538444764E-05
     pc12 = -5.19905444897492E-08
-    pc21 =  5.19905444897492E-08
+    pc21 = 5.19905444897492E-08
     w.wcs.cd = [[pc11, pc12],
                 [pc21, pc22]]
     w.wcs.set_pv([
@@ -79,10 +79,10 @@ def create_wcs_alt(fppa=270 * u.deg):
     # scale = cons.EMIR_PIXSCALE.to(u.deg / u.pixel).value
     scale1 = 0.194279723 / 3600
     scale2 = 0.194264445 / 3600
-    #w.wcs.cdelt = [scale, scale]
+    # w.wcs.cdelt = [scale, scale]
     pc11 = scale1 * numpy.cos(angle)
     pc22 = scale2 * numpy.cos(angle)
-    pc12 = -scale1 *numpy.sin(angle)
+    pc12 = -scale1 * numpy.sin(angle)
     pc21 = scale2 * numpy.sin(angle)
     w.wcs.cd = [[pc11, pc12],
                 [pc21, pc22]]
@@ -104,7 +104,7 @@ def test_distortions_ex1():
 
 def test_distortions_ex2():
     """Inverse transformation, not very precise"""
-    
+
     x0 = [1, 100, 1000, 1990]
     y0 = [1200, 900, 200, 5]
     p_x1 = [16.20132521, 110.97939823, 1000.22549019, 1962.80728145]
@@ -148,8 +148,8 @@ def test_distortions_wcs_ex():
 
     w = create_wcs()
 
-    e_x1 = [ -15.73469527,   88.61357533, 1000.58521175, 2024.25873613]
-    e_y1 = [1201.96995355,  897.6454293 ,  192.4567596 ,  -28.81253997]
+    e_x1 = [-15.73469527,   88.61357533, 1000.58521175, 2024.25873613]
+    e_y1 = [1201.96995355,  897.6454293,  192.4567596,  -28.81253997]
     x0 = [1, 100, 1000, 1990]
     y0 = [1200, 900, 200, 5]
     x1, y1 = wcs_exvp(w, x0, y0)
@@ -162,7 +162,7 @@ def test_distortions_wcs_pc():
 
     w = create_wcs()
 
-    p_x1 = [  16.87732924,  110.93407453,  999.42297684, 1959.34745267]
+    p_x1 = [16.87732924,  110.93407453,  999.42297684, 1959.34745267]
     p_y1 = [1198.15178941,  902.27528867,  207.32346469,   35.16785173]
     x0 = [1, 100, 1000, 1990]
     y0 = [1200, 900, 200, 5]
@@ -179,8 +179,8 @@ def test_consistency_wcs():
 
     w = create_wcs()
 
-    v_x1 = [  33.61421368,   34.25887803, 1971.56801359, 1968.54383359]
-    v_y1 = [  35.31658127, 1969.82615199, 1969.55586265,   31.79447425]
+    v_x1 = [33.61421368,   34.25887803, 1971.56801359, 1968.54383359]
+    v_y1 = [35.31658127, 1969.82615199, 1969.55586265,   31.79447425]
 
     x1, y1 = wcs_pvex(w, x0, y0)
 
@@ -202,8 +202,8 @@ def test_consistency2_wcs():
     wcs1 = create_wcs()
     wcs2 = create_wcs_alt()
 
-    v_x1 = [  33.61421368,   34.25887803, 1971.56801359, 1968.54383359]
-    v_y1 = [  35.31658127, 1969.82615199, 1969.55586265,   31.79447425]
+    v_x1 = [33.61421368,   34.25887803, 1971.56801359, 1968.54383359]
+    v_y1 = [35.31658127, 1969.82615199, 1969.55586265,   31.79447425]
 
     ra_i, dec_i = wcs1.all_pix2world(x0, y0, 1)
     x1, y1 = wcs2.all_world2pix(ra_i, dec_i, 1)

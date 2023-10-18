@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -14,9 +14,6 @@ from __future__ import division
 import logging
 
 import numina.datamodel as dm
-import astropy.wcs
-
-import emirdrp.instrument
 
 
 _logger = logging.getLogger(__name__)
@@ -42,7 +39,6 @@ class EmirDataModel(dm.DataModel):
         'grism': dm.QueryAttribute('grism', str),
         'insconf': dm.QueryAttribute('insconf', str)
     }
-
 
     def __init__(self):
         defaults = self.default_mappings()

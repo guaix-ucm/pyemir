@@ -3,18 +3,8 @@
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Definition of Slitlet2D class"""
@@ -463,12 +453,12 @@ class Slitlet2D(object):
                        dtype=float)
         for spectrail in self.list_spectrails:
             yy0 = self.corr_yrect_a + \
-                  self.corr_yrect_b * spectrail(self.x0_reference)
+                self.corr_yrect_b * spectrail(self.x0_reference)
             yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
             ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
         for spectrail in self.list_frontiers:
             yy0 = self.corr_yrect_a +\
-                  self.corr_yrect_b * spectrail(self.x0_reference)
+                self.corr_yrect_b * spectrail(self.x0_reference)
             yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
             ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b:")
         # show plot

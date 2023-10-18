@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2020 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -11,7 +11,6 @@
 Spectroscopy mode, compute pixel-to-pixel flatfield
 """
 
-import astropy.io.fits as fits
 import contextlib
 import logging
 import numpy as np
@@ -378,11 +377,11 @@ class SpecFlatPix2Pix(EmirRecipe):
                 # get useful slitlet region (use boundaries)
                 spectrail = slt.list_spectrails[0]
                 yy0 = slt.corr_yrect_a + \
-                      slt.corr_yrect_b * spectrail(slt.x0_reference)
+                    slt.corr_yrect_b * spectrail(slt.x0_reference)
                 ii1 = int(yy0 + 0.5) - slt.bb_ns1_orig
                 spectrail = slt.list_spectrails[2]
                 yy0 = slt.corr_yrect_a + \
-                      slt.corr_yrect_b * spectrail(slt.x0_reference)
+                    slt.corr_yrect_b * spectrail(slt.x0_reference)
                 ii2 = int(yy0 + 0.5) - slt.bb_ns1_orig
 
                 # median spatial profile along slitlet (to be used later)

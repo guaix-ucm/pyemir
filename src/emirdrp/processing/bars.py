@@ -1,20 +1,10 @@
 #
-# Copyright 2008-2022 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 
@@ -112,8 +102,10 @@ def find_bars(hdulist, bars_nominal_positions, csupos, dtur,
             ref_x_l_coor_virt = params_l[3] + current_csupos_l * params_l[2]
             ref_x_r_coor_virt = params_r[3] + current_csupos_r * params_r[2]
             # Transform to REAL..
-            ref_x_l_coor, ref_y_l_coor = dist.exvp(ref_x_l_coor_virt, ref_y_coor_virt)
-            ref_x_r_coor, ref_y_r_coor = dist.exvp(ref_x_r_coor_virt, ref_y_coor_virt)
+            ref_x_l_coor, ref_y_l_coor = dist.exvp(
+                ref_x_l_coor_virt, ref_y_coor_virt)
+            ref_x_r_coor, ref_y_r_coor = dist.exvp(
+                ref_x_r_coor_virt, ref_y_coor_virt)
             # FIXME: check if DTU has to be applied
             # ref_y_coor = ref_y_coor + vec[1]
             prow = coor_to_pix_1d(ref_y_l_coor) - 1
@@ -121,24 +113,32 @@ def find_bars(hdulist, bars_nominal_positions, csupos, dtur,
 
             logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
             logger.debug('ref Y virtual position is %7.2f', ref_y_coor_virt)
-            logger.debug('ref X virtual positions are %7.2f %7.2f', ref_x_l_coor_virt, ref_x_r_coor_virt)
-            logger.debug('ref X positions are %7.2f %7.2f', ref_x_l_coor, ref_x_r_coor)
-            logger.debug('ref Y positions are %7.2f %7.2f', ref_y_l_coor, ref_y_r_coor)
+            logger.debug('ref X virtual positions are %7.2f %7.2f',
+                         ref_x_l_coor_virt, ref_x_r_coor_virt)
+            logger.debug('ref X positions are %7.2f %7.2f',
+                         ref_x_l_coor, ref_x_r_coor)
+            logger.debug('ref Y positions are %7.2f %7.2f',
+                         ref_y_l_coor, ref_y_r_coor)
             # if ref_y_coor is outlimits, skip this bar
             # ref_y_coor is in FITS format
             if (ref_y_l_coor >= 2047 + 16) or (ref_y_l_coor <= 1 - 16):
                 logger.debug('reference y position is outlimits, skipping')
-                positions.append([lbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
-                positions.append([rbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
+                positions.append(
+                    [lbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
+                positions.append(
+                    [rbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
                 continue
 
             # minimal width of the slit
             minwidth = 0.9
             if abs(ref_x_l_coor_virt - ref_x_r_coor_virt) < minwidth:
                 # FIXME: if width < minwidth fit peak in image
-                logger.debug('slit is less than %d virt pixels, skipping', minwidth)
-                positions.append([lbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
-                positions.append([rbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
+                logger.debug(
+                    'slit is less than %d virt pixels, skipping', minwidth)
+                positions.append(
+                    [lbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
+                positions.append(
+                    [rbarid, fits_row, fits_row, fits_row, 1, 1, 0, 3])
                 continue
 
             # Left bar
@@ -151,7 +151,8 @@ def find_bars(hdulist, bars_nominal_positions, csupos, dtur,
                                                                                  prow, bstart1, bend1,
                                                                                  threshold)
 
-            insert1 = [lbarid, centery + 1, centery_virt, fits_row, xpos1 + 1, xpos1_virt, fwhm, st]
+            insert1 = [lbarid, centery + 1, centery_virt,
+                       fits_row, xpos1 + 1, xpos1_virt, fwhm, st]
             positions.append(insert1)
 
             # Right bar
@@ -162,7 +163,8 @@ def find_bars(hdulist, bars_nominal_positions, csupos, dtur,
             centery, centery_virt, xpos2, xpos2_virt, fwhm, st = char_bar_peak_r(arr_deriv, prow, bstart2, bend2,
                                                                                  threshold)
             # This centery/centery_virt should be equal to ref_y_coor_virt
-            insert2 = [rbarid, centery + 1, centery_virt, fits_row, xpos2 + 1, xpos2_virt, fwhm, st]
+            insert2 = [rbarid, centery + 1, centery_virt,
+                       fits_row, xpos2 + 1, xpos2_virt, fwhm, st]
             positions.append(insert2)
 
             # FIXME: hardcoded value
@@ -179,12 +181,15 @@ def find_bars(hdulist, bars_nominal_positions, csupos, dtur,
             logger.debug(msg, *positions[-1])
 
             if ks == 5:
-                slits[lbarid - 1] = numpy.array([xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1])
+                slits[lbarid -
+                      1] = numpy.array([xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1])
                 # FITS coordinates
                 slits[lbarid - 1] += 1.0
-                logger.debug('inserting bars %d-%d into "slits"', lbarid, rbarid)
+                logger.debug('inserting bars %d-%d into "slits"',
+                             lbarid, rbarid)
 
-        allpos[ks] = numpy.asarray(positions, dtype='float')  # GCS doesn't like lists of lists
+        # GCS doesn't like lists of lists
+        allpos[ks] = numpy.asarray(positions, dtype='float')
 
     return allpos, slits
 
@@ -214,5 +219,7 @@ def slits_to_ds9_reg(ds9reg, slits):
         xd = (xpos2 - xpos1)
         yd = (y2 - y1)
         ds9reg.write('box({0},{1},{2},{3},0)\n'.format(xc, yc, xd, yd))
-        ds9reg.write('# text({0},{1}) color=red text={{{2}}}\n'.format(xpos1 - 5, yc, idx))
-        ds9reg.write('# text({0},{1}) color=red text={{{2}}}\n'.format(xpos2 + 5, yc, idx + EMIR_NBARS))
+        ds9reg.write('# text({0},{1}) color=red text={{{2}}}\n'.format(
+            xpos1 - 5, yc, idx))
+        ds9reg.write('# text({0},{1}) color=red text={{{2}}}\n'.format(
+            xpos2 + 5, yc, idx + EMIR_NBARS))

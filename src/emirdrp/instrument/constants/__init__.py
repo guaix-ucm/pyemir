@@ -1,5 +1,5 @@
 #
-# Copyright 2020 Universidad Complutense de Madrid
+# Copyright 2020-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -26,7 +26,7 @@ GTC_NASMYTH_A_PLATESCALE = 1.212 * u.arcsec / u.mm
 EMIR_CSU_PLATESCALE = 1.1746 * u.arcsec / u.mm
 
 # plate scale, detector, arcsec / mm
-EMIR_DETECTOR_PLATESCALE = 10.8  * u.arcsec / u.mm
+EMIR_DETECTOR_PLATESCALE = 10.8 * u.arcsec / u.mm
 
 # This value is stored in keyword IPA
-EMIR_REF_IPA = 90.0552 * u.deg # deg
+EMIR_REF_IPA = 90.0552 * u.deg  # deg

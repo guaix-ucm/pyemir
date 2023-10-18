@@ -75,7 +75,8 @@ def create_ob(value, nimages, crpix, nstare=3, exptime=100.0, starttime=0.0):
         t1 = base + off1
         t2 = base + off2
         keys = {'TSUTC1': t1, 'TSUTC2': t2, 'NUM-NCOM': nstare, 'NUM-SK': 1}
-        frame = numina.core.DataFrame(frame=create_frame(background=value, keys=keys, crpix=crpix[i]))
+        frame = numina.core.DataFrame(frame=create_frame(
+            background=value, keys=keys, crpix=crpix[i]))
         frames.append(frame)
 
     obsresult = numina.core.ObservationResult()
@@ -108,11 +109,13 @@ def test_join(nimages, naccum):
         frame_hdul = result.frame.open()
         assert frame_hdul[0].header['NUM-NCOM'] == nimages * nstare
         accum_hdul = result.accum.open()
-        assert accum_hdul[0].header['NUM-NCOM'] == nimages * nstare * obsresult.naccum
+        assert accum_hdul[0].header['NUM-NCOM'] == nimages * \
+            nstare * obsresult.naccum
         if obsresult.naccum < naccum:
             # Init next loop
             starttime += exptime * (nimages + 1)
-            nobsresult = create_ob(value , nimages, crpix, nstare, exptime, starttime)
+            nobsresult = create_ob(value, nimages, crpix,
+                                   nstare, exptime, starttime)
             nobsresult.naccum = obsresult.naccum + 1
             obsresult = nobsresult
             prev_accum = result.accum
@@ -146,14 +149,14 @@ def test_init_aggregate_result(nimages):
         obresult=obsresult,
     )
 
-    #import logging
-    #logging.basicConfig(level=logging.DEBUG)
+    # import logging
+    # logging.basicConfig(level=logging.DEBUG)
     result1 = recipe.run(rinput)
 
     frame_hdul = result1.frame.open()
     accum_hdul = result1.accum.open()
 
-    assert(len(frame_hdul) == len(accum_hdul))
+    assert len(frame_hdul) == len(accum_hdul)
 
     for key in ['NUM-NCOM', 'TSUTC1', 'TSUTC2']:
         assert frame_hdul[0].header[key] == accum_hdul[0].header[key]

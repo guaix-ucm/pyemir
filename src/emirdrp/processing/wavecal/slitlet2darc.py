@@ -3,19 +3,10 @@
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """Definition of Slitlet2dArc class"""
 
@@ -64,7 +55,7 @@ def expected_y0_lower_frontier(islitlet):
         Ordinate value.
     """
 
-    y0_lower =  0.5 + float((islitlet - 1) * EMIR_NPIXPERSLIT_RECTIFIED)
+    y0_lower = 0.5 + float((islitlet - 1) * EMIR_NPIXPERSLIT_RECTIFIED)
     return y0_lower
 
 
@@ -82,7 +73,7 @@ def expected_y0_upper_frontier(islitlet):
         Ordinate value.
     """
 
-    y0_upper =  float((islitlet) * EMIR_NPIXPERSLIT_RECTIFIED) + 0.5
+    y0_upper = float((islitlet) * EMIR_NPIXPERSLIT_RECTIFIED) + 0.5
     return y0_upper
 
 
@@ -311,10 +302,10 @@ class Slitlet2dArc(object):
         self.i_middle_spectrail = 1
         self.i_upper_spectrail = 2
         self.list_spectrails = expected_distorted_boundaries(
-                islitlet, self.csu_bar_slit_center,
-                [0, 0.5, 1], params, parmodel,
-                numpts=101, deg=5, debugplot=0
-            )
+            islitlet, self.csu_bar_slit_center,
+            [0, 0.5, 1], params, parmodel,
+            numpts=101, deg=5, debugplot=0
+        )
         # update y_rectified computed at x0_reference
         for spectrail in self.list_spectrails:
             spectrail.y_rectified = spectrail.poly_funct(self.x0_reference)
@@ -380,9 +371,9 @@ class Slitlet2dArc(object):
         # EMIR_NPIXPERSLIT_RECTIFIED pixels
         # a) scan number (in pixels, from 1 to NAXIS2)
         xdum1 = self.corr_yrect_a + \
-                self.corr_yrect_b * self.y0_frontier_lower
+            self.corr_yrect_b * self.y0_frontier_lower
         xdum2 = self.corr_yrect_a + \
-                self.corr_yrect_b * self.y0_frontier_upper
+            self.corr_yrect_b * self.y0_frontier_upper
         # b) row number (starting from zero)
         self.min_row_rectified = \
             int((round(xdum1 * 10) + 5) / 10) - self.bb_ns1_orig
@@ -899,7 +890,7 @@ class Slitlet2dArc(object):
                 # compute expected ordinate y_expected in the rectified
                 # image
                 y_expected = self.corr_yrect_a + self.corr_yrect_b * \
-                             spectrail.y_rectified
+                    spectrail.y_rectified
                 self.y_inter_rect = np.append(self.y_inter_rect, y_expected)
         if abs(self.debugplot) >= 10:
             print('>>> y0_frontier_lower_expected........: ',
@@ -1013,7 +1004,7 @@ class Slitlet2dArc(object):
                            dtype=float)
             for spectrail in self.list_spectrails:
                 yy0 = self.corr_yrect_a + \
-                      self.corr_yrect_b * spectrail.y_rectified
+                    self.corr_yrect_b * spectrail.y_rectified
                 yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
                 ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
                 xxx, yyy = fmap(self.ttd_order, self.ttd_aij, self.ttd_bij,
@@ -1034,7 +1025,7 @@ class Slitlet2dArc(object):
             for arc_line in self.list_arc_lines:
                 xline = arc_line.x_rectified - self.bb_nc1_orig
                 xx = np.array([xline] * n_points)
-                ax.plot(xx + self.bb_nc1_orig,yy + self.bb_ns1_orig, "b" )
+                ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
                 xxx, yyy = fmap(self.ttd_order, self.ttd_aij, self.ttd_bij,
                                 xx, yy)
                 ax.plot(xxx + self.bb_nc1_orig, yyy + self.bb_ns1_orig, "c")
@@ -1114,12 +1105,12 @@ class Slitlet2dArc(object):
                            dtype=float)
             for spectrail in self.list_spectrails:
                 yy0 = self.corr_yrect_a + \
-                      self.corr_yrect_b * spectrail.y_rectified
+                    self.corr_yrect_b * spectrail.y_rectified
                 yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
                 ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
             for spectrail in self.list_frontiers:
                 yy0 = self.corr_yrect_a + \
-                      self.corr_yrect_b * spectrail.y_rectified
+                    self.corr_yrect_b * spectrail.y_rectified
                 yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
                 ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b:")
             # grid with fitted transformation: arc lines

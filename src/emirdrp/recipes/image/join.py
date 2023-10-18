@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2020 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -50,7 +50,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
                            description='Accumulated result',
                            optional=True,
                            destination='accum',
-                           query_opts=ResultOf('DITHERED_IMAGE.accum', node='prev')
+                           query_opts=ResultOf(
+                               'DITHERED_IMAGE.accum', node='prev')
                            )
     frame = Result(prods.ProcessedImage)
     sky = Result(prods.ProcessedImage, optional=True)
@@ -58,7 +59,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
     # Accumulate Frame results
     accum = Result(prods.ProcessedImage, optional=True)
 
-    #@emirdrp.decorators.aggregate
+    # @emirdrp.decorators.aggregate
     @emirdrp.decorators.loginfo
     def run(self, rinput):
         partial_result = self.run_single(rinput)
@@ -74,7 +75,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         frame = partial_result.frame
 
-        if 0 <= naccum <= 1  or accum is None:
+        if 0 <= naccum <= 1 or accum is None:
             self.logger.debug('round %d initialize accumulator', naccum)
             newaccum = frame
         else:
@@ -108,9 +109,10 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         subpixshape = baseshape
         base_header = baseimg[0].header
         compute_sky = 'NUM-SK' not in base_header
-        compute_sky_advanced = False
+        # compute_sky_advanced = False
 
-        self.logger.debug('base image is: %s', self.datamodel.get_imgid(baseimg))
+        self.logger.debug('base image is: %s',
+                          self.datamodel.get_imgid(baseimg))
         self.logger.debug('images have NUM extension: %s', has_num_ext)
         self.logger.debug('images have BPM extension: %s', has_bpm_ext)
         self.logger.debug('compute sky is needed: %s', compute_sky)
@@ -178,7 +180,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             # regions = self.compute_regions(finalshape, box=200, corners=True)
 
             # Regions frm bright objects
-            regions = self.compute_regions_from_objs(hdulist[0].data, finalshape, box=20)
+            regions = self.compute_regions_from_objs(
+                hdulist[0].data, finalshape, box=20)
 
             try:
 
@@ -196,7 +199,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
                 finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
     #
                 self.logger.debug("Relative offsetsp (crosscorr) %s", offsetsp)
-                self.logger.info('Shape of resized array (crosscorr) is %s', finalshape)
+                self.logger.info(
+                    'Shape of resized array (crosscorr) is %s', finalshape)
 
                 # Resizing target imgs
                 self.logger.debug("Resize to final offsets")
@@ -211,14 +215,16 @@ class JoinDitheredImagesRecipe(EmirRecipe):
                 if self.intermediate_results:
                     self.logger.debug('save resized intermediate2 img')
                     for idx, arr_r in enumerate(data_arr_sr):
-                        self.save_intermediate_array(arr_r, 'interm2_%03d.fits' % idx)
+                        self.save_intermediate_array(
+                            arr_r, 'interm2_%03d.fits' % idx)
 
                 hdulist = self.combine(data_arr_sr, data_hdul, finalshape, offsetsp,
                                        refpix, use_errors)
 
                 self.save_intermediate_img(hdulist, 'result_initial2.fits')
             except Exception as error:
-                self.logger.warning('Error during cross-correlation, %s', error)
+                self.logger.warning(
+                    'Error during cross-correlation, %s', error)
 
         result = self.create_result(frame=hdulist, sky=sky_result)
         self.logger.info('end of dither recipe')
@@ -232,27 +238,31 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         has_bpm_ext = 'BPM' in baseimg
         baseshape = baseimg[0].shape
         subpixshape = baseshape
-        base_header = baseimg[0].header
+        # base_header = baseimg[0].header
         result = copy_img(baseimg)
 
         if has_num_ext:
             self.logger.debug('Using NUM extension')
-            masks = [numpy.where(m['NUM'].data, 0, 1).astype('int16') for m in data_hdul]
+            masks = [numpy.where(m['NUM'].data, 0, 1).astype('int16')
+                     for m in data_hdul]
         elif has_bpm_ext:
             self.logger.debug('Using BPM extension')
             #
-            masks = [numpy.where(m['BPM'].data, 1, 0).astype('int16') for m in data_hdul]
+            masks = [numpy.where(m['BPM'].data, 1, 0).astype('int16')
+                     for m in data_hdul]
         else:
             self.logger.warning('BPM missing, use zeros instead')
             false_mask = numpy.zeros(baseshape, dtype='int16')
             masks = [false_mask for _ in data_arr_sr]
 
         self.logger.debug('resize bad pixel masks')
-        mask_arr_r, _ = resize_arrays(masks, subpixshape, offsetsp, finalshape, fill=1)
+        mask_arr_r, _ = resize_arrays(
+            masks, subpixshape, offsetsp, finalshape, fill=1)
 
         # Position of refpixel in final image
         refpix_final = refpix + offsetsp[0]
-        self.logger.info('Position of refpixel in final image %s', refpix_final)
+        self.logger.info(
+            'Position of refpixel in final image %s', refpix_final)
 
         self.logger.info('Combine target images (final)')
         method = combine.median
@@ -278,7 +288,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # Update NUM-NCOM, sum of individual imagess
         ncom = 0
         for img in data_hdul:
-            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
+            hdu.header['history'] = "Image {}".format(
+                self.datamodel.get_imgid(img))
             ncom += img[0].header.get('NUM-NCOM', 1)
         hdr['NUM-NCOM'] = ncom
         hdr['UUID'] = str(uuid.uuid1())
@@ -298,7 +309,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # FIXME: this is mostly duplicated
         # in processing.combine
         baseimg = data_hdul[0]
-        base_header = baseimg[0].header
+        # base_header = baseimg[0].header
         result = copy_img(baseimg)
 
         self.logger.info('Combine target images (final)')
@@ -329,7 +340,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # Update NUM-NCOM, sum of individual images
         ncom = 0
         for img in data_hdul:
-            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
+            hdu.header['history'] = "Image {}".format(
+                self.datamodel.get_imgid(img))
             ncom += img[0].header.get('NUM-NCOM', 1)
         hdr['NUM-NCOM'] = ncom
         # Update WCS, approximate solution
@@ -353,7 +365,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
     def compute_offset_wcs_imgs(self, imgs, baseshape, subpixshape):
 
-        refpix = numpy.divide(numpy.array([baseshape], dtype='int'), 2).astype('float')
+        refpix = numpy.divide(numpy.array(
+            [baseshape], dtype='int'), 2).astype('float')
         offsets_xy = offsets_from_wcs_imgs(imgs, refpix)
         self.logger.debug("offsets_xy %s", offsets_xy)
         # Offsets in numpy order, swaping
@@ -366,7 +379,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         return finalshape, offsetsp, refpix, offsets_xy
 
     def compute_offset_crosscor(self, arrs, region, subpixshape, refine=False):
-        offsets_xy = offsets_from_crosscor(arrs, region, refine=refine, order='xy')
+        offsets_xy = offsets_from_crosscor(
+            arrs, region, refine=refine, order='xy')
         self.logger.debug("offsets_xy cross-corr %s", offsets_xy)
         # Offsets in numpy order, swaping
         offsets_fc = offsets_xy[:, ::-1]
@@ -401,7 +415,6 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         return finalshape, offsetsp, offsets_xy
 
-
     def compute_shapes_wcs(self, imgs):
 
         # Better near the center...
@@ -417,7 +430,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         ref_pix_xy = [coor_to_pix(c, order='xy') for c in ref_coor_xy]
 
         self.logger.info('Computing relative shapes')
-        finalshape, partialshapes, finalpix_xy = combine_shapes(shapes, ref_pix_xy, order='xy')
+        finalshape, partialshapes, finalpix_xy = combine_shapes(
+            shapes, ref_pix_xy, order='xy')
 
         return finalshape, partialshapes, ref_pix_xy_0, finalpix_xy
 
@@ -438,7 +452,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         if not has_bpm_ext:
             omasks = [(segmap[region] > 0) for region in regions]
         else:
-            omasks = [((segmap[region] > 0) & bpm) for region, bpm in zip(regions, masks)]
+            omasks = [((segmap[region] > 0) & bpm)
+                      for region, bpm in zip(regions, masks)]
 
         return omasks
 
@@ -466,7 +481,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             datetime.datetime.utcnow().isoformat()
         )
         for img in data_hdul:
-            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
+            hdu.header['history'] = "Image {}".format(
+                self.datamodel.get_imgid(img))
 
         if use_errors:
             varhdu = fits.ImageHDU(sky_data[1], name='VARIANCE')
@@ -481,7 +497,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         method = combine.mean
 
         self.logger.info('recombine images with segmentation mask')
-        sky_data = method([m[0].data for m in data_hdul], masks=omasks, dtype='float32')
+        sky_data = method([m[0].data for m in data_hdul],
+                          masks=omasks, dtype='float32')
 
         hdu = fits.PrimaryHDU(sky_data[0], header=base_header)
         points_no_data = (sky_data[2] == 0).sum()
@@ -497,7 +514,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             datetime.datetime.utcnow().isoformat()
         )
         for img in data_hdul:
-            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
+            hdu.header['history'] = "Image {}".format(
+                self.datamodel.get_imgid(img))
 
         msg = "missing pixels, total: {}, fraction: {:3.1f}".format(
             points_no_data,
@@ -523,7 +541,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         fframe = frames[0]
         img = fframe.open()
         result = copy_img(img)
-        base_header = result[0].header
+        # base_header = result[0].header
 
         imgs = []
         for f in frames:
@@ -532,7 +550,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
         self.logger.info('Computing offsets from WCS information')
 
-        finalshape, partial_shapes, refpix_xy_0, refpix_final_xy = self.compute_shapes_wcs(imgs)
+        finalshape, partial_shapes, refpix_xy_0, refpix_final_xy = self.compute_shapes_wcs(
+            imgs)
 
         self.logger.info('Shape of resized array is %s', finalshape)
         self.logger.debug("partial shapes %s", partial_shapes)
@@ -560,7 +579,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         )
 
         self.logger.debug('resize bad pixel masks')
-        mask_arr_r = resize_arrays_alt(masks, partial_shapes, finalshape, fill=1)
+        mask_arr_r = resize_arrays_alt(
+            masks, partial_shapes, finalshape, fill=1)
 
         self.logger.debug("not computing sky")
         data_arr_sr = data_arr_r
@@ -573,7 +593,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         scales = [1.0 / weight_accum, 1.0 / weight_frame]
         self.logger.debug("weights for 'accum' and 'frame', %s", scales)
         method = combine.mean
-        out = method(data_arr_sr, masks=mask_arr_r, scales=scales, dtype='float32')
+        out = method(data_arr_sr, masks=mask_arr_r,
+                     scales=scales, dtype='float32')
 
         self.logger.debug('create result image')
         hdu = result[0]
@@ -595,7 +616,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # Update NUM-NCOM, sum of individual frames
         ncom = 0
         for img in imgs:
-            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
+            hdu.header['history'] = "Image {}".format(
+                self.datamodel.get_imgid(img))
             ncom += img[0].header['NUM-NCOM']
 
         hdr['NUM-NCOM'] = ncom
@@ -635,7 +657,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         xref_cross = finalshape[1] // 2
         yref_cross = finalshape[0] // 2
         #
-        self.logger.debug("Reference position is (x,y) %d  %d", xref_cross + 1, yref_cross + 1)
+        self.logger.debug("Reference position is (x,y) %d  %d",
+                          xref_cross + 1, yref_cross + 1)
         self.logger.debug("Reference regions size is %d", 2 * box + 1)
         region = image_box2d(xref_cross, yref_cross, finalshape, (box, box))
         regions.append(region)
@@ -646,8 +669,10 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
             for xi in [xref_c, 3 * xref_c]:
                 for yi in [yref_c, 3 * yref_c]:
-                    self.logger.debug("Reference position is (x,y) %d  %d", xi + 1, yi + 1)
-                    self.logger.debug("Reference regions size is %d", 2 * box + 1)
+                    self.logger.debug(
+                        "Reference position is (x,y) %d  %d", xi + 1, yi + 1)
+                    self.logger.debug(
+                        "Reference regions size is %d", 2 * box + 1)
                     region = image_box2d(xi, yi, finalshape, (box, box))
                     regions.append(region)
 
@@ -674,7 +699,8 @@ class JoinDitheredImagesRecipe(EmirRecipe):
 
 
 class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
-    obresult = ObservationResultRequirement(query_opts=ResultOf('frame', node='children'))
+    obresult = ObservationResultRequirement(
+        query_opts=ResultOf('frame', node='children'))
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     # extinction = Extinction_Requirement()
     # sources = Catalog_Requirement()
@@ -734,9 +760,10 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
         subpixshape = baseshape
         base_header = baseimg[0].header
         compute_sky = 'NUM-SK' not in base_header
-        compute_sky_advanced = False
+        # compute_sky_advanced = False
 
-        self.logger.debug('base image is: %s', self.datamodel.get_imgid(baseimg))
+        self.logger.debug('base image is: %s',
+                          self.datamodel.get_imgid(baseimg))
         self.logger.debug('images have NUM extension: %s', has_num_ext)
         self.logger.debug('images have BPM extension: %s', has_bpm_ext)
         self.logger.debug('compute sky is needed: %s', compute_sky)
@@ -789,25 +816,29 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
 
         if has_num_ext:
             self.logger.debug('Using NUM extension')
-            masks = [numpy.where(m['NUM'].data, 0, 1).astype('int16') for m in data_hdul]
+            masks = [numpy.where(m['NUM'].data, 0, 1).astype('int16')
+                     for m in data_hdul]
         elif has_bpm_ext:
             self.logger.debug('Using BPM extension')
             #
-            masks = [numpy.where(m['BPM'].data, 1, 0).astype('int16') for m in data_hdul]
+            masks = [numpy.where(m['BPM'].data, 1, 0).astype('int16')
+                     for m in data_hdul]
         else:
             self.logger.warning('BPM missing, use zeros instead')
             false_mask = numpy.zeros(baseshape, dtype='int16')
             masks = [false_mask for _ in data_arr_sr]
 
         self.logger.debug('resize bad pixel masks')
-        mask_arr_r, _ = resize_arrays(masks, subpixshape, offsetsp, finalshape, fill=1)
+        mask_arr_r, _ = resize_arrays(
+            masks, subpixshape, offsetsp, finalshape, fill=1)
 
         if self.intermediate_results:
             self.logger.debug('save resized intermediate img')
             for idx, arr_r in enumerate(data_arr_sr):
                 self.save_intermediate_array(arr_r, 'interm1_%03d.fits' % idx)
 
-        hdulist = self.combine2(data_arr_sr, mask_arr_r, data_hdul, offsetsp, use_errors)
+        hdulist = self.combine2(data_arr_sr, mask_arr_r,
+                                data_hdul, offsetsp, use_errors)
 
         self.save_intermediate_img(hdulist, 'result_initial1.fits')
 
@@ -818,7 +849,8 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
             # regions_c = self.compute_regions(finalshape, box=200, corners=True)
 
             # Regions frm bright objects
-            regions_c = self.compute_regions_from_objs(hdulist[0].data, finalshape, box=20)
+            regions_c = self.compute_regions_from_objs(
+                hdulist[0].data, finalshape, box=20)
 
             try:
 
@@ -836,7 +868,8 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
                 finalshape, offsetsp = combine_shape(subpixshape, offsets_fc_t)
                 #
                 self.logger.debug("Relative offsetsp (crosscorr) %s", offsetsp)
-                self.logger.info('Shape of resized array (crosscorr) is %s', finalshape)
+                self.logger.info(
+                    'Shape of resized array (crosscorr) is %s', finalshape)
 
                 # Resizing target imgs
                 self.logger.debug("Resize to final offsets")
@@ -851,33 +884,39 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
                 if self.intermediate_results:
                     self.logger.debug('save resized intermediate2 img')
                     for idx, arr_r in enumerate(data_arr_sr):
-                        self.save_intermediate_array(arr_r, 'interm2_%03d.fits' % idx)
+                        self.save_intermediate_array(
+                            arr_r, 'interm2_%03d.fits' % idx)
 
                 self.logger.debug('resize bad pixel masks')
-                mask_arr_r, _ = resize_arrays(masks, subpixshape, offsetsp, finalshape, fill=1)
+                mask_arr_r, _ = resize_arrays(
+                    masks, subpixshape, offsetsp, finalshape, fill=1)
 
-                hdulist = self.combine2(data_arr_sr, mask_arr_r, data_hdul, offsetsp, use_errors)
+                hdulist = self.combine2(
+                    data_arr_sr, mask_arr_r, data_hdul, offsetsp, use_errors)
 
                 self.save_intermediate_img(hdulist, 'result_initial2.fits')
             except Exception as error:
-                self.logger.warning('Error during cross-correlation, %s', error)
+                self.logger.warning(
+                    'Error during cross-correlation, %s', error)
 
-
-        catalog, objmask = self.create_object_catalog(hdulist[0].data, border=50)
+        catalog, objmask = self.create_object_catalog(
+            hdulist[0].data, border=50)
 
         data_arr_sky = [sky_result[0].data for _ in data_arr_sr]
-        data_arr_0 = [(d[r] + s) for d, r, s in zip(data_arr_sr, regions, data_arr_sky)]
+        data_arr_0 = [(d[r] + s)
+                      for d, r, s in zip(data_arr_sr, regions, data_arr_sky)]
         data_arr_r = [d.copy() for d in data_arr_sr]
 
         for inum in range(1, rinput.iterations + 1):
             # superflat
-            sf_data = self.compute_superflat(data_arr_0, objmask, regions, channels)
+            sf_data = self.compute_superflat(
+                data_arr_0, objmask, regions, channels)
             fits.writeto('superflat_%d.fits' % inum, sf_data, overwrite=True)
             # apply superflat
             data_arr_rf = data_arr_r
             for base, arr, reg in zip(data_arr_rf, data_arr_0, regions):
                 arr_f = arr / sf_data
-                #arr_f = arr
+                # arr_f = arr
                 base[reg] = arr_f
 
             # compute sky advanced
@@ -894,7 +933,7 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
                 l2, = numpy.nonzero(idxs2)
                 limit1 = l1[-rinput.sky_images:]
                 limit2 = l2[:rinput.sky_images]
-                len_l1 =len(limit1)
+                len_l1 = len(limit1)
                 len_l2 = len(limit2)
                 self.logger.info('For image %s, using %d-%d images)', idx,
                                  len_l1, len_l2)
@@ -915,7 +954,8 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
                     skydata.append(data_s)
                     skymasks.append(mask_s)
                     skyscales.append(scale_s)
-                self.logger.debug('computing background with %d frames', len(skydata))
+                self.logger.debug(
+                    'computing background with %d frames', len(skydata))
                 sky, _, num = median(skydata, skymasks, scales=skyscales)
                 # rescale
                 sky *= my_sky_scale
@@ -926,7 +966,7 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
                     # We have pixels without
                     # sky background information
                     self.logger.warn('pixels without sky information when correcting %d',
-                                 idx)
+                                     idx)
 
                     # FIXME: during development, this is faster
                     # sky[binmask] = sky[num != 0].mean()
@@ -947,17 +987,20 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
             if self.intermediate_results:
                 self.logger.debug('save resized intermediate img')
                 for idx, arr_r in enumerate(data_arr_rfs):
-                    self.save_intermediate_array(arr_r, 'interm_%d_%03d.fits' % (inum, idx))
+                    self.save_intermediate_array(
+                        arr_r, 'interm_%d_%03d.fits' % (inum, idx))
 
-
-            hdulist = self.combine2(data_arr_rfs, mask_arr_r, data_hdul, offsetsp, use_errors)
+            hdulist = self.combine2(
+                data_arr_rfs, mask_arr_r, data_hdul, offsetsp, use_errors)
 
             self.save_intermediate_img(hdulist, 'result_%d.fits' % inum)
 
             # For next step
-            catalog, objmask = self.create_object_catalog(hdulist[0].data, border=50)
+            catalog, objmask = self.create_object_catalog(
+                hdulist[0].data, border=50)
 
-            data_arr_0 = [(d[r] + s) for d, r, s in zip(data_arr_rfs, regions, data_arr_sky)]
+            data_arr_0 = [(d[r] + s)
+                          for d, r, s in zip(data_arr_rfs, regions, data_arr_sky)]
             data_arr_r = [d.copy() for d in data_arr_rfs]
 
         result = self.create_result(frame=hdulist)
@@ -970,7 +1013,8 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
         mask = [objmask[r] for r in regions]
         scales = [numpy.median(d) for d in data_arr_r]
         self.logger.debug('flat scaling %s', scales)
-        sf_data, _sf_var, sf_num = flatcombine(data_arr_r, masks=mask, scales=scales)
+        sf_data, _sf_var, sf_num = flatcombine(
+            data_arr_r, masks=mask, scales=scales)
 
         for channel in channels:
             mask = (sf_num[channel] == 0)
@@ -985,7 +1029,8 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
         method = combine.mean
 
         self.logger.info('recombine images with segmentation mask')
-        sky_data = method([m[0].data for m in data_hdul], masks=omasks, dtype='float32')
+        sky_data = method([m[0].data for m in data_hdul],
+                          masks=omasks, dtype='float32')
 
         hdu = fits.PrimaryHDU(sky_data[0], header=base_header)
         points_no_data = (sky_data[2] == 0).sum()
@@ -1001,7 +1046,8 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
             datetime.datetime.utcnow().isoformat()
         )
         for img in data_hdul:
-            hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
+            hdu.header['history'] = "Image {}".format(
+                self.datamodel.get_imgid(img))
 
         msg = "missing pixels, total: {}, fraction: {:3.1f}".format(
             points_no_data,

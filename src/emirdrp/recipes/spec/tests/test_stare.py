@@ -35,9 +35,11 @@ def create_frame_flat():
 def test_subs():
 
     expected_data = 2.5 + numpy.zeros((10, 10))
-    keys = {'DATE-OBS': '2001-10-01T12:33:43.345', 'TSUTC1': 1000000001.00034, 'TSUTC2': 1000000100.00034}
+    keys = {'DATE-OBS': '2001-10-01T12:33:43.345',
+            'TSUTC1': 1000000001.00034, 'TSUTC2': 1000000100.00034}
     frames1 = numina.core.DataFrame(frame=create_frame(val=3, keys=keys))
-    keys = {'DATE-OBS': '2001-10-01T12:35:44.345', 'TSUTC1': 1000000101.00034, 'TSUTC2': 1000000200.00034}
+    keys = {'DATE-OBS': '2001-10-01T12:35:44.345',
+            'TSUTC1': 1000000101.00034, 'TSUTC2': 1000000200.00034}
     frames2 = numina.core.DataFrame(frame=create_frame(val=2, keys=keys))
 
     obsresult = numina.core.ObservationResult()
@@ -46,8 +48,8 @@ def test_subs():
     recipe = StareSpectraRecipe()
     rinput = recipe.create_input(
         obresult=obsresult,
-        master_dark = numina.core.DataFrame(frame=create_frame_dark()),
-        master_flat = numina.core.DataFrame(frame=create_frame_flat())
+        master_dark=numina.core.DataFrame(frame=create_frame_dark()),
+        master_flat=numina.core.DataFrame(frame=create_frame_flat())
     )
     result = recipe.run(rinput)
 

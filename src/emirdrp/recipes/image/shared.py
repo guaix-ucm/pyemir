@@ -1,21 +1,12 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """Routines shared by image mode recipes"""
 
@@ -27,7 +18,6 @@ import math
 import six
 import numpy
 from astropy.io import fits
-import astropy.wcs
 from astropy.visualization import SqrtStretch
 from astropy.visualization import PercentileInterval
 from astropy.visualization.mpl_normalize import ImageNormalize
@@ -49,6 +39,7 @@ from numina.exceptions import RecipeError
 
 from emirdrp.util.sextractor import SExtractor
 from emirdrp.util.sextractor import open as sopen
+from emirdrp.util import sexcatalog
 from emirdrp.core.recipe import EmirRecipe
 from emirdrp.products import SourcesCatalog
 from emirdrp.instrument.channels import FULL
@@ -65,7 +56,7 @@ _logger = logging.getLogger('numina.recipes.emir')
 
 
 def intersection(a, b, scale=1):
-    '''Intersection between two segments.'''
+    """Intersection between two segments."""
     try:
         a1, a2 = a
     except TypeError:
@@ -238,7 +229,7 @@ class DirectImageCommon(EmirRecipe):
                 if ri.offsets is not None:
                     _logger.info('Using offsets from parameters')
                     base_ref = numpy.asarray(ri.offsets)
-                    list_of_offsets= -(base_ref - base_ref[0])
+                    list_of_offsets = -(base_ref - base_ref[0])
                 else:
                     _logger.info('Computing offsets from WCS information')
                     list_of_offsets = offsets_from_wcs(targetframes, refpix)
@@ -624,7 +615,8 @@ class DirectImageCommon(EmirRecipe):
             # saving the three extensions
             fits.writeto('result_i%0d.fits' % step, out[0], overwrite=True)
             fits.writeto('result_var_i%0d.fits' % step, out[1], overwrite=True)
-            fits.writeto('result_npix_i%0d.fits' % step, out[2], overwrite=True)
+            fits.writeto('result_npix_i%0d.fits' %
+                         step, out[2], overwrite=True)
 
             return out
 
@@ -997,10 +989,8 @@ class DirectImageCommon(EmirRecipe):
 
         # sextractor takes care of bad pixels
 
-
-        #if seeing_fwhm is not None and seeing_fwhm > 0:
+        # if seeing_fwhm is not None and seeing_fwhm > 0:
         #    sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
-
 
         if remove_border:
             weigthmap = 'weights4rms.fits'
@@ -1030,17 +1020,17 @@ class DirectImageCommon(EmirRecipe):
             border = (wm < lower)
             fits.writeto(weigthmap, border.astype('uint8'), overwrite=True)
 
-            #sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+            # sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             # FIXME: this is a magic number
             # sex.config['WEIGHT_THRESH'] = 50
-            #sex.config['WEIGHT_IMAGE'] = weigthmap
+            # sex.config['WEIGHT_IMAGE'] = weigthmap
         else:
-            border=None
+            border = None
 
         filename = 'result_i%0d.fits' % (step)
 
         # Lauch SExtractor on a FITS file
-        #sex.run(filename)
+        # sex.run(filename)
 
         data_res = fits.getdata(filename)
         data_res = data_res.byteswap().newbyteorder()
@@ -1049,7 +1039,7 @@ class DirectImageCommon(EmirRecipe):
 
         _logger.info('Runing source extraction tor in %s', filename)
         objects, objmask = sep.extract(data_sub, 1.5, err=bkg.globalrms,
-                              mask=border, segmentation_map=True)
+                                       mask=border, segmentation_map=True)
         fits.writeto(name_segmask(step), objmask, overwrite=True)
 
         # # Plot objects

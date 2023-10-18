@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -135,7 +135,8 @@ class BaseABBARecipe(EmirRecipe):
             o.frames = [DataFrame(frame=hdulist)]
             subd = {}
             subd['obresult'] = o
-            bardata = pkgutil.get_data('emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
+            bardata = pkgutil.get_data(
+                'emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
             ss = S.StringIO(bardata.decode('utf8'))
             subd['bars_nominal_positions'] = numpy.loadtxt(ss)
 
@@ -204,9 +205,9 @@ class BaseABBARecipe(EmirRecipe):
             len(cdata),
             method_name
         )
-        #hdu.header['history'] = 'Combination time {}'.format(
+        # hdu.header['history'] = 'Combination time {}'.format(
         #    datetime.datetime.utcnow().isoformat()
-        #)
+        # )
         # Update NUM-NCOM, sum of individual frames
         ncom = 0
         for hdul in cdata:
@@ -254,14 +255,14 @@ class BaseABBARecipe(EmirRecipe):
     def aggregate2(self, img1, img2, naccum):
 
         frames = [img1, img2]
-        use_errors = True
+        # use_errors = True
         # Initial checks
         fframe = frames[0]
         # Ref image
         img = fframe.open()
         has_num_ext = 'NUM' in img
         has_bpm_ext = 'BPM' in img
-        base_header = img[0].header
+        # base_header = img[0].header
         baseshape = img[0].shape
 
         data_hdul = []
@@ -271,7 +272,8 @@ class BaseABBARecipe(EmirRecipe):
 
         if has_num_ext:
             self.logger.debug('Using NUM extension')
-            masks = [numpy.where(m['NUM'].data, 0, 1).astype('uint8') for m in data_hdul]
+            masks = [numpy.where(m['NUM'].data, 0, 1).astype('uint8')
+                     for m in data_hdul]
         elif has_bpm_ext:
             self.logger.debug('Using BPM extension')
             masks = [m['BPM'].data for m in data_hdul]
@@ -284,7 +286,8 @@ class BaseABBARecipe(EmirRecipe):
 
         weight_accum = 2 * (1 - 1.0 / naccum)
         weight_frame = 2.0 / naccum
-        self.logger.debug("weights for 'accum' and 'frame', %s", [weight_accum, weight_frame])
+        self.logger.debug("weights for 'accum' and 'frame', %s", [
+                          weight_accum, weight_frame])
         scales = [1.0 / weight_accum, 1.0 / weight_frame]
         method = combine.mean
         data_arr = [hdul[0].data for hdul in data_hdul]

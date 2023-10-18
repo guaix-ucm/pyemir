@@ -40,9 +40,12 @@ class BarDetectionRecipe(EmirRecipe):
                                          'Nominal positions of the bars'
                                          )
     median_filter_size = Parameter(5, 'Size of the median box')
-    average_box_row_size = Parameter(7, 'Number of rows to average for fine centering (odd)')
-    average_box_col_size = Parameter(21, 'Number of columns to extract for fine centering (odd)')
-    fit_peak_npoints = Parameter(3, 'Number of points to use for fitting the peak (odd)')
+    average_box_row_size = Parameter(
+        7, 'Number of rows to average for fine centering (odd)')
+    average_box_col_size = Parameter(
+        21, 'Number of columns to extract for fine centering (odd)')
+    fit_peak_npoints = Parameter(
+        3, 'Number of points to use for fitting the peak (odd)')
 
     # Recipe Products
     frame = Result(prods.ProcessedImage)
@@ -63,7 +66,8 @@ class BarDetectionRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, reduction_flow=flow)
+        hdulist = basic_processing_with_combination(
+            rinput, reduction_flow=flow)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)

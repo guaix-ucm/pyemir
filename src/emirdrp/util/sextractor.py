@@ -166,11 +166,13 @@ __version__ = "1.15.0 (2005-07-06)"
 
 # ======================================================================
 
+# flake8: noqa
 
 class SExtractorException(Exception):
     pass
 
 # ======================================================================
+
 
 nnw_config = \
     """NNW
@@ -526,7 +528,8 @@ class SExtractor:
             else:
                 value = str(self.config[key])
 
-            print(("%-16s       %-16s # %s" % (key, value, SExtractor._SE_config[key]['comment'])), file=main_f)
+            print(("%-16s       %-16s # %s" % (key, value,
+                  SExtractor._SE_config[key]['comment'])), file=main_f)
 
         main_f.close()
 

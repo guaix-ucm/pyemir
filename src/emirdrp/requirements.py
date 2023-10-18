@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -22,13 +22,13 @@ EMIRObservationResultRequirement = ObservationResultRequirement
 
 class EMIRConfigurationRequirement(Requirement):
     """The Recipe requires the configuration of EMIR."""
+
     def __init__(self):
 
         super(EMIRConfigurationRequirement,
               self).__init__(prods.EMIRConfigurationType,
                              "EMIR Configuration"
                              )
-
 
     def __repr__(self):
         sclass = type(self).__name__
@@ -100,7 +100,8 @@ class RectWaveCoeffRequirement(Requirement):
 class ListOfRectWaveCoeffRequirement(Requirement):
     def __init__(self, optional=False):
         super(ListOfRectWaveCoeffRequirement,
-              self).__init__(ListOfType(prods.RectWaveCoeff), 'List of Rectification+wavelength calibration coefficients',
+              self).__init__(ListOfType(prods.RectWaveCoeff),
+                             'List of Rectification+wavelength calibration coefficients',
                              optional=optional)
 
 
@@ -120,7 +121,7 @@ class Extinction_Requirement(Parameter):
     def __init__(self):
         super(Extinction_Requirement, self).__init__(
             0.0, 'Mean atmospheric extinction'
-            )
+        )
 
 
 class SkyImageSepTime_Requirement(Parameter):
@@ -128,7 +129,7 @@ class SkyImageSepTime_Requirement(Parameter):
         super(SkyImageSepTime_Requirement, self).__init__(
             10.0,
             'Maximum time interval between target and sky images [minutes]'
-            )
+        )
 
 
 class Catalog_Requirement(Parameter):
@@ -136,7 +137,7 @@ class Catalog_Requirement(Parameter):
         super(Catalog_Requirement, self).__init__(
             [], 'List of x, y coordinates to measure FWHM',
             optional=optional
-            )
+        )
 
 
 class Offsets_Requirement(Parameter):
@@ -144,4 +145,4 @@ class Offsets_Requirement(Parameter):
         super(Offsets_Requirement, self).__init__(
             [], 'List of pairs of offsets',
             optional=optional
-            )
+        )

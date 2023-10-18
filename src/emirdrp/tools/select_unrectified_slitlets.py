@@ -1,21 +1,12 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 from __future__ import division
 from __future__ import print_function
@@ -174,9 +165,9 @@ def main(args=None):
         raise ValueError("INSTRUME keyword is not 'EMIR'!")
 
     # read GRISM, FILTER and ROTANG from FITS header
-    grism = image_header['grism']
-    spfilter = image_header['filter']
-    rotang = image_header['rotang']
+    # grism = image_header['grism']
+    # spfilter = image_header['filter']
+    # rotang = image_header['rotang']
 
     # read fitted_bound_param JSON file
     fittedpar_dict = json.loads(open(args.fitted_bound_param.name).read())

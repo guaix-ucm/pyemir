@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2020 Universidad Complutense de Madrid
+# Copyright 2018-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -65,7 +65,7 @@ def rectwv_coeff_from_arc_image(reduced_image,
                                 args_threshold_wv=0,
                                 args_ylogscale=False,
                                 args_pdf=None,
-                                args_geometry=(0,0,640,480),
+                                args_geometry=(0, 0, 640, 480),
                                 debugplot=0):
     """Evaluate rect.+wavecal. coefficients from arc image
 
@@ -289,12 +289,12 @@ def rectwv_coeff_from_arc_image(reduced_image,
                 crval1_linear = poly_crval1_linear(csu_bar_slit_center)
                 cdelt1_linear = poly_cdelt1_linear(csu_bar_slit_center)
                 expected_wvmin = crval1_linear - \
-                                 args_margin_npix * cdelt1_linear
+                    args_margin_npix * cdelt1_linear
                 naxis1_linear = sp_median.shape[0]
                 crvaln_linear = crval1_linear + \
-                                (naxis1_linear - 1) * cdelt1_linear
+                    (naxis1_linear - 1) * cdelt1_linear
                 expected_wvmax = crvaln_linear + \
-                                 args_margin_npix * cdelt1_linear
+                    args_margin_npix * cdelt1_linear
                 # override previous estimates when necessary
                 if wvmin_expected is not None:
                     expected_wvmin = wvmin_expected
@@ -336,10 +336,10 @@ def rectwv_coeff_from_arc_image(reduced_image,
                 # clip master arc line list to useful region
                 if wvmin_useful is not None:
                     lok = wvmin_useful <= wv_master_all_eff
-                    wv_master_all_eff  = wv_master_all_eff[lok]
+                    wv_master_all_eff = wv_master_all_eff[lok]
                 if wvmax_useful is not None:
                     lok = wv_master_all_eff <= wvmax_useful
-                    wv_master_all_eff  = wv_master_all_eff[lok]
+                    wv_master_all_eff = wv_master_all_eff[lok]
 
                 # refine wavelength calibration
                 if args_poldeg_refined > 0:
@@ -373,13 +373,13 @@ def rectwv_coeff_from_arc_image(reduced_image,
                 # check that the trimming of wv_master and wv_master_all has
                 # preserved the wavelength range [crmin1_linear, crmax1_linear]
                 if crmin1_linear < expected_wvmin:
-                    logger.warning(">>> islitlet: " +str(islitlet))
+                    logger.warning(">>> islitlet: " + str(islitlet))
                     logger.warning("expected_wvmin: " + str(expected_wvmin))
                     logger.warning("crmin1_linear.: " + str(crmin1_linear))
                     logger.warning("WARNING: Unexpected crmin1_linear < "
                                    "expected_wvmin")
                 if crmax1_linear > expected_wvmax:
-                    logger.warning(">>> islitlet: " +str(islitlet))
+                    logger.warning(">>> islitlet: " + str(islitlet))
                     logger.warning("expected_wvmax: " + str(expected_wvmax))
                     logger.warning("crmax1_linear.: " + str(crmax1_linear))
                     logger.warning("WARNING: Unexpected crmax1_linear > "

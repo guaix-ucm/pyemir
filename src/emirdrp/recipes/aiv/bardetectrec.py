@@ -47,8 +47,10 @@ class BarDetectionRecipe(EmirRecipe):
                                          )
     median_filter_size = Parameter(5, 'Size of the median box')
     canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
-    canny_high_threshold = Parameter(0.04, 'High threshold for the canny algorithm')
-    canny_low_threshold = Parameter(0.01, 'High threshold for the canny algorithm')
+    canny_high_threshold = Parameter(
+        0.04, 'High threshold for the canny algorithm')
+    canny_low_threshold = Parameter(
+        0.01, 'High threshold for the canny algorithm')
 
     # Recipe Results
     frame = Result(prods.ProcessedImage)
@@ -69,7 +71,8 @@ class BarDetectionRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, reduction_flow=flow)
+        hdulist = basic_processing_with_combination(
+            rinput, reduction_flow=flow)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -114,7 +117,7 @@ class BarDetectionRecipe(EmirRecipe):
         # Number or rows used
         # These other parameters cab be tuned also
         total = 5
-        maxdist = 1.0
+        # maxdist = 1.0
         bstart = 100
         bend = 1900
 
@@ -139,7 +142,7 @@ class BarDetectionRecipe(EmirRecipe):
             rbarid = lbarid + 55
             ref_y_coor = coords[2] + vec[1]
             prow = coor_to_pix_1d(ref_y_coor) - 1
-            fits_row = prow + 1 # FITS pixel index
+            fits_row = prow + 1  # FITS pixel index
 
             logger.debug('looking for bars with ids %d - %d', lbarid, rbarid)
             logger.debug('reference y position is Y %7.2f', ref_y_coor)
@@ -151,7 +154,8 @@ class BarDetectionRecipe(EmirRecipe):
 
             # If no bar is found, append and empty token
             if nbars_found == 0:
-                logger.debug('bars %d, %d not found at row %d', lbarid, rbarid, fits_row)
+                logger.debug('bars %d, %d not found at row %d',
+                             lbarid, rbarid, fits_row)
                 thisres1 = (lbarid, fits_row, 0, 0, 1)
                 thisres2 = (rbarid, fits_row, 0, 0, 1)
 
@@ -162,27 +166,29 @@ class BarDetectionRecipe(EmirRecipe):
                 c1 = centl[0]
                 c2 = centr[0]
 
-                logger.debug('bars found  at row %d between %7.2f - %7.2f', fits_row, c1, c2)
+                logger.debug(
+                    'bars found  at row %d between %7.2f - %7.2f', fits_row, c1, c2)
                 # Compute FWHM of the collapsed profile
 
-                cslit = arr_grey[prow-nt:prow+nt+1,:]
+                cslit = arr_grey[prow-nt:prow+nt+1, :]
                 pslit = cslit.mean(axis=0)
 
                 # Add 1 to return FITS coordinates
                 epos, epos_f, error = locate_bar_l(pslit, c1)
                 thisres1 = lbarid, fits_row, epos + 1, epos_f + 1, error
 
-
                 epos, epos_f, error = locate_bar_r(pslit, c2)
                 thisres2 = rbarid, fits_row, epos + 1, epos_f + 1, error
 
             elif nbars_found == 1:
-                logger.warning('only 1 edge found  at row %d, not yet implemented', fits_row)
+                logger.warning(
+                    'only 1 edge found  at row %d, not yet implemented', fits_row)
                 thisres1 = (lbarid, fits_row, 0, 0, 1)
                 thisres2 = (rbarid, fits_row, 0, 0, 1)
 
             else:
-                logger.warning('3 or more edges found  at row %d, not yet implemented', fits_row)
+                logger.warning(
+                    '3 or more edges found  at row %d, not yet implemented', fits_row)
                 thisres1 = (lbarid, fits_row, 0, 0, 1)
                 thisres2 = (rbarid, fits_row, 0, 0, 1)
 

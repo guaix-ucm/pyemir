@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2020 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -16,8 +16,10 @@ from numina.array.bbox import BoundingBox
 
 EMIR_NBARS = 55
 
+
 class CSUConf(object):
     """Information about the configuration of slits in the CSU"""
+
     def __init__(self, barmodel):
         self.name = 'CSU'
         self.conf_id = 'v1'
@@ -35,8 +37,10 @@ class CSUConf(object):
         self._update_slits({})
 
     def is_open(self):
-        lopen = all(self.bars[barid].x2 <= self.L_LIMIT for barid in self.LBARS)
-        ropen = all(self.bars[barid].x1 >= self.R_LIMIT for barid in self.RBARS)
+        lopen = all(self.bars[barid].x2 <=
+                    self.L_LIMIT for barid in self.LBARS)
+        ropen = all(self.bars[barid].x1 >=
+                    self.R_LIMIT for barid in self.RBARS)
 
         return lopen and ropen
 
@@ -105,7 +109,8 @@ class CSUConf(object):
             yref = hdr.get("YVSLI%d" % idx, OUTPOS) - 1
             target_coordinates_v = (xref, yref)
 
-            mm.append((idx, target_type, target_coordinates, target_coordinates_v))
+            mm.append(
+                (idx, target_type, target_coordinates, target_coordinates_v))
 
         bag = merge_slits(mm, max_slits=3, tol=1e-2)
 
@@ -215,6 +220,7 @@ class PhysicalBarR(PhysicalBar):
 
 class LogicalSlit(object):
     """Slit formed from combination of PhysicalBarL and PhysicalBarR"""
+
     def __init__(self, idx, lbars, rbars, target_type=TargetType.UNKNOWN):
         UNDEFPOS = -100
         self.target_type = target_type
@@ -234,9 +240,9 @@ class LogicalSlit(object):
             raise ValueError('len() are different')
 
         # bars must be paired
-        for l, r in zip(lbars_ids, rbars_ids):
-            if r != l + EMIR_NBARS:
-                raise ValueError('not paired {} and {}'.format(l, r))
+        for ll, r in zip(lbars_ids, rbars_ids):
+            if r != ll + EMIR_NBARS:
+                raise ValueError('not paired {} and {}'.format(ll, r))
 
         for a, b in zip(lbars_ids, lbars_ids[1:]):
             if b != a + 1:
@@ -254,7 +260,8 @@ class LogicalSlit(object):
         bbox_x1 = min(self.lbars.values(), key=lambda obk: obk.xpos).xpos
         bbox_x2 = max(self.rbars.values(), key=lambda obk: obk.xpos).xpos
         # Origin is 1
-        self.bbox_int = BoundingBox.from_coordinates(bbox_x1-1, bbox_x2-1, bbox_y1-1, bbox_y2-1)
+        self.bbox_int = BoundingBox.from_coordinates(
+            bbox_x1-1, bbox_x2-1, bbox_y1-1, bbox_y2-1)
 
     def bbox(self):
         return self.bbox_int
@@ -309,7 +316,7 @@ def merge_slits(mm, max_slits=3, tol=1e-2):
             # For REFERENCE
             for r_id, r_type, r_coor, r_coor_v in rest:
                 dis = numpy.hypot(t_coor[0] - r_coor[0], t_coor[1] - r_coor[1])
-                if r_type == TargetType.REFERENCE and (dis < tol) :
+                if r_type == TargetType.REFERENCE and (dis < tol):
                     bag[t_id].append(r_id)
                     cx2 += 1
                 else:

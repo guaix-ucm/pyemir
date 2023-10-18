@@ -1,21 +1,12 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 from __future__ import division
 from __future__ import print_function
@@ -312,7 +303,7 @@ def main(args=None):
             catlines = np.genfromtxt(arc_lines_tmpfile)
             # define wavelength and flux as separate arrays
             catlines_all_wave = catlines[:, 0]
-            catlines_all_flux = catlines[:, 1]
+            # catlines_all_flux = catlines[:, 1]
         elif args.oh_lines:
             dumdata = pkgutil.get_data('emirdrp.instrument.configs',
                                        'Oliva_etal_2013.dat')
@@ -321,15 +312,14 @@ def main(args=None):
             # define wavelength and flux as separate arrays
             catlines_all_wave = np.concatenate((catlines[:, 1],
                                                 catlines[:, 0]))
-            catlines_all_flux = np.concatenate((catlines[:, 2],
-                                                catlines[:, 2]))
+            # catlines_all_flux = np.concatenate((catlines[:, 2], catlines[:, 2]))
         else:
             raise ValueError("This should not happen!")
 
     else:
-            rectwv_coeff = None
-            catlines_all_wave = None
-            catlines_all_flux = None
+        rectwv_coeff = None
+        catlines_all_wave = None
+        # catlines_all_flux = None
 
     # ---
 
@@ -369,8 +359,8 @@ def main(args=None):
     if abs(args.debugplot) % 10 != 0:
         ax = ximshow(image2d=image2d,
                      title=sfitsfile + "\ngrism=" + grism +
-                           ", filter=" + spfilter +
-                           ", rotang=" + str(round(rotang, 2)),
+                     ", filter=" + spfilter +
+                     ", rotang=" + str(round(rotang, 2)),
                      image_bbox=(1, naxis1, 1, naxis2), show=False)
 
         # overplot boundaries

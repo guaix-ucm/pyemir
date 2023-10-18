@@ -5,14 +5,14 @@ from ..dtu_configuration import DtuConfiguration
 
 
 @pytest.mark.xfail(reason="DtuConfiguration.__eq__ not complete")
-def test_dtu_eq():
+def test_dtu_eq1():
 
     dtu1 = DtuConfiguration()
     assert not (dtu1 == 100)
 
 
 @pytest.mark.xfail(reason="DtuConfiguration.__ne__ not complete")
-def test_dtu_eq():
+def test_dtu_eq2():
 
     dtu1 = DtuConfiguration()
     assert dtu1 != 100
@@ -22,7 +22,8 @@ def compute_md5_checksum(conf):
     import hashlib
     mm = hashlib.md5()
     ndig = 3
-    values = (conf.xdtu, conf.ydtu, conf.zdtu, conf.xdtu_0, conf.ydtu_0, conf.zdtu_0)
+    values = (conf.xdtu, conf.ydtu, conf.zdtu,
+              conf.xdtu_0, conf.ydtu_0, conf.zdtu_0)
     m1 = [round(r, ndig) for r in values]
     m2 = ["{:+010.3f}".format(m) for m in m1]
     m3 = ':'.join(m2)

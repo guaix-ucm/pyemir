@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2022 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -18,7 +18,7 @@ import numpy as np
 from skimage.registration import phase_cross_correlation
 
 from numina.core import Result
-from numina.core import Requirement, Parameter
+from numina.core import Parameter
 from numina.array.combine import sigmaclip
 import numina.processing as proc
 from numina.processing.combine import basic_processing_with_combination
@@ -397,7 +397,7 @@ class GenerateRectwvCoeff(EmirRecipe):
                 ))
                 if self.intermediate_results:
                     data_product = np.fft.fft2(data1_rs) * \
-                                   np.fft.fft2(data2_rs).conj()
+                        np.fft.fft2(data2_rs).conj()
                     cc_image = np.fft.fftshift(np.fft.ifft2(data_product))
                     power = np.log10(cc_image.real)
                     hdu_power = fits.PrimaryHDU(power)

@@ -44,7 +44,7 @@ def test_dtuc_shift():
     coor_r = dtuconf.coor_r
     assert numpy.allclose(coor_r, expected)
 
-    expected_pix = [ 0.03992254, -0.95590473,  0.00305684]
+    expected_pix = [0.03992254, -0.95590473,  0.00305684]
     # Value in pixels in image coords
     trans3 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]  # T3 = T2 * T1
 
@@ -76,7 +76,7 @@ def test_dtur():
     header = HEADERS[0]
     dtuconf = DtuConf.from_header(header)
     x_dtu = [-205.679000854492, -24.4878005981445, -463.765991210938]
-    x_dtu_r =  [-17.206285211909773, -0.7186057740102463, 0.055023193358977096]
+    x_dtu_r = [-17.206285211909773, -0.7186057740102463, 0.055023193358977096]
 
     assert numpy.allclose(x_dtu, dtuconf.coor)
 

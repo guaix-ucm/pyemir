@@ -48,7 +48,8 @@ def create_ob(value, nimages, exptime=100.0, starttime=0.0):
         off2 = off1 + exptime
         t1 = base + off1
         t2 = base + off2
-        keys = {'DATE-OBS': '2019-04-12T03:01:05.678', 'TSUTC1': t1, 'TSUTC2': t2}
+        keys = {'DATE-OBS': '2019-04-12T03:01:05.678',
+                'TSUTC1': t1, 'TSUTC2': t2}
         frame = numina.core.DataFrame(frame=create_frame(val=value, keys=keys))
         frames.append(frame)
 
@@ -57,7 +58,7 @@ def create_ob(value, nimages, exptime=100.0, starttime=0.0):
     return obsresult
 
 
-@pytest.mark.parametrize("nimages", [1,2,3,4])
+@pytest.mark.parametrize("nimages", [1, 2, 3, 4])
 def test_stare_with_bpm(nimages):
 
     value = 4
@@ -69,7 +70,7 @@ def test_stare_with_bpm(nimages):
     recipe = StareImageBaseRecipe()
     rinput = recipe.create_input(
         obresult=obsresult,
-        master_bpm=numina.core.DataFrame(frame= create_frame_bpm()),
+        master_bpm=numina.core.DataFrame(frame=create_frame_bpm()),
         master_dark=numina.core.DataFrame(frame=create_frame_dark()),
         master_flat=numina.core.DataFrame(frame=create_frame_flat())
     )
@@ -89,7 +90,7 @@ def test_stare_with_bpm(nimages):
     assert numpy.allclose(expected_data, hdu.data)
 
 
-@pytest.mark.parametrize("nimages", [1,2,3,4])
+@pytest.mark.parametrize("nimages", [1, 2, 3, 4])
 def test_stare(nimages):
 
     value = 9

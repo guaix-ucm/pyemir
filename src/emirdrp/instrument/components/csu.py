@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of EMIR DRP
 #
@@ -161,7 +161,8 @@ if __name__ == '__main__':
     import io
     import numpy.polynomial.polynomial as pol
 
-    dumdata = pkgutil.get_data('emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
+    dumdata = pkgutil.get_data(
+        'emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
     ss = io.StringIO(dumdata.decode('utf8'))
     bars_nominal_positions = numpy.loadtxt(ss)
 

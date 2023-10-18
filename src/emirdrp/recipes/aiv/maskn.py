@@ -15,7 +15,7 @@ from __future__ import division
 import logging
 
 import numpy
-import six
+# import six
 import numina.exceptions
 from numina.core import Requirement, Result, Parameter
 import numina.types.array as tarray
@@ -60,7 +60,8 @@ class TestMaskRecipe(EmirRecipe):
     canny_sigma = Parameter(3.0, 'Sigma for the canny algorithm')
     obj_min_size = Parameter(200, 'Minimum size of the slit')
     obj_max_size = Parameter(3000, 'Maximum size of the slit')
-    slit_size_ratio = Parameter(4.0, 'Minimum ratio between height and width for slits')
+    slit_size_ratio = Parameter(
+        4.0, 'Minimum ratio between height and width for slits')
 
     # Recipe Results
     frame = Result(prods.ProcessedImage)
@@ -82,7 +83,8 @@ class TestMaskRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, reduction_flow=flow)
+        hdulist = basic_processing_with_combination(
+            rinput, reduction_flow=flow)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -179,13 +181,11 @@ class TestMaskRecipe(EmirRecipe):
         _logger.debug('Label filtered objects')
         relabel_objects, nb_labels = ndimage.label(fill_slits_clean)
         _logger.debug('%d objects found after filtering', nb_labels)
-        ids = list(six.moves.range(1, nb_labels + 1))
+        # ids = list(six.moves.range(1, nb_labels + 1))
 
         _logger.debug('Find regions and centers')
         regions = ndimage.find_objects(relabel_objects)
-        centers = ndimage.center_of_mass(data2, labels=relabel_objects,
-                                         index=ids
-                                         )
+        # centers = ndimage.center_of_mass(data2, labels=relabel_objects, index=ids)
 
         table = char_slit(data2, regions,
                           slit_size_ratio=rinput.slit_size_ratio

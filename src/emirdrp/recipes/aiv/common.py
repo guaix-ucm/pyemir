@@ -1,21 +1,12 @@
 #
-# Copyright 2013-2018 Universidad Complutense de Madrid
+# Copyright 2013-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 """AIV Recipes for EMIR"""
 
@@ -30,7 +21,6 @@ import scipy.optimize as opz
 from scipy import ndimage
 
 from astropy.modeling import models, fitting
-import astropy.wcs
 import photutils
 from photutils import CircularAperture
 
@@ -41,7 +31,6 @@ from numina.constants import FWHM_G
 from numina.array.fwhm import compute_fwhm_2d_simple
 from numina.array.utils import expand_region
 
-from emirdrp.core import EMIR_PIXSCALE
 from .procedures import compute_fwhm_enclosed_direct
 from .procedures import compute_fwhm_enclosed_grow
 from .procedures import moments
@@ -151,15 +140,15 @@ def gauss_model(data, center_r):
         sl[0].start, t.amplitude.value, t.x_stddev.value, t.y_stddev.value
     return mm
 
- 
+
 def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_half_box, do_recenter):
-    
+
     # recentered values
     centers_r = numpy.empty_like(centers_i)
     # Ignore certain pinholes
     compute_mask = numpy.ones((centers_i.shape[0],), dtype='bool')
     status_array = numpy.ones((centers_i.shape[0],), dtype='int')
-    
+
     for idx, (xi, yi) in enumerate(centers_i):
         # A failsafe
         _logger.info('for pinhole %i', idx)
@@ -172,7 +161,7 @@ def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_ha
             status_array[idx] = 0
         else:
             if do_recenter and (recenter_maxdist > 0.0):
-                kk = centering_centroid(
+                _ = centering_centroid(
                     data, xi, yi,
                     box=recenter_half_box,
                     maxdist=recenter_maxdist, nloop=recenter_nloop
@@ -248,7 +237,7 @@ def pinhole_char(data, ncenters, box=4, recenter_pinhole=True, maxdist=10.0):
     apertures = [2.0, 4.0]
     for idx, rad in enumerate(apertures):
         _logger.info('compute photometry with aperture radii %s', rad)
-        apertures = CircularAperture(centers_r[:,:2], r=rad)
+        apertures = CircularAperture(centers_r[:, :2], r=rad)
         faper = photutils.aperture_photometry(data, apertures)
         mm0[:, 9+idx] = faper['aperture_sum']
         _logger.info('done')
@@ -458,7 +447,7 @@ def pinhole_char2(
     apertures = [2.0, 4.0]
     for idx, rad in enumerate(apertures):
         _logger.info('compute photometry with aperture radii %s', rad)
-        apertures = CircularAperture(centers_r[:,:2], r=rad)
+        apertures = CircularAperture(centers_r[:, :2], r=rad)
         faper = photutils.aperture_photometry(data, apertures)
         mm0[:, 33+idx] = faper['aperture_sum']
         _logger.info('done')
@@ -516,7 +505,7 @@ def char_slit(data, regions, box_increase=3, slit_size_ratio=4.0):
         oshape = shape_of_slices(r)
 
         ratio = oshape[0] / oshape[1]
-        if (slit_size_ratio > 0)  and (ratio < slit_size_ratio):
+        if (slit_size_ratio > 0) and (ratio < slit_size_ratio):
             _logger.debug("this is not a slit, ratio=%f", ratio)
             continue
 
@@ -527,22 +516,22 @@ def char_slit(data, regions, box_increase=3, slit_size_ratio=4.0):
         _logger.debug('expanded region %r', rp)
         ref = rp[0].start, rp[1].start
         _logger.debug('reference point %r', ref)
-    
+
         datas = data[rp]
 
         c = ndimage.center_of_mass(datas)
-    
+
         fc = datas.shape[0] // 2
         cc = datas.shape[1] // 2
         _logger.debug("%d %d %d %d", fc, cc, c[0], c[1])
 
         _peak, fwhm_x, fwhm_y = compute_fwhm_2d_simple(datas, c[1], c[0])
 
-        _logger.debug('x=%f y=%f', c[1] +  ref[1], c[0] +  ref[0])
+        _logger.debug('x=%f y=%f', c[1] + ref[1], c[0] + ref[0])
         _logger.debug('fwhm_x %f fwhm_y %f', fwhm_x, fwhm_y)
 
         # colrow = ref[1] + cc + 1, ref[0] + fc + 1
 
-        result.append([c[1] +  ref[1] + 1, c[0] +  ref[0] + 1, fwhm_x, fwhm_y])
+        result.append([c[1] + ref[1] + 1, c[0] + ref[0] + 1, fwhm_x, fwhm_y])
 
     return result

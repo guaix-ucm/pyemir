@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2020 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -137,8 +137,10 @@ class MaskCheckRecipe(EmirRecipe):
     object_image = Result(prods.ProcessedImage)
     offset = Result(tarray.ArrayType)
     angle = Result(float)
-    matched_slits = Result(tarray.ArrayType, description="Centroids measured in the detector")
-    centroids = Result(tarray.ArrayType, description="Centroids measured in the detector")
+    matched_slits = Result(
+        tarray.ArrayType, description="Centroids measured in the detector")
+    centroids = Result(
+        tarray.ArrayType, description="Centroids measured in the detector")
 
     def run(self, rinput):
         self.logger.info('starting processing for image acquisition')
@@ -150,7 +152,8 @@ class MaskCheckRecipe(EmirRecipe):
 
         nframes = len(frames)
         if nframes not in [1, 2, 4]:
-            raise ValueError("expected 1, 2 or 4 frames, got {}".format(nframes))
+            raise ValueError(
+                "expected 1, 2 or 4 frames, got {}".format(nframes))
 
         interm = basic_processing_(frames, flow)
 
@@ -167,7 +170,8 @@ class MaskCheckRecipe(EmirRecipe):
             hdulist_object = process_abba(interm)
             # background_subs = True
         else:
-            raise ValueError("expected 1, 2 or 4 frames, got {}".format(nframes))
+            raise ValueError(
+                "expected 1, 2 or 4 frames, got {}".format(nframes))
 
         self.set_base_headers(hdulist_slit[0].header)
         self.set_base_headers(hdulist_object[0].header)
@@ -182,26 +186,32 @@ class MaskCheckRecipe(EmirRecipe):
         # (Off - raxis) = Rot * (Offnew - raxis)
         wcs = astropy.wcs.WCS(hdulist_slit[0].header)
         rotaxis = wcs.wcs.crpix - 1
-        ipa_deg = hdulist_object[0].header.get("IPA", cons.EMIR_REF_IPA) * u.deg
-        rotoff_deg = hdulist_object[0].header.get("ROTOFF", cons.EMIR_REF_IPA) * u.deg
+        ipa_deg = hdulist_object[0].header.get(
+            "IPA", cons.EMIR_REF_IPA) * u.deg
+        rotoff_deg = hdulist_object[0].header.get(
+            "ROTOFF", cons.EMIR_REF_IPA) * u.deg
 
-        self.logger.debug('center of rotation (from CRPIX) is %s', wcs.wcs.crpix)
+        self.logger.debug(
+            'center of rotation (from CRPIX) is %s', wcs.wcs.crpix)
 
-        csu_conf = self.load_csu_conf(hdulist_slit, rinput.bars_nominal_positions)
+        csu_conf = self.load_csu_conf(
+            hdulist_slit, rinput.bars_nominal_positions)
 
         # IF CSU is completely open OR there are no references,
         # this is not needed
         if not csu_conf.is_open():
-            #self.logger.info('CSU is configured, detecting slits')
+            # self.logger.info('CSU is configured, detecting slits')
             # slits_bb = self.compute_slits(hdulist_slit, csu_conf)
 
             # Not detecting slits. We trust the model
             slits_bb = None
             image_sep = hdulist_object[0].data.astype('float32')
 
-            self.logger.debug('center of rotation (from CRPIX) is %s', wcs.wcs.crpix)
+            self.logger.debug(
+                'center of rotation (from CRPIX) is %s', wcs.wcs.crpix)
             self.logger.debug('create adapted WCS from header WCS')
-            wcsa = dist.adapt_wcs(wcs, ipa_deg=ipa_deg.value, rotang_deg=rotoff_deg.value)
+            wcsa = dist.adapt_wcs(wcs, ipa_deg=ipa_deg.value,
+                                  rotang_deg=rotoff_deg.value)
             self.logger.debug('CD matrix of WCS %s', wcs.wcs.cd)
             self.logger.debug('CD matrix of adapted WCS %s', wcsa.wcs.cd)
             # angle in deg, offset in pixels on the CSU
@@ -221,8 +231,10 @@ class MaskCheckRecipe(EmirRecipe):
         self.logger.debug('Pixel size in NASMYTH_A %s mm', pixsize_na)
         # Offset is returned without units
         o_mm = ((offset * u.pixel) * pixsize_na).to(u.mm)
-        ipa_rot = create_rot2d(ipa_deg.to('', equivalencies=u.dimensionless_angles()))
-        rotoff_rot = create_rot2d(rotoff_deg.to('', equivalencies=u.dimensionless_angles()))
+        ipa_rot = create_rot2d(ipa_deg.to(
+            '', equivalencies=u.dimensionless_angles()))
+        rotoff_rot = create_rot2d(rotoff_deg.to(
+            '', equivalencies=u.dimensionless_angles()))
         self.logger.info('IPA is %s deg', ipa_deg.value)
         self.logger.info('ROTOFF is %s deg', rotoff_deg.value)
         self.logger.info('OFF (mm) %s', o_mm)
@@ -230,8 +242,10 @@ class MaskCheckRecipe(EmirRecipe):
         o_mm_rotoff = np.dot(rotoff_rot, o_mm)
 
         self.logger.info('=========================================')
-        self.logger.info('(WITH IPA) Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
-        self.logger.info('Offset Target in Focal Plane Frame %s mm', o_mm_rotoff)
+        self.logger.info(
+            '(WITH IPA) Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
+        self.logger.info(
+            'Offset Target in Focal Plane Frame %s mm', o_mm_rotoff)
         self.logger.info('=========================================')
 
         # P2 Pos REF VIRT
@@ -241,7 +255,7 @@ class MaskCheckRecipe(EmirRecipe):
 
         matched_slits, p_d, p_v, q_d, q_v = coords
         centroids_det = np.hstack([p_d, q_d])
-        centroids_virt = np.hstack([p_v, q_v])
+        # centroids_virt = np.hstack([p_v, q_v])
 
         # Value in mm
         offset_out = o_mm_rotoff.to(u.mm).value
@@ -250,8 +264,8 @@ class MaskCheckRecipe(EmirRecipe):
         result = self.create_result(
             slit_image=hdulist_slit,
             object_image=hdulist_object,
-            offset=offset_out, # offset is in milimeters
-            angle=angle_out, # angle is in degrees
+            offset=offset_out,  # offset is in milimeters
+            angle=angle_out,  # angle is in degrees
             qc=qc,
             matched_slits=matched_slits,
             centroids=centroids_det
@@ -275,7 +289,7 @@ class MaskCheckRecipe(EmirRecipe):
         # trans2 = [[0,1,0], [1,0,0], [0,0,1]]
         trans3 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]  # T3 = T2 * T1
 
-        vec = np.dot(trans3, dtuconf.coor_r) * u.micron/ cons.EMIR_PIXSIZE
+        vec = np.dot(trans3, dtuconf.coor_r) * u.micron / cons.EMIR_PIXSIZE
         self.logger.debug('DTU shift is %s', vec)
 
         self.logger.debug('create bar model')
@@ -341,7 +355,8 @@ class MaskCheckRecipe(EmirRecipe):
             all_coords_virt[bar.idx - 1] = bar.xpos, bar.y0
 
         # Origin of coordinates is 1 for this function
-        _x, _y = dist.wcs_exvp(wcs, all_coords_virt[:, 0], all_coords_virt[:, 1])
+        _x, _y = dist.wcs_exvp(
+            wcs, all_coords_virt[:, 0], all_coords_virt[:, 1])
         all_coords_real[:, 0] = _x
         all_coords_real[:, 1] = _y
 
@@ -384,12 +399,14 @@ class MaskCheckRecipe(EmirRecipe):
                                                plot=plot, lbarid=lbarid, rbarid=rbarid,
                                                plot2=False)
             if np.any(np.isnan([comp_l, comp_r])):
-                self.logger.warning("converting NaN value, border of=%d", idx + 1)
+                self.logger.warning(
+                    "converting NaN value, border of=%d", idx + 1)
                 self.logger.warning("skipping bar=%d", idx + 1)
                 continue
             elif comp_l > comp_r:
                 # Not refining
-                self.logger.warning("computed left border of=%d greater than right border", idx + 1)
+                self.logger.warning(
+                    "computed left border of=%d greater than right border", idx + 1)
                 comp2_l, comp2_r = px1, px2
             else:
                 region2 = 5
@@ -402,11 +419,13 @@ class MaskCheckRecipe(EmirRecipe):
                                                      plot2=False)
 
                 if np.any(np.isnan([comp2_l, comp2_r])):
-                    self.logger.warning("converting NaN value, border of=%d", idx + 1)
+                    self.logger.warning(
+                        "converting NaN value, border of=%d", idx + 1)
                     comp2_l, comp2_r = comp_l, comp_r
                 elif comp2_l > comp2_r:
                     # Not refining
-                    self.logger.warning("computed left border of=%d greater than right border", idx + 1)
+                    self.logger.warning(
+                        "computed left border of=%d greater than right border", idx + 1)
                     comp2_l, comp2_r = comp_l, comp_r
 
             # print('slit', lbarid, '-', rbarid, comp_l, comp_r)
@@ -421,7 +440,8 @@ class MaskCheckRecipe(EmirRecipe):
             _, y1 = dist.wcs_exvp(wcs, xpos1_virt + 1, y1_virt)
             _, y2 = dist.wcs_exvp(wcs, xpos2_virt + 1, y2_virt)
             # print(comp2_l, comp2_r, y1 - 1, y2 - 1)
-            cbb = BoundingBox.from_coordinates(comp2_l, comp2_r, y1 - 1, y2 - 1)
+            cbb = BoundingBox.from_coordinates(
+                comp2_l, comp2_r, y1 - 1, y2 - 1)
             slits_bb[lbarid] = cbb
             mask1[cbb.slice] = lbarid
 
@@ -445,7 +465,8 @@ def compute_off_rotation(data, wcsa, csu_conf, slits_bb=None, rotaxis=(0, 0),
         data = data.byteswap().newbyteorder()
 
     logger.info('we have %s slits', len(csu_conf.slits))
-    refslits = [slit for slit in csu_conf.slits.values() if slit.target_type is TargetType.REFERENCE]
+    refslits = [slit for slit in csu_conf.slits.values(
+    ) if slit.target_type is TargetType.REFERENCE]
     logger.info('we have %s reference slits', len(refslits))
 
     slits = []
@@ -465,10 +486,14 @@ def compute_off_rotation(data, wcsa, csu_conf, slits_bb=None, rotaxis=(0, 0),
             bb = this.bbox()
         region = bb.slice
         target_coordinates = this.target_coordinates
-        res = comp_centroid(data, bb, debug_plot=debug_plot, plot_reference=target_coordinates)
-        logger.debug('slit %s is formed by bars %s %s', this.idx, this.lbars_ids, this.rbars_ids)
-        logger.debug('in slit %s, reference is %s', this.idx, target_coordinates)
-        logger.debug('in slit %s, reference (v) is %s', this.idx, this.target_coordinates_v)
+        res = comp_centroid(data, bb, debug_plot=debug_plot,
+                            plot_reference=target_coordinates)
+        logger.debug('slit %s is formed by bars %s %s',
+                     this.idx, this.lbars_ids, this.rbars_ids)
+        logger.debug('in slit %s, reference is %s',
+                     this.idx, target_coordinates)
+        logger.debug('in slit %s, reference (v) is %s',
+                     this.idx, this.target_coordinates_v)
 
         if res is None:
             logger.warning('no object found in slit %s, skipping', this.idx)
@@ -504,7 +529,8 @@ def compute_off_rotation(data, wcsa, csu_conf, slits_bb=None, rotaxis=(0, 0),
         for idx, c in zip(slits, q2):
             logger.debug('in slit %s, object (v) is %s', idx, c)
         # Move from objects to reference
-        logger.debug('compute transform from measured objects to reference coordinates')
+        logger.debug(
+            'compute transform from measured objects to reference coordinates')
         offset, rot = fit_offset_and_rotation(q2, p2)
         logger.debug('rotation matrix')
         logger.debug('%s', rot)
@@ -530,7 +556,7 @@ def compute_off_rotation(data, wcsa, csu_conf, slits_bb=None, rotaxis=(0, 0),
         logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', pq1.mean(axis=0))
         logger.debug('MEAN pf REF-MEASURED (VIRT) %s', pq2.mean(axis=0))
 
-    return offset, angle, qc, (slits, p1,p2, q1, q2)
+    return offset, angle, qc, (slits, p1, p2, q1, q2)
 
 
 def calc_bars_borders(image, sob, prow, px1, px2, regionw, h=16, refine=False,
@@ -648,7 +674,8 @@ def calc_borders_step(image, sob, pr, ccl, ccr, sign=1, refine=False, plot=True,
 
     if xpeak:
         if refine:
-            x_t, y_t = refine_peaks(sign * sob[pr], np.array([xpeak]), window_width=3)
+            x_t, y_t = refine_peaks(
+                sign * sob[pr], np.array([xpeak]), window_width=3)
             xpeak_ref = x_t
         else:
             xpeak_ref = xpeak

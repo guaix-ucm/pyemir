@@ -1,20 +1,10 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Decorator for EMIR Recipes"""
@@ -28,7 +18,6 @@ import emirdrp.processing.info as info
 def loginfo(method):
     """Log the contents of Recipe Input"""
 
-
     def loginfo_method(self, rinput):
 
         klass = rinput.__class__
@@ -39,7 +28,8 @@ def loginfo(method):
                 self.logger.debug("DataFrame %s", info.gather_info_dframe(val))
             elif isinstance(val, ObservationResult):
                 for f in val.images:
-                    self.logger.debug("OB DataFrame %s" , info.gather_info_dframe(f))
+                    self.logger.debug("OB DataFrame %s",
+                                      info.gather_info_dframe(f))
             else:
                 pass
 

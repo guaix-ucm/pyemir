@@ -1,21 +1,12 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 from __future__ import division
 from __future__ import print_function
@@ -29,7 +20,6 @@ from uuid import uuid4
 from numina.array.display.fileinfo import list_fileinfo_from_txt
 from numina.array.distortion import ncoef_fmap
 from numina.tools.arg_file_is_new import arg_file_is_new
-from numina.tools.check_setstate_getstate import check_setstate_getstate
 import numina.types.qc
 
 from emirdrp.instrument.dtuconf import DtuConf
@@ -313,7 +303,7 @@ def main(args=None):
                 list_csu_bar_slit_center.append(csu_bar_slit_center)
             # check that list_csu_bar_slit_center is properly sorted
             if not np.all(list_csu_bar_slit_center[:-1] <=
-                      list_csu_bar_slit_center[1:]):
+                          list_csu_bar_slit_center[1:]):
                 print('cslitlet: ', cslitlet)
                 print('list_csu_bar_slit_center: ', list_csu_bar_slit_center)
                 raise ValueError('Unsorted list_csu_bar_slit_center')
@@ -349,7 +339,8 @@ def main(args=None):
                         else:
                             cij_modeled = tmpdict[keycoef + '_longslit_model']
                             if cij_modeled is None:
-                                raise ValueError("Unexpected cij_modeled=None!")
+                                raise ValueError(
+                                    "Unexpected cij_modeled=None!")
                             else:
                                 list_cij.append(cij_modeled[icoef])
                             if abs(args.debugplot) >= 10:

@@ -1,20 +1,10 @@
 #
-# Copyright 2010-2014 Universidad Complutense de Madrid
+# Copyright 2010-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Recipe for the reduction of gain calibration frames."""
@@ -45,7 +35,7 @@ class GainRecipe1(EmirRecipe):
 
     Recipe to calibrate the detector gain.
     """
-    
+
     obresult = ObservationResultRequirement()
     region = Parameter('channel', 'Region used to compute: '
                        '(full|quadrant|channel)',
@@ -55,7 +45,7 @@ class GainRecipe1(EmirRecipe):
     gain = Result(MasterGainMap(None, None, None))
     ron = Result(MasterRONMap(None, None))
 
-    def region(self, reqs):
+    def region_method(self, reqs):
         mm = reqs['region'].tolower()
         if mm == 'full':
             return ((slice(0, 2048), slice(0, 2048)))
@@ -81,7 +71,7 @@ class GainRecipe1(EmirRecipe):
             else:
                 raise RecipeError('frame is neither a RAMP nor a RESET')
 
-        channels = self.region(rinput)
+        channels = self.region_method(rinput)
         result_gain = numpy.zeros((len(channels), ))
         result_ron = numpy.zeros_like(result_gain)
 

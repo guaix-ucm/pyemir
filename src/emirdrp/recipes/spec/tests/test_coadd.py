@@ -8,6 +8,7 @@ import numina.exceptions
 from ..subs import BaseABBARecipe
 from ..coadd import CoaddABBARecipe
 
+
 def create_frame(val=0, pos=3, keys=None):
     data = numpy.zeros((10, 10))
     data[pos] += val
@@ -33,7 +34,7 @@ def create_frame_flat():
     return fits.HDUList([hdu])
 
 
-@pytest.mark.parametrize("nabba", [1,2,3,4])
+@pytest.mark.parametrize("nabba", [1, 2, 3, 4])
 def test_coadd(nabba):
 
     expected_data = numpy.zeros((10, 10))
@@ -43,7 +44,7 @@ def test_coadd(nabba):
     results = []
     starttime = 1000000001.00034
     for i in range(nabba):
-        pos = [5,3,3,5]
+        pos = [5, 3, 3, 5]
         frames = []
         for j in range(4):
             base = starttime + i * 1000
@@ -52,7 +53,8 @@ def test_coadd(nabba):
             t1 = base + off1
             t2 = base + off2
             keys = {'TSUTC1': t1, 'TSUTC2': t2}
-            frame = numina.core.DataFrame(frame=create_frame(val=2, pos=pos[j], keys=keys))
+            frame = numina.core.DataFrame(
+                frame=create_frame(val=2, pos=pos[j], keys=keys))
             frames.append(frame)
 
         obsresult = numina.core.ObservationResult()

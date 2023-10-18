@@ -1,20 +1,10 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
-# PyEmir is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# PyEmir is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 from __future__ import division
@@ -181,12 +171,12 @@ def display_slitlet_arrangement(fileobj,
                 csu_crvaln = np.amin([csu_crvaln, wvmax_useful])
             print("{0:4d} {1:8.3f} {2:8.3f} {3:8.3f} {4:7.3f}   "
                   "{5:8.2f}   {6:8.2f}".format(
-                ibar, csu_config.csu_bar_left(ibar),
-                csu_config.csu_bar_right(ibar),
-                csu_config.csu_bar_slit_center(ibar),
-                csu_config.csu_bar_slit_width(ibar),
-                csu_crval1, csu_crvaln)
-            )
+                      ibar, csu_config.csu_bar_left(ibar),
+                      csu_config.csu_bar_right(ibar),
+                      csu_config.csu_bar_slit_center(ibar),
+                      csu_config.csu_bar_slit_width(ibar),
+                      csu_crval1, csu_crvaln)
+                  )
         print(
             "---> {0:8.3f} {1:8.3f} {2:8.3f} {3:7.3f} <- mean (all)".format(
                 np.mean(csu_config._csu_bar_left),
@@ -250,7 +240,7 @@ def display_slitlet_arrangement(fileobj,
 
     # return results
     return csu_config._csu_bar_left, csu_config._csu_bar_right, \
-           csu_config._csu_bar_slit_center, csu_config._csu_bar_slit_width
+        csu_config._csu_bar_slit_center, csu_config._csu_bar_slit_width
 
 
 def display_slitlet_histogram(csu_bar_slit_width,
@@ -415,7 +405,7 @@ def main(args=None):
         print("\nFile " + str(ifile+1) + "/" + str(nfiles) + ": " +
               fileobj.name)
         csu_bar_left[ifile, :], csu_bar_right[ifile, :], \
-        csu_bar_slit_center[ifile, :], csu_bar_slit_width[ifile, :] = \
+            csu_bar_slit_center[ifile, :], csu_bar_slit_width[ifile, :] = \
             display_slitlet_arrangement(
                 fileobj,
                 grism=args.grism,
@@ -425,7 +415,7 @@ def main(args=None):
                 adjust=args.adjust,
                 geometry=geometry,
                 debugplot=args.debugplot
-            )
+        )
         if args.n_clusters >= 2:
             display_slitlet_histogram(
                 csu_bar_slit_width[ifile, :],
