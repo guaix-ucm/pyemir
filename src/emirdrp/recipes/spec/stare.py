@@ -375,7 +375,7 @@ class GenerateRectwvCoeff(EmirRecipe):
                 moving_mask = (data2_rs > 0)
                 # the number of arguments returned by phase_cross_correlation
                 # is only 1 when reference_mask and moving_mask are used
-                shifts = phase_cross_correlation(
+                shifts, _, _ = phase_cross_correlation(
                     data1_rs, data2_rs, upsample_factor=100,
                     reference_mask=reference_mask,
                     moving_mask=moving_mask, overlap_ratio=0.9)
