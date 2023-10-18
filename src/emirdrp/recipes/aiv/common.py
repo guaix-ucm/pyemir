@@ -22,7 +22,7 @@ from scipy import ndimage
 
 from astropy.modeling import models, fitting
 import photutils
-from photutils import CircularAperture
+from photutils.aperture import CircularAperture
 
 from numina.array.recenter import centering_centroid
 from numina.array.utils import image_box

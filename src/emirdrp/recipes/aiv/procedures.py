@@ -15,8 +15,8 @@ import math
 
 import numpy as np
 from scipy.interpolate import splrep, splev, sproot
-from photutils import CircularAperture
-from photutils import aperture_photometry
+from photutils.aperture import CircularAperture
+from photutils.aperture import aperture_photometry
 from photutils.geometry.circular_overlap import circular_overlap_grid
 
 from astropy.modeling import (fitting, models)
