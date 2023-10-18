@@ -21,17 +21,7 @@ import emirdrp.datamodel
 
 
 class EmirRecipe(recipes.BaseRecipe):
-    """Base clase for all EMIR Recipes
-
-
-    Attributes
-    ----------
-    logger :
-         recipe logger
-
-    datamodel : EmirDataModel
-
-    """
+    """Base class for all EMIR Recipes"""
     logger = logging.getLogger(__name__)
     datamodel = emirdrp.datamodel.EmirDataModel()
 

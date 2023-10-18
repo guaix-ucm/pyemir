@@ -266,5 +266,5 @@ texinfo_documents = [
 
 # Used by intersphinx plugin
 intersphinx_mapping = {
-     'numina': ('http://numina.readthedocs.org/en/latest/', None),
+     'numina': ('http://numina.readthedocs.io/en/latest/', None),
 }
