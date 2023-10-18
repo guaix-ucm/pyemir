@@ -18,7 +18,7 @@ from numina.core import Requirement, Result, Parameter
 import numina.exceptions
 import numina.types.array as tarray
 from numina.processing.combine import basic_processing_with_combination
-from scipy.ndimage.filters import median_filter
+from scipy.ndimage import median_filter
 from skimage.feature import canny
 
 import emirdrp.datamodel as datamodel

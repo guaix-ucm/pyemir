@@ -21,7 +21,6 @@ from numina.core import Requirement, Result, Parameter
 import numina.types.array as tarray
 from numina.processing.combine import basic_processing_with_combination
 from scipy import ndimage
-from scipy.ndimage.filters import median_filter
 from skimage.feature import canny
 
 import emirdrp.datamodel as datamodel
@@ -141,7 +140,7 @@ class TestMaskRecipe(EmirRecipe):
 
         data1 = hdulist[0].data
         _logger.debug('Median filter with box %d', median_filter_size)
-        data2 = median_filter(data1, size=median_filter_size)
+        data2 = ndimage.median_filter(data1, size=median_filter_size)
 
         # Grey level image
         img_grey = normalize(data2)
