@@ -53,7 +53,7 @@ tool = [
 
 [project.urls]
 Homepage = "https://github.com/guaix-ucm/pyemir"
-Repository = "https://github.com/guaix-ucm/pyemirgit"
+Repository = "https://github.com/guaix-ucm/pyemir.git"
 Documentation = "https://pyemir.readthedocs.io/en/stable/"
 
 [project.entry-points."numina.pipeline.1"]
