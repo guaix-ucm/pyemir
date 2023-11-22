@@ -1,0 +1,11 @@
+{
+  "description": "Updated instrument after 2023",
+  "uuid": "443fc0d1-e09a-48cc-a0fd-02be6f399da2",
+  "date_start": "2023-06-01T12:00:00.0",
+  "date_end": null,
+  "type": "instrument",
+  "name": "EMIR",
+  "components": [
+    {"id": "detector", "uuid": "1ac26dff-4c3f-43d8-a069-7470357120d6"}
+  ]
+}
