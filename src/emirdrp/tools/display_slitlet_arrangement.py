@@ -12,12 +12,12 @@ from __future__ import print_function
 
 import argparse
 from astropy.io import fits
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import numpy as np
 from sklearn.cluster import KMeans
 import sys
 
-from numina.array.display.matplotlib_qt import plt
-from numina.array.display.matplotlib_qt import patches as patches
 from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from emirdrp.instrument.csu_configuration import CsuConfiguration
