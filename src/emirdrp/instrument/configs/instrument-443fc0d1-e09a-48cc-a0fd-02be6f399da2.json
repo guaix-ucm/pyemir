@@ -6,6 +6,7 @@
   "type": "instrument",
   "name": "EMIR",
   "components": [
-    {"id": "detector", "uuid": "1ac26dff-4c3f-43d8-a069-7470357120d6"}
+    {"id": "detector", "uuid": "1ac26dff-4c3f-43d8-a069-7470357120d6"},
+    {"id": "dtu", "uuid": "82b66c4d-e0c7-4395-9cea-c7cd753a5c06"}
   ]
 }

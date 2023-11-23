@@ -1,0 +1,11 @@
+{
+ "name": "DTU",
+ "type": "component",
+ "class": "emirdrp.instrument.components.dtu.DetectorTranslationUnit",
+ "description": "DetectorTranslationUnit",
+ "uuid": "82b66c4d-e0c7-4395-9cea-c7cd753a5c06",
+ "date_start": null,
+ "date_end": null,
+ "setup": [
+ ]
+}
