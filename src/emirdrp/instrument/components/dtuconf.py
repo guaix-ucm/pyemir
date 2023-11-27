@@ -9,83 +9,11 @@
 
 """DTU configuration class"""
 
-from __future__ import division
-
-import contextlib
 
 import numpy
 import astropy.wcs
 
-
-@contextlib.contextmanager
-def managed_ndig(obj, ndig):
-    """Context manager to handle ndig"""
-    old_ndig = obj.get_ndig()
-    obj.set_ndig(ndig)
-    try:
-        yield ndig
-    finally:
-        # Code to release resource, e.g.:
-        obj.set_ndig(old_ndig)
-
-
-class DtuAxis(object):
-    """Represents one DTU axis of movement"""
-
-    def __init__(self, name, coor, coor_f=1.0, coor_0=0.0):
-        if name.lower() not in ['x', 'y', 'z']:
-            raise ValueError('"name" must be "X", "Y" or "Z')
-        self.name = name
-        self.coor = coor
-        self.coor_f = coor_f
-        self.coor_0 = coor_0
-        self.ndig = 3
-
-    @property
-    def coor_r(self):
-        return (self.coor / self.coor_f) - self.coor_0
-
-    @classmethod
-    def from_header(cls, hdr, name):
-        if name.lower() not in ['x', 'y', 'z']:
-            raise ValueError('"name" must be "X", "Y" or "Z')
-        coor = hdr['{}DTU'.format(name)]
-        coor_f = hdr.get('{}DTU_F'.format(name), 1.0)
-        coor_0 = hdr.get('{}DTU_0'.format(name), 0.0)
-        return DtuAxis(name, coor, coor_f, coor_0)
-
-    def allclose(self, other, rtol=1e-05, atol=1e-08, equal_nan=False):
-        import numpy
-        a = [self.coor, self.coor_f, self.coor_0]
-        b = [other.coor, other.coor_f, other.coor_0]
-        return numpy.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
-
-    def closeto(self, other, abserror):
-        return self.allclose(other, rtol=0.0, atol=abserror, equal_nan=False)
-
-    def set_ndig(self, ndig):
-        self.ndig = ndig
-
-    def get_ndig(self):
-        return self.ndig
-
-    def __eq__(self, other):
-        # note: set the precision (number of decimal places) to the same
-        # number employed in __str__() function above to print out member
-        # values
-        # FIXME: this is eqv to allclose with atol=1e-4?
-        if isinstance(other, DtuAxis):
-            result = \
-                self.name.lower() == other.name.lower() and \
-                (round(self.coor, self.ndig) == round(other.coor, self.ndig)) and \
-                (round(self.coor_f, self.ndig) == round(other.coor_f, self.ndig)) and \
-                (round(self.coor_0, self.ndig) == round(other.coor_0, self.ndig))
-
-            return result
-        return NotImplemented
-
-    def __ne__(self, other):
-        return not self == other
+from .dtuaxis import DtuAxisAdaptor as DtuAxis
 
 
 class DtuConf(object):

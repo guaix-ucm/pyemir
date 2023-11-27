@@ -10,75 +10,13 @@
 from numina.instrument.hwdevice import HWDevice
 
 
-class DTUAxis(HWDevice):
-    """Represents one DTU axis of movement"""
-    def __init__(self, name, parent=None, active=True):
-        super().__init__(name, parent=parent)
-        self.active_ = active
-        self.coor_ = 0.0
-        self.coor_f_ = 1.0
-        self.coor_0_ = 0.0
-
-    @property
-    def coor(self):
-        return self.coor_
-
-    @coor.setter
-    def coor(self, value):
-        if self.active_:
-            self.coor_ = value
-        else:
-            # warning, bar is inactive
-            pass
-
-    @property
-    def coor_0(self):
-        return self.coor_0_
-
-    @coor_0.setter
-    def coor_0(self, value):
-        if self.active_:
-            self.coor_0_ = value
-        else:
-            # warning, bar is inactive
-            pass
-
-    @property
-    def coor_f(self):
-        return self.coor_f_
-
-    @coor_f.setter
-    def coor_f(self, value):
-        if self.active_:
-            self.coor_f_ = value
-        else:
-            # warning, bar is inactive
-            pass
-
-
-    @property
-    def active(self):
-        return self.active_
-
-    @active.setter
-    def active(self, value):
-        self.active_ = value
-
-    @property
-    def coor_r(self):
-        return (self.coor / self.coor_f) - self.coor_0
-
-    def configure_with_header(self, hdr):
-        self.coor = hdr[f'{self.name}DTU']
-        self.coor_f = hdr.get('{}DTU_F'.format(self.name), 1.0)
-        self.coor_0 = hdr.get('{}DTU_0'.format(self.name), 0.0)
-
+from .dtuaxis import DTUAxis
 
 class DetectorTranslationUnit(HWDevice):
     def __init__(self, name, parent=None, **kwds):
         super().__init__(name, parent=parent)
 
-        # Attributtes added to read from JSON
+        # Attributes added to read from JSON
         self.origin = None
         self.configurations = {}
         # Up to HERE
