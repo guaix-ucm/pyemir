@@ -24,7 +24,7 @@ from numina.array.wavecalib.resample import resample_image2d_flux
 from numina.frame.utils import copy_img
 from numina.tools.arg_file_is_new import arg_file_is_new
 
-from emirdrp.instrument.dtuconf import DtuConf
+from emirdrp.instrument.components.dtuconf import DtuConf
 from emirdrp.products import RectWaveCoeff
 
 from .set_wv_parameters import set_wv_parameters

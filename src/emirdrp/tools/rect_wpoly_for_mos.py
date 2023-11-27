@@ -22,7 +22,7 @@ from numina.array.distortion import ncoef_fmap
 from numina.tools.arg_file_is_new import arg_file_is_new
 import numina.types.qc
 
-from emirdrp.instrument.dtuconf import DtuConf
+from emirdrp.instrument.components.dtuconf import DtuConf
 from emirdrp.products import RefinedBoundaryModelParam
 from emirdrp.products import RectWaveCoeff
 from emirdrp.products import MasterRectWave

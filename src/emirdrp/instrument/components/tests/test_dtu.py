@@ -4,7 +4,7 @@ import pytest
 import astropy.units as U
 
 from ..dtuconf import DtuConf, DtuAxis
-from ..dtuconf import managed_ndig
+from ..dtuaxis import managed_ndig
 from ..dtuconf import average, apply_on_axis
 from emirdrp.instrument.tests.dtuheader import HEADERS
 

@@ -17,7 +17,7 @@ import sys
 
 from numina.tools.arg_file_is_new import arg_file_is_new
 
-from emirdrp.instrument.dtuconf import DtuConf
+from emirdrp.instrument.components.dtuconf import DtuConf
 from emirdrp.products import RectWaveCoeff
 from emirdrp.processing.wavecal.slitlet2d import Slitlet2D
 from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers

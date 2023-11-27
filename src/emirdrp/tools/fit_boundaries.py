@@ -27,7 +27,7 @@ from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 from emirdrp.core import EMIR_NBARS
-import emirdrp.instrument.dtuconf as dtuconf
+import emirdrp.instrument.components.dtuconf as dtuconf
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
