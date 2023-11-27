@@ -181,7 +181,7 @@ class DtuConf(object):
         return cls.from_header(hdr)
 
     def __eq__(self, other):
-        from .dtu_configuration import DtuConfiguration
+        from ..dtu_configuration import DtuConfiguration
         if isinstance(other, DtuConf):
             return (self.xaxis == other.xaxis and
                     self.yaxis == other.yaxis and
