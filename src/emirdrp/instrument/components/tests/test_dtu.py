@@ -6,7 +6,7 @@ import astropy.units as U
 from ..dtuconf import DtuConf, DtuAxis
 from ..dtuconf import managed_ndig
 from ..dtuconf import average, apply_on_axis
-from .dtuheader import HEADERS
+from emirdrp.instrument.tests.dtuheader import HEADERS
 
 
 @pytest.mark.parametrize("hdr", HEADERS)

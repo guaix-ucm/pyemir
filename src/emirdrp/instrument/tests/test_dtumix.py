@@ -1,7 +1,7 @@
 
 import pytest
 
-from ..dtuconf import DtuConf, average, maxdiff
+from emirdrp.instrument.components.dtuconf import DtuConf, average, maxdiff
 from ..dtu_configuration import DtuConfiguration, average_dtu_configurations
 from ..dtu_configuration import maxdiff_dtu_configurations
 from .dtuheader import HEADERS
