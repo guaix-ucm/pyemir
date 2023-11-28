@@ -8,6 +8,7 @@
 #
 
 import contextlib
+import warnings
 
 from numina.instrument.hwdevice import HWDevice
 
@@ -21,17 +22,19 @@ class DTUAxis(HWDevice):
         self.coor_f_ = 1.0
         self.coor_0_ = 0.0
 
+    def set_prop_key(self, key, value):
+        if self.active_:
+            setattr(self, key, value)
+        else:
+            warnings.warn("DTUAxis is inactive")
+
     @property
     def coor(self):
         return self.coor_
 
     @coor.setter
     def coor(self, value):
-        if self.active_:
-            self.coor_ = value
-        else:
-            # warning, bar is inactive
-            pass
+        self.set_prop_key('coor_', value)
 
     @property
     def coor_0(self):
@@ -39,11 +42,7 @@ class DTUAxis(HWDevice):
 
     @coor_0.setter
     def coor_0(self, value):
-        if self.active_:
-            self.coor_0_ = value
-        else:
-            # warning, bar is inactive
-            pass
+        self.set_prop_key('coor_0_', value)
 
     @property
     def coor_f(self):
@@ -51,11 +50,7 @@ class DTUAxis(HWDevice):
 
     @coor_f.setter
     def coor_f(self, value):
-        if self.active_:
-            self.coor_f_ = value
-        else:
-            # warning, bar is inactive
-            pass
+        self.set_prop_key('coor_f_', value)
 
     @property
     def active(self):
@@ -69,10 +64,18 @@ class DTUAxis(HWDevice):
     def coor_r(self):
         return (self.coor / self.coor_f) - self.coor_0
 
-    def configure_with_header(self, hdr):
+    def configure_me_with_header(self, hdr):
+        super().configure_me_with_header(hdr)
         self.coor = hdr[f'{self.name}DTU']
         self.coor_f = hdr.get('{}DTU_F'.format(self.name), 1.0)
         self.coor_0 = hdr.get('{}DTU_0'.format(self.name), 0.0)
+
+    def configure_me_with_imge(self, image):
+        if 'MECS' in image:
+            hdr = image['MECS'].header
+        else:
+            hdr = image[0].header
+        self.configure_me_with_header(hdr)
 
 
 @contextlib.contextmanager
@@ -90,7 +93,7 @@ def managed_ndig(obj, ndig):
 class DtuAxisAdaptor(DTUAxis):
     """Represents one DTU axis of movement"""
 
-    def __init__(self, name, coor, coor_f=1.0, coor_0=0.0):
+    def __init__(self, name, coor=0.0, coor_f=1.0, coor_0=0.0):
         super().__init__(name)
         if name.lower() not in ['x', 'y', 'z']:
             raise ValueError('"name" must be "X", "Y" or "Z')

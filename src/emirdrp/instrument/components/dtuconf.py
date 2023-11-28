@@ -109,22 +109,10 @@ class DtuConf(object):
         return cls.from_header(hdr)
 
     def __eq__(self, other):
-        from ..dtu_configuration import DtuConfiguration
         if isinstance(other, DtuConf):
             return (self.xaxis == other.xaxis and
                     self.yaxis == other.yaxis and
                     self.zaxis == other.zaxis)
-        elif isinstance(other, DtuConfiguration):
-            # Notice that coor_f is mising
-            ndig = 3
-            result = \
-                (round(self.xaxis.coor, ndig) == round(other.xdtu, ndig)) and \
-                (round(self.yaxis.coor, ndig) == round(other.ydtu, ndig)) and \
-                (round(self.zaxis.coor, ndig) == round(other.zdtu, ndig)) and \
-                (round(self.xaxis.coor_0, ndig) == round(other.xdtu_0, ndig)) and \
-                (round(self.yaxis.coor_0, ndig) == round(other.ydtu_0, ndig)) and \
-                (round(self.zaxis.coor_0, ndig) == round(other.zdtu_0, ndig))
-            return result
         return NotImplemented
 
     def __ne__(self, other):
