@@ -19,6 +19,3 @@
    :members:
    :undoc-members:
 
-.. automodule:: emirdrp.instrument.dtu_configuration
-   :members:
-   :undoc-members:

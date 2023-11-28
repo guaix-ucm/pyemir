@@ -1,11 +1,13 @@
 
 import numpy
 import pytest
+import hypothesis.strategies as st
+from hypothesis import given
 
 from ..dtuaxis import DtuAxisAdaptor, DTUAxis
 from ..dtuconf import apply_on_axis
 
-from emirdrp.instrument.tests.dtuheader import HEADERS
+from emirdrp.instrument.tests.dtuheader import dtu_fits_header
 
 
 def test_dtuaxis_raise():
@@ -13,26 +15,20 @@ def test_dtuaxis_raise():
         DtuAxisAdaptor("R", 200.0)
 
 
-def test_dtuaxis_header():
-
-    header = HEADERS[0]
-
-    dtuaxis_x = DtuAxisAdaptor.from_header(header, name='X')
-
+@given(dtu_fits_header())
+def test_dtuaxis_header(hdr):
+    dtuaxis_x = DtuAxisAdaptor.from_header(hdr, name='X')
     assert isinstance(dtuaxis_x, DtuAxisAdaptor)
 
-def test_dtuaxis_header2():
 
-    header = HEADERS[0]
-
-    dtuaxis_x = DTUAxis('X')
-    dtuaxis_x.configure_with_header(header)
-
-    assert dtuaxis_x.is_configured
+@given(dtu_fits_header(), st.sampled_from(['X', 'Y', 'Z']))
+def test_dtuaxis_header2(hdr, name):
+    dtuaxis = DTUAxis(name)
+    dtuaxis.configure_with_header(hdr)
+    assert dtuaxis.is_configured
 
 
-
-@pytest.mark.parametrize("hdr", HEADERS)
+@given(dtu_fits_header())
 def test_dtuaxis_header_raise(hdr):
     with pytest.raises(ValueError):
         DtuAxisAdaptor.from_header(hdr, name='R')

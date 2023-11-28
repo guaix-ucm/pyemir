@@ -12,6 +12,7 @@ from numina.instrument.hwdevice import HWDevice
 
 from .dtuaxis import DTUAxis
 
+
 class DetectorTranslationUnit(HWDevice):
     def __init__(self, name, parent=None, **kwds):
         super().__init__(name, parent=parent)
