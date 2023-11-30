@@ -27,7 +27,7 @@ from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 
 from emirdrp.instrument.csu_configuration import CsuConfiguration
-from emirdrp.instrument.components.dtuconf import DtuConf
+from emirdrp.instrument.components.dtu import DtuConf
 
 from emirdrp.core import EMIR_NBARS
 from emirdrp.core import EMIR_VALID_GRISMS

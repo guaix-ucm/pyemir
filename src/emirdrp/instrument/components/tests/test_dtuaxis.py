@@ -5,7 +5,7 @@ import hypothesis.strategies as st
 from hypothesis import given
 
 from ..dtuaxis import DtuAxisAdaptor, DTUAxis
-from ..dtuconf import apply_on_axis
+from ..dtu import apply_on_axis
 
 from emirdrp.instrument.tests.dtuheader import dtu_fits_header
 
@@ -38,17 +38,15 @@ def test_dtu_apply():
     axis1 = DtuAxisAdaptor("X", 100.0)
     axis2 = DtuAxisAdaptor("X", 120.0)
 
-    axis3 = apply_on_axis(numpy.mean, [axis1, axis2])
-    assert axis3.coor == 110.0
-    assert axis3.coor_f == 1.0
-    assert axis3.coor_0 == 0.0
-    assert axis3.name == "X"
+    res = apply_on_axis(numpy.mean, [axis1, axis2])
+    assert res['coor'] == 110.0
+    assert res['coor_f'] == 1.0
+    assert res['coor_0'] == 0.0
 
 
 def test_dtu_apply0():
     """Test on an empty list"""
-    axis3 = apply_on_axis(numpy.mean, [])
-    assert numpy.isnan(axis3.coor)
-    assert numpy.isnan(axis3.coor_f)
-    assert numpy.isnan(axis3.coor_0)
-    assert axis3.name == "X"
+    res = apply_on_axis(numpy.mean, [])
+    assert numpy.isnan(res['coor'])
+    assert numpy.isnan(res['coor_f'])
+    assert numpy.isnan(res['coor_0'])

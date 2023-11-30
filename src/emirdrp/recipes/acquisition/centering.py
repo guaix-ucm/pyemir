@@ -15,7 +15,7 @@ from numina.core import Parameter, Requirement, Result
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.instrument.components.dtuconf import DtuConf
+from emirdrp.instrument.components.dtu import DtuConf
 import emirdrp.products as prods
 
 

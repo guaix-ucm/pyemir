@@ -26,7 +26,7 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.processing.wavecal.slitlet2d import Slitlet2D
 from emirdrp.processing.wavecal.set_wv_parameters import set_wv_parameters
-from emirdrp.instrument.components.dtuconf import DtuConf
+from emirdrp.instrument.components.dtu import DtuConf
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.tools.nscan_minmax_frontiers import nscan_minmax_frontiers
 from emirdrp.tools.rect_wpoly_for_mos import islitlet_progress

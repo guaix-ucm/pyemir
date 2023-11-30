@@ -28,7 +28,7 @@ import numina.types.qc
 
 import emirdrp.datamodel as datamodel
 from emirdrp.instrument.csu_configuration import CsuConfiguration
-from emirdrp.instrument.components.dtuconf import DtuConf
+from emirdrp.instrument.components.dtu import DtuConf
 from emirdrp.products import MasterRectWave
 from emirdrp.products import RectWaveCoeff
 from emirdrp.tools.fit_boundaries import bound_params_from_dict

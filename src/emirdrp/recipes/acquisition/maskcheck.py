@@ -274,7 +274,7 @@ class MaskCheckRecipe(EmirRecipe):
         return result
 
     def load_csu_conf(self, hdulist, bars_nominal_positions):
-        from emirdrp.instrument.components.dtuconf import DtuConf
+        from emirdrp.instrument.components.dtu import DtuConf
         # Get slits
         # hdr = hdulist[0].header
         # Extract DTU and CSU information from headers

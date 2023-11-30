@@ -1,12 +1,12 @@
 
 import numpy
+import math
 import pytest
 import astropy.units as u
 from hypothesis import given
 
-from ..dtuconf import DtuConf
+from ..dtu import DtuConf, average, DetectorTranslationUnit
 from ..dtuaxis import managed_ndig
-from ..dtuconf import average
 from emirdrp.instrument.tests.dtuheader import dtu_fits_header, DTU_HEADER_EXAMPLE
 
 
@@ -101,3 +101,27 @@ def test_dtu_average(hdr1, hdr2):
 def test_dtu_average0():
     dtuconf = average()
     assert isinstance(dtuconf, DtuConf)
+
+
+@given(dtu_fits_header(), dtu_fits_header())
+def test_dtu_average2_1(hdr1, hdr2):
+    dtuconf1 = DetectorTranslationUnit.from_header(hdr1)
+    dtuconf2 = DetectorTranslationUnit.from_header(hdr2)
+    dtuconf = average(dtuconf1, dtuconf2)
+    assert isinstance(dtuconf, DetectorTranslationUnit)
+
+
+@given(dtu_fits_header(), dtu_fits_header())
+def test_dtu_average2_2(hdr1, hdr2):
+    dtuconf1 = DetectorTranslationUnit.from_header(hdr1)
+    dtuconf2 = DetectorTranslationUnit.from_header(hdr2)
+    dtuconf = average(dtuconf1, dtuconf2)
+    for name in ['xaxis', 'yaxis', 'zaxis']:
+        calc = 0.5 * (getattr(dtuconf1, name).coor + getattr(dtuconf2, name).coor)
+        assert math.isclose(getattr(dtuconf, name).coor, calc)
+    for name in ['xaxis', 'yaxis', 'zaxis']:
+        calc = 0.5 * (getattr(dtuconf1, name).coor_f + getattr(dtuconf2, name).coor_f)
+        assert math.isclose(getattr(dtuconf, name).coor_f, calc)
+    for name in ['xaxis', 'yaxis', 'zaxis']:
+        calc = 0.5 * (getattr(dtuconf1, name).coor_0 + getattr(dtuconf2, name).coor_0)
+        assert math.isclose(getattr(dtuconf, name).coor_0, calc)

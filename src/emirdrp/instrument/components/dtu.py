@@ -6,15 +6,18 @@
 # SPDX-License-Identifier: GPL-3.0+
 # License-Filename: LICENSE.txt
 #
+import astropy.wcs
+import numpy
 
 from numina.instrument.hwdevice import HWDevice
 
 
-from .dtuaxis import DTUAxis
+from .dtuaxis import DtuAxisAdaptor as DtuAxis
+from .dtuaxis import apply_on_axis as apply_on_axis
 
 
 class DetectorTranslationUnit(HWDevice):
-    def __init__(self, name, parent=None, **kwds):
+    def __init__(self, name='DTU', parent=None, **kwds):
         super().__init__(name, parent=parent)
 
         # Attributes added to read from JSON
@@ -22,9 +25,9 @@ class DetectorTranslationUnit(HWDevice):
         self.configurations = {}
         # Up to HERE
 
-        self.xaxis = DTUAxis("X", parent=self)
-        self.yaxis = DTUAxis("Y", parent=self)
-        self.zaxis = DTUAxis("Z", parent=self)
+        self.xaxis = DtuAxis("X", parent=self)
+        self.yaxis = DtuAxis("Y", parent=self)
+        self.zaxis = DtuAxis("Z", parent=self)
 
     def configure_with_header(self, hdr):
         self.xaxis.configure_with_header(hdr)
@@ -61,7 +64,6 @@ class DetectorTranslationUnit(HWDevice):
 
     def to_wcs(self):
         """Create a WCS structure for DTU measurements"""
-        import astropy.wcs
         dtur = self.coor_r
         xfac = dtur[0]
         yfac = -dtur[1]
@@ -76,16 +78,130 @@ class DetectorTranslationUnit(HWDevice):
 
         return dtuwcs
 
+    def vector_shift(self, pixsize=None):
+        import astropy.units as u
+        import emirdrp.instrument.constants as cons
+
+        if pixsize is None:
+            pixsize = cons.EMIR_PIXSIZE
+        # coordinates transformation from DTU coordinates
+        # to image coordinates
+        # Y inverted
+        # XY switched
+        # trans1 = [[1, 0, 0], [0,-1, 0], [0,0,1]]
+        # trans2 = [[0,1,0], [1,0,0], [0,0,1]]
+        trans3 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]  # T3 = T2 * T1
+        vec = numpy.dot(trans3, self.coor_r) * u.micron / pixsize
+        return vec
+
     @classmethod
-    def from_header(cls, hdr, name="DTU"):
+    def from_header(cls, hdr, name="DTU", parent=None, **kwds):
         """Create a DtuConf object from a FITS image"""
-        obj = DetectorTranslationUnit(name=name)
+        obj = cls.__new__(cls)
+        obj.__init__(name, parent=parent, **kwds)
         obj.configure_with_header(hdr)
         return obj
 
     @classmethod
-    def from_img(cls, img, name="DTU"):
+    def from_img(cls, img, name="DTU", parent=None, **kwds):
         """Create a DtuConf object from a FITS image"""
-        obj = DetectorTranslationUnit(name=name)
+        obj = cls.__new__(cls)
+        obj.__init__(name, parent=parent, **kwds)
         obj.configure_with_img(img)
         return obj
+
+    def allclose(self, other, rtol=1e-05, atol=1e-08, equal_nan=False):
+        return (self.xaxis.allclose(other.xaxis, rtol=rtol, atol=atol, equal_nan=equal_nan) and
+                self.yaxis.allclose(other.yaxis, rtol=rtol, atol=atol, equal_nan=equal_nan) and
+                self.zaxis.allclose(other.zaxis, rtol=rtol, atol=atol, equal_nan=equal_nan))
+
+    def closeto(self, other, abserror):
+        return self.allclose(other, rtol=0.0, atol=abserror, equal_nan=False)
+
+
+class DtuConf(DetectorTranslationUnit):
+    """Represents the three DTU axes of movement"""
+
+    def __init__(self, name='DTU', parent=None, **kwds):
+        super().__init__(name, parent=parent, **kwds)
+
+    def set_ndig(self, ndig):
+        self.xaxis.set_ndig(ndig)
+        self.yaxis.set_ndig(ndig)
+        self.zaxis.set_ndig(ndig)
+
+    def get_ndig(self):
+        return self.xaxis.get_ndig()
+
+    @classmethod
+    def from_values(cls, **kwargs):
+        """Create a DtuConf object from values"""
+
+        # xdtu, ydtu and zdtu must be defined
+        for req in ['xdtu', 'ydtu', 'zdtu']:
+            if req not in kwargs:
+                raise ValueError("missing required value {}".format(req))
+        # Convert keys to upper case
+        kwargs_u = dict((k.upper(), v) for k, v in kwargs.items())
+        dtuconf = DtuConf.from_header(kwargs_u)
+        return dtuconf
+
+    def __eq__(self, other):
+        if isinstance(other, DtuConf):
+            return (self.xaxis == other.xaxis and
+                    self.yaxis == other.yaxis and
+                    self.zaxis == other.zaxis)
+        return NotImplemented
+
+    def __ne__(self, other):
+        return not self == other
+
+    def describe(self, ndig=None):
+        # note: set the number of decimal figures in output to the precision
+        # value employed in __eq__() function below
+        if ndig is None:
+            ndig = self.xaxis.ndig
+
+        output = (
+            "<DtuConf instance>\n"
+            "- XDTU..: {0.xaxis.coor:{width}.{prec}f}\n"
+            "- YDTU..: {0.yaxis.coor:{width}.{prec}f}\n"
+            "- ZDTU..: {0.zaxis.coor:{width}.{prec}f}\n"
+            "- XDTU_0: {0.xaxis.coor_0:{width}.{prec}f}\n"
+            "- YDTU_0: {0.yaxis.coor_0:{width}.{prec}f}\n"
+            "- ZDTU_0: {0.zaxis.coor_0:{width}.{prec}f}\n"
+            "- XDTU_F: {0.xaxis.coor_f:{width}.{prec}f}\n"
+            "- YDTU_F: {0.yaxis.coor_f:{width}.{prec}f}\n"
+            "- ZDTU_F: {0.zaxis.coor_f:{width}.{prec}f}\n"
+        )
+        return output.format(self, width=8, prec=ndig)
+
+    def outdict(self, ndigits=3):
+        """Return dictionary structure rounded to a given precision."""
+        output = {
+            'xdtu': round(self.xaxis.coor, ndigits),
+            'xdtu_0': round(self.xaxis.coor_0, ndigits),
+            'ydtu': round(self.yaxis.coor, ndigits),
+            'ydtu_0': round(self.yaxis.coor_0, ndigits),
+            'zdtu': round(self.zaxis.coor, ndigits),
+            'zdtu_0': round(self.zaxis.coor_0, ndigits),
+        }
+        return output
+
+
+def average(*args):
+    """Return instance with averaged values."""
+    new = DtuConf()
+    for axis in ['xaxis', 'yaxis', 'zaxis']:
+        fun_res = apply_on_axis(numpy.mean, [getattr(arg, axis) for arg in args])
+        getattr(new, axis).configure_me(fun_res)
+    return new
+
+
+def maxdiff(*args):
+    """Return DtuConf instance with maximum differences."""
+    new = DtuConf()
+    for axis in ['xaxis', 'yaxis', 'zaxis']:
+        fun_res = apply_on_axis(numpy.ptp, [getattr(arg, axis) for arg in args])
+        getattr(new, axis).configure_me(fun_res)
+    return new

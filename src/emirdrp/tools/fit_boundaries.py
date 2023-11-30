@@ -26,8 +26,9 @@ from numina.array.ccd_line import SpectrumTrail
 from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
+
+import emirdrp.instrument.components.dtu
 from emirdrp.core import EMIR_NBARS
-import emirdrp.instrument.components.dtuconf as dtuconf
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
@@ -152,12 +153,12 @@ def integrity_check(bounddict, max_dtu_offset):
                                  "boundary_xmin_upper")
             if first_dtu:
                 first_dtu_configuration = \
-                    dtuconf.DtuConf.from_values(**tmp_dict)
+                    emirdrp.instrument.components.dtu.DtuConf.from_values(**tmp_dict)
                 first_dtu = False
                 list_dtu_configurations.append(first_dtu_configuration)
             else:
                 last_dtu_configuration = \
-                    dtuconf.DtuConf.from_values(**tmp_dict)
+                    emirdrp.instrument.components.dtu.DtuConf.from_values(**tmp_dict)
                 if not first_dtu_configuration.closeto(
                         last_dtu_configuration,
                         abserror=max_dtu_offset
@@ -175,9 +176,9 @@ def integrity_check(bounddict, max_dtu_offset):
 
     print("* Integrity check OK!")
 
-    averaged_dtu_configuration = dtuconf.average(
+    averaged_dtu_configuration = emirdrp.instrument.components.dtu.average(
         list_dtu_configurations)
-    maxdiff_dtu_configuration = dtuconf.maxdiff(
+    maxdiff_dtu_configuration = emirdrp.instrument.components.dtu.maxdiff(
         list_dtu_configurations
     )
 
