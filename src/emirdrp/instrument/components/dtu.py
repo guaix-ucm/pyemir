@@ -16,6 +16,13 @@ from .dtuaxis import DTUAxis
 from .dtuaxis import apply_on_axis as apply_on_axis
 
 
+def convert_md5(string):
+    import hashlib
+    mm = hashlib.md5()
+    mm.update(string.encode('utf-8'))
+    return mm.hexdigest()
+
+
 class DetectorTranslationUnit(HWDevice):
     def __init__(self, name='DTU', parent=None, **kwds):
         super().__init__(name, parent=parent)
@@ -155,12 +162,16 @@ class DetectorTranslationUnit(HWDevice):
     def outdict(self, ndigits=3):
         """Return dictionary structure rounded to a given precision."""
         output = {
+            'dtuhash': convert_md5(self.stringify(ndig=3)),
             'xdtu': round(self.xaxis.coor, ndigits),
             'xdtu_0': round(self.xaxis.coor_0, ndigits),
             'ydtu': round(self.yaxis.coor, ndigits),
             'ydtu_0': round(self.yaxis.coor_0, ndigits),
             'zdtu': round(self.zaxis.coor, ndigits),
             'zdtu_0': round(self.zaxis.coor_0, ndigits),
+            'xdtu_f': round(self.xaxis.coor_f, ndigits),
+            'ydtu_f': round(self.yaxis.coor_f, ndigits),
+            'zdtu_f': round(self.zaxis.coor_f, ndigits),
         }
         return output
 

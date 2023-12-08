@@ -115,3 +115,9 @@ def test_dtu_average2_2(hdr1, hdr2):
     for name in ['xaxis', 'yaxis', 'zaxis']:
         calc = 0.5 * (getattr(dtuconf1, name).coor_0 + getattr(dtuconf2, name).coor_0)
         assert math.isclose(getattr(dtuconf, name).coor_0, calc)
+
+def test_dtu_hash():
+    header = DTU_HEADER_EXAMPLE
+    dtuconf = DtuConf.from_header(header)
+    res = dtuconf.outdict()
+    assert res['dtuhash'] == '271c6b3476b06c527196b8a96d72c9d6'
