@@ -153,12 +153,12 @@ def integrity_check(bounddict, max_dtu_offset):
                                  "boundary_xmin_upper")
             if first_dtu:
                 first_dtu_configuration = \
-                    emirdrp.instrument.components.dtu.DtuConf.from_values(**tmp_dict)
+                    emirdrp.instrument.components.dtu.DtuConf.from_header(tmp_dict)
                 first_dtu = False
                 list_dtu_configurations.append(first_dtu_configuration)
             else:
                 last_dtu_configuration = \
-                    emirdrp.instrument.components.dtu.DtuConf.from_values(**tmp_dict)
+                    emirdrp.instrument.components.dtu.DtuConf.from_header(tmp_dict)
                 if not first_dtu_configuration.closeto(
                         last_dtu_configuration,
                         abserror=max_dtu_offset

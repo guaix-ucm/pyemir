@@ -118,9 +118,7 @@ def main(args=None):
         list_json_files[0].filename)
     filter_name = coef_rect_wpoly_first_longslit.tags['filter']
     grism_name = coef_rect_wpoly_first_longslit.tags['grism']
-    dtu_conf = DtuConf.from_values(
-        **coef_rect_wpoly_first_longslit.meta_info['dtu_configuration']
-    )
+    dtu_conf = DtuConf.from_header(coef_rect_wpoly_first_longslit.meta_info['dtu_configuration'])
     list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
     for idel in coef_rect_wpoly_first_longslit.missing_slitlets:
         list_valid_islitlets.remove(idel)
@@ -139,9 +137,7 @@ def main(args=None):
             raise ValueError("Unexpected different grism found")
         coef_rect_wpoly = RectWaveCoeff._datatype_load(
             list_json_files[ifile].filename)
-        dtu_conf_tmp = DtuConf.from_values(
-            **coef_rect_wpoly.meta_info['dtu_configuration']
-        )
+        dtu_conf_tmp = DtuConf.from_header(coef_rect_wpoly.meta_info['dtu_configuration'])
         if dtu_conf != dtu_conf_tmp:
             print(dtu_conf)
             print(dtu_conf_tmp)

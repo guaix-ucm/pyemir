@@ -7,9 +7,9 @@
 # License-Filename: LICENSE.txt
 #
 
-import contextlib
 import warnings
 
+from astropy.io.fits import Header
 from numina.instrument.hwdevice import HWDevice
 
 
@@ -74,12 +74,14 @@ class DTUAxis(HWDevice):
         return (self.coor / self.coor_f) - self.coor_0
 
     def configure_me_with_header(self, hdr):
+        if isinstance(hdr, dict):
+            hdr = Header(hdr)
         super().configure_me_with_header(hdr)
         self.coor = hdr[f'{self.name}DTU']
-        self.coor_f = hdr.get('{}DTU_F'.format(self.name), 1.0)
-        self.coor_0 = hdr.get('{}DTU_0'.format(self.name), 0.0)
+        self.coor_f = hdr.get(f'{self.name}DTU_F', 1.0)
+        self.coor_0 = hdr.get(f'{self.name}DTU_0', 0.0)
 
-    def configure_me_with_imge(self, image):
+    def configure_me_with_image(self, image):
         if 'MECS' in image:
             hdr = image['MECS'].header
         else:
@@ -93,51 +95,20 @@ class DTUAxis(HWDevice):
         obj.configure_with_header(hdr)
         return obj
 
+    def stringify(self, ndig=3):
+        values = (self.coor_, self.coor_f_, self.coor_0_)
+        m1 = [round(r, ndig) for r in values]
+        return f'{m1[0]:+010.3f}:{m1[1]:+010.3f}:{m1[2]:+010.3f}'
 
-@contextlib.contextmanager
-def managed_ndig(obj, ndig):
-    """Context manager to handle ndig"""
-    old_ndig = obj.get_ndig()
-    obj.set_ndig(ndig)
-    try:
-        yield ndig
-    finally:
-        # Code to release resource, e.g.:
-        obj.set_ndig(old_ndig)
-
-
-class DtuAxisAdaptor(DTUAxis):
-    """Represents one DTU axis of movement"""
-
-    def __init__(self, name, coor=0.0, coor_f=1.0, coor_0=0.0, parent=None):
-        super().__init__(name, parent=parent)
-        if name.lower() not in ['x', 'y', 'z']:
-            raise ValueError('"name" must be "X", "Y" or "Z')
-
-        # Parent values
-        self.coor = coor
-        self.coor_f = coor_f
-        self.coor_0 = coor_0
-        # Upto here
-        self.ndig = 3
-
-    def set_ndig(self, ndig):
-        self.ndig = ndig
-
-    def get_ndig(self):
-        return self.ndig
+    def __hash__(self):
+        return hash(self.stringify())
 
     def __eq__(self, other):
-        # note: set the precision (number of decimal places) to the same
-        # number employed in __str__() function above to print out member
-        # values
-        # FIXME: this is eqv to allclose with atol=1e-4?
-        if isinstance(other, DtuAxisAdaptor):
+        ndig = 3
+        if isinstance(other, DTUAxis):
             result = \
                 self.name.lower() == other.name.lower() and \
-                (round(self.coor, self.ndig) == round(other.coor, self.ndig)) and \
-                (round(self.coor_f, self.ndig) == round(other.coor_f, self.ndig)) and \
-                (round(self.coor_0, self.ndig) == round(other.coor_0, self.ndig))
+                self.stringify(ndig) == other.stringify(ndig)
 
             return result
         return NotImplemented

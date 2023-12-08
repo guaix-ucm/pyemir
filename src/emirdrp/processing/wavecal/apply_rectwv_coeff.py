@@ -93,9 +93,7 @@ def apply_rectwv_coeff(reduced_image,
     dtu_conf = DtuConf.from_img(reduced_image)
 
     # retrieve DTU configuration from RectWaveCoeff object
-    dtu_conf_calib = DtuConf.from_values(
-        **rectwv_coeff.meta_info['dtu_configuration']
-    )
+    dtu_conf_calib = DtuConf.from_header(rectwv_coeff.meta_info['dtu_configuration'])
     # check that the DTU configuration employed to obtain the calibration
     # corresponds to the DTU configuration in the input FITS file
     if dtu_conf != dtu_conf_calib:

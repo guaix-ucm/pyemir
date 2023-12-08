@@ -88,9 +88,7 @@ def rectwv_coeff_from_mos_library(reduced_image,
     dtu_conf = DtuConf.from_img(reduced_image)
 
     # retrieve DTU configuration from MasterRectWave object
-    dtu_conf_calib = DtuConf.from_values(
-        **master_rectwv.meta_info['dtu_configuration']
-    )
+    dtu_conf_calib = DtuConf.from_header(master_rectwv.meta_info['dtu_configuration'])
     # check that the DTU configuration employed to obtain the calibration
     # corresponds to the DTU configuration in the input FITS file
     if dtu_conf != dtu_conf_calib:

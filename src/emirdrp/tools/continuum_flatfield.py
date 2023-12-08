@@ -160,9 +160,7 @@ def main(args=None):
     # check that the DTU configurations are compatible
     with fits.open(args.fitsfile) as hdulist:
         dtu_conf_fitsfile = DtuConf.from_img(hdulist)
-    dtu_conf_jsonfile = DtuConf.from_values(
-        **rectwv_coeff.meta_info['dtu_configuration']
-    )
+    dtu_conf_jsonfile = DtuConf.from_header(rectwv_coeff.meta_info['dtu_configuration'])
     if dtu_conf_fitsfile != dtu_conf_jsonfile:
         print('DTU configuration (FITS file):\n\t', dtu_conf_fitsfile)
         print('DTU configuration (JSON file):\n\t', dtu_conf_jsonfile)

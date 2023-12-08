@@ -4,21 +4,16 @@ import pytest
 import hypothesis.strategies as st
 from hypothesis import given
 
-from ..dtuaxis import DtuAxisAdaptor, DTUAxis
+from ..dtuaxis import DTUAxis
 from ..dtu import apply_on_axis
 
 from emirdrp.instrument.tests.dtuheader import dtu_fits_header
 
 
-def test_dtuaxis_raise():
-    with pytest.raises(ValueError):
-        DtuAxisAdaptor("R", 200.0)
-
-
 @given(dtu_fits_header())
 def test_dtuaxis_header(hdr):
-    dtuaxis_x = DtuAxisAdaptor.from_header(hdr, name='X')
-    assert isinstance(dtuaxis_x, DtuAxisAdaptor)
+    dtuaxis_x = DTUAxis.from_header(hdr, name='X')
+    assert isinstance(dtuaxis_x, DTUAxis)
 
 
 @given(dtu_fits_header(), st.sampled_from(['X', 'Y', 'Z']))
@@ -30,13 +25,15 @@ def test_dtuaxis_header2(hdr, name):
 
 @given(dtu_fits_header())
 def test_dtuaxis_header_raise(hdr):
-    with pytest.raises(ValueError):
-        DtuAxisAdaptor.from_header(hdr, name='R')
+    with pytest.raises(KeyError):
+        DTUAxis.from_header(hdr, name='R')
 
 
 def test_dtu_apply():
-    axis1 = DtuAxisAdaptor("X", 100.0)
-    axis2 = DtuAxisAdaptor("X", 120.0)
+    axis1 = DTUAxis("X")
+    axis1.coor = 100.0
+    axis2 = DTUAxis("X")
+    axis2.coor = 120.0
 
     res = apply_on_axis(numpy.mean, [axis1, axis2])
     assert res['coor'] == 110.0

@@ -12,7 +12,7 @@ import numpy
 from numina.instrument.hwdevice import HWDevice
 
 
-from .dtuaxis import DtuAxisAdaptor as DtuAxis
+from .dtuaxis import DTUAxis
 from .dtuaxis import apply_on_axis as apply_on_axis
 
 
@@ -25,9 +25,9 @@ class DetectorTranslationUnit(HWDevice):
         self.configurations = {}
         # Up to HERE
 
-        self.xaxis = DtuAxis("X", parent=self)
-        self.yaxis = DtuAxis("Y", parent=self)
-        self.zaxis = DtuAxis("Z", parent=self)
+        self.xaxis = DTUAxis("X", parent=self)
+        self.yaxis = DTUAxis("Y", parent=self)
+        self.zaxis = DTUAxis("Z", parent=self)
 
     def configure_with_header(self, hdr):
         self.xaxis.configure_with_header(hdr)
@@ -118,33 +118,11 @@ class DetectorTranslationUnit(HWDevice):
     def closeto(self, other, abserror):
         return self.allclose(other, rtol=0.0, atol=abserror, equal_nan=False)
 
-
-class DtuConf(DetectorTranslationUnit):
-    """Represents the three DTU axes of movement"""
-
-    def __init__(self, name='DTU', parent=None, **kwds):
-        super().__init__(name, parent=parent, **kwds)
-
-    def set_ndig(self, ndig):
-        self.xaxis.set_ndig(ndig)
-        self.yaxis.set_ndig(ndig)
-        self.zaxis.set_ndig(ndig)
-
-    def get_ndig(self):
-        return self.xaxis.get_ndig()
-
-    @classmethod
-    def from_values(cls, **kwargs):
-        """Create a DtuConf object from values"""
-
-        # xdtu, ydtu and zdtu must be defined
-        for req in ['xdtu', 'ydtu', 'zdtu']:
-            if req not in kwargs:
-                raise ValueError("missing required value {}".format(req))
-        # Convert keys to upper case
-        kwargs_u = dict((k.upper(), v) for k, v in kwargs.items())
-        dtuconf = DtuConf.from_header(kwargs_u)
-        return dtuconf
+    def stringify(self, ndig=3):
+        xv = self.xaxis.stringify(ndig)
+        yv = self.yaxis.stringify(ndig)
+        zv = self.zaxis.stringify(ndig)
+        return f'x={xv}:y={yv}:z={zv}'
 
     def __eq__(self, other):
         if isinstance(other, DtuConf):
@@ -156,11 +134,9 @@ class DtuConf(DetectorTranslationUnit):
     def __ne__(self, other):
         return not self == other
 
-    def describe(self, ndig=None):
+    def describe(self, ndig=3):
         # note: set the number of decimal figures in output to the precision
         # value employed in __eq__() function below
-        if ndig is None:
-            ndig = self.xaxis.ndig
 
         output = (
             "<DtuConf instance>\n"
@@ -187,6 +163,10 @@ class DtuConf(DetectorTranslationUnit):
             'zdtu_0': round(self.zaxis.coor_0, ndigits),
         }
         return output
+
+
+class DtuConf(DetectorTranslationUnit):
+    pass
 
 
 def average(*args):

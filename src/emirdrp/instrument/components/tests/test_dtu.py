@@ -6,7 +6,6 @@ import astropy.units as u
 from hypothesis import given
 
 from ..dtu import DtuConf, average, DetectorTranslationUnit
-from ..dtuaxis import managed_ndig
 from emirdrp.instrument.tests.dtuheader import dtu_fits_header, DTU_HEADER_EXAMPLE
 
 
@@ -17,20 +16,20 @@ def test_dtuc(hdr):
 
 
 def test_dtu_values():
-    dtuconf = DtuConf.from_values(xdtu=1.0, ydtu=1.0, zdtu=1.0)
+    dtuconf = DtuConf.from_header(dict(xdtu=1.0, ydtu=1.0, zdtu=1.0))
     assert isinstance(dtuconf, DtuConf)
 
 
 def test_dtu_values_raises():
-    with pytest.raises(ValueError):
-        DtuConf.from_values(xdtu=1.0, zdtu=1.0)
+    with pytest.raises(KeyError):
+        DtuConf.from_header(dict(kwargs=1.0, kwargs1=1.0))
 
 
 @given(dtu_fits_header())
 def test_dtu_eq(hdr):
     dtuconf1 = DtuConf.from_header(hdr)
     kwvals = {(k.lower()): v for k, v in hdr.items()}
-    dtuconf2 = DtuConf.from_values(**kwvals)
+    dtuconf2 = DtuConf.from_header(kwvals)
     assert dtuconf1 == dtuconf2
 
 
@@ -79,15 +78,6 @@ def test_dtu_formatter():
     dtuconf = DtuConf.from_header(header)
     val = dtuconf.describe()
     assert val == expected
-
-
-@given(dtu_fits_header())
-def test_dtu_managed(hdr):
-    dtuconf = DtuConf.from_header(hdr)
-    with managed_ndig(dtuconf, 4):
-        assert dtuconf.get_ndig() == 4
-
-    assert dtuconf.get_ndig() == 3
 
 
 @given(dtu_fits_header(), dtu_fits_header())
