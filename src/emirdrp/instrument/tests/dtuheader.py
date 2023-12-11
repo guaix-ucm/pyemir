@@ -1,9 +1,9 @@
 #
 # Copyright 2023 Universidad Complutense de Madrid
 #
-# This file is part of EMIR DRP
+# This file is part of PyEmir
 #
-# SPDX-License-Identifier: GPL-3.0+
+# SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
 
