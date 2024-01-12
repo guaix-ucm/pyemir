@@ -177,6 +177,19 @@ class SpecFlatLowFreq(EmirRecipe):
             with fname.open() as f:
                 list_lampincd.append(f[0].header['lampincd'])
 
+        # Note: after installing the new Hawaii 2 RG detector, the
+        # keyword LAMPINCD values are no longer 0 / 1 but FALSE / TRUE.
+        # To avoid changing the code below, we replace
+        # FALSE by 0 and TRUE by 1 when necessary
+        contains_only_0_and_1 = all(item in [0, 1] for item in list_lampincd)
+        if not contains_only_0_and_1:
+            contains_only_TRUE_and_FALSE = all(item in ['TRUE', 'FALSE'] for item in list_lampincd)
+            if not contains_only_TRUE_and_FALSE:
+                self.logger.info(f'List of LAMPINCD values: {list_lampincd}')
+                raise ValueError('Unexpected values of the keyword LAMPINCD')
+            # replace (in place) FALSE by 0 and TRUE by 1 in this case
+            list_lampincd = [1 if item == 'TRUE' else 0 for item in list_lampincd]
+
         # check number of images
         nimages = len(rinput.obresult.frames)
         n_on = list_lampincd.count(1)
