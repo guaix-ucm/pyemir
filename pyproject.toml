@@ -32,7 +32,7 @@ dependencies = [
     "six",
     "photutils>=1.4",
     "sep>=0.5",
-    "scikit-image>=0.18",
+    "scikit-image>=0.22",
     "scikit-learn>=0.19",
     "reproject",
     "importlib_resources",  # required with python < 3.9
