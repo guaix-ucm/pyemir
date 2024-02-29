@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2023 Universidad Complutense de Madrid
+# Copyright 2018-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -9,8 +9,6 @@
 
 
 """Wavelength calibration parameters for each grism + filter configuration"""
-
-from __future__ import division, print_function
 
 import sys
 

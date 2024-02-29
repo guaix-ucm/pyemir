@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2023 Universidad Complutense de Madrid
+# Copyright 2008-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -8,8 +8,6 @@
 #
 
 """Decorator for EMIR Recipes"""
-
-from __future__ import print_function
 
 from numina.core import DataFrame, ObservationResult
 import emirdrp.processing.info as info

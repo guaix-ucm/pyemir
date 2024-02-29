@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2023 Universidad Complutense de Madrid
+# Copyright 2010-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -8,8 +8,6 @@
 #
 
 """Recipe for finding cosmetic defects."""
-
-from __future__ import division
 
 import logging
 import warnings

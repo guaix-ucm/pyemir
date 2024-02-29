@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2023 Universidad Complutense de Madrid
+# Copyright 2018-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -10,9 +10,6 @@
 """
 Rectification and wavelength calibration polynomials from arc image
 """
-
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 from astropy.io import fits

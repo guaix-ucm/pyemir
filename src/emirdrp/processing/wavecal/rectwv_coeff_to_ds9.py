@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2023 Universidad Complutense de Madrid
+# Copyright 2008-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -7,9 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 import numpy as np

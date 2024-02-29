@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2023 Universidad Complutense de Madrid
+# Copyright 2013-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -8,8 +8,6 @@
 #
 
 """Combination routines"""
-
-from __future__ import division
 
 import datetime
 import functools

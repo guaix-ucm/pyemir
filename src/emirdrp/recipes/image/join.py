@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2023 Universidad Complutense de Madrid
+# Copyright 2014-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -9,9 +9,6 @@
 
 
 """Dither Image recipe for EMIR"""
-
-from __future__ import division, print_function
-
 
 import datetime
 import uuid

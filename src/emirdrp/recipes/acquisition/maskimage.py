@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -8,8 +8,6 @@
 #
 
 """Bar characterization using gradients for EMIR"""
-
-from __future__ import division
 
 import numpy
 from numina.array.utils import coor_to_pix_1d

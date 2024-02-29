@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2023 Universidad Complutense de Madrid
+# Copyright 2008-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -8,8 +8,6 @@
 #
 
 """Preprocessing EMIR readout modes"""
-
-from __future__ import division
 
 import six
 

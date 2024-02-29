@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -8,8 +8,6 @@
 #
 
 """Datamodel for EMIR and related functions"""
-
-from __future__ import division
 
 import logging
 

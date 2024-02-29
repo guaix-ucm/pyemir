@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2023 Universidad Complutense de Madrid
+# Copyright 2013-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -8,9 +8,6 @@
 #
 
 """Recipe to detect slits in the AIV mask"""
-
-from __future__ import division
-
 
 import numpy
 # import six

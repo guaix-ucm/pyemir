@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -9,9 +9,6 @@
 
 
 """Offsets from cross-correlation"""
-
-
-from __future__ import print_function
 
 import logging
 

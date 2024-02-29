@@ -1,15 +1,11 @@
 #
-# Copyright 2019-2023 Universidad Complutense de Madrid
+# Copyright 2019-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
-
-
-from __future__ import division
-from __future__ import print_function
 
 import logging
 import numpy as np

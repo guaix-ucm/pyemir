@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -10,8 +10,6 @@
 """
 Arc calibration Recipe for EMIR
 """
-
-from __future__ import division, print_function
 
 from numina.array.combine import median
 from numina.core import Requirement, Result

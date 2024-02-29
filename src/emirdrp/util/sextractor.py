@@ -148,8 +148,6 @@ Example of use:
 
 # ======================================================================
 
-from __future__ import print_function
-
 from six.moves import builtins as __builtin__
 
 import os
