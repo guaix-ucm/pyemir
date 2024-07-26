@@ -16,6 +16,7 @@ import numpy
 import numpy.linalg
 import scipy.signal
 import numina.array.imsurfit as imsurfit
+from numina.array.imsurfit import vertex_of_quadratic
 import numina.array.utils as utils
 import numina.array.stats as s
 
@@ -27,22 +28,6 @@ def standarize(arr):
     m = arr.mean()
     s = arr.std()
     return (arr - m) / s
-
-
-def vertex_of_quadratic(coeffs):
-    C = coeffs[1]
-    D = coeffs[2]
-    A = coeffs[3]
-    E = coeffs[4]
-    B = coeffs[5]
-
-    det = 4 * A * B - E**2
-    if det <= 0:
-        raise ValueError('quadratic has no maximum')
-
-    xm = -(2*B*C - D*E) / det
-    ym = -(2*A*D - C*E) / det
-    return xm, ym
 
 
 def filter_region(arr, level=4):
