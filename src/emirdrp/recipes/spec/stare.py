@@ -20,6 +20,7 @@ from skimage.registration import phase_cross_correlation
 from numina.core import Result
 from numina.core import Parameter
 from numina.array.combine import sigmaclip
+from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
 import numina.processing as proc
 from numina.processing.combine import basic_processing_with_combination
 
@@ -33,7 +34,6 @@ from emirdrp.processing.wavecal.median_slitlets_rectified \
     import median_slitlets_rectified
 from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
     import rectwv_coeff_from_mos_library
-from emirdrp.processing.wavecal.rescale_array_z1z2 import rescale_array_to_z1z2
 from emirdrp.processing.wavecal.retrieve_catlines import retrieve_catlines
 from emirdrp.processing.wavecal.synthetic_lines_rawdata import \
     synthetic_lines_rawdata

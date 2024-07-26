@@ -25,14 +25,13 @@ from numina.array.display.ximshow import ximshow
 from numina.array.distortion import compute_distortion
 from numina.array.distortion import fmap
 from numina.array.distortion import rectify2d
+from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
+from numina.array.rescale_array_z1z2 import rescale_array_from_z1z2
 from numina.array.wavecalib.peaks_spectrum import find_peaks_spectrum
 from numina.array.wavecalib.peaks_spectrum import refine_peaks_spectrum
 
 from emirdrp.tools.fit_boundaries import expected_distorted_boundaries
 from emirdrp.tools.fit_boundaries import expected_distorted_frontiers
-
-from .rescale_array_z1z2 import rescale_array_to_z1z2
-from .rescale_array_z1z2 import rescale_array_from_z1z2
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
