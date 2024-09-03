@@ -23,7 +23,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "numpy >= 1.20",
+    "numpy >= 1.20,<2",
     "astropy",
     "scipy >= 1.8",
     "matplotlib",
@@ -31,7 +31,7 @@ dependencies = [
     "numina>=0.32",
     "six",
     "photutils>=1.4",
-    "sep>=0.5",
+    "sep>=0.5", # sep requieres numpy < 2 for the moment
     "scikit-image>=0.22",
     "scikit-learn>=0.19",
     "reproject",
