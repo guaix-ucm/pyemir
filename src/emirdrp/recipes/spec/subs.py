@@ -206,7 +206,7 @@ class BaseABBARecipe(EmirRecipe):
             method_name
         )
         # hdu.header['history'] = 'Combination time {}'.format(
-        #    datetime.datetime.utcnow().isoformat()
+        #    datetime.datetime.now(datetime.UTC).isoformat()
         # )
         # Update NUM-NCOM, sum of individual frames
         ncom = 0

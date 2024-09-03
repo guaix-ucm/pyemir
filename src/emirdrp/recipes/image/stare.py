@@ -176,7 +176,7 @@ class StareImageRecipe2(EmirRecipe):
                 'uint8') + mask_footprint
             # update header
             hdr['history'] = f'Reprojection using reproject_{reprojection_method}()'
-            hdr['history'] = f'Reprojection time {datetime.datetime.utcnow().isoformat()}'
+            hdr['history'] = f'Reprojection time {datetime.datetime.now(datetime.UTC).isoformat()}'
 
         # Append the BPM to the result
         self.logger.debug('append BPM')

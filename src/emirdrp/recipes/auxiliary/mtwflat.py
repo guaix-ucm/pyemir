@@ -231,7 +231,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         hdu.header['history'] = "Combined %d images using '%s'" % (
             cnum, method_name)
         hdu.header['history'] = 'Combination time {}'.format(
-            datetime.datetime.utcnow().isoformat())
+            datetime.datetime.now(datetime.UTC).isoformat())
 
         for img in cdata:
             hdu.header['history'] = "Image {}".format(

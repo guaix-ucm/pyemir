@@ -857,7 +857,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             method.__name__
         )
         hdu.header['history'] = 'Combination time {}'.format(
-            datetime.datetime.utcnow().isoformat()
+            datetime.datetime.now(datetime.UTC).isoformat()
         )
         for img in data_hdul:
             hdu.header['history'] = "Image {}".format(self.datamodel.get_imgid(img))
@@ -925,7 +925,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             hdu.header['history'] = "Combined %d images using '%s'" % (
                 len(frameslll), method.__name__)
             hdu.header['history'] = 'Combination time {}'.format(
-                datetime.datetime.utcnow().isoformat())
+                datetime.datetime.now(datetime.UTC).isoformat())
             for img in frameslll:
                 hdu.header['history'] = "Image {}".format(
                     img[0].header['uuid'])

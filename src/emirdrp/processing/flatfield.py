@@ -61,7 +61,7 @@ class FlatFieldCorrector(proc.Corrector):
         hdr['NUM-FF'] = self.calibid
         hdr['history'] = 'Flat-field correction with {}'.format(self.calibid)
         hdr['history'] = 'Flat-field correction time {}'.format(
-            datetime.datetime.utcnow().isoformat())
+            datetime.datetime.now(datetime.UTC).isoformat())
         hdr['history'] = 'Flat-field correction mean {}'.format(
             self.flat_stats)
         return img

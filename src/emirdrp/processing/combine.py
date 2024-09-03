@@ -60,7 +60,7 @@ def process_abba(images, errors=False, prolog=None):
     result = copy_img(images[0])
     base_header = result[0].header.copy()
 
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.UTC)
     _logger.info("processing ABBA")
     ###
     ###
@@ -115,7 +115,7 @@ def process_ab(images, errors=False, prolog=None):
     cnum = len(images)
     result = copy_img(images[0])
     base_header = result[0].header.copy()
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.UTC)
     _logger.info("processing AB")
     ###
     ###
@@ -237,7 +237,7 @@ def combine_images(images, method=combine.mean, method_kwargs=None,
     result = copy_img(images[0])
     base_header = result[0].header.copy()
 
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.UTC)
     _logger.info("stacking %d images using '%s'", cnum, method.__name__)
     data = method([d[0].data for d in images], dtype='float32')
     hdu = result[0]
@@ -425,7 +425,7 @@ def basic_processing_with_segmentation(rinput, flow,
         hdu.header['history'] = "Combined %d images using '%s'" % (
             len(cdata), method.__name__)
         hdu.header['history'] = 'Combination time {}'.format(
-            datetime.datetime.utcnow().isoformat())
+            datetime.datetime.now(datetime.UTC).isoformat())
         hdu.header['UUID'] = str(uuid.uuid1())
         _logger.info("missing points, total: %d, fraction: %3.1f",
                      points_no_data, points_no_data / data2[2].size)

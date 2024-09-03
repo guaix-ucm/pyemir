@@ -280,7 +280,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             method.__name__
         )
         hdu.header['history'] = 'Combination time {}'.format(
-            datetime.datetime.utcnow().isoformat()
+            datetime.datetime.now(datetime.UTC).isoformat()
         )
         # Update NUM-NCOM, sum of individual imagess
         ncom = 0
@@ -332,7 +332,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             method.__name__
         )
         hdu.header['history'] = 'Combination time {}'.format(
-            datetime.datetime.utcnow().isoformat()
+            datetime.datetime.now(datetime.UTC).isoformat()
         )
         # Update NUM-NCOM, sum of individual images
         ncom = 0
@@ -475,7 +475,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             method.__name__
         )
         hdu.header['history'] = 'Combination time {}'.format(
-            datetime.datetime.utcnow().isoformat()
+            datetime.datetime.now(datetime.UTC).isoformat()
         )
         for img in data_hdul:
             hdu.header['history'] = "Image {}".format(
@@ -508,7 +508,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             method.__name__
         )
         hdu.header['history'] = 'Combination time {}'.format(
-            datetime.datetime.utcnow().isoformat()
+            datetime.datetime.now(datetime.UTC).isoformat()
         )
         for img in data_hdul:
             hdu.header['history'] = "Image {}".format(
@@ -608,7 +608,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             method.__name__
         )
         hdu.header['history'] = 'Combination time {}'.format(
-            datetime.datetime.utcnow().isoformat()
+            datetime.datetime.now(datetime.UTC).isoformat()
         )
         # Update NUM-NCOM, sum of individual frames
         ncom = 0
@@ -1040,7 +1040,7 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
             method.__name__
         )
         hdu.header['history'] = 'Combination time {}'.format(
-            datetime.datetime.utcnow().isoformat()
+            datetime.datetime.now(datetime.UTC).isoformat()
         )
         for img in data_hdul:
             hdu.header['history'] = "Image {}".format(
