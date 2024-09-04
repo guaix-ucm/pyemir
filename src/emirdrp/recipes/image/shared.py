@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -15,7 +15,6 @@ import logging
 import shutil
 import math
 
-import six
 import numpy
 from astropy.io import fits
 from astropy.visualization import SqrtStretch
@@ -805,7 +804,7 @@ class DirectImageCommon(EmirRecipe):
 
         nimages = ndata.max()
 
-        rnimage = list(six.moves.range(1, nimages + 1))
+        rnimage = list(range(1, nimages + 1))
         rmean = rnimage[:]
         rstd = rnimage[:]
 

@@ -12,7 +12,7 @@ from astropy.io import fits
 import numpy as np
 import os.path
 import pkgutil
-from six import StringIO
+from io import StringIO
 import sys
 
 from numina.array.display.pause_debugplot import pause_debugplot

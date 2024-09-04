@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2023 Universidad Complutense de Madrid
+# Copyright 2019-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -11,7 +11,7 @@
 
 import numpy as np
 import pkgutil
-from six import StringIO
+from io import StringIO
 
 from numina.array.display.ximshow import ximshow
 from numina.array.display.pause_debugplot import pause_debugplot

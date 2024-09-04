@@ -12,7 +12,7 @@ import argparse
 import numpy as np
 from numpy.polynomial import Polynomial
 import pkgutil
-from six import StringIO
+from io import StringIO
 import sys
 
 from emirdrp.processing.wavecal.set_wv_parameters import set_wv_parameters

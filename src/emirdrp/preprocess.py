@@ -9,8 +9,6 @@
 
 """Preprocessing EMIR readout modes"""
 
-import six
-
 from astropy.io import fits
 
 from numina.array import ramp_array, fowler_array
@@ -119,7 +117,7 @@ def preprocess_ramp(hdulist):
 
 
 def fits_wrapper(frame):
-    if isinstance(frame, six.string_types):
+    if isinstance(frame, str):
         return fits.open(frame)
     elif isinstance(frame, fits.HDUList):
         return frame

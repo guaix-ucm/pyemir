@@ -10,7 +10,6 @@
 """Recipe to detect slits in the AIV mask"""
 
 import numpy
-# import six
 from numina.core import Result, Parameter
 from numina.exceptions import RecipeError
 import numina.types.array as tarray
@@ -112,7 +111,7 @@ class TestSlitDetectionRecipe(EmirRecipe):
         self.logger.debug('Label objects')
         label_objects, nb_labels = ndimage.label(fill_slits)
         self.logger.debug('%d objects found', nb_labels)
-        # ids = list(six.moves.range(1, nb_labels + 1))
+        # ids = list(range(1, nb_labels + 1))
 
         self.logger.debug('Find regions and centers')
         regions = ndimage.find_objects(label_objects)
@@ -242,7 +241,7 @@ class TestSlitMaskDetectionRecipe(EmirRecipe):
         self.logger.debug('Label filtered objects')
         relabel_objects, nb_labels = ndimage.label(fill_slits_clean)
         self.logger.debug('%d objects found after filtering', nb_labels)
-        # ids = list(six.moves.range(1, nb_labels + 1))
+        # ids = list(range(1, nb_labels + 1))
 
         self.logger.debug('Find regions and centers')
         regions = ndimage.find_objects(relabel_objects)

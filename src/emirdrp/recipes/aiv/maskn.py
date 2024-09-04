@@ -13,7 +13,6 @@
 import logging
 
 import numpy
-# import six
 import numina.exceptions
 from numina.core import Requirement, Result, Parameter
 import numina.types.array as tarray
@@ -178,7 +177,7 @@ class TestMaskRecipe(EmirRecipe):
         _logger.debug('Label filtered objects')
         relabel_objects, nb_labels = ndimage.label(fill_slits_clean)
         _logger.debug('%d objects found after filtering', nb_labels)
-        # ids = list(six.moves.range(1, nb_labels + 1))
+        # ids = list(range(1, nb_labels + 1))
 
         _logger.debug('Find regions and centers')
         regions = ndimage.find_objects(relabel_objects)

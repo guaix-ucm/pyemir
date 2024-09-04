@@ -134,7 +134,7 @@ Examples:
 
 # ======================================================================
 
-from six.moves import builtins as __builtin__
+import builtins as __builtin__
 
 # flake8: noqa
 

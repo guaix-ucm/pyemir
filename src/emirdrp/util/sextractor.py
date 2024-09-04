@@ -148,7 +148,7 @@ Example of use:
 
 # ======================================================================
 
-from six.moves import builtins as __builtin__
+import builtins as __builtin__
 
 import os
 import subprocess

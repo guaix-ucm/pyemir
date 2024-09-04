@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -13,7 +13,6 @@
 import logging
 import operator
 
-import six
 import numpy
 from astropy.io import fits
 import sep
@@ -138,7 +137,7 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
     levels = check_photometry_levels
     actions = check_photometry_actions
 
-    x = list(six.moves.range(len(frames)))
+    x = list(range(len(frames)))
     vals, (_, sigma) = check_photometry_categorize(
         x, wdata, levels, tags=actions)
     # n sigma level to plt
@@ -178,7 +177,7 @@ def check_photometry_categorize(x, y, levels, tags=None):
     result = []
 
     if tags is None:
-        tags = list(six.moves.range(len(levels) + 1))
+        tags = list(range(len(levels) + 1))
 
     for ll, t in zip(levels, tags):
         indc = y < ll

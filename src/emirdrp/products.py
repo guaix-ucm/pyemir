@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2023 Universidad Complutense de Madrid
+# Copyright 2008-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -11,7 +11,6 @@
 
 import copy
 
-import six
 import numpy
 
 from numina.ext.gtc import DF
@@ -334,18 +333,12 @@ class RefinedBoundaryModelParam(numina.types.structured.BaseStructuredCalibratio
 
     def __getstate__(self):
         state = super(RefinedBoundaryModelParam, self).__getstate__()
-        if six.PY2:
-            state['contents'] = copy.copy(self.contents)
-        else:
-            state['contents'] = self.contents.copy()
+        state['contents'] = self.contents.copy()
         return state
 
     def __setstate__(self, state):
         super(RefinedBoundaryModelParam, self).__setstate__(state)
-        if six.PY2:
-            self.contents = copy.copy(state['contents'])
-        else:
-            self.contents = state['contents'].copy()
+        self.contents = state['contents'].copy()
 
     def tag_names(self):
         return ['grism', 'filter']
@@ -375,10 +368,7 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
         for key in keys:
             state[key] = self.__dict__[key]
 
-        if six.PY2:
-            state['contents'] = copy.copy(self.contents)
-        else:
-            state['contents'] = self.contents.copy()
+        state['contents'] = self.contents.copy()
         return state
 
     def __setstate__(self, state):
@@ -388,10 +378,7 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
                 'total_slitlets', 'missing_slitlets']
         for key in keys:
             self.__dict__[key] = state[key]
-        if six.PY2:
-            self.contents = copy.copy(state['contents'])
-        else:
-            self.contents = state['contents'].copy()
+        self.contents = state['contents'].copy()
 
     def tag_names(self):
         return ['grism', 'filter']
@@ -429,11 +416,7 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
         for key in keys:
             state[key] = self.__dict__[key]
 
-        if six.PY2:
-            # list has no .copy method in PY2
-            state['contents'] = copy.copy(self.contents)
-        else:
-            state['contents'] = self.contents.copy()
+        state['contents'] = self.contents.copy()
         return state
 
     def __setstate__(self, state):
@@ -461,11 +444,7 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
         for key in keys:
             self.__dict__[key] = state[key]
 
-        if six.PY2:
-            # list has no .copy method in PY2
-            self.contents = copy.copy(state['contents'])
-        else:
-            self.contents = state['contents'].copy()
+        self.contents = state['contents'].copy()
 
     def tag_names(self):
         return ['grism', 'filter']

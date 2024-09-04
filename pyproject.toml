@@ -29,7 +29,6 @@ dependencies = [
     "matplotlib",
     "lmfit",
     "numina>=0.32",
-    "six",
     "photutils>=1.4",
     "sep>=0.5", # sep requieres numpy < 2 for the moment
     "scikit-image>=0.22",
