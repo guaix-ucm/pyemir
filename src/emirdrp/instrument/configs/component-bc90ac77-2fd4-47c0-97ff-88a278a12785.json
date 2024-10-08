@@ -1,0 +1,15 @@
+{
+  "name": "detector",
+  "type": "component",
+  "description": "H2RG detector configuration",
+  "uuid": "bc90ac77-2fd4-47c0-97ff-88a278a12785",
+  "date_start": "2023-07-01T12:00:00.0",
+  "date_end": null,
+  "configurations": {
+    "channels": {
+      "depends": [
+      ],
+      "values": "H2RG_FULL"
+    }
+  }
+}
