@@ -111,27 +111,31 @@ Running the pipeline
 ``datadir`` to directory ``workdir``, where the processing happens. 
 The result is stored in directory ``resultsdir``. 
 The default values are for each directory are ``data``, ``obsid<id_of_obs>_work`` and ``obsid<id_of_obs>_results``.
-All these directories can be defined in the command line using flags::
+All these directories can be defined in the command line using flags:
 
-  $ numina run --workdir /tmp/test1 --datadir /scrat/obs/run12222 obs.yaml -r requires.yaml
+.. code-block:: console
+
+   $ numina run --workdir /tmp/test1 --datadir /scrat/obs/run12222 obs.yaml -r requires.yaml
 
 See :ref:`numina:cli` for a full description of the command line interface.
 
 Following the example, we create a directory ``data`` in our current directory and copy
 there the raw frames from ``r0121.fits`` to ``r0132.fits`` and the master bias ``master_bias-1.fits``.
 
-The we run::
+The we run:
 
-  $ numina run obsresult.yaml -r requirements.yaml
-  INFO: Numina simple recipe runner version 0.15
-  INFO: Loading observation result from 'obsrun.yaml'
-  INFO: Identifier of the observation result: 1
-  INFO: instrument name:
-  ...
-  numina.recipes.emir INFO stacking 4 images using median
-  numina.recipes.emir INFO bias reduction ended
-  INFO: result: BiasRecipeResult(qc=Product(type=QualityControlProduct(), dest='qc'), biasframe=Product(type=MasterBias(), dest='biasframe'))
-  INFO: storing result
+.. code-block:: console
+
+   $ numina run obsresult.yaml -r requirements.yaml
+   INFO: Numina simple recipe runner version 0.15
+   INFO: Loading observation result from 'obsrun.yaml'
+   INFO: Identifier of the observation result: 1
+   INFO: instrument name:
+   ...
+   numina.recipes.emir INFO stacking 4 images using median
+   numina.recipes.emir INFO bias reduction ended
+   INFO: result: BiasRecipeResult(qc=Product(type=QualityControlProduct(), dest='qc'), biasframe=Product(type=MasterBias(), dest='biasframe'))
+   INFO: storing result
 
 We get information of what's going on through logging messages. In the end, the result and log files are stored in ``obsid<id_of_obs>_results``.
 The working directory ``obsid<id_of_obs>_work`` can be inspected too. Intermediate results will be saved here.

@@ -85,13 +85,13 @@ The steps to install and run PyEmir within a virtual environment are:
 
   In order to create a virtual environment called e.g. emir using ``venv``:
 
-  ::
+  .. code-block:: console
   
      $ python3 -m venv emir /path/to/emir
 
   With ``virtualenv``:
   
-  ::
+  .. code-block:: console
 
      $ virtualenv /path/to/emir
 
@@ -106,13 +106,13 @@ The steps to install and run PyEmir within a virtual environment are:
   script called ``activate``. To activate the environment we ``source`` (a bash
   shell command) this script file:
 
-  ::
+  .. code-block:: console
   
      $ source /path/to/emir/bin/activate
 
   which yields a different system prompt to the user:
 
-  ::
+  .. code-block:: console
   
      (emir) $
 
@@ -126,7 +126,7 @@ The steps to install and run PyEmir within a virtual environment are:
   the standard Python tool for package management. It will download the package
   and its dependencies, unpack everything and compile when needed.
 
-  ::
+  .. code-block:: console
   
      (emir) $ pip install pyemir
      ...
@@ -136,14 +136,14 @@ The steps to install and run PyEmir within a virtual environment are:
 
   We can test the installation by running the ``numina`` command:
 
-  ::
+  .. code-block:: console
 
      (emir) $ numina
      DEBUG: Numina simple recipe runner version 0.30
 
   The current PyEmir version can also be easily displayed using:
 
-  ::
+  .. code-block:: console
 
      (emir) $ numina show-instruments
      INFO: Numina simple recipe runner version 0.30.0
@@ -159,7 +159,7 @@ The steps to install and run PyEmir within a virtual environment are:
   In order to update PyEmir within a virtualenv installation the user should
   execute:
   
-  ::
+  .. code-block:: console
   
      (emir) $ pip install -U pyemir
 
@@ -168,7 +168,7 @@ The steps to install and run PyEmir within a virtual environment are:
   To exit the environment is enough to exit the terminal or run the command
   ``deactivate``:
 
-  ::
+  .. code-block:: console
   
      (emir) $ deactivate
      $
@@ -178,7 +178,7 @@ environment and delete the whole directory where the environment was created
 (be careful with the use of this command; make sure you are deleting the
 correct directory!):
 
-::
+.. code-block:: console
 
    $ rm -fr /path/to/emir
 
@@ -202,13 +202,13 @@ possible to install ``anaconda`` by executing ``conda install anaconda``).
 If you have updated the ``$PATH`` system variable during the miniconda or conda
 installation, you can call conda commands directly in the shell, like this:
 
-::
+.. code-block:: console
 
    $ conda info
 
 If not, you will need the add the path to the command, like:
 
-::
+.. code-block:: console
 
   $ /path/to/conda/bin/conda info
 
@@ -224,7 +224,7 @@ instructions, the steps to execute and run PyEmir under conda are:
   subdirectory ``./envs`` in your conda tree), i.e., we do not pass the path to
   the environment:
 
-  ::
+  .. code-block:: console
 
      $ conda create --name emir python=3
 
@@ -232,7 +232,7 @@ instructions, the steps to execute and run PyEmir under conda are:
   of Python 3. If for any reason you need a particular Python version, you can
   specify it; for example, to force the use of Python 3.9:
 
-  ::
+  .. code-block:: console
 
      $ conda create --name emir python=3.9
 
@@ -240,13 +240,13 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   Activate the environment:
 
-  ::
+  .. code-block:: console
 
      $ conda activate emir
 
   which yields a different system prompt to the user:
 
-  ::
+  .. code-block:: console
 
      (emir) $ 
 
@@ -256,7 +256,7 @@ instructions, the steps to execute and run PyEmir under conda are:
   provide conda packages for PyEmir in the `conda-forge channel
   <https://conda-forge.org>`_):
 
-  ::
+  .. code-block:: console
 
      (emir) $ conda install -c conda-forge pyemir
      ...
@@ -266,7 +266,7 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   We can test the installation by running the ``numina`` command:
 
-  ::
+  .. code-block:: console
 
      (emir) $ numina
      DEBUG: Numina simple recipe runner version 0.30
@@ -276,7 +276,7 @@ instructions, the steps to execute and run PyEmir under conda are:
   In order to update PyEmir within the conda environment the user should
   execute:
   
-  ::
+  .. code-block:: console
   
      (emir) $ conda update pyemir
 
@@ -285,7 +285,7 @@ instructions, the steps to execute and run PyEmir under conda are:
   To exit the environment is enough to exit the terminal or run the following
   command:
 
-  ::
+  .. code-block:: console
   
      (emir) $ conda deactivate
      $
@@ -293,7 +293,7 @@ instructions, the steps to execute and run PyEmir under conda are:
 If at a given point you need to remove the environment, deactivate that
 environment and remove it through conda:
 
-::
+.. code-block:: console
 
    $ conda remove --name emir --all
 
@@ -307,7 +307,7 @@ Installing the development version (using venv)
 The development version is the most updated working version of the code (use it
 at your own risk!). 
 
-::
+.. code-block:: console
 
    $ python3 -m venv venv_emir
    $ source venv_emir/bin/activate
