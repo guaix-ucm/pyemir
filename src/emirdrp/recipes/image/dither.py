@@ -13,6 +13,7 @@ import datetime
 import logging
 import os
 import shutil
+import sys
 import uuid
 
 import numpy
@@ -45,6 +46,10 @@ from .naming import name_skyflat_proc, name_segmask
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
+
+
+if sys.version_info[:2] <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
 
 
 class ImageInfo(object):

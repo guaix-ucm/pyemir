@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -10,9 +10,9 @@
 
 """Twilight Flat Recipe for a list of frames in different filters"""
 
-
-import uuid
 import datetime
+import sys
+import uuid
 
 import numpy
 import astropy.io.fits as fits
@@ -27,6 +27,9 @@ from emirdrp.processing.info import gather_info_frames
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
+
+if sys.version_info[:2] <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
 
 
 class MultiTwilightFlatRecipe(EmirRecipe):

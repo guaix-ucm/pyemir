@@ -12,12 +12,13 @@
 Stare Image mode of EMIR
 """
 
+from copy import deepcopy
+import datetime
 import logging
+import sys
 
 from astropy.coordinates import SkyCoord
 from astropy.wcs import WCS
-from copy import deepcopy
-import datetime
 import numpy as np
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from scipy.ndimage import median_filter
@@ -35,6 +36,10 @@ import emirdrp.requirements as reqs
 import emirdrp.products as prods
 import emirdrp.processing.combine as comb
 import emirdrp.decorators
+
+
+if sys.version_info[:2] <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
 
 
 _logger = logging.getLogger(__name__)

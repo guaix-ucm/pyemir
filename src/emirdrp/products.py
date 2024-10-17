@@ -9,8 +9,6 @@
 
 """Data products produced by the EMIR pipeline."""
 
-import copy
-
 import numpy
 
 from numina.ext.gtc import DF

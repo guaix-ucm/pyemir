@@ -11,6 +11,7 @@
 """Dither Image recipe for EMIR"""
 
 import datetime
+import sys
 import uuid
 
 import numpy
@@ -36,6 +37,10 @@ from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs
 from emirdrp.processing.corr import offsets_from_crosscor, offsets_from_crosscor_regions
 from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.combine import segmentation_combined
+
+
+if sys.version_info[:2] <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
 
 
 class JoinDitheredImagesRecipe(EmirRecipe):

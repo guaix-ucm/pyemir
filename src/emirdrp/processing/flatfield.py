@@ -10,10 +10,15 @@
 
 """Corrector to remove flat field"""
 
+import datetime
 import logging
+import sys
 
 import numpy
 import numina.processing as proc
+
+if sys.version_info[:2] <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
 
 
 _logger = logging.getLogger(__name__)
@@ -36,7 +41,6 @@ class FlatFieldCorrector(proc.Corrector):
         self.flat_stats = flatdata.mean()
 
     def run(self, img):
-        import datetime
         imgid = self.get_imgid(img)
 
         _logger.debug('correcting flat in %s', imgid)
