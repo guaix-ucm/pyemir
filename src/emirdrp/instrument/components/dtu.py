@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2023 Universidad Complutense de Madrid
+# Copyright 2019-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -40,6 +40,7 @@ class DetectorTranslationUnit(HWDevice):
         self.xaxis.configure_with_header(hdr)
         self.yaxis.configure_with_header(hdr)
         self.zaxis.configure_with_header(hdr)
+        self.is_configured = True
 
     def configure_with_img(self, img):
         """Create a DtuConf object from a FITS image"""
@@ -48,6 +49,9 @@ class DetectorTranslationUnit(HWDevice):
         else:
             hdr = img[0].header
         self.configure_with_header(hdr)
+
+    # everything defined with @property can be accessed
+    # with get_property('name')
 
     @property
     def xdtu_r(self):
