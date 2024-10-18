@@ -13,10 +13,10 @@ import datetime
 import logging
 import os
 import shutil
-import sys
 import uuid
 
 import numpy
+import numpy as np
 import sep
 from astropy.io import fits
 from scipy import interpolate
@@ -46,10 +46,6 @@ from .naming import name_skyflat_proc, name_segmask
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
-
-
-if sys.version_info[:2] <= (3, 10):
-    datetime.UTC = datetime.timezone.utc
 
 
 class ImageInfo(object):
@@ -218,6 +214,11 @@ class FullDitheredImagesRecipe(EmirRecipe):
         extinction = rinput.extinction
         nside_adhoc_sky_correction = rinput.nside_adhoc_sky_correction
 
+        # determine which EMIR detector we are using
+        insconf = rinput.obresult.configuration
+        detector_channels = insconf.get_device("detector").get_property("channels")
+        self.logger.info(f"Detector channels: {detector_channels}")
+
         # protections
         if rinput.iterations == 0 and sky_images != 0:
             raise ValueError('sky_images: {} not compatible with iterations: {}'.format(
@@ -315,7 +316,9 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 extinction=extinction,
                 method=method, method_kwargs=method_kwargs,
                 nside_adhoc_sky_correction=nside_adhoc_sky_correction,
-                fit_doughnut=rinput.fit_doughnut
+                fit_doughnut=rinput.fit_doughnut,
+                detector_channels=detector_channels
+
             )
             step += 1
 
@@ -377,7 +380,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                       target_is_sky=True,
                       extinction=0.0,
                       method=None, method_kwargs=None,
-                      fit_doughnut=False):
+                      fit_doughnut=False,
+                      detector_channels=None):
 
         target_info = [iinfo for iinfo in images_info if iinfo.valid_target]
         sky_info = [iinfo for iinfo in images_info if iinfo.valid_sky]
@@ -420,7 +424,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                          maxsep_time=5.0, nframes=6, extinction=0,
                          method=None, method_kwargs=None,
                          nside_adhoc_sky_correction=0,
-                         fit_doughnut=False):
+                         fit_doughnut=False,
+                         detector_channels=None):
 
         seeing_fwhm = None
         baseshape = (EMIR_NAXIS2, EMIR_NAXIS1)
@@ -481,7 +486,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
             step=step,
             method=method,
             method_kwargs=method_kwargs,
-            nside_adhoc_sky_correction=nside_adhoc_sky_correction
+            nside_adhoc_sky_correction=nside_adhoc_sky_correction,
+            detector_channels=detector_channels
         )
 
         # Combining the images
@@ -1138,7 +1144,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                              nframes=10,
                              step=0,
                              method=None, method_kwargs=None,
-                             nside_adhoc_sky_correction=0):
+                             nside_adhoc_sky_correction=0,
+                             detector_channels=None):
 
         if target_is_sky:
             skyframes = targetframes
@@ -1187,7 +1194,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 self.compute_advanced_sky_for_frame(
                     tf, locskyframes, step=step,
                     method=method, method_kwargs=method_kwargs,
-                    nside_adhoc_sky_correction=nside_adhoc_sky_correction
+                    nside_adhoc_sky_correction=nside_adhoc_sky_correction,
+                    detector_channels=detector_channels
                 )
             except IndexError:
                 self.logger.error(
@@ -1196,7 +1204,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
     def compute_advanced_sky_for_frame(self, frame, skyframes, step=0,
                                        method=None, method_kwargs=None,
-                                       nside_adhoc_sky_correction=0):
+                                       nside_adhoc_sky_correction=0,
+                                       detector_channels=None):
         self.logger.info('Correcting sky in frame %s', frame.lastname)
         self.logger.info('with sky computed from frames:')
         for i in skyframes:
@@ -1319,7 +1328,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 skycorr = self.adhoc_sky_correction(
                     arr=valid,
                     objmask=frame.objmask_data,
-                    nside=nside_adhoc_sky_correction
+                    nside=nside_adhoc_sky_correction,
+                    detector_channels=detector_channels
                 )
                 valid -= skycorr
             self.logger.debug(f'saving sky subtracted result {frame.lastname}')
@@ -1365,29 +1375,42 @@ class FullDitheredImagesRecipe(EmirRecipe):
         )
         return objects, objmask
 
-    def adhoc_sky_correction(self, arr, objmask, nside=10):
+    def adhoc_sky_correction(self, arr, objmask, nside=10, detector_channels=None):
         # nside: number of subdivisions in each quadrant
 
         self.logger.info('computing ad hoc sky correction')
 
         skyfit = numpy.zeros_like(arr)
 
-        # fit each quadrant separately
-        lim = [0, 1024, 2048]
-        for i in range(2):
-            i1 = lim[i]
-            i2 = lim[i + 1]
-            for j in range(2):
-                j1 = lim[j]
-                j2 = lim[j + 1]
+
+        if detector_channels == 'FULL':
+            # fit each quadrant separately (original EMIR detector)
+            lim_i = [0, 1024, 2048]
+            lim_j = [0, 1024, 2048]
+            nside_i = nside
+            nside_j = nside
+        elif detector_channels == 'H2RG_FULL':
+            # fit each channel separately (new H2RG detector)
+            lim_i = np.linspace(0, 2048, 2).astype(int)
+            lim_j = np.linspace(0, 2048, 33).astype(int)
+            nside_i = nside
+            nside_j = 2
+        else:
+            raise ValueError(f'Invalid {detector_channels=}')
+        for i in range(len(lim_i) - 1):
+            i1 = lim_i[i]
+            i2 = lim_i[i + 1]
+            for j in range(len(lim_j) - 1):
+                j1 = lim_j[j]
+                j2 = lim_j[j + 1]
                 xyfit = []
                 zfit = []
-                limi = numpy.linspace(i1, i2, nside + 1, dtype=int)
-                limj = numpy.linspace(j1, j2, nside + 1, dtype=int)
-                for ii in range(nside):
+                limi = numpy.linspace(i1, i2, nside_i + 1, dtype=int)
+                limj = numpy.linspace(j1, j2, nside_j + 1, dtype=int)
+                for ii in range(nside_i):
                     ii1 = limi[ii]
                     ii2 = limi[ii+1]
-                    for jj in range(nside):
+                    for jj in range(nside_j):
                         jj1 = limj[jj]
                         jj2 = limj[jj+1]
                         tmprect = arr[ii1:ii2, jj1:jj2]
@@ -1418,6 +1441,17 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     surface_nearest,
                     surface_cubic
                 )
+
+                debug = False
+                if debug:
+                    import matplotlib.pyplot as plt
+                    fig, axarr = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
+                    vmin, vmax = numpy.percentile(arr, [40, 60])
+                    axarr[0].imshow(arr, origin='lower', vmin=vmin, vmax=vmax)
+                    axarr[1].imshow(skyfit, origin='lower', vmin=vmin, vmax=vmax)
+                    for xdum, ydum in xyfit:
+                        axarr[0].plot(xdum, ydum, 'r+')
+                    plt.show()
 
         # hdu = fits.PrimaryHDU(arr.astype('float32'))
         # hdul = fits.HDUList([hdu])
