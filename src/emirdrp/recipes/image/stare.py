@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -18,6 +18,7 @@ import logging
 import sys
 
 from astropy.coordinates import SkyCoord
+import astropy.io.fits as fits
 from astropy.wcs import WCS
 import numpy as np
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
@@ -63,6 +64,11 @@ class StareImageRecipe2(EmirRecipe):
 
     def run(self, rinput):
         self.logger.info('starting stare image reduction (offline)')
+
+        # determine which EMIR detector we are using
+        insconf = rinput.obresult.configuration
+        detector_channels = insconf.get_device("detector").get_property("channels")
+        self.logger.info(f"Detector channels: {detector_channels}")
 
         frames = rinput.obresult.frames
 
@@ -179,13 +185,51 @@ class StareImageRecipe2(EmirRecipe):
             # there is no need to recompute mask_footprint (is the one computed for data)
             hdu_bpm.data = (mask_reprojected > 0).astype(
                 'uint8') + mask_footprint
+            # generate image with individual channel distortion
+            if detector_channels == 'H2RG_FULL':
+                image_channels = np.zeros((2048, 2048))
+                for j_channel in range(32):
+                    j1 = j_channel * 64
+                    j2 = j1 + 64
+                    image_channels[:, j1:j2] = j_channel + 1
+                channels_reprojected, footprint = reproject_function(
+                    input_data=(image_channels, wcs_original),
+                    output_projection=wcs_final,
+                    shape_out=image_channels.shape,
+                )
+                channels_reprojected[footprint < minimum_footprint] = 0.0
+                channels_reprojected_int = np.round(channels_reprojected).astype('uint8')
+                header = fits.Header()
+                header['EXTNAME'] = 'ICHANNEL'
+                hdu_channels = fits.ImageHDU(channels_reprojected_int, header=header)
+            else:
+                hdu_channels = None
+
             # update header
             hdr['history'] = f'Reprojection using reproject_{reprojection_method}()'
             hdr['history'] = f'Reprojection time {datetime.datetime.now(datetime.UTC).isoformat()}'
+        else:
+            if detector_channels == 'H2RG_FULL':
+                image_channels = np.zeros((2048, 2048), dtype='uint8')
+                for j_channel in range(32):
+                    j1 = j_channel * 64
+                    j2 = j1 + 64
+                    image_channels[:, j1:j2] = j_channel + 1
+                header = fits.Header()
+                header['EXTNAME'] = 'ICHANNEL'
+                hdu_channels = fits.ImageHDU(image_channels, header=header)
+            else:
+                hdu_channels = None
 
         # Append the BPM to the result
         self.logger.debug('append BPM')
         processed_img.append(hdu_bpm)
+
+        # Append the reprojected layout of the detector channels (for the H2RG detector)
+        if hdu_channels is not None:
+            self.logger.debug('append channels reprojection')
+            processed_img.append(hdu_channels)
+
         self.logger.info('end stare image (off) reduction')
         result = self.create_result(reduced_image=processed_img)
 
