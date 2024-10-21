@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2023 Universidad Complutense de Madrid
+# Copyright 2008-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -200,6 +200,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
         0, 'Ad hoc sky correction (number of subintervals in each quadrant)'
     )
 
+    adhoc_sky_correction_h2rg = Parameter(False, 'Ad hoc sky correction for H2RG detector')
+
     reduced_image = Result(prods.ProcessedImage)
     result_sky = Result(prods.ProcessedImage, optional=True)
 
@@ -213,11 +215,32 @@ class FullDitheredImagesRecipe(EmirRecipe):
         user_offsets = rinput.offsets
         extinction = rinput.extinction
         nside_adhoc_sky_correction = rinput.nside_adhoc_sky_correction
+        adhoc_sky_correction_h2rg = rinput.adhoc_sky_correction_h2rg
+
+        if nside_adhoc_sky_correction > 0 and adhoc_sky_correction_h2rg:
+            raise ValueError('nside_adhoc_sky_correction and adhoc_sky_correction_h2rg cannot be used simultaneously')
 
         # determine which EMIR detector we are using
         insconf = rinput.obresult.configuration
         detector_channels = insconf.get_device("detector").get_property("channels")
         self.logger.info(f"Detector channels: {detector_channels}")
+        img_channels_layout = None
+        if detector_channels == 'FULL':  # original EMIR detector
+            if adhoc_sky_correction_h2rg:
+                raise ValueError("'adhoc_sky_correction_h2rg' is not valid for the original EMIR detector")
+        elif detector_channels == 'H2RG_FULL':  # new H2RG detector
+            if nside_adhoc_sky_correction != 0:
+                raise ValueError("'nside_adhoc_sky_correction' is not valid for the H2RG detector")
+            # read channels layout (after astrometric correction) from the first image
+            if adhoc_sky_correction_h2rg:
+                with obresult.frames[0].open() as hdul:
+                    if 'ICHANNEL' in hdul:
+                        self.logger.info('images have ICHANNEL extension')
+                        img_channels_layout = hdul['ICHANNEL'].data
+                    else:
+                        raise ValueError("Expected image extension 'ICHANNEL' not found!")
+        else:
+            raise ValueError(f'Unexpected detector: {detector_channels}')
 
         # protections
         if rinput.iterations == 0 and sky_images != 0:
@@ -317,7 +340,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                 method=method, method_kwargs=method_kwargs,
                 nside_adhoc_sky_correction=nside_adhoc_sky_correction,
                 fit_doughnut=rinput.fit_doughnut,
-                detector_channels=detector_channels
+                detector_channels=detector_channels,
+                img_channels_layout=img_channels_layout
 
             )
             step += 1
@@ -425,7 +449,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                          method=None, method_kwargs=None,
                          nside_adhoc_sky_correction=0,
                          fit_doughnut=False,
-                         detector_channels=None):
+                         detector_channels=None,
+                         img_channels_layout=None):
 
         seeing_fwhm = None
         baseshape = (EMIR_NAXIS2, EMIR_NAXIS1)
@@ -487,7 +512,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
             method=method,
             method_kwargs=method_kwargs,
             nside_adhoc_sky_correction=nside_adhoc_sky_correction,
-            detector_channels=detector_channels
+            detector_channels=detector_channels,
+            img_channels_layout=img_channels_layout
         )
 
         # Combining the images
@@ -1145,7 +1171,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                              step=0,
                              method=None, method_kwargs=None,
                              nside_adhoc_sky_correction=0,
-                             detector_channels=None):
+                             detector_channels=None,
+                             img_channels_layout=None):
 
         if target_is_sky:
             skyframes = targetframes
@@ -1195,7 +1222,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     tf, locskyframes, step=step,
                     method=method, method_kwargs=method_kwargs,
                     nside_adhoc_sky_correction=nside_adhoc_sky_correction,
-                    detector_channels=detector_channels
+                    detector_channels=detector_channels,
+                    img_channels_layout=img_channels_layout
                 )
             except IndexError:
                 self.logger.error(
@@ -1205,7 +1233,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
     def compute_advanced_sky_for_frame(self, frame, skyframes, step=0,
                                        method=None, method_kwargs=None,
                                        nside_adhoc_sky_correction=0,
-                                       detector_channels=None):
+                                       detector_channels=None,
+                                       img_channels_layout=None):
         self.logger.info('Correcting sky in frame %s', frame.lastname)
         self.logger.info('with sky computed from frames:')
         for i in skyframes:
@@ -1324,12 +1353,13 @@ class FullDitheredImagesRecipe(EmirRecipe):
             data = hdulist['primary'].data
             valid = data[frame.valid_region]
             valid -= sky
-            if nside_adhoc_sky_correction > 0:
+            if nside_adhoc_sky_correction > 0 or img_channels_layout is not None:
                 skycorr = self.adhoc_sky_correction(
                     arr=valid,
                     objmask=frame.objmask_data,
                     nside=nside_adhoc_sky_correction,
-                    detector_channels=detector_channels
+                    detector_channels=detector_channels,
+                    img_channels_layout=img_channels_layout
                 )
                 valid -= skycorr
             self.logger.debug(f'saving sky subtracted result {frame.lastname}')
@@ -1375,83 +1405,99 @@ class FullDitheredImagesRecipe(EmirRecipe):
         )
         return objects, objmask
 
-    def adhoc_sky_correction(self, arr, objmask, nside=10, detector_channels=None):
+    def adhoc_sky_correction(self, arr, objmask, nside=10,
+                             detector_channels=None,
+                             img_channels_layout=None):
         # nside: number of subdivisions in each quadrant
 
         self.logger.info('computing ad hoc sky correction')
 
         skyfit = numpy.zeros_like(arr)
 
-
-        if detector_channels == 'FULL':
+        if detector_channels == 'FULL':  # original EMIR detector
             # fit each quadrant separately (original EMIR detector)
             lim_i = [0, 1024, 2048]
             lim_j = [0, 1024, 2048]
             nside_i = nside
             nside_j = nside
-        elif detector_channels == 'H2RG_FULL':
-            # fit each channel separately (new H2RG detector)
-            lim_i = np.linspace(0, 2048, 2).astype(int)
-            lim_j = np.linspace(0, 2048, 33).astype(int)
-            nside_i = nside
-            nside_j = 2
-        else:
-            raise ValueError(f'Invalid {detector_channels=}')
-        for i in range(len(lim_i) - 1):
-            i1 = lim_i[i]
-            i2 = lim_i[i + 1]
-            for j in range(len(lim_j) - 1):
-                j1 = lim_j[j]
-                j2 = lim_j[j + 1]
-                xyfit = []
-                zfit = []
-                limi = numpy.linspace(i1, i2, nside_i + 1, dtype=int)
-                limj = numpy.linspace(j1, j2, nside_j + 1, dtype=int)
-                for ii in range(nside_i):
-                    ii1 = limi[ii]
-                    ii2 = limi[ii+1]
-                    for jj in range(nside_j):
-                        jj1 = limj[jj]
-                        jj2 = limj[jj+1]
-                        tmprect = arr[ii1:ii2, jj1:jj2]
-                        tmpmask = objmask[ii1:ii2, jj1:jj2]
-                        usefulpix = tmprect[tmpmask == 0]
-                        if usefulpix.size > 0:
-                            x0 = (jj1 + jj2) / 2.0
-                            y0 = (ii1 + ii2) / 2.0
-                            z0 = numpy.median(usefulpix)
-                            xyfit.append([x0, y0])
-                            zfit.append(z0)
-                xyfit = numpy.array(xyfit)
-                zfit = numpy.array(zfit)
-                xgrid, ygrid = numpy.meshgrid(
-                    numpy.arange(j1, j2, dtype=float),
-                    numpy.arange(i1, i2, dtype=float))
-                surface_nearest = interpolate.griddata(
-                    xyfit, zfit, (xgrid, ygrid), method='nearest',
-                    rescale=True
-                )
-                surface_cubic = interpolate.griddata(
-                    xyfit, zfit, (xgrid, ygrid), method='cubic',
-                    fill_value=-1.0E30,
-                    rescale=True
-                )
-                skyfit[i1:i2, j1:j2] = numpy.where(
-                    surface_cubic < -1.0E29,
-                    surface_nearest,
-                    surface_cubic
-                )
+            for i in range(len(lim_i) - 1):
+                i1 = lim_i[i]
+                i2 = lim_i[i + 1]
+                for j in range(len(lim_j) - 1):
+                    j1 = lim_j[j]
+                    j2 = lim_j[j + 1]
+                    xyfit = []
+                    zfit = []
+                    limi = numpy.linspace(i1, i2, nside_i + 1, dtype=int)
+                    limj = numpy.linspace(j1, j2, nside_j + 1, dtype=int)
+                    for ii in range(nside_i):
+                        ii1 = limi[ii]
+                        ii2 = limi[ii+1]
+                        for jj in range(nside_j):
+                            jj1 = limj[jj]
+                            jj2 = limj[jj+1]
+                            tmprect = arr[ii1:ii2, jj1:jj2]
+                            tmpmask = objmask[ii1:ii2, jj1:jj2]
+                            usefulpix = tmprect[tmpmask == 0]
+                            if usefulpix.size > 0:
+                                x0 = (jj1 + jj2) / 2.0
+                                y0 = (ii1 + ii2) / 2.0
+                                z0 = numpy.median(usefulpix)
+                                xyfit.append([x0, y0])
+                                zfit.append(z0)
+                    xyfit = numpy.array(xyfit)
+                    zfit = numpy.array(zfit)
+                    xgrid, ygrid = numpy.meshgrid(
+                        numpy.arange(j1, j2, dtype=float),
+                        numpy.arange(i1, i2, dtype=float))
+                    surface_nearest = interpolate.griddata(
+                        xyfit, zfit, (xgrid, ygrid), method='nearest',
+                        rescale=True
+                    )
+                    surface_cubic = interpolate.griddata(
+                        xyfit, zfit, (xgrid, ygrid), method='cubic',
+                        fill_value=-1.0E30,
+                        rescale=True
+                    )
+                    skyfit[i1:i2, j1:j2] = numpy.where(
+                        surface_cubic < -1.0E29,
+                        surface_nearest,
+                        surface_cubic
+                    )
+                    debug = False
+                    if debug:
+                        import matplotlib.pyplot as plt
+                        fig, axarr = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
+                        vmin, vmax = numpy.percentile(arr, [30, 70])
+                        axarr[0].imshow(arr, origin='lower', vmin=vmin, vmax=vmax)
+                        axarr[1].imshow(skyfit, origin='lower', vmin=vmin, vmax=vmax)
+                        for xdum, ydum in xyfit:
+                            axarr[0].plot(xdum, ydum, 'r+')
+                        plt.show()
 
+        elif detector_channels == 'H2RG_FULL':  # new H2RG detector
+            if img_channels_layout is None:
+                raise ValueError(f'Expected img_channels_layout is None')
+            for j_channel in range(32):
+                within_channel = (img_channels_layout == j_channel + 1)
+                objmask_for_channel = objmask[within_channel]
+                if len(arr[within_channel][objmask_for_channel == 0]) > 0:
+                    skyfit[within_channel] = numpy.median(arr[within_channel][objmask_for_channel == 0])
                 debug = False
                 if debug:
                     import matplotlib.pyplot as plt
                     fig, axarr = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
-                    vmin, vmax = numpy.percentile(arr, [40, 60])
+                    vmin, vmax = numpy.percentile(arr, [30, 70])
                     axarr[0].imshow(arr, origin='lower', vmin=vmin, vmax=vmax)
                     axarr[1].imshow(skyfit, origin='lower', vmin=vmin, vmax=vmax)
-                    for xdum, ydum in xyfit:
-                        axarr[0].plot(xdum, ydum, 'r+')
+                    ydum, xdum = np.where(objmask > 0)
+                    axarr[1].scatter(xdum, ydum, color='red', marker='.', s=1)
                     plt.show()
+
+        else:
+            raise ValueError(f'Unexpected {detector_channels=}')
+
+
 
         # hdu = fits.PrimaryHDU(arr.astype('float32'))
         # hdul = fits.HDUList([hdu])
