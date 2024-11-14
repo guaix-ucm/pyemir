@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2023 Universidad Complutense de Madrid
+# Copyright 2019-2024 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -43,31 +43,32 @@ from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
 
 
-def get_isky(i, pattern):
-    """Return index number of image to be employed as sky"""
+def get_isky(i, basic_pattern, repeat):
+    """Return index number of image to be employed as sky
 
-    if pattern == 'AB':
-        if (i + 1) % 2 == 0:
-            return i - 1
+    This function considers the following patterns:
+    - AB, AABB, AAABBB, AAAABBBB, etc. (basic_patern = 'AB', repeat = 1, 2, 3, 4, etc.)
+    - ABBA, AABBBBAA, AAABBBBBBAAA, AAAABBBBBBBBAAAA, etc. (basic_pattern = 'ABBA', repeat = 1, 2, 3, 4, etc.)
+    """
+
+    len_pattern = len(basic_pattern * repeat)
+    n_previous_sequences = (i + 1) // len_pattern
+    if (i + 1) % len_pattern == 0:
+        n_previous_sequences -= 1
+    ieff  = i - n_previous_sequences * len_pattern   # number between 0 and len(pattern) - 1
+
+    if basic_pattern == 'AB':
+        if ieff in list(range(0, repeat)):
+            iout = i + repeat
         else:
-            return i + 1
-    elif pattern == 'ABBA':
-        n_previous_sequences = (i + 1) // 4
-        if (i + 1) % 4 == 0:
-            n_previous_sequences -= 1
-        ieff = i - n_previous_sequences * 4
-        if ieff == 0:
-            iout = i + 1
-        elif ieff == 1:
-            iout = i - 1
-        elif ieff == 2:
-            iout = i + 1
-        elif ieff == 3:
-            iout = i - 1
+            iout = i - repeat
+    elif basic_pattern == 'ABBA':
+        if ieff in list(range(0, repeat)) + list(range(2*repeat, 3*repeat)):
+            iout = i + repeat
         else:
-            raise ValueError('Unexpected ieff value={}'.format(ieff))
+            iout = i - repeat
     else:
-        raise ValueError('Unexpected pattern: {}'.format(pattern))
+        raise ValueError(f'Unexpected pattern: {basic_pattern}')
 
     return iout
 
@@ -128,6 +129,10 @@ class ABBASpectraRectwv(EmirRecipe):
         description='Observation pattern',
         choices=['AB', 'ABBA']
     )
+    repeat = Parameter(
+        1,
+        description='Repetitions at each A and B position'
+    )
     # do not allow 'sum' as combination method in order to avoid
     # confusion with number of counts in resulting image
     method = Parameter(
@@ -151,8 +156,15 @@ class ABBASpectraRectwv(EmirRecipe):
     def run(self, rinput):
 
         nimages = len(rinput.obresult.frames)
-        pattern = rinput.pattern
+        basic_pattern = rinput.pattern
+        basic_pattern_length = len(basic_pattern)
+        repeat = rinput.repeat
+        pattern = ''
+        for i in range(basic_pattern_length):
+            pattern += basic_pattern[i] * repeat
         pattern_length = len(pattern)
+        if pattern_length != repeat * basic_pattern_length:
+            raise ValueError(f"Unexpected mismatch: {pattern_length=} != {repeat*basic_pattern_length=}")
 
         # check combination method
         if rinput.method != 'sigmaclip':
@@ -165,6 +177,10 @@ class ABBASpectraRectwv(EmirRecipe):
             raise ValueError('Number of images is not a multiple of pattern '
                              'length: {}, {}'.format(nimages, pattern_length))
         nsequences = nimages // pattern_length
+        if nsequences == 0:
+            self.logger.info(f'number of images: {nimages}')
+            self.logger.info(f'minimum number of required images: {pattern_length}')
+            raise ValueError('Insufficient number of images')
 
         # check rectification and wavelength calibration information
         if rinput.rectwv_coeff is None and rinput.list_rectwv_coeff is None:
@@ -209,23 +225,18 @@ class ABBASpectraRectwv(EmirRecipe):
 
         for i in range(nimages):
             self.logger.info(list_rectwv_coeff[i])
-        self.logger.info('observation pattern..................: {}'.format(
-            pattern))
-        self.logger.info('nsequences...........................: {}'.format(
-            nsequences))
-        self.logger.info('offsets (arcsec, from WCS)...........: {}'.format(
-            sep_arcsec))
-        self.logger.info('spatial scales (arcsec/pix, from WCS): {}'.format(
-            spatial_scales))
-        self.logger.info('spatial scales (pixels, from WCS)....: {}'.format(
-            sep_pixel))
+        self.logger.info(f'basic pattern........................: {basic_pattern}')
+        self.logger.info(f'repeat...............................: {repeat}')
+        self.logger.info(f'actual pattern.......................: {pattern}')
+        self.logger.info(f'nsequences...........................: {nsequences}')
+        self.logger.info(f'offsets (arcsec, from WCS)...........: {sep_arcsec}')
+        self.logger.info(f'spatial scales (arcsec/pix, from WCS): {spatial_scales}')
+        self.logger.info(f'spatial scales (pixels, from WCS)....: {sep_pixel}')
 
         full_set = pattern * nsequences
-        self.logger.info('full set of images...................: {}'.format(
-            full_set))
+        self.logger.info(f'full set of images...................: {full_set}')
 
-        # basic parameters to determine useful pixels in the wavelength
-        # direction
+        # basic parameters to determine useful pixels in the wavelength direction
         dict_rtas = rinput.refine_target_along_slitlet
 
         valid_keys = [
@@ -305,52 +316,41 @@ class ABBASpectraRectwv(EmirRecipe):
         except KeyError:
             nwidth_medfilt = 0
         except ValueError:
-            raise ValueError('wrong value: nwidth_medfilt={}'.format(
-                dict_rtas['nwidth_medfilt']))
+            raise ValueError('wrong value: nwidth_medfilt={}'.format(dict_rtas['nwidth_medfilt']))
 
         try:
             save_individual_images = int(dict_rtas['save_individual_images'])
         except KeyError:
             save_individual_images = 0
         except ValueError:
-            raise ValueError('wrong value: save_individual_images={}'.format(
-                dict_rtas['save_individual_images']))
+            raise ValueError('wrong value: save_individual_images={}'.format(dict_rtas['save_individual_images']))
 
-        self.logger.info('npix_removed_near_ohlines: {}'.format(
-            npix_removed_near_ohlines))
-        self.logger.info('nwidth_medfilt: {}'.format(nwidth_medfilt))
-        self.logger.info('vpix_region_a_target: {}'.format(
-            vpix_region_a_target))
-        self.logger.info('vpix_region_b_target: {}'.format(
-            vpix_region_b_target))
-        self.logger.info('list_valid_wvregions_a: {}'.format(
-            list_valid_wvregions_a))
-        self.logger.info('list_valid_wvregions_b: {}'.format(
-            list_valid_wvregions_b))
+        self.logger.info(f'npix_removed_near_ohlines: {npix_removed_near_ohlines}')
+        self.logger.info(f'nwidth_medfilt: {nwidth_medfilt}')
+        self.logger.info(f'vpix_region_a_target: {vpix_region_a_target}')
+        self.logger.info(f'vpix_region_b_target: {vpix_region_b_target}')
+        self.logger.info(f'list_valid_wvregions_a: {list_valid_wvregions_a}')
+        self.logger.info(f'list_valid_wvregions_b: {list_valid_wvregions_b}')
 
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
 
-        # basic reduction, rectification and wavelength calibration of
-        # all the individual images
+        # basic reduction, rectification and wavelength calibration of all the individual images
         list_reduced_mos_images = []
         self.logger.info('starting reduction of individual images')
         for i, char in enumerate(full_set):
             frame = rinput.obresult.frames[i]
-            self.logger.info('image {} ({} of {})'.format(char, i + 1,
-                                                          nimages))
-            self.logger.info('image: {}'.format(frame.filename))
+            self.logger.info(f'image {char} ({i+1} of {nimages})')
+            self.logger.info(f'image: {frame.filename}')
             with frame.open() as f:
                 newimg = fits.HDUList([ext.copy() for ext in f])
             base_header = newimg[0].header
             grism_name_ = base_header['grism']
             if grism_name_ != grism_name:
-                raise ValueError('Incompatible grism name in '
-                                 'rectwv_coeff.json file and FITS image')
+                raise ValueError('Incompatible grism name in rectwv_coeff.json file and FITS image')
             filter_name_ = base_header['filter']
             if filter_name_ != filter_name:
-                raise ValueError('Incompatible filter name in '
-                                 'rectwv_coeff.json file and FITS image')
+                raise ValueError('Incompatible filter name in rectwv_coeff.json file and FITS image')
             hdu = newimg[0]
             hdu.header['UUID'] = str(uuid.uuid1())
             # basic reduction
@@ -397,12 +397,11 @@ class ABBASpectraRectwv(EmirRecipe):
                 refine_image = False
             if refine_image:
                 frame = rinput.obresult.frames[i]
-                isky = get_isky(i, pattern)
+                isky = get_isky(i, basic_pattern, repeat)
                 frame_sky = rinput.obresult.frames[isky]
-                self.logger.info('image {} ({} of {})'.format(char, i + 1,
-                                                              nimages))
-                self.logger.info('image: {}'.format(frame.filename))
-                self.logger.info('(sky): {}'.format(frame_sky.filename))
+                self.logger.info(f'image {char} ({i+1} of {nimages})')
+                self.logger.info(f'image: {frame.filename}')
+                self.logger.info(f'(sky): {frame_sky.filename}')
                 data = list_reduced_mos_images[i][0].data.copy()
                 data_sky = list_reduced_mos_images[isky][0].data
                 data -= data_sky
@@ -453,7 +452,7 @@ class ABBASpectraRectwv(EmirRecipe):
                         nsmax_sky = None
                         skysubtraction = False
                 else:
-                    raise ValueError('Unexpected char value: {}'.format(char))
+                    raise ValueError(f'Unexpected char value: {char}')
 
                 # initial slitlet region
                 slitlet2d = data[(nsmin - 1):nsmax, :].copy()
@@ -501,7 +500,7 @@ class ABBASpectraRectwv(EmirRecipe):
                 elif char == 'B':
                     reference_profile = reference_profile_b
                 else:
-                    raise ValueError('Unexpected char value: {}'.format(char))
+                    raise ValueError(f'Unexpected char value: {char}')
                 offset, fpeak = periodic_corr1d(
                     sp_reference=reference_profile,
                     sp_offset=profile,
@@ -512,8 +511,7 @@ class ABBASpectraRectwv(EmirRecipe):
                     nfit_peak=5,
                     naround_zero=naround_zero,
                     sp_label='spatial profile',
-                    plottitle='Image #{} (type {}), {}'.format(
-                        i + 1, char, frame.filename[:10]),
+                    plottitle=f'Image #{i+1} (type {char}), {frame.filename[:10]}',
                     pdf=pdf
                 )
                 # round to 4 decimal places
@@ -530,33 +528,29 @@ class ABBASpectraRectwv(EmirRecipe):
                     first_b = False
             else:
                 list_offsets.append(0.0)
-        self.logger.info('computed offsets: {}'.format(list_offsets))
+        self.logger.info(f'computed offsets: {list_offsets}')
 
-        self.logger.info('correcting vertical offsets between individual '
-                         'images')
+        self.logger.info('correcting vertical offsets between individual images')
         list_a = []
         list_b = []
         for i, (char, offset) in enumerate(zip(full_set, list_offsets)):
             frame = rinput.obresult.frames[i]
-            self.logger.info('image {} ({} of {})'.format(char, i + 1,
-                                                          nimages))
-            self.logger.info('image: {}'.format(frame.filename))
+            self.logger.info(f'image {char} ({i+1} of {nimages})')
+            self.logger.info(f'image: {frame.filename}')
             reduced_mos_image = list_reduced_mos_images[i]
             data = reduced_mos_image[0].data
             base_header = reduced_mos_image[0].header
-            self.logger.info(
-                'correcting vertical offset (pixesl): {}'.format(offset))
+            self.logger.info(f'correcting vertical offset (pixesl): {offset}')
             if offset != 0:
                 reduced_mos_image[0].data = shift_image2d(
                     data,
                     yoffset=-offset
                 ).astype('float32')
-            base_header['HISTORY'] = 'Applying voffset_pix {}'.format(offset)
+            base_header['HISTORY'] = f'Applying voffset_pix {offset}'
             if save_individual_images != 0:
                 self.save_intermediate_img(
                     reduced_mos_image,
-                    'reduced_mos_image_refined_' + char + '_' +
-                    frame.filename[:10] + '.fits'
+                    'reduced_mos_image_refined_' + char + '_' + frame.filename[:10] + '.fits'
                 )
 
             # store reduced_mos_image
@@ -580,8 +574,7 @@ class ABBASpectraRectwv(EmirRecipe):
             errors=False,
             prolog=None
         )
-        self.save_intermediate_img(reduced_mos_image_a,
-                                   'reduced_mos_image_a.fits')
+        self.save_intermediate_img(reduced_mos_image_a, 'reduced_mos_image_a.fits')
 
         # final combination of B images
         self.logger.info('combining individual B images')
@@ -592,8 +585,7 @@ class ABBASpectraRectwv(EmirRecipe):
             errors=False,
             prolog=None
         )
-        self.save_intermediate_img(reduced_mos_image_b,
-                                   'reduced_mos_image_b.fits')
+        self.save_intermediate_img(reduced_mos_image_b, 'reduced_mos_image_b.fits')
 
         self.logger.info('mixing A and B spectra')
         header_a = reduced_mos_image_a[0].header
@@ -609,7 +601,7 @@ class ABBASpectraRectwv(EmirRecipe):
             dict_rtas,
             reduced_mos_abba_data,
             header_a, header_b,
-            pattern,
+            basic_pattern, repeat,
             full_set,
             list_offsets,
             voffset_pix=0
@@ -659,22 +651,16 @@ class ABBASpectraRectwv(EmirRecipe):
         elif ab_different_target == 9:
             voffset_pix = None
         else:
-            raise ValueError('Invalid ab_different_target={}'.format(
-                ab_different_target))
+            raise ValueError(f'Invalid ab_different_target={ab_different_target}')
 
         # close output PDF file
         if pdf is not None:
             pdf.close()
 
         if voffset_pix is not None:
-            self.logger.info(
-                'correcting vertical offset (pixesl): {}'.format(voffset_pix))
-            shifted_a_minus_b_data = shift_image2d(
-                reduced_mos_abba_data,
-                yoffset=-voffset_pix,
-            ).astype('float32')
-            reduced_mos_abba_combined_data = \
-                reduced_mos_abba_data - shifted_a_minus_b_data
+            self.logger.info(f'correcting vertical offset (pixesl): {voffset_pix}')
+            shifted_a_minus_b_data = shift_image2d(reduced_mos_abba_data, yoffset=-voffset_pix,).astype('float32')
+            reduced_mos_abba_combined_data = reduced_mos_abba_data - shifted_a_minus_b_data
             # scale signal to exposure of a single image
             reduced_mos_abba_combined_data /= 2.0
         else:
@@ -686,7 +672,7 @@ class ABBASpectraRectwv(EmirRecipe):
             dict_rtas,
             reduced_mos_abba_combined_data,
             header_a, header_b,
-            pattern,
+            basic_pattern, repeat,
             full_set,
             list_offsets,
             voffset_pix
@@ -718,7 +704,8 @@ class ABBASpectraRectwv(EmirRecipe):
 
     def create_mos_abba_image(self, rinput, dict_rtas, reduced_mos_abba_data,
                               header_a, header_b,
-                              pattern, full_set, list_offsets, voffset_pix):
+                              basic_pattern, repeat,
+                              full_set, list_offsets, voffset_pix):
         with contextlib.ExitStack() as stack:
             hduls = [stack.enter_context(fname.open()) for fname in
                      rinput.obresult.frames]
@@ -744,8 +731,7 @@ class ABBASpectraRectwv(EmirRecipe):
                     hdu.header.remove(keyword)
             hdu.header['crpix1'] = (crpix1, 'reference pixel')
             hdu.header['crval1'] = (crval1, 'central wavelength at crpix1')
-            hdu.header['cdelt1'] = (
-                cdelt1, 'linear dispersion (Angstrom/pixel)')
+            hdu.header['cdelt1'] = (cdelt1, 'linear dispersion (Angstrom/pixel)')
             hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
             hdu.header['ctype1'] = 'WAVE'
             hdu.header['crpix2'] = (0.0, 'reference pixel')
@@ -761,12 +747,12 @@ class ABBASpectraRectwv(EmirRecipe):
 
             # update additional keywords
             hdu.header['UUID'] = str(uuid.uuid1())
-            hdu.header['OBSMODE'] = pattern + ' pattern'
+            hdu.header['OBSMODE'] = f'{basic_pattern} pattern (repeat={repeat})'
             hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
             hdu.header['NUM-NCOM'] = (len(hduls), 'Number of combined frames')
 
             # update history
-            hdu.header['HISTORY'] = "Processed " + pattern + " pattern"
+            hdu.header['HISTORY'] = f"Processed {basic_pattern} pattern (repeat={repeat})"
             hdu.header['HISTORY'] = '--- Reduction of A images ---'
             for line in header_a['HISTORY']:
                 hdu.header['HISTORY'] = line
@@ -775,22 +761,19 @@ class ABBASpectraRectwv(EmirRecipe):
                 hdu.header['HISTORY'] = line
             hdu.header['HISTORY'] = '--- Combination of ABBA images ---'
             for key in dict_rtas:
-                hdu.header['HISTORY'] = '{}: {}'.format(key, dict_rtas[key])
+                hdu.header['HISTORY'] = f'{key}: {dict_rtas[key]}'
             dm = emirdrp.datamodel.EmirDataModel()
             for img, key, offset in zip(hduls, full_set, list_offsets):
                 imgid = dm.get_imgid(img)
-                hdu.header['HISTORY'] = \
-                    "Image '{}' is '{}', with voffset_pix {}".format(
-                        imgid, key, offset)
+                hdu.header['HISTORY'] = f"Image '{imgid}' is '{key}', with voffset_pix {offset}"
 
         if voffset_pix is not None and voffset_pix != 0:
             hdu.header['HISTORY'] = '--- Combination of AB spectra ---'
-            hdu.header['HISTORY'] = "voffset_pix between A and B {}".format(
-                voffset_pix)
+            hdu.header['HISTORY'] = f"voffset_pix between A and B {voffset_pix}"
         hdu.header.add_history('--- rinput.stored() (BEGIN) ---')
         for item in rinput.stored():
             value = getattr(rinput, item)
-            cline = '{}: {}'.format(item, value)
+            cline = f'{item}: {value}'
             hdu.header.add_history(cline)
         hdu.header.add_history('--- rinput.stored() (END) ---')
         return result_img
@@ -836,6 +819,10 @@ class ABBASpectraFastRectwv(EmirRecipe):
         description='Observation pattern',
         choices=['AB', 'ABBA']
     )
+    repeat = Parameter(
+        1,
+        description='Repetitions at each A and B position',
+    )
     # do not allow 'sum' as combination method in order to avoid
     # confusion with number of counts in resulting image
     method = Parameter(
@@ -859,8 +846,15 @@ class ABBASpectraFastRectwv(EmirRecipe):
     def run(self, rinput):
 
         nimages = len(rinput.obresult.frames)
-        pattern = rinput.pattern
+        basic_pattern = rinput.pattern
+        basic_pattern_length = len(basic_pattern)
+        repeat = rinput.repeat
+        pattern = ''
+        for i in range(basic_pattern_length):
+            pattern += basic_pattern[i] * repeat
         pattern_length = len(pattern)
+        if pattern_length != repeat * basic_pattern_length:
+            raise ValueError(f'Unexpected mismatch: {pattern_length=} != {repeat*basic_pattern_length=}')
 
         # check combination method
         if rinput.method != 'sigmaclip':
@@ -870,17 +864,23 @@ class ABBASpectraFastRectwv(EmirRecipe):
 
         # check pattern sequence matches number of images
         if nimages % pattern_length != 0:
-            raise ValueError('Number of images is not a multiple of pattern '
+            raise ValueError('Number of images is not a multiple of expected pattern '
                              'length: {}, {}'.format(nimages, pattern_length))
         nsequences = nimages // pattern_length
+        if nsequences == 0:
+            self.logger.info(f'number of images: {nimages}')
+            self.logger.info(f'minimum number of required images: {pattern_length}')
+            raise ValueError('Insufficient number of images')
 
         rectwv_coeff = rinput.rectwv_coeff
         self.logger.info(rectwv_coeff)
-        self.logger.info('observation pattern: {}'.format(pattern))
-        self.logger.info('nsequences.........: {}'.format(nsequences))
+        self.logger.info(f'basic pattern......: {basic_pattern}')
+        self.logger.info(f'repeat.............: {repeat}')
+        self.logger.info(f'actual pattern.....: {pattern}')
+        self.logger.info(f'nsequences.........: {nsequences}')
 
         full_set = pattern * nsequences
-        self.logger.info('full set of images.: {}'.format(full_set))
+        self.logger.info(f'full set of images.: {full_set}')
 
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
@@ -940,7 +940,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
             reduced_data,
             header_a,
             header_b,
-            rinput.pattern,
+            basic_pattern,
+            repeat,
             full_set,
             voffset_pix=0,
             header_mos_abba=None,
@@ -981,7 +982,8 @@ class ABBASpectraFastRectwv(EmirRecipe):
             reduced_mos_abba_combined_data,
             header_a,
             header_b,
-            rinput.pattern,
+            basic_pattern,
+            repeat,
             full_set,
             voffset_pix,
             header_mos_abba=header_mos_abba
@@ -1013,7 +1015,7 @@ class ABBASpectraFastRectwv(EmirRecipe):
 
     def create_reduced_image(self, rinput, reduced_data,
                              header_a, header_b,
-                             pattern, full_set,
+                             basic_pattern, repeat, full_set,
                              voffset_pix, header_mos_abba):
         with contextlib.ExitStack() as stack:
             hduls = [stack.enter_context(fname.open()) for fname in
@@ -1038,8 +1040,7 @@ class ABBASpectraFastRectwv(EmirRecipe):
                         hdu.header.remove(keyword)
                 hdu.header['crpix1'] = (crpix1, 'reference pixel')
                 hdu.header['crval1'] = (crval1, 'central wavelength at crpix1')
-                hdu.header['cdelt1'] = \
-                    (cdelt1, 'linear dispersion (Angstrom/pixel)')
+                hdu.header['cdelt1'] = (cdelt1, 'linear dispersion (Angstrom/pixel)')
                 hdu.header['cunit1'] = ('Angstrom', 'units along axis1')
                 hdu.header['ctype1'] = 'WAVE'
                 hdu.header['crpix2'] = (0.0, 'reference pixel')
@@ -1055,9 +1056,9 @@ class ABBASpectraFastRectwv(EmirRecipe):
 
             # update additional keywords
             hdu.header['UUID'] = str(uuid.uuid1())
-            hdu.header['OBSMODE'] = pattern + ' pattern'
+            hdu.header['OBSMODE'] = f'{basic_pattern} pattern (repeat={repeat})'
             hdu.header['TSUTC2'] = hduls[-1][0].header['TSUTC2']
-            hdu.header['history'] = "Processed " + pattern + " pattern"
+            hdu.header['history'] = f"Processed {basic_pattern} pattern (repeat={repeat})"
             hdu.header['NUM-NCOM'] = (len(hduls), 'Number of combined frames')
 
             # update history
@@ -1066,7 +1067,7 @@ class ABBASpectraFastRectwv(EmirRecipe):
                 imgid = dm.get_imgid(img)
                 hdu.header['HISTORY'] = "Image '{}' is '{}'".format(imgid, key)
 
-        hdu.header['HISTORY'] = "Processed " + pattern + " pattern"
+        hdu.header['HISTORY'] = f"Processed {basic_pattern} pattern (repeat={repeat})"
         hdu.header['HISTORY'] = '--- Reduction of A images ---'
         for line in header_a['HISTORY']:
             hdu.header['HISTORY'] = line
@@ -1075,12 +1076,11 @@ class ABBASpectraFastRectwv(EmirRecipe):
             hdu.header['HISTORY'] = line
         if voffset_pix is not None and voffset_pix != 0:
             hdu.header['HISTORY'] = '--- Combination of AB spectra ---'
-            hdu.header['HISTORY'] = "voffset_pix between A and B {}".format(
-                voffset_pix)
+            hdu.header['HISTORY'] = f"voffset_pix between A and B {voffset_pix}"
         hdu.header.add_history('--- rinput.stored() (BEGIN) ---')
         for item in rinput.stored():
             value = getattr(rinput, item)
-            cline = '{}: {}'.format(item, value)
+            cline = f'{item}: {value}'
             hdu.header.add_history(cline)
         hdu.header.add_history('--- rinput.stored() (END) ---')
         return result_img

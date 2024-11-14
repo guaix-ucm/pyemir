@@ -111,7 +111,8 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
         for i in range(nimages):
             output += ' - ' + list_fileinfo[i].filename + '\n'
         output += 'requirements:\n'
-        output += '  pattern: ABBA\n'
+        output += f'  pattern: {args.pattern}\n'
+        output += f'  repeat: {args.repeat}\n'
         idlabel = list_fileinfo[0].filename[:10]
         output += '  rectwv_coeff: ../obsid_' + idlabel + '_rectwv_'
         if args.rectwv_combined:
@@ -135,7 +136,8 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
         for i in range(nimages):
             output += ' - ' + list_fileinfo[i].filename + '\n'
         output += 'requirements:\n'
-        output += '  pattern: ABBA\n'
+        output += f'  pattern: {args.pattern}\n'
+        output += f'  repeat: {args.repeat}\n'
         if args.rectwv_combined:
             output += '  rectwv_coeff: ../obsid_'
             output += list_fileinfo[0].filename[:10]
