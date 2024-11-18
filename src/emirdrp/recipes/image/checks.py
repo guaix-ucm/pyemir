@@ -15,7 +15,7 @@ import operator
 
 import numpy
 from astropy.io import fits
-import sep
+import sep_pjw as sep
 import matplotlib.pyplot as plt
 
 from emirdrp.util.sextractor import SExtractor

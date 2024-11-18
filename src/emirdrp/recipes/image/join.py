@@ -15,7 +15,7 @@ import sys
 import uuid
 
 import numpy
-import sep
+import sep_pjw as sep
 from astropy.io import fits
 from numina.core import Result, Requirement, Parameter
 from numina.core.requirements import ObservationResultRequirement

@@ -17,7 +17,7 @@ import uuid
 
 import numpy
 import numpy as np
-import sep
+import sep_pjw as sep
 from astropy.io import fits
 from scipy import interpolate
 from scipy.ndimage import median_filter

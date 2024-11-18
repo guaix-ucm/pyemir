@@ -14,7 +14,7 @@ import itertools
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sep
+import sep_pjw as sep
 import astropy.units as u
 import astropy.wcs
 import skimage.filters as filt

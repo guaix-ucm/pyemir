@@ -9,7 +9,7 @@
 
 """Test recipe to find point sources"""
 
-import sep
+import sep_pjw as sep
 import numpy
 import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel

@@ -13,6 +13,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
@@ -22,14 +23,14 @@ classifiers = [
 ]
 
 dependencies = [
-    "numpy >= 1.20,<2",
+    "numpy >= 1.20",
     "astropy",
     "scipy >= 1.8",
     "matplotlib",
     "lmfit",
     "numina>=0.32",
     "photutils>=1.4",
-    "sep>=0.5", # sep requieres numpy < 2 for the moment
+    "sep-pjw",
     "scikit-image>=0.22",
     "scikit-learn>=0.19",
     "reproject",

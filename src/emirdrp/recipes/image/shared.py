@@ -21,7 +21,7 @@ from astropy.visualization import SqrtStretch
 from astropy.visualization import PercentileInterval
 from astropy.visualization.mpl_normalize import ImageNormalize
 from scipy.spatial import KDTree as KDTree
-import sep
+import sep_pjw as sep
 
 import matplotlib as mpl
 from matplotlib.patches import Ellipse
