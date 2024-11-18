@@ -82,7 +82,7 @@ pyemir-overplot_boundary_model = "emirdrp.processing.wavecal.overplot_boundary_m
 pyemir-overplot_bounddict = "emirdrp.tools.overplot_bounddict:main"
 
 [build-system]
-requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools >= 45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 # pyproject.toml
