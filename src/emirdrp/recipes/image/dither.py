@@ -1477,7 +1477,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         elif detector_channels == 'H2RG_FULL':  # new H2RG detector
             if img_channels_layout is None:
-                raise ValueError(f'Expected img_channels_layout is None')
+                raise ValueError('Expected img_channels_layout is None')
             for j_channel in range(32):
                 within_channel = (img_channels_layout == j_channel + 1)
                 objmask_for_channel = objmask[within_channel]
@@ -1496,8 +1496,6 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         else:
             raise ValueError(f'Unexpected {detector_channels=}')
-
-
 
         # hdu = fits.PrimaryHDU(arr.astype('float32'))
         # hdul = fits.HDUList([hdu])

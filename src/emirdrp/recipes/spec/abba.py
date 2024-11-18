@@ -55,7 +55,7 @@ def get_isky(i, basic_pattern, repeat):
     n_previous_sequences = (i + 1) // len_pattern
     if (i + 1) % len_pattern == 0:
         n_previous_sequences -= 1
-    ieff  = i - n_previous_sequences * len_pattern   # number between 0 and len(pattern) - 1
+    ieff = i - n_previous_sequences * len_pattern   # number between 0 and len(pattern) - 1
 
     if basic_pattern == 'AB':
         if ieff in list(range(0, repeat)):
