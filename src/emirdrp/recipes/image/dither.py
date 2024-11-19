@@ -705,9 +705,13 @@ class FullDitheredImagesRecipe(EmirRecipe):
             # are set to a small, but not zero, value below)
             self.logger.debug(
                 f"Step {step}, combining {len(data)} frames using '{method.__name__}'")
+            time_ini_combination = datetime.datetime.now()
             sf_data, _sf_var, sf_num = method(
                 data, masks, scales=scales, dtype='float32', **method_kwargs
             )
+            time_end_combination = datetime.datetime.now()
+            self.logger.debug(
+                f"Step {step}, combination time: {time_end_combination-time_ini_combination}")
             # avoid pixels without flatfield information
             if numpy.any(sf_num == 0):
                 self.logger.warning(
@@ -942,8 +946,12 @@ class FullDitheredImagesRecipe(EmirRecipe):
             headers = [i['primary'].header for i in frameslll]
 
             # compute combination
+            time_ini_combination = datetime.datetime.now()
             out = method(data, masks, scales=extinc, dtype='float32', out=out,
                          **method_kwargs)
+            time_end_combination = datetime.datetime.now()
+            self.logger.debug(
+                f"Step {step}, combination time: {time_end_combination - time_ini_combination}")
 
             # update header
             base_header = headers[0]
