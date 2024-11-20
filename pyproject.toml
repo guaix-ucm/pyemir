@@ -1,6 +1,7 @@
 [project]
 name = "pyemir"
 dynamic = ["version"]
+description = "EMIR Data Processing Pipeline"
 readme = "README.rst"
 requires-python = ">=3.9"
 license = {text = "GPL-3.0-or-later"}
