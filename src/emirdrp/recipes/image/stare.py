@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2024 Universidad Complutense de Madrid
+# Copyright 2011-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -17,19 +17,21 @@ import datetime
 import logging
 import sys
 
+if sys.version_info[:2] <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
+
 from astropy.coordinates import SkyCoord
 import astropy.io.fits as fits
 from astropy.wcs import WCS
-import numpy as np
-from reproject import reproject_interp, reproject_adaptive, reproject_exact
-from scipy.ndimage import median_filter
-
 from numina.array import combine
 from numina.core import Result, Parameter
 from numina.core.query import Ignore
 from numina.core.recipes import timeit
 from numina.processing.combine import basic_processing_with_combination
 from numina.util.context import manage_fits
+import numpy as np
+from reproject import reproject_interp, reproject_adaptive, reproject_exact
+from scipy.ndimage import median_filter
 
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.core.extra as extra
@@ -37,11 +39,6 @@ import emirdrp.requirements as reqs
 import emirdrp.products as prods
 import emirdrp.processing.combine as comb
 import emirdrp.decorators
-
-
-if sys.version_info[:2] <= (3, 10):
-    datetime.UTC = datetime.timezone.utc
-
 
 _logger = logging.getLogger(__name__)
 

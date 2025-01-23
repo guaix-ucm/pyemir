@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2024 Universidad Complutense de Madrid
+# Copyright 2013-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -12,8 +12,11 @@
 import datetime
 import functools
 import logging
-import uuid
 import sys
+import uuid
+
+if sys.version_info <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
 
 import numpy
 from astropy.io import fits

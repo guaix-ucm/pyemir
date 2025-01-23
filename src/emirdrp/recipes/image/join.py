@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2024 Universidad Complutense de Madrid
+# Copyright 2014-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -14,8 +14,9 @@ import datetime
 import sys
 import uuid
 
-import numpy
-import sep_pjw as sep
+if sys.version_info[:2] <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
+
 from astropy.io import fits
 from numina.core import Result, Requirement, Parameter
 from numina.core.requirements import ObservationResultRequirement
@@ -28,6 +29,8 @@ import numina.processing as proc
 from numina.core.query import ResultOf
 from numina.array import fixpix2
 from numina.frame.utils import copy_img
+import numpy
+import sep_pjw as sep
 
 from emirdrp.instrument.channels import FULL
 import emirdrp.products as prods
@@ -37,10 +40,6 @@ from emirdrp.processing.wcs import offsets_from_wcs_imgs, reference_pix_from_wcs
 from emirdrp.processing.corr import offsets_from_crosscor, offsets_from_crosscor_regions
 from emirdrp.core.recipe import EmirRecipe
 from emirdrp.processing.combine import segmentation_combined
-
-
-if sys.version_info[:2] <= (3, 10):
-    datetime.UTC = datetime.timezone.utc
 
 
 class JoinDitheredImagesRecipe(EmirRecipe):

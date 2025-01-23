@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2024 Universidad Complutense de Madrid
+# Copyright 2008-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -13,16 +13,13 @@ import datetime
 import logging
 import os
 import shutil
+import sys
 import uuid
 
-import numpy
-import numpy as np
-import sep_pjw as sep
-from astropy.io import fits
-from scipy import interpolate
-from scipy.ndimage import median_filter
-from scipy.spatial import KDTree as KDTree
+if sys.version_info[:2] <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
 
+from astropy.io import fits
 from numina.core import Result, Requirement, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.query import ResultOf
@@ -32,6 +29,11 @@ import numina.array.combine as nacom
 import numina.frame.combine as nfcom
 from numina.util.context import manage_fits
 from numina.frame import resize_fits, custom_region_to_str
+import numpy
+from scipy import interpolate
+from scipy.ndimage import median_filter
+from scipy.spatial import KDTree as KDTree
+import sep_pjw as sep
 
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
@@ -822,8 +824,8 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         # for the first radii (with empty data in some bins), average all
         # undefined values with the median within each quadrant
-        j1, j2, j3, j4, j5 = numpy.arange(
-            5 * nbins_theta_per_quarter, step=nbins_theta_per_quarter)
+        j1, j2, j3, j4, j5 = numpy.arange(5 * nbins_theta_per_quarter,
+                                          step=nbins_theta_per_quarter)
         for i in range(nbins_r):
             if len(numpy.argwhere(hist2d[:, i] == -1)) > 0:
                 for jj1, jj2 in zip([j1, j2, j3, j4],
@@ -1498,7 +1500,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
                     vmin, vmax = numpy.percentile(arr, [30, 70])
                     axarr[0].imshow(arr, origin='lower', vmin=vmin, vmax=vmax)
                     axarr[1].imshow(skyfit, origin='lower', vmin=vmin, vmax=vmax)
-                    ydum, xdum = np.where(objmask > 0)
+                    ydum, xdum = numpy.where(objmask > 0)
                     axarr[1].scatter(xdum, ydum, color='red', marker='.', s=1)
                     plt.show()
 

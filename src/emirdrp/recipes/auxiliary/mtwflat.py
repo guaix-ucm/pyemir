@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2024 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -14,7 +14,9 @@ import datetime
 import sys
 import uuid
 
-import numpy
+if sys.version_info[:2] <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
+
 import astropy.io.fits as fits
 from numina.array.combine import median
 from numina.array.robustfit import fit_theil_sen
@@ -22,14 +24,12 @@ from numina.core import Result
 from numina.frame.utils import copy_img
 import numina.types.datatype as dt
 from numina.processing.combine import basic_processing_with_combination_frames
+import numpy
 
 from emirdrp.processing.info import gather_info_frames
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
-
-if sys.version_info[:2] <= (3, 10):
-    datetime.UTC = datetime.timezone.utc
 
 
 class MultiTwilightFlatRecipe(EmirRecipe):

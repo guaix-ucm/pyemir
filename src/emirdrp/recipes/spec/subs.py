@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -10,8 +10,14 @@
 """
 Spectroscopy mode, ABBA
 """
-import uuid
+
+# import datetime
 import pkgutil
+# import sys
+import uuid
+
+# if sys.version_info[:2] <= (3, 10):
+#    datetime.UTC = datetime.timezone.utc
 
 import astropy.io.fits as fits
 import numpy
