@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2024 Universidad Complutense de Madrid
+# Copyright 2013-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -9,7 +9,7 @@
 
 """Test recipe to find point sources"""
 
-import sep_pjw as sep
+import sep
 import numpy
 import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel

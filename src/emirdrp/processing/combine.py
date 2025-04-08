@@ -451,7 +451,7 @@ def basic_processing_with_segmentation(rinput, flow,
 
 
 def segmentation_combined(data, snr_detect=10.0, fwhm=4.0, npixels=15, mask_corners=False):
-    import sep_pjw as sep
+    import sep
     from astropy.convolution import Gaussian2DKernel
     from astropy.stats import gaussian_fwhm_to_sigma
 

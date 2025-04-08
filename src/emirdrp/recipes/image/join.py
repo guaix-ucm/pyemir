@@ -30,7 +30,7 @@ from numina.core.query import ResultOf
 from numina.array import fixpix2
 from numina.frame.utils import copy_img
 import numpy
-import sep_pjw as sep
+import sep
 
 from emirdrp.instrument.channels import FULL
 import emirdrp.products as prods

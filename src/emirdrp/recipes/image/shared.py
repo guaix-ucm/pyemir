@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2024 Universidad Complutense de Madrid
+# Copyright 2011-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -21,7 +21,7 @@ from astropy.visualization import SqrtStretch
 from astropy.visualization import PercentileInterval
 from astropy.visualization.mpl_normalize import ImageNormalize
 from scipy.spatial import KDTree as KDTree
-import sep_pjw as sep
+import sep
 
 import matplotlib as mpl
 from matplotlib.patches import Ellipse

@@ -31,7 +31,7 @@ dependencies = [
     "lmfit",
     "numina>=0.32",
     "photutils>=1.4",
-    "sep-pjw",
+    "sep>=1.4.0",
     "scikit-image>=0.22",
     "scikit-learn>=0.19",
     "reproject",

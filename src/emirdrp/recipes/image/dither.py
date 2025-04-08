@@ -33,7 +33,7 @@ import numpy
 from scipy import interpolate
 from scipy.ndimage import median_filter
 from scipy.spatial import KDTree as KDTree
-import sep_pjw as sep
+import sep
 
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
