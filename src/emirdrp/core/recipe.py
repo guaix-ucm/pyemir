@@ -12,7 +12,6 @@ import logging
 import numina.core.recipes as recipes
 
 import emirdrp.core.correctors as cor
-import emirdrp.processing.info
 import emirdrp.products as prods
 import emirdrp.datamodel
 
@@ -43,7 +42,3 @@ class EmirRecipe(recipes.BaseRecipe):
 
     def aggregate_result(self, result, rinput):
         return result
-
-    def gather_info(self, rinput):
-        meta = emirdrp.processing.info.gather_info(rinput)
-        return meta

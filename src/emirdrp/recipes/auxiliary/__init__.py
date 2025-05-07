@@ -19,7 +19,6 @@ from numina.util.context import manage_fits
 
 from emirdrp.core import EMIR_BIAS_MODES
 from emirdrp.core.recipe import EmirRecipe
-from emirdrp.processing.info import gather_info_frames
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 
@@ -63,7 +62,7 @@ class BiasRecipe(EmirRecipe):
     def run(self, rinput):
         _logger.info('starting bias reduction')
 
-        iinfo = gather_info_frames(rinput.obresult.frames)
+        iinfo = self.datamodel.gather_info_oresult(rinput.obresult)
 
         if iinfo:
             mode = iinfo[0]['readmode']

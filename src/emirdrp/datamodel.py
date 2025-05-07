@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2024 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -20,6 +20,7 @@ _logger = logging.getLogger(__name__)
 class EmirDataModel(dm.DataModel):
     """Data model of EMIR."""
 
+    # These keywords are used by gather_info_hdu
     meta_dinfo_headers = [
         'readmode',
         'exptime',

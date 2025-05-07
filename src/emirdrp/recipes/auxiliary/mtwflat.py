@@ -26,7 +26,6 @@ import numina.types.datatype as dt
 from numina.processing.combine import basic_processing_with_combination_frames
 import numpy
 
-from emirdrp.processing.info import gather_info_frames
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
@@ -51,7 +50,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         # flow = self.init_filters(rinput)
         saturation = 45000.0
 
-        iinfo = gather_info_frames(rinput.obresult.frames)
+        iinfo = self.datamodel.gather_info_oresult(rinput.obresult)
         image_groups = {}
         self.logger.info('group images by filter')
         for idx, info in enumerate(iinfo):
