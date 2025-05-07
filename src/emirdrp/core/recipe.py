@@ -38,8 +38,8 @@ class EmirRecipe(recipes.BaseRecipe):
 
         return imgtypes, getters
 
-    def get_filters(self):
-        imgtypes, getters = self.types_getter()
+    def get_filters(self, imgtypes, getters):
+
         used_getters = []
         for rtype, getter in zip(imgtypes, getters):
             self.logger.debug('get_filters, %s  %s', rtype, getter)
@@ -62,25 +62,39 @@ class EmirRecipe(recipes.BaseRecipe):
                     pass
         return used_getters
 
-    def init_filters_generic(self, rinput, getters, ins):
+    def init_filters_generic(self, rinput, getters_seq, ins):
         # with BPM, bias, dark, flat and sky
         if numina.ext.gtc.check_gtc():
             self.logger.debug('running in GTC environment')
         else:
             self.logger.debug('running outside of GTC environment')
 
-        meta = emirdrp.processing.info.gather_info(rinput)
+        meta = self.gather_info(rinput)
         self.logger.debug('obresult info')
         for entry in meta['obresult']:
             self.logger.debug('frame info is %s', entry)
-        correctors = [getter(rinput, meta, ins, self.datamodel)
-                      for getter in getters]
-        flow = flowmod.SerialFlow(correctors)
-        return flow
 
-    def init_filters(self, rinput, ins='EMIR'):
-        getters = self.get_filters()
-        return self.init_filters_generic(rinput, getters, ins)
+        reduction_flows = []
+        for getters in getters_seq:
+            correctors = [getter(rinput, meta, ins, self.datamodel)
+                          for getter in getters]
+            flow = flowmod.SerialFlow(correctors)
+            reduction_flows.append(flow)
+
+        return reduction_flows
+
+    def init_filters(self, rinput, ins=None):
+        if ins is None:
+            ins = rinput.obresult.configuration
+        imgtypes, getters = self.types_getter()
+        getters = self.get_filters(imgtypes, getters)
+        getters_seq = [getters]
+        # FIXME:
+        return self.init_filters_generic(rinput, getters_seq, ins)[0]
 
     def aggregate_result(self, result, rinput):
         return result
+
+    def gather_info(self, rinput):
+        meta = emirdrp.processing.info.gather_info(rinput)
+        return meta
