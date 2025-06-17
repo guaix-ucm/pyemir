@@ -20,7 +20,6 @@ import sys
 if sys.version_info[:2] <= (3, 10):
     datetime.UTC = datetime.timezone.utc
 
-from astropy.coordinates import SkyCoord
 import astropy.io.fits as fits
 from astropy.wcs import WCS
 from numina.array import combine
@@ -28,10 +27,10 @@ from numina.core import Result, Parameter
 from numina.core.query import Ignore
 from numina.core.recipes import timeit
 from numina.processing.combine import basic_processing_with_combination
+from numina.tools.pixel_solid_angle_arcsec2 import pixel_solid_angle_arcsec2
 from numina.util.context import manage_fits
 import numpy as np
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
-from scipy.ndimage import median_filter
 
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.core.extra as extra
@@ -135,6 +134,7 @@ class StareImageRecipe2(EmirRecipe):
                     wcs=wcs_original,
                     naxis1=naxis1,
                     naxis2=naxis2,
+                    method=3,
                     kernel_size=(11, 11)
                 )
                 surface_brightness_data = processed_img[0].data / \
@@ -155,6 +155,7 @@ class StareImageRecipe2(EmirRecipe):
                     wcs=wcs_final,
                     naxis1=naxis1,
                     naxis2=naxis2,
+                    method=3,
                     kernel_size=(11, 11)
                 )
                 data_final *= pixel_solid_angle_final
@@ -291,54 +292,3 @@ class StareImageBaseRecipe(EmirRecipe):
         # Update EXP to 0
         hdr['EXP'] = 0
         return hdr
-
-
-def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, kernel_size=None):
-    """Compute the solid angle (arcsec**2) of every pixel."""
-
-    # X, Y coordinates (2D image array, following the FITS criterium)
-    # corresponding to the four corners of all the image pixels
-    borders_x = np.arange(naxis1 + 1) + 0.5
-    borders_y = np.arange(naxis2 + 1) + 0.5
-    meshgrid = np.meshgrid(borders_x, borders_y)
-    ix_array = meshgrid[0].flatten()
-    iy_array = meshgrid[1].flatten()
-
-    # spherical coordinates of the four corners of all the image pixels
-    result_spherical = SkyCoord.from_pixel(
-        xp=ix_array,
-        yp=iy_array,
-        wcs=wcs,
-        origin=1,
-        mode='all'
-    )
-
-    # cartesian coordinates of the four corners of all the image pixels
-    x = result_spherical.cartesian.x.value.reshape(naxis2 + 1, naxis1 + 1)
-    y = result_spherical.cartesian.y.value.reshape(naxis2 + 1, naxis1 + 1)
-    z = result_spherical.cartesian.z.value.reshape(naxis2 + 1, naxis1 + 1)
-
-    # dot product of consecutive points along NAXIS1
-    dot_product_naxis1 = x[:, :-1] * x[:, 1:] + \
-        y[:, :-1] * y[:, 1:] + z[:, :-1] * z[:, 1:]
-    # distance (arcsec) between consecutive points along NAXIS1
-    result_naxis1 = np.arccos(dot_product_naxis1) * 180 / np.pi * 3600
-    # average distances corresponding to the upper and lower sides of each pixel
-    pixel_size_naxis1 = (result_naxis1[:-1, :] + result_naxis1[1:, :]) / 2
-
-    # dot product of consecutive points along NAXIS2
-    dot_product_naxis2 = x[:-1, :] * x[1:, :] + \
-        y[:-1, :] * y[1:, :] + z[:-1, :] * z[1:, :]
-    # distance (arcsec) between consecutive points along NAXIS2
-    result_naxis2 = np.arccos(dot_product_naxis2) * 180 / np.pi * 3600
-    # averange distances corresponding to the left and right sides of each pixel
-    pixel_size_naxis2 = (result_naxis2[:, :-1] + result_naxis2[:, 1:]) / 2
-
-    # pixel size (arcsec**2)
-    result = pixel_size_naxis1 * pixel_size_naxis2
-
-    # smooth result
-    if kernel_size is not None:
-        result = median_filter(result, size=kernel_size, mode='nearest')
-
-    return result
