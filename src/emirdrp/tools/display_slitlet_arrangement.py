@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2024 Universidad Complutense de Madrid
+# Copyright 2008-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -28,6 +28,7 @@ from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 def display_slitlet_arrangement(fileobj,
                                 grism=None,
                                 spfilter=None,
+                                fov=341.5,
                                 longslits=False,
                                 bbox=None,
                                 adjust=None,
@@ -43,6 +44,8 @@ def display_slitlet_arrangement(fileobj,
         Grism name.
     spfilter : str
         Filter name.
+    fov : float
+        Field of view in mm (default=341.5).
     longslits : bool
         If True, display (pseudo) longslits.
     bbox : tuple of 4 floats
@@ -103,7 +106,7 @@ def display_slitlet_arrangement(fileobj,
                             csu_config._csu_bar_left.append(position)
                             next_id_bar = id_bar + EMIR_NBARS
                         else:
-                            csu_config._csu_bar_right.append(341.5 - position)
+                            csu_config._csu_bar_right.append(fov - position)
                             next_id_bar = id_bar - EMIR_NBARS + 1
                     else:
                         raise ValueError("Unexpected id_bar:" + str(id_bar))
@@ -215,7 +218,7 @@ def display_slitlet_arrangement(fileobj,
                 xmax += dx/20
                 ax.set_xlim(xmin, xmax)
             else:
-                ax.set_xlim(0., 341.5)
+                ax.set_xlim(0., fov)
             ax.set_ylim(0, 56)
         else:
             ax.set_xlim(bbox[0], bbox[1])
@@ -229,7 +232,7 @@ def display_slitlet_arrangement(fileobj,
                 csu_config.csu_bar_slit_width(ibar), 1.0))
             ax.plot([0., csu_config.csu_bar_left(ibar)], [ibar, ibar],
                     '-', color='gray')
-            ax.plot([csu_config.csu_bar_right(ibar), 341.5],
+            ax.plot([csu_config.csu_bar_right(ibar), fov],
                     [ibar, ibar], '-', color='gray')
         plt.title("File: " + fileobj.name + "\ngrism=" + grism +
                   ", filter=" + spfilter)
@@ -335,6 +338,9 @@ def main(args=None):
     parser.add_argument("--n_clusters",
                         help="Display histogram of slitlet widths",
                         default=0, type=int)
+    parser.add_argument("--fov",
+                        help="Field of view (in mm; default=341.5)",
+                        default=341.5, type=float)
     parser.add_argument("--longslits",
                         help="Display (pseudo) longslits built with "
                              "consecutive slitlets",
@@ -407,6 +413,7 @@ def main(args=None):
                 fileobj,
                 grism=args.grism,
                 spfilter=args.filter,
+                fov=args.fov,
                 longslits=args.longslits,
                 bbox=bbox,
                 adjust=args.adjust,
