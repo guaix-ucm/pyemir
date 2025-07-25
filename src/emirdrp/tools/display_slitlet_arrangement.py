@@ -131,7 +131,7 @@ def display_slitlet_arrangement(fileobj,
         spfilter = image_header['filter']
 
         # define slitlet arrangement
-        csu_config = CsuConfiguration.define_from_fits(fileobj)
+        csu_config = CsuConfiguration.define_from_fits(fileobj, fov=fov)
         if longslits:
             csu_config.display_pseudo_longslits()
             pause_debugplot(debugplot)

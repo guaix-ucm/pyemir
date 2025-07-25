@@ -96,7 +96,7 @@ class CsuConfiguration(object):
         return NotImplemented
 
     @classmethod
-    def define_from_fits(cls, fitsobj, extnum=None):
+    def define_from_fits(cls, fitsobj, fov=341.5, extnum=None):
         """Define class members from header information in FITS file.
 
         Parameters
@@ -104,6 +104,8 @@ class CsuConfiguration(object):
         fitsobj: file object
             FITS file whose header contains the CSU bar information
             needed to initialise the members of this class.
+        fov : float
+            Field of view (mm) of the CSU configuration. Default is 341.5 mm.
         extnum : None or int or str
             Extension number or extension name. If None, select 'MECS' extension
             if available. If not, use priamry extension
@@ -118,16 +120,18 @@ class CsuConfiguration(object):
                 else:
                     extnum = 0
             image_header = hdulist[extnum].header
-            return cls.define_from_header(image_header)
+            return cls.define_from_header(image_header, fov)
 
     @classmethod
-    def define_from_header(cls, image_header):
+    def define_from_header(cls, image_header, fov=341.5):
         """Define class members directly from FITS header.
 
         Parameters
         ----------
         image_header : instance of hdulist.header
             Header content from a FITS file.
+        fov : float
+            Field of view (mm) of the CSU configuration. Default is 341.5 mm.
 
         """
 
@@ -149,7 +153,7 @@ class CsuConfiguration(object):
             keyword = 'CSUP{}'.format(ibar + EMIR_NBARS)
             if keyword in image_header:
                 # set the same origin as the one employed for _csu_bar_left
-                self._csu_bar_right.append(341.5 - image_header[keyword])
+                self._csu_bar_right.append(fov - image_header[keyword])
             else:
                 raise ValueError("Expected keyword " + keyword + " not found!")
             self._csu_bar_slit_center.append(

@@ -157,6 +157,9 @@ def main(args=None):
                         type=argparse.FileType('rt'))
 
     # optional arguments
+    parser.add_argument("--fov",
+                        help="Field of view in mm (default=341.5)",
+                        type=float, default=341.5)
     parser.add_argument("--global_integer_offset_x_pix",
                         help="Global integer offset in the X direction "
                              "(default=0)",
@@ -367,7 +370,8 @@ def main(args=None):
             list_islitlet=list_valid_islitlets,
             list_csu_bar_slit_center=list_csu_bar_slit_center,
             global_offset_x_pix=-args.global_integer_offset_x_pix,
-            global_offset_y_pix=-args.global_integer_offset_y_pix
+            global_offset_y_pix=-args.global_integer_offset_y_pix,
+            fov=args.fov
         )
 
         # overplot frontiers
@@ -377,6 +381,7 @@ def main(args=None):
             parmodel=parmodel,
             list_islitlet=list_valid_islitlets,
             list_csu_bar_slit_center=list_csu_bar_slit_center,
+            fov=args.fov,
             micolors=('b', 'b'), linetype='-',
             labels=False,    # already displayed with the boundaries
             global_offset_x_pix=-args.global_integer_offset_x_pix,

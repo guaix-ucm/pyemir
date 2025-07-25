@@ -116,6 +116,9 @@ def main(args=None):
                         type=str)
 
     # optional arguments
+    parser.add_argument("--fov",
+                        help="Field of view in mm (default=341.5)",
+                        type=float, default=341.5)
     parser.add_argument("--outfile",
                         help="Output FITS file name",
                         type=lambda x: arg_file_is_new(parser, x, mode='wb'))
@@ -231,7 +234,8 @@ def main(args=None):
             params=params,
             parmodel=parmodel,
             list_islitlet=list_islitlet,
-            list_csu_bar_slit_center=list_csu_bar_slit_center
+            list_csu_bar_slit_center=list_csu_bar_slit_center,
+            fov=args.fov
         )
 
         # overplot frontiers
@@ -241,6 +245,7 @@ def main(args=None):
             parmodel=parmodel,
             list_islitlet=list_islitlet,
             list_csu_bar_slit_center=list_csu_bar_slit_center,
+            fov=args.fov,
             micolors=('b', 'b'), linetype='-',
             labels=False    # already displayed with the boundaries
         )

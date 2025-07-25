@@ -704,6 +704,7 @@ def overplot_boundaries_from_bounddict(ax, bounddict, micolors, linetype='-'):
 def overplot_boundaries_from_params(ax, params, parmodel,
                                     list_islitlet,
                                     list_csu_bar_slit_center,
+                                    fov=341.5,
                                     micolors=('m', 'c'), linetype='--',
                                     labels=True, alpha_fill=None,
                                     global_offset_x_pix=0,
@@ -725,6 +726,8 @@ def overplot_boundaries_from_params(ax, params, parmodel,
         longslits.
     list_csu_bar_slit_center : list of floats
         CSU bar slit centers of the considered slitlets.
+    fov : float
+        Field of view in mm.
     micolors : Python list
         List with two characters corresponding to alternating colors
         for odd and even slitlets.
@@ -786,7 +789,7 @@ def overplot_boundaries_from_params(ax, params, parmodel,
                 # slitlet label
                 yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
                 yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
-                xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
+                xcsu = EMIR_NAXIS1 * csu_bar_slit_center / fov
                 ax.text(xcsu + xoff, (yc_lower + yc_upper) / 2 + yoff,
                         str(islitlet),
                         fontsize=10, va='center', ha='center',
@@ -802,6 +805,7 @@ def overplot_boundaries_from_params(ax, params, parmodel,
 def overplot_frontiers_from_params(ax, params, parmodel,
                                    list_islitlet,
                                    list_csu_bar_slit_center,
+                                   fov=341.5,
                                    micolors=('m', 'c'), linetype='--',
                                    labels=True, alpha_fill=None,
                                    global_offset_x_pix=0,
@@ -823,6 +827,8 @@ def overplot_frontiers_from_params(ax, params, parmodel,
         longslits.
     list_csu_bar_slit_center : list of floats
         CSU bar slit centers of the considered slitlets.
+    fov : float
+        Field of view in mm.
     micolors : Python list
         List with two characters corresponding to alternating colors
         for odd and even slitlets.
@@ -881,7 +887,7 @@ def overplot_frontiers_from_params(ax, params, parmodel,
                 # slitlet label
                 yc_lower = pol_lower_expected(EMIR_NAXIS1 / 2 + 0.5)
                 yc_upper = pol_upper_expected(EMIR_NAXIS1 / 2 + 0.5)
-                xcsu = EMIR_NAXIS1 * csu_bar_slit_center / 341.5
+                xcsu = EMIR_NAXIS1 * csu_bar_slit_center / fov
                 ax.text(xcsu + xoff, (yc_lower + yc_upper) / 2 + yoff,
                         str(islitlet),
                         fontsize=10, va='center', ha='center',
@@ -1299,6 +1305,9 @@ def main(args=None):
                         help="Maximum allowed difference in DTU location (mm)"
                              "for each parameter (default=0.5)",
                         type=float, default=0.5)
+    parser.add_argument("--fov",
+                        help="Field of view in mm (default=341.5)",
+                        type=float, default=341.5)
     parser.add_argument("--numresolution",
                         help="Number of points/boundary (default=101)",
                         type=int, default=101)
@@ -1504,7 +1513,8 @@ def main(args=None):
         if args.parmodel == "longslit":
             overplot_boundaries_from_params(ax, result.params, args.parmodel,
                                             list_islitlet,
-                                            list_csu_bar_slit_center)
+                                            list_csu_bar_slit_center,
+                                            fov=args.fov)
         pause_debugplot(debugplot=args.debugplot, pltshow=True,
                         tight_layout=True)
 
