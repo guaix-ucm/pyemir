@@ -3,18 +3,18 @@ name = "pyemir"
 dynamic = ["version"]
 description = "EMIR Data Processing Pipeline"
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "GPL-3.0-or-later"}
 authors = [
     {name = "Sergio Pascual", email = "sergiopr@fis.ucm.es"},
     {name = "Nicolás Cardiel", email = "cardiel@ucm.es"},
 ]
 classifiers = [
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
@@ -24,18 +24,18 @@ classifiers = [
 ]
 
 dependencies = [
-    "numpy >= 1.20",
     "astropy",
-    "scipy >= 1.8",
-    "matplotlib",
+    "importlib_resources",  # required with python < 3.9
     "lmfit",
+    "matplotlib",
+    "numpy",
     "numina>=0.32",
     "photutils>=1.4",
+    "reproject",
     "sep>=1.4.0",
     "scikit-image>=0.22",
     "scikit-learn>=0.19",
-    "reproject",
-    "importlib_resources",  # required with python < 3.9
+    "scipy >= 1.8",
 ]
 
 [project.optional-dependencies]
