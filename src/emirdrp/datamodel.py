@@ -12,6 +12,7 @@
 import logging
 
 import numina.datamodel as dm
+from numina.keydef import QueryAttribute
 
 
 _logger = logging.getLogger(__name__)
@@ -34,9 +35,9 @@ class EmirDataModel(dm.DataModel):
     ]
 
     query_attrs = {
-        'filter': dm.QueryAttribute('filter', str),
-        'grism': dm.QueryAttribute('grism', str),
-        'insconf': dm.QueryAttribute('insconf', str)
+        'filter': QueryAttribute('filter', str),
+        'grism': QueryAttribute('grism', str),
+        'insconf': QueryAttribute('insconf', str)
     }
 
     def __init__(self):
