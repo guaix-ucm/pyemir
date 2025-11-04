@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2024 Universidad Complutense de Madrid
+# Copyright 2019-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -24,8 +24,8 @@ def convert_md5(string):
 
 
 class DetectorTranslationUnit(HWDevice):
-    def __init__(self, name='DTU', parent=None, **kwds):
-        super().__init__(name, parent=parent)
+    def __init__(self, name, origin=None, parent=None):
+        super().__init__(name, origin=origin, parent=parent)
 
         # Attributes added to read from JSON
         self.origin = None
@@ -35,6 +35,21 @@ class DetectorTranslationUnit(HWDevice):
         self.xaxis = DTUAxis("X", parent=self)
         self.yaxis = DTUAxis("Y", parent=self)
         self.zaxis = DTUAxis("Z", parent=self)
+
+    @classmethod
+    def from_component(
+            cls,
+            name: str,
+            comp_id: str,
+            origin=None,
+            parent=None,
+            properties=None,
+            setup=None,
+    ):
+        obj = cls.__new__(cls)
+        obj.__init__(comp_id, origin=origin, parent=parent)
+        return obj
+
 
     def configure_with_header(self, hdr):
         self.xaxis.configure_with_header(hdr)
