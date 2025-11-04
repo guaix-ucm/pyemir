@@ -5,11 +5,7 @@
   "uuid": "1ac26dff-4c3f-43d8-a069-7470357120d6",
   "date_start": "2014-01-01T12:00:00",
   "date_end": "2023-03-10T12:00:00.0",
-  "properties": {
-    "channels": {
-      "depends": [
-      ],
-      "values": "FULL"
-    }
-  }
+  "properties": [
+    {"id": "channels", "depends": [],  "values": "FULL"}
+  ]
 }
