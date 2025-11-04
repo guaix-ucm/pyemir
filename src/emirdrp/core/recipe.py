@@ -42,3 +42,13 @@ class EmirRecipe(recipes.BaseRecipe):
 
     def aggregate_result(self, result, rinput):
         return result
+
+    def init_filters(self, rinput, ins=None):
+        # TODO: we overload this method to
+        # avoid rewriting all the calls like
+        # flow = self.init_filters(rinput)
+        # to
+        # flow = self.init_filters(rinput)[0]
+        # we should do it in the future
+        return super().init_filters(rinput, ins)[0]
+
