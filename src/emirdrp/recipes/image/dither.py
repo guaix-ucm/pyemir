@@ -28,6 +28,7 @@ import numina.array.utils as nautils
 import numina.array.combine as nacom
 import numina.frame.combine as nfcom
 from numina.util.context import manage_fits
+from numina.util.convert import convert_date
 from numina.frame import resize_fits, custom_region_to_str
 import numpy
 from scipy import interpolate
@@ -223,8 +224,15 @@ class FullDitheredImagesRecipe(EmirRecipe):
             raise ValueError('nside_adhoc_sky_correction and adhoc_sky_correction_h2rg cannot be used simultaneously')
 
         # determine which EMIR detector we are using
-        insconf = rinput.obresult.configuration
-        detector_channels = insconf.get_device("detector").get_property("channels")
+        # FIXME: the selection of insconf is incorrect for nested Obsres
+        # insconf = rinput.obresult.configuration
+        # detector_channels = insconf.get_device("detector").get_property("channels")
+        # temporal workaround
+        with obresult.frames[0].open() as hdul:
+            if convert_date(hdul[0].header['DATE-OBS']) > convert_date("2023-07-01T12:00:00.0"):
+                detector_channels = 'H2RG_FULL'
+            else:
+                detector_channels = 'FULL'
         self.logger.info(f"Detector channels: {detector_channels}")
         img_channels_layout = None
         if detector_channels == 'FULL':  # original EMIR detector
