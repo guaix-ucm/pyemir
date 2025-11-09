@@ -29,7 +29,7 @@ dependencies = [
     "lmfit",
     "matplotlib",
     "numpy",
-    "numina>=0.32",
+    "numina>=0.36.0",
     "photutils>=1.4",
     "reproject",
     "sep>=1.4.0",
