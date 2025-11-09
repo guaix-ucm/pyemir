@@ -201,7 +201,7 @@ class DtuConf(DetectorTranslationUnit):
 
 def average(*args):
     """Return instance with averaged values."""
-    new = DtuConf()
+    new = DtuConf('DTU_avg')
     for axis in ['xaxis', 'yaxis', 'zaxis']:
         fun_res = apply_on_axis(numpy.mean, [getattr(arg, axis) for arg in args])
         getattr(new, axis).configure_me(fun_res)

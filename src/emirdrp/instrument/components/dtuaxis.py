@@ -80,6 +80,8 @@ class DTUAxis(HWDevice):
         self.coor = hdr[f'{self.name}DTU']
         self.coor_f = hdr.get(f'{self.name}DTU_F', 1.0)
         self.coor_0 = hdr.get(f'{self.name}DTU_0', 0.0)
+        # FIXME: this is not needed
+        self.is_configured = True
 
     def configure_me_with_image(self, image):
         if 'MECS' in image:
