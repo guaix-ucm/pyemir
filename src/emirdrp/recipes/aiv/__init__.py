@@ -45,22 +45,24 @@ class SimpleBiasRecipe(EmirRecipe):
     biasframe = Result(prods.MasterBias)
 
     def run(self, rinput):
-        _logger.info('starting simple bias reduction')
+        _logger.info("starting simple bias reduction")
 
-        def flow(x): return x
-        hdulist = basic_processing_with_combination(rinput, flow,
-                                                    method=median,
-                                                    errors=True)
+        def flow(x):
+            return x
+
+        hdulist = basic_processing_with_combination(
+            rinput, flow, method=median, errors=True
+        )
 
         # update hdu header with
         # reduction keywords
         hdr = hdulist[0].header
-        hdr['IMGTYP'] = ('BIAS', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr["IMGTYP"] = ("BIAS", "Image type")
+        hdr["NUMTYP"] = ("MASTER_BIAS", "Data product type")
+        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
+        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
 
-        _logger.info('simple bias reduction ended')
+        _logger.info("simple bias reduction ended")
 
         # qc is QC.UNKNOWN
         result = self.create_result(biasframe=hdulist)
@@ -75,13 +77,13 @@ class TestBiasCorrectRecipe(EmirRecipe):
     frame = Result(prods.ProcessedImage)
 
     def run(self, rinput):
-        _logger.info('starting simple bias reduction')
+        _logger.info("starting simple bias reduction")
 
         flow = self.init_filters(rinput)
         hdu = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdu[0].header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
+        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
         hdulist = fits.HDUList([hdu])
 
         result = self.create_result(frame=hdulist)
@@ -100,15 +102,16 @@ class TestRectImageRecipe(EmirRecipe):
 
     def run(self, rinput):
         import numpy
-        _logger.info('testing rectangular image')
 
-        data = numpy.zeros((500, 1000), dtype='float32')
+        _logger.info("testing rectangular image")
+
+        data = numpy.zeros((500, 1000), dtype="float32")
         data[200:400, 400:600] = 10000.0
         hdu = fits.PrimaryHDU(data)
         hdulist = fits.HDUList([hdu])
         print("numpy shape of data is", data.shape)
 
-        _logger.info('end testing rectangular image')
+        _logger.info("end testing rectangular image")
         result = self.create_result(frame=hdulist)
         return result
 
@@ -123,14 +126,13 @@ class TestDarkCorrectRecipe(EmirRecipe):
     frame = Result(prods.ProcessedImage)
 
     def run(self, rinput):
-        _logger.info('starting simple dark reduction')
+        _logger.info("starting simple dark reduction")
 
         flow = self.init_filters(rinput)
-        hdulist = basic_processing_with_combination(rinput, flow,
-                                                    method=median)
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdulist[0].header
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
+        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
 
         result = self.create_result(frame=hdulist)
 
@@ -148,11 +150,10 @@ class TestFlatCorrectRecipe(EmirRecipe):
     frame = Result(prods.ProcessedImage)
 
     def run(self, rinput):
-        _logger.info('starting simple flat reduction')
+        _logger.info("starting simple flat reduction")
 
         flow = self.init_filters(rinput)
-        hdulist = basic_processing_with_combination(
-            rinput, flow, method=median)
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         result = self.create_result(frame=hdulist)

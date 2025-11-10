@@ -19,9 +19,9 @@ class CSUConf(object):
     """Information about the configuration of slits in the CSU"""
 
     def __init__(self, barmodel):
-        self.name = 'CSU'
-        self.conf_id = 'v1'
-        self.conf_f = 'UNKNOWN'
+        self.name = "CSU"
+        self.conf_id = "v1"
+        self.conf_f = "UNKNOWN"
         self.slits = {}
         # Indices
         self.LBARS = list(range(1, EMIR_NBARS + 1))
@@ -35,10 +35,8 @@ class CSUConf(object):
         self._update_slits({})
 
     def is_open(self):
-        lopen = all(self.bars[barid].x2 <=
-                    self.L_LIMIT for barid in self.LBARS)
-        ropen = all(self.bars[barid].x1 >=
-                    self.R_LIMIT for barid in self.RBARS)
+        lopen = all(self.bars[barid].x2 <= self.L_LIMIT for barid in self.LBARS)
+        ropen = all(self.bars[barid].x1 >= self.R_LIMIT for barid in self.RBARS)
 
         return lopen and ropen
 
@@ -50,11 +48,11 @@ class CSUConf(object):
 
         # FIXME: CSUCONFF is in primary
         hdr0 = img[0].header
-        self.conf_f = hdr0['CSUCONFF']
+        self.conf_f = hdr0["CSUCONFF"]
 
-        if 'MECS' in img:
+        if "MECS" in img:
             # Get header from extension
-            hdr_csu = img['MECS'].header
+            hdr_csu = img["MECS"].header
         else:
             # Get header from main header
             hdr_csu = img[0].header
@@ -66,7 +64,7 @@ class CSUConf(object):
         # FIXME: this keyword in only in primary
         # it should be duplicated in MECS
         try:
-            self.conf_f = hdr['CSUCONFF']
+            self.conf_f = hdr["CSUCONFF"]
         except KeyError:
             pass
         # Read CSUPOS and set position in model
@@ -107,8 +105,7 @@ class CSUConf(object):
             yref = hdr.get("YVSLI%d" % idx, OUTPOS) - 1
             target_coordinates_v = (xref, yref)
 
-            mm.append(
-                (idx, target_type, target_coordinates, target_coordinates_v))
+            mm.append((idx, target_type, target_coordinates, target_coordinates_v))
 
         bag = merge_slits(mm, max_slits=3, tol=1e-2)
 
@@ -129,6 +126,7 @@ class CSUConf(object):
 
 class TargetType(enum.Enum):
     """Possible targets in a slit"""
+
     UNASSIGNED = 0
     SOURCE = 1
     REFERENCE = 2
@@ -235,16 +233,16 @@ class LogicalSlit(object):
 
         # Must have the same size
         if len(lbars) != len(rbars):
-            raise ValueError('len() are different')
+            raise ValueError("len() are different")
 
         # bars must be paired
         for ll, r in zip(lbars_ids, rbars_ids):
             if r != ll + EMIR_NBARS:
-                raise ValueError('not paired {} and {}'.format(ll, r))
+                raise ValueError("not paired {} and {}".format(ll, r))
 
         for a, b in zip(lbars_ids, lbars_ids[1:]):
             if b != a + 1:
-                raise ValueError('not contiguous {} and {}'.format(a, b))
+                raise ValueError("not contiguous {} and {}".format(a, b))
 
         self.lbars_ids = lbars_ids
         self.rbars_ids = rbars_ids
@@ -259,7 +257,8 @@ class LogicalSlit(object):
         bbox_x2 = max(self.rbars.values(), key=lambda obk: obk.xpos).xpos
         # Origin is 1
         self.bbox_int = BoundingBox.from_coordinates(
-            bbox_x1-1, bbox_x2-1, bbox_y1-1, bbox_y2-1)
+            bbox_x1 - 1, bbox_x2 - 1, bbox_y1 - 1, bbox_y2 - 1
+        )
 
     def bbox(self):
         return self.bbox_int
@@ -302,12 +301,12 @@ def read_csu_from_image(barmodel, img):
 
 
 def merge_slits(mm, max_slits=3, tol=1e-2):
-    """"Merge contiguous REFERENCE slits"""
+    """ "Merge contiguous REFERENCE slits"""
     cx1 = 0
     bag = {}
     while True:
         t_id, t_type, t_coor, t_coor_v = mm[cx1]
-        rest = mm[cx1 + 1: cx1 + max_slits]
+        rest = mm[cx1 + 1 : cx1 + max_slits]
         bag[t_id] = [t_id]
         cx2 = cx1 + 1
         if t_type == TargetType.REFERENCE:

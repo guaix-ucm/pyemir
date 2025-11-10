@@ -27,22 +27,20 @@ class TestSkyCorrectRecipe(EmirRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
-    master_sky = Requirement(prods.MasterIntensityFlat,
-                             'Master Sky calibration')
+    master_sky = Requirement(prods.MasterIntensityFlat, "Master Sky calibration")
 
     frame = Result(prods.ProcessedImage)
 
     def run(self, rinput):
-        self.logger.info('starting simple sky reduction')
+        self.logger.info("starting simple sky reduction")
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(
-            rinput, flow, method=median)
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         # Update SEC to 0
-        hdr['SEC'] = 0
+        hdr["SEC"] = 0
 
         result = self.create_result(frame=hdulist)
 
@@ -50,12 +48,12 @@ class TestSkyCorrectRecipe(EmirRecipe):
 
 
 class StareImageRecipeInputBuilder(object):
-    '''Class to build StareImageRecipe inputs from the Observation Results.
+    """Class to build StareImageRecipe inputs from the Observation Results.
 
-       Fetches SKY calibration image from the archive
+    Fetches SKY calibration image from the archive
 
 
-    '''
+    """
 
     def __init__(self, dal):
         self.dal = dal
@@ -64,15 +62,14 @@ class StareImageRecipeInputBuilder(object):
     def buildRecipeInput(self, obsres):
 
         if self.sky_image is None:
-            print('obtaining SKY image')
-            sky_cal_result = self.dal.getLastRecipeResult(
-                "EMIR", "EMIR", "IMAGE_SKY")
-            self.sky_image = sky_cal_result['elements']['skyframe']
+            print("obtaining SKY image")
+            sky_cal_result = self.dal.getLastRecipeResult("EMIR", "EMIR", "IMAGE_SKY")
+            self.sky_image = sky_cal_result["elements"]["skyframe"]
 
-        obsres['master_sky'] = self.sky_image
+        obsres["master_sky"] = self.sky_image
         newOR = ObservationResult()
-        newOR.frames = obsres['frames']
-        obsres['obresult'] = newOR
+        newOR.frames = obsres["frames"]
+        obsres["obresult"] = newOR
         newRI = StareImageRecipeInput(**obsres)
 
         return newRI

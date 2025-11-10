@@ -34,16 +34,19 @@ class BarDetectionRecipe(EmirRecipe):
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
     master_sky = reqs.MasterSkyRequirement()
 
-    bars_nominal_positions = Requirement(prods.NominalPositions,
-                                         'Nominal positions of the bars'
-                                         )
-    median_filter_size = Parameter(5, 'Size of the median box')
+    bars_nominal_positions = Requirement(
+        prods.NominalPositions, "Nominal positions of the bars"
+    )
+    median_filter_size = Parameter(5, "Size of the median box")
     average_box_row_size = Parameter(
-        7, 'Number of rows to average for fine centering (odd)')
+        7, "Number of rows to average for fine centering (odd)"
+    )
     average_box_col_size = Parameter(
-        21, 'Number of columns to extract for fine centering (odd)')
+        21, "Number of columns to extract for fine centering (odd)"
+    )
     fit_peak_npoints = Parameter(
-        3, 'Number of points to use for fitting the peak (odd)')
+        3, "Number of points to use for fitting the peak (odd)"
+    )
 
     # Recipe Products
     frame = Result(prods.ProcessedImage)
@@ -60,60 +63,61 @@ class BarDetectionRecipe(EmirRecipe):
     csusens = Result(tarray.ArrayType)
 
     def run(self, rinput):
-        self.logger.info('starting processing for bars detection')
+        self.logger.info("starting processing for bars detection")
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(
-            rinput, reduction_flow=flow)
+        hdulist = basic_processing_with_combination(rinput, reduction_flow=flow)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
 
-        self.save_intermediate_img(hdulist, 'reduced_image.fits')
+        self.save_intermediate_img(hdulist, "reduced_image.fits")
 
         try:
-            rotang = hdr['ROTANG']
-            tsutc1 = hdr['TSUTC1']
+            rotang = hdr["ROTANG"]
+            tsutc1 = hdr["TSUTC1"]
             mecs_hdr = datamodel.get_mecs_header(hdulist)
             dtub, dtur = datamodel.get_dtur_from_header(mecs_hdr)
             csupos = datamodel.get_csup_from_header(mecs_hdr)
             if len(csupos) != 2 * EMIR_NBARS:
-                raise RecipeError('Number of CSUPOS != 2 * NBARS')
+                raise RecipeError("Number of CSUPOS != 2 * NBARS")
             csusens = datamodel.get_cs_from_header(hdr)
 
         except KeyError as error:
             self.logger.error(error)
             raise RecipeError(error)
 
-        self.logger.debug('start finding bars')
-        allpos, slits = find_bars(hdulist,
-                                  rinput.bars_nominal_positions,
-                                  csupos,
-                                  dtur,
-                                  average_box_row_size=rinput.average_box_row_size,
-                                  average_box_col_size=rinput.average_box_col_size,
-                                  fit_peak_npoints=rinput.fit_peak_npoints,
-                                  median_filter_size=rinput.median_filter_size,
-                                  logger=self.logger
-                                  )
+        self.logger.debug("start finding bars")
+        allpos, slits = find_bars(
+            hdulist,
+            rinput.bars_nominal_positions,
+            csupos,
+            dtur,
+            average_box_row_size=rinput.average_box_row_size,
+            average_box_col_size=rinput.average_box_col_size,
+            fit_peak_npoints=rinput.fit_peak_npoints,
+            median_filter_size=rinput.median_filter_size,
+            logger=self.logger,
+        )
 
-        self.logger.debug('end finding bars')
+        self.logger.debug("end finding bars")
 
         if self.intermediate_results:
-            with open('ds9.reg', 'w') as ds9reg:
+            with open("ds9.reg", "w") as ds9reg:
                 slits_to_ds9_reg(ds9reg, slits)
 
-        result = self.create_result(frame=hdulist,
-                                    slits=slits,
-                                    positions9=allpos[9],
-                                    positions7=allpos[7],
-                                    positions5=allpos[5],
-                                    positions3=allpos[3],
-                                    DTU=dtub,
-                                    ROTANG=rotang,
-                                    TSUTC1=tsutc1,
-                                    csupos=csupos,
-                                    csusens=csusens,
-                                    )
+        result = self.create_result(
+            frame=hdulist,
+            slits=slits,
+            positions9=allpos[9],
+            positions7=allpos[7],
+            positions5=allpos[5],
+            positions3=allpos[3],
+            DTU=dtub,
+            ROTANG=rotang,
+            TSUTC1=tsutc1,
+            csupos=csupos,
+            csusens=csusens,
+        )
         return result

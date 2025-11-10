@@ -18,8 +18,9 @@ from .dtuaxis import apply_on_axis as apply_on_axis
 
 def convert_md5(string):
     import hashlib
+
     mm = hashlib.md5()
-    mm.update(string.encode('utf-8'))
+    mm.update(string.encode("utf-8"))
     return mm.hexdigest()
 
 
@@ -38,18 +39,17 @@ class DetectorTranslationUnit(HWDevice):
 
     @classmethod
     def from_component(
-            cls,
-            name: str,
-            comp_id: str,
-            origin=None,
-            parent=None,
-            properties=None,
-            setup=None,
+        cls,
+        name: str,
+        comp_id: str,
+        origin=None,
+        parent=None,
+        properties=None,
+        setup=None,
     ):
         obj = cls.__new__(cls)
         obj.__init__(comp_id, origin=origin, parent=parent)
         return obj
-
 
     def configure_with_header(self, hdr):
         self.xaxis.configure_with_header(hdr)
@@ -59,8 +59,8 @@ class DetectorTranslationUnit(HWDevice):
 
     def configure_with_img(self, img):
         """Create a DtuConf object from a FITS image"""
-        if 'MECS' in img:
-            hdr = img['MECS'].header
+        if "MECS" in img:
+            hdr = img["MECS"].header
         else:
             hdr = img[0].header
         self.configure_with_header(hdr)
@@ -95,12 +95,12 @@ class DetectorTranslationUnit(HWDevice):
         yfac = -dtur[1]
 
         dtuwcs = astropy.wcs.WCS(naxis=2)
-        dtuwcs.wcs.name = 'DTU WCS'
+        dtuwcs.wcs.name = "DTU WCS"
         dtuwcs.wcs.crpix = [0, 0]
         dtuwcs.wcs.cdelt = [1, 1]
         dtuwcs.wcs.crval = [yfac, xfac]
-        dtuwcs.wcs.ctype = ['linear', 'linear']
-        dtuwcs.wcs.cunit = ['um', 'um']
+        dtuwcs.wcs.ctype = ["linear", "linear"]
+        dtuwcs.wcs.cunit = ["um", "um"]
 
         return dtuwcs
 
@@ -137,9 +137,15 @@ class DetectorTranslationUnit(HWDevice):
         return obj
 
     def allclose(self, other, rtol=1e-05, atol=1e-08, equal_nan=False):
-        return (self.xaxis.allclose(other.xaxis, rtol=rtol, atol=atol, equal_nan=equal_nan) and
-                self.yaxis.allclose(other.yaxis, rtol=rtol, atol=atol, equal_nan=equal_nan) and
-                self.zaxis.allclose(other.zaxis, rtol=rtol, atol=atol, equal_nan=equal_nan))
+        return (
+            self.xaxis.allclose(other.xaxis, rtol=rtol, atol=atol, equal_nan=equal_nan)
+            and self.yaxis.allclose(
+                other.yaxis, rtol=rtol, atol=atol, equal_nan=equal_nan
+            )
+            and self.zaxis.allclose(
+                other.zaxis, rtol=rtol, atol=atol, equal_nan=equal_nan
+            )
+        )
 
     def closeto(self, other, abserror):
         return self.allclose(other, rtol=0.0, atol=abserror, equal_nan=False)
@@ -148,13 +154,15 @@ class DetectorTranslationUnit(HWDevice):
         xv = self.xaxis.stringify(ndig)
         yv = self.yaxis.stringify(ndig)
         zv = self.zaxis.stringify(ndig)
-        return f'x={xv}:y={yv}:z={zv}'
+        return f"x={xv}:y={yv}:z={zv}"
 
     def __eq__(self, other):
         if isinstance(other, DtuConf):
-            return (self.xaxis == other.xaxis and
-                    self.yaxis == other.yaxis and
-                    self.zaxis == other.zaxis)
+            return (
+                self.xaxis == other.xaxis
+                and self.yaxis == other.yaxis
+                and self.zaxis == other.zaxis
+            )
         return NotImplemented
 
     def __ne__(self, other):
@@ -181,16 +189,16 @@ class DetectorTranslationUnit(HWDevice):
     def outdict(self, ndigits=3):
         """Return dictionary structure rounded to a given precision."""
         output = {
-            'dtuhash': convert_md5(self.stringify(ndig=3)),
-            'xdtu': round(self.xaxis.coor, ndigits),
-            'xdtu_0': round(self.xaxis.coor_0, ndigits),
-            'ydtu': round(self.yaxis.coor, ndigits),
-            'ydtu_0': round(self.yaxis.coor_0, ndigits),
-            'zdtu': round(self.zaxis.coor, ndigits),
-            'zdtu_0': round(self.zaxis.coor_0, ndigits),
-            'xdtu_f': round(self.xaxis.coor_f, ndigits),
-            'ydtu_f': round(self.yaxis.coor_f, ndigits),
-            'zdtu_f': round(self.zaxis.coor_f, ndigits),
+            "dtuhash": convert_md5(self.stringify(ndig=3)),
+            "xdtu": round(self.xaxis.coor, ndigits),
+            "xdtu_0": round(self.xaxis.coor_0, ndigits),
+            "ydtu": round(self.yaxis.coor, ndigits),
+            "ydtu_0": round(self.yaxis.coor_0, ndigits),
+            "zdtu": round(self.zaxis.coor, ndigits),
+            "zdtu_0": round(self.zaxis.coor_0, ndigits),
+            "xdtu_f": round(self.xaxis.coor_f, ndigits),
+            "ydtu_f": round(self.yaxis.coor_f, ndigits),
+            "zdtu_f": round(self.zaxis.coor_f, ndigits),
         }
         return output
 
@@ -201,8 +209,8 @@ class DtuConf(DetectorTranslationUnit):
 
 def average(*args):
     """Return instance with averaged values."""
-    new = DtuConf('DTU_avg')
-    for axis in ['xaxis', 'yaxis', 'zaxis']:
+    new = DtuConf("DTU_avg")
+    for axis in ["xaxis", "yaxis", "zaxis"]:
         fun_res = apply_on_axis(numpy.mean, [getattr(arg, axis) for arg in args])
         getattr(new, axis).configure_me(fun_res)
     return new
@@ -211,7 +219,7 @@ def average(*args):
 def maxdiff(*args):
     """Return DtuConf instance with maximum differences."""
     new = DtuConf()
-    for axis in ['xaxis', 'yaxis', 'zaxis']:
+    for axis in ["xaxis", "yaxis", "zaxis"]:
         fun_res = apply_on_axis(numpy.ptp, [getattr(arg, axis) for arg in args])
         getattr(new, axis).configure_me(fun_res)
     return new

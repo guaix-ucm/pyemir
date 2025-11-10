@@ -17,13 +17,12 @@ from emirdrp.core.recipe import EmirRecipe
 
 class RecWaveRecipe(EmirRecipe):
     """Builds a MasterRecWave from a seralized version"""
-    filename = Requirement(str, 'Full path of MasterRecWave')
+
+    filename = Requirement(str, "Full path of MasterRecWave")
     master_rectwv = Result(prods.MasterRectWave)
 
     def run(self, rinput):
         filename = rinput.filename
-        self.logger.debug('filename is %s', filename)
+        self.logger.debug("filename is %s", filename)
         master_rectwv = load(prods.MasterRectWave, filename)
-        return self.create_result(
-            master_rectwv=master_rectwv
-        )
+        return self.create_result(master_rectwv=master_rectwv)

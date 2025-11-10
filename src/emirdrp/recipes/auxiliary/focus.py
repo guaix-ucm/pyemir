@@ -42,8 +42,8 @@ class TelescopeRoughFocusRecipe(EmirRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
-    objects = Parameter([], 'List of x-y pair of object coordinates'),
-    focus_range = Parameter([], 'Focus range: begin, end and step')
+    objects = (Parameter([], "List of x-y pair of object coordinates"),)
+    focus_range = Parameter([], "Focus range: begin, end and step")
 
     focus = Result(prods.TelescopeFocus)
 
@@ -76,7 +76,7 @@ class TelescopeFineFocusRecipe(EmirRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
-    objects = Parameter([], 'List of x-y pair of object coordinates'),
+    objects = (Parameter([], "List of x-y pair of object coordinates"),)
 
     focus = Result(prods.TelescopeFocus)
 
@@ -109,10 +109,9 @@ class DTUFocusRecipe(EmirRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
-    objects = Parameter([], 'List of x-y pair of object coordinates'),
-    msm_pattern = Parameter([], 'List of x-y pair of slit coordinates'),
-    dtu_focus_range = Parameter(
-        [], 'Focus range of the DTU: begin, end and step')
+    objects = (Parameter([], "List of x-y pair of object coordinates"),)
+    msm_pattern = (Parameter([], "List of x-y pair of slit coordinates"),)
+    dtu_focus_range = Parameter([], "Focus range of the DTU: begin, end and step")
 
     focus = Result(prods.DTUFocus)
 

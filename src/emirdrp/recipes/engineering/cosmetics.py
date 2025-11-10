@@ -37,26 +37,22 @@ def gather_info(hdulist):
     n_ext = len(hdulist)
 
     # READMODE is STRING
-    readmode = hdulist[0].header.get('READMODE', 'undefined')
-    bunit = hdulist[0].header.get('BUNIT', 'undefined')
-    texp = hdulist[0].header.get('EXPTIME')
+    readmode = hdulist[0].header.get("READMODE", "undefined")
+    bunit = hdulist[0].header.get("BUNIT", "undefined")
+    texp = hdulist[0].header.get("EXPTIME")
     adu_s = True
     if bunit:
-        if bunit.lower() == 'adu':
+        if bunit.lower() == "adu":
             adu_s = False
-        elif bunit.lower() == 'adu/s':
+        elif bunit.lower() == "adu/s":
             adu_s = True
         else:
-            _logger.warning('Unrecognized value for BUNIT %s', bunit)
+            _logger.warning("Unrecognized value for BUNIT %s", bunit)
 
-    return {'n_ext': n_ext,
-            'readmode': readmode,
-            'texp': texp,
-            'adu_s': adu_s}
+    return {"n_ext": n_ext, "readmode": readmode, "texp": texp, "adu_s": adu_s}
 
 
 class CosmeticsRecipe(EmirRecipe):
-
     """Detector Cosmetics.
 
     Recipe to find and tag bad pixels in the detector.
@@ -67,10 +63,10 @@ class CosmeticsRecipe(EmirRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     lowercut = Parameter(
-        4.0, 'Values below this sigma level are flagged as dead pixels')
-    uppercut = Parameter(
-        4.0, 'Values above this sigma level are flagged as hot pixels')
-    maxiter = Parameter(30, 'Maximum number of iterations')
+        4.0, "Values below this sigma level are flagged as dead pixels"
+    )
+    uppercut = Parameter(4.0, "Values above this sigma level are flagged as hot pixels")
+    maxiter = Parameter(30, "Maximum number of iterations")
 
     ratioframe = Result(prods.ProcessedImage)
     maskframe = Result(prods.MasterBadPixelMask)
@@ -85,7 +81,7 @@ class CosmeticsRecipe(EmirRecipe):
         #
 
         if len(rinput.obresult.frames) < 2:
-            raise RecipeError('The recipe requires 2 flat frames')
+            raise RecipeError("The recipe requires 2 flat frames")
 
         iinfo = []
         for frame in rinput.obresult.frames:
@@ -94,31 +90,31 @@ class CosmeticsRecipe(EmirRecipe):
 
         # Loading calibrations
         with rinput.master_bias.open() as hdul:
-            readmode = hdul[0].header.get('READMODE', 'undefined')
-            if readmode.lower() in ['simple', 'bias']:
-                self.logger.debug('loading bias')
+            readmode = hdul[0].header.get("READMODE", "undefined")
+            if readmode.lower() in ["simple", "bias"]:
+                self.logger.debug("loading bias")
                 mbias = hdul[0].data
                 bias_corrector = proc.BiasCorrector(mbias)
             else:
-                self.logger.debug('ignoring bias')
+                self.logger.debug("ignoring bias")
                 bias_corrector = numina.util.node.IdNode()
 
         with rinput.master_dark.open() as mdark_hdul:
-            self.logger.debug('loading dark')
+            self.logger.debug("loading dark")
             mdark = mdark_hdul[0].data
             dark_corrector = proc.DarkCorrector(mdark)
 
         flow = numina.util.flow.SerialFlow([bias_corrector, dark_corrector])
 
-        self.logger.info('processing flat #1')
+        self.logger.info("processing flat #1")
         with rinput.obresult.frames[0].open() as hdul:
             other = flow(hdul)
-            f1 = other[0].data.copy() * iinfo[0]['texp'] * 1e-3
+            f1 = other[0].data.copy() * iinfo[0]["texp"] * 1e-3
 
-        self.logger.info('processing flat #2')
+        self.logger.info("processing flat #2")
         with rinput.obresult.frames[1].open() as hdul:
             other = flow(hdul)
-            f2 = other[0].data.copy() * iinfo[1]['texp'] * 1e-3
+            f2 = other[0].data.copy() * iinfo[1]["texp"] * 1e-3
 
         # Preprocess...
 
@@ -133,70 +129,73 @@ class CosmeticsRecipe(EmirRecipe):
             m = fits.getdata(mask)
             ninvalid = numpy.count_nonzero(m)
         else:
-            m = numpy.zeros_like(f1, dtype='int')
+            m = numpy.zeros_like(f1, dtype="int")
 
         for niter in range(1, maxiter + 1):
-            self.logger.debug('iter %d', niter)
-            ratio, m, sigma = cosmetics(
-                f1, f2, m, lowercut=lowercut, uppercut=uppercut)
+            self.logger.debug("iter %d", niter)
+            ratio, m, sigma = cosmetics(f1, f2, m, lowercut=lowercut, uppercut=uppercut)
 
             if self.intermediate_results:
                 with warnings.catch_warnings():
-                    warnings.simplefilter('ignore')
-                    fits.writeto('numina-cosmetics-i%02d.fits' %
-                                 niter, ratio, overwrite=True)
-                    fits.writeto('numina-mask-i%02d.fits' %
-                                 niter, m, overwrite=True)
-                    fits.writeto('numina-sigma-i%02d.fits' %
-                                 niter, m * 0.0 + sigma, overwrite=True)
+                    warnings.simplefilter("ignore")
+                    fits.writeto(
+                        "numina-cosmetics-i%02d.fits" % niter, ratio, overwrite=True
+                    )
+                    fits.writeto("numina-mask-i%02d.fits" % niter, m, overwrite=True)
+                    fits.writeto(
+                        "numina-sigma-i%02d.fits" % niter,
+                        m * 0.0 + sigma,
+                        overwrite=True,
+                    )
             self.logger.debug(
-                'iter %d, invalid points in input mask: %d', niter, ninvalid)
-            self.logger.debug('iter %d, estimated sigma is %f', niter, sigma)
+                "iter %d, invalid points in input mask: %d", niter, ninvalid
+            )
+            self.logger.debug("iter %d, estimated sigma is %f", niter, sigma)
             n_ninvalid = numpy.count_nonzero(m)
 
             # Probably there is something wrong here
             # too much defective pixels
             if ninvalid / m.size >= 0.10:
                 # This should set a flag in the output
-                msg = 'defective pixels are greater than 10%'
+                msg = "defective pixels are greater than 10%"
                 self.logger.warning(msg)
 
             if n_ninvalid == ninvalid:
-                self.logger.info(
-                    'convergence reached after %d iterations', niter)
+                self.logger.info("convergence reached after %d iterations", niter)
                 break
-            self.logger.info('new invalid points: %d', n_ninvalid - ninvalid)
+            self.logger.info("new invalid points: %d", n_ninvalid - ninvalid)
             ninvalid = n_ninvalid
         else:
             # This should set a flag in the output
-            msg = 'convergence not reached after %d iterations' % maxiter
+            msg = "convergence not reached after %d iterations" % maxiter
             self.logger.warning(msg)
 
         self.logger.info(
-            'number of dead pixels %d', numpy.count_nonzero(m == PIXEL_DEAD))
-        self.logger.info(
-            'number of hot pixels %d', numpy.count_nonzero(m == PIXEL_HOT))
+            "number of dead pixels %d", numpy.count_nonzero(m == PIXEL_DEAD)
+        )
+        self.logger.info("number of hot pixels %d", numpy.count_nonzero(m == PIXEL_HOT))
 
         if self.intermediate_results:
             with warnings.catch_warnings():
-                warnings.simplefilter('ignore')
-                fits.writeto('numina-cosmetics.fits', ratio, overwrite=True)
-                fits.writeto('numina-mask.fits', m, overwrite=True)
+                warnings.simplefilter("ignore")
+                fits.writeto("numina-cosmetics.fits", ratio, overwrite=True)
+                fits.writeto("numina-mask.fits", m, overwrite=True)
                 fits.writeto(
-                    'numina-sigma.fits', sigma * numpy.ones_like(m), overwrite=True)
+                    "numina-sigma.fits", sigma * numpy.ones_like(m), overwrite=True
+                )
 
         hdu = fits.PrimaryHDU(ratio)
         hdr = hdu.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr["NUMXVER"] = (__version__, "Numina package version")
+        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
+        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
         ratiohdl = fits.HDUList([hdu])
 
         maskhdu = fits.PrimaryHDU(m)
         hdr = maskhdu.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr["NUMXVER"] = (__version__, "Numina package version")
+        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
+        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
         maskhdl = fits.HDUList([maskhdu])
 
         res = self.create_result(ratioframe=ratiohdl, maskframe=maskhdl)

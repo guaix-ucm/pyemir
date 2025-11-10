@@ -29,49 +29,53 @@ _logger = logging.getLogger(__name__)
 
 
 def warn_action(img):
-    _logger.warning('Image %s has low flux in objects', img.baselabel)
+    _logger.warning("Image %s has low flux in objects", img.baselabel)
     img.valid_science = True
 
 
 def reject_action(img):
     img.valid_science = False
-    _logger.info('Image %s rejected, has low flux in objects', img.baselabel)
+    _logger.info("Image %s rejected, has low flux in objects", img.baselabel)
     pass
 
 
 def default_action(img):
-    _logger.info(
-        'Image %s accepted, has correct flux in objects', img.baselabel)
+    _logger.info("Image %s accepted, has correct flux in objects", img.baselabel)
     img.valid_science = True
 
 
 # Actions
-_dactions = {'warn': warn_action,
-             'reject': reject_action, 'default': default_action}
+_dactions = {"warn": warn_action, "reject": reject_action, "default": default_action}
 
 
-def check_photometry(frames, sf_data, seeing_fwhm, step=0,
-                     border=300, extinction=0.0,
-                     check_photometry_levels=[0.5, 0.8],
-                     check_photometry_actions=['warn', 'warn', 'default'],
-                     figure=None):
+def check_photometry(
+    frames,
+    sf_data,
+    seeing_fwhm,
+    step=0,
+    border=300,
+    extinction=0.0,
+    check_photometry_levels=[0.5, 0.8],
+    check_photometry_actions=["warn", "warn", "default"],
+    figure=None,
+):
     # Check photometry of few objects
     # weigthmap = 'weights4rms.fits'
 
-    wmap = numpy.ones_like(sf_data[0], dtype='bool')
+    wmap = numpy.ones_like(sf_data[0], dtype="bool")
 
     # Center of the image
     wmap[border:-border, border:-border] = 0
     # fits.writeto(weigthmap, wmap.astype('uintt8'), overwrite=True)
 
-    basename = 'result_i%0d.fits' % step
+    basename = "result_i%0d.fits" % step
 
     data_res = fits.getdata(basename)
     data_res = data_res.byteswap().newbyteorder()
     bkg = sep.Background(data_res)
     data_sub = data_res - bkg
 
-    _logger.info('Runing source extraction tor in %s', basename)
+    _logger.info("Runing source extraction tor in %s", basename)
     objects = sep.extract(data_sub, 1.5, err=bkg.globalrms, mask=wmap)
 
     # if seeing_fwhm is not None:
@@ -82,10 +86,10 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
     # sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % step
 
     LIMIT_AREA = 5000
-    idx_small = objects['npix'] < LIMIT_AREA
+    idx_small = objects["npix"] < LIMIT_AREA
     objects_small = objects[idx_small]
     NKEEP = 15
-    idx_flux = objects_small['flux'].argsort()
+    idx_flux = objects_small["flux"].argsort()
     objects_nth = objects_small[idx_flux][-NKEEP:]
 
     # set of indices of the N first objects
@@ -102,19 +106,19 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
 
         # Lauch SExtractor on a FITS file
         # om double image mode
-        _logger.info('Runing sextractor in %s', imagename)
+        _logger.info("Runing sextractor in %s", imagename)
         with fits.open(imagename) as hdul:
             header = hdul[0].header
-            airmasses.append(header['airmass'])
-            times.append(header['tstamp'])
+            airmasses.append(header["airmass"])
+            times.append(header["tstamp"])
             data_i = hdul[0].data
             data_i = data_i.byteswap().newbyteorder()
             bkg_i = sep.Background(data_i)
             data_sub_i = data_i - bkg_i
         # objects_i = sep.extract(data_sub_i, 1.5, err=bkg_i.globalrms, mask=wmap)
-        flux_i, fluxerr_i, flag_i = sep.sum_circle(data_sub_i,
-                                                   objects_nth['x'], objects_nth['y'],
-                                                   3.0, err=bkg_i.globalrms)
+        flux_i, fluxerr_i, flag_i = sep.sum_circle(
+            data_sub_i, objects_nth["x"], objects_nth["y"], 3.0, err=bkg_i.globalrms
+        )
 
         # Extinction correction
         excor = pow(10, -0.4 * frame.airmass * extinction)
@@ -138,8 +142,7 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
     actions = check_photometry_actions
 
     x = list(range(len(frames)))
-    vals, (_, sigma) = check_photometry_categorize(
-        x, wdata, levels, tags=actions)
+    vals, (_, sigma) = check_photometry_categorize(x, wdata, levels, tags=actions)
     # n sigma level to plt
     nsig = 3
 
@@ -147,15 +150,14 @@ def check_photometry(frames, sf_data, seeing_fwhm, step=0,
         figure = plt.figure()
         ax = figure.add_subplot(111)
 
-        plot_photometry_check(
-            ax, vals, wsigma, check_photometry_levels, nsig * sigma)
-        plt.savefig('figure-relative-flux_i%01d.png' % step)
+        plot_photometry_check(ax, vals, wsigma, check_photometry_levels, nsig * sigma)
+        plt.savefig("figure-relative-flux_i%01d.png" % step)
 
     for x, _, t in vals:
         try:
             action = _dactions[t]
         except KeyError:
-            _logger.warning('Action named %s not recognized, ignoring', t)
+            _logger.warning("Action named %s not recognized, ignoring", t)
             action = default_action
         for p in x:
             action(frames[p])
@@ -170,10 +172,10 @@ def check_photometry_categorize(x, y, levels, tags=None):
     ys = y.copy()
     ys.sort()
     # Mean of the upper half
-    m = ys[len(ys) // 2:].mean()
+    m = ys[len(ys) // 2 :].mean()
     y /= m
     m = 1.0
-    s = ys[len(ys) // 2:].std()
+    s = ys[len(ys) // 2 :].std()
     result = []
 
     if tags is None:
@@ -197,16 +199,16 @@ def check_photometry_categorize(x, y, levels, tags=None):
 def plot_photometry_check(ax, vals, errors, levels, nsigma):
     x = range(len(errors))
 
-    ax.set_title('Relative flux of brightest object')
-    for v, c in zip(vals, ['b', 'r', 'g', 'y']):
+    ax.set_title("Relative flux of brightest object")
+    for v, c in zip(vals, ["b", "r", "g", "y"]):
         ax.scatter(v[0], v[1], c=c)
         w = errors[v[0]]
-        ax.errorbar(v[0], v[1], yerr=w, fmt='none', c=c)
+        ax.errorbar(v[0], v[1], yerr=w, fmt="none", c=c)
 
-    ax.plot([x[0], x[-1]], [1, 1], 'r--')
-    ax.plot([x[0], x[-1]], [1 - nsigma, 1 - nsigma], 'b--')
+    ax.plot([x[0], x[-1]], [1, 1], "r--")
+    ax.plot([x[0], x[-1]], [1 - nsigma, 1 - nsigma], "b--")
     for f in levels:
-        ax.plot([x[0], x[-1]], [f, f], 'g--')
+        ax.plot([x[0], x[-1]], [f, f], "g--")
 
     return ax
 
@@ -214,41 +216,40 @@ def plot_photometry_check(ax, vals, errors, levels, nsigma):
 def check_position(images_info, sf_data, seeing_fwhm, step=0):
     # FIXME: this method has to be updated
 
-    _logger.info('Checking positions')
+    _logger.info("Checking positions")
     # Check position of bright objects
-    weigthmap = 'weights4rms.fits'
+    weigthmap = "weights4rms.fits"
 
     wmap = numpy.zeros_like(sf_data[0])
 
     # Center of the image
     border = 300
     wmap[border:-border, border:-border] = 1
-    fits.writeto(weigthmap, wmap.astype('uint8'), overwrite=True)
+    fits.writeto(weigthmap, wmap.astype("uint8"), overwrite=True)
 
-    basename = 'result_i%0d.fits' % (step)
+    basename = "result_i%0d.fits" % (step)
     sex = SExtractor()
-    sex.config['VERBOSE_TYPE'] = 'QUIET'
-    sex.config['PIXEL_SCALE'] = 1
-    sex.config['BACK_TYPE'] = 'AUTO'
+    sex.config["VERBOSE_TYPE"] = "QUIET"
+    sex.config["PIXEL_SCALE"] = 1
+    sex.config["BACK_TYPE"] = "AUTO"
     if seeing_fwhm is not None and seeing_fwhm > 0:
-        sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
-    sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-    sex.config['WEIGHT_IMAGE'] = weigthmap
+        sex.config["SEEING_FWHM"] = seeing_fwhm * sex.config["PIXEL_SCALE"]
+    sex.config["WEIGHT_TYPE"] = "MAP_WEIGHT"
+    sex.config["WEIGHT_IMAGE"] = weigthmap
 
-    sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
-    sex.config['PARAMETERS_LIST'].append('FLUXERR_BEST')
-    sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
-    sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
+    sex.config["PARAMETERS_LIST"].append("FLUX_BEST")
+    sex.config["PARAMETERS_LIST"].append("FLUXERR_BEST")
+    sex.config["PARAMETERS_LIST"].append("FWHM_IMAGE")
+    sex.config["PARAMETERS_LIST"].append("CLASS_STAR")
 
-    sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % step
+    sex.config["CATALOG_NAME"] = "master-catalogue-i%01d.cat" % step
 
-    _logger.info('Runing sextractor in %s', basename)
-    sex.run('%s,%s' % (basename, basename))
+    _logger.info("Runing sextractor in %s", basename)
+    sex.run("%s,%s" % (basename, basename))
 
     # Sort catalog by flux
     catalog = sex.catalog()
-    catalog = sorted(
-        catalog, key=operator.itemgetter('FLUX_BEST'), reverse=True)
+    catalog = sorted(catalog, key=operator.itemgetter("FLUX_BEST"), reverse=True)
 
     # set of indices of the N first objects
     # OBJS_I_KEEP = 10
@@ -259,12 +260,14 @@ def check_position(images_info, sf_data, seeing_fwhm, step=0):
     for image in images_info:
         imagename = name_skysub_proc(image.baselabel, step)
 
-        sex.config['CATALOG_NAME'] = ('catalogue-self-%s-i%01d.cat' %
-                                      (image.baselabel, step))
+        sex.config["CATALOG_NAME"] = "catalogue-self-%s-i%01d.cat" % (
+            image.baselabel,
+            step,
+        )
 
         # Lauch SExtractor on a FITS file
         # on double image mode
-        _logger.info('Runing sextractor in %s', imagename)
+        _logger.info("Runing sextractor in %s", imagename)
         sex.run(imagename)
         catalog = sex.catalog()
 

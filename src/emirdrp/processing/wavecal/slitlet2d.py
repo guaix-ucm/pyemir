@@ -146,55 +146,53 @@ class Slitlet2D(object):
         # slitlet number
         self.islitlet = islitlet
 
-        tmpcontent = rectwv_coeff.contents[islitlet-1]
+        tmpcontent = rectwv_coeff.contents[islitlet - 1]
 
         # csu configuration
-        self.csu_bar_left = tmpcontent['csu_bar_left']
-        self.csu_bar_right = tmpcontent['csu_bar_right']
-        self.csu_bar_slit_center = tmpcontent['csu_bar_slit_center']
-        self.csu_bar_slit_width = tmpcontent['csu_bar_slit_width']
+        self.csu_bar_left = tmpcontent["csu_bar_left"]
+        self.csu_bar_right = tmpcontent["csu_bar_right"]
+        self.csu_bar_slit_center = tmpcontent["csu_bar_slit_center"]
+        self.csu_bar_slit_width = tmpcontent["csu_bar_slit_width"]
 
         # horizontal and vertical bounding box
-        self.bb_nc1_orig = tmpcontent['bb_nc1_orig']
-        self.bb_nc2_orig = tmpcontent['bb_nc2_orig']
-        self.bb_ns1_orig = tmpcontent['bb_ns1_orig']
-        self.bb_ns2_orig = tmpcontent['bb_ns2_orig']
+        self.bb_nc1_orig = tmpcontent["bb_nc1_orig"]
+        self.bb_nc2_orig = tmpcontent["bb_nc2_orig"]
+        self.bb_ns1_orig = tmpcontent["bb_ns1_orig"]
+        self.bb_ns2_orig = tmpcontent["bb_ns2_orig"]
 
         # reference abscissa
-        self.x0_reference = tmpcontent['x0_reference']
+        self.x0_reference = tmpcontent["x0_reference"]
 
         # list of spectrum trails (lower, middle, and upper)
         self.list_spectrails = []
-        for idum, cdum in zip(range(3), ['lower', 'middle', 'upper']):
-            coeff = tmpcontent['spectrail']['poly_coef_' + cdum]
+        for idum, cdum in zip(range(3), ["lower", "middle", "upper"]):
+            coeff = tmpcontent["spectrail"]["poly_coef_" + cdum]
             self.list_spectrails.append(np.polynomial.Polynomial(coeff))
 
         # define reference ordinates using lower, middle and upper spectrails
         # evaluated at x0_reference
-        self.y0_reference_lower = tmpcontent['y0_reference_lower']
-        self.y0_reference_middle = tmpcontent['y0_reference_middle']
-        self.y0_reference_upper = tmpcontent['y0_reference_upper']
+        self.y0_reference_lower = tmpcontent["y0_reference_lower"]
+        self.y0_reference_middle = tmpcontent["y0_reference_middle"]
+        self.y0_reference_upper = tmpcontent["y0_reference_upper"]
 
         # list of frontiers (lower and upper)
         self.list_frontiers = []
-        for idum, cdum in zip(range(2), ['lower', 'upper']):
-            coeff = tmpcontent['frontier']['poly_coef_' + cdum]
+        for idum, cdum in zip(range(2), ["lower", "upper"]):
+            coeff = tmpcontent["frontier"]["poly_coef_" + cdum]
             self.list_frontiers.append(np.polynomial.Polynomial(coeff))
 
         # define frontier ordinates at x0_reference
-        self.y0_frontier_lower = tmpcontent['y0_frontier_lower']
-        self.y0_frontier_upper = tmpcontent['y0_frontier_upper']
+        self.y0_frontier_lower = tmpcontent["y0_frontier_lower"]
+        self.y0_frontier_upper = tmpcontent["y0_frontier_upper"]
 
         # define expected frontier ordinates at x0_reference and
         # associated linear transformation
-        self.y0_frontier_lower_expected = \
-            tmpcontent['y0_frontier_lower_expected']
-        self.y0_frontier_upper_expected = \
-            tmpcontent['y0_frontier_upper_expected']
-        self.corr_yrect_a = tmpcontent['corr_yrect_a']
-        self.corr_yrect_b = tmpcontent['corr_yrect_b']
-        self.min_row_rectified = tmpcontent['min_row_rectified']
-        self.max_row_rectified = tmpcontent['max_row_rectified']
+        self.y0_frontier_lower_expected = tmpcontent["y0_frontier_lower_expected"]
+        self.y0_frontier_upper_expected = tmpcontent["y0_frontier_upper_expected"]
+        self.corr_yrect_a = tmpcontent["corr_yrect_a"]
+        self.corr_yrect_b = tmpcontent["corr_yrect_b"]
+        self.min_row_rectified = tmpcontent["min_row_rectified"]
+        self.max_row_rectified = tmpcontent["max_row_rectified"]
 
         # define useful scan region in output rectified image
         self.iminslt = (islitlet - 1) * EMIR_NPIXPERSLIT_RECTIFIED + 1
@@ -205,16 +203,16 @@ class Slitlet2D(object):
         self.jmaxslt = 0
 
         # Rectification coefficients
-        self.ttd_aij = tmpcontent['ttd_aij']
-        self.ttd_bij = tmpcontent['ttd_bij']
-        self.tti_aij = tmpcontent['tti_aij']
-        self.tti_bij = tmpcontent['tti_bij']
+        self.ttd_aij = tmpcontent["ttd_aij"]
+        self.ttd_bij = tmpcontent["ttd_bij"]
+        self.tti_aij = tmpcontent["tti_aij"]
+        self.tti_bij = tmpcontent["tti_bij"]
         # determine order from number of coefficients
         ncoef = len(self.ttd_aij)
         self.ttd_order = order_fmap(ncoef)
 
         # Wavelength calibration coefficients
-        self.wpoly = tmpcontent['wpoly_coeff']
+        self.wpoly = tmpcontent["wpoly_coeff"]
 
         # debugplot
         self.debugplot = debugplot
@@ -223,81 +221,119 @@ class Slitlet2D(object):
         """Define printable representation of a Slitlet2D instance."""
 
         # string with all the information
-        output = "<Slilet2D instance>\n" + \
-                 "- islitlet..................: " + \
-                 str(self.islitlet) + "\n" + \
-                 "- csu_bar_left..............: " + \
-                 str(self.csu_bar_left) + "\n" + \
-                 "- csu_bar_right.............: " + \
-                 str(self.csu_bar_right) + "\n" + \
-                 "- csu_bar_slit_center.......: " + \
-                 str(self.csu_bar_slit_center) + "\n" + \
-                 "- csu_bar_slit_width........: " + \
-                 str(self.csu_bar_slit_width) + "\n" + \
-                 "- x0_reference..............: " + \
-                 str(self.x0_reference) + "\n" + \
-                 "- y0_reference_lower........: " + \
-                 str(self.y0_reference_lower) + "\n" + \
-                 "- y0_reference_middle.......: " + \
-                 str(self.y0_reference_middle) + "\n" + \
-                 "- y0_reference_upper........: " + \
-                 str(self.y0_reference_upper) + "\n" + \
-                 "- y0_frontier_lower.........: " + \
-                 str(self.y0_frontier_lower) + "\n" + \
-                 "- y0_frontier_upper.........: " + \
-                 str(self.y0_frontier_upper) + "\n" + \
-                 "- y0_frontier_lower_expected: " + \
-                 str(self.y0_frontier_lower_expected) + "\n" + \
-                 "- y0_frontier_upper_expected: " + \
-                 str(self.y0_frontier_upper_expected) + "\n" + \
-                 "- corr_yrect_a................: " + \
-                 str(self.corr_yrect_a) + "\n" + \
-                 "- corr_yrect_b................: " + \
-                 str(self.corr_yrect_b) + "\n" + \
-                 "- min_row_rectified...........: " + \
-                 str(self.min_row_rectified) + "\n" + \
-                 "- max_row_rectified...........: " + \
-                 str(self.max_row_rectified) + "\n" + \
-                 "- iminslt.....................: " + \
-                 str(self.iminslt) + "\n" + \
-                 "- imaxslt.....................: " + \
-                 str(self.imaxslt) + "\n" + \
-                 "- jminslt.....................: " + \
-                 str(self.jminslt) + "\n" + \
-                 "- jmaxslt.....................: " + \
-                 str(self.jmaxslt) + "\n" + \
-                 "- bb_nc1_orig...............: " + \
-                 str(self.bb_nc1_orig) + "\n" + \
-                 "- bb_nc2_orig...............: " + \
-                 str(self.bb_nc2_orig) + "\n" + \
-                 "- bb_ns1_orig...............: " + \
-                 str(self.bb_ns1_orig) + "\n" + \
-                 "- bb_ns2_orig...............: " + \
-                 str(self.bb_ns2_orig) + "\n" + \
-                 "- lower spectrail...........:\n\t" + \
-                 str(self.list_spectrails[0]) + "\n" + \
-                 "- middle spectrail..........:\n\t" + \
-                 str(self.list_spectrails[1]) + "\n" + \
-                 "- upper spectrail...........:\n\t" + \
-                 str(self.list_spectrails[2]) + "\n" + \
-                 "- lower frontier............:\n\t" + \
-                 str(self.list_frontiers[0]) + "\n" + \
-                 "- upper frontier............:\n\t" + \
-                 str(self.list_frontiers[1]) + "\n" + \
-                 "- ttd_order.................: " + \
-                 str(self.ttd_order) + "\n" + \
-                 "- ttd_aij...................:\n\t" + \
-                 str(self.ttd_aij) + "\n" + \
-                 "- ttd_bij...................:\n\t" + \
-                 str(self.ttd_bij) + "\n" + \
-                 "- tti_aij...................:\n\t" + \
-                 str(self.tti_aij) + "\n" + \
-                 "- tti_bij...................:\n\t" + \
-                 str(self.tti_bij) + "\n" + \
-                 "- wpoly.....................:\n\t" + \
-                 str(self.wpoly) + "\n" + \
-                 "- debugplot.................: " + \
-                 str(self.debugplot)
+        output = (
+            "<Slilet2D instance>\n"
+            + "- islitlet..................: "
+            + str(self.islitlet)
+            + "\n"
+            + "- csu_bar_left..............: "
+            + str(self.csu_bar_left)
+            + "\n"
+            + "- csu_bar_right.............: "
+            + str(self.csu_bar_right)
+            + "\n"
+            + "- csu_bar_slit_center.......: "
+            + str(self.csu_bar_slit_center)
+            + "\n"
+            + "- csu_bar_slit_width........: "
+            + str(self.csu_bar_slit_width)
+            + "\n"
+            + "- x0_reference..............: "
+            + str(self.x0_reference)
+            + "\n"
+            + "- y0_reference_lower........: "
+            + str(self.y0_reference_lower)
+            + "\n"
+            + "- y0_reference_middle.......: "
+            + str(self.y0_reference_middle)
+            + "\n"
+            + "- y0_reference_upper........: "
+            + str(self.y0_reference_upper)
+            + "\n"
+            + "- y0_frontier_lower.........: "
+            + str(self.y0_frontier_lower)
+            + "\n"
+            + "- y0_frontier_upper.........: "
+            + str(self.y0_frontier_upper)
+            + "\n"
+            + "- y0_frontier_lower_expected: "
+            + str(self.y0_frontier_lower_expected)
+            + "\n"
+            + "- y0_frontier_upper_expected: "
+            + str(self.y0_frontier_upper_expected)
+            + "\n"
+            + "- corr_yrect_a................: "
+            + str(self.corr_yrect_a)
+            + "\n"
+            + "- corr_yrect_b................: "
+            + str(self.corr_yrect_b)
+            + "\n"
+            + "- min_row_rectified...........: "
+            + str(self.min_row_rectified)
+            + "\n"
+            + "- max_row_rectified...........: "
+            + str(self.max_row_rectified)
+            + "\n"
+            + "- iminslt.....................: "
+            + str(self.iminslt)
+            + "\n"
+            + "- imaxslt.....................: "
+            + str(self.imaxslt)
+            + "\n"
+            + "- jminslt.....................: "
+            + str(self.jminslt)
+            + "\n"
+            + "- jmaxslt.....................: "
+            + str(self.jmaxslt)
+            + "\n"
+            + "- bb_nc1_orig...............: "
+            + str(self.bb_nc1_orig)
+            + "\n"
+            + "- bb_nc2_orig...............: "
+            + str(self.bb_nc2_orig)
+            + "\n"
+            + "- bb_ns1_orig...............: "
+            + str(self.bb_ns1_orig)
+            + "\n"
+            + "- bb_ns2_orig...............: "
+            + str(self.bb_ns2_orig)
+            + "\n"
+            + "- lower spectrail...........:\n\t"
+            + str(self.list_spectrails[0])
+            + "\n"
+            + "- middle spectrail..........:\n\t"
+            + str(self.list_spectrails[1])
+            + "\n"
+            + "- upper spectrail...........:\n\t"
+            + str(self.list_spectrails[2])
+            + "\n"
+            + "- lower frontier............:\n\t"
+            + str(self.list_frontiers[0])
+            + "\n"
+            + "- upper frontier............:\n\t"
+            + str(self.list_frontiers[1])
+            + "\n"
+            + "- ttd_order.................: "
+            + str(self.ttd_order)
+            + "\n"
+            + "- ttd_aij...................:\n\t"
+            + str(self.ttd_aij)
+            + "\n"
+            + "- ttd_bij...................:\n\t"
+            + str(self.ttd_bij)
+            + "\n"
+            + "- tti_aij...................:\n\t"
+            + str(self.tti_aij)
+            + "\n"
+            + "- tti_bij...................:\n\t"
+            + str(self.tti_bij)
+            + "\n"
+            + "- wpoly.....................:\n\t"
+            + str(self.wpoly)
+            + "\n"
+            + "- debugplot.................: "
+            + str(self.debugplot)
+        )
 
         return output
 
@@ -322,13 +358,15 @@ class Slitlet2D(object):
         # protections
         naxis2, naxis1 = image_2k2k.shape
         if naxis1 != EMIR_NAXIS1:
-            raise ValueError('Unexpected naxis1')
+            raise ValueError("Unexpected naxis1")
         if naxis2 != EMIR_NAXIS2:
-            raise ValueError('Unexpected naxis2')
+            raise ValueError("Unexpected naxis2")
 
         # extract slitlet region
-        slitlet2d = image_2k2k[(self.bb_ns1_orig - 1):self.bb_ns2_orig,
-                               (self.bb_nc1_orig - 1):self.bb_nc2_orig]
+        slitlet2d = image_2k2k[
+            (self.bb_ns1_orig - 1) : self.bb_ns2_orig,
+            (self.bb_nc1_orig - 1) : self.bb_nc2_orig,
+        ]
 
         # transform to float
         slitlet2d = slitlet2d.astype(float)
@@ -381,10 +419,7 @@ class Slitlet2D(object):
 
         # rectify image
         slitlet2d_rect = rectify2d(
-            image2d=slitlet2d,
-            aij=aij,
-            bij=bij,
-            resampling=resampling
+            image2d=slitlet2d, aij=aij, bij=bij, resampling=resampling
         )
 
         if abs(self.debugplot % 10) != 0:
@@ -409,21 +444,24 @@ class Slitlet2D(object):
 
         title = "Slitlet#" + str(self.islitlet)
         if subtitle is not None:
-            title += ' (' + subtitle + ')'
-        ax = ximshow(slitlet2d, title=title,
-                     first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
-                     show=False)
+            title += " (" + subtitle + ")"
+        ax = ximshow(
+            slitlet2d,
+            title=title,
+            first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
+            show=False,
+        )
         xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
         ylower = self.list_spectrails[0](xdum)
-        ax.plot(xdum, ylower, 'b-')
+        ax.plot(xdum, ylower, "b-")
         ymiddle = self.list_spectrails[1](xdum)
-        ax.plot(xdum, ymiddle, 'b--')
+        ax.plot(xdum, ymiddle, "b--")
         yupper = self.list_spectrails[2](xdum)
-        ax.plot(xdum, yupper, 'b-')
+        ax.plot(xdum, yupper, "b-")
         ylower_frontier = self.list_frontiers[0](xdum)
-        ax.plot(xdum, ylower_frontier, 'b:')
+        ax.plot(xdum, ylower_frontier, "b:")
         yupper_frontier = self.list_frontiers[1](xdum)
-        ax.plot(xdum, yupper_frontier, 'b:')
+        ax.plot(xdum, yupper_frontier, "b:")
         if title is not None:
             ax.set_title(title)
         pause_debugplot(debugplot=self.debugplot, pltshow=True)
@@ -442,21 +480,21 @@ class Slitlet2D(object):
 
         title = "Slitlet#" + str(self.islitlet)
         if subtitle is not None:
-            title += ' (' + subtitle + ')'
-        ax = ximshow(slitlet2d_rect, title=title,
-                     first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
-                     show=False)
+            title += " (" + subtitle + ")"
+        ax = ximshow(
+            slitlet2d_rect,
+            title=title,
+            first_pixel=(self.bb_nc1_orig, self.bb_ns1_orig),
+            show=False,
+        )
         # grid with fitted transformation: spectrum trails
-        xx = np.arange(0, self.bb_nc2_orig - self.bb_nc1_orig + 1,
-                       dtype=float)
+        xx = np.arange(0, self.bb_nc2_orig - self.bb_nc1_orig + 1, dtype=float)
         for spectrail in self.list_spectrails:
-            yy0 = self.corr_yrect_a + \
-                self.corr_yrect_b * spectrail(self.x0_reference)
+            yy0 = self.corr_yrect_a + self.corr_yrect_b * spectrail(self.x0_reference)
             yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
             ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b")
         for spectrail in self.list_frontiers:
-            yy0 = self.corr_yrect_a +\
-                self.corr_yrect_b * spectrail(self.x0_reference)
+            yy0 = self.corr_yrect_a + self.corr_yrect_b * spectrail(self.x0_reference)
             yy = np.tile([yy0 - self.bb_ns1_orig], xx.size)
             ax.plot(xx + self.bb_nc1_orig, yy + self.bb_ns1_orig, "b:")
         # show plot

@@ -18,12 +18,14 @@ from emirdrp.core import EMIR_NAXIS2
 from emirdrp.core import EMIR_NBARS
 
 
-def synthetic_lines_rawdata(catlines_all_wave,
-                            catlines_all_flux,
-                            list_useful_slitlets,
-                            rectwv_coeff,
-                            ycorrection_pix=2.0,
-                            sigma_gauss_pix=1.5):
+def synthetic_lines_rawdata(
+    catlines_all_wave,
+    catlines_all_flux,
+    list_useful_slitlets,
+    rectwv_coeff,
+    ycorrection_pix=2.0,
+    sigma_gauss_pix=1.5,
+):
     """Generate synthetic MOS data with arc/OH lines.
 
     Parameters
@@ -52,7 +54,7 @@ def synthetic_lines_rawdata(catlines_all_wave,
     """
 
     logger = logging.getLogger(__name__)
-    logger.info('generating synthetic MOS image')
+    logger.info("generating synthetic MOS image")
 
     simulated_image = np.zeros((EMIR_NAXIS2, EMIR_NAXIS1))
 
@@ -61,43 +63,43 @@ def synthetic_lines_rawdata(catlines_all_wave,
 
     nside_pix = int(sigma_gauss_pix * 5.0 + 0.5)
 
-    cout = '0'
+    cout = "0"
     for islitlet in range(1, EMIR_NBARS + 1):
         if islitlet in list_useful_slitlets:
-            cout += '.'
+            cout += "."
             dumdict = rectwv_coeff.contents[islitlet - 1]
             # check pseudo-longslit with previous slitlet
-            center = dumdict['csu_bar_slit_center']
-            width = dumdict['csu_bar_slit_width']
+            center = dumdict["csu_bar_slit_center"]
+            width = dumdict["csu_bar_slit_width"]
             connected_prev = False
             if islitlet > 1:
                 dumdict_prev = rectwv_coeff.contents[islitlet - 2]
-                center_prev = dumdict_prev['csu_bar_slit_center']
-                width_prev = dumdict_prev['csu_bar_slit_width']
-                if abs(center - center_prev) < width/2:
-                    if abs(width - width_prev) < width/2:
+                center_prev = dumdict_prev["csu_bar_slit_center"]
+                width_prev = dumdict_prev["csu_bar_slit_width"]
+                if abs(center - center_prev) < width / 2:
+                    if abs(width - width_prev) < width / 2:
                         connected_prev = True
             # check pseudo-longslit with next slitlet
             connected_next = False
             if islitlet < EMIR_NBARS:
                 dumdict_next = rectwv_coeff.contents[islitlet]
-                center_next = dumdict_next['csu_bar_slit_center']
-                width_next = dumdict_next['csu_bar_slit_width']
-                if abs(center - center_next) < width/2:
-                    if abs(width - width_next) < width/2:
+                center_next = dumdict_next["csu_bar_slit_center"]
+                width_next = dumdict_next["csu_bar_slit_width"]
+                if abs(center - center_next) < width / 2:
+                    if abs(width - width_next) < width / 2:
                         connected_next = True
             # wavelength calibration parameters
-            crval1_linear = dumdict['crval1_linear']
-            cdelt1_linear = dumdict['cdelt1_linear']
+            crval1_linear = dumdict["crval1_linear"]
+            cdelt1_linear = dumdict["cdelt1_linear"]
             crvaln_linear = crval1_linear + (EMIR_NAXIS1 - 1) * cdelt1_linear
             # rectification parameters
-            bb_ns1_orig = dumdict['bb_ns1_orig']
-            ttd_order = dumdict['ttd_order']
-            aij = dumdict['ttd_aij']
-            bij = dumdict['ttd_bij']
-            min_row_rectified = float(dumdict['min_row_rectified'])
-            max_row_rectified = float(dumdict['max_row_rectified'])
-            wpoly_coeff = dumdict['wpoly_coeff']
+            bb_ns1_orig = dumdict["bb_ns1_orig"]
+            ttd_order = dumdict["ttd_order"]
+            aij = dumdict["ttd_aij"]
+            bij = dumdict["ttd_bij"]
+            min_row_rectified = float(dumdict["min_row_rectified"])
+            max_row_rectified = float(dumdict["max_row_rectified"])
+            wpoly_coeff = dumdict["wpoly_coeff"]
             # store coordinates for each line
             x1 = []
             y1 = []
@@ -133,7 +135,7 @@ def synthetic_lines_rawdata(catlines_all_wave,
                 slope = (xx2_ - xx1_) / (yy2_ - yy1_)
                 iyy1_ = int(yy1_ + 0.5)
                 if yy1_ <= float(iyy1_):
-                    fracpix1 = (float(iyy1_) - yy1_)
+                    fracpix1 = float(iyy1_) - yy1_
                     iyy1_ -= 1
                 else:
                     fracpix1 = 1.0 - (yy1_ - float(iyy1_))
@@ -141,7 +143,7 @@ def synthetic_lines_rawdata(catlines_all_wave,
                 if yy2_ <= float(iyy2_):
                     fracpix2 = 1.0 - (float(iyy2_) - yy2_)
                 else:
-                    fracpix2 = (yy2_ - float(iyy2_))
+                    fracpix2 = yy2_ - float(iyy2_)
                     iyy2_ += 1
                 for iyy_ in range(iyy1_, iyy2_ + 1):
                     if iyy_ == iyy1_:
@@ -158,19 +160,19 @@ def synthetic_lines_rawdata(catlines_all_wave,
                         xpix = xcenter + np.arange(-nside_pix, nside_pix + 1)
                         left_border = xpix - xx0_ - 0.5
                         right_border = left_border + 1.0
-                        borders = np.concatenate((left_border,
-                                                  right_border))
+                        borders = np.concatenate((left_border, right_border))
                         area = norm.cdf(borders, scale=sigma_gauss_pix)
                         for i in range(npix):
                             xdum = xpix[i]
                             if 1 <= xdum <= EMIR_NAXIS1:
-                                simulated_image[icenter, xdum - 1] += \
+                                simulated_image[icenter, xdum - 1] += (
                                     fracpix * flux * (area[i + npix] - area[i])
+                                )
         else:
-            cout += 'i'
+            cout += "i"
 
         if islitlet % 10 == 0:
-            if cout != 'i':
+            if cout != "i":
                 cout = str(islitlet // 10)
 
         logger.info(cout)

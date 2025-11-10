@@ -33,17 +33,19 @@ class NBImageRecipeInput(RecipeInput):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    extinction = Parameter(0.0, 'Mean atmospheric extinction')
-    sources = Parameter(
-        [], 'List of x, y coordinates to measure FWHM', optional=True)
+    extinction = Parameter(0.0, "Mean atmospheric extinction")
+    sources = Parameter([], "List of x, y coordinates to measure FWHM", optional=True)
     offsets = Offsets_Requirement()
-    sky_images = Parameter(5, 'Images used to estimate the background'
-                           ' before and after current image')
+    sky_images = Parameter(
+        5, "Images used to estimate the background" " before and after current image"
+    )
     sky_images_sep_time = SkyImageSepTime_Requirement()
     check_photometry_levels = Parameter(
-        [0.5, 0.8], 'Levels to check the flux of the objects')
+        [0.5, 0.8], "Levels to check the flux of the objects"
+    )
     check_photometry_actions = Parameter(
-        ['warn', 'warn', 'default'], 'Actions to take on images')
+        ["warn", "warn", "default"], "Actions to take on images"
+    )
 
 
 class NBImageRecipeResult(RecipeResult):
@@ -54,7 +56,6 @@ class NBImageRecipeResult(RecipeResult):
 @define_input(NBImageRecipeInput)
 @define_result(NBImageRecipeResult)
 class NBImageRecipe(DirectImageCommon):
-
     """
     The effect of recording a series of stare images, with the same
     acquisition parameters, and taken by pointing the TS in cycles
@@ -71,9 +72,12 @@ class NBImageRecipe(DirectImageCommon):
 
     def run(self, ri):
 
-        frame, catalog = self.process(ri,
-                                      window=None, subpix=1,
-                                      target_is_sky=False,
-                                      stop_after=DirectImageCommon.FULLRED)
+        frame, catalog = self.process(
+            ri,
+            window=None,
+            subpix=1,
+            target_is_sky=False,
+            stop_after=DirectImageCommon.FULLRED,
+        )
 
         return self.create_result(frame=frame, catalog=catalog)

@@ -36,31 +36,28 @@ def retrieve_catlines(mode, grism_name):
 
     # protections
     if mode not in [1, 2, 11, 12]:
-        raise ValueError('Invalid mode={}'.format(mode))
+        raise ValueError("Invalid mode={}".format(mode))
 
     # read tabulated lines
     if mode in [1, 2]:  # ARC lines
-        if grism_name == 'LR':
-            catlines_file = 'lines_argon_neon_xenon_empirical_LR.dat'
+        if grism_name == "LR":
+            catlines_file = "lines_argon_neon_xenon_empirical_LR.dat"
         else:
-            catlines_file = 'lines_argon_neon_xenon_empirical.dat'
-        dumdata = pkgutil.get_data('emirdrp.instrument.configs', catlines_file)
-        arc_lines_tmpfile = StringIO(dumdata.decode('utf8'))
+            catlines_file = "lines_argon_neon_xenon_empirical.dat"
+        dumdata = pkgutil.get_data("emirdrp.instrument.configs", catlines_file)
+        arc_lines_tmpfile = StringIO(dumdata.decode("utf8"))
         catlines = np.genfromtxt(arc_lines_tmpfile)
         # define wavelength and flux as separate arrays
         catlines_all_wave = catlines[:, 0]
         catlines_all_flux = catlines[:, 1]
     elif mode in [11, 12]:  # OH lines
-        dumdata = pkgutil.get_data(
-            'emirdrp.instrument.configs',
-            'Oliva_etal_2013.dat'
-        )
-        oh_lines_tmpfile = StringIO(dumdata.decode('utf8'))
+        dumdata = pkgutil.get_data("emirdrp.instrument.configs", "Oliva_etal_2013.dat")
+        oh_lines_tmpfile = StringIO(dumdata.decode("utf8"))
         catlines = np.genfromtxt(oh_lines_tmpfile)
         # define wavelength and flux as separate arrays
         catlines_all_wave = np.concatenate((catlines[:, 1], catlines[:, 0]))
         catlines_all_flux = np.concatenate((catlines[:, 2], catlines[:, 2]))
     else:
-        raise ValueError('Unexpected mode={}'.format(mode))
+        raise ValueError("Unexpected mode={}".format(mode))
 
     return catlines_all_wave, catlines_all_flux

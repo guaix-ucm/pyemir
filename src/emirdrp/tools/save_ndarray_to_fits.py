@@ -11,11 +11,16 @@ import numpy as np
 from astropy.io import fits
 
 
-def save_ndarray_to_fits(array=None, file_name=None,
-                         main_header=None,
-                         cast_to_float=True,
-                         crpix1=None, crval1=None, cdelt1=None,
-                         overwrite=True):
+def save_ndarray_to_fits(
+    array=None,
+    file_name=None,
+    main_header=None,
+    cast_to_float=True,
+    crpix1=None,
+    crval1=None,
+    cdelt1=None,
+    overwrite=True,
+):
     """Save numpy array(s) into a FITS file with the provided filename.
 
     Parameters
@@ -66,12 +71,10 @@ def save_ndarray_to_fits(array=None, file_name=None,
         list_cast_to_float = cast_to_float
         # check that the additional associated lists have been provided
         # and that they have the expected length (or they are None)
-        for ldum, cdum in zip([crpix1, crval1, cdelt1],
-                              ['crpix1', 'crval1', 'cdelt1']):
+        for ldum, cdum in zip([crpix1, crval1, cdelt1], ["crpix1", "crval1", "cdelt1"]):
             if ldum is not None:
                 if type(ldum) is not list:
-                    raise ValueError("Expected list of " + cdum +
-                                     " not found!")
+                    raise ValueError("Expected list of " + cdum + " not found!")
                 else:
                     if len(ldum) != narrays:
                         raise ValueError("Unexpected length of " + cdum)
@@ -98,12 +101,14 @@ def save_ndarray_to_fits(array=None, file_name=None,
 
     for ihdu, tmp_array in enumerate(list_of_arrays):
         if type(tmp_array) is not np.ndarray:
-            raise ValueError("Array#" + str(ihdu) + "=" + str(tmp_array) +
-                             " must be a numpy.ndarray")
+            raise ValueError(
+                "Array#" + str(ihdu) + "=" + str(tmp_array) + " must be a numpy.ndarray"
+            )
         if ihdu == 0:
             if list_cast_to_float[ihdu]:
-                hdu = fits.PrimaryHDU(data=tmp_array.astype(np.float32),
-                                      header=main_header)
+                hdu = fits.PrimaryHDU(
+                    data=tmp_array.astype(np.float32), header=main_header
+                )
             else:
                 hdu = fits.PrimaryHDU(data=tmp_array, header=main_header)
         else:
@@ -115,15 +120,15 @@ def save_ndarray_to_fits(array=None, file_name=None,
         # set additional FITS keywords if requested
         tmp_crpix1 = list_crpix1[ihdu]
         if tmp_crpix1 is not None:
-            hdu.header.set('CRPIX1', tmp_crpix1, 'Reference pixel')
+            hdu.header.set("CRPIX1", tmp_crpix1, "Reference pixel")
         tmp_crval1 = list_crval1[ihdu]
         if tmp_crval1 is not None:
-            hdu.header.set('CRVAL1', tmp_crval1,
-                           'Reference wavelength corresponding to CRPIX1')
+            hdu.header.set(
+                "CRVAL1", tmp_crval1, "Reference wavelength corresponding to CRPIX1"
+            )
         tmp_cdelt1 = list_cdelt1[ihdu]
         if tmp_cdelt1 is not None:
-            hdu.header.set('CDELT1', tmp_cdelt1,
-                           'Linear dispersion (angstrom/pixel)')
+            hdu.header.set("CDELT1", tmp_cdelt1, "Linear dispersion (angstrom/pixel)")
 
         # add HDU to HDUList
         hdulist.append(hdu)

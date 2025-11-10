@@ -16,7 +16,7 @@ import scipy.interpolate as sil
 
 
 class Counts:
-    INTEGRAL_COUNTS = 0,
+    INTEGRAL_COUNTS = (0,)
     DIFFERENTIAL_COUNTS = 1
 
 
@@ -42,17 +42,14 @@ class RBModel(BaseModel):
     """
 
     def __init__(self):
-        super().__init__('Ratnatunga & Bahcall')
+        super().__init__("Ratnatunga & Bahcall")
 
         _counts = numpy.array(
             [
                 [12, 14, 16, 18, 20, 22, 24, 26, 28],
-                [0.0, 1.3e-2, 1.8e-2, 4.8e-2, 1.1e-1,
-                    9.0e-2, 2.7e-2, 3.4e-3, 1.6e-4],
-                [0.0, 8.2e-3, 2.6e-2, 2.6e-2, 4.5e-2,
-                    1.2e-1, 1.1e-1, 3.9e-2, 5.6e-3],
-                [0.0, 2.0e-3, 1.0e-2, 4.4e-2, 1.1e-1,
-                    2.2e-1, 4.6e-1, 8.1e-1, 1.1e-0]
+                [0.0, 1.3e-2, 1.8e-2, 4.8e-2, 1.1e-1, 9.0e-2, 2.7e-2, 3.4e-3, 1.6e-4],
+                [0.0, 8.2e-3, 2.6e-2, 2.6e-2, 4.5e-2, 1.2e-1, 1.1e-1, 3.9e-2, 5.6e-3],
+                [0.0, 2.0e-3, 1.0e-2, 4.4e-2, 1.1e-1, 2.2e-1, 4.6e-1, 8.1e-1, 1.1e-0],
             ]
         )
         # Order 3 spline
@@ -73,20 +70,20 @@ class RBModel(BaseModel):
     def integral_counts(self, mag, filter=PhotometricFilter.FILTER_K):
         if filter == PhotometricFilter.FILTER_K:
             return self._integral_counts_color(mag, self._colorsVK)
-        return 0.
+        return 0.0
 
     def _integral_counts_color(self, mag, colors):
         def subint(i):
-            return max(sil.splint(self._min + colors[i],
-                                  mag + colors[i],
-                                  self._spl[i]),
-                       0.0
-                       )
+            return max(
+                sil.splint(self._min + colors[i], mag + colors[i], self._spl[i]), 0.0
+            )
+
         return sum(subint(i) for i in (0, 1, 2))
 
     def _differential_counts_color(self, mag, colors):
         def subspl(i):
             return max(sil.splev(mag, self._spl[i]), 0.0)
+
         return sum(subspl(i) for i in (0, 1, 2))
 
 
@@ -97,9 +94,9 @@ class SpagnaModel(BaseModel):
     """
 
     def __init__(self):
-        super().__init__('Spagna 1999')
+        super().__init__("Spagna 1999")
 
-        res = importlib_resources.files('emirdrp.simulation').joinpath('spagna-J.dat')
+        res = importlib_resources.files("emirdrp.simulation").joinpath("spagna-J.dat")
         with open(res) as fd:
             _J_counts_data = numpy.loadtxt(fd)
 
@@ -108,7 +105,7 @@ class SpagnaModel(BaseModel):
             self._spl_J_1 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 1])
             self._spl_J_2 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 2])
 
-        res = importlib_resources.files('emirdrp.simulation').joinpath('spagna-K.dat')
+        res = importlib_resources.files("emirdrp.simulation").joinpath("spagna-K.dat")
         with open(res) as fd:
             _K_counts_data = numpy.loadtxt(fd)
             # Data in file is for square degree
@@ -124,7 +121,7 @@ class SpagnaModel(BaseModel):
         elif filter == PhotometricFilter.FILTER_K:
             return sil.splev(mag, self._spl_K_2)
         else:
-            return 0.
+            return 0.0
 
     def differential_counts(self, mag, filter=PhotometricFilter.FILTER_K):
         if filter == PhotometricFilter.FILTER_J:
@@ -132,7 +129,7 @@ class SpagnaModel(BaseModel):
         elif filter == PhotometricFilter.FILTER_K:
             return sil.splev(mag, self._spl_K_1) / 3600.0
         else:
-            return 0.
+            return 0.0
 
 
 class BSModel(BaseModel):
@@ -140,70 +137,93 @@ class BSModel(BaseModel):
 
     Number of stars per square arc minute
     """
+
     def __init__(self):
         super().__init__("Bahcall & Soneira")
         self.params = numpy.array(
             [
-                [200, - 0.2, 0.01, 2, 15, 400, - 0.26, 0.065, 1.5, 17.5],
-                [925, - 0.132, 0.035, 3, 15.75, 1050, - 0.18, 0.087, 2.5, 17.5],
-                [235, - 0.227, 0.0, 1.5, 17, 370, - 0.175, 0.06, 2.0, 18],
-                [950, - 0.124, 0.027, 3.1, 16.60, 910, - 0.167, 0.083, 2.5, 18]
+                [200, -0.2, 0.01, 2, 15, 400, -0.26, 0.065, 1.5, 17.5],
+                [925, -0.132, 0.035, 3, 15.75, 1050, -0.18, 0.087, 2.5, 17.5],
+                [235, -0.227, 0.0, 1.5, 17, 370, -0.175, 0.06, 2.0, 18],
+                [950, -0.124, 0.027, 3.1, 16.60, 910, -0.167, 0.083, 2.5, 18],
             ]
         )
 
     def integral_counts(self, mag, filter=PhotometricFilter.FILTER_V):
         if filter == PhotometricFilter.FILTER_V:
-            return self.dFunction(mag, 0., 0.5 * math.pi, *self.params[1])
+            return self.dFunction(mag, 0.0, 0.5 * math.pi, *self.params[1])
         elif filter == PhotometricFilter.FILTER_B:
-            return self.dFunction(mag, 0., 0.5 * math.pi, *self.params[4])
+            return self.dFunction(mag, 0.0, 0.5 * math.pi, *self.params[4])
         else:
-            return 0.
+            return 0.0
 
     def differential_counts(self, mag, filter=PhotometricFilter.FILTER_V):
         if filter == PhotometricFilter.FILTER_V:
-            return self.dFunction(mag, 0., 0.5 * math.pi, *self.params[0])
+            return self.dFunction(mag, 0.0, 0.5 * math.pi, *self.params[0])
         elif filter == PhotometricFilter.FILTER_B:
-            return self.dFunction(mag, 0., 0.5 * math.pi, *self.params[3])
+            return self.dFunction(mag, 0.0, 0.5 * math.pi, *self.params[3])
         else:
-            return 0.
+            return 0.0
 
     def mu(self, magnitude):
         """Compute parameter \\mu of Appendix B."""
-        if magnitude <= 12.:
+        if magnitude <= 12.0:
             return 0.03
         if magnitude <= 20:
-            return 0.0075 * (magnitude - 12.) + 0.03
+            return 0.0075 * (magnitude - 12.0) + 0.03
         # if magnitude > 20:
         return 0.09
 
     def gamma(self, magnitude):
-        if magnitude <= 12.:
+        if magnitude <= 12.0:
             return 0.36
         if magnitude <= 20:
-            return 0.04 * (12. - magnitude) + 0.36
+            return 0.04 * (12.0 - magnitude) + 0.36
         # if magnitude > 20:
         return 0.04
 
     def sigma(self, galacticLongitude, galacticLatitude):
         return 1.45 - 0.20 * math.cos(galacticLongitude) * math.cos(galacticLatitude)
 
-    def dFunction(self, mag, glongitude, glatitude, C1, alpha, beta, delta,
-                  mStar, C2, kappa, eta, lambdax, mDagger):
-        firstTerm = (C1 * pow(10., beta * (mag - mStar)) /
-                     pow(1 + pow(10., alpha * (mag - mStar)), delta) /
-                     pow(math.sin(glatitude) *
-                         (1 - self.mu(mag) / math.tan(glatitude) * math.cos(glongitude)),
-                         3.0 - 5 * self.gamma(mag))
-                     )
-        secondTerm = (C2 * pow(10., eta * (mag - mDagger)) /
-                      pow(1 + pow(10., kappa * (mag - mDagger)), lambdax) /
-                      pow(1 - math.cos(glatitude) * math.cos(glongitude),
-                          self.sigma(glongitude, glatitude))
-                      )
+    def dFunction(
+        self,
+        mag,
+        glongitude,
+        glatitude,
+        C1,
+        alpha,
+        beta,
+        delta,
+        mStar,
+        C2,
+        kappa,
+        eta,
+        lambdax,
+        mDagger,
+    ):
+        firstTerm = (
+            C1
+            * pow(10.0, beta * (mag - mStar))
+            / pow(1 + pow(10.0, alpha * (mag - mStar)), delta)
+            / pow(
+                math.sin(glatitude)
+                * (1 - self.mu(mag) / math.tan(glatitude) * math.cos(glongitude)),
+                3.0 - 5 * self.gamma(mag),
+            )
+        )
+        secondTerm = (
+            C2
+            * pow(10.0, eta * (mag - mDagger))
+            / pow(1 + pow(10.0, kappa * (mag - mDagger)), lambdax)
+            / pow(
+                1 - math.cos(glatitude) * math.cos(glongitude),
+                self.sigma(glongitude, glatitude),
+            )
+        )
         return (firstTerm + secondTerm) / 3600.0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import numpy as np
     import numpy.random
     from math import sqrt, log
@@ -219,7 +239,7 @@ if __name__ == '__main__':
     # print bsmodel.differential_counts(18)
 
     class GeneralRandom:
-        """ Recipe from http://code.activestate.com/recipes/576556/."""
+        """Recipe from http://code.activestate.com/recipes/576556/."""
 
         def __init__(self, x, p, Nrl=1000):
             self.x = x
@@ -236,24 +256,19 @@ if __name__ == '__main__':
                 while self.cdf[cdf_idx] < y[n] and cdf_idx < Nrl:
                     cdf_idx += 1
                 # Seems a linear interpolation
-                self.inversecdf[n] = (self.x[cdf_idx - 1] +
-                                      (self.x[cdf_idx] -
-                                       self.x[cdf_idx - 1]) *
-                                      (y[n] - self.cdf[cdf_idx - 1]) /
-                                      (self.cdf[cdf_idx] -
-                                       self.cdf[cdf_idx - 1])
-                                      )
+                self.inversecdf[n] = self.x[cdf_idx - 1] + (
+                    self.x[cdf_idx] - self.x[cdf_idx - 1]
+                ) * (y[n] - self.cdf[cdf_idx - 1]) / (
+                    self.cdf[cdf_idx] - self.cdf[cdf_idx - 1]
+                )
                 if cdf_idx >= Nrl:
                     break
-            self.delta_inversecdf = np.concatenate(
-                (np.diff(self.inversecdf), [0])
-            )
+            self.delta_inversecdf = np.concatenate((np.diff(self.inversecdf), [0]))
 
         def random(self, N=1000):
             idx_f = np.random.uniform(size=N, high=self.Nrl - 1)
-            idx = np.array(idx_f, 'i')
-            y = (self.inversecdf[idx] +
-                 (idx_f - idx) * self.delta_inversecdf[idx])
+            idx = np.array(idx_f, "i")
+            y = self.inversecdf[idx] + (idx_f - idx) * self.delta_inversecdf[idx]
             return y
 
     scmodel = sgmodel
@@ -263,12 +278,15 @@ if __name__ == '__main__':
     plate_scale = 0.2
     detector_shape = (2048, 2048)
     pixel_area = detector_shape
-    detector_area = (plate_scale ** 2 * detector_shape[0] *
-                     detector_shape[1]) / 3600.
+    detector_area = (plate_scale**2 * detector_shape[0] * detector_shape[1]) / 3600.0
 
-    nstars = int(round(detector_area * (scmodel.integral_counts(magmax) -
-                                        scmodel.integral_counts(magmin))))
-    print('nstars', nstars)
+    nstars = int(
+        round(
+            detector_area
+            * (scmodel.integral_counts(magmax) - scmodel.integral_counts(magmin))
+        )
+    )
+    print("nstars", nstars)
 
     seeing = 1.0
 

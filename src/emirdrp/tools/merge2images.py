@@ -46,29 +46,25 @@ def merge2images(hdu1, hdu2, debugplot):
     image_merged = copy_img(hdu1)
     image_header_ = hdu2[0].header
     #
-    naxis = image_header['naxis']
-    naxis_ = image_header_['naxis']
+    naxis = image_header["naxis"]
+    naxis_ = image_header_["naxis"]
     if naxis != naxis_:
-        raise ValueError('Incompatible NAXIS values: {}, {}'.format(
-            naxis, naxis_
-        ))
-    naxis1 = image_header['naxis1']
-    naxis1_ = image_header_['naxis1']
+        raise ValueError("Incompatible NAXIS values: {}, {}".format(naxis, naxis_))
+    naxis1 = image_header["naxis1"]
+    naxis1_ = image_header_["naxis1"]
     if naxis1 != naxis1_:
-        raise ValueError('Incompatible NAXIS1 values: {}, {}'.format(
-            naxis1, naxis1_
-        ))
+        raise ValueError("Incompatible NAXIS1 values: {}, {}".format(naxis1, naxis1_))
     if naxis == 1:
         naxis2 = 1
     elif naxis == 2:
-        naxis2 = image_header['naxis2']
-        naxis2_ = image_header_['naxis2']
+        naxis2 = image_header["naxis2"]
+        naxis2_ = image_header_["naxis2"]
         if naxis2 != naxis2_:
-            raise ValueError('Incompatible NAXIS2 values: {}, {}'.format(
-                naxis2, naxis2_
-            ))
+            raise ValueError(
+                "Incompatible NAXIS2 values: {}, {}".format(naxis2, naxis2_)
+            )
     else:
-        raise ValueError('Unexpected NAXIS value: {}'.format(naxis))
+        raise ValueError("Unexpected NAXIS value: {}".format(naxis))
 
     # initialize output array
     image2d_merged = np.zeros((naxis2, naxis1))
@@ -87,7 +83,7 @@ def merge2images(hdu1, hdu2, debugplot):
         if useful1 and useful2:
             jmineff = max(jmin1, jmin2)
             jmaxeff = min(jmax1, jmax2)
-            image2d_merged[i, jmineff:(jmaxeff+1)] /= 2
+            image2d_merged[i, jmineff : (jmaxeff + 1)] /= 2
 
     # return result
     image_merged[0].data = image2d_merged.astype(np.float32)
@@ -98,45 +94,42 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description='description: merge 2 EMIR images averaging the common'
-                    ' region'
+        description="description: merge 2 EMIR images averaging the common" " region"
     )
 
     # positional arguments
-    parser.add_argument("infile1",
-                        help="Input FITS file name #1",
-                        type=argparse.FileType('rb'))
-    parser.add_argument("infile2",
-                        help="Input FITS file name #2",
-                        type=argparse.FileType('rb'))
-    parser.add_argument("outfile",
-                        help="Output FITS file name",
-                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
+    parser.add_argument(
+        "infile1", help="Input FITS file name #1", type=argparse.FileType("rb")
+    )
+    parser.add_argument(
+        "infile2", help="Input FITS file name #2", type=argparse.FileType("rb")
+    )
+    parser.add_argument(
+        "outfile",
+        help="Output FITS file name",
+        type=lambda x: arg_file_is_new(parser, x, mode="wb"),
+    )
 
     # optional arguments
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting/debugging" +
-                             " (default=0)",
-                        default=0, type=int,
-                        choices=DEBUGPLOT_CODES)
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument(
+        "--debugplot",
+        help="Integer indicating plotting/debugging" + " (default=0)",
+        default=0,
+        type=int,
+        choices=DEBUGPLOT_CODES,
+    )
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args(args=args)
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print("\033[1m\033[31mExecuting: " + " ".join(sys.argv) + "\033[0m\n")
 
     # read input FITS files
     hdulist1 = fits.open(args.infile1)
     hdulist2 = fits.open(args.infile2)
 
-    image_merged = merge2images(
-        hdulist1,
-        hdulist2,
-        debugplot=args.debugplot
-    )
+    image_merged = merge2images(hdulist1, hdulist2, debugplot=args.debugplot)
 
     # save result
     image_merged.writeto(args.outfile, overwrite=True)

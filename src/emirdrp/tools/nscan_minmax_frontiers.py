@@ -10,8 +10,7 @@
 from emirdrp.core import EMIR_NAXIS2
 
 
-def nscan_minmax_frontiers(y0_frontier_lower, y0_frontier_upper,
-                           resize=False):
+def nscan_minmax_frontiers(y0_frontier_lower, y0_frontier_upper, resize=False):
     """Compute valid scan range for provided y0_frontier values.
     Parameters
     ----------
@@ -50,7 +49,8 @@ def nscan_minmax_frontiers(y0_frontier_lower, y0_frontier_upper,
         if resize:
             nscan_max = EMIR_NAXIS2
         else:
-            raise ValueError("nscan_max=" + str(nscan_max) +
-                             " is > NAXIS2_EMIR=" + str(EMIR_NAXIS2))
+            raise ValueError(
+                "nscan_max=" + str(nscan_max) + " is > NAXIS2_EMIR=" + str(EMIR_NAXIS2)
+            )
 
     return nscan_min, nscan_max

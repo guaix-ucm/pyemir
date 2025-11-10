@@ -32,8 +32,9 @@ from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
 
 
-def select_unrectified_slitlet(image2d, islitlet, csu_bar_slit_center,
-                               params, parmodel, maskonly):
+def select_unrectified_slitlet(
+    image2d, islitlet, csu_bar_slit_center, params, parmodel, maskonly
+):
     """Returns image with the indicated slitlet (zero anywhere else).
 
     Parameters
@@ -71,8 +72,7 @@ def select_unrectified_slitlet(image2d, islitlet, csu_bar_slit_center,
 
     # expected slitlet frontiers
     list_expected_frontiers = expected_distorted_frontiers(
-        islitlet, csu_bar_slit_center,
-        params, parmodel, numpts=101, deg=5, debugplot=0
+        islitlet, csu_bar_slit_center, params, parmodel, numpts=101, deg=5, debugplot=0
     )
     pol_lower_expected = list_expected_frontiers[0].poly_funct
     pol_upper_expected = list_expected_frontiers[1].poly_funct
@@ -82,16 +82,14 @@ def select_unrectified_slitlet(image2d, islitlet, csu_bar_slit_center,
         xchannel = j + 1
         y0_lower = pol_lower_expected(xchannel)
         y0_upper = pol_upper_expected(xchannel)
-        n1, n2 = nscan_minmax_frontiers(y0_frontier_lower=y0_lower,
-                                        y0_frontier_upper=y0_upper,
-                                        resize=True)
+        n1, n2 = nscan_minmax_frontiers(
+            y0_frontier_lower=y0_lower, y0_frontier_upper=y0_upper, resize=True
+        )
         # note that n1 and n2 are scans (ranging from 1 to NAXIS2)
         if maskonly:
-            image2d_output[(n1 - 1):n2, j] = np.repeat(
-                [1.0], (n2 - n1 + 1)
-            )
+            image2d_output[(n1 - 1) : n2, j] = np.repeat([1.0], (n2 - n1 + 1))
         else:
-            image2d_output[(n1 - 1):n2, j] = image2d[(n1 - 1):n2, j]
+            image2d_output[(n1 - 1) : n2, j] = image2d[(n1 - 1) : n2, j]
 
     return image2d_output
 
@@ -102,50 +100,60 @@ def main(args=None):
     parser = argparse.ArgumentParser()
 
     # positional arguments
-    parser.add_argument("fitsfile",
-                        help="FITS file name to be displayed",
-                        type=argparse.FileType('rb'))
-    parser.add_argument("--fitted_bound_param", required=True,
-                        help="JSON file with fitted boundary coefficients "
-                             "corresponding to the multislit model",
-                        type=argparse.FileType('rt'))
-    parser.add_argument("--slitlets", required=True,
-                        help="Slitlet selection: string between double "
-                             "quotes providing tuples of the form "
-                             "n1[,n2[,step]]",
-                        type=str)
+    parser.add_argument(
+        "fitsfile", help="FITS file name to be displayed", type=argparse.FileType("rb")
+    )
+    parser.add_argument(
+        "--fitted_bound_param",
+        required=True,
+        help="JSON file with fitted boundary coefficients "
+        "corresponding to the multislit model",
+        type=argparse.FileType("rt"),
+    )
+    parser.add_argument(
+        "--slitlets",
+        required=True,
+        help="Slitlet selection: string between double "
+        "quotes providing tuples of the form "
+        "n1[,n2[,step]]",
+        type=str,
+    )
 
     # optional arguments
-    parser.add_argument("--fov",
-                        help="Field of view in mm (default=341.5)",
-                        type=float, default=341.5)
-    parser.add_argument("--outfile",
-                        help="Output FITS file name",
-                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
-    parser.add_argument("--maskonly",
-                        help="Generate mask for the indicated slitlets",
-                        action="store_true")
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting/debugging" +
-                             " (default=0)",
-                        type=int, default=0,
-                        choices=DEBUGPLOT_CODES)
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument(
+        "--fov", help="Field of view in mm (default=341.5)", type=float, default=341.5
+    )
+    parser.add_argument(
+        "--outfile",
+        help="Output FITS file name",
+        type=lambda x: arg_file_is_new(parser, x, mode="wb"),
+    )
+    parser.add_argument(
+        "--maskonly",
+        help="Generate mask for the indicated slitlets",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--debugplot",
+        help="Integer indicating plotting/debugging" + " (default=0)",
+        type=int,
+        default=0,
+        choices=DEBUGPLOT_CODES,
+    )
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args()
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print("\033[1m\033[31mExecuting: " + " ".join(sys.argv) + "\033[0m\n")
 
     # read input FITS file
     hdulist_image = fits.open(args.fitsfile.name)
     image_header = hdulist_image[0].header
     image2d = hdulist_image[0].data
 
-    naxis1 = image_header['naxis1']
-    naxis2 = image_header['naxis2']
+    naxis1 = image_header["naxis1"]
+    naxis2 = image_header["naxis2"]
 
     if image2d.shape != (naxis2, naxis1):
         raise ValueError("Unexpected error with NAXIS1, NAXIS2")
@@ -160,8 +168,8 @@ def main(args=None):
         sfitsfile = os.path.basename(args.outfile.name)
 
     # check that the FITS file has been obtained with EMIR
-    instrument = image_header['instrume']
-    if instrument != 'EMIR':
+    instrument = image_header["instrume"]
+    if instrument != "EMIR":
         raise ValueError("INSTRUME keyword is not 'EMIR'!")
 
     # read GRISM, FILTER and ROTANG from FITS header
@@ -175,17 +183,15 @@ def main(args=None):
     if abs(args.debugplot) in [21, 22]:
         params.pretty_print()
 
-    parmodel = fittedpar_dict['meta_info']['parmodel']
-    if parmodel != 'multislit':
+    parmodel = fittedpar_dict["meta_info"]["parmodel"]
+    if parmodel != "multislit":
         raise ValueError("Unexpected parameter model: ", parmodel)
 
     # define slitlet range
-    islitlet_min = fittedpar_dict['tags']['islitlet_min']
-    islitlet_max = fittedpar_dict['tags']['islitlet_max']
+    islitlet_min = fittedpar_dict["tags"]["islitlet_min"]
+    islitlet_max = fittedpar_dict["tags"]["islitlet_max"]
     list_islitlet = list_slitlets_from_string(
-        s=args.slitlets,
-        islitlet_min=islitlet_min,
-        islitlet_max=islitlet_max
+        s=args.slitlets, islitlet_min=islitlet_min, islitlet_max=islitlet_max
     )
 
     # read CsuConfiguration object from FITS file
@@ -194,22 +200,20 @@ def main(args=None):
     # define csu_bar_slit_center associated to each slitlet
     list_csu_bar_slit_center = []
     for islitlet in list_islitlet:
-        list_csu_bar_slit_center.append(
-            csu_config.csu_bar_slit_center(islitlet))
+        list_csu_bar_slit_center.append(csu_config.csu_bar_slit_center(islitlet))
 
     # initialize output data array
     image2d_output = np.zeros((naxis2, naxis1))
 
     # main loop
-    for islitlet, csu_bar_slit_center in \
-            zip(list_islitlet, list_csu_bar_slit_center):
+    for islitlet, csu_bar_slit_center in zip(list_islitlet, list_csu_bar_slit_center):
         image2d_tmp = select_unrectified_slitlet(
             image2d=image2d,
             islitlet=islitlet,
             csu_bar_slit_center=csu_bar_slit_center,
             params=params,
             parmodel=parmodel,
-            maskonly=args.maskonly
+            maskonly=args.maskonly,
         )
         image2d_output += image2d_tmp
 
@@ -224,9 +228,12 @@ def main(args=None):
 
     # display full image
     if abs(args.debugplot) % 10 != 0:
-        ax = ximshow(image2d=image2d_output,
-                     title=sfitsfile + "\n" + args.slitlets,
-                     image_bbox=(1, naxis1, 1, naxis2), show=False)
+        ax = ximshow(
+            image2d=image2d_output,
+            title=sfitsfile + "\n" + args.slitlets,
+            image_bbox=(1, naxis1, 1, naxis2),
+            show=False,
+        )
 
         # overplot boundaries
         overplot_boundaries_from_params(
@@ -235,7 +242,7 @@ def main(args=None):
             parmodel=parmodel,
             list_islitlet=list_islitlet,
             list_csu_bar_slit_center=list_csu_bar_slit_center,
-            fov=args.fov
+            fov=args.fov,
         )
 
         # overplot frontiers
@@ -246,8 +253,9 @@ def main(args=None):
             list_islitlet=list_islitlet,
             list_csu_bar_slit_center=list_csu_bar_slit_center,
             fov=args.fov,
-            micolors=('b', 'b'), linetype='-',
-            labels=False    # already displayed with the boundaries
+            micolors=("b", "b"),
+            linetype="-",
+            labels=False,  # already displayed with the boundaries
         )
 
         # show plot

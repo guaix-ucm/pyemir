@@ -21,7 +21,7 @@ import numina.array.utils as utils
 import numina.array.stats as s
 
 
-_logger = logging.getLogger('numina.recipes.emir')
+_logger = logging.getLogger("numina.recipes.emir")
 
 
 def standarize(arr):
@@ -37,10 +37,10 @@ def filter_region(arr, level=4):
     return numpy.where(arr >= median + level * std, arr, 0.0)
 
 
-def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order='ij'):
+def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order="ij"):
     # import astropy.io.fits as fits
     # allowed values for order
-    if order not in ['xy', 'ij']:
+    if order not in ["xy", "ij"]:
         raise ValueError("'order' must be either 'ij' or 'xy'")
 
     result = numpy.zeros((len(arrs), 2))
@@ -48,20 +48,20 @@ def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order='ij'):
 
     for idx, arr in enumerate(arrs[1:], 1):
 
-        refoff = offset_from_crosscor(ref_array, arr, region,
-                                      refine=refine,
-                                      refine_box=refine_box,
-                                      order=order
-                                      )
+        refoff = offset_from_crosscor(
+            ref_array, arr, region, refine=refine, refine_box=refine_box, order=order
+        )
         result[idx] = refoff
 
     return result
 
 
-def offsets_from_crosscor_regions(arrs, regions, refine=True, refine_box=3, order='ij', tol=0.5):
+def offsets_from_crosscor_regions(
+    arrs, regions, refine=True, refine_box=3, order="ij", tol=0.5
+):
     # import astropy.io.fits as fits
     # allowed values for order
-    if order not in ['xy', 'ij']:
+    if order not in ["xy", "ij"]:
         raise ValueError("'order' must be either 'ij' or 'xy'")
 
     result = numpy.zeros((len(arrs), 2))
@@ -70,21 +70,23 @@ def offsets_from_crosscor_regions(arrs, regions, refine=True, refine_box=3, orde
     for idx, arr in enumerate(arrs[1:], 1):
 
         refoff = offset_from_crosscor_regions(
-            ref_array, arr, regions,
+            ref_array,
+            arr,
+            regions,
             refine=refine,
             refine_box=refine_box,
             order=order,
-            tol=tol
+            tol=tol,
         )
         result[idx] = refoff
 
     return result
 
 
-def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order='ij'):
+def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order="ij"):
     # import astropy.io.fits as fits
     # allowed values for order
-    if order not in ['xy', 'ij']:
+    if order not in ["xy", "ij"]:
         raise ValueError("'order' must be either 'ij' or 'xy'")
 
     ref_array = arr0
@@ -101,7 +103,7 @@ def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order='i
     # fits.writeto('cutout_%d.fits' % idx, d2, overwrite=True)
     # corr = scipy.signal.correlate2d(d1, d2, mode='same', boundary='fill', fillvalue=fillvalue)
     # correlation is equivalent to convolution with inverted image
-    corr = scipy.signal.fftconvolve(d1, d2[::-1, ::-1], mode='same')
+    corr = scipy.signal.fftconvolve(d1, d2[::-1, ::-1], mode="same")
     # normalize
     corr /= corr.max()
     # fits.writeto('corr_%d.fits' % idx, corr, overwrite=True)
@@ -114,9 +116,9 @@ def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order='i
     std_corr = numpy.std(corr)
     peakvalue = corr[maxindex]
     threshold = median_corr + 5 * std_corr
-    _logger.debug('The peak value is %f, threshold %f', peakvalue, threshold)
+    _logger.debug("The peak value is %f, threshold %f", peakvalue, threshold)
     if peakvalue < threshold:
-        raise ValueError('Peak below threshold')
+        raise ValueError("Peak below threshold")
 
     # baseoff = dcenter - numpy.asarray(maxindex)
     # Pixel (0,0) in reference corresponds to baseoff in image
@@ -125,10 +127,9 @@ def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order='i
     if refine:
         # Refine to subpixel
         # Fit a 2D surface to the peak of the crosscorr
-        region_ref = utils.image_box(
-            maxindex, shape, box=(refine_box, refine_box))
+        region_ref = utils.image_box(maxindex, shape, box=(refine_box, refine_box))
 
-        coeffs, = imsurfit.imsurfit(corr[region_ref], order=2)
+        (coeffs,) = imsurfit.imsurfit(corr[region_ref], order=2)
         # coefss are a + b *x + c * y + d*x**2 + e * x* y + f * y**2
 
         try:
@@ -143,7 +144,7 @@ def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order='i
             else:
                 final = maxindex + numpy.asarray([ym, xm])
         except ValueError as error:
-            _logger.debug('Error fitting peak, %s', error)
+            _logger.debug("Error fitting peak, %s", error)
             final = maxindex
     else:
         final = maxindex
@@ -152,29 +153,30 @@ def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order='i
     # Pixel (0,0) in reference corresponds to baseoff in image
     # print("Pixel (0,0) in reference corresponds to %s in image" % refoff)
     # result xy
-    if order == 'xy':
+    if order == "xy":
         return refoff[::-1]
     else:
         return refoff
 
 
-def offset_from_crosscor_regions(arr0, arr1, regions, refine=True, refine_box=3, order='ij', tol=0.5):
+def offset_from_crosscor_regions(
+    arr0, arr1, regions, refine=True, refine_box=3, order="ij", tol=0.5
+):
 
     values = []
     for region in regions:
         try:
-            res = offset_from_crosscor(arr0, arr1, region,
-                                       refine=refine,
-                                       refine_box=refine_box,
-                                       order=order)
+            res = offset_from_crosscor(
+                arr0, arr1, region, refine=refine, refine_box=refine_box, order=order
+            )
             values.append(res)
         except ValueError as error:
-            _logger.debug('error in offset_from_crosscor_regions: %s', error)
+            _logger.debug("error in offset_from_crosscor_regions: %s", error)
 
     if len(values) == 0:
-        raise ValueError('No measurements to compute offset in any region')
+        raise ValueError("No measurements to compute offset in any region")
     values = numpy.array(values)
-    _logger.debug('offsets from cross-correlation:\n%s', values)
+    _logger.debug("offsets from cross-correlation:\n%s", values)
     med_c = numpy.median(values, axis=0)
 
     dis = numpy.linalg.norm(values - med_c, axis=1)
@@ -184,4 +186,4 @@ def offset_from_crosscor_regions(arr0, arr1, regions, refine=True, refine_box=3,
     if numpy.any(mask):
         return values[mask].mean(axis=0)
     else:
-        raise ValueError('No measurements within tolerance in any region')
+        raise ValueError("No measurements within tolerance in any region")

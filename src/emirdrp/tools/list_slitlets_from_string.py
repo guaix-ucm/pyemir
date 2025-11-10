@@ -36,25 +36,25 @@ def list_slitlets_from_string(s, islitlet_min, islitlet_max):
 
     # protection
     if not isinstance(s, str):
-        print('type(s): ', type(s))
-        print('ERROR: function expected a string parameter')
+        print("type(s): ", type(s))
+        print("ERROR: function expected a string parameter")
 
     # initialize empty output
     set_slitlets = set()
 
     # remove leading blank spaces
-    s = re.sub('^ *', '', s)
+    s = re.sub("^ *", "", s)
     # remove trailing blank spaces
-    s = re.sub(' *$', '', s)
+    s = re.sub(" *$", "", s)
     # remove blank space before ','
-    s = re.sub(' *,', ',', s)
+    s = re.sub(" *,", ",", s)
     # remove blank spaces after  ','
-    s = re.sub(', *', ',', s)
+    s = re.sub(", *", ",", s)
     # remove many blank spaces by a single blank space
-    s = re.sub(' +', ' ', s)
+    s = re.sub(" +", " ", s)
     stuples = s.split()
     for item in stuples:
-        subitems = item.split(',')
+        subitems = item.split(",")
         nsubitems = len(subitems)
         if nsubitems == 1:
             n1 = int(subitems[0])
@@ -69,14 +69,14 @@ def list_slitlets_from_string(s, islitlet_min, islitlet_max):
             n2 = int(subitems[1])
             step = int(subitems[2])
         else:
-            raise ValueError('Unexpected slitlet range:', s)
+            raise ValueError("Unexpected slitlet range:", s)
         for i in range(n1, n2 + 1, step):
             if islitlet_min <= i <= islitlet_max:
                 set_slitlets.add(i)
             else:
-                print('islitlet_min: ', islitlet_min)
-                print('islitlet_max: ', islitlet_max)
-                print('i...........: ', i)
+                print("islitlet_min: ", islitlet_min)
+                print("islitlet_max: ", islitlet_max)
+                print("i...........: ", i)
                 raise ValueError("Slitlet number out of range!")
 
     list_slitlets = list(set_slitlets)

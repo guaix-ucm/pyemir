@@ -27,8 +27,8 @@ def islitlet_progress(islitlet, islitlet_max):
     if islitlet % 10 == 0:
         cout = str(islitlet // 10)
     else:
-        cout = '.'
+        cout = "."
     sys.stdout.write(cout)
     if islitlet == islitlet_max:
-        sys.stdout.write('\n')
+        sys.stdout.write("\n")
     sys.stdout.flush()

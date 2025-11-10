@@ -22,32 +22,30 @@ import numina.types.structured
 import emirdrp.datamodel
 
 base_schema_description = {
-    'keywords': {
-        'INSTRUME': {'mandatory': True},
-        'READMODE': {'mandatory': True,
-                     'value': ['SIMPLE', 'BIAS', 'SINGLE',
-                               'CDS', 'FOWLER', 'RAMP']
-                     },
-        'EXPTIME': {'value': float},
-        'NUMINAID': {'value': int}
+    "keywords": {
+        "INSTRUME": {"mandatory": True},
+        "READMODE": {
+            "mandatory": True,
+            "value": ["SIMPLE", "BIAS", "SINGLE", "CDS", "FOWLER", "RAMP"],
+        },
+        "EXPTIME": {"value": float},
+        "NUMINAID": {"value": int},
     }
 }
 
 gtc_proc_schema_description = {
-    'keywords': {
-        'NUMINAID': {'mandatory': True, 'value': int}
-    }
+    "keywords": {"NUMINAID": {"mandatory": True, "value": int}}
 }
 
 emir_schema_description = {
-    'keywords': {
-        'INSTRUME': {'mandatory': True, 'value': 'EMIR'},
-        'READMODE': {'mandatory': True,
-                     'value': ['SIMPLE', 'BIAS', 'SINGLE',
-                               'CDS', 'FOWLER', 'RAMP']
-                     },
-        'BUNIT': {'value': ['ADU', 'ADU/s']},
-        'IMGTYPE': {'mandatory': True, 'type': 'string'},
+    "keywords": {
+        "INSTRUME": {"mandatory": True, "value": "EMIR"},
+        "READMODE": {
+            "mandatory": True,
+            "value": ["SIMPLE", "BIAS", "SINGLE", "CDS", "FOWLER", "RAMP"],
+        },
+        "BUNIT": {"value": ["ADU", "ADU/s"]},
+        "IMGTYPE": {"mandatory": True, "type": "string"},
     }
 }
 
@@ -55,27 +53,30 @@ emir_schema_description = {
 class EmirFrame(DataFrameType):
 
     def __init__(self, *args, **kwargs):
-        super(EmirFrame, self).__init__(
-            datamodel=emirdrp.datamodel.EmirDataModel)
+        super(EmirFrame, self).__init__(datamodel=emirdrp.datamodel.EmirDataModel)
 
 
 class ProcessedFrame(EmirFrame):
     """A processed frame"""
+
     pass
 
 
 class ProcessedImage(ProcessedFrame):
     """A processed image"""
+
     pass
 
 
 class ProcessedMOS(ProcessedFrame):
     """A processed image with slit spectra"""
+
     pass
 
 
 class ProcessedSpectrum(ProcessedFrame):
     """A 1d spectrum"""
+
     pass
 
 
@@ -96,39 +97,39 @@ class MasterBadPixelMask(ProcessedImageProduct):
 
 
 class MasterBias(ProcessedImageProduct):
-    """Master bias product
-    """
+    """Master bias product"""
+
     pass
 
 
 class MasterDark(ProcessedImageProduct):
-    """Master dark product
-    """
+    """Master dark product"""
+
     pass
 
 
 class SkyLinesCatalog(LinesCatalog):
-    """Sky Lines Catalog
-    """
+    """Sky Lines Catalog"""
+
     pass
 
 
 class MasterIntensityFlat(ProcessedImageProduct):
-    __tags__ = ['filter']
+    __tags__ = ["filter"]
 
 
 class MasterSpectralFlat(ProcessedImageProduct):
-    __tags__ = ['grism', 'filter']
+    __tags__ = ["grism", "filter"]
 
 
 # FIXME: This is not really a calibration
 class MasterSky(ProcessedImageProduct):
-    __tags__ = ['filter']
+    __tags__ = ["filter"]
 
 
 # FIXME: This is not really a calibration
 class SkySpectrum(ProcessedImageProduct):
-    __tags__ = ['grism', 'filter']
+    __tags__ = ["grism", "filter"]
 
 
 class Spectra(DataFrameType):
@@ -196,7 +197,7 @@ class MasterGainMap(DataProductType):
     def __getstate__(self):
         gmean = list(map(float, self.mean.flat))
         gvar = list(map(float, self.var.flat))
-        return {'frame': self.frame, 'mean': gmean, 'var': gvar}
+        return {"frame": self.frame, "mean": gmean, "var": gvar}
 
 
 class MasterRONMap(DataProductType):
@@ -207,7 +208,7 @@ class MasterRONMap(DataProductType):
     def __getstate__(self):
         gmean = map(float, self.mean.flat)
         gvar = map(float, self.var.flat)
-        return {'mean': gmean, 'var': gvar}
+        return {"mean": gmean, "var": gvar}
 
 
 class TelescopeOffset(DataProductType):
@@ -217,21 +218,17 @@ class TelescopeOffset(DataProductType):
 
 class CoordinateListNType(arrtype.ArrayNType):
     def __init__(self, dimensions, default=None):
-        super(CoordinateListNType,
-              self).__init__(dimensions,
-                             default=default)
+        super(CoordinateListNType, self).__init__(dimensions, default=default)
 
     def validate(self, obj):
         ndims = len(obj.shape)
         if ndims != 2:
             raise numina.exceptions.ValidationError(
-                '%r is not a valid %r' %
-                (obj, self.__class__.__name__)
+                "%r is not a valid %r" % (obj, self.__class__.__name__)
             )
         if obj.shape[1] != self.N:
             raise numina.exceptions.ValidationError(
-                '%r is not a valid %r' %
-                (obj, self.__class__.__name__)
+                "%r is not a valid %r" % (obj, self.__class__.__name__)
             )
 
 
@@ -243,7 +240,7 @@ class CoordinateList1DType(CoordinateListNType):
 class CoordinateList2DType(CoordinateListNType):
     def __init__(self, default=None):
         super(CoordinateList2DType, self).__init__(2, default=default)
-        self.add_dialect_info('gtc', DF.TYPE_DOUBLE_ARRAY2D)
+        self.add_dialect_info("gtc", DF.TYPE_DOUBLE_ARRAY2D)
 
 
 class NominalPositions(prodtypes.DataProductMixin, CoordinateList2DType):
@@ -253,13 +250,15 @@ class NominalPositions(prodtypes.DataProductMixin, CoordinateList2DType):
 def default_nominal_positions():
     """Read default value of bnp"""
     import pkgutil
+
     try:
         import StringIO as S
     except ImportError:
         import io as S
     bardata = pkgutil.get_data(
-        'emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
-    ss = S.StringIO(bardata.decode('utf8'))
+        "emirdrp.instrument.configs", "bars_nominal_positions_test.txt"
+    )
+    ss = S.StringIO(bardata.decode("utf8"))
     bars_nominal_positions = numpy.loadtxt(ss)
     return bars_nominal_positions
 
@@ -289,15 +288,16 @@ class ChannelLevelStatistics(DataProductType):
         self.statistics = statistics
 
     def __numina_dump__(self, obj, where):
-        fname = 'statistics.txt'
+        fname = "statistics.txt"
 
-        header = ("Channel Level Statistics\n"
-                  "comment 2\n"
-                  "pixels start in 1\n"
-                  "pixels end in 2048\n"
-                  "exposure={exposure}\n"
-                  "xbegin xend ybegin yend mean median var\n"
-                  )
+        header = (
+            "Channel Level Statistics\n"
+            "comment 2\n"
+            "pixels start in 1\n"
+            "pixels end in 2048\n"
+            "exposure={exposure}\n"
+            "xbegin xend ybegin yend mean median var\n"
+        )
 
         inter = header.format(exposure=obj.exposure)
         numpy.savetxt(fname, obj.statistics, header=inter)
@@ -308,8 +308,7 @@ class ChannelLevelStatisticsType(DataProductType):
     """A list of exposure time, mean, std dev and median per channel"""
 
     def __init__(self):
-        super(ChannelLevelStatisticsType,
-              self).__init__(ptype=ChannelLevelStatistics)
+        super(ChannelLevelStatisticsType, self).__init__(ptype=ChannelLevelStatistics)
 
 
 class LinesCatalog(DataProductType):
@@ -318,40 +317,32 @@ class LinesCatalog(DataProductType):
 
 
 class RefinedBoundaryModelParam(numina.types.structured.BaseStructuredCalibration):
-    """Refined parameters of MOS model
-    """
+    """Refined parameters of MOS model"""
 
-    def __init__(self, instrument='unknown'):
+    def __init__(self, instrument="unknown"):
         super(RefinedBoundaryModelParam, self).__init__(instrument)
-        self.tags = {
-            'grism': "unknown",
-            'filter': "unknown"
-        }
+        self.tags = {"grism": "unknown", "filter": "unknown"}
         self.contents = []
 
     def __getstate__(self):
         state = super(RefinedBoundaryModelParam, self).__getstate__()
-        state['contents'] = self.contents.copy()
+        state["contents"] = self.contents.copy()
         return state
 
     def __setstate__(self, state):
         super(RefinedBoundaryModelParam, self).__setstate__(state)
-        self.contents = state['contents'].copy()
+        self.contents = state["contents"].copy()
 
     def tag_names(self):
-        return ['grism', 'filter']
+        return ["grism", "filter"]
 
 
 class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
-    """Rectification and Wavelength Calibration Coefficients
-    """
+    """Rectification and Wavelength Calibration Coefficients"""
 
-    def __init__(self, instrument='unknown'):
+    def __init__(self, instrument="unknown"):
         super(RectWaveCoeff, self).__init__(instrument)
-        self.tags = {
-            'grism': "unknown",
-            'filter': "unknown"
-        }
+        self.tags = {"grism": "unknown", "filter": "unknown"}
         self.global_integer_offset_x_pix = 0
         self.global_integer_offset_y_pix = 0
         self.total_slitlets = 0
@@ -361,40 +352,44 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
     def __getstate__(self):
         state = super(RectWaveCoeff, self).__getstate__()
 
-        keys = ['global_integer_offset_x_pix', 'global_integer_offset_y_pix',
-                'total_slitlets', 'missing_slitlets']
+        keys = [
+            "global_integer_offset_x_pix",
+            "global_integer_offset_y_pix",
+            "total_slitlets",
+            "missing_slitlets",
+        ]
         for key in keys:
             state[key] = self.__dict__[key]
 
-        state['contents'] = self.contents.copy()
+        state["contents"] = self.contents.copy()
         return state
 
     def __setstate__(self, state):
         super(RectWaveCoeff, self).__setstate__(state)
 
-        keys = ['global_integer_offset_x_pix', 'global_integer_offset_y_pix',
-                'total_slitlets', 'missing_slitlets']
+        keys = [
+            "global_integer_offset_x_pix",
+            "global_integer_offset_y_pix",
+            "total_slitlets",
+            "missing_slitlets",
+        ]
         for key in keys:
             self.__dict__[key] = state[key]
-        self.contents = state['contents'].copy()
+        self.contents = state["contents"].copy()
 
     def tag_names(self):
-        return ['grism', 'filter']
+        return ["grism", "filter"]
 
 
 class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
-    """Rectification and Wavelength Calibration Library Product
-    """
+    """Rectification and Wavelength Calibration Library Product"""
 
-    def __init__(self, instrument='unknown'):
+    def __init__(self, instrument="unknown"):
         import numina.core.tagexpr as tagexpr
 
         datamodel = emirdrp.datamodel.EmirDataModel()
         super(MasterRectWave, self).__init__(instrument, datamodel=datamodel)
-        self.tags = {
-            'grism': "unknown",
-            'filter': "unknown"
-        }
+        self.tags = {"grism": "unknown", "filter": "unknown"}
 
         my_tag_table = self.datamodel.query_attrs
         objtags = [my_tag_table[t] for t in self.tag_names()]
@@ -410,11 +405,11 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
     def __getstate__(self):
         state = super(MasterRectWave, self).__getstate__()
 
-        keys = ['total_slitlets', 'missing_slitlets']
+        keys = ["total_slitlets", "missing_slitlets"]
         for key in keys:
             state[key] = self.__dict__[key]
 
-        state['contents'] = self.contents.copy()
+        state["contents"] = self.contents.copy()
         return state
 
     def __setstate__(self, state):
@@ -438,14 +433,14 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
         self.names_f = self.query_expr.fields()
         self.query_opts = []
 
-        keys = ['total_slitlets', 'missing_slitlets']
+        keys = ["total_slitlets", "missing_slitlets"]
         for key in keys:
             self.__dict__[key] = state[key]
 
-        self.contents = state['contents'].copy()
+        self.contents = state["contents"].copy()
 
     def tag_names(self):
-        return ['grism', 'filter']
+        return ["grism", "filter"]
 
 
 try:
@@ -457,11 +452,12 @@ try:
     @toElementType.register(MasterRectWave)
     def _(value):
         return DF.TYPE_STRUCT
+
 except ImportError:
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     m = MasterRectWave().query_expr
     print(m.tags())
     m = MasterIntensityFlat().query_expr

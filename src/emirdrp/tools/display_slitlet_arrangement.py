@@ -25,15 +25,17 @@ from emirdrp.core import EMIR_NBARS
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
 
-def display_slitlet_arrangement(fileobj,
-                                grism=None,
-                                spfilter=None,
-                                fov=341.5,
-                                longslits=False,
-                                bbox=None,
-                                adjust=None,
-                                geometry=None,
-                                debugplot=0):
+def display_slitlet_arrangement(
+    fileobj,
+    grism=None,
+    spfilter=None,
+    fov=341.5,
+    longslits=False,
+    bbox=None,
+    adjust=None,
+    geometry=None,
+    debugplot=0,
+):
     """Display slitlet arrangment from CSUP keywords in FITS header.
 
     Parameters
@@ -92,12 +94,12 @@ def display_slitlet_arrangement(fileobj,
         # mode, it is necessary to close it and open it in text mode
         fileobj.close()
         # read TXT file
-        with open(fileobj.name, mode='rt') as f:
+        with open(fileobj.name, mode="rt") as f:
             file_content = f.read().splitlines()
         next_id_bar = 1
         for line in file_content:
             if len(line) > 0:
-                if line[0] not in ['#']:
+                if line[0] not in ["#"]:
                     line_contents = line.split()
                     id_bar = int(line_contents[0])
                     position = float(line_contents[1])
@@ -114,7 +116,7 @@ def display_slitlet_arrangement(fileobj,
         # compute slit width and center
         for i in range(EMIR_NBARS):
             csu_config._csu_bar_slit_center.append(
-                (csu_config._csu_bar_left[i] + csu_config._csu_bar_right[i])/2
+                (csu_config._csu_bar_left[i] + csu_config._csu_bar_right[i]) / 2
             )
             csu_config._csu_bar_slit_width.append(
                 csu_config._csu_bar_right[i] - csu_config._csu_bar_left[i]
@@ -127,8 +129,8 @@ def display_slitlet_arrangement(fileobj,
         hdulist.close()
 
         # additional info from header
-        grism = image_header['grism']
-        spfilter = image_header['filter']
+        grism = image_header["grism"]
+        spfilter = image_header["filter"]
 
         # define slitlet arrangement
         csu_config = CsuConfiguration.define_from_fits(fileobj, fov=fov)
@@ -150,11 +152,11 @@ def display_slitlet_arrangement(fileobj,
     else:
         raise ValueError("Invalid grism + filter configuration")
 
-    crval1 = wv_parameters['poly_crval1_linear']
-    cdelt1 = wv_parameters['poly_cdelt1_linear']
+    crval1 = wv_parameters["poly_crval1_linear"]
+    cdelt1 = wv_parameters["poly_cdelt1_linear"]
 
-    wvmin_useful = wv_parameters['wvmin_useful']
-    wvmax_useful = wv_parameters['wvmax_useful']
+    wvmin_useful = wv_parameters["wvmin_useful"]
+    wvmax_useful = wv_parameters["wvmax_useful"]
 
     # display arrangement
     if abs(debugplot) >= 10:
@@ -169,20 +171,24 @@ def display_slitlet_arrangement(fileobj,
                 csu_crval1 = np.amax([csu_crval1, wvmin_useful])
             if wvmax_useful is not None:
                 csu_crvaln = np.amin([csu_crvaln, wvmax_useful])
-            print("{0:4d} {1:8.3f} {2:8.3f} {3:8.3f} {4:7.3f}   "
-                  "{5:8.2f}   {6:8.2f}".format(
-                      ibar, csu_config.csu_bar_left(ibar),
-                      csu_config.csu_bar_right(ibar),
-                      csu_config.csu_bar_slit_center(ibar),
-                      csu_config.csu_bar_slit_width(ibar),
-                      csu_crval1, csu_crvaln)
-                  )
+            print(
+                "{0:4d} {1:8.3f} {2:8.3f} {3:8.3f} {4:7.3f}   "
+                "{5:8.2f}   {6:8.2f}".format(
+                    ibar,
+                    csu_config.csu_bar_left(ibar),
+                    csu_config.csu_bar_right(ibar),
+                    csu_config.csu_bar_slit_center(ibar),
+                    csu_config.csu_bar_slit_width(ibar),
+                    csu_crval1,
+                    csu_crvaln,
+                )
+            )
         print(
             "---> {0:8.3f} {1:8.3f} {2:8.3f} {3:7.3f} <- mean (all)".format(
                 np.mean(csu_config._csu_bar_left),
                 np.mean(csu_config._csu_bar_right),
                 np.mean(csu_config._csu_bar_slit_center),
-                np.mean(csu_config._csu_bar_slit_width)
+                np.mean(csu_config._csu_bar_slit_width),
             )
         )
         print(
@@ -190,7 +196,7 @@ def display_slitlet_arrangement(fileobj,
                 np.mean(csu_config._csu_bar_left[::2]),
                 np.mean(csu_config._csu_bar_right[::2]),
                 np.mean(csu_config._csu_bar_slit_center[::2]),
-                np.mean(csu_config._csu_bar_slit_width[::2])
+                np.mean(csu_config._csu_bar_slit_width[::2]),
             )
         )
         print(
@@ -198,7 +204,7 @@ def display_slitlet_arrangement(fileobj,
                 np.mean(csu_config._csu_bar_left[1::2]),
                 np.mean(csu_config._csu_bar_right[1::2]),
                 np.mean(csu_config._csu_bar_slit_center[1::2]),
-                np.mean(csu_config._csu_bar_slit_width[1::2])
+                np.mean(csu_config._csu_bar_slit_width[1::2]),
             )
         )
 
@@ -214,39 +220,47 @@ def display_slitlet_arrangement(fileobj,
                 dx = xmax - xmin
                 if dx == 0:
                     dx = 1
-                xmin -= dx/20
-                xmax += dx/20
+                xmin -= dx / 20
+                xmax += dx / 20
                 ax.set_xlim(xmin, xmax)
             else:
-                ax.set_xlim(0., fov)
+                ax.set_xlim(0.0, fov)
             ax.set_ylim(0, 56)
         else:
             ax.set_xlim(bbox[0], bbox[1])
             ax.set_ylim(bbox[2], bbox[3])
-        ax.set_xlabel('csu_bar_position (mm)')
-        ax.set_ylabel('slit number')
+        ax.set_xlabel("csu_bar_position (mm)")
+        ax.set_ylabel("slit number")
         for i in range(EMIR_NBARS):
             ibar = i + 1
-            ax.add_patch(patches.Rectangle(
-                (csu_config.csu_bar_left(ibar), ibar-0.5),
-                csu_config.csu_bar_slit_width(ibar), 1.0))
-            ax.plot([0., csu_config.csu_bar_left(ibar)], [ibar, ibar],
-                    '-', color='gray')
-            ax.plot([csu_config.csu_bar_right(ibar), fov],
-                    [ibar, ibar], '-', color='gray')
-        plt.title("File: " + fileobj.name + "\ngrism=" + grism +
-                  ", filter=" + spfilter)
+            ax.add_patch(
+                patches.Rectangle(
+                    (csu_config.csu_bar_left(ibar), ibar - 0.5),
+                    csu_config.csu_bar_slit_width(ibar),
+                    1.0,
+                )
+            )
+            ax.plot(
+                [0.0, csu_config.csu_bar_left(ibar)], [ibar, ibar], "-", color="gray"
+            )
+            ax.plot(
+                [csu_config.csu_bar_right(ibar), fov], [ibar, ibar], "-", color="gray"
+            )
+        plt.title("File: " + fileobj.name + "\ngrism=" + grism + ", filter=" + spfilter)
         pause_debugplot(debugplot, pltshow=True)
 
     # return results
-    return csu_config._csu_bar_left, csu_config._csu_bar_right, \
-        csu_config._csu_bar_slit_center, csu_config._csu_bar_slit_width
+    return (
+        csu_config._csu_bar_left,
+        csu_config._csu_bar_right,
+        csu_config._csu_bar_slit_center,
+        csu_config._csu_bar_slit_width,
+    )
 
 
-def display_slitlet_histogram(csu_bar_slit_width,
-                              n_clusters=2,
-                              geometry=None,
-                              debugplot=0):
+def display_slitlet_histogram(
+    csu_bar_slit_width, n_clusters=2, geometry=None, debugplot=0
+):
     """
 
     Find separations between groups of slitlet widths.
@@ -280,7 +294,7 @@ def display_slitlet_histogram(csu_bar_slit_width,
     separator_list = []
     for i in range(n_clusters - 1):
         peak1 = fit.cluster_centers_[i][0]
-        peak2 = fit.cluster_centers_[i+1][0]
+        peak2 = fit.cluster_centers_[i + 1][0]
         separator = (peak1 + peak2) / 2
         separator_list.append(separator)
         array_csu_bar_slit_width = np.array(csu_bar_slit_width)
@@ -291,15 +305,19 @@ def display_slitlet_histogram(csu_bar_slit_width,
                 list_ok.append(k + 1)
             else:
                 list_not_ok.append(k + 1)
-        print('\nNumber of slitlets with width > separator: {}'.format(
-            sum(np.array(csu_bar_slit_width) > separator)
-        ))
+        print(
+            "\nNumber of slitlets with width > separator: {}".format(
+                sum(np.array(csu_bar_slit_width) > separator)
+            )
+        )
         print(list_ok)
-        print('\nNumber of slitlets with width < separator: {}'.format(
-            sum(np.array(csu_bar_slit_width) < separator)
-        ))
+        print(
+            "\nNumber of slitlets with width < separator: {}".format(
+                sum(np.array(csu_bar_slit_width) < separator)
+            )
+        )
         print(list_not_ok)
-        print('\n--->  separator: {0:7.3f}'.format(separator))
+        print("\n--->  separator: {0:7.3f}".format(separator))
 
     # display histogram
     if abs(debugplot) % 10 != 0:
@@ -307,10 +325,10 @@ def display_slitlet_histogram(csu_bar_slit_width,
         set_window_geometry(geometry)
         ax = fig.add_subplot(111)
         ax.hist(csu_bar_slit_width, bins=100)
-        ax.set_xlabel('slit width (mm)')
-        ax.set_ylabel('number of slitlets')
+        ax.set_xlabel("slit width (mm)")
+        ax.set_ylabel("number of slitlets")
         for separator in separator_list:
-            ax.axvline(separator, color='C1', linestyle='dashed')
+            ax.axvline(separator, color="C1", linestyle="dashed")
         pause_debugplot(debugplot, pltshow=True)
 
 
@@ -318,56 +336,66 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description='description: display arrangement of EMIR CSU bars'
+        description="description: display arrangement of EMIR CSU bars"
     )
 
     # positional arguments
-    parser.add_argument("filename",
-                        help="FITS files (wildcards accepted) or single TXT "
-                             "file with CSU configuration from OSP",
-                        type=argparse.FileType('rb'),
-                        nargs='+')
+    parser.add_argument(
+        "filename",
+        help="FITS files (wildcards accepted) or single TXT "
+        "file with CSU configuration from OSP",
+        type=argparse.FileType("rb"),
+        nargs="+",
+    )
 
     # optional arguments
-    parser.add_argument("--grism",
-                        help="Grism (J, H, K, LR)",
-                        choices=["J", "H", "K", "LR"])
-    parser.add_argument("--filter",
-                        help="Filter (J, H, Ksp, YJ, HK)",
-                        choices=["J", "H", "Ksp", "YJ", "HK"])
-    parser.add_argument("--n_clusters",
-                        help="Display histogram of slitlet widths",
-                        default=0, type=int)
-    parser.add_argument("--fov",
-                        help="Field of view (in mm; default=341.5)",
-                        default=341.5, type=float)
-    parser.add_argument("--longslits",
-                        help="Display (pseudo) longslits built with "
-                             "consecutive slitlets",
-                        action="store_true")
-    parser.add_argument("--bbox",
-                        help="Bounding box tuple xmin,xmax,ymin,ymax "
-                             "indicating plot limits")
-    parser.add_argument("--adjust",
-                        help="Adjust X range according to minimum and maximum"
-                             " csu_bar_left and csu_bar_right (note that this "
-                             "option is overriden by --bbox",
-                        action='store_true')
-    parser.add_argument("--geometry",
-                        help="Tuple x,y,dx,dy indicating window geometry",
-                        default="0,0,640,480")
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting & debugging options"
-                             " (default=12)",
-                        default=12, type=int,
-                        choices=DEBUGPLOT_CODES)
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument(
+        "--grism", help="Grism (J, H, K, LR)", choices=["J", "H", "K", "LR"]
+    )
+    parser.add_argument(
+        "--filter",
+        help="Filter (J, H, Ksp, YJ, HK)",
+        choices=["J", "H", "Ksp", "YJ", "HK"],
+    )
+    parser.add_argument(
+        "--n_clusters", help="Display histogram of slitlet widths", default=0, type=int
+    )
+    parser.add_argument(
+        "--fov", help="Field of view (in mm; default=341.5)", default=341.5, type=float
+    )
+    parser.add_argument(
+        "--longslits",
+        help="Display (pseudo) longslits built with " "consecutive slitlets",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--bbox",
+        help="Bounding box tuple xmin,xmax,ymin,ymax " "indicating plot limits",
+    )
+    parser.add_argument(
+        "--adjust",
+        help="Adjust X range according to minimum and maximum"
+        " csu_bar_left and csu_bar_right (note that this "
+        "option is overriden by --bbox",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--geometry",
+        help="Tuple x,y,dx,dy indicating window geometry",
+        default="0,0,640,480",
+    )
+    parser.add_argument(
+        "--debugplot",
+        help="Integer indicating plotting & debugging options" " (default=12)",
+        default=12,
+        type=int,
+        choices=DEBUGPLOT_CODES,
+    )
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
     args = parser.parse_args(args)
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print("\033[1m\033[31mExecuting: " + " ".join(sys.argv) + "\033[0m\n")
 
     # geometry
     if args.geometry is None:
@@ -405,27 +433,29 @@ def main(args=None):
 
     # display CSU bar arrangement
     for ifile, fileobj in enumerate(list_fits_file_objects):
-        print("\nFile " + str(ifile+1) + "/" + str(nfiles) + ": " +
-              fileobj.name)
-        csu_bar_left[ifile, :], csu_bar_right[ifile, :], \
-            csu_bar_slit_center[ifile, :], csu_bar_slit_width[ifile, :] = \
-            display_slitlet_arrangement(
-                fileobj,
-                grism=args.grism,
-                spfilter=args.filter,
-                fov=args.fov,
-                longslits=args.longslits,
-                bbox=bbox,
-                adjust=args.adjust,
-                geometry=geometry,
-                debugplot=args.debugplot
+        print("\nFile " + str(ifile + 1) + "/" + str(nfiles) + ": " + fileobj.name)
+        (
+            csu_bar_left[ifile, :],
+            csu_bar_right[ifile, :],
+            csu_bar_slit_center[ifile, :],
+            csu_bar_slit_width[ifile, :],
+        ) = display_slitlet_arrangement(
+            fileobj,
+            grism=args.grism,
+            spfilter=args.filter,
+            fov=args.fov,
+            longslits=args.longslits,
+            bbox=bbox,
+            adjust=args.adjust,
+            geometry=geometry,
+            debugplot=args.debugplot,
         )
         if args.n_clusters >= 2:
             display_slitlet_histogram(
                 csu_bar_slit_width[ifile, :],
                 n_clusters=args.n_clusters,
                 geometry=geometry,
-                debugplot=args.debugplot
+                debugplot=args.debugplot,
             )
 
     # print summary of comparison between files
@@ -444,23 +474,32 @@ def main(args=None):
                 std_csu_bar_right[i] = np.std(csu_bar_right[:, i])
                 std_csu_bar_slit_center[i] = np.std(csu_bar_slit_center[:, i])
                 std_csu_bar_slit_width[i] = np.std(csu_bar_slit_width[:, i])
-                print("{0:4d} {1:8.3f} {2:8.3f} {3:8.3f} {4:7.3f}".format(
-                    ibar,
-                    std_csu_bar_left[i],
-                    std_csu_bar_right[i],
-                    std_csu_bar_slit_center[i],
-                    std_csu_bar_slit_width[i]))
+                print(
+                    "{0:4d} {1:8.3f} {2:8.3f} {3:8.3f} {4:7.3f}".format(
+                        ibar,
+                        std_csu_bar_left[i],
+                        std_csu_bar_right[i],
+                        std_csu_bar_slit_center[i],
+                        std_csu_bar_slit_width[i],
+                    )
+                )
             print("====  =======  =======  =======   =====")
-            print("MIN: {0:8.3f} {1:8.3f} {2:8.3f} {3:7.3f}".format(
-                std_csu_bar_left.min(),
-                std_csu_bar_right.min(),
-                std_csu_bar_slit_center.min(),
-                std_csu_bar_slit_width.min()))
-            print("MAX: {0:8.3f} {1:8.3f} {2:8.3f} {3:7.3f}".format(
-                std_csu_bar_left.max(),
-                std_csu_bar_right.max(),
-                std_csu_bar_slit_center.max(),
-                std_csu_bar_slit_width.max()))
+            print(
+                "MIN: {0:8.3f} {1:8.3f} {2:8.3f} {3:7.3f}".format(
+                    std_csu_bar_left.min(),
+                    std_csu_bar_right.min(),
+                    std_csu_bar_slit_center.min(),
+                    std_csu_bar_slit_width.min(),
+                )
+            )
+            print(
+                "MAX: {0:8.3f} {1:8.3f} {2:8.3f} {3:7.3f}".format(
+                    std_csu_bar_left.max(),
+                    std_csu_bar_right.max(),
+                    std_csu_bar_slit_center.max(),
+                    std_csu_bar_slit_width.max(),
+                )
+            )
             print("====  =======  =======  =======   =====")
             print("Total number of files examined:", nfiles)
 

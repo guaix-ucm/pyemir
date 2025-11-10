@@ -18,19 +18,27 @@ import emirdrp.datamodel
 
 class EmirRecipe(recipes.BaseRecipe):
     """Base class for all EMIR Recipes"""
+
     logger = logging.getLogger(__name__)
     datamodel = emirdrp.datamodel.EmirDataModel()
 
     def types_getter(self):
-        imgtypes = [prods.MasterBadPixelMask,
-                    prods.MasterBias,
-                    prods.MasterDark,
-                    prods.MasterIntensityFlat,
-                    prods.MasterSpectralFlat,
-                    prods.MasterSky
-                    ]
-        getters = [cor.get_corrector_p, cor.get_corrector_b, cor.get_corrector_d,
-                   [cor.get_corrector_f, cor.get_checker], cor.get_corrector_sf, cor.get_corrector_s]
+        imgtypes = [
+            prods.MasterBadPixelMask,
+            prods.MasterBias,
+            prods.MasterDark,
+            prods.MasterIntensityFlat,
+            prods.MasterSpectralFlat,
+            prods.MasterSky,
+        ]
+        getters = [
+            cor.get_corrector_p,
+            cor.get_corrector_b,
+            cor.get_corrector_d,
+            [cor.get_corrector_f, cor.get_checker],
+            cor.get_corrector_sf,
+            cor.get_corrector_s,
+        ]
 
         return imgtypes, getters
 
@@ -51,4 +59,3 @@ class EmirRecipe(recipes.BaseRecipe):
         # flow = self.init_filters(rinput)[0]
         # we should do it in the future
         return super().init_filters(rinput, ins)[0]
-

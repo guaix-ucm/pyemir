@@ -22,8 +22,9 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.instrument.csu_configuration import CsuConfiguration
 from emirdrp.products import MasterRectWave
-from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library \
-    import rectwv_coeff_from_mos_library
+from emirdrp.processing.wavecal.rectwv_coeff_from_mos_library import (
+    rectwv_coeff_from_mos_library,
+)
 from emirdrp.tools.fit_boundaries import bound_params_from_dict
 from emirdrp.tools.fit_boundaries import overplot_boundaries_from_params
 from emirdrp.tools.fit_boundaries import overplot_frontiers_from_params
@@ -38,12 +39,16 @@ from emirdrp.tools.fit_boundaries import EXPECTED_PARAMETER_LIST
 from emirdrp.tools.fit_boundaries import EXPECTED_PARAMETER_LIST_EXTENDED
 
 
-def overplot_lines(ax,
-                   catlines_all_wave,
-                   list_valid_islitlets,
-                   rectwv_coeff,
-                   global_integer_offset_x_pix, global_integer_offset_y_pix,
-                   ds9_file, debugplot):
+def overplot_lines(
+    ax,
+    catlines_all_wave,
+    list_valid_islitlets,
+    rectwv_coeff,
+    global_integer_offset_x_pix,
+    global_integer_offset_y_pix,
+    ds9_file,
+    debugplot,
+):
     """Overplot lines (arc/OH).
 
     Parameters
@@ -73,21 +78,21 @@ def overplot_lines(ax,
     """
 
     for islitlet in list_valid_islitlets:
-        crval1_linear = rectwv_coeff.contents[islitlet - 1]['crval1_linear']
-        cdelt1_linear = rectwv_coeff.contents[islitlet - 1]['cdelt1_linear']
+        crval1_linear = rectwv_coeff.contents[islitlet - 1]["crval1_linear"]
+        cdelt1_linear = rectwv_coeff.contents[islitlet - 1]["cdelt1_linear"]
         crvaln_linear = crval1_linear + (EMIR_NAXIS1 - 1) * cdelt1_linear
-        bb_ns1_orig = rectwv_coeff.contents[islitlet - 1]['bb_ns1_orig']
-        ttd_order = rectwv_coeff.contents[islitlet - 1]['ttd_order']
-        aij = rectwv_coeff.contents[islitlet - 1]['ttd_aij']
-        bij = rectwv_coeff.contents[islitlet - 1]['ttd_bij']
+        bb_ns1_orig = rectwv_coeff.contents[islitlet - 1]["bb_ns1_orig"]
+        ttd_order = rectwv_coeff.contents[islitlet - 1]["ttd_order"]
+        aij = rectwv_coeff.contents[islitlet - 1]["ttd_aij"]
+        bij = rectwv_coeff.contents[islitlet - 1]["ttd_bij"]
         min_row_rectified = float(
-            rectwv_coeff.contents[islitlet - 1]['min_row_rectified']
+            rectwv_coeff.contents[islitlet - 1]["min_row_rectified"]
         )
         max_row_rectified = float(
-            rectwv_coeff.contents[islitlet - 1]['max_row_rectified']
+            rectwv_coeff.contents[islitlet - 1]["max_row_rectified"]
         )
         mean_row_rectified = (min_row_rectified + max_row_rectified) / 2
-        wpoly_coeff = rectwv_coeff.contents[islitlet - 1]['wpoly_coeff']
+        wpoly_coeff = rectwv_coeff.contents[islitlet - 1]["wpoly_coeff"]
         x0 = []
         y0 = []
         x1 = []
@@ -125,90 +130,94 @@ def overplot_lines(ax,
         if abs(debugplot) % 10 != 0:
             if abs(debugplot) == 22:
                 for xx1_, xx2_, yy1_, yy2_ in zip(xx1, xx2, yy1, yy2):
-                    ax.plot([xx1_, xx2_], [yy1_, yy2_], 'c-', linewidth=2.0)
+                    ax.plot([xx1_, xx2_], [yy1_, yy2_], "c-", linewidth=2.0)
             else:
-                ax.plot(xx0, yy0, 'c.')
+                ax.plot(xx0, yy0, "c.")
 
         if ds9_file is not None:
-            ds9_file.write(
-                '#\n# islitlet...........: {0}\n'.format(islitlet)
-            )
+            ds9_file.write("#\n# islitlet...........: {0}\n".format(islitlet))
             for xx0_, yy0_ in zip(xx0, yy0):
-                ds9_file.write(
-                    'circle {0} {1} 2 # fill=1\n'.format(
-                        xx0_, yy0_)
-                )
+                ds9_file.write("circle {0} {1} 2 # fill=1\n".format(xx0_, yy0_))
 
 
 def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description='description: overplot boundary model over FITS image'
+        description="description: overplot boundary model over FITS image"
     )
 
     # positional arguments
-    parser.add_argument("fitsfile",
-                        help="FITS file name to be displayed",
-                        type=argparse.FileType('rb'))
-    parser.add_argument("--rect_wpoly_MOSlibrary", required=True,
-                        help="Input JSON file with library of rectification "
-                             "and wavelength calibration coefficients",
-                        type=argparse.FileType('rt'))
+    parser.add_argument(
+        "fitsfile", help="FITS file name to be displayed", type=argparse.FileType("rb")
+    )
+    parser.add_argument(
+        "--rect_wpoly_MOSlibrary",
+        required=True,
+        help="Input JSON file with library of rectification "
+        "and wavelength calibration coefficients",
+        type=argparse.FileType("rt"),
+    )
 
     # optional arguments
-    parser.add_argument("--fov",
-                        help="Field of view in mm (default=341.5)",
-                        type=float, default=341.5)
-    parser.add_argument("--global_integer_offset_x_pix",
-                        help="Global integer offset in the X direction "
-                             "(default=0)",
-                        default=0, type=int)
-    parser.add_argument("--global_integer_offset_y_pix",
-                        help="Global integer offset in the Y direction "
-                             "(default=0)",
-                        default=0, type=int)
-    parser.add_argument("--arc_lines",
-                        help="Overplot arc lines",
-                        action="store_true")
-    parser.add_argument("--oh_lines",
-                        help="Overplot OH lines",
-                        action="store_true")
-    parser.add_argument("--ds9_frontiers",
-                        help="Output ds9 region file with slitlet frontiers",
-                        type=lambda x: arg_file_is_new(parser, x))
-    parser.add_argument("--ds9_boundaries",
-                        help="Output ds9 region file with slitlet boundaries",
-                        type=lambda x: arg_file_is_new(parser, x))
-    parser.add_argument("--ds9_lines",
-                        help="Output ds9 region file with arc/oh lines",
-                        type=lambda x: arg_file_is_new(parser, x))
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting/debugging" +
-                             " (default=12)",
-                        type=int, default=12,
-                        choices=DEBUGPLOT_CODES)
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument(
+        "--fov", help="Field of view in mm (default=341.5)", type=float, default=341.5
+    )
+    parser.add_argument(
+        "--global_integer_offset_x_pix",
+        help="Global integer offset in the X direction " "(default=0)",
+        default=0,
+        type=int,
+    )
+    parser.add_argument(
+        "--global_integer_offset_y_pix",
+        help="Global integer offset in the Y direction " "(default=0)",
+        default=0,
+        type=int,
+    )
+    parser.add_argument("--arc_lines", help="Overplot arc lines", action="store_true")
+    parser.add_argument("--oh_lines", help="Overplot OH lines", action="store_true")
+    parser.add_argument(
+        "--ds9_frontiers",
+        help="Output ds9 region file with slitlet frontiers",
+        type=lambda x: arg_file_is_new(parser, x),
+    )
+    parser.add_argument(
+        "--ds9_boundaries",
+        help="Output ds9 region file with slitlet boundaries",
+        type=lambda x: arg_file_is_new(parser, x),
+    )
+    parser.add_argument(
+        "--ds9_lines",
+        help="Output ds9 region file with arc/oh lines",
+        type=lambda x: arg_file_is_new(parser, x),
+    )
+    parser.add_argument(
+        "--debugplot",
+        help="Integer indicating plotting/debugging" + " (default=12)",
+        type=int,
+        default=12,
+        choices=DEBUGPLOT_CODES,
+    )
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args()
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print("\033[1m\033[31mExecuting: " + " ".join(sys.argv) + "\033[0m\n")
 
     # ---
 
     # avoid incompatible options
     if args.arc_lines and args.oh_lines:
-        raise ValueError("--arc_lines and --oh_lines cannot be used "
-                         "simultaneously")
+        raise ValueError("--arc_lines and --oh_lines cannot be used " "simultaneously")
 
     # --ds9_lines requires --arc_lines or --oh_lines
     if args.ds9_lines:
         if not (args.arc_lines or args.oh_lines):
-            raise ValueError("--ds9_lines requires the use of either "
-                             "--arc_lines or --oh_lines")
+            raise ValueError(
+                "--ds9_lines requires the use of either " "--arc_lines or --oh_lines"
+            )
 
     # read input FITS file
     hdulist = fits.open(args.fitsfile)
@@ -218,8 +227,8 @@ def main(args=None):
     image2d = hdulist[0].data
     # hdulist.close()
 
-    naxis1 = image_header['naxis1']
-    naxis2 = image_header['naxis2']
+    naxis1 = image_header["naxis1"]
+    naxis2 = image_header["naxis2"]
 
     if image2d.shape != (naxis2, naxis1):
         raise ValueError("Unexpected error with NAXIS1, NAXIS2")
@@ -230,29 +239,27 @@ def main(args=None):
     sfitsfile = os.path.basename(args.fitsfile.name)
 
     # check that the FITS file has been obtained with EMIR
-    instrument = image_header['instrume']
-    if instrument != 'EMIR':
+    instrument = image_header["instrume"]
+    if instrument != "EMIR":
         raise ValueError("INSTRUME keyword is not 'EMIR'!")
 
     # read GRISM, FILTER and ROTANG from FITS header
-    grism = image_header['grism']
-    spfilter = image_header['filter']
-    rotang = image_header['rotang']
+    grism = image_header["grism"]
+    spfilter = image_header["filter"]
+    rotang = image_header["rotang"]
 
     # ---
 
     # generate MasterRectWave object
-    master_rectwv = MasterRectWave._datatype_load(
-        args.rect_wpoly_MOSlibrary.name
-    )
+    master_rectwv = MasterRectWave._datatype_load(args.rect_wpoly_MOSlibrary.name)
 
     # check that grism and filter are the expected ones
-    grism_ = master_rectwv.tags['grism']
+    grism_ = master_rectwv.tags["grism"]
     if grism_ != grism:
-        raise ValueError('Unexpected grism: ' + str(grism_))
-    spfilter_ = master_rectwv.tags['filter']
+        raise ValueError("Unexpected grism: " + str(grism_))
+    spfilter_ = master_rectwv.tags["filter"]
     if spfilter_ != spfilter:
-        raise ValueError('Unexpected filter ' + str(spfilter_))
+        raise ValueError("Unexpected filter " + str(spfilter_))
 
     # valid slitlet numbers
     list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
@@ -265,16 +272,14 @@ def main(args=None):
     # list with csu_bar_slit_center for valid slitlets
     list_csu_bar_slit_center = []
     for islitlet in list_valid_islitlets:
-        list_csu_bar_slit_center.append(
-            csu_config.csu_bar_slit_center(islitlet)
-        )
+        list_csu_bar_slit_center.append(csu_config.csu_bar_slit_center(islitlet))
 
     # define parmodel and params
     fitted_bound_param_json = {
-        'contents': master_rectwv.meta_info['refined_boundary_model']
+        "contents": master_rectwv.meta_info["refined_boundary_model"]
     }
-    parmodel = fitted_bound_param_json['contents']['parmodel']
-    fitted_bound_param_json.update({'meta_info': {'parmodel': parmodel}})
+    parmodel = fitted_bound_param_json["contents"]["parmodel"]
+    fitted_bound_param_json.update({"meta_info": {"parmodel": parmodel}})
     params = bound_params_from_dict(fitted_bound_param_json)
     if parmodel != "multislit":
         raise ValueError('parmodel = "multislit" not found')
@@ -285,32 +290,29 @@ def main(args=None):
     if args.arc_lines or args.oh_lines:
 
         rectwv_coeff = rectwv_coeff_from_mos_library(hdulist, master_rectwv)
-        rectwv_coeff.global_integer_offset_x_pix = \
-            args.global_integer_offset_x_pix
-        rectwv_coeff.global_integer_offset_y_pix = \
-            args.global_integer_offset_y_pix
+        rectwv_coeff.global_integer_offset_x_pix = args.global_integer_offset_x_pix
+        rectwv_coeff.global_integer_offset_y_pix = args.global_integer_offset_y_pix
         # rectwv_coeff.writeto('xxx.json')
 
         if args.arc_lines:
-            if grism == 'LR':
-                catlines_file = 'lines_argon_neon_xenon_empirical_LR.dat'
+            if grism == "LR":
+                catlines_file = "lines_argon_neon_xenon_empirical_LR.dat"
             else:
-                catlines_file = 'lines_argon_neon_xenon_empirical.dat'
-            dumdata = pkgutil.get_data('emirdrp.instrument.configs',
-                                       catlines_file)
-            arc_lines_tmpfile = StringIO(dumdata.decode('utf8'))
+                catlines_file = "lines_argon_neon_xenon_empirical.dat"
+            dumdata = pkgutil.get_data("emirdrp.instrument.configs", catlines_file)
+            arc_lines_tmpfile = StringIO(dumdata.decode("utf8"))
             catlines = np.genfromtxt(arc_lines_tmpfile)
             # define wavelength and flux as separate arrays
             catlines_all_wave = catlines[:, 0]
             # catlines_all_flux = catlines[:, 1]
         elif args.oh_lines:
-            dumdata = pkgutil.get_data('emirdrp.instrument.configs',
-                                       'Oliva_etal_2013.dat')
-            oh_lines_tmpfile = StringIO(dumdata.decode('utf8'))
+            dumdata = pkgutil.get_data(
+                "emirdrp.instrument.configs", "Oliva_etal_2013.dat"
+            )
+            oh_lines_tmpfile = StringIO(dumdata.decode("utf8"))
             catlines = np.genfromtxt(oh_lines_tmpfile)
             # define wavelength and flux as separate arrays
-            catlines_all_wave = np.concatenate((catlines[:, 1],
-                                                catlines[:, 0]))
+            catlines_all_wave = np.concatenate((catlines[:, 1], catlines[:, 0]))
             # catlines_all_flux = np.concatenate((catlines[:, 2], catlines[:, 2]))
         else:
             raise ValueError("This should not happen!")
@@ -334,7 +336,7 @@ def main(args=None):
             spfilter=spfilter,
             ds9_filename=args.ds9_boundaries.name,
             global_offset_x_pix=-args.global_integer_offset_x_pix,
-            global_offset_y_pix=-args.global_integer_offset_y_pix
+            global_offset_y_pix=-args.global_integer_offset_y_pix,
         )
 
     # generate output ds9 region file with slitlet frontiers
@@ -349,18 +351,25 @@ def main(args=None):
             spfilter=spfilter,
             ds9_filename=args.ds9_frontiers.name,
             global_offset_x_pix=-args.global_integer_offset_x_pix,
-            global_offset_y_pix=-args.global_integer_offset_y_pix
+            global_offset_y_pix=-args.global_integer_offset_y_pix,
         )
 
     # ---
 
     # display full image
     if abs(args.debugplot) % 10 != 0:
-        ax = ximshow(image2d=image2d,
-                     title=sfitsfile + "\ngrism=" + grism +
-                     ", filter=" + spfilter +
-                     ", rotang=" + str(round(rotang, 2)),
-                     image_bbox=(1, naxis1, 1, naxis2), show=False)
+        ax = ximshow(
+            image2d=image2d,
+            title=sfitsfile
+            + "\ngrism="
+            + grism
+            + ", filter="
+            + spfilter
+            + ", rotang="
+            + str(round(rotang, 2)),
+            image_bbox=(1, naxis1, 1, naxis2),
+            show=False,
+        )
 
         # overplot boundaries
         overplot_boundaries_from_params(
@@ -371,7 +380,7 @@ def main(args=None):
             list_csu_bar_slit_center=list_csu_bar_slit_center,
             global_offset_x_pix=-args.global_integer_offset_x_pix,
             global_offset_y_pix=-args.global_integer_offset_y_pix,
-            fov=args.fov
+            fov=args.fov,
         )
 
         # overplot frontiers
@@ -382,10 +391,11 @@ def main(args=None):
             list_islitlet=list_valid_islitlets,
             list_csu_bar_slit_center=list_csu_bar_slit_center,
             fov=args.fov,
-            micolors=('b', 'b'), linetype='-',
-            labels=False,    # already displayed with the boundaries
+            micolors=("b", "b"),
+            linetype="-",
+            labels=False,  # already displayed with the boundaries
             global_offset_x_pix=-args.global_integer_offset_x_pix,
-            global_offset_y_pix=-args.global_integer_offset_y_pix
+            global_offset_y_pix=-args.global_integer_offset_y_pix,
         )
 
     else:
@@ -397,39 +407,48 @@ def main(args=None):
         if args.ds9_lines is None:
             ds9_file = None
         else:
-            ds9_file = open(args.ds9_lines.name, 'w')
-            ds9_file.write('# Region file format: DS9 version 4.1\n')
-            ds9_file.write('global color=#00ffff dashlist=0 0 width=2 '
-                           'font="helvetica 10 normal roman" select=1 '
-                           'highlite=1 dash=0 fixed=0 edit=1 '
-                           'move=1 delete=1 include=1 source=1\n')
-            ds9_file.write('physical\n#\n')
+            ds9_file = open(args.ds9_lines.name, "w")
+            ds9_file.write("# Region file format: DS9 version 4.1\n")
+            ds9_file.write(
+                "global color=#00ffff dashlist=0 0 width=2 "
+                'font="helvetica 10 normal roman" select=1 '
+                "highlite=1 dash=0 fixed=0 edit=1 "
+                "move=1 delete=1 include=1 source=1\n"
+            )
+            ds9_file.write("physical\n#\n")
 
-            ds9_file.write('#\n# uuid..: {0}\n'.format(master_rectwv.uuid))
-            ds9_file.write('# filter: {0}\n'.format(spfilter))
-            ds9_file.write('# grism.: {0}\n'.format(grism))
-            ds9_file.write('#\n# global_offset_x_pix: {0}\n'.format(
-                args.global_integer_offset_x_pix))
-            ds9_file.write('# global_offset_y_pix: {0}\n#\n'.format(
-                args.global_integer_offset_y_pix))
+            ds9_file.write("#\n# uuid..: {0}\n".format(master_rectwv.uuid))
+            ds9_file.write("# filter: {0}\n".format(spfilter))
+            ds9_file.write("# grism.: {0}\n".format(grism))
+            ds9_file.write(
+                "#\n# global_offset_x_pix: {0}\n".format(
+                    args.global_integer_offset_x_pix
+                )
+            )
+            ds9_file.write(
+                "# global_offset_y_pix: {0}\n#\n".format(
+                    args.global_integer_offset_y_pix
+                )
+            )
             if parmodel == "longslit":
                 for dumpar in EXPECTED_PARAMETER_LIST:
                     parvalue = params[dumpar].value
-                    ds9_file.write('# {0}: {1}\n'.format(dumpar, parvalue))
+                    ds9_file.write("# {0}: {1}\n".format(dumpar, parvalue))
             else:
                 for dumpar in EXPECTED_PARAMETER_LIST_EXTENDED:
                     parvalue = params[dumpar].value
-                    ds9_file.write('# {0}: {1}\n'.format(dumpar, parvalue))
+                    ds9_file.write("# {0}: {1}\n".format(dumpar, parvalue))
 
-        overplot_lines(ax,
-                       catlines_all_wave,
-                       list_valid_islitlets,
-                       rectwv_coeff,
-                       args.global_integer_offset_x_pix,
-                       args.global_integer_offset_y_pix,
-                       ds9_file,
-                       args.debugplot
-                       )
+        overplot_lines(
+            ax,
+            catlines_all_wave,
+            list_valid_islitlets,
+            rectwv_coeff,
+            args.global_integer_offset_x_pix,
+            args.global_integer_offset_y_pix,
+            ds9_file,
+            args.debugplot,
+        )
 
         if ds9_file is not None:
             ds9_file.close()

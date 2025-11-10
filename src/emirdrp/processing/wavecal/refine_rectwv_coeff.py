@@ -24,21 +24,25 @@ from numina.frame.utils import copy_img
 
 import emirdrp.datamodel as datamodel
 from emirdrp.instrument.csu_configuration import CsuConfiguration
-from emirdrp.processing.wavecal.median_slitlets_rectified \
-    import median_slitlets_rectified
+from emirdrp.processing.wavecal.median_slitlets_rectified import (
+    median_slitlets_rectified,
+)
 from emirdrp.processing.wavecal.set_wv_parameters import set_wv_parameters
 
 from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NBARS
 
 
-def refine_rectwv_coeff(input_image, rectwv_coeff,
-                        catlines_all_wave,
-                        catlines_all_flux,
-                        refine_wavecalib_mode,
-                        list_useful_slitlets,
-                        save_intermediate_results=False,
-                        debugplot=0):
+def refine_rectwv_coeff(
+    input_image,
+    rectwv_coeff,
+    catlines_all_wave,
+    catlines_all_flux,
+    refine_wavecalib_mode,
+    list_useful_slitlets,
+    save_intermediate_results=False,
+    debugplot=0,
+):
     """Refine RectWaveCoeff object using a catalogue of lines
 
     One and only one among refine_with_oh_lines_mode and
@@ -86,78 +90,82 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
 
     if save_intermediate_results:
         from matplotlib.backends.backend_pdf import PdfPages
-        pdf = PdfPages('crosscorrelation.pdf')
+
+        pdf = PdfPages("crosscorrelation.pdf")
     else:
         pdf = None
 
     # image header
     main_header = input_image[0].header
     mecs_header = datamodel.get_mecs_header(input_image)
-    filter_name = main_header['filter']
-    grism_name = main_header['grism']
+    filter_name = main_header["filter"]
+    grism_name = main_header["grism"]
 
     # initialize output
     refined_rectwv_coeff = deepcopy(rectwv_coeff)
 
-    logger.info('Computing median spectrum')
+    logger.info("Computing median spectrum")
     # compute median spectrum and normalize it
     sp_median = median_slitlets_rectified(
-        input_image,
-        mode=2,
-        list_useful_slitlets=list_useful_slitlets
+        input_image, mode=2, list_useful_slitlets=list_useful_slitlets
     )[0].data
     sp_median /= sp_median.max()
 
     # determine minimum and maximum useful wavelength
     jmin, jmax = find_pix_borders(sp_median, 0)
-    naxis1 = main_header['naxis1']
-    naxis2 = main_header['naxis2']
-    crpix1 = main_header['crpix1']
-    crval1 = main_header['crval1']
-    cdelt1 = main_header['cdelt1']
+    naxis1 = main_header["naxis1"]
+    naxis2 = main_header["naxis2"]
+    crpix1 = main_header["crpix1"]
+    crval1 = main_header["crval1"]
+    cdelt1 = main_header["cdelt1"]
     xwave = crval1 + (np.arange(naxis1) + 1.0 - crpix1) * cdelt1
-    if grism_name == 'LR':
+    if grism_name == "LR":
         wv_parameters = set_wv_parameters(filter_name, grism_name)
-        wave_min = wv_parameters['wvmin_useful']
-        wave_max = wv_parameters['wvmax_useful']
+        wave_min = wv_parameters["wvmin_useful"]
+        wave_max = wv_parameters["wvmax_useful"]
     else:
         wave_min = crval1 + (jmin + 1 - crpix1) * cdelt1
         wave_max = crval1 + (jmax + 1 - crpix1) * cdelt1
-    logger.info('Setting wave_min to {}'.format(wave_min))
-    logger.info('Setting wave_max to {}'.format(wave_max))
+    logger.info("Setting wave_min to {}".format(wave_min))
+    logger.info("Setting wave_max to {}".format(wave_max))
 
     # extract subset of catalogue lines within current wavelength range
     lok1 = catlines_all_wave >= wave_min
     lok2 = catlines_all_wave <= wave_max
-    catlines_reference_wave = catlines_all_wave[lok1*lok2]
-    catlines_reference_flux = catlines_all_flux[lok1*lok2]
+    catlines_reference_wave = catlines_all_wave[lok1 * lok2]
+    catlines_reference_flux = catlines_all_flux[lok1 * lok2]
     catlines_reference_flux /= catlines_reference_flux.max()
 
     # estimate sigma to broaden catalogue lines
     csu_config = CsuConfiguration.define_from_header(mecs_header)
     # segregate slitlets
-    list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1))
-                                if i not in list_useful_slitlets]
-    logger.info('list of useful slitlets: {}'.format(
-        list_useful_slitlets))
-    logger.info('list of unusable slitlets: {}'.format(
-        list_not_useful_slitlets))
-    tempwidths = np.array([csu_config.csu_bar_slit_width(islitlet)
-                           for islitlet in list_useful_slitlets])
+    list_not_useful_slitlets = [
+        i for i in list(range(1, EMIR_NBARS + 1)) if i not in list_useful_slitlets
+    ]
+    logger.info("list of useful slitlets: {}".format(list_useful_slitlets))
+    logger.info("list of unusable slitlets: {}".format(list_not_useful_slitlets))
+    tempwidths = np.array(
+        [csu_config.csu_bar_slit_width(islitlet) for islitlet in list_useful_slitlets]
+    )
     widths_summary = summary(tempwidths)
-    logger.info('Statistics of useful slitlet widths (mm):')
-    logger.info('- npoints....: {0:d}'.format(widths_summary['npoints']))
-    logger.info('- mean.......: {0:7.3f}'.format(widths_summary['mean']))
-    logger.info('- median.....: {0:7.3f}'.format(widths_summary['median']))
-    logger.info('- std........: {0:7.3f}'.format(widths_summary['std']))
-    logger.info('- robust_std.: {0:7.3f}'.format(widths_summary['robust_std']))
+    logger.info("Statistics of useful slitlet widths (mm):")
+    logger.info("- npoints....: {0:d}".format(widths_summary["npoints"]))
+    logger.info("- mean.......: {0:7.3f}".format(widths_summary["mean"]))
+    logger.info("- median.....: {0:7.3f}".format(widths_summary["median"]))
+    logger.info("- std........: {0:7.3f}".format(widths_summary["std"]))
+    logger.info("- robust_std.: {0:7.3f}".format(widths_summary["robust_std"]))
     # empirical transformation of slit width (mm) to pixels
-    sigma_broadening = cdelt1 * widths_summary['median']
+    sigma_broadening = cdelt1 * widths_summary["median"]
 
     # convolve location of catalogue lines to generate expected spectrum
     xwave_reference, sp_reference = convolve_comb_lines(
-        catlines_reference_wave, catlines_reference_flux, sigma_broadening,
-        crpix1, crval1, cdelt1, naxis1
+        catlines_reference_wave,
+        catlines_reference_flux,
+        sigma_broadening,
+        crpix1,
+        crval1,
+        cdelt1,
+        naxis1,
     )
     sp_reference /= sp_reference.max()
 
@@ -170,17 +178,27 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         expected_cat_image = None
 
     if (abs(debugplot) % 10 != 0) or (pdf is not None):
-        ax = ximplotxy(xwave, sp_median, 'C1-',
-                       xlabel='Wavelength (Angstroms, in vacuum)',
-                       ylabel='Normalized number of counts',
-                       title='Median spectrum',
-                       label='observed spectrum', show=False)
+        ax = ximplotxy(
+            xwave,
+            sp_median,
+            "C1-",
+            xlabel="Wavelength (Angstroms, in vacuum)",
+            ylabel="Normalized number of counts",
+            title="Median spectrum",
+            label="observed spectrum",
+            show=False,
+        )
         # overplot reference catalogue lines
-        ax.stem(catlines_reference_wave, catlines_reference_flux, 'C4-',
-                markerfmt=' ', basefmt='C4-', label='tabulated lines')
+        ax.stem(
+            catlines_reference_wave,
+            catlines_reference_flux,
+            "C4-",
+            markerfmt=" ",
+            basefmt="C4-",
+            label="tabulated lines",
+        )
         # overplot convolved reference lines
-        ax.plot(xwave_reference, sp_reference, 'C0-',
-                label='expected spectrum')
+        ax.plot(xwave_reference, sp_reference, "C0-", label="expected spectrum")
         ax.legend()
         if pdf is not None:
             pdf.savefig()
@@ -193,10 +211,10 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.hist(sp_median, bins=1000, log=True)
-        ax.set_xlabel('Normalized number of counts')
-        ax.set_ylabel('Number of pixels')
-        ax.set_title('Median spectrum')
-        ax.axvline(float(baseline), linestyle='--', color='grey')
+        ax.set_xlabel("Normalized number of counts")
+        ax.set_ylabel("Number of pixels")
+        ax.set_title("Median spectrum")
+        ax.axvline(float(baseline), linestyle="--", color="grey")
         if pdf is not None:
             pdf.savefig()
         else:
@@ -208,17 +226,17 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
     sp_median[lok] -= baseline
 
     # compute global offset through periodic correlation
-    logger.info('Computing global offset')
+    logger.info("Computing global offset")
     global_offset, fpeak = periodic_corr1d(
         sp_reference=sp_reference,
         sp_offset=sp_median,
         fminmax=None,
         naround_zero=50,
-        plottitle='Median spectrum (cross-correlation)',
+        plottitle="Median spectrum (cross-correlation)",
         pdf=pdf,
-        debugplot=debugplot
+        debugplot=debugplot,
     )
-    logger.info('Global offset: {} pixels'.format(-global_offset))
+    logger.info("Global offset: {} pixels".format(-global_offset))
 
     missing_slitlets = rectwv_coeff.missing_slitlets
 
@@ -228,18 +246,18 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
             if islitlet not in missing_slitlets:
                 i = islitlet - 1
                 dumdict = refined_rectwv_coeff.contents[i]
-                dumdict['wpoly_coeff'][0] -= global_offset*cdelt1
+                dumdict["wpoly_coeff"][0] -= global_offset * cdelt1
 
     elif refine_wavecalib_mode in [2, 12]:
         # compute individual offset for each slitlet
-        logger.info('Computing individual offsets')
+        logger.info("Computing individual offsets")
         median_55sp = median_slitlets_rectified(input_image, mode=1)
         offset_array = np.zeros(EMIR_NBARS)
         xplot = []
         yplot = []
         xplot_skipped = []
         yplot_skipped = []
-        cout = '0'
+        cout = "0"
         for islitlet in range(1, EMIR_NBARS + 1):
             if islitlet in list_useful_slitlets:
                 i = islitlet - 1
@@ -254,73 +272,77 @@ def refine_rectwv_coeff(input_image, rectwv_coeff,
                         sp_offset=median_55sp[0].data[i, :],
                         fminmax=None,
                         naround_zero=50,
-                        plottitle='slitlet #{0} (cross-correlation)'.format(
-                            islitlet),
+                        plottitle="slitlet #{0} (cross-correlation)".format(islitlet),
                         pdf=pdf,
-                        debugplot=debugplot
+                        debugplot=debugplot,
                     )
                 else:
                     offset_array[i] = 0.0
                 dumdict = refined_rectwv_coeff.contents[i]
-                dumdict['wpoly_coeff'][0] -= offset_array[i]*cdelt1
+                dumdict["wpoly_coeff"][0] -= offset_array[i] * cdelt1
                 xplot.append(islitlet)
                 yplot.append(-offset_array[i])
                 # second correction
                 wpoly_coeff_refined = check_wlcalib_sp(
                     sp=median_55sp[0].data[i, :],
                     crpix1=crpix1,
-                    crval1=crval1-offset_array[i]*cdelt1,
+                    crval1=crval1 - offset_array[i] * cdelt1,
                     cdelt1=cdelt1,
                     wv_master=catlines_reference_wave,
-                    coeff_ini=dumdict['wpoly_coeff'],
+                    coeff_ini=dumdict["wpoly_coeff"],
                     naxis1_ini=EMIR_NAXIS1,
-                    title='slitlet #{0} (after applying offset)'.format(
-                        islitlet),
+                    title="slitlet #{0} (after applying offset)".format(islitlet),
                     ylogscale=False,
                     pdf=pdf,
-                    debugplot=debugplot
+                    debugplot=debugplot,
                 )
-                dumdict['wpoly_coeff'] = wpoly_coeff_refined
-                cout += '.'
+                dumdict["wpoly_coeff"] = wpoly_coeff_refined
+                cout += "."
 
             else:
                 xplot_skipped.append(islitlet)
                 yplot_skipped.append(0)
-                cout += 'i'
+                cout += "i"
 
             if islitlet % 10 == 0:
-                if cout != 'i':
+                if cout != "i":
                     cout = str(islitlet // 10)
 
             logger.info(cout)
 
         # show offsets with opposite sign
         stat_summary = summary(np.array(yplot))
-        logger.info('Statistics of individual slitlet offsets (pixels):')
-        logger.info('- npoints....: {0:d}'.format(stat_summary['npoints']))
-        logger.info('- mean.......: {0:7.3f}'.format(stat_summary['mean']))
-        logger.info('- median.....: {0:7.3f}'.format(stat_summary['median']))
-        logger.info('- std........: {0:7.3f}'.format(stat_summary['std']))
-        logger.info('- robust_std.: {0:7.3f}'.format(stat_summary[
-            'robust_std']))
+        logger.info("Statistics of individual slitlet offsets (pixels):")
+        logger.info("- npoints....: {0:d}".format(stat_summary["npoints"]))
+        logger.info("- mean.......: {0:7.3f}".format(stat_summary["mean"]))
+        logger.info("- median.....: {0:7.3f}".format(stat_summary["median"]))
+        logger.info("- std........: {0:7.3f}".format(stat_summary["std"]))
+        logger.info("- robust_std.: {0:7.3f}".format(stat_summary["robust_std"]))
         if (abs(debugplot) % 10 != 0) or (pdf is not None):
-            ax = ximplotxy(xplot, yplot,
-                           linestyle='', marker='o', color='C0',
-                           xlabel='slitlet number',
-                           ylabel='-offset (pixels) = offset to be applied',
-                           title='cross-correlation result',
-                           show=False, **{'label': 'individual slitlets'})
+            ax = ximplotxy(
+                xplot,
+                yplot,
+                linestyle="",
+                marker="o",
+                color="C0",
+                xlabel="slitlet number",
+                ylabel="-offset (pixels) = offset to be applied",
+                title="cross-correlation result",
+                show=False,
+                **{"label": "individual slitlets"},
+            )
             if len(xplot_skipped) > 0:
-                ax.plot(xplot_skipped, yplot_skipped, 'mx')
-            ax.axhline(-global_offset, linestyle='--', color='C1',
-                       label='global offset')
+                ax.plot(xplot_skipped, yplot_skipped, "mx")
+            ax.axhline(
+                -global_offset, linestyle="--", color="C1", label="global offset"
+            )
             ax.legend()
             if pdf is not None:
                 pdf.savefig()
             else:
                 pause_debugplot(debugplot=debugplot, pltshow=True)
     else:
-        raise ValueError('Unexpected mode={}'.format(refine_wavecalib_mode))
+        raise ValueError("Unexpected mode={}".format(refine_wavecalib_mode))
 
     # close output PDF file
     if pdf is not None:

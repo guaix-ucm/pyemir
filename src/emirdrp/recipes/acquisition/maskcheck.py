@@ -42,7 +42,9 @@ from emirdrp.instrument.csuconf import TargetType
 import emirdrp.instrument.csuconf as csuconf
 
 
-def comp_centroid(data, bounding_box, debug_plot=False, plot_reference=None, logger=None):
+def comp_centroid(
+    data, bounding_box, debug_plot=False, plot_reference=None, logger=None
+):
     """Detect objects in a region and return the centroid of the brightest one"""
 
     from matplotlib.patches import Ellipse
@@ -53,52 +55,59 @@ def comp_centroid(data, bounding_box, debug_plot=False, plot_reference=None, log
     region = bounding_box.slice
     ref_x = region[1].start
     ref_y = region[0].start
-    logger.debug('region ofset is %s, %s', ref_x, ref_y)
+    logger.debug("region ofset is %s, %s", ref_x, ref_y)
     subimage = data[region].copy()
     bkg = sep.Background(subimage)
     data_sub = subimage - bkg
     objects = sep.extract(data_sub, 1.5, err=bkg.globalrms)
     # Select brightest object
-    logger.debug('%d object found', len(objects))
+    logger.debug("%d object found", len(objects))
 
     if len(objects) == 0:
         # print('No objects')
         return None
 
-    iadx = objects['flux'].argmax()
+    iadx = objects["flux"].argmax()
     # plot background-subtracted image
     maxflux = objects[iadx]
 
     if debug_plot:
         fig, ax = plt.subplots()
         m, s = np.mean(data_sub), np.std(data_sub)
-        ax.imshow(data_sub, interpolation='nearest', cmap='gray',
-                  vmin=m - s, vmax=m + s, origin='lower',
-                  extent=bounding_box.extent)
+        ax.imshow(
+            data_sub,
+            interpolation="nearest",
+            cmap="gray",
+            vmin=m - s,
+            vmax=m + s,
+            origin="lower",
+            extent=bounding_box.extent,
+        )
         if plot_reference:
-            e = Ellipse(xy=(plot_reference[0], plot_reference[1]),
-                        width=6,
-                        height=6,
-                        angle=0)
-            e.set_facecolor('none')
-            e.set_edgecolor('green')
+            e = Ellipse(
+                xy=(plot_reference[0], plot_reference[1]), width=6, height=6, angle=0
+            )
+            e.set_facecolor("none")
+            e.set_edgecolor("green")
             ax.add_artist(e)
 
         # plot an ellipse for each object
         for idx, obj in enumerate(objects):
-            e = Ellipse(xy=(obj['x'] + ref_x, obj['y'] + ref_y),
-                        width=6 * obj['a'],
-                        height=6 * obj['b'],
-                        angle=obj['theta'] * 180. / np.pi)
-            e.set_facecolor('none')
+            e = Ellipse(
+                xy=(obj["x"] + ref_x, obj["y"] + ref_y),
+                width=6 * obj["a"],
+                height=6 * obj["b"],
+                angle=obj["theta"] * 180.0 / np.pi,
+            )
+            e.set_facecolor("none")
             if idx == iadx:
-                e.set_edgecolor('blue')
+                e.set_edgecolor("blue")
             else:
-                e.set_edgecolor('red')
+                e.set_edgecolor("red")
             ax.add_artist(e)
-        return maxflux['x'], maxflux['y'], ax
+        return maxflux["x"], maxflux["y"], ax
     else:
-        return maxflux['x'], maxflux['y']
+        return maxflux["x"], maxflux["y"]
 
 
 class MaskCheckRecipe(EmirRecipe):
@@ -117,16 +126,13 @@ class MaskCheckRecipe(EmirRecipe):
     #
     obresult = ObservationResultRequirement(
         query_opts=qmod.ResultOf(
-            'STARE_IMAGE.reduced_image',
-            node='children',
-            id_field="resultsIds"
+            "STARE_IMAGE.reduced_image", node="children", id_field="resultsIds"
         )
     )
     master_bpm = reqs.MasterBadPixelMaskRequirement()
 
     bars_nominal_positions = Requirement(
-        prods.NominalPositions,
-        'Nominal positions of the bars'
+        prods.NominalPositions, "Nominal positions of the bars"
     )
 
     # Recipe Products
@@ -135,12 +141,14 @@ class MaskCheckRecipe(EmirRecipe):
     offset = Result(tarray.ArrayType)
     angle = Result(float)
     matched_slits = Result(
-        tarray.ArrayType, description="Centroids measured in the detector")
+        tarray.ArrayType, description="Centroids measured in the detector"
+    )
     centroids = Result(
-        tarray.ArrayType, description="Centroids measured in the detector")
+        tarray.ArrayType, description="Centroids measured in the detector"
+    )
 
     def run(self, rinput):
-        self.logger.info('starting processing for image acquisition')
+        self.logger.info("starting processing for image acquisition")
         # Combine and masking
         flow = self.init_filters(rinput)
 
@@ -149,8 +157,7 @@ class MaskCheckRecipe(EmirRecipe):
 
         nframes = len(frames)
         if nframes not in [1, 2, 4]:
-            raise ValueError(
-                "expected 1, 2 or 4 frames, got {}".format(nframes))
+            raise ValueError("expected 1, 2 or 4 frames, got {}".format(nframes))
 
         interm = basic_processing_(frames, flow)
 
@@ -167,15 +174,14 @@ class MaskCheckRecipe(EmirRecipe):
             hdulist_object = process_abba(interm)
             # background_subs = True
         else:
-            raise ValueError(
-                "expected 1, 2 or 4 frames, got {}".format(nframes))
+            raise ValueError("expected 1, 2 or 4 frames, got {}".format(nframes))
 
         self.set_base_headers(hdulist_slit[0].header)
         self.set_base_headers(hdulist_object[0].header)
 
-        self.save_intermediate_img(hdulist_slit, 'slit_image.fits')
+        self.save_intermediate_img(hdulist_slit, "slit_image.fits")
 
-        self.save_intermediate_img(hdulist_object, 'object_image.fits')
+        self.save_intermediate_img(hdulist_object, "object_image.fits")
 
         # Get slits
         # Rotation around (0,0)
@@ -183,16 +189,12 @@ class MaskCheckRecipe(EmirRecipe):
         # (Off - raxis) = Rot * (Offnew - raxis)
         wcs = astropy.wcs.WCS(hdulist_slit[0].header)
         rotaxis = wcs.wcs.crpix - 1
-        ipa_deg = hdulist_object[0].header.get(
-            "IPA", cons.EMIR_REF_IPA) * u.deg
-        rotoff_deg = hdulist_object[0].header.get(
-            "ROTOFF", cons.EMIR_REF_IPA) * u.deg
+        ipa_deg = hdulist_object[0].header.get("IPA", cons.EMIR_REF_IPA) * u.deg
+        rotoff_deg = hdulist_object[0].header.get("ROTOFF", cons.EMIR_REF_IPA) * u.deg
 
-        self.logger.debug(
-            'center of rotation (from CRPIX) is %s', wcs.wcs.crpix)
+        self.logger.debug("center of rotation (from CRPIX) is %s", wcs.wcs.crpix)
 
-        csu_conf = self.load_csu_conf(
-            hdulist_slit, rinput.bars_nominal_positions)
+        csu_conf = self.load_csu_conf(hdulist_slit, rinput.bars_nominal_positions)
 
         # IF CSU is completely open OR there are no references,
         # this is not needed
@@ -202,48 +204,53 @@ class MaskCheckRecipe(EmirRecipe):
 
             # Not detecting slits. We trust the model
             slits_bb = None
-            image_sep = hdulist_object[0].data.astype('float32')
+            image_sep = hdulist_object[0].data.astype("float32")
 
-            self.logger.debug(
-                'center of rotation (from CRPIX) is %s', wcs.wcs.crpix)
-            self.logger.debug('create adapted WCS from header WCS')
-            wcsa = dist.adapt_wcs(wcs, ipa_deg=ipa_deg.value,
-                                  rotang_deg=rotoff_deg.value)
-            self.logger.debug('CD matrix of WCS %s', wcs.wcs.cd)
-            self.logger.debug('CD matrix of adapted WCS %s', wcsa.wcs.cd)
+            self.logger.debug("center of rotation (from CRPIX) is %s", wcs.wcs.crpix)
+            self.logger.debug("create adapted WCS from header WCS")
+            wcsa = dist.adapt_wcs(
+                wcs, ipa_deg=ipa_deg.value, rotang_deg=rotoff_deg.value
+            )
+            self.logger.debug("CD matrix of WCS %s", wcs.wcs.cd)
+            self.logger.debug("CD matrix of adapted WCS %s", wcsa.wcs.cd)
             # angle in deg, offset in pixels on the CSU
             offset, angle, qc, coords = compute_off_rotation(
-                image_sep, wcsa, csu_conf, slits_bb,
-                rotaxis=rotaxis, logger=self.logger,
-                debug_plot=False, intermediate_results=self.intermediate_results
+                image_sep,
+                wcsa,
+                csu_conf,
+                slits_bb,
+                rotaxis=rotaxis,
+                logger=self.logger,
+                debug_plot=False,
+                intermediate_results=self.intermediate_results,
             )
         else:
-            self.logger.info('CSU is open, not detecting slits')
+            self.logger.info("CSU is open, not detecting slits")
             offset = [0.0, 0.0]
             angle = 0.0
             coords = ([], [], [], [], [])
             qc = QC.GOOD
 
         pixsize_na = cons.EMIR_PIXSCALE / cons.GTC_NASMYTH_A_PLATESCALE
-        self.logger.debug('Pixel size in NASMYTH_A %s mm', pixsize_na)
+        self.logger.debug("Pixel size in NASMYTH_A %s mm", pixsize_na)
         # Offset is returned without units
         o_mm = ((offset * u.pixel) * pixsize_na).to(u.mm)
-        ipa_rot = create_rot2d(ipa_deg.to(
-            '', equivalencies=u.dimensionless_angles()))
-        rotoff_rot = create_rot2d(rotoff_deg.to(
-            '', equivalencies=u.dimensionless_angles()))
-        self.logger.info('IPA is %s deg', ipa_deg.value)
-        self.logger.info('ROTOFF is %s deg', rotoff_deg.value)
-        self.logger.info('OFF (mm) %s', o_mm)
+        ipa_rot = create_rot2d(ipa_deg.to("", equivalencies=u.dimensionless_angles()))
+        rotoff_rot = create_rot2d(
+            rotoff_deg.to("", equivalencies=u.dimensionless_angles())
+        )
+        self.logger.info("IPA is %s deg", ipa_deg.value)
+        self.logger.info("ROTOFF is %s deg", rotoff_deg.value)
+        self.logger.info("OFF (mm) %s", o_mm)
         o_mm_ipa = np.dot(ipa_rot, o_mm)
         o_mm_rotoff = np.dot(rotoff_rot, o_mm)
 
-        self.logger.info('=========================================')
+        self.logger.info("=========================================")
         self.logger.info(
-            '(WITH IPA) Offset Target in Focal Plane Frame %s mm', o_mm_ipa)
-        self.logger.info(
-            'Offset Target in Focal Plane Frame %s mm', o_mm_rotoff)
-        self.logger.info('=========================================')
+            "(WITH IPA) Offset Target in Focal Plane Frame %s mm", o_mm_ipa
+        )
+        self.logger.info("Offset Target in Focal Plane Frame %s mm", o_mm_rotoff)
+        self.logger.info("=========================================")
 
         # P2 Pos REF VIRT
         # P1 Pos REF DET
@@ -265,13 +272,14 @@ class MaskCheckRecipe(EmirRecipe):
             angle=angle_out,  # angle is in degrees
             qc=qc,
             matched_slits=matched_slits,
-            centroids=centroids_det
+            centroids=centroids_det,
         )
-        self.logger.info('end processing for image acquisition')
+        self.logger.info("end processing for image acquisition")
         return result
 
     def load_csu_conf(self, hdulist, bars_nominal_positions):
         from emirdrp.instrument.components.dtu import DtuConf
+
         # Get slits
         # hdr = hdulist[0].header
         # Extract DTU and CSU information from headers
@@ -287,61 +295,61 @@ class MaskCheckRecipe(EmirRecipe):
         trans3 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]  # T3 = T2 * T1
 
         vec = np.dot(trans3, dtuconf.coor_r) * u.micron / cons.EMIR_PIXSIZE
-        self.logger.debug('DTU shift is %s', vec)
+        self.logger.debug("DTU shift is %s", vec)
 
-        self.logger.debug('create bar model')
+        self.logger.debug("create bar model")
         barmodel = csuconf.create_bar_models(bars_nominal_positions)
 
         csu_conf = csuconf.CSUConf(barmodel)
         csu_conf.set_state_from_img(hdulist)
 
-        self.logger.info('loaded CSU named: %s', csu_conf.conf_f)
+        self.logger.info("loaded CSU named: %s", csu_conf.conf_f)
         if self.intermediate_results:
             # FIXME: coordinates are in VIRT pixels
-            self.logger.debug('create bar mask from predictions')
+            self.logger.debug("create bar mask from predictions")
             mask = np.ones_like(hdulist[0].data)
             for i in itertools.chain(csu_conf.LBARS, csu_conf.RBARS):
                 bar = csu_conf.bars[i]
                 mask[bar.bbox().slice] = 0
-            self.save_intermediate_array(mask, 'mask_bars.fits')
+            self.save_intermediate_array(mask, "mask_bars.fits")
 
-            self.logger.debug('create slit mask from predictions')
+            self.logger.debug("create slit mask from predictions")
             mask = np.zeros_like(hdulist[0].data)
             for slit in csu_conf.slits.values():
                 mask[slit.bbox().slice] = slit.idx
-            self.save_intermediate_array(mask, 'mask_slit.fits')
+            self.save_intermediate_array(mask, "mask_slit.fits")
 
-            self.logger.debug('create slit reference mask from predictions')
+            self.logger.debug("create slit reference mask from predictions")
             mask1 = np.zeros_like(hdulist[0].data)
             for slit in csu_conf.slits.values():
                 if slit.target_type == TargetType.REFERENCE:
                     mask1[slit.bbox().slice] = slit.idx
-            self.save_intermediate_array(mask1, 'mask_slit_ref.fits')
+            self.save_intermediate_array(mask1, "mask_slit_ref.fits")
 
         return csu_conf
 
     def compute_slits(self, hdulist, csu_conf):
 
-        self.logger.debug('finding borders of slits')
-        self.logger.debug('not strictly necessary...')
+        self.logger.debug("finding borders of slits")
+        self.logger.debug("not strictly necessary...")
         data = hdulist[0].data
         wcs = astropy.wcs.WCS(hdulist[0].header)
-        self.logger.debug('dtype of data %s', data.dtype)
+        self.logger.debug("dtype of data %s", data.dtype)
 
-        self.logger.debug('median filter (3x3)')
+        self.logger.debug("median filter (3x3)")
         image_base = ndi.filters.median_filter(data, size=3)
 
         # Cast as original type for skimage
-        self.logger.debug('casting image to unit16 (for skimage)')
+        self.logger.debug("casting image to unit16 (for skimage)")
         iuint16 = np.iinfo(np.uint16)
         image = np.clip(image_base, iuint16.min, iuint16.max).astype(np.uint16)
 
-        self.logger.debug('compute Sobel filter')
+        self.logger.debug("compute Sobel filter")
         # FIXME: compute sob and sob_v is redundant
         sob = filt.sobel(image)
-        self.save_intermediate_array(sob, 'sobel_image.fits')
+        self.save_intermediate_array(sob, "sobel_image.fits")
         sob_v = filt.sobel_v(image)
-        self.save_intermediate_array(sob_v, 'sobel_v_image.fits')
+        self.save_intermediate_array(sob_v, "sobel_v_image.fits")
 
         # Compute detector coordinates of bars
         all_coords_virt = np.empty((110, 2))
@@ -352,8 +360,7 @@ class MaskCheckRecipe(EmirRecipe):
             all_coords_virt[bar.idx - 1] = bar.xpos, bar.y0
 
         # Origin of coordinates is 1 for this function
-        _x, _y = dist.wcs_exvp(
-            wcs, all_coords_virt[:, 0], all_coords_virt[:, 1])
+        _x, _y = dist.wcs_exvp(wcs, all_coords_virt[:, 0], all_coords_virt[:, 1])
         all_coords_real[:, 0] = _x
         all_coords_real[:, 1] = _y
 
@@ -392,37 +399,56 @@ class MaskCheckRecipe(EmirRecipe):
             px2 = coor_to_pix_1d(ref_x_r_d) - 1
             prow = coor_to_pix_1d(ref_y_l_d) - 1
 
-            comp_l, comp_r = calc_bars_borders(image, sob_v, prow, px1, px2, regionw, h=h,
-                                               plot=plot, lbarid=lbarid, rbarid=rbarid,
-                                               plot2=False)
+            comp_l, comp_r = calc_bars_borders(
+                image,
+                sob_v,
+                prow,
+                px1,
+                px2,
+                regionw,
+                h=h,
+                plot=plot,
+                lbarid=lbarid,
+                rbarid=rbarid,
+                plot2=False,
+            )
             if np.any(np.isnan([comp_l, comp_r])):
-                self.logger.warning(
-                    "converting NaN value, border of=%d", idx + 1)
+                self.logger.warning("converting NaN value, border of=%d", idx + 1)
                 self.logger.warning("skipping bar=%d", idx + 1)
                 continue
             elif comp_l > comp_r:
                 # Not refining
                 self.logger.warning(
-                    "computed left border of=%d greater than right border", idx + 1)
+                    "computed left border of=%d greater than right border", idx + 1
+                )
                 comp2_l, comp2_r = px1, px2
             else:
                 region2 = 5
                 px21 = coor_to_pix_1d(comp_l)
                 px22 = coor_to_pix_1d(comp_r)
 
-                comp2_l, comp2_r = calc_bars_borders(image, sob_v, prow, px21, px22, region2,
-                                                     refine=True,
-                                                     plot=plot, lbarid=lbarid, rbarid=rbarid,
-                                                     plot2=False)
+                comp2_l, comp2_r = calc_bars_borders(
+                    image,
+                    sob_v,
+                    prow,
+                    px21,
+                    px22,
+                    region2,
+                    refine=True,
+                    plot=plot,
+                    lbarid=lbarid,
+                    rbarid=rbarid,
+                    plot2=False,
+                )
 
                 if np.any(np.isnan([comp2_l, comp2_r])):
-                    self.logger.warning(
-                        "converting NaN value, border of=%d", idx + 1)
+                    self.logger.warning("converting NaN value, border of=%d", idx + 1)
                     comp2_l, comp2_r = comp_l, comp_r
                 elif comp2_l > comp2_r:
                     # Not refining
                     self.logger.warning(
-                        "computed left border of=%d greater than right border", idx + 1)
+                        "computed left border of=%d greater than right border", idx + 1
+                    )
                     comp2_l, comp2_r = comp_l, comp_r
 
             # print('slit', lbarid, '-', rbarid, comp_l, comp_r)
@@ -437,19 +463,24 @@ class MaskCheckRecipe(EmirRecipe):
             _, y1 = dist.wcs_exvp(wcs, xpos1_virt + 1, y1_virt)
             _, y2 = dist.wcs_exvp(wcs, xpos2_virt + 1, y2_virt)
             # print(comp2_l, comp2_r, y1 - 1, y2 - 1)
-            cbb = BoundingBox.from_coordinates(
-                comp2_l, comp2_r, y1 - 1, y2 - 1)
+            cbb = BoundingBox.from_coordinates(comp2_l, comp2_r, y1 - 1, y2 - 1)
             slits_bb[lbarid] = cbb
             mask1[cbb.slice] = lbarid
 
-        self.save_intermediate_array(mask1, 'mask_slit_computed.fits')
+        self.save_intermediate_array(mask1, "mask_slit_computed.fits")
         return slits_bb
 
 
-def compute_off_rotation(data, wcsa, csu_conf, slits_bb=None, rotaxis=(0, 0),
-                         logger=None, debug_plot=False,
-                         intermediate_results=True
-                         ):
+def compute_off_rotation(
+    data,
+    wcsa,
+    csu_conf,
+    slits_bb=None,
+    rotaxis=(0, 0),
+    logger=None,
+    debug_plot=False,
+    intermediate_results=True,
+):
     # We can use a dictionary of slits_bb created by measuring the slits
     # in the image or we can use the slits given by the model of the CSU
     # which is correct around ~ 1.5 pix
@@ -457,14 +488,17 @@ def compute_off_rotation(data, wcsa, csu_conf, slits_bb=None, rotaxis=(0, 0),
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    swapped_code = (sys.byteorder == 'little') and '>' or '<'
+    swapped_code = (sys.byteorder == "little") and ">" or "<"
     if data.dtype.byteorder == swapped_code:
         data = data.byteswap().newbyteorder()
 
-    logger.info('we have %s slits', len(csu_conf.slits))
-    refslits = [slit for slit in csu_conf.slits.values(
-    ) if slit.target_type is TargetType.REFERENCE]
-    logger.info('we have %s reference slits', len(refslits))
+    logger.info("we have %s slits", len(csu_conf.slits))
+    refslits = [
+        slit
+        for slit in csu_conf.slits.values()
+        if slit.target_type is TargetType.REFERENCE
+    ]
+    logger.info("we have %s reference slits", len(refslits))
 
     slits = []
     p2 = []  # Pos REF VIRT
@@ -475,7 +509,7 @@ def compute_off_rotation(data, wcsa, csu_conf, slits_bb=None, rotaxis=(0, 0),
     for this in refslits:
         if slits_bb is not None:
             if this.idx not in slits_bb:
-                logger.warning('slit %s not detected, skipping', this.idx)
+                logger.warning("slit %s not detected, skipping", this.idx)
                 continue
 
             bb = slits_bb[this.idx]
@@ -483,35 +517,37 @@ def compute_off_rotation(data, wcsa, csu_conf, slits_bb=None, rotaxis=(0, 0),
             bb = this.bbox()
         region = bb.slice
         target_coordinates = this.target_coordinates
-        res = comp_centroid(data, bb, debug_plot=debug_plot,
-                            plot_reference=target_coordinates)
-        logger.debug('slit %s is formed by bars %s %s',
-                     this.idx, this.lbars_ids, this.rbars_ids)
-        logger.debug('in slit %s, reference is %s',
-                     this.idx, target_coordinates)
-        logger.debug('in slit %s, reference (v) is %s',
-                     this.idx, this.target_coordinates_v)
+        res = comp_centroid(
+            data, bb, debug_plot=debug_plot, plot_reference=target_coordinates
+        )
+        logger.debug(
+            "slit %s is formed by bars %s %s", this.idx, this.lbars_ids, this.rbars_ids
+        )
+        logger.debug("in slit %s, reference is %s", this.idx, target_coordinates)
+        logger.debug(
+            "in slit %s, reference (v) is %s", this.idx, this.target_coordinates_v
+        )
 
         if res is None:
-            logger.warning('no object found in slit %s, skipping', this.idx)
+            logger.warning("no object found in slit %s, skipping", this.idx)
             continue
 
         if debug_plot and intermediate_results:
             ax = res[2]
-            ax.set_title('slit %s' % this.idx)
-            plt.savefig('centroid_slit_%s.png' % this.idx)
+            ax.set_title("slit %s" % this.idx)
+            plt.savefig("centroid_slit_%s.png" % this.idx)
             plt.close()
 
         m_x = res[0] + region[1].start
         m_y = res[1] + region[0].start
 
-        logger.debug('in slit %s, object is (%s, %s)', this.idx, m_x, m_y)
+        logger.debug("in slit %s, object is (%s, %s)", this.idx, m_x, m_y)
         slits.append(this.idx)
         p1.append(this.target_coordinates)
         p2.append(this.target_coordinates_v)
         q1.append((m_x, m_y))
 
-    logger.info('compute offset and rotation with %d points', len(p1))
+    logger.info("compute offset and rotation with %d points", len(p1))
     qc = QC.BAD
 
     if len(p2) == 0:
@@ -520,47 +556,64 @@ def compute_off_rotation(data, wcsa, csu_conf, slits_bb=None, rotaxis=(0, 0),
         rot = np.array([[1, 0], [0, 1]])
         angle = 0.0
     else:
-        logger.debug('convert coordinates to virtual, ie, focal plane')
+        logger.debug("convert coordinates to virtual, ie, focal plane")
         q2 = dist.wcs_pix2virt(wcsa, q1, origin=0)
-        logger.debug('converted virtual coordinates')
+        logger.debug("converted virtual coordinates")
         for idx, c in zip(slits, q2):
-            logger.debug('in slit %s, object (v) is %s', idx, c)
+            logger.debug("in slit %s, object (v) is %s", idx, c)
         # Move from objects to reference
-        logger.debug(
-            'compute transform from measured objects to reference coordinates')
+        logger.debug("compute transform from measured objects to reference coordinates")
         offset, rot = fit_offset_and_rotation(q2, p2)
-        logger.debug('rotation matrix')
-        logger.debug('%s', rot)
-        logger.debug('translation (with rotation around 0)')
-        logger.debug('%s', offset)
+        logger.debug("rotation matrix")
+        logger.debug("%s", rot)
+        logger.debug("translation (with rotation around 0)")
+        logger.debug("%s", offset)
 
-        logger.debug('center of rotation (from CRPIX) is %s', rotaxis)
-        logger.debug('translation (with rotation around rotaxis)')
+        logger.debug("center of rotation (from CRPIX) is %s", rotaxis)
+        logger.debug("translation (with rotation around rotaxis)")
         newoff = np.dot(rot, offset - rotaxis) + rotaxis
-        logger.debug('%s', newoff)
+        logger.debug("%s", newoff)
 
         offset = newoff
         angle = math.atan2(rot[1, 0], rot[0, 0])
         angle = np.rad2deg(angle)
         qc = QC.GOOD
-    logger.info('offset is %s', offset)
-    logger.info('rot matrix is %s', rot)
-    logger.info('rot angle %5.2f deg', angle)
+    logger.info("offset is %s", offset)
+    logger.info("rot matrix is %s", rot)
+    logger.info("rot angle %5.2f deg", angle)
 
     pq1 = np.subtract(p1, q1)
     pq2 = np.subtract(p2, q2)
     if len(pq1) != 0:
-        logger.debug('MEAN of REF-MEASURED (ON DETECTOR) %s', pq1.mean(axis=0))
-        logger.debug('MEAN pf REF-MEASURED (VIRT) %s', pq2.mean(axis=0))
+        logger.debug("MEAN of REF-MEASURED (ON DETECTOR) %s", pq1.mean(axis=0))
+        logger.debug("MEAN pf REF-MEASURED (VIRT) %s", pq2.mean(axis=0))
 
     return offset, angle, qc, (slits, p1, p2, q1, q2)
 
 
-def calc_bars_borders(image, sob, prow, px1, px2, regionw, h=16, refine=False,
-                      plot=True, lbarid=0, rbarid=0, plot2=False):
+def calc_bars_borders(
+    image,
+    sob,
+    prow,
+    px1,
+    px2,
+    regionw,
+    h=16,
+    refine=False,
+    plot=True,
+    lbarid=0,
+    rbarid=0,
+    plot2=False,
+):
 
-    borders = [px1 - regionw, px1 + regionw, px2 - regionw, px2 + regionw,
-               prow - h, prow + h]
+    borders = [
+        px1 - regionw,
+        px1 + regionw,
+        px2 - regionw,
+        px2 + regionw,
+        prow - h,
+        prow + h,
+    ]
     borders = np.clip(borders, 0, 2047)
     cc1l = borders[0]
     cc1r = borders[1]
@@ -581,8 +634,9 @@ def calc_bars_borders(image, sob, prow, px1, px2, regionw, h=16, refine=False,
         pr1 = prow + scale * s
         if pr1 < 0 or pr1 >= 2048:
             continue
-        val = calc_borders_step(image, sob, pr1, cc1l, cc1r, refine=refine,
-                                plot=plot, barid=lbarid, px=px1)
+        val = calc_borders_step(
+            image, sob, pr1, cc1l, cc1r, refine=refine, plot=plot, barid=lbarid, px=px1
+        )
         if val is not None:
             lres.append(val)
 
@@ -603,8 +657,18 @@ def calc_bars_borders(image, sob, prow, px1, px2, regionw, h=16, refine=False,
         if pr1 < 0 or pr1 >= 2048:
             continue
 
-        val = calc_borders_step(image, sob, pr1, cc2l, cc2r, sign=-1, refine=refine,
-                                plot=plot, barid=rbarid, px=px2)
+        val = calc_borders_step(
+            image,
+            sob,
+            pr1,
+            cc2l,
+            cc2r,
+            sign=-1,
+            refine=refine,
+            plot=plot,
+            barid=rbarid,
+            px=px2,
+        )
         if val is not None:
             rres.append(val)
     # Average left bar position
@@ -620,20 +684,22 @@ def calc_bars_borders(image, sob, prow, px1, px2, regionw, h=16, refine=False,
 
     if plot2:
         plt.imshow(image[bb.slice], extent=bb.extent)
-        plt.scatter(colr_l, row_l, marker='+', color='black')
-        plt.scatter(colr_r, row_r, marker='+', color='black')
-        plt.axvline(px1, color='blue')
-        plt.axvline(px2, color='blue')
-        plt.axvline(comp_l, color='red')
-        plt.axvline(comp_r, color='red')
+        plt.scatter(colr_l, row_l, marker="+", color="black")
+        plt.scatter(colr_r, row_r, marker="+", color="black")
+        plt.axvline(px1, color="blue")
+        plt.axvline(px2, color="blue")
+        plt.axvline(comp_l, color="red")
+        plt.axvline(comp_r, color="red")
         plt.show()
 
     return comp_l, comp_r
 
 
-def calc_borders_step(image, sob, pr, ccl, ccr, sign=1, refine=False, plot=True, barid=0, px=0):
-    cut1 = sob[pr, ccl:ccr + 1]
-    mcut1 = image[pr, ccl:ccr + 1]
+def calc_borders_step(
+    image, sob, pr, ccl, ccr, sign=1, refine=False, plot=True, barid=0, px=0
+):
+    cut1 = sob[pr, ccl : ccr + 1]
+    mcut1 = image[pr, ccl : ccr + 1]
 
     res = feat.peak_local_max(sign * cut1, exclude_border=4, num_peaks=2)
 
@@ -643,22 +709,22 @@ def calc_borders_step(image, sob, pr, ccl, ccr, sign=1, refine=False, plot=True,
         res1 = []
 
     if sign > 0:
-        bar_s = 'l'
+        bar_s = "l"
     else:
-        bar_s = 'r'
+        bar_s = "r"
 
     if plot:
         xdummy = np.arange(ccl, ccr + 1)
         plt.title("{}bar {}, prow={} px={}".format(bar_s, barid, pr, px))
         plt.plot(xdummy, sign * cut1)
-        plt.axvline(px, color='g')
+        plt.axvline(px, color="g")
         ax1 = plt.gca()
         ax2 = ax1.twinx()
-        ax2.plot(xdummy, mcut1, '--')
+        ax2.plot(xdummy, mcut1, "--")
         for r in res1:
-            plt.axvline(ccl + r, color='red')
+            plt.axvline(ccl + r, color="red")
         for r in res[:, 0]:
-            plt.axvline(ccl + r, color='red', linestyle='--')
+            plt.axvline(ccl + r, color="red", linestyle="--")
     xpeak = None
     if len(res1) != 0:
         idx = (sign * cut1)[res1].argmax()
@@ -666,13 +732,12 @@ def calc_borders_step(image, sob, pr, ccl, ccr, sign=1, refine=False, plot=True,
 
     if plot:
         if xpeak:
-            plt.axvline(xpeak, color='black')
+            plt.axvline(xpeak, color="black")
         plt.show()
 
     if xpeak:
         if refine:
-            x_t, y_t = refine_peaks(
-                sign * sob[pr], np.array([xpeak]), window_width=3)
+            x_t, y_t = refine_peaks(sign * sob[pr], np.array([xpeak]), window_width=3)
             xpeak_ref = x_t
         else:
             xpeak_ref = xpeak

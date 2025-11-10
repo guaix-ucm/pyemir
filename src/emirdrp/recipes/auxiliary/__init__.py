@@ -27,7 +27,7 @@ from emirdrp.processing.combine import basic_processing_with_segmentation
 from emirdrp.processing.combine import combine_images, scale_with_median
 
 
-_logger = logging.getLogger('numina.recipes.emir')
+_logger = logging.getLogger("numina.recipes.emir")
 
 
 class BiasRecipe(EmirRecipe):
@@ -60,21 +60,23 @@ class BiasRecipe(EmirRecipe):
     biasframe = Result(prods.MasterBias)
 
     def run(self, rinput):
-        _logger.info('starting bias reduction')
+        _logger.info("starting bias reduction")
 
         iinfo = self.datamodel.gather_info_oresult(rinput.obresult)
 
         if iinfo:
-            mode = iinfo[0]['readmode']
+            mode = iinfo[0]["readmode"]
             if mode.lower() not in EMIR_BIAS_MODES:
-                msg = 'readmode %s, is not a bias mode' % mode
+                msg = "readmode %s, is not a bias mode" % mode
                 _logger.error(msg)
                 raise RecipeError(msg)
 
-        def flow(x): return x
-        hdulist = basic_processing_with_combination(rinput, flow,
-                                                    method=median,
-                                                    errors=False)
+        def flow(x):
+            return x
+
+        hdulist = basic_processing_with_combination(
+            rinput, flow, method=median, errors=False
+        )
 
         pdata = hdulist[0].data
 
@@ -82,9 +84,9 @@ class BiasRecipe(EmirRecipe):
         # reduction keywords
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
-        hdr['CCDMEAN'] = pdata.mean()
+        hdr["CCDMEAN"] = pdata.mean()
 
-        _logger.info('bias reduction ended')
+        _logger.info("bias reduction ended")
 
         result = self.create_result(biasframe=DataFrame(hdulist))
         return result
@@ -116,20 +118,20 @@ class DarkRecipe(EmirRecipe):
 
     def run(self, rinput):
 
-        _logger.info('starting dark reduction')
+        _logger.info("starting dark reduction")
 
         flow = self.init_filters(rinput)
 
         iinfo = gather_info_frames(rinput.obresult.frames)
         ref_exptime = 0.0
         for el in iinfo[1:]:
-            if abs(el['texp'] - ref_exptime) > 1e-4:
-                _logger.error('image with wrong exposure time')
-                raise RecipeError('image with wrong exposure time')
+            if abs(el["texp"] - ref_exptime) > 1e-4:
+                _logger.error("image with wrong exposure time")
+                raise RecipeError("image with wrong exposure time")
 
-        hdulist = basic_processing_with_combination(rinput, flow,
-                                                    method=median,
-                                                    errors=True)
+        hdulist = basic_processing_with_combination(
+            rinput, flow, method=median, errors=True
+        )
 
         pdata = hdulist[0].data
 
@@ -138,9 +140,9 @@ class DarkRecipe(EmirRecipe):
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
-        hdr['CCDMEAN'] = pdata.mean()
+        hdr["CCDMEAN"] = pdata.mean()
 
-        _logger.info('dark reduction ended')
+        _logger.info("dark reduction ended")
         result = self.create_result(darkframe=hdulist)
         return result
 
@@ -181,23 +183,23 @@ class IntensityFlatRecipe(EmirRecipe):
     flatframe = Result(prods.MasterIntensityFlat)
 
     def run(self, rinput):
-        _logger.info('starting flat reduction')
+        _logger.info("starting flat reduction")
 
         errors = True
 
         flow = self.init_filters(rinput)
-        hdulist = basic_processing_with_combination(rinput, flow,
-                                                    method=median,
-                                                    errors=errors)
+        hdulist = basic_processing_with_combination(
+            rinput, flow, method=median, errors=errors
+        )
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         mm = hdulist[0].data.mean()
-        hdr['CCDMEAN'] = mm
+        hdr["CCDMEAN"] = mm
 
         hdulist[0].data /= mm
         if errors:
-            hdulist['variance'].data /= (mm*mm)
+            hdulist["variance"].data /= mm * mm
 
         result = self.create_result(flatframe=hdulist)
 
@@ -215,7 +217,7 @@ class IntensityFlatRecipe2(EmirRecipe):
     def run(self, rinput):
         from numina.array import combine
 
-        _logger.info('starting flat reduction')
+        _logger.info("starting flat reduction")
 
         frames = rinput.obresult.frames
 
@@ -223,31 +225,32 @@ class IntensityFlatRecipe2(EmirRecipe):
             scaled_mean = scale_with_median(combine.mean)
             c_img = combine_images(list_of, method=scaled_mean, errors=False)
 
-        self.save_intermediate_img(c_img, 'p0.fits')
+        self.save_intermediate_img(c_img, "p0.fits")
 
         flow = self.init_filters(rinput)
 
         processed_img = flow(c_img)
 
-        self.save_intermediate_img(processed_img, 'p1.fits')
+        self.save_intermediate_img(processed_img, "p1.fits")
 
         hdr = processed_img[0].header
         self.set_base_headers(hdr)
 
         import scipy.ndimage.filters
 
-        _logger.info('median filter')
+        _logger.info("median filter")
         data_smooth = scipy.ndimage.filters.median_filter(
-            processed_img[0].data, size=11)
+            processed_img[0].data, size=11
+        )
 
-        self.save_intermediate_array(data_smooth, 'smooth.fits')
+        self.save_intermediate_array(data_smooth, "smooth.fits")
 
         mm = processed_img[0].data.mean()
-        hdr['CCDMEAN'] = mm
+        hdr["CCDMEAN"] = mm
 
         processed_img[0].data /= data_smooth
 
-        self.save_intermediate_img(processed_img, 'p2.fits')
+        self.save_intermediate_img(processed_img, "p2.fits")
 
         result = self.create_result(master_flatframe=processed_img)
 
@@ -255,9 +258,7 @@ class IntensityFlatRecipe2(EmirRecipe):
 
 
 class SimpleSkyRecipe(EmirRecipe):
-    """Recipe to process data taken in intensity flat-field mode.
-
-    """
+    """Recipe to process data taken in intensity flat-field mode."""
 
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     obresult = reqs.ObservationResultRequirement()
@@ -268,13 +269,13 @@ class SimpleSkyRecipe(EmirRecipe):
     skyframe = Result(prods.MasterSky)
 
     def run(self, rinput):
-        _logger.info('starting sky reduction')
+        _logger.info("starting sky reduction")
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, flow,
-                                                    method=median,
-                                                    errors=True)
+        hdulist = basic_processing_with_combination(
+            rinput, flow, method=median, errors=True
+        )
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -285,9 +286,7 @@ class SimpleSkyRecipe(EmirRecipe):
 
 
 class DitherSkyRecipe(EmirRecipe):
-    """Recipe to process data taken in dither sky mode.
-
-    """
+    """Recipe to process data taken in dither sky mode."""
 
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
@@ -298,20 +297,20 @@ class DitherSkyRecipe(EmirRecipe):
     skyframe = Result(prods.MasterSky)
 
     def run(self, rinput):
-        _logger.debug('instrument %s, mode %s', rinput.obresult.instrument,
-                      rinput.obresult.mode
-                      )
-        _logger.info('starting sky reduction with dither')
+        _logger.debug(
+            "instrument %s, mode %s", rinput.obresult.instrument, rinput.obresult.mode
+        )
+        _logger.info("starting sky reduction with dither")
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_segmentation(rinput, flow,
-                                                     method=median,
-                                                     errors=True)
+        hdulist = basic_processing_with_segmentation(
+            rinput, flow, method=median, errors=True
+        )
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
-        _logger.info('end sky reduction with dither')
+        _logger.info("end sky reduction with dither")
 
         result = self.create_result(skyframe=hdulist)
 

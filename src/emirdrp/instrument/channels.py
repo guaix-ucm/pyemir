@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
+
 def braid(*iterables):
     """Return the elements of each iterator in turn until some is exhausted.
     This function is similar to the roundrobin example
@@ -26,8 +27,8 @@ def braid(*iterables):
 
 _P1 = slice(0, 1024)
 _P2 = slice(1024, 2048)
-_O1 = [slice(i*128, (i+1)*128) for i in range(8)]
-_O2 = [slice(1024 + (7-i)*128, 1024+(8-i)*128) for i in range(8)]
+_O1 = [slice(i * 128, (i + 1) * 128) for i in range(8)]
+_O2 = [slice(1024 + (7 - i) * 128, 1024 + (8 - i) * 128) for i in range(8)]
 
 
 _CH1 = [(_P2, s) for s in _O2]
@@ -41,8 +42,7 @@ CHANNELS_1 = CHANNELS
 # Channels as they are populated during reconstruction
 CHANNELS_2 = [chan for chans in [_CH3, _CH4, _CH1, _CH2] for chan in chans]
 # Channels as listed in Carlos Gonzalez Ph. D. Thesis
-CHANNELS_3 = [chan for chans in [_CH2, _CH3, _CH4, _CH1]
-              for chan in reversed(chans)]
+CHANNELS_3 = [chan for chans in [_CH2, _CH3, _CH4, _CH1] for chan in reversed(chans)]
 # Channels in readout order
 CHANNELS_READOUT = list(braid(_CH3, _CH4, _CH1, _CH2))
 
@@ -56,7 +56,7 @@ QUADRANTS = [(_P2, _P1), (_P1, _P1), (_P1, _P2), (_P2, _P2)]
 
 # FIXME: this is a hack to convert channel name to a structure
 def convert_name_to_channels(conf):
-    chname = conf.configuration['detector']['channels']
+    chname = conf.configuration["detector"]["channels"]
     allcha = globals()[chname]
-    conf.configuration['detector']['channels'] = allcha
+    conf.configuration["detector"]["channels"] = allcha
     return conf

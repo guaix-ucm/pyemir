@@ -29,12 +29,14 @@ def get_islitlet(ipixel):
     """
 
     if ipixel < 1:
-        raise ValueError('ipixel={} cannot be < 1'.format(ipixel))
+        raise ValueError("ipixel={} cannot be < 1".format(ipixel))
 
     if ipixel > EMIR_NPIXPERSLIT_RECTIFIED * EMIR_NBARS:
-        raise ValueError('ipixel={} cannot be > {}'.format(
-            ipixel, EMIR_NPIXPERSLIT_RECTIFIED * EMIR_NBARS
-        ))
+        raise ValueError(
+            "ipixel={} cannot be > {}".format(
+                ipixel, EMIR_NPIXPERSLIT_RECTIFIED * EMIR_NBARS
+            )
+        )
 
     islitlet = int(ipixel / EMIR_NPIXPERSLIT_RECTIFIED) + 1
 

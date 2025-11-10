@@ -88,47 +88,70 @@ class SlitletLimits(object):
         if grism not in EMIR_VALID_GRISMS:
             raise ValueError("Grism " + str(grism) + " is not a valid option")
         if spfilter not in EMIR_VALID_FILTERS:
-            raise ValueError("Filter " + str(spfilter) +
-                             " is not a valid  option")
+            raise ValueError("Filter " + str(spfilter) + " is not a valid  option")
         if islitlet < 1 or islitlet > EMIR_NBARS:
-            raise ValueError("islitlet=" + str(islitlet) +
-                             " is outside valid range")
+            raise ValueError("islitlet=" + str(islitlet) + " is outside valid range")
 
         # check that islitlet is within valid the range for the
         # grism + filter configuration
         if grism == "J" and spfilter == "J":
             if islitlet < 2 or islitlet > 54:
-                raise ValueError("islitlet=" + str(islitlet) +
-                                 " is outside valid range for grism " +
-                                 str(grism) + " and filter " + str(spfilter))
+                raise ValueError(
+                    "islitlet="
+                    + str(islitlet)
+                    + " is outside valid range for grism "
+                    + str(grism)
+                    + " and filter "
+                    + str(spfilter)
+                )
         elif grism == "H" and spfilter == "H":
             if islitlet < 2 or islitlet > 54:
-                raise ValueError("islitlet=" + str(islitlet) +
-                                 " is outside valid range for grism " +
-                                 str(grism) + " and filter " + str(spfilter))
+                raise ValueError(
+                    "islitlet="
+                    + str(islitlet)
+                    + " is outside valid range for grism "
+                    + str(grism)
+                    + " and filter "
+                    + str(spfilter)
+                )
         elif grism == "K" and spfilter == "Ksp":
             if islitlet < 2 or islitlet > 54:
-                raise ValueError("islitlet=" + str(islitlet) +
-                                 " is outside valid range for grism " +
-                                 str(grism) + " and filter " + str(spfilter))
+                raise ValueError(
+                    "islitlet="
+                    + str(islitlet)
+                    + " is outside valid range for grism "
+                    + str(grism)
+                    + " and filter "
+                    + str(spfilter)
+                )
         elif grism == "LR" and spfilter == "YJ":
             if islitlet < 4 or islitlet > 55:
-                raise ValueError("islitlet=" + str(islitlet) +
-                                 " is outside valid range for grism " +
-                                 str(grism) + " and filter " + str(spfilter))
+                raise ValueError(
+                    "islitlet="
+                    + str(islitlet)
+                    + " is outside valid range for grism "
+                    + str(grism)
+                    + " and filter "
+                    + str(spfilter)
+                )
         elif grism == "LR" and spfilter == "HK":
             if islitlet < 4 or islitlet > 55:
-                raise ValueError("islitlet=" + str(islitlet) +
-                                 " is outside valid range for grism " +
-                                 str(grism) + " and filter " + str(spfilter))
+                raise ValueError(
+                    "islitlet="
+                    + str(islitlet)
+                    + " is outside valid range for grism "
+                    + str(grism)
+                    + " and filter "
+                    + str(spfilter)
+                )
         else:
-            raise ValueError("Minimum and maximum islitlet still undefined "
-                             "for grism " + str(grism) +
-                             " and filter " + str(spfilter))
+            raise ValueError(
+                "Minimum and maximum islitlet still undefined "
+                "for grism " + str(grism) + " and filter " + str(spfilter)
+            )
 
         # expected boundaries of the rectangle enclosing the 2D image
-        coeff_bb_ns1 = [-8.03677111e+01, 3.98169266e+01, -7.77949391e-02,
-                        9.00823598e-04]
+        coeff_bb_ns1 = [-8.03677111e01, 3.98169266e01, -7.77949391e-02, 9.00823598e-04]
         delta_bb_ns2 = 84
         # offset measured overplotting ds9_bounddict.reg (created with the
         # script fit_boundaries) corresponding to grism J and filter J
@@ -145,8 +168,12 @@ class SlitletLimits(object):
         elif grism == "LR" and spfilter == "HK":
             offset_with_J_J = -95.0
         else:
-            raise ValueError("Boundaries still undefined for grism " +
-                             str(grism) + " and filter " + str(spfilter))
+            raise ValueError(
+                "Boundaries still undefined for grism "
+                + str(grism)
+                + " and filter "
+                + str(spfilter)
+            )
         coeff_bb_ns1[0] += offset_with_J_J
         poly_bb_ns1 = np.polynomial.Polynomial(coeff_bb_ns1)
         self.bb_nc1_orig = 1
@@ -196,9 +223,10 @@ class SlitletLimits(object):
                 self.xmin_lower_boundary_fit = 300
                 # self.xmax_lower_boundary_fit = 1750
         else:
-            raise ValueError("Ranges to fit boundaries still undefined "
-                             "for grism " + str(grism) +
-                             " and filter " + str(spfilter))
+            raise ValueError(
+                "Ranges to fit boundaries still undefined "
+                "for grism " + str(grism) + " and filter " + str(spfilter)
+            )
 
 
 def extract_slitlet2d(image_2k2k, sltlim):
@@ -221,8 +249,10 @@ def extract_slitlet2d(image_2k2k, sltlim):
     """
 
     # extract slitlet region
-    slitlet2d = image_2k2k[(sltlim.bb_ns1_orig - 1):sltlim.bb_ns2_orig,
-                           (sltlim.bb_nc1_orig - 1):sltlim.bb_nc2_orig]
+    slitlet2d = image_2k2k[
+        (sltlim.bb_ns1_orig - 1) : sltlim.bb_ns2_orig,
+        (sltlim.bb_nc1_orig - 1) : sltlim.bb_nc2_orig,
+    ]
 
     # transform to float
     slitlet2d = slitlet2d.astype(float)
@@ -232,10 +262,16 @@ def extract_slitlet2d(image_2k2k, sltlim):
 
 
 def compute_slitlet_boundaries(
-        filename, grism, spfilter, list_slitlets,
-        size_x_medfilt, size_y_savgol,
-        times_sigma_threshold,
-        bounddict, debugplot=0):
+    filename,
+    grism,
+    spfilter,
+    list_slitlets,
+    size_x_medfilt,
+    size_y_savgol,
+    times_sigma_threshold,
+    bounddict,
+    debugplot=0,
+):
     """Compute slitlet boundaries using continuum lamp images.
 
     Parameters
@@ -271,21 +307,22 @@ def compute_slitlet_boundaries(
     naxis2, naxis1 = image2d.shape
     hdulist.close()
     if debugplot >= 10:
-        print('>>> NAXIS1:', naxis1)
-        print('>>> NAXIS2:', naxis2)
+        print(">>> NAXIS1:", naxis1)
+        print(">>> NAXIS2:", naxis2)
 
     # ToDo: replace this by application of cosmetic defect mask!
     for j in range(1024):
         image2d[1024, j] = (image2d[1023, j] + image2d[1025, j]) / 2
-        image2d[1023, j + 1024] = (image2d[1022, j + 1024] +
-                                   image2d[1024, j + 1024]) / 2
+        image2d[1023, j + 1024] = (
+            image2d[1022, j + 1024] + image2d[1024, j + 1024]
+        ) / 2
 
     # remove path from filename
     sfilename = os.path.basename(filename)
 
     # check that the FITS file has been obtained with EMIR
-    instrument = image_header['instrume']
-    if instrument != 'EMIR':
+    instrument = image_header["instrume"]
+    if instrument != "EMIR":
         raise ValueError("INSTRUME keyword is not 'EMIR'!")
 
     # read CSU configuration from FITS header
@@ -295,63 +332,81 @@ def compute_slitlet_boundaries(
         dtu2_config = DtuConf.from_img(img)
 
     # read grism
-    grism_in_header = image_header['grism']
+    grism_in_header = image_header["grism"]
     if grism != grism_in_header:
-        raise ValueError("GRISM keyword=" + grism_in_header +
-                         " is not the expected value=" + grism)
+        raise ValueError(
+            "GRISM keyword=" + grism_in_header + " is not the expected value=" + grism
+        )
 
     # read filter
-    spfilter_in_header = image_header['filter']
+    spfilter_in_header = image_header["filter"]
     if spfilter != spfilter_in_header:
-        raise ValueError("FILTER keyword=" + spfilter_in_header +
-                         " is not the expected value=" + spfilter)
+        raise ValueError(
+            "FILTER keyword="
+            + spfilter_in_header
+            + " is not the expected value="
+            + spfilter
+        )
 
     # read rotator position angle
-    rotang = image_header['rotang']
+    rotang = image_header["rotang"]
 
     # read date-obs
-    date_obs = image_header['date-obs']
+    date_obs = image_header["date-obs"]
 
     for islitlet in list_slitlets:
         if debugplot < 10:
-            sys.stdout.write('.')
+            sys.stdout.write(".")
             sys.stdout.flush()
 
         sltlim = SlitletLimits(grism, spfilter, islitlet)
         # extract slitlet2d
         slitlet2d = extract_slitlet2d(image2d, sltlim)
         if debugplot % 10 != 0:
-            ximshow(slitlet2d,
-                    title=sfilename + " [original]"
-                    "\nslitlet=" + str(islitlet) +
-                    ", grism=" + grism +
-                    ", filter=" + spfilter +
-                    ", rotang=" + str(round(rotang, 2)),
-                    first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
-                    debugplot=debugplot)
+            ximshow(
+                slitlet2d,
+                title=sfilename + " [original]"
+                "\nslitlet="
+                + str(islitlet)
+                + ", grism="
+                + grism
+                + ", filter="
+                + spfilter
+                + ", rotang="
+                + str(round(rotang, 2)),
+                first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
+                debugplot=debugplot,
+            )
 
         # apply 1d median filtering (along the spectral direction)
         # to remove bad pixels
         size_x = size_x_medfilt
         size_y = 1
         slitlet2d_smooth = ndimage.filters.median_filter(
-            slitlet2d, size=(size_y, size_x))
+            slitlet2d, size=(size_y, size_x)
+        )
 
         if debugplot % 10 != 0:
-            ximshow(slitlet2d_smooth,
-                    title=sfilename + " [smoothed]"
-                    "\nslitlet=" + str(islitlet) +
-                    ", grism=" + grism +
-                    ", filter=" + spfilter +
-                    ", rotang=" + str(round(rotang, 2)),
-                    first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
-                    debugplot=debugplot)
+            ximshow(
+                slitlet2d_smooth,
+                title=sfilename + " [smoothed]"
+                "\nslitlet="
+                + str(islitlet)
+                + ", grism="
+                + grism
+                + ", filter="
+                + spfilter
+                + ", rotang="
+                + str(round(rotang, 2)),
+                first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
+                debugplot=debugplot,
+            )
 
         # apply 1d Savitzky-Golay filter (along the spatial direction)
         # to compute first derivative
         slitlet2d_savgol = savgol_filter(
-            slitlet2d_smooth, window_length=size_y_savgol, polyorder=2,
-            deriv=1, axis=0)
+            slitlet2d_smooth, window_length=size_y_savgol, polyorder=2, deriv=1, axis=0
+        )
 
         # compute basic statistics
         q25, q50, q75 = np.percentile(slitlet2d_savgol, q=[25.0, 50.0, 75.0])
@@ -360,16 +415,24 @@ def compute_slitlet_boundaries(
             print("q50, sigmag:", q50, sigmag)
 
         if debugplot % 10 != 0:
-            ximshow(slitlet2d_savgol,
-                    title=sfilename + " [S.-G.filt.]"
-                    "\nslitlet=" + str(islitlet) +
-                    ", grism=" + grism +
-                    ", filter=" + spfilter +
-                    ", rotang=" + str(round(rotang, 2)),
-                    first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
-                    z1z2=(q50-times_sigma_threshold*sigmag,
-                          q50+times_sigma_threshold*sigmag),
-                    debugplot=debugplot)
+            ximshow(
+                slitlet2d_savgol,
+                title=sfilename + " [S.-G.filt.]"
+                "\nslitlet="
+                + str(islitlet)
+                + ", grism="
+                + grism
+                + ", filter="
+                + spfilter
+                + ", rotang="
+                + str(round(rotang, 2)),
+                first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
+                z1z2=(
+                    q50 - times_sigma_threshold * sigmag,
+                    q50 + times_sigma_threshold * sigmag,
+                ),
+                debugplot=debugplot,
+            )
 
         # identify objects in slitlet2d_savgol: pixels with positive
         # derivatives are identify independently from pixels with
@@ -384,35 +447,42 @@ def compute_slitlet_boundaries(
         #
         # search for positive derivatives
         labels2d_objects_pos, no_objects_pos = ndimage.label(
-            slitlet2d_savgol > q50 + times_sigma_threshold * sigmag)
+            slitlet2d_savgol > q50 + times_sigma_threshold * sigmag
+        )
         # search for negative derivatives
         labels2d_objects_neg, no_objects_neg = ndimage.label(
-            slitlet2d_savgol < q50 - times_sigma_threshold * sigmag)
+            slitlet2d_savgol < q50 - times_sigma_threshold * sigmag
+        )
         # merge both sets
         non_zero_neg = np.where(labels2d_objects_neg > 0)
         labels2d_objects = np.copy(labels2d_objects_pos)
-        labels2d_objects[non_zero_neg] += \
+        labels2d_objects[non_zero_neg] += (
             labels2d_objects_neg[non_zero_neg] + no_objects_pos
+        )
         no_objects = no_objects_pos + no_objects_neg
 
         if debugplot >= 10:
-            print("Number of objects with positive derivative:",
-                  no_objects_pos)
-            print("Number of objects with negative derivative:",
-                  no_objects_neg)
+            print("Number of objects with positive derivative:", no_objects_pos)
+            print("Number of objects with negative derivative:", no_objects_neg)
             print("Total number of objects initially found...:", no_objects)
 
         if debugplot % 10 != 0:
-            ximshow(labels2d_objects,
-                    z1z2=(0, no_objects),
-                    title=sfilename + " [objects]"
-                    "\nslitlet=" + str(islitlet) +
-                    ", grism=" + grism +
-                    ", filter=" + spfilter +
-                    ", rotang=" + str(round(rotang, 2)),
-                    first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
-                    cbar_label="Object number",
-                    debugplot=debugplot)
+            ximshow(
+                labels2d_objects,
+                z1z2=(0, no_objects),
+                title=sfilename + " [objects]"
+                "\nslitlet="
+                + str(islitlet)
+                + ", grism="
+                + grism
+                + ", filter="
+                + spfilter
+                + ", rotang="
+                + str(round(rotang, 2)),
+                first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
+                cbar_label="Object number",
+                debugplot=debugplot,
+            )
 
         # select boundaries as the largest objects found with
         # positive and negative derivatives
@@ -420,7 +490,7 @@ def compute_slitlet_boundaries(
         i_der_pos = 0  # id of the object with deriv > 0
         n_der_neg = 0  # number of pixels covered by the object with deriv < 0
         i_der_neg = 0  # id of the object with deriv < 0
-        for i in range(1, no_objects+1):
+        for i in range(1, no_objects + 1):
             xy_tmp = np.where(labels2d_objects == i)
             n_pix = len(xy_tmp[0])
             if i <= no_objects_pos:
@@ -434,9 +504,11 @@ def compute_slitlet_boundaries(
 
         # determine which boundary is lower and which is upper
         y_center_mass_der_pos = ndimage.center_of_mass(
-            slitlet2d_savgol, labels2d_objects, [i_der_pos])[0][0]
+            slitlet2d_savgol, labels2d_objects, [i_der_pos]
+        )[0][0]
         y_center_mass_der_neg = ndimage.center_of_mass(
-            slitlet2d_savgol, labels2d_objects, [i_der_neg])[0][0]
+            slitlet2d_savgol, labels2d_objects, [i_der_neg]
+        )[0][0]
         if y_center_mass_der_pos < y_center_mass_der_neg:
             i_lower = i_der_pos
             i_upper = i_der_neg
@@ -484,66 +556,76 @@ def compute_slitlet_boundaries(
             # declare new SpectrumTrail instance
             boundary = SpectrumTrail()
             # define new boundary
-            boundary.fit(x=xfit, y=yfit, deg=sltlim.deg_boundary,
-                         times_sigma_reject=10,
-                         title="slit:" + str(sltlim.islitlet) +
-                               ", deg=" + str(sltlim.deg_boundary),
-                         debugplot=0)
+            boundary.fit(
+                x=xfit,
+                y=yfit,
+                deg=sltlim.deg_boundary,
+                times_sigma_reject=10,
+                title="slit:"
+                + str(sltlim.islitlet)
+                + ", deg="
+                + str(sltlim.deg_boundary),
+                debugplot=0,
+            )
             list_boundaries.append(boundary)
 
         if debugplot % 10 != 0:
             for tmp_img, tmp_label in zip(
-                [slitlet2d_savgol, slitlet2d],
-                [' [S.-G.filt.]', ' [original]']
+                [slitlet2d_savgol, slitlet2d], [" [S.-G.filt.]", " [original]"]
             ):
-                ax = ximshow(tmp_img,
-                             title=sfilename + tmp_label +
-                             "\nslitlet=" + str(islitlet) +
-                             ", grism=" + grism +
-                             ", filter=" + spfilter +
-                             ", rotang=" + str(round(rotang, 2)),
-                             first_pixel=(sltlim.bb_nc1_orig,
-                                          sltlim.bb_ns1_orig),
-                             show=False,
-                             debugplot=debugplot)
+                ax = ximshow(
+                    tmp_img,
+                    title=sfilename
+                    + tmp_label
+                    + "\nslitlet="
+                    + str(islitlet)
+                    + ", grism="
+                    + grism
+                    + ", filter="
+                    + spfilter
+                    + ", rotang="
+                    + str(round(rotang, 2)),
+                    first_pixel=(sltlim.bb_nc1_orig, sltlim.bb_ns1_orig),
+                    show=False,
+                    debugplot=debugplot,
+                )
                 for k in range(2):
                     xpol, ypol = list_boundaries[k].linspace_pix(
-                        start=1, stop=EMIR_NAXIS1)
-                    ax.plot(xpol, ypol, 'b--', linewidth=1)
+                        start=1, stop=EMIR_NAXIS1
+                    )
+                    ax.plot(xpol, ypol, "b--", linewidth=1)
                 for k in range(2):
                     xpol, ypol = list_boundaries[k].linspace_pix()
-                    ax.plot(xpol, ypol, 'g--', linewidth=4)
+                    ax.plot(xpol, ypol, "g--", linewidth=4)
                 # show plot
                 pause_debugplot(debugplot, pltshow=True)
 
         # update bounddict
         tmp_dict = {
-            'boundary_coef_lower':
-                list_boundaries[0].poly_funct.coef.tolist(),
-            'boundary_xmin_lower': list_boundaries[0].xlower_line,
-            'boundary_xmax_lower': list_boundaries[0].xupper_line,
-            'boundary_coef_upper':
-                list_boundaries[1].poly_funct.coef.tolist(),
-            'boundary_xmin_upper': list_boundaries[1].xlower_line,
-            'boundary_xmax_upper': list_boundaries[1].xupper_line,
-            'csu_bar_left': csu_config.csu_bar_left(islitlet),
-            'csu_bar_right': csu_config.csu_bar_right(islitlet),
-            'csu_bar_slit_center': csu_config.csu_bar_slit_center(islitlet),
-            'csu_bar_slit_width': csu_config.csu_bar_slit_width(islitlet),
-            'rotang': rotang,
-            'xdtu': dtu2_config.xaxis.coor,
-            'ydtu': dtu2_config.yaxis.coor,
-            'zdtu': dtu2_config.zaxis.coor,
-            'xdtu_0': dtu2_config.xaxis.coorx_0,
-            'ydtu_0': dtu2_config.yaxis.coory_0,
-            'zdtu_0': dtu2_config.zaxis.coor_0,
-            'zzz_info1': os.getlogin() + '@' + socket.gethostname(),
-            'zzz_info2': datetime.now().isoformat()
+            "boundary_coef_lower": list_boundaries[0].poly_funct.coef.tolist(),
+            "boundary_xmin_lower": list_boundaries[0].xlower_line,
+            "boundary_xmax_lower": list_boundaries[0].xupper_line,
+            "boundary_coef_upper": list_boundaries[1].poly_funct.coef.tolist(),
+            "boundary_xmin_upper": list_boundaries[1].xlower_line,
+            "boundary_xmax_upper": list_boundaries[1].xupper_line,
+            "csu_bar_left": csu_config.csu_bar_left(islitlet),
+            "csu_bar_right": csu_config.csu_bar_right(islitlet),
+            "csu_bar_slit_center": csu_config.csu_bar_slit_center(islitlet),
+            "csu_bar_slit_width": csu_config.csu_bar_slit_width(islitlet),
+            "rotang": rotang,
+            "xdtu": dtu2_config.xaxis.coor,
+            "ydtu": dtu2_config.yaxis.coor,
+            "zdtu": dtu2_config.zaxis.coor,
+            "xdtu_0": dtu2_config.xaxis.coorx_0,
+            "ydtu_0": dtu2_config.yaxis.coory_0,
+            "zdtu_0": dtu2_config.zaxis.coor_0,
+            "zzz_info1": os.getlogin() + "@" + socket.gethostname(),
+            "zzz_info2": datetime.now().isoformat(),
         }
         slitlet_label = "slitlet" + str(islitlet).zfill(2)
-        if slitlet_label not in bounddict['contents']:
-            bounddict['contents'][slitlet_label] = {}
-        bounddict['contents'][slitlet_label][date_obs] = tmp_dict
+        if slitlet_label not in bounddict["contents"]:
+            bounddict["contents"][slitlet_label] = {}
+        bounddict["contents"][slitlet_label][date_obs] = tmp_dict
 
     if debugplot < 10:
         print("")
@@ -555,35 +637,40 @@ def main(args=None):
     parser = argparse.ArgumentParser()
 
     # positional arguments
-    parser.add_argument("filename",
-                        help="FITS file or txt file with list of FITS files",
-                        type=argparse.FileType('rb'))
-    parser.add_argument("--grism", required=True,
-                        help="Grism name",
-                        choices=EMIR_VALID_GRISMS)
-    parser.add_argument("--filter", required=True,
-                        help="Filter name",
-                        choices=EMIR_VALID_FILTERS)
-    parser.add_argument("--tuple_slit_numbers", required=True,
-                        help="Tuple n1[,n2[,step]] to define slitlet numbers")
+    parser.add_argument(
+        "filename",
+        help="FITS file or txt file with list of FITS files",
+        type=argparse.FileType("rb"),
+    )
+    parser.add_argument(
+        "--grism", required=True, help="Grism name", choices=EMIR_VALID_GRISMS
+    )
+    parser.add_argument(
+        "--filter", required=True, help="Filter name", choices=EMIR_VALID_FILTERS
+    )
+    parser.add_argument(
+        "--tuple_slit_numbers",
+        required=True,
+        help="Tuple n1[,n2[,step]] to define slitlet numbers",
+    )
 
     # optional arguments
-    parser.add_argument("--first_time",
-                        help="Generate new bounddict json file",
-                        action="store_true")
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting/debugging" +
-                             " (default=0)",
-                        type=int, default=0,
-                        choices=DEBUGPLOT_CODES)
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument(
+        "--first_time", help="Generate new bounddict json file", action="store_true"
+    )
+    parser.add_argument(
+        "--debugplot",
+        help="Integer indicating plotting/debugging" + " (default=0)",
+        type=int,
+        default=0,
+        choices=DEBUGPLOT_CODES,
+    )
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args()
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print("\033[1m\033[31mExecuting: " + " ".join(sys.argv) + "\033[0m\n")
 
     # read slitlet numbers to be computed
     tmp_str = args.tuple_slit_numbers.split(",")
@@ -607,33 +694,35 @@ def main(args=None):
         raise ValueError("Invalid slitlet number > EMIR_NBARS")
     if step <= 0:
         raise ValueError("Invalid step <= 0")
-    list_slitlets = range(n1, n2+1, step)
+    list_slitlets = range(n1, n2 + 1, step)
 
     # define bounddict file name
-    bounddict_file = "bounddict_grism_" + args.grism + "_filter_" + \
-                     args.filter + ".json"
+    bounddict_file = (
+        "bounddict_grism_" + args.grism + "_filter_" + args.filter + ".json"
+    )
 
     # define bounddict prior to the new computation
     if args.first_time:
         bounddict = {}
-        bounddict['instrument'] = 'EMIR'
-        bounddict['meta_info'] = {}
-        bounddict['meta_info']['creation_date'] = datetime.now().isoformat()
-        bounddict['meta_info']['description'] = \
-            'slitlet boundaries from fits to continuum-lamp exposures'
-        bounddict['meta_info']['recipe_name'] = 'undefined'
-        bounddict['tags'] = {}
-        bounddict['tags']['grism'] = args.grism
-        bounddict['tags']['filter'] = args.filter
-        bounddict['uuid'] = str(uuid4())
-        bounddict['contents'] = {}
-        print('>>> Generating new bounddict from scratch')
+        bounddict["instrument"] = "EMIR"
+        bounddict["meta_info"] = {}
+        bounddict["meta_info"]["creation_date"] = datetime.now().isoformat()
+        bounddict["meta_info"][
+            "description"
+        ] = "slitlet boundaries from fits to continuum-lamp exposures"
+        bounddict["meta_info"]["recipe_name"] = "undefined"
+        bounddict["tags"] = {}
+        bounddict["tags"]["grism"] = args.grism
+        bounddict["tags"]["filter"] = args.filter
+        bounddict["uuid"] = str(uuid4())
+        bounddict["contents"] = {}
+        print(">>> Generating new bounddict from scratch")
     else:
         if not os.path.isfile(bounddict_file):
             raise ValueError("File " + bounddict_file + " not found!")
         else:
-            bounddict = json.loads(open(bounddict_file, mode='rt').read())
-            print('>>> Initializing bounddict from previous file:')
+            bounddict = json.loads(open(bounddict_file, mode="rt").read())
+            print(">>> Initializing bounddict from previous file:")
             print(bounddict_file)
 
     # if input file is a txt file, assume it is a list of FITS files
@@ -642,12 +731,12 @@ def main(args=None):
         # since the input filename has been opened with argparse in binary
         # mode, it is necessary to close it and open it in text mode
         args.filename.close()
-        with open(filename, mode='rt') as f:
+        with open(filename, mode="rt") as f:
             file_content = f.read().splitlines()
         list_fits_files = []
         for line in file_content:
             if len(line) > 0:
-                if line[0] != '#':
+                if line[0] != "#":
                     tmpfile = line.split()[0]
                     if not os.path.isfile(tmpfile):
                         raise ValueError("File " + tmpfile + " not found!")
@@ -657,22 +746,31 @@ def main(args=None):
 
     # update bounddict
     for ifile, myfile in enumerate(list_fits_files):
-        print('>>> Reading file ' + str(ifile+1) + "/" +
-              str(len(list_fits_files)) + ":\n" + myfile)
+        print(
+            ">>> Reading file "
+            + str(ifile + 1)
+            + "/"
+            + str(len(list_fits_files))
+            + ":\n"
+            + myfile
+        )
         compute_slitlet_boundaries(
             filename=myfile,
             list_slitlets=list_slitlets,
-            grism=args.grism, spfilter=args.filter,
+            grism=args.grism,
+            spfilter=args.filter,
             size_x_medfilt=31,
             size_y_savgol=11,
             times_sigma_threshold=3.0,
-            bounddict=bounddict, debugplot=args.debugplot)
+            bounddict=bounddict,
+            debugplot=args.debugplot,
+        )
 
     # save new version of bounddict
     # print(json.dumps(bounddict, indent=4, sort_keys=True))
-    with open(bounddict_file, 'wt') as fstream:
+    with open(bounddict_file, "wt") as fstream:
         json.dump(bounddict, fstream, indent=2, sort_keys=True)
-        print('>>> Saving file ' + bounddict_file)
+        print(">>> Saving file " + bounddict_file)
 
 
 if __name__ == "__main__":

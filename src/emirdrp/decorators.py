@@ -46,7 +46,7 @@ def aggregate(method):
 
         result = method(self, rinput)
 
-        aggregate_m = getattr(self, 'aggregate_result')
+        aggregate_m = getattr(self, "aggregate_result")
 
         new_result = aggregate_m(self, result, rinput)
 

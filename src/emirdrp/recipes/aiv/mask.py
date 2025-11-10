@@ -38,15 +38,18 @@ class TestPinholeRecipe(EmirRecipe):
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
     master_sky = reqs.MasterSkyRequirement()
 
-    pinhole_nominal_positions = Requirement(prods.CoordinateList2DType,
-                                            'Nominal positions of the pinholes'
-                                            )
-    shift_coordinates = Parameter(True, 'Use header information to'
-                                  ' shift the pinhole positions from (0,0) '
-                                  'to X_DTU, Y_DTU')
-    box_half_size = Parameter(4, 'Half of the computation box size in pixels')
-    recenter = Parameter(True, 'Recenter the pinhole coordinates')
-    max_recenter_radius = Parameter(2.0, 'Maximum distance for recentering')
+    pinhole_nominal_positions = Requirement(
+        prods.CoordinateList2DType, "Nominal positions of the pinholes"
+    )
+    shift_coordinates = Parameter(
+        True,
+        "Use header information to"
+        " shift the pinhole positions from (0,0) "
+        "to X_DTU, Y_DTU",
+    )
+    box_half_size = Parameter(4, "Half of the computation box size in pixels")
+    recenter = Parameter(True, "Recenter the pinhole coordinates")
+    max_recenter_radius = Parameter(2.0, "Maximum distance for recentering")
 
     # Recipe Results
     frame = Result(prods.ProcessedImage)
@@ -63,24 +66,23 @@ class TestPinholeRecipe(EmirRecipe):
     param_box_half_size = Result(float)
 
     def run(self, rinput):
-        _logger.info('starting processing for slit detection')
+        _logger.info("starting processing for slit detection")
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(
-            rinput, reduction_flow=flow)
+        hdulist = basic_processing_with_combination(rinput, reduction_flow=flow)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
 
-        _logger.debug('finding pinholes')
+        _logger.debug("finding pinholes")
 
         try:
-            filtername = hdr['FILTER']
-            readmode = hdr['READMODE']
-            rotang = hdr['ROTANG']
-            detpa = hdr['DETPA']
-            dtupa = hdr['DTUPA']
+            filtername = hdr["FILTER"]
+            readmode = hdr["READMODE"]
+            rotang = hdr["ROTANG"]
+            detpa = hdr["DETPA"]
+            dtupa = hdr["DTUPA"]
             dtub, dtur = datamodel.get_dtur_from_img(hdulist)
         except KeyError as error:
             _logger.error(error)
@@ -92,40 +94,42 @@ class TestPinholeRecipe(EmirRecipe):
             yfac = -ydtur / EMIR_PIXSCALE
 
             vec = numpy.array([yfac, xfac])
-            _logger.info('shift is %s', vec)
+            _logger.info("shift is %s", vec)
             ncenters = rinput.pinhole_nominal_positions + vec
         else:
-            _logger.info('using pinhole coordinates as they are')
+            _logger.info("using pinhole coordinates as they are")
             ncenters = rinput.pinhole_nominal_positions
 
-        _logger.info('pinhole characterization')
+        _logger.info("pinhole characterization")
         positions = pinhole_char(
             hdulist[0].data,
             ncenters,
             box=rinput.box_half_size,
             recenter_pinhole=rinput.recenter,
-            maxdist=rinput.max_recenter_radius
+            maxdist=rinput.max_recenter_radius,
         )
 
-        _logger.info('alternate pinhole characterization')
+        _logger.info("alternate pinhole characterization")
         positions_alt = pinhole_char2(
-            hdulist[0].data, ncenters,
+            hdulist[0].data,
+            ncenters,
             recenter_pinhole=rinput.recenter,
             recenter_half_box=rinput.box_half_size,
-            recenter_maxdist=rinput.max_recenter_radius
+            recenter_maxdist=rinput.max_recenter_radius,
         )
 
-        result = self.create_result(frame=hdulist,
-                                    positions=positions,
-                                    positions_alt=positions_alt,
-                                    filter=filtername,
-                                    DTU=dtub,
-                                    readmode=readmode,
-                                    ROTANG=rotang,
-                                    DETPA=detpa,
-                                    DTUPA=dtupa,
-                                    param_recenter=rinput.recenter,
-                                    param_max_recenter_radius=rinput.max_recenter_radius,
-                                    param_box_half_size=rinput.box_half_size
-                                    )
+        result = self.create_result(
+            frame=hdulist,
+            positions=positions,
+            positions_alt=positions_alt,
+            filter=filtername,
+            DTU=dtub,
+            readmode=readmode,
+            ROTANG=rotang,
+            DETPA=detpa,
+            DTUPA=dtupa,
+            param_recenter=rinput.recenter,
+            param_max_recenter_radius=rinput.max_recenter_radius,
+            param_box_half_size=rinput.box_half_size,
+        )
         return result

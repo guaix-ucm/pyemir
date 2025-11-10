@@ -45,13 +45,12 @@ from emirdrp.instrument.channels import FULL
 from emirdrp.processing.wcs import offsets_from_wcs
 
 from .checks import check_photometry
-from .naming import (name_redimensioned_frames, name_object_mask,
-                     name_skybackground)
+from .naming import name_redimensioned_frames, name_object_mask, name_skybackground
 from .naming import name_skybackgroundmask, name_skysub_proc, name_skyflat
 from .naming import name_skyflat_proc, name_segmask
 
 
-_logger = logging.getLogger('numina.recipes.emir')
+_logger = logging.getLogger("numina.recipes.emir")
 
 
 def intersection(a, b, scale=1):
@@ -88,7 +87,7 @@ def intersection(a, b, scale=1):
 
 
 def clip_slices(r, region, scale=1):
-    '''Intersect slices with a region.'''
+    """Intersect slices with a region."""
     t = []
     for ch in r:
         a1 = intersection(ch[0], region[0], scale=scale)
@@ -107,33 +106,39 @@ class DirectImageCommon(EmirRecipe):
 
     logger = _logger
     BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = [0, 1, 2, 3, 4]
-    __version__ = '1'
+    __version__ = "1"
 
     def __init__(self, *args, **kwds):
         super(DirectImageCommon, self).__init__(version=__version__)
         # Required to delay the backend initialization (issue numina/#102, #49)
         import matplotlib.pyplot as plt
 
-        self._figure = plt.figure(facecolor='white')
+        self._figure = plt.figure(facecolor="white")
         # FigureCanvasAgg has no set_window_title
         # self._figure.canvas.set_window_title('Recipe Plots')
         self._figure.canvas.draw()
 
-    def process(self, ri,
-                window=None, subpix=1,
-                store_intermediate=True,
-                target_is_sky=True, stop_after=PRERED):
+    def process(
+        self,
+        ri,
+        window=None,
+        subpix=1,
+        store_intermediate=True,
+        target_is_sky=True,
+        stop_after=PRERED,
+    ):
 
-        numpy.seterr(divide='raise')
+        numpy.seterr(divide="raise")
 
         recipe_input = ri
         # FIXME: hardcoded instrument information
-        keywords = {'airmass': 'AIRMASS',
-                    'exposure': 'EXPTIME',
-                    'imagetype': 'IMGTYP',
-                    'juliandate': 'MJD-OBS',
-                    'tstamp': 'TSTAMP'
-                    }
+        keywords = {
+            "airmass": "AIRMASS",
+            "exposure": "EXPTIME",
+            "imagetype": "IMGTYP",
+            "juliandate": "MJD-OBS",
+            "tstamp": "TSTAMP",
+        }
         baseshape = [2048, 2048]
         channels = FULL
 
@@ -155,7 +160,7 @@ class DirectImageCommon(EmirRecipe):
 
         while True:
             if state == self.BASIC:
-                _logger.info('Basic processing')
+                _logger.info("Basic processing")
 
                 # Basic processing
                 basicflow = self.init_filters(recipe_input)
@@ -171,21 +176,21 @@ class DirectImageCommon(EmirRecipe):
             elif state == self.PRERED:
                 # Shape of the window
                 windowshape = tuple((i[1] - i[0]) for i in window)
-                _logger.debug('Shape of window is %s', windowshape)
+                _logger.debug("Shape of window is %s", windowshape)
                 # Shape of the scaled window
                 subpixshape = tuple((side * subpix) for side in windowshape)
 
                 # Scaled window region
-                scalewindow = tuple(
-                    slice(*(subpix * i for i in p)) for p in window)
+                scalewindow = tuple(slice(*(subpix * i for i in p)) for p in window)
                 # Window region
                 window = tuple(slice(*p) for p in window)
 
                 scaled_chan = clip_slices(channels, window, scale=subpix)
 
                 # Reference pixel in the center of the frame
-                refpix = numpy.divide(
-                    numpy.array([baseshape], dtype='int'), 2).astype('float')
+                refpix = numpy.divide(numpy.array([baseshape], dtype="int"), 2).astype(
+                    "float"
+                )
 
                 # lists of targets and sky frames
                 targetframes = []
@@ -196,13 +201,12 @@ class DirectImageCommon(EmirRecipe):
                     # Getting some metadata from FITS header
                     hdr = fits.getheader(frame.label)
                     try:
-                        frame.exposure = hdr[str(keywords['exposure'])]
+                        frame.exposure = hdr[str(keywords["exposure"])]
                         # frame.baseshape = get_image_shape(hdr)
-                        frame.airmass = hdr[str(keywords['airmass'])]
-                        frame.mjd = hdr[str(keywords['tstamp'])]
+                        frame.airmass = hdr[str(keywords["airmass"])]
+                        frame.mjd = hdr[str(keywords["tstamp"])]
                     except KeyError as e:
-                        raise KeyError("%s in frame %s" %
-                                       (str(e), frame.label))
+                        raise KeyError("%s in frame %s" % (str(e), frame.label))
 
                     frame.baselabel = os.path.splitext(frame.label)[0]
                     frame.mask = ri.master_bpm
@@ -212,25 +216,25 @@ class DirectImageCommon(EmirRecipe):
                     frame.valid_sky = False
                     frame.valid_region = scalewindow
                     # FIXME: hardcode itype for the moment
-                    frame.itype = 'TARGET'
-                    if frame.itype == 'TARGET':
+                    frame.itype = "TARGET"
+                    if frame.itype == "TARGET":
                         frame.valid_target = True
                         targetframes.append(frame)
                         if target_is_sky:
                             frame.valid_sky = True
                             skyframes.append(frame)
-                    if frame.itype == 'SKY':
+                    if frame.itype == "SKY":
                         frame.valid_sky = True
                         skyframes.append(frame)
 
-#                labels = [frame.label for frame in targetframes]
+                #                labels = [frame.label for frame in targetframes]
 
                 if ri.offsets is not None:
-                    _logger.info('Using offsets from parameters')
+                    _logger.info("Using offsets from parameters")
                     base_ref = numpy.asarray(ri.offsets)
                     list_of_offsets = -(base_ref - base_ref[0])
                 else:
-                    _logger.info('Computing offsets from WCS information')
+                    _logger.info("Computing offsets from WCS information")
                     list_of_offsets = offsets_from_wcs(targetframes, refpix)
 
                 # FIXME: Im using offsets in row/columns
@@ -244,19 +248,25 @@ class DirectImageCommon(EmirRecipe):
                     frame.pix_offset = off
                     frame.scaled_pix_offset = subpix * off
 
-                    _logger.debug('Frame %s, offset=%s, scaled=%s',
-                                  frame.label, off, subpix * off)
+                    _logger.debug(
+                        "Frame %s, offset=%s, scaled=%s", frame.label, off, subpix * off
+                    )
 
-                _logger.info('Computing relative offsets')
-                offsets = [(frame.scaled_pix_offset)
-                           for frame in targetframes]
-                offsets = numpy.round(offsets).astype('int')
+                _logger.info("Computing relative offsets")
+                offsets = [(frame.scaled_pix_offset) for frame in targetframes]
+                offsets = numpy.round(offsets).astype("int")
                 finalshape, offsetsp = combine_shape(subpixshape, offsets)
-                _logger.info('Shape of resized array is %s', finalshape)
+                _logger.info("Shape of resized array is %s", finalshape)
 
                 # Resizing target frames
-                self.resize(targetframes, subpixshape, offsetsp, finalshape,
-                            window=window, scale=subpix)
+                self.resize(
+                    targetframes,
+                    subpixshape,
+                    offsetsp,
+                    finalshape,
+                    window=window,
+                    scale=subpix,
+                )
 
                 if not target_is_sky:
                     for frame in skyframes:
@@ -264,20 +274,20 @@ class DirectImageCommon(EmirRecipe):
                         frame.resized_mask = frame.mask
 
                 # superflat
-                _logger.info('Step %d, superflat correction (SF)', step)
+                _logger.info("Step %d, superflat correction (SF)", step)
                 # Compute scale factors (median)
                 self.update_scale_factors(ri.obresult.frames)
 
                 # Create superflat
-                superflat = self.compute_superflat(skyframes,
-                                                   channels=scaled_chan,
-                                                   step=step)
+                superflat = self.compute_superflat(
+                    skyframes, channels=scaled_chan, step=step
+                )
 
                 # Apply superflat
                 self.figure_init(subpixshape)
                 self.apply_superflat(ri.obresult.frames, superflat)
 
-                _logger.info('Simple sky correction')
+                _logger.info("Simple sky correction")
                 if target_is_sky:
                     # Each frame is the closest sky frame available
 
@@ -289,12 +299,11 @@ class DirectImageCommon(EmirRecipe):
                 # Combining the frames
                 _logger.info("Step %d, Combining target frames", step)
 
-                sf_data = self.combine_frames(
-                    targetframes, extinction=ri.extinction)
+                sf_data = self.combine_frames(targetframes, extinction=ri.extinction)
 
                 self.figures_after_combine(sf_data)
 
-                _logger.info('Step %d, finished', step)
+                _logger.info("Step %d, finished", step)
 
                 if stop_after == state:
                     break
@@ -307,13 +316,14 @@ class DirectImageCommon(EmirRecipe):
                 # self.check_position(images_info, sf_data, seeing_fwhm)
                 recompute = False
                 if recompute:
-                    _logger.info('Recentering is needed')
+                    _logger.info("Recentering is needed")
                     state = self.PRERED
                 else:
-                    _logger.info('Recentering is not needed')
-                    _logger.info('Checking photometry')
-                    check_photometry(targetframes, sf_data,
-                                     seeing_fwhm, figure=self._figure)
+                    _logger.info("Recentering is not needed")
+                    _logger.info("Checking photometry")
+                    check_photometry(
+                        targetframes, sf_data, seeing_fwhm, figure=self._figure
+                    )
 
                     if stop_after == state:
                         break
@@ -322,54 +332,55 @@ class DirectImageCommon(EmirRecipe):
             elif state == self.FULLRED:
 
                 # Generating segmentation image
-                _logger.info('Step %d, generating segmentation image', step)
-                objmask, seeing_fwhm = self.create_mask(
-                    sf_data, seeing_fwhm, step=step)
+                _logger.info("Step %d, generating segmentation image", step)
+                objmask, seeing_fwhm = self.create_mask(sf_data, seeing_fwhm, step=step)
                 step += 1
                 # Update objects mask
                 # For all images
                 # FIXME:
                 for frame in targetframes:
                     frame.objmask = name_object_mask(frame.baselabel, step)
-                    _logger.info(
-                        'Step %d, create object mask %s', step,  frame.objmask)
+                    _logger.info("Step %d, create object mask %s", step, frame.objmask)
                     frame.objmask_data = objmask[frame.valid_region]
-                    fits.writeto(
-                        frame.objmask, frame.objmask_data, overwrite=True)
+                    fits.writeto(frame.objmask, frame.objmask_data, overwrite=True)
 
                 if not target_is_sky:
                     # Empty object mask for sky frames
-                    bogus_objmask = numpy.zeros(windowshape, dtype='int')
+                    bogus_objmask = numpy.zeros(windowshape, dtype="int")
 
                     for frame in skyframes:
                         frame.objmask_data = bogus_objmask
 
-                _logger.info('Step %d, superflat correction (SF)', step)
+                _logger.info("Step %d, superflat correction (SF)", step)
 
                 # Compute scale factors (median)
                 self.update_scale_factors(ri.obresult.frames, step)
 
                 # Create superflat
-                superflat = self.compute_superflat(skyframes, scaled_chan,
-                                                   segmask=objmask, step=step)
+                superflat = self.compute_superflat(
+                    skyframes, scaled_chan, segmask=objmask, step=step
+                )
 
                 # Apply superflat
                 self.figure_init(subpixshape)
 
                 self.apply_superflat(
-                    ri.obresult.frames, superflat, step=step, save=True)
+                    ri.obresult.frames, superflat, step=step, save=True
+                )
 
-                _logger.info('Step %d, advanced sky correction (SC)', step)
-                self.compute_advanced_sky(targetframes, objmask,
-                                          skyframes=skyframes,
-                                          target_is_sky=target_is_sky,
-                                          step=step)
+                _logger.info("Step %d, advanced sky correction (SC)", step)
+                self.compute_advanced_sky(
+                    targetframes,
+                    objmask,
+                    skyframes=skyframes,
+                    target_is_sky=target_is_sky,
+                    step=step,
+                )
 
                 # Combining the images
                 _logger.info("Step %d, Combining the images", step)
                 # FIXME: only for science
-                sf_data = self.combine_frames(
-                    targetframes, ri.extinction, step=step)
+                sf_data = self.combine_frames(targetframes, ri.extinction, step=step)
                 self.figures_after_combine(sf_data)
 
                 if step >= niteration:
@@ -378,21 +389,20 @@ class DirectImageCommon(EmirRecipe):
                 break
 
         if sf_data is None:
-            raise RecipeError(
-                'no combined image has been generated at step %d', state)
+            raise RecipeError("no combined image has been generated at step %d", state)
 
         hdu = fits.PrimaryHDU(sf_data[0])
         hdr = hdu.header
-        hdr.update('NUMXVER', __version__, 'Numina package version')
-        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
-        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        hdr.update("NUMXVER", __version__, "Numina package version")
+        hdr.update("NUMRNAM", self.__class__.__name__, "Numina recipe name")
+        hdr.update("NUMRVER", self.__version__, "Numina recipe version")
 
-        hdr.update('FILENAME', 'result.fits')
-        hdr.update('IMGTYP', 'TARGET', 'Image type')
-        hdr.update('NUMTYP', 'TARGET', 'Data product type')
+        hdr.update("FILENAME", "result.fits")
+        hdr.update("IMGTYP", "TARGET", "Image type")
+        hdr.update("NUMTYP", "TARGET", "Data product type")
 
-        varhdu = fits.ImageHDU(sf_data[1], name='VARIANCE')
-        num = fits.ImageHDU(sf_data[2], name='MAP')
+        varhdu = fits.ImageHDU(sf_data[1], name="VARIANCE")
+        num = fits.ImageHDU(sf_data[2], name="MAP")
 
         result = fits.HDUList([hdu, varhdu, num])
 
@@ -400,8 +410,7 @@ class DirectImageCommon(EmirRecipe):
 
         return DataFrame(result), SourcesCatalog()
 
-    def compute_simple_sky(self, targetframes, skyframes,
-                           maxsep=5, step=0, save=True):
+    def compute_simple_sky(self, targetframes, skyframes, maxsep=5, step=0, save=True):
 
         # build kdtree
         sarray = numpy.array([frame.mjd for frame in skyframes])
@@ -417,8 +426,7 @@ class DirectImageCommon(EmirRecipe):
 
         # 1 / minutes in a day
         MIN_TO_DAY = 0.000694444
-        _dis, idxs = kdtree.query(tarray, k=1,
-                                  distance_upper_bound=maxsep * MIN_TO_DAY)
+        _dis, idxs = kdtree.query(tarray, k=1, distance_upper_bound=maxsep * MIN_TO_DAY)
 
         for tid, idss in enumerate(idxs):
             try:
@@ -426,31 +434,30 @@ class DirectImageCommon(EmirRecipe):
                 sf = skyframes[idss]
                 self.compute_simple_sky_for_frame(tf, sf, step=step, save=save)
             except IndexError:
-                _logger.error(
-                    'No sky image available for frame %s', tf.lastname)
+                _logger.error("No sky image available for frame %s", tf.lastname)
                 raise
 
     def compute_simple_sky_for_frame(self, frame, skyframe, step=0, save=True):
-        _logger.info('Correcting sky in frame %s', frame.lastname)
-        _logger.info('with sky computed from frame %s', skyframe.lastname)
+        _logger.info("Correcting sky in frame %s", frame.lastname)
+        _logger.info("with sky computed from frame %s", skyframe.lastname)
 
-        if hasattr(skyframe, 'median_sky'):
+        if hasattr(skyframe, "median_sky"):
             sky = skyframe.median_sky
         else:
 
-            with fits.open(skyframe.lastname, mode='readonly') as hdulist:
-                data = hdulist['primary'].data
+            with fits.open(skyframe.lastname, mode="readonly") as hdulist:
+                data = hdulist["primary"].data
                 valid = data[frame.valid_region]
 
                 if skyframe.objmask_data is not None:
-                    _logger.debug('object mask defined')
+                    _logger.debug("object mask defined")
                     msk = frame.objmask_data
                     sky = numpy.median(valid[msk == 0])
                 else:
-                    _logger.debug('object mask empty')
+                    _logger.debug("object mask empty")
                     sky = numpy.median(valid)
 
-            _logger.debug('median sky value is %f', sky)
+            _logger.debug("median sky value is %f", sky)
             skyframe.median_sky = sky
 
         dst = name_skysub_proc(frame.baselabel, step)
@@ -463,23 +470,29 @@ class DirectImageCommon(EmirRecipe):
 
         frame.lastname = dst
 
-        with fits.open(frame.lastname, mode='update') as hdulist:
-            data = hdulist['primary'].data
+        with fits.open(frame.lastname, mode="update") as hdulist:
+            data = hdulist["primary"].data
             valid = data[frame.valid_region]
             valid -= sky
 
-    def compute_advanced_sky(self, targetframes, objmask,
-                             skyframes=None, target_is_sky=False,
-                             maxsep=5.0,
-                             nframes=10,
-                             step=0, save=True):
+    def compute_advanced_sky(
+        self,
+        targetframes,
+        objmask,
+        skyframes=None,
+        target_is_sky=False,
+        maxsep=5.0,
+        nframes=10,
+        step=0,
+        save=True,
+    ):
 
         if target_is_sky:
             skyframes = targetframes
             # Each frame is its closets sky frame
             nframes += 1
         elif skyframes is None:
-            raise ValueError('skyframes not defined')
+            raise ValueError("skyframes not defined")
 
         # build kdtree
         sarray = numpy.array([frame.mjd for frame in skyframes])
@@ -496,16 +509,18 @@ class DirectImageCommon(EmirRecipe):
         # 1 / minutes in a Julian day
         SCALE = 60.0
         # max_time_sep = ri.sky_images_sep_time / 1440.0
-        _dis, idxs = kdtree.query(tarray, k=nframes,
-                                  distance_upper_bound=maxsep * SCALE)
+        _dis, idxs = kdtree.query(
+            tarray, k=nframes, distance_upper_bound=maxsep * SCALE
+        )
 
         nsky = len(sarray)
 
         for tid, idss in enumerate(idxs):
             try:
                 tf = targetframes[tid]
-                _logger.info('Step %d, SC: computing advanced sky for %s',
-                             step, tf.baselabel)
+                _logger.info(
+                    "Step %d, SC: computing advanced sky for %s", step, tf.baselabel
+                )
                 # filter(lambda x: x < nsky, idss)
                 locskyframes = []
                 for si in idss:
@@ -513,22 +528,24 @@ class DirectImageCommon(EmirRecipe):
                         # this sky frame its the current frame, reject
                         continue
                     if si < nsky:
-                        _logger.debug('Step %d, SC: %s is a sky frame',
-                                      step, skyframes[si].baselabel)
+                        _logger.debug(
+                            "Step %d, SC: %s is a sky frame",
+                            step,
+                            skyframes[si].baselabel,
+                        )
                         locskyframes.append(skyframes[si])
                 self.compute_advanced_sky_for_frame(
-                    tf, locskyframes, step=step, save=save)
+                    tf, locskyframes, step=step, save=save
+                )
             except IndexError:
-                _logger.error(
-                    'No sky image available for frame %s', tf.lastname)
+                _logger.error("No sky image available for frame %s", tf.lastname)
                 raise
 
-    def compute_advanced_sky_for_frame(self, frame, skyframes,
-                                       step=0, save=True):
-        _logger.info('Correcting sky in frame %s', frame.lastname)
-        _logger.info('with sky computed from frames')
+    def compute_advanced_sky_for_frame(self, frame, skyframes, step=0, save=True):
+        _logger.info("Correcting sky in frame %s", frame.lastname)
+        _logger.info("with sky computed from frames")
         for i in skyframes:
-            _logger.info('%s', i.flat_corrected)
+            _logger.info("%s", i.flat_corrected)
 
         data = []
         scales = []
@@ -538,24 +555,23 @@ class DirectImageCommon(EmirRecipe):
         try:
             for i in skyframes:
                 filename = i.flat_corrected
-                hdulist = fits.open(filename, mode='readonly', memmap=True)
+                hdulist = fits.open(filename, mode="readonly", memmap=True)
 
-                data.append(hdulist['primary'].data[i.valid_region])
+                data.append(hdulist["primary"].data[i.valid_region])
                 desc.append(hdulist)
                 scales.append(numpy.median(data[-1]))
                 if i.objmask_data is not None:
                     masks.append(i.objmask_data)
-                    _logger.debug('object mask is shared')
+                    _logger.debug("object mask is shared")
                 elif i.objmask is not None:
-                    hdulistmask = fits.open(
-                        i.objmask, mode='readonly', memmap=True)
-                    masks.append(hdulistmask['primary'].data)
+                    hdulistmask = fits.open(i.objmask, mode="readonly", memmap=True)
+                    masks.append(hdulistmask["primary"].data)
                     desc.append(hdulistmask)
-                    _logger.debug('object mask is particular')
+                    _logger.debug("object mask is particular")
                 else:
-                    _logger.warn('no object mask for %s', filename)
+                    _logger.warn("no object mask for %s", filename)
 
-            _logger.debug('computing background with %d frames', len(data))
+            _logger.debug("computing background with %d frames", len(data))
             sky, _, num = median(data, masks, scales=scales)
 
         finally:
@@ -566,8 +582,10 @@ class DirectImageCommon(EmirRecipe):
         if numpy.any(num == 0):
             # We have pixels without
             # sky background information
-            _logger.warn('pixels without sky information when correcting %s',
-                         frame.flat_corrected)
+            _logger.warn(
+                "pixels without sky information when correcting %s",
+                frame.flat_corrected,
+            )
             binmask = num == 0
             # FIXME: during development, this is faster
             # sky[binmask] = sky[num != 0].mean()
@@ -577,53 +595,58 @@ class DirectImageCommon(EmirRecipe):
             name = name_skybackground(frame.baselabel, step)
             fits.writeto(name, sky, overwrite=True)
             name = name_skybackgroundmask(frame.baselabel, step)
-            fits.writeto(name, binmask.astype('int16'), overwrite=True)
+            fits.writeto(name, binmask.astype("int16"), overwrite=True)
 
         dst = name_skysub_proc(frame.baselabel, step)
         prev = frame.lastname
         shutil.copyfile(prev, dst)
         frame.lastname = dst
 
-        with fits.open(frame.lastname, mode='update') as hdulist:
-            data = hdulist['primary'].data
+        with fits.open(frame.lastname, mode="update") as hdulist:
+            data = hdulist["primary"].data
             valid = data[frame.valid_region]
             valid -= sky
 
     def combine_frames(self, frames, extinction, out=None, step=0):
-        _logger.debug('Step %d, opening sky-subtracted frames', step)
+        _logger.debug("Step %d, opening sky-subtracted frames", step)
 
         def fits_open(name):
-            '''Open FITS with memmap in readonly mode'''
-            return fits.open(name, mode='readonly', memmap=True)
+            """Open FITS with memmap in readonly mode"""
+            return fits.open(name, mode="readonly", memmap=True)
 
-        frameslll = [fits_open(frame.lastname)
-                     for frame in frames if frame.valid_target]
-        _logger.debug('Step %d, opening mask frames', step)
-        mskslll = [fits_open(frame.resized_mask)
-                   for frame in frames if frame.valid_target]
-        _logger.debug('Step %d, combining %d frames', step, len(frameslll))
+        frameslll = [
+            fits_open(frame.lastname) for frame in frames if frame.valid_target
+        ]
+        _logger.debug("Step %d, opening mask frames", step)
+        mskslll = [
+            fits_open(frame.resized_mask) for frame in frames if frame.valid_target
+        ]
+        _logger.debug("Step %d, combining %d frames", step, len(frameslll))
         try:
-            extinc = [pow(10, -0.4 * frame.airmass * extinction)
-                      for frame in frames if frame.valid_target]
-            data = [i['primary'].data for i in frameslll]
-            masks = [i['primary'].data for i in mskslll]
+            extinc = [
+                pow(10, -0.4 * frame.airmass * extinction)
+                for frame in frames
+                if frame.valid_target
+            ]
+            data = [i["primary"].data for i in frameslll]
+            masks = [i["primary"].data for i in mskslll]
 
-            out = quantileclip(data, masks, scales=extinc,
-                               dtype='float32', out=out, fclip=0.1)
+            out = quantileclip(
+                data, masks, scales=extinc, dtype="float32", out=out, fclip=0.1
+            )
 
             # saving the three extensions
-            fits.writeto('result_i%0d.fits' % step, out[0], overwrite=True)
-            fits.writeto('result_var_i%0d.fits' % step, out[1], overwrite=True)
-            fits.writeto('result_npix_i%0d.fits' %
-                         step, out[2], overwrite=True)
+            fits.writeto("result_i%0d.fits" % step, out[0], overwrite=True)
+            fits.writeto("result_var_i%0d.fits" % step, out[1], overwrite=True)
+            fits.writeto("result_npix_i%0d.fits" % step, out[2], overwrite=True)
 
             return out
 
         finally:
-            _logger.debug('Step %d, closing sky-subtracted frames', step)
+            _logger.debug("Step %d, closing sky-subtracted frames", step)
             for f in frameslll:
                 f.close()
-            _logger.debug('Step %d, closing mask frames', step)
+            _logger.debug("Step %d, closing mask frames", step)
             for f in mskslll:
                 f.close()
 
@@ -645,10 +668,11 @@ class DirectImageCommon(EmirRecipe):
         else:
             os.rename(frame.resized_base, frame.flat_corrected)
 
-        _logger.info("Step %d, SF: apply superflat to frame %s",
-                     step, frame.flat_corrected)
-        with fits.open(frame.flat_corrected, mode='update') as hdulist:
-            data = hdulist['primary'].data
+        _logger.info(
+            "Step %d, SF: apply superflat to frame %s", step, frame.flat_corrected
+        )
+        with fits.open(frame.flat_corrected, mode="update") as hdulist:
+            data = hdulist["primary"].data
             datar = data[frame.valid_region]
             data[frame.valid_region] = correct_flatfield(datar, fitted)
 
@@ -658,7 +682,7 @@ class DirectImageCommon(EmirRecipe):
             try:
                 self.figure_image(data[frame.valid_region], frame)
             except ValueError:
-                _logger.warning('Problem plotting %s', frame.lastname)
+                _logger.warning("Problem plotting %s", frame.lastname)
 
     def compute_superflat(self, frames, channels, segmask=None, step=0):
         _logger.info("Step %d, SF: combining the frames without offsets", step)
@@ -667,12 +691,12 @@ class DirectImageCommon(EmirRecipe):
             data = []
             masks = []
             for frame in frames:
-                _logger.debug('Step %d, opening resized frame %s',
-                              step, frame.resized_base)
-                hdulist = fits.open(
-                    frame.resized_base, memmap=True, mode='readonly')
+                _logger.debug(
+                    "Step %d, opening resized frame %s", step, frame.resized_base
+                )
+                hdulist = fits.open(frame.resized_base, memmap=True, mode="readonly")
                 filelist.append(hdulist)
-                data.append(hdulist['primary'].data[frame.valid_region])
+                data.append(hdulist["primary"].data[frame.valid_region])
 
             scales = [frame.median_scale for frame in frames]
 
@@ -683,26 +707,29 @@ class DirectImageCommon(EmirRecipe):
                 masks = [segmask[frame.valid_region] for frame in frames]
             else:
                 for frame in frames:
-                    _logger.debug('Step %d, opening resized mask %s',
-                                  step, frame.resized_mask)
+                    _logger.debug(
+                        "Step %d, opening resized mask %s", step, frame.resized_mask
+                    )
                     hdulist = fits.open(
-                        frame.resized_mask, memmap=True, mode='readonly')
+                        frame.resized_mask, memmap=True, mode="readonly"
+                    )
                     filelist.append(hdulist)
-                    masks.append(hdulist['primary'].data[frame.valid_region])
+                    masks.append(hdulist["primary"].data[frame.valid_region])
 
-            _logger.debug('Step %d, combining %d frames', step, len(data))
+            _logger.debug("Step %d, combining %d frames", step, len(data))
 
-            sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales,
-                                                   blank=1.0 / scales[0])
+            sf_data, _sf_var, sf_num = flatcombine(
+                data, masks, scales=scales, blank=1.0 / scales[0]
+            )
         finally:
-            _logger.debug('Step %d, closing resized frames and mask', step)
+            _logger.debug("Step %d, closing resized frames and mask", step)
             for fileh in filelist:
                 fileh.close()
 
         # We interpolate holes by channel
-        _logger.debug('Step %d, interpolating holes by channel', step)
+        _logger.debug("Step %d, interpolating holes by channel", step)
         for channel in channels:
-            mask = (sf_num[channel] == 0)
+            mask = sf_num[channel] == 0
             if numpy.any(mask):
                 fixpix2(sf_data[channel], mask, out=sf_data[channel])
 
@@ -711,11 +738,11 @@ class DirectImageCommon(EmirRecipe):
 
         # Auxiliary data
         sfhdu = fits.PrimaryHDU(sf_data)
-        sfhdu.writeto(name_skyflat('comb', step), overwrite=True)
+        sfhdu.writeto(name_skyflat("comb", step), overwrite=True)
         return sf_data
 
     def update_scale_factors(self, frames, step=0):
-        _logger.info('Step %d, SF: computing scale factors', step)
+        _logger.info("Step %d, SF: computing scale factors", step)
         # FIXME: not sure
         for frame in frames:
             region = frame.valid_region
@@ -723,13 +750,13 @@ class DirectImageCommon(EmirRecipe):
             mask = fits.getdata(frame.resized_mask)[region]
             # FIXME: while developing this ::10 is faster, remove later
             frame.median_scale = numpy.median(data[mask == 0][::10])
-            _logger.debug('median value of %s is %f',
-                          frame.resized_base, frame.median_scale)
+            _logger.debug(
+                "median value of %s is %f", frame.resized_base, frame.median_scale
+            )
         return frames
 
-    def resize(self, frames, shape, offsetsp, finalshape, window=None,
-               scale=1, step=0):
-        _logger.info('Resizing frames and masks')
+    def resize(self, frames, shape, offsetsp, finalshape, window=None, scale=1, step=0):
+        _logger.info("Resizing frames and masks")
         for frame, rel_offset in zip(frames, offsetsp):
             if frame.valid_target:
                 region, _ = subarray_match(finalshape, rel_offset, shape)
@@ -738,56 +765,76 @@ class DirectImageCommon(EmirRecipe):
                 # Relative offset
                 frame.rel_offset = rel_offset
                 # names of frame and mask
-                framen, maskn = name_redimensioned_frames(
-                    frame.baselabel, step)
+                framen, maskn = name_redimensioned_frames(frame.baselabel, step)
                 frame.resized_base = framen
                 frame.resized_mask = maskn
-                _logger.debug('%s, valid region is %s, relative offset is %s',
-                              frame.label, custom_region_to_str(region),
-                              rel_offset
-                              )
+                _logger.debug(
+                    "%s, valid region is %s, relative offset is %s",
+                    frame.label,
+                    custom_region_to_str(region),
+                    rel_offset,
+                )
                 self.resize_frame_and_mask(
-                    frame, finalshape, framen, maskn, window, scale)
+                    frame, finalshape, framen, maskn, window, scale
+                )
 
         return frames
 
-    def resize_frame_and_mask(self, frame, finalshape,
-                              framen, maskn, window, scale):
-        _logger.info('Resizing frame %s, window=%s, subpix=%i', frame.label,
-                     custom_region_to_str(window), scale)
+    def resize_frame_and_mask(self, frame, finalshape, framen, maskn, window, scale):
+        _logger.info(
+            "Resizing frame %s, window=%s, subpix=%i",
+            frame.label,
+            custom_region_to_str(window),
+            scale,
+        )
         hdul = frame.open()
         baseshape = hdul[0].data.shape
 
         # FIXME: Resize_fits saves the resized image in framen
-        resize_fits(hdul, framen, finalshape, frame.valid_region,
-                    window=window, scale=scale, dtype='float32')
+        resize_fits(
+            hdul,
+            framen,
+            finalshape,
+            frame.valid_region,
+            window=window,
+            scale=scale,
+            dtype="float32",
+        )
 
-        _logger.info('Resizing mask %s, subpix x%i', frame.label, scale)
+        _logger.info("Resizing mask %s, subpix x%i", frame.label, scale)
         # We don't conserve the sum of the values of the frame here, just
         # expand the mask
         if frame.mask is None:
-            self.logger.warning('BPM missing, use zeros instead')
-            false_mask = numpy.zeros(baseshape, dtype='int16')
+            self.logger.warning("BPM missing, use zeros instead")
+            false_mask = numpy.zeros(baseshape, dtype="int16")
             hdum = fits.HDUList(fits.PrimaryHDU(false_mask))
             frame.mask = DataFrame(frame=hdum)
-        resize_fits(frame.mask.open(), maskn, finalshape, frame.valid_region,
-                    fill=1, window=window, scale=scale, conserve=False)
+        resize_fits(
+            frame.mask.open(),
+            maskn,
+            finalshape,
+            frame.valid_region,
+            fill=1,
+            window=window,
+            scale=scale,
+            conserve=False,
+        )
 
     def figure_init(self, shape):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
-        cmap = mpl.cm.get_cmap('gray')
+        cmap = mpl.cm.get_cmap("gray")
         norm = mpl.colors.LogNorm()
         ax.imshow(numpy.ones(shape), cmap=cmap, norm=norm)
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
         self._figure.canvas.draw()
 
     def figures_after_combine(self, sf_data, step=0):
 
         # FIXME, more plots
         def truncated(array, frac=0.1):
-            '''Dirty truncated mean'''
+            """Dirty truncated mean"""
             nf = int(array.size * frac)
             array.sort()
             new = array[nf:-nf]
@@ -799,7 +846,7 @@ class DirectImageCommon(EmirRecipe):
             else:
                 return new.mean(), new.std()
 
-        ndata = sf_data[2].astype('int')
+        ndata = sf_data[2].astype("int")
         data = sf_data[0]
 
         nimages = ndata.max()
@@ -811,61 +858,57 @@ class DirectImageCommon(EmirRecipe):
         for pix in rnimage:
             rmean[pix - 1], rstd[pix - 1] = truncated(data[ndata == pix])
 
-        avg_rms = self.figure_check_combination(
-            rnimage, rmean, rstd, step=step)
+        avg_rms = self.figure_check_combination(rnimage, rmean, rstd, step=step)
 
         # Fake sky error image
-        self.figure_simple_image(ndata, title='Number of frames combined')
+        self.figure_simple_image(ndata, title="Number of frames combined")
 
         # Create fake error frame
-        mask = (ndata <= 0)
+        mask = ndata <= 0
         ndata[mask] = 1
-        fake = numpy.where(
-            mask, 0.0, numpy.random.normal(avg_rms / numpy.sqrt(ndata)))
+        fake = numpy.where(mask, 0.0, numpy.random.normal(avg_rms / numpy.sqrt(ndata)))
         ndata[mask] = 0
-        self.figure_simple_image(fake, title='Fake sky error image')
+        self.figure_simple_image(fake, title="Fake sky error image")
         # store fake image
-        fits.writeto('fake_sky_rms_i%0d.fits' % step, fake, overwrite=True)
+        fits.writeto("fake_sky_rms_i%0d.fits" % step, fake, overwrite=True)
 
     def figure_check_combination(self, rnimage, rmean, rstd, step=0):
         self._figure.clf()
         self._figure.subplots_adjust(hspace=0.001)
 
         ax1 = self._figure.add_subplot(3, 1, 1)
-        pred = [rstd[-1] * math.sqrt(rnimage[-1] /
-                                     float(npix)) for npix in rnimage]
-        ax1.plot(rnimage, rstd, 'g*', rnimage, pred, 'y-')
+        pred = [rstd[-1] * math.sqrt(rnimage[-1] / float(npix)) for npix in rnimage]
+        ax1.plot(rnimage, rstd, "g*", rnimage, pred, "y-")
         ax1.set_title("")
-        ax1.set_ylabel('measured sky rms')
+        ax1.set_ylabel("measured sky rms")
 
         ax2 = self._figure.add_subplot(3, 1, 2, sharex=ax1)
         pred = [val * math.sqrt(npix) for val, npix in zip(rstd, rnimage)]
         avg_rms = sum(pred) / len(pred)
-        ax2.plot(
-            rnimage, pred, 'r*', [rnimage[0], rnimage[-1]], [avg_rms, avg_rms])
-        ax2.set_ylabel('scaled sky rms')
+        ax2.plot(rnimage, pred, "r*", [rnimage[0], rnimage[-1]], [avg_rms, avg_rms])
+        ax2.set_ylabel("scaled sky rms")
 
         ax3 = self._figure.add_subplot(3, 1, 3, sharex=ax1)
-        ax3.plot(rnimage, rmean, 'b*')
-        ax3.set_ylabel('mean sky')
-        ax3.set_xlabel('number of frames per pixel')
+        ax3.plot(rnimage, rmean, "b*")
+        ax3.set_ylabel("mean sky")
+        ax3.set_xlabel("number of frames per pixel")
 
         xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
         mpl.artist.setp(xticklabels, visible=False)
         self._figure.canvas.draw()
-        self._figure.savefig('figure-check-combination_i%01d.png' % step)
+        self._figure.savefig("figure-check-combination_i%01d.png" % step)
         return avg_rms
 
     def figure_simple_image(self, data, title=None):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
-        cmap = mpl.cm.get_cmap('gray')
+        cmap = mpl.cm.get_cmap("gray")
         norm = mpl.colors.LogNorm()
         if title is not None:
             ax.set_title(title)
 
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
         ax.imshow(data, cmap=cmap, norm=norm)
         self._figure.canvas.draw()
 
@@ -873,27 +916,26 @@ class DirectImageCommon(EmirRecipe):
         # FIXME: plotting
         self._figure.clf()
         ax = self._figure.add_subplot(1, 1, 1)
-        ax.plot(scales, 'r*')
+        ax.plot(scales, "r*")
         ax.set_title("")
-        ax.set_xlabel('Image number')
-        ax.set_ylabel('Median')
+        ax.set_xlabel("Image number")
+        ax.set_ylabel("Median")
         self._figure.canvas.draw()
-        self._figure.savefig('figure-median-sky-background_i%01d.png' % step)
+        self._figure.savefig("figure-median-sky-background_i%01d.png" % step)
 
     def figure_image(self, thedata, image):
         ax = self._figure.gca()
-        image_axes, = ax.get_images()
+        (image_axes,) = ax.get_images()
         image_axes.set_data(thedata)
 
         # Create normalizer object
-        interval = PercentileInterval(50.)
+        interval = PercentileInterval(50.0)
         z1, z2 = interval.get_limits(thedata)
         norm = ImageNormalize(vmin=z1, vmax=z2, stretch=SqrtStretch())
         image_axes.set_clim(z1, z2)
         image_axes.set_norm(norm)
         clim = image_axes.get_clim()
-        ax.set_title('%s, bg=%g fg=%g, linscale' %
-                     (image.lastname, clim[0], clim[1]))
+        ax.set_title("%s, bg=%g fg=%g, linscale" % (image.lastname, clim[0], clim[1]))
         self._figure.canvas.draw()
 
     def create_mask_single(self, frame, seeing_fwhm, step=0):
@@ -902,24 +944,24 @@ class DirectImageCommon(EmirRecipe):
 
         # sextractor takes care of bad pixels
         sex = SExtractor()
-        sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
+        sex.config["CHECKIMAGE_TYPE"] = "SEGMENTATION"
         sex.config["CHECKIMAGE_NAME"] = name_object_mask(frame.baselabel, step)
 
-        sex.config['VERBOSE_TYPE'] = 'QUIET'
-        sex.config['PIXEL_SCALE'] = 1
-        sex.config['BACK_TYPE'] = 'AUTO'
+        sex.config["VERBOSE_TYPE"] = "QUIET"
+        sex.config["PIXEL_SCALE"] = 1
+        sex.config["BACK_TYPE"] = "AUTO"
 
         if seeing_fwhm is not None and seeing_fwhm > 0:
-            sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+            sex.config["SEEING_FWHM"] = seeing_fwhm * sex.config["PIXEL_SCALE"]
 
-        sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
-        sex.config['PARAMETERS_LIST'].append('X_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('Y_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('A_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('B_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('THETA_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
-        sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
+        sex.config["PARAMETERS_LIST"].append("FLUX_BEST")
+        sex.config["PARAMETERS_LIST"].append("X_IMAGE")
+        sex.config["PARAMETERS_LIST"].append("Y_IMAGE")
+        sex.config["PARAMETERS_LIST"].append("A_IMAGE")
+        sex.config["PARAMETERS_LIST"].append("B_IMAGE")
+        sex.config["PARAMETERS_LIST"].append("THETA_IMAGE")
+        sex.config["PARAMETERS_LIST"].append("FWHM_IMAGE")
+        sex.config["PARAMETERS_LIST"].append("CLASS_STAR")
 
         filename = frame.lastname
 
@@ -931,22 +973,22 @@ class DirectImageCommon(EmirRecipe):
         patches = []
         fwhms = []
         nfirst = 0
-        catalog_f = sopen(sex.config['CATALOG_NAME'])
+        catalog_f = sopen(sex.config["CATALOG_NAME"])
         try:
             star = catalog_f.readline()
             while star:
-                flags = star['FLAGS']
+                flags = star["FLAGS"]
                 # ignoring those objects with corrupted apertures
                 if flags & sexcatalog.CORRUPTED_APER:
                     star = catalog_f.readline()
                     continue
-                center = (star['X_IMAGE'], star['Y_IMAGE'])
-                wd = 10 * star['A_IMAGE']
-                hd = 10 * star['B_IMAGE']
-                color = 'red'
-                e = Ellipse(center, wd, hd, star['THETA_IMAGE'], color=color)
+                center = (star["X_IMAGE"], star["Y_IMAGE"])
+                wd = 10 * star["A_IMAGE"]
+                hd = 10 * star["B_IMAGE"]
+                color = "red"
+                e = Ellipse(center, wd, hd, star["THETA_IMAGE"], color=color)
                 patches.append(e)
-                fwhms.append(star['FWHM_IMAGE'])
+                fwhms.append(star["FWHM_IMAGE"])
                 nfirst += 1
                 # FIXME Plot a ellipse
                 star = catalog_f.readline()
@@ -957,7 +999,7 @@ class DirectImageCommon(EmirRecipe):
         ax = self._figure.gca()
         ax.add_collection(p)
         self._figure.canvas.draw()
-        self._figure.savefig('figure-sky-segmentation-overlay_%01d.png' % step)
+        self._figure.savefig("figure-sky-segmentation-overlay_%01d.png" % step)
 
         self.figure_fwhm_histogram(fwhms, step=step)
 
@@ -967,14 +1009,16 @@ class DirectImageCommon(EmirRecipe):
 
         seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1])
         if seeing_fwhm <= 0:
-            _logger.warning(
-                'Seeing FHWM %f pixels is negative, reseting', seeing_fwhm)
+            _logger.warning("Seeing FHWM %f pixels is negative, reseting", seeing_fwhm)
             seeing_fwhm = None
         else:
-            _logger.info('Seeing FHWM %f pixels (%f arcseconds)',
-                         seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
+            _logger.info(
+                "Seeing FHWM %f pixels (%f arcseconds)",
+                seeing_fwhm,
+                seeing_fwhm * sex.config["PIXEL_SCALE"],
+            )
         name_segmask(step)
-        _logger.info('Step %d, create object mask %s', step,  frame.objmask)
+        _logger.info("Step %d, create object mask %s", step, frame.objmask)
         frame.objmask = name_object_mask(frame.baselabel, step)
         frame.objmask_data = None
         return frame, seeing_fwhm
@@ -992,7 +1036,7 @@ class DirectImageCommon(EmirRecipe):
         #    sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
 
         if remove_border:
-            weigthmap = 'weights4rms.fits'
+            weigthmap = "weights4rms.fits"
 
             # Create weight map, remove n pixs from either side
             # using a Hannig filter
@@ -1016,8 +1060,8 @@ class DirectImageCommon(EmirRecipe):
             # We ignore objects in regions where we have less
             # than 10% of the images
             lower = sf_data[2].max() // 10
-            border = (wm < lower)
-            fits.writeto(weigthmap, border.astype('uint8'), overwrite=True)
+            border = wm < lower
+            fits.writeto(weigthmap, border.astype("uint8"), overwrite=True)
 
             # sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             # FIXME: this is a magic number
@@ -1026,7 +1070,7 @@ class DirectImageCommon(EmirRecipe):
         else:
             border = None
 
-        filename = 'result_i%0d.fits' % (step)
+        filename = "result_i%0d.fits" % (step)
 
         # Lauch SExtractor on a FITS file
         # sex.run(filename)
@@ -1036,9 +1080,10 @@ class DirectImageCommon(EmirRecipe):
         bkg = sep.Background(data_res)
         data_sub = data_res - bkg
 
-        _logger.info('Runing source extraction tor in %s', filename)
-        objects, objmask = sep.extract(data_sub, 1.5, err=bkg.globalrms,
-                                       mask=border, segmentation_map=True)
+        _logger.info("Runing source extraction tor in %s", filename)
+        objects, objmask = sep.extract(
+            data_sub, 1.5, err=bkg.globalrms, mask=border, segmentation_map=True
+        )
         fits.writeto(name_segmask(step), objmask, overwrite=True)
 
         # # Plot objects
@@ -1095,13 +1140,13 @@ class DirectImageCommon(EmirRecipe):
     def figure_final_before_s(self, data):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
-        cmap = mpl.cm.get_cmap('gray')
+        cmap = mpl.cm.get_cmap("gray")
         # norm = mpl.colors.LogNorm()
-        ax.set_title('Result image')
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
+        ax.set_title("Result image")
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
 
-        interval = PercentileInterval(50.)
+        interval = PercentileInterval(50.0)
         z1, z2 = interval.get_limits(data)
         norm = ImageNormalize(vmin=z1, vmax=z2, stretch=SqrtStretch())
         ax.imshow(data, cmap=cmap, clim=(z1, z2), norm=norm)
@@ -1110,7 +1155,7 @@ class DirectImageCommon(EmirRecipe):
     def figure_fwhm_histogram(self, fwhms, step=0):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
-        ax.set_title('FWHM of objects')
-        ax.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
+        ax.set_title("FWHM of objects")
+        ax.hist(fwhms, 50, normed=1, facecolor="g", alpha=0.75)
         self._figure.canvas.draw()
-        self._figure.savefig('figure-fwhm-histogram_i%01d.png' % step)
+        self._figure.savefig("figure-fwhm-histogram_i%01d.png" % step)

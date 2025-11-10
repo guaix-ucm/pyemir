@@ -34,21 +34,22 @@ class MicroditheredImageRecipeInput(RecipeInput):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_flat = MasterIntensityFlatFieldRequirement()
-    extinction = Parameter(0.0, 'Mean atmospheric extinction')
-    sources = Parameter([],
-                        'List of x, y coordinates to measure FWHM',
-                        optional=True)
+    extinction = Parameter(0.0, "Mean atmospheric extinction")
+    sources = Parameter([], "List of x, y coordinates to measure FWHM", optional=True)
     offsets = Offsets_Requirement()
-    iterations = Parameter(4, 'Iterations of the recipe')
-    sky_images = Parameter(5, 'Images used to estimate the background before '
-                           'and after current image')
+    iterations = Parameter(4, "Iterations of the recipe")
+    sky_images = Parameter(
+        5, "Images used to estimate the background before " "and after current image"
+    )
     sky_images_sep_time = SkyImageSepTime_Requirement()
     check_photometry_levels = Parameter(
-        [0.5, 0.8], 'Levels to check the flux of the objects')
+        [0.5, 0.8], "Levels to check the flux of the objects"
+    )
     check_photometry_actions = Parameter(
-        ['warn', 'warn', 'default'], 'Actions to take on images')
-    subpixelization = Parameter(4, 'Number of subdivisions in each pixel side')
-    window = Parameter([], 'Region of interesting data', optional=True)
+        ["warn", "warn", "default"], "Actions to take on images"
+    )
+    subpixelization = Parameter(4, "Number of subdivisions in each pixel side")
+    window = Parameter([], "Region of interesting data", optional=True)
 
 
 class MicroditheredImageRecipeResult(RecipeResult):
@@ -59,7 +60,6 @@ class MicroditheredImageRecipeResult(RecipeResult):
 @define_input(MicroditheredImageRecipeInput)
 @define_result(MicroditheredImageRecipeResult)
 class MicroditheredImageRecipe(DirectImageCommon):
-
     """
     Recipe for the reduction of microdithering imaging.
 
@@ -146,10 +146,13 @@ class MicroditheredImageRecipe(DirectImageCommon):
         subpix = ri.subpixelization
         window = ri.window
 
-        frame, catalog = self.process(ri,
-                                      window=window, subpix=subpix,
-                                      target_is_sky=True,
-                                      stop_after=DirectImageCommon.FULLRED)
+        frame, catalog = self.process(
+            ri,
+            window=window,
+            subpix=subpix,
+            target_is_sky=True,
+            stop_after=DirectImageCommon.FULLRED,
+        )
 
         result = self.create_result(frame=frame, catalog=catalog)
         return result

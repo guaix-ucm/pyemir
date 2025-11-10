@@ -15,7 +15,7 @@ from numina.array import ramp_array, fowler_array
 
 from .core import EMIR_READ_MODES
 
-PREPROC_KEY = 'READPROC'
+PREPROC_KEY = "READPROC"
 PREPROC_VAL = True
 
 
@@ -27,26 +27,24 @@ class ReadModeGuessing(object):
 
 def image_readmode(hdulist, default=None):
     header = hdulist[0].header
-    if 'READMODE' in header:
-        p_readmode = header['READMODE'].lower()
+    if "READMODE" in header:
+        p_readmode = header["READMODE"].lower()
         if p_readmode in EMIR_READ_MODES:
-            return ReadModeGuessing(mode=p_readmode,
-                                    info={'source': 'keyword'}
-                                    )
+            return ReadModeGuessing(mode=p_readmode, info={"source": "keyword"})
     # Using heuristics
     shape = hdulist[0].shape
     if len(shape) == 2:
         # A 2D image, mode is single
-        return ReadModeGuessing(mode='single', info={'source': 'heuristics'})
+        return ReadModeGuessing(mode="single", info={"source": "heuristics"})
     else:
         nd = min(shape)
         if nd == 2:
             # A NXNX2 image
             # mide is cds
-            return ReadModeGuessing(mode='cds', info={'source': 'heuristics'})
+            return ReadModeGuessing(mode="cds", info={"source": "heuristics"})
     # Insufficient information
     if default:
-        return ReadModeGuessing(mode=default, info={'source': 'default'})
+        return ReadModeGuessing(mode=default, info={"source": "default"})
     else:
         return None
 
@@ -70,21 +68,25 @@ def preprocess_fowler(hdulist):
     # A master badpixel mask
     cube = hdulist[0].data
 
-    res, var, npix, mask = fowler_array(cube, ti=tint, ts=ts,
-                                        gain=gain, ron=ron,
-                                        badpixels=None,
-                                        dtype='float32',
-                                        saturation=55000.0
-                                        )
+    res, var, npix, mask = fowler_array(
+        cube,
+        ti=tint,
+        ts=ts,
+        gain=gain,
+        ron=ron,
+        badpixels=None,
+        dtype="float32",
+        saturation=55000.0,
+    )
     hdulist[0].data = res
     varhdu = fits.ImageHDU(var)
-    varhdu.update_ext_name('VARIANCE')
+    varhdu.update_ext_name("VARIANCE")
     hdulist.append(varhdu)
     nmap = fits.ImageHDU(npix)
-    nmap.update_ext_name('MAP')
+    nmap.update_ext_name("MAP")
     hdulist.append(nmap)
     nmask_hdu = fits.ImageHDU(mask)
-    nmask_hdu.update_ext_name('MASK')
+    nmask_hdu.update_ext_name("MASK")
     hdulist.append(nmask_hdu)
     return hdulist
 
@@ -96,22 +98,27 @@ def preprocess_ramp(hdulist):
     ti = 0.0  # Integration time
     gain = 1.0
     ron = 1.0
-    rslt = ramp_array(cube, ti, gain=gain,
-                      ron=ron, badpixels=None,
-                      dtype='float32', saturation=55000.0
-                      )
+    rslt = ramp_array(
+        cube,
+        ti,
+        gain=gain,
+        ron=ron,
+        badpixels=None,
+        dtype="float32",
+        saturation=55000.0,
+    )
     result, var, npix, mask = rslt
 
     hdulist[0].data = result
     varhdu = fits.ImageHDU(var)
-    varhdu.update_ext_name('VARIANCE')
+    varhdu.update_ext_name("VARIANCE")
     hdulist.append(varhdu)
 
     nmap = fits.ImageHDU(npix)
-    nmap.update_ext_name('MAP')
+    nmap.update_ext_name("MAP")
     hdulist.append(nmap)
     nmask = fits.ImageHDU(mask)
-    nmask.update_ext_name('MASK')
+    nmask.update_ext_name("MASK")
     hdulist.append(nmask)
     return hdulist
 
@@ -128,24 +135,24 @@ def fits_wrapper(frame):
 def preprocess(input_, output):
     with fits_wrapper(input_) as hdulist:
         header = hdulist[0].header
-        if 'PREPROC' in header:
+        if "PREPROC" in header:
             # if the image is preprocessed, do nothing
             if input != output:
                 hdulist.writeto(output, overwrite=True)
             return
         # determine the READ mode
-        guess = image_readmode(hdulist, 'single')
+        guess = image_readmode(hdulist, "single")
         if guess is None:
             # We have a problem here
             return
 
-        if guess.mode == 'single':
+        if guess.mode == "single":
             hduproc = preprocess_single(hdulist)
-        elif guess.mode == 'cds':
+        elif guess.mode == "cds":
             hduproc = preprocess_cds(hdulist)
-        elif guess.mode == 'fowler':
+        elif guess.mode == "fowler":
             hduproc = preprocess_fowler(hdulist)
-        elif guess.mode == 'ramp':
+        elif guess.mode == "ramp":
             pass
         else:
             hduproc = preprocess_single(hdulist)

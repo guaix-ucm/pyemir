@@ -51,15 +51,15 @@ class StareImageRecipe2(EmirRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
     reprojection_method = Parameter(
-        'interp',
-        description='Astrometric reprojection method',
-        choices=['interp', 'adaptive', 'exact', 'none']
+        "interp",
+        description="Astrometric reprojection method",
+        choices=["interp", "adaptive", "exact", "none"],
     )
 
     reduced_image = Result(prods.ProcessedImage)
 
     def run(self, rinput):
-        self.logger.info('starting stare image reduction (offline)')
+        self.logger.info("starting stare image reduction (offline)")
 
         # determine which EMIR detector we are using
         insconf = rinput.obresult.configuration
@@ -69,8 +69,7 @@ class StareImageRecipe2(EmirRecipe):
         frames = rinput.obresult.frames
 
         with manage_fits(frames) as list_of:
-            c_img = comb.combine_images(
-                list_of, method=combine.mean, errors=False)
+            c_img = comb.combine_images(list_of, method=combine.mean, errors=False)
 
         flow = self.init_filters(rinput)
 
@@ -84,79 +83,88 @@ class StareImageRecipe2(EmirRecipe):
         self.set_base_headers(hdr)
 
         if rinput.master_bpm is not None:
-            self.logger.debug('using BPM from inputs')
+            self.logger.debug("using BPM from inputs")
             hdul_bpm = rinput.master_bpm.open()
             hdu_bpm = extra.generate_bpm_hdu(hdul_bpm[0])
         else:
-            self.logger.debug('using empty BPM')
+            self.logger.debug("using empty BPM")
             hdu_bpm = extra.generate_empty_bpm_hdu(processed_img[0])
 
         # remove ERROR extension
-        if 'ERROR' in processed_img:
-            self.logger.debug('... removing ERROR extension')
-            processed_img.pop('ERROR')
+        if "ERROR" in processed_img:
+            self.logger.debug("... removing ERROR extension")
+            processed_img.pop("ERROR")
 
         # image reprojection: note that the reprojection functions preserve
         # the flux only when the image is in surface brightness units
         convert_to_surface_brightness = True
         reprojection_method = rinput.reprojection_method
-        if reprojection_method != 'none':
-            if reprojection_method == 'interp':
+        if reprojection_method != "none":
+            if reprojection_method == "interp":
                 reproject_function = reproject_interp
-            elif reprojection_method == 'adaptive':
+            elif reprojection_method == "adaptive":
                 reproject_function = reproject_adaptive
-            elif reprojection_method == 'exact':
+            elif reprojection_method == "exact":
                 reproject_function = reproject_exact
             else:
                 raise ValueError(
-                    f'Unexpected astrometric_reprojection value: {reprojection_method}')
+                    f"Unexpected astrometric_reprojection value: {reprojection_method}"
+                )
             # reproject data
-            self.logger.debug('starting image reprojection')
+            self.logger.debug("starting image reprojection")
             hdr_original = deepcopy(hdr)
             wcs_original = WCS(hdr_original)
             # remove PV2_2, PV2_3,... PV2_5
             for item in wcs_original.wcs.get_pv():
                 if item[1] == 1:
                     self.logger.debug(
-                        f'... preserving keyword PV{item[0]}_{item[1]}={item[2]}')
+                        f"... preserving keyword PV{item[0]}_{item[1]}={item[2]}"
+                    )
                 elif item[1] > 1:
                     self.logger.debug(
-                        f'... removing   keyword PV{item[0]}_{item[1]}={item[2]}')
-                    del hdr[f'PV{item[0]}_{item[1]}']
+                        f"... removing   keyword PV{item[0]}_{item[1]}={item[2]}"
+                    )
+                    del hdr[f"PV{item[0]}_{item[1]}"]
                 else:
-                    raise ValueError('Unexpected PVi_j value')
+                    raise ValueError("Unexpected PVi_j value")
             wcs_final = WCS(hdr)
             naxis2, naxis1 = processed_img[0].data.shape
             if convert_to_surface_brightness:
                 # solid angle subtended by every pixel
-                self.logger.debug('... computing solid angle of every pixel in the original WCS')
+                self.logger.debug(
+                    "... computing solid angle of every pixel in the original WCS"
+                )
                 pixel_solid_angle_original = pixel_solid_angle_arcsec2(
                     wcs=wcs_original,
                     naxis1=naxis1,
                     naxis2=naxis2,
                     method=3,
-                    kernel_size=(11, 11)
+                    kernel_size=(11, 11),
                 )
-                surface_brightness_data = processed_img[0].data / \
-                    pixel_solid_angle_original
+                surface_brightness_data = (
+                    processed_img[0].data / pixel_solid_angle_original
+                )
             else:
                 surface_brightness_data = processed_img[0].data
             # reprojection itself
             self.logger.debug(
-                f'... reprojecting surface brightness using reproject_{reprojection_method}')
+                f"... reprojecting surface brightness using reproject_{reprojection_method}"
+            )
             data_final, footprint = reproject_function(
                 input_data=(surface_brightness_data, wcs_original),
                 output_projection=wcs_final,
                 shape_out=processed_img[0].data.shape,
             )
             if convert_to_surface_brightness:
-                self.logger.debug('... computing solid angle of every pixel in the final WCS')
+                self.logger.debug(
+                    "... computing solid angle of every pixel in the final WCS"
+                )
                 pixel_solid_angle_final = pixel_solid_angle_arcsec2(
                     wcs=wcs_final,
                     naxis1=naxis1,
                     naxis2=naxis2,
                     method=3,
-                    kernel_size=(11, 11)
+                    kernel_size=(11, 11),
                 )
                 data_final *= pixel_solid_angle_final
             # avoid undefined values: note that using footprint < 1.0 does not work
@@ -167,10 +175,11 @@ class StareImageRecipe2(EmirRecipe):
             # avoid undefined values
             data_final[footprint < minimum_footprint] = 0
             processed_img[0].data = data_final
-            mask_footprint = (footprint < minimum_footprint).astype('uint8')
+            mask_footprint = (footprint < minimum_footprint).astype("uint8")
             # reproject mask
             self.logger.debug(
-                f'... reprojecting mask using reproject_{reprojection_method}')
+                f"... reprojecting mask using reproject_{reprojection_method}"
+            )
             mask_reprojected, footprint = reproject_function(
                 input_data=(hdu_bpm.data, wcs_original),
                 output_projection=wcs_final,
@@ -178,13 +187,11 @@ class StareImageRecipe2(EmirRecipe):
             )
             # avoid undefined values
             mask_reprojected[footprint < minimum_footprint] = 0
-            self.logger.debug(
-                '... merging existing mask with footprint from reproject')
+            self.logger.debug("... merging existing mask with footprint from reproject")
             # there is no need to recompute mask_footprint (is the one computed for data)
-            hdu_bpm.data = (mask_reprojected > 0).astype(
-                'uint8') + mask_footprint
+            hdu_bpm.data = (mask_reprojected > 0).astype("uint8") + mask_footprint
             # generate image with individual channel distortion
-            if detector_channels == 'H2RG_FULL':
+            if detector_channels == "H2RG_FULL":
                 image_channels = np.zeros((2048, 2048))
                 for j_channel in range(32):
                     j1 = j_channel * 64
@@ -196,39 +203,43 @@ class StareImageRecipe2(EmirRecipe):
                     shape_out=image_channels.shape,
                 )
                 channels_reprojected[footprint < minimum_footprint] = 0.0
-                channels_reprojected_int = np.round(channels_reprojected).astype('uint8')
+                channels_reprojected_int = np.round(channels_reprojected).astype(
+                    "uint8"
+                )
                 header = fits.Header()
-                header['EXTNAME'] = 'ICHANNEL'
+                header["EXTNAME"] = "ICHANNEL"
                 hdu_channels = fits.ImageHDU(channels_reprojected_int, header=header)
             else:
                 hdu_channels = None
 
             # update header
-            hdr['history'] = f'Reprojection using reproject_{reprojection_method}()'
-            hdr['history'] = f'Reprojection time {datetime.datetime.now(datetime.UTC).isoformat()}'
+            hdr["history"] = f"Reprojection using reproject_{reprojection_method}()"
+            hdr["history"] = (
+                f"Reprojection time {datetime.datetime.now(datetime.UTC).isoformat()}"
+            )
         else:
-            if detector_channels == 'H2RG_FULL':
-                image_channels = np.zeros((2048, 2048), dtype='uint8')
+            if detector_channels == "H2RG_FULL":
+                image_channels = np.zeros((2048, 2048), dtype="uint8")
                 for j_channel in range(32):
                     j1 = j_channel * 64
                     j2 = j1 + 64
                     image_channels[:, j1:j2] = j_channel + 1
                 header = fits.Header()
-                header['EXTNAME'] = 'ICHANNEL'
+                header["EXTNAME"] = "ICHANNEL"
                 hdu_channels = fits.ImageHDU(image_channels, header=header)
             else:
                 hdu_channels = None
 
         # Append the BPM to the result
-        self.logger.debug('append BPM')
+        self.logger.debug("append BPM")
         processed_img.append(hdu_bpm)
 
         # Append the reprojected layout of the detector channels (for the H2RG detector)
         if hdu_channels is not None:
-            self.logger.debug('append channels reprojection')
+            self.logger.debug("append channels reprojection")
             processed_img.append(hdu_channels)
 
-        self.logger.info('end stare image (off) reduction')
+        self.logger.info("end stare image (off) reduction")
         result = self.create_result(reduced_image=processed_img)
 
         return result
@@ -237,7 +248,7 @@ class StareImageRecipe2(EmirRecipe):
         """Set metadata in FITS headers."""
         hdr = super(StareImageRecipe2, self).set_base_headers(hdr)
         # Set EXP to 0
-        hdr['EXP'] = 0
+        hdr["EXP"] = 0
         return hdr
 
 
@@ -256,20 +267,16 @@ class StareImageBaseRecipe(EmirRecipe):
     def __init__(self, *args, **kwargs):
         super(StareImageBaseRecipe, self).__init__(*args, **kwargs)
         if False:
-            self.query_options['master_sky'] = Ignore()
+            self.query_options["master_sky"] = Ignore()
 
     @emirdrp.decorators.loginfo
     @timeit
     def run(self, rinput):
-        self.logger.info('starting stare image reduction')
+        self.logger.info("starting stare image reduction")
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(
-            rinput,
-            flow,
-            method=combine.median
-        )
+        hdulist = basic_processing_with_combination(rinput, flow, method=combine.median)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
 
@@ -281,7 +288,7 @@ class StareImageBaseRecipe(EmirRecipe):
 
         # Append the BPM to the result
         hdulist.append(hdu_bpm)
-        self.logger.info('end stare image reduction')
+        self.logger.info("end stare image reduction")
         result = self.create_result(frame=hdulist)
 
         return result
@@ -290,5 +297,5 @@ class StareImageBaseRecipe(EmirRecipe):
         """Set metadata in FITS headers."""
         hdr = super(StareImageBaseRecipe, self).set_base_headers(hdr)
         # Update EXP to 0
-        hdr['EXP'] = 0
+        hdr["EXP"] = 0
         return hdr

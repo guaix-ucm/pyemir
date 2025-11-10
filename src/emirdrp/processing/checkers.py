@@ -24,10 +24,10 @@ class Checker(proc.Corrector):
 
     def run(self, img):
         base = img[0].data
-        _logger.debug('running checker after flat')
+        _logger.debug("running checker after flat")
         # Check NaN and Ceros
         mask1 = ~numpy.isfinite(base)
         if numpy.any(mask1):
-            _logger.warning('image has %d NaN', mask1.sum())
+            _logger.warning("image has %d NaN", mask1.sum())
 
         return img

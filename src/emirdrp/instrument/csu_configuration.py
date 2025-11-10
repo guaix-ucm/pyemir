@@ -23,15 +23,12 @@ class LongSlit(object):
         self._imax = imax
 
     def __repr__(self):
-        output = 'islitlet_min_max=({0:02d}, {1:02d})'.format(
-            self._imin, self._imax
-        )
+        output = "islitlet_min_max=({0:02d}, {1:02d})".format(self._imin, self._imax)
         return output
 
     def __eq__(self, other):
         if isinstance(other, LongSlit):
-            result = \
-                (self._imin == other._imin) and (self._imax == other._imax)
+            result = (self._imin == other._imin) and (self._imax == other._imax)
             return result
         return NotImplemented
 
@@ -74,8 +71,10 @@ class CsuConfiguration(object):
             strdum = "- [BAR{0:2d}] left, right, center, width: ".format(ibar)
             output += strdum
             strdum = "{0:7.3f} {1:7.3f} {2:7.3f} {3:7.3f}\n".format(
-                self._csu_bar_left[i], self._csu_bar_right[i],
-                self._csu_bar_slit_center[i], self._csu_bar_slit_width[i]
+                self._csu_bar_left[i],
+                self._csu_bar_right[i],
+                self._csu_bar_slit_center[i],
+                self._csu_bar_slit_width[i],
             )
             output += strdum
         return output
@@ -83,15 +82,21 @@ class CsuConfiguration(object):
     def __eq__(self, other):
         if isinstance(other, CsuConfiguration):
             ndig = 3
-            result = \
-                (round(self._csu_bar_left, ndig) ==
-                 round(other._csu_bar_left, ndig)) and \
-                (round(self._csu_bar_right, ndig) ==
-                 round(other._csu_bar_right, ndig)) and \
-                (round(self._csu_bar_slit_center) ==
-                 round(other._csu_bar_slit_center)) and \
-                (round(self._csu_bar_slit_width, ndig) ==
-                 round(other._csu_bar_slit_width, ndig))
+            result = (
+                (round(self._csu_bar_left, ndig) == round(other._csu_bar_left, ndig))
+                and (
+                    round(self._csu_bar_right, ndig)
+                    == round(other._csu_bar_right, ndig)
+                )
+                and (
+                    round(self._csu_bar_slit_center)
+                    == round(other._csu_bar_slit_center)
+                )
+                and (
+                    round(self._csu_bar_slit_width, ndig)
+                    == round(other._csu_bar_slit_width, ndig)
+                )
+            )
             return result
         return NotImplemented
 
@@ -115,8 +120,8 @@ class CsuConfiguration(object):
         # read input FITS file
         with fits.open(fitsobj) as hdulist:
             if extnum is None:
-                if 'MECS' in hdulist:
-                    extnum = 'MECS'
+                if "MECS" in hdulist:
+                    extnum = "MECS"
                 else:
                     extnum = 0
             image_header = hdulist[extnum].header
@@ -145,12 +150,12 @@ class CsuConfiguration(object):
 
         for i in range(EMIR_NBARS):
             ibar = i + 1
-            keyword = 'CSUP{}'.format(ibar)
+            keyword = "CSUP{}".format(ibar)
             if keyword in image_header:
                 self._csu_bar_left.append(image_header[keyword])
             else:
                 raise ValueError("Expected keyword " + keyword + " not found!")
-            keyword = 'CSUP{}'.format(ibar + EMIR_NBARS)
+            keyword = "CSUP{}".format(ibar + EMIR_NBARS)
             if keyword in image_header:
                 # set the same origin as the one employed for _csu_bar_left
                 self._csu_bar_right.append(fov - image_header[keyword])
@@ -191,23 +196,23 @@ class CsuConfiguration(object):
         outdict = {}
         for i in range(EMIR_NBARS):
             ibar = i + 1
-            cbar = 'slitlet' + str(ibar).zfill(2)
+            cbar = "slitlet" + str(ibar).zfill(2)
             outdict[cbar] = {}
-            outdict[cbar]['_csu_bar_left'] = \
-                round(self._csu_bar_left[i], ndigits)
-            outdict[cbar]['_csu_bar_right'] = \
-                round(self._csu_bar_right[i], ndigits)
-            outdict[cbar]['_csu_bar_slit_center'] = \
-                round(self._csu_bar_slit_center[i], ndigits)
-            outdict[cbar]['_csu_bar_slit_width'] = \
-                round(self._csu_bar_slit_width[i], ndigits)
+            outdict[cbar]["_csu_bar_left"] = round(self._csu_bar_left[i], ndigits)
+            outdict[cbar]["_csu_bar_right"] = round(self._csu_bar_right[i], ndigits)
+            outdict[cbar]["_csu_bar_slit_center"] = round(
+                self._csu_bar_slit_center[i], ndigits
+            )
+            outdict[cbar]["_csu_bar_slit_width"] = round(
+                self._csu_bar_slit_width[i], ndigits
+            )
 
         return outdict
 
     def widths_in_range_mm(
-            self,
-            minwidth=EMIR_MINIMUM_SLITLET_WIDTH_MM,
-            maxwidth=EMIR_MAXIMUM_SLITLET_WIDTH_MM
+        self,
+        minwidth=EMIR_MINIMUM_SLITLET_WIDTH_MM,
+        maxwidth=EMIR_MAXIMUM_SLITLET_WIDTH_MM,
     ):
         """Return list of slitlets which width is within given range
 
@@ -234,8 +239,9 @@ class CsuConfiguration(object):
 
         return list_ok
 
-    def pseudo_longslits(self, list_valid_slitlets=None,
-                         fracwidth=0.25, diffcenter=0.25):
+    def pseudo_longslits(
+        self, list_valid_slitlets=None, fracwidth=0.25, diffcenter=0.25
+    ):
         """Return dictionary of LongSlit instances
 
         Parameters
@@ -278,8 +284,7 @@ class CsuConfiguration(object):
                     wmean = (w1 + w2) / 2.0
                     if abs(w1 - w2) / wmean < fracwidth:
                         if abs(c1 - c2) < wmean * diffcenter:
-                            result[islitlet]._imin = \
-                                result[(islitlet - 1)]._imin
+                            result[islitlet]._imin = result[(islitlet - 1)]._imin
 
         # check for pseudo-longslit with next slitlet
         for islitlet in reversed(range(1, EMIR_NBARS)):
@@ -292,32 +297,32 @@ class CsuConfiguration(object):
                     wmean = (w1 + w2) / 2.0
                     if abs(w1 - w2) / wmean < fracwidth:
                         if abs(c1 - c2) < wmean * diffcenter:
-                            result[islitlet]._imax = \
-                                result[(islitlet + 1)]._imax
+                            result[islitlet]._imax = result[(islitlet + 1)]._imax
 
         return result
 
-    def display_pseudo_longslits(self, list_valid_slitlets=None,
-                                 fracwidth=0.25, diffcenter=0.25):
+    def display_pseudo_longslits(
+        self, list_valid_slitlets=None, fracwidth=0.25, diffcenter=0.25
+    ):
         dict_longslits = self.pseudo_longslits(
             list_valid_slitlets=list_valid_slitlets,
             fracwidth=fracwidth,
-            diffcenter=diffcenter
+            diffcenter=diffcenter,
         )
         for islitlet in range(1, EMIR_NBARS + 1):
             longslit = dict_longslits[islitlet]
             imin = longslit._imin
             imax = longslit._imax
-            output = 'islitlet: {0:02d} '.format(islitlet)
-            output += '--> min: {0:02d}  max: {1:02d} '.format(imin, imax)
+            output = "islitlet: {0:02d} ".format(islitlet)
+            output += "--> min: {0:02d}  max: {1:02d} ".format(imin, imax)
             if imin == islitlet == imax:
-                output += '<->'
+                output += "<->"
             elif imin == islitlet < imax:
-                output += '<--'
+                output += "<--"
             elif imin < islitlet == imax:
-                output += '-->'
+                output += "-->"
             else:
-                output += '...'
+                output += "..."
             print(output)
 
 
@@ -352,10 +357,8 @@ def merge_odd_even_csu_configurations(conf_odd, conf_even):
         if ibar % 2 == 0:
             merged_conf._csu_bar_left[i] = conf_even._csu_bar_left[i]
             merged_conf._csu_bar_right[i] = conf_even._csu_bar_right[i]
-            merged_conf._csu_bar_slit_center[i] = \
-                conf_even._csu_bar_slit_center[i]
-            merged_conf._csu_bar_slit_width[i] = \
-                conf_even._csu_bar_slit_width[i]
+            merged_conf._csu_bar_slit_center[i] = conf_even._csu_bar_slit_center[i]
+            merged_conf._csu_bar_slit_width[i] = conf_even._csu_bar_slit_width[i]
 
     # return merged configuration
     return merged_conf

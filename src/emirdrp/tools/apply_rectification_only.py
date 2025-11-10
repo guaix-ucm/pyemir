@@ -33,48 +33,58 @@ from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description='description: apply rectification polynomials '
-                    'for the CSU configuration of a particular image'
+        description="description: apply rectification polynomials "
+        "for the CSU configuration of a particular image"
     )
 
     # required arguments
-    parser.add_argument("fitsfile",
-                        help="Input FITS file",
-                        type=argparse.FileType('rb'))
-    parser.add_argument("--rectwv_coeff", required=True,
-                        help="Input JSON file with rectification and "
-                             "wavelength calibration coefficients",
-                        type=argparse.FileType('rt'))
-    parser.add_argument("--outfile", required=True,
-                        help="Output FITS file with rectified image",
-                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
+    parser.add_argument(
+        "fitsfile", help="Input FITS file", type=argparse.FileType("rb")
+    )
+    parser.add_argument(
+        "--rectwv_coeff",
+        required=True,
+        help="Input JSON file with rectification and "
+        "wavelength calibration coefficients",
+        type=argparse.FileType("rt"),
+    )
+    parser.add_argument(
+        "--outfile",
+        required=True,
+        help="Output FITS file with rectified image",
+        type=lambda x: arg_file_is_new(parser, x, mode="wb"),
+    )
 
     # optional arguments
-    parser.add_argument("--resampling",
-                        help="Resampling method: 1 -> nearest neighbor, "
-                             "2 -> linear interpolation (default)",
-                        default=2, type=int,
-                        choices=(1, 2))
-    parser.add_argument("--ignore_dtu_configuration",
-                        help="Ignore DTU configurations differences between "
-                             "transformation and input image",
-                        action="store_true")
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting & debugging options"
-                             " (default=0)",
-                        default=0, type=int,
-                        choices=DEBUGPLOT_CODES)
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument(
+        "--resampling",
+        help="Resampling method: 1 -> nearest neighbor, "
+        "2 -> linear interpolation (default)",
+        default=2,
+        type=int,
+        choices=(1, 2),
+    )
+    parser.add_argument(
+        "--ignore_dtu_configuration",
+        help="Ignore DTU configurations differences between "
+        "transformation and input image",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--debugplot",
+        help="Integer indicating plotting & debugging options" " (default=0)",
+        default=0,
+        type=int,
+        choices=DEBUGPLOT_CODES,
+    )
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
     args = parser.parse_args(args)
 
     if args.echo:
-        print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
+        print("\033[1m\033[31m% " + " ".join(sys.argv) + "\033[0m\n")
 
     # read calibration structure from JSON file
-    rectwv_coeff = RectWaveCoeff._datatype_load(
-        args.rectwv_coeff.name)
+    rectwv_coeff = RectWaveCoeff._datatype_load(args.rectwv_coeff.name)
 
     # read FITS image and its corresponding header
     hdulist = fits.open(args.fitsfile)
@@ -84,39 +94,39 @@ def main(args=None):
 
     # protections
     naxis2, naxis1 = image2d.shape
-    if naxis1 != header['naxis1'] or naxis2 != header['naxis2']:
-        print('>>> NAXIS1:', naxis1)
-        print('>>> NAXIS2:', naxis2)
-        raise ValueError('Something is wrong with NAXIS1 and/or NAXIS2')
+    if naxis1 != header["naxis1"] or naxis2 != header["naxis2"]:
+        print(">>> NAXIS1:", naxis1)
+        print(">>> NAXIS2:", naxis2)
+        raise ValueError("Something is wrong with NAXIS1 and/or NAXIS2")
     if abs(args.debugplot) >= 10:
-        print('>>> NAXIS1:', naxis1)
-        print('>>> NAXIS2:', naxis2)
+        print(">>> NAXIS1:", naxis1)
+        print(">>> NAXIS2:", naxis2)
 
     # check that the input FITS file grism and filter match
-    filter_name = header['filter']
-    if filter_name != rectwv_coeff.tags['filter']:
+    filter_name = header["filter"]
+    if filter_name != rectwv_coeff.tags["filter"]:
         raise ValueError("Filter name does not match!")
-    grism_name = header['grism']
-    if grism_name != rectwv_coeff.tags['grism']:
+    grism_name = header["grism"]
+    if grism_name != rectwv_coeff.tags["grism"]:
         raise ValueError("Filter name does not match!")
     if abs(args.debugplot) >= 10:
-        print('>>> grism.......:', grism_name)
-        print('>>> filter......:', filter_name)
+        print(">>> grism.......:", grism_name)
+        print(">>> filter......:", filter_name)
 
     # check that the DTU configurations are compatible
     with fits.open(args.fitsfile) as hdulist:
         dtu_conf_fitsfile = DtuConf.from_img(hdulist)
-    dtu_conf_jsonfile = DtuConf.from_header(rectwv_coeff.meta_info['dtu_configuration'])
+    dtu_conf_jsonfile = DtuConf.from_header(rectwv_coeff.meta_info["dtu_configuration"])
     if dtu_conf_fitsfile != dtu_conf_jsonfile:
-        print('DTU configuration (FITS file):\n\t', dtu_conf_fitsfile)
-        print('DTU configuration (JSON file):\n\t', dtu_conf_jsonfile)
+        print("DTU configuration (FITS file):\n\t", dtu_conf_fitsfile)
+        print("DTU configuration (JSON file):\n\t", dtu_conf_jsonfile)
         if args.ignore_dtu_configuration:
-            print('WARNING: DTU configuration differences found!')
+            print("WARNING: DTU configuration differences found!")
         else:
             raise ValueError("DTU configurations do not match!")
     else:
         if abs(args.debugplot) >= 10:
-            print('>>> DTU Configuration match!')
+            print(">>> DTU Configuration match!")
             print(dtu_conf_fitsfile)
 
     # valid slitlet numbers
@@ -124,7 +134,7 @@ def main(args=None):
     for idel in rectwv_coeff.missing_slitlets:
         list_valid_islitlets.remove(idel)
     if abs(args.debugplot) >= 10:
-        print('>>> valid slitlet numbers:\n', list_valid_islitlets)
+        print(">>> valid slitlet numbers:\n", list_valid_islitlets)
 
     naxis2_enlarged = EMIR_NBARS * EMIR_NPIXPERSLIT_RECTIFIED
     image2d_rectified = np.zeros((naxis2_enlarged, EMIR_NAXIS1))
@@ -136,9 +146,9 @@ def main(args=None):
                 islitlet_progress(islitlet, EMIR_NBARS, ignore=False)
 
             # define Slitlet2D object
-            slt = Slitlet2D(islitlet=islitlet,
-                            rectwv_coeff=rectwv_coeff,
-                            debugplot=args.debugplot)
+            slt = Slitlet2D(
+                islitlet=islitlet, rectwv_coeff=rectwv_coeff, debugplot=args.debugplot
+            )
 
             # extract 2D image corresponding to the selected slitlet: note that
             # in this case we are not using select_unrectified_slitlets()
@@ -146,8 +156,7 @@ def main(args=None):
             slitlet2d = slt.extract_slitlet2d(image2d)
 
             # rectify image
-            slitlet2d_rect = slt.rectify(slitlet2d,
-                                         resampling=args.resampling)
+            slitlet2d_rect = slt.rectify(slitlet2d, resampling=args.resampling)
 
             # minimum and maximum useful row in the full 2d rectified image
             # (starting from 0)
@@ -166,16 +175,14 @@ def main(args=None):
             # ---
 
             # unrectify image
-            slitlet2d_unrect = slt.rectify(slitlet2d_rect,
-                                           resampling=args.resampling,
-                                           inverse=True)
+            slitlet2d_unrect = slt.rectify(
+                slitlet2d_rect, resampling=args.resampling, inverse=True
+            )
 
             # minimum and maximum useful scan (pixel in the spatial direction)
             # for the rectified slitlet
             nscan_min, nscan_max = nscan_minmax_frontiers(
-                slt.y0_frontier_lower,
-                slt.y0_frontier_upper,
-                resize=False
+                slt.y0_frontier_lower, slt.y0_frontier_upper, resize=False
             )
             ii1 = nscan_min - slt.bb_ns1_orig
             ii2 = nscan_max - slt.bb_ns1_orig + 1
@@ -192,15 +199,15 @@ def main(args=None):
                 islitlet_progress(islitlet, EMIR_NBARS, ignore=True)
 
     if args.debugplot == 0:
-        print('OK!')
+        print("OK!")
 
     save_ndarray_to_fits(
         array=[image2d_rectified, image2d_unrectified],
         file_name=args.outfile,
         cast_to_float=[True] * 2,
-        overwrite=True
+        overwrite=True,
     )
-    print('>>> Saving file ' + args.outfile.name)
+    print(">>> Saving file " + args.outfile.name)
 
 
 if __name__ == "__main__":

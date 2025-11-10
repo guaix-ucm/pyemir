@@ -26,8 +26,7 @@ def adapt_wcs(wcs, rotang_deg, ipa_deg):
     pc22 = cdelt * numpy.cos(nangle)
     pc12 = -cdelt * numpy.sin(nangle)
     pc21 = cdelt * numpy.sin(nangle)
-    wcsa.wcs.cd = [[pc11, pc12],
-                   [pc21, pc22]]
+    wcsa.wcs.cd = [[pc11, pc12], [pc21, pc22]]
     return wcsa
 
 

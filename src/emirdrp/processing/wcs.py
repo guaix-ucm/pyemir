@@ -13,7 +13,7 @@ from astropy import wcs
 
 
 def offsets_from_wcs(frames, pixref):
-    '''Compute offsets between frames using WCS information.
+    """Compute offsets between frames using WCS information.
 
     :parameter frames: sequence of FITS filenames or file descriptors
     :parameter pixref: numpy array used as reference pixel
@@ -28,7 +28,7 @@ def offsets_from_wcs(frames, pixref):
     of the array is [0, 0], being the offset from the first image
     to itself.
 
-    '''
+    """
 
     result = numpy.zeros((len(frames), pixref.shape[1]))
 

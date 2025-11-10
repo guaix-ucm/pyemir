@@ -35,7 +35,7 @@ class ConfigurableSlitUnit(HWDevice):
         self.rbars = []
         self.slits = {}
 
-        nominal = barsmodel.values['nominal']
+        nominal = barsmodel.values["nominal"]
 
         for i in range(self.NBARS):
             name = "BarL_{}".format(i + 1)
@@ -54,7 +54,7 @@ class ConfigurableSlitUnit(HWDevice):
     # Methods added to read from JSON
     @classmethod
     def init_args(self, name, setup_objects):
-        barsmodel = setup_objects['barsmodel']
+        barsmodel = setup_objects["barsmodel"]
         return (name, barsmodel), {}
 
     def is_open(self):
@@ -154,7 +154,7 @@ def create_test_header0():
     return hdr
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     import pkgutil
     import numpy
@@ -162,8 +162,9 @@ if __name__ == '__main__':
     import numpy.polynomial.polynomial as pol
 
     dumdata = pkgutil.get_data(
-        'emirdrp.instrument.configs', 'bars_nominal_positions_test.txt')
-    ss = io.StringIO(dumdata.decode('utf8'))
+        "emirdrp.instrument.configs", "bars_nominal_positions_test.txt"
+    )
+    ss = io.StringIO(dumdata.decode("utf8"))
     bars_nominal_positions = numpy.loadtxt(ss)
 
     class BarModel:
@@ -171,16 +172,16 @@ if __name__ == '__main__':
             self.values = {}
 
     barmodel = BarModel()
-    barmodel.values['nominal'] = bars_nominal_positions
+    barmodel.values["nominal"] = bars_nominal_positions
 
     csu = ConfigurableSlitUnit("CSU", barmodel)
 
     print(csu.config_info())
-    csu.configure({'CSU.BarL_1': {'csupos': 100}})
+    csu.configure({"CSU.BarL_1": {"csupos": 100}})
     print(csu.children)
     print(csu.is_open())
-    dev = csu.get_device('CSU.BarL_12')
-    csu.get_property('CSU.BarL_12.csupos')
+    dev = csu.get_device("CSU.BarL_12")
+    csu.get_property("CSU.BarL_12.csupos")
     dev.csupos = 234
     print(dev.position)
     print(dev.bbox().slice)

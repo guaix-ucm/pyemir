@@ -30,7 +30,7 @@ class MMTestCase(unittest.TestCase):
         somefits = []
         nimg = 10
         for i in range(nimg):
-            hdu = fits.PrimaryHDU(data=np.zeros((10, 10), dtype='int16'))
+            hdu = fits.PrimaryHDU(data=np.zeros((10, 10), dtype="int16"))
             hdul = fits.HDUList([hdu])
             somefits.append(hdul)
 
@@ -69,7 +69,7 @@ class MMTestCase(unittest.TestCase):
         somefits = []
         nimg = 10
         for i in range(nimg):
-            hdu = fits.PrimaryHDU(data=np.zeros((10, 10), dtype='int16'))
+            hdu = fits.PrimaryHDU(data=np.zeros((10, 10), dtype="int16"))
             hdul = fits.HDUList([hdu])
             fd, filename = mkstemp()
             hdul.writeto(filename, overwrite=True)
