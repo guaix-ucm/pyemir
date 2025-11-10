@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2024 Universidad Complutense de Madrid
+# Copyright 2008-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -35,7 +35,7 @@ from emirdrp.core import EMIR_NAXIS2
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
 
-class SlitletLimits(object):
+class SlitletLimits:
     """Relevant parameters to fit boundaries of a given slitlet.
 
     Parameters

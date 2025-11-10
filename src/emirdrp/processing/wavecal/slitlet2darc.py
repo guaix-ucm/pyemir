@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2024 Universidad Complutense de Madrid
+# Copyright 2018-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -73,7 +73,7 @@ def expected_y0_upper_frontier(islitlet):
     return y0_upper
 
 
-class Slitlet2dArc(object):
+class Slitlet2dArc:
     """Slitlet2dArc class definition.
 
      Slitlet2dArc: 2D slitlet class for Long-Slit Arc image

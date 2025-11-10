@@ -15,7 +15,7 @@ from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
 from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
 
 
-class LongSlit(object):
+class LongSlit:
     """Auxiliary class to store the minimum and maximum islitlet"""
 
     def __init__(self, imin=None, imax=None):
@@ -39,7 +39,7 @@ class LongSlit(object):
         return self._imax
 
 
-class CsuConfiguration(object):
+class CsuConfiguration:
     """Configurable Slit Unit (CSU) Configuration class definition.
 
     Attributes

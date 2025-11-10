@@ -50,7 +50,7 @@ from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
 
 
-class ImageInfo(object):
+class ImageInfo:
     def __init__(self, origin):
         self.origin = origin
         self.mask = None

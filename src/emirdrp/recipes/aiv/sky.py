@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2023 Universidad Complutense de Madrid
+# Copyright 2013-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -47,7 +47,7 @@ class TestSkyCorrectRecipe(EmirRecipe):
         return result
 
 
-class StareImageRecipeInputBuilder(object):
+class StareImageRecipeInputBuilder:
     """Class to build StareImageRecipe inputs from the Observation Results.
 
     Fetches SKY calibration image from the archive

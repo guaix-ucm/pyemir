@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2024 Universidad Complutense de Madrid
+# Copyright 2018-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -21,7 +21,7 @@ from emirdrp.core import EMIR_NAXIS2
 from emirdrp.core import EMIR_NPIXPERSLIT_RECTIFIED
 
 
-class Slitlet2D(object):
+class Slitlet2D:
     """Slitlet2D class definition.
 
     Parameters

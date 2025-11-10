@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2024 Universidad Complutense de Madrid
+# Copyright 2014-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -61,7 +61,7 @@ def comp_back_with_annulus(img, xc, yc, r_in, r_out, frac=0.1):
     return bck, mm
 
 
-class ConstantBackgroundEstimator(object):
+class ConstantBackgroundEstimator:
     def __init__(self, const):
         self.const = const
 
@@ -69,7 +69,7 @@ class ConstantBackgroundEstimator(object):
         return self.const
 
 
-class AnnulusBackgroundEstimator(object):
+class AnnulusBackgroundEstimator:
     def __init__(self, r1, r2):
         self.r1 = r1
         self.r2 = r2

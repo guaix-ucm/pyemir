@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2024 Universidad Complutense de Madrid
+# Copyright 2008-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -15,7 +15,7 @@ from numina.array.bbox import BoundingBox
 EMIR_NBARS = 55
 
 
-class CSUConf(object):
+class CSUConf:
     """Information about the configuration of slits in the CSU"""
 
     def __init__(self, barmodel):
@@ -134,7 +134,7 @@ class TargetType(enum.Enum):
     UNKNOWN = 4
 
 
-class CSUBarModel(object):
+class CSUBarModel:
     def __init__(self, idx, xs, xdelt, yc, active=True):
         self.idx = idx
         self.xs = xs
@@ -195,7 +195,7 @@ class CSUBarModelR(CSUBarModel):
         return self.position(self.csupos)
 
 
-class PhysicalBar(object):
+class PhysicalBar:
     def __init__(self, idx, xpos, y1, y2, active=True):
         self.idx = idx
         self.xpos = xpos
@@ -214,7 +214,7 @@ class PhysicalBarR(PhysicalBar):
         super(PhysicalBarR, self).__init__(idx, xpos, y1, y2, active)
 
 
-class LogicalSlit(object):
+class LogicalSlit:
     """Slit formed from combination of PhysicalBarL and PhysicalBarR"""
 
     def __init__(self, idx, lbars, rbars, target_type=TargetType.UNKNOWN):

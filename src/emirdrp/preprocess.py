@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2024 Universidad Complutense de Madrid
+# Copyright 2008-2025 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -19,7 +19,7 @@ PREPROC_KEY = "READPROC"
 PREPROC_VAL = True
 
 
-class ReadModeGuessing(object):
+class ReadModeGuessing:
     def __init__(self, mode, info=None):
         self.mode = mode
         self.info = info
