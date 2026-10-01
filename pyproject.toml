@@ -48,9 +48,14 @@ docs = [
     "sphinx>=7",
     "sphinx_rtd_theme"
 ]
+# Qt bindings for the interactive windows of the graphical
+# tools
+gui = [
+    "PyQt6",
+]
 tool = [
     "PyQt5",
-    ]
+]
 
 [project.urls]
 Homepage = "https://github.com/guaix-ucm/pyemir"
@@ -83,9 +88,29 @@ pyemir-overplot_boundary_model = "emirdrp.processing.wavecal.overplot_boundary_m
 pyemir-overplot_bounddict = "emirdrp.tools.overplot_bounddict:main"
 
 [build-system]
-requires = ["setuptools >= 45", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools >= 77.0.3", "setuptools_scm[toml]>=8.1"]
 build-backend = "setuptools.build_meta"
 
 # pyproject.toml
 [tool.setuptools_scm]
-write_to = "src/emirdrp/_version.py"
+version_file = "src/emirdrp/_version.py"
+
+[tool.pytest.ini_options]
+# filterwarnings = [
+#     "error",
+# ]
+
+[tool.black]
+line-length = 120
+target-version = ['py310', 'py311', 'py312', 'py313', 'py314']
+skip-string-normalization = false
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | build
+  | dist
+)/
+'''
