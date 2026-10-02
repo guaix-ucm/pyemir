@@ -25,7 +25,6 @@ classifiers = [
 
 dependencies = [
     "astropy",
-    "importlib_resources",  # required with python < 3.9
     "lmfit",
     "matplotlib",
     "numpy",

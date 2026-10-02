@@ -9,7 +9,7 @@
 
 import math
 
-import importlib_resources
+import importlib.resources
 
 import numpy
 import scipy.interpolate as sil
@@ -96,7 +96,7 @@ class SpagnaModel(BaseModel):
     def __init__(self):
         super().__init__("Spagna 1999")
 
-        res = importlib_resources.files("emirdrp.simulation").joinpath("spagna-J.dat")
+        res = importlib.resources.files("emirdrp.simulation").joinpath("spagna-J.dat")
         with open(res) as fd:
             _J_counts_data = numpy.loadtxt(fd)
 
@@ -105,7 +105,7 @@ class SpagnaModel(BaseModel):
             self._spl_J_1 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 1])
             self._spl_J_2 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 2])
 
-        res = importlib_resources.files("emirdrp.simulation").joinpath("spagna-K.dat")
+        res = importlib.resources.files("emirdrp.simulation").joinpath("spagna-K.dat")
         with open(res) as fd:
             _K_counts_data = numpy.loadtxt(fd)
             # Data in file is for square degree
