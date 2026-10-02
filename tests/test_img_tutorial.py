@@ -2,8 +2,10 @@ import pytest
 
 from numina.user.baserun import run_reduce
 
-# Variable for datamanager_remote
-TEST_SET_FILE = "pyemir/pyemir-image-tutorial-v2.tar.gz"
+# Variables for datamanager_remote
+TEST_SET_FILE = "pyemir/pyemir-image-tutorial-v3.tar.gz"
+TEST_SET_CONTROL = "control.yaml"
+TEST_SET_OBS = "obs.yaml"
 
 
 @pytest.mark.result_compare
