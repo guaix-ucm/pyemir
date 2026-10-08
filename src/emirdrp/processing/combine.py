@@ -219,9 +219,7 @@ def scale_with_median(method):
 
 
 # FIXME: use the function in numina
-def combine_images(
-    images, method=combine.mean, method_kwargs=None, errors=False, prolog=None
-):
+def combine_images(images, method=combine.mean, method_kwargs=None, errors=False, prolog=None):
     """Combine a sequence of HDUList objects.
 
     Using the following keywords:
@@ -378,9 +376,7 @@ def resize_hdulists(hdulists, shape, offsetsp, finalshape, window=None):
     return rhdulist, regions
 
 
-def basic_processing_with_segmentation(
-    rinput, flow, method=combine.mean, errors=True, bpm=None
-):
+def basic_processing_with_segmentation(rinput, flow, method=combine.mean, errors=True, bpm=None):
 
     odata = []
     cdata = []
@@ -421,9 +417,7 @@ def basic_processing_with_segmentation(
         # Resizing target frames
         rhduls, regions = resize_hdulists(cdata, subpixshape, offsetsp, finalshape)
 
-        _logger.info(
-            "stacking %d images, with offsets using '%s'", len(cdata), method.__name__
-        )
+        _logger.info("stacking %d images, with offsets using '%s'", len(cdata), method.__name__)
         data1 = method([d[0].data for d in rhduls], dtype="float32")
 
         segmap = segmentation_combined(data1[0])
@@ -448,9 +442,7 @@ def basic_processing_with_segmentation(
             len(cdata),
             method.__name__,
         )
-        hdu.header["history"] = "Combination time {}".format(
-            datetime.datetime.now(datetime.UTC).isoformat()
-        )
+        hdu.header["history"] = "Combination time {}".format(datetime.datetime.now(datetime.UTC).isoformat())
         hdu.header["UUID"] = str(uuid.uuid1())
         _logger.info(
             "missing points, total: %d, fraction: %3.1f",
@@ -472,9 +464,7 @@ def basic_processing_with_segmentation(
     return result
 
 
-def segmentation_combined(
-    data, snr_detect=10.0, fwhm=4.0, npixels=15, mask_corners=False
-):
+def segmentation_combined(data, snr_detect=10.0, fwhm=4.0, npixels=15, mask_corners=False):
     import sep
     from astropy.convolution import Gaussian2DKernel
     from astropy.stats import gaussian_fwhm_to_sigma

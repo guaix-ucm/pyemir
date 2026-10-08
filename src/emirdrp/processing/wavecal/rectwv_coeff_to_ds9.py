@@ -63,9 +63,7 @@ def save_four_ds9(rectwv_coeff, debugplot=0):
         [False, True, False, True],
         ["rawimage", "rectified", "rawimage", "rectified"],
     ):
-        output = rectwv_coeff_to_ds9(
-            rectwv_coeff=rectwv_coeff, limits=limits, rectified=rectified
-        )
+        output = rectwv_coeff_to_ds9(rectwv_coeff=rectwv_coeff, limits=limits, rectified=rectified)
         filename = "ds9_" + limits + "_" + suffix + ".reg"
         if abs(debugplot) >= 10:
             print(">>> Saving: ", filename)
@@ -137,9 +135,7 @@ def rectwv_coeff_to_ds9(rectwv_coeff, limits=None, rectified=False, numpix=100):
                     colorbox = "#00ffff"  # '#4444ff'
 
             ds9_output += "#\n# islitlet...........: {0}\n".format(islitlet)
-            ds9_output += "# csu_bar_slit_center: {0}\n".format(
-                dumdict["csu_bar_slit_center"]
-            )
+            ds9_output += "# csu_bar_slit_center: {0}\n".format(dumdict["csu_bar_slit_center"])
             if rectified:
                 crpix1_linear = 1.0
                 crval1_linear = dumdict["crval1_linear"]
@@ -153,22 +149,16 @@ def rectwv_coeff_to_ds9(rectwv_coeff, limits=None, rectified=False, numpix=100):
                 wave_ini = crval1_linear + (0.5 - crpix1_linear) * cdelt1_linear
                 xdum_ini = (wave_ini - crval1_enlarged) / cdelt1_enlarged
                 xdum_ini += crpix1_enlarged
-                wave_end = (
-                    crval1_linear + (EMIR_NAXIS1 + 0.5 - crpix1_linear) * cdelt1_linear
-                )
+                wave_end = crval1_linear + (EMIR_NAXIS1 + 0.5 - crpix1_linear) * cdelt1_linear
                 xdum_end = (wave_end - crval1_enlarged) / cdelt1_enlarged
                 xdum_end += crpix1_enlarged
                 for ydum in [ydum_lower, ydum_upper]:
-                    ds9_output += "line {0} {1} {2} {3}".format(
-                        xdum_ini, ydum, xdum_end, ydum
-                    )
+                    ds9_output += "line {0} {1} {2} {3}".format(xdum_ini, ydum, xdum_end, ydum)
                     ds9_output += " # color={0}\n".format(colorbox)
                 # slitlet label
                 ydum_label = (ydum_lower + ydum_upper) / 2.0
                 xdum_label = EMIR_NAXIS1 / 2 + 0.5
-                wave_center = (
-                    crval1_linear + (xdum_label - crpix1_linear) * cdelt1_linear
-                )
+                wave_center = crval1_linear + (xdum_label - crpix1_linear) * cdelt1_linear
                 xdum_label = (wave_center - crval1_enlarged) / cdelt1_enlarged
                 xdum_label += crpix1_enlarged
                 ds9_output += (
@@ -187,16 +177,12 @@ def rectwv_coeff_to_ds9(rectwv_coeff, limits=None, rectified=False, numpix=100):
                 ydum = pol_lower(xdum)
                 ydum -= float(rectwv_coeff.global_integer_offset_y_pix)
                 for i in range(len(xdum) - 1):
-                    ds9_output += "line {0} {1} {2} {3}".format(
-                        xdum[i], ydum[i], xdum[i + 1], ydum[i + 1]
-                    )
+                    ds9_output += "line {0} {1} {2} {3}".format(xdum[i], ydum[i], xdum[i + 1], ydum[i + 1])
                     ds9_output += " # color={0}\n".format(colorbox)
                 ydum = pol_upper(xdum)
                 ydum -= float(rectwv_coeff.global_integer_offset_y_pix)
                 for i in range(len(xdum) - 1):
-                    ds9_output += "line {0} {1} {2} {3}".format(
-                        xdum[i], ydum[i], xdum[i + 1], ydum[i + 1]
-                    )
+                    ds9_output += "line {0} {1} {2} {3}".format(xdum[i], ydum[i], xdum[i + 1], ydum[i + 1])
                     ds9_output += " # color={0}\n".format(colorbox)
                 # slitlet label
                 xdum_label = EMIR_NAXIS1 / 2 + 0.5
@@ -322,16 +308,12 @@ def spectral_lines_to_ds9(rectwv_coeff, spectral_lines=None, rectified=False):
                 colorbox = "#00ffff"  # '#4444ff'
 
             ds9_output += "#\n# islitlet...........: {0}\n".format(islitlet)
-            ds9_output += "# csu_bar_slit_center: {0}\n".format(
-                dumdict["csu_bar_slit_center"]
-            )
+            ds9_output += "# csu_bar_slit_center: {0}\n".format(dumdict["csu_bar_slit_center"])
             crpix1_linear = 1.0
             crval1_linear = dumdict["crval1_linear"]
             cdelt1_linear = dumdict["cdelt1_linear"]
             wave_ini = crval1_linear + (0.5 - crpix1_linear) * cdelt1_linear
-            wave_end = (
-                crval1_linear + (EMIR_NAXIS1 + 0.5 - crpix1_linear) * cdelt1_linear
-            )
+            wave_end = crval1_linear + (EMIR_NAXIS1 + 0.5 - crpix1_linear) * cdelt1_linear
             if rectified:
                 ydum_lower = dumdict["y0_reference_lower_expected"]
                 ydum_upper = dumdict["y0_reference_upper_expected"]
@@ -340,16 +322,12 @@ def spectral_lines_to_ds9(rectwv_coeff, spectral_lines=None, rectified=False):
                     if wave_ini <= wave <= wave_end:
                         xdum = (wave - crval1_enlarged) / cdelt1_enlarged
                         xdum += crpix1_enlarged
-                        ds9_output += "line {0} {1} {2} {3}".format(
-                            xdum, ydum_lower, xdum, ydum_upper
-                        )
+                        ds9_output += "line {0} {1} {2} {3}".format(xdum, ydum_lower, xdum, ydum_upper)
                         ds9_output += " # color={0}\n".format(colorbox)
                 # slitlet label
                 ydum_label = (ydum_lower + ydum_upper) / 2.0
                 xdum_label = EMIR_NAXIS1 / 2 + 0.5
-                wave_center = (
-                    crval1_linear + (xdum_label - crpix1_linear) * cdelt1_linear
-                )
+                wave_center = crval1_linear + (xdum_label - crpix1_linear) * cdelt1_linear
                 xdum_label = (wave_center - crval1_enlarged) / cdelt1_enlarged
                 xdum_label += crpix1_enlarged
                 ds9_output += (
@@ -431,8 +409,7 @@ def main(args=None):
     parser.add_argument(
         "--rectwv_coeff",
         required=True,
-        help="Input JSON file with rectification and "
-        "wavelength calibration coefficients",
+        help="Input JSON file with rectification and " "wavelength calibration coefficients",
         type=argparse.FileType("rt"),
     )
 

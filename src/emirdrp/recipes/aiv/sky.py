@@ -9,7 +9,6 @@
 
 """AIV Recipes for EMIR"""
 
-
 from numina.core import ObservationResult
 from numina.array.combine import median
 from numina.core import Result, Requirement

@@ -11,7 +11,6 @@
 Spectroscopy mode, coadd ABBA
 """
 
-
 import numina.core
 import numina.array.combine as combine
 from numina.core import Result
@@ -29,9 +28,7 @@ class CoaddABBARecipe(EmirRecipe):
     """Process images in ABBA mode"""
 
     obresult = ObservationResultRequirement(
-        query_opts=qmod.ResultOf(
-            "LS_ABBA.reduced_mos_abba", node="children", id_field="stareSpectraIds"
-        )
+        query_opts=qmod.ResultOf("LS_ABBA.reduced_mos_abba", node="children", id_field="stareSpectraIds")
     )
 
     reduced_mos_abba = Result(prods.ProcessedMOS)
@@ -70,9 +67,7 @@ class CoaddABBARecipe(EmirRecipe):
             msg = "Received %d images" % nimages
             raise numina.exceptions.RecipeError(msg)
 
-        hdulist = basic_processing_with_combination(
-            rinput, flow, method=combine.mean, prolog="Process Coadd ABBA"
-        )
+        hdulist = basic_processing_with_combination(rinput, flow, method=combine.mean, prolog="Process Coadd ABBA")
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -129,9 +124,7 @@ class CoaddRecipe(EmirRecipe):
             msg = "Received %d images" % nimages
             raise numina.exceptions.RecipeError(msg)
 
-        hdulist = basic_processing_with_combination(
-            rinput, flow, method=combine.mean, prolog="Process Generic Coadd"
-        )
+        hdulist = basic_processing_with_combination(rinput, flow, method=combine.mean, prolog="Process Generic Coadd")
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)

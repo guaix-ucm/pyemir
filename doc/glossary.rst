@@ -1,7 +1,7 @@
 
 .. _glossary:
 
-PyEmir Glossary 
+PyEmir Glossary
 ===============
 
 .. glossary::
@@ -19,4 +19,3 @@ PyEmir Glossary
 
    DFP
     Data Factory Pipeline
-

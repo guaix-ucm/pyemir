@@ -74,9 +74,7 @@ class RBModel(BaseModel):
 
     def _integral_counts_color(self, mag, colors):
         def subint(i):
-            return max(
-                sil.splint(self._min + colors[i], mag + colors[i], self._spl[i]), 0.0
-            )
+            return max(sil.splint(self._min + colors[i], mag + colors[i], self._spl[i]), 0.0)
 
         return sum(subint(i) for i in (0, 1, 2))
 
@@ -206,8 +204,7 @@ class BSModel(BaseModel):
             * pow(10.0, beta * (mag - mStar))
             / pow(1 + pow(10.0, alpha * (mag - mStar)), delta)
             / pow(
-                math.sin(glatitude)
-                * (1 - self.mu(mag) / math.tan(glatitude) * math.cos(glongitude)),
+                math.sin(glatitude) * (1 - self.mu(mag) / math.tan(glatitude) * math.cos(glongitude)),
                 3.0 - 5 * self.gamma(mag),
             )
         )
@@ -256,11 +253,9 @@ if __name__ == "__main__":
                 while self.cdf[cdf_idx] < y[n] and cdf_idx < Nrl:
                     cdf_idx += 1
                 # Seems a linear interpolation
-                self.inversecdf[n] = self.x[cdf_idx - 1] + (
-                    self.x[cdf_idx] - self.x[cdf_idx - 1]
-                ) * (y[n] - self.cdf[cdf_idx - 1]) / (
-                    self.cdf[cdf_idx] - self.cdf[cdf_idx - 1]
-                )
+                self.inversecdf[n] = self.x[cdf_idx - 1] + (self.x[cdf_idx] - self.x[cdf_idx - 1]) * (
+                    y[n] - self.cdf[cdf_idx - 1]
+                ) / (self.cdf[cdf_idx] - self.cdf[cdf_idx - 1])
                 if cdf_idx >= Nrl:
                     break
             self.delta_inversecdf = np.concatenate((np.diff(self.inversecdf), [0]))
@@ -280,12 +275,7 @@ if __name__ == "__main__":
     pixel_area = detector_shape
     detector_area = (plate_scale**2 * detector_shape[0] * detector_shape[1]) / 3600.0
 
-    nstars = int(
-        round(
-            detector_area
-            * (scmodel.integral_counts(magmax) - scmodel.integral_counts(magmin))
-        )
-    )
+    nstars = int(round(detector_area * (scmodel.integral_counts(magmax) - scmodel.integral_counts(magmin))))
     print("nstars", nstars)
 
     seeing = 1.0

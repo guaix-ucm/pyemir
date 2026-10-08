@@ -33,19 +33,15 @@ from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description="description: apply rectification polynomials "
-        "for the CSU configuration of a particular image"
+        description="description: apply rectification polynomials " "for the CSU configuration of a particular image"
     )
 
     # required arguments
-    parser.add_argument(
-        "fitsfile", help="Input FITS file", type=argparse.FileType("rb")
-    )
+    parser.add_argument("fitsfile", help="Input FITS file", type=argparse.FileType("rb"))
     parser.add_argument(
         "--rectwv_coeff",
         required=True,
-        help="Input JSON file with rectification and "
-        "wavelength calibration coefficients",
+        help="Input JSON file with rectification and " "wavelength calibration coefficients",
         type=argparse.FileType("rt"),
     )
     parser.add_argument(
@@ -58,16 +54,14 @@ def main(args=None):
     # optional arguments
     parser.add_argument(
         "--resampling",
-        help="Resampling method: 1 -> nearest neighbor, "
-        "2 -> linear interpolation (default)",
+        help="Resampling method: 1 -> nearest neighbor, " "2 -> linear interpolation (default)",
         default=2,
         type=int,
         choices=(1, 2),
     )
     parser.add_argument(
         "--ignore_dtu_configuration",
-        help="Ignore DTU configurations differences between "
-        "transformation and input image",
+        help="Ignore DTU configurations differences between " "transformation and input image",
         action="store_true",
     )
     parser.add_argument(
@@ -146,9 +140,7 @@ def main(args=None):
                 islitlet_progress(islitlet, EMIR_NBARS, ignore=False)
 
             # define Slitlet2D object
-            slt = Slitlet2D(
-                islitlet=islitlet, rectwv_coeff=rectwv_coeff, debugplot=args.debugplot
-            )
+            slt = Slitlet2D(islitlet=islitlet, rectwv_coeff=rectwv_coeff, debugplot=args.debugplot)
 
             # extract 2D image corresponding to the selected slitlet: note that
             # in this case we are not using select_unrectified_slitlets()
@@ -175,15 +167,11 @@ def main(args=None):
             # ---
 
             # unrectify image
-            slitlet2d_unrect = slt.rectify(
-                slitlet2d_rect, resampling=args.resampling, inverse=True
-            )
+            slitlet2d_unrect = slt.rectify(slitlet2d_rect, resampling=args.resampling, inverse=True)
 
             # minimum and maximum useful scan (pixel in the spatial direction)
             # for the rectified slitlet
-            nscan_min, nscan_max = nscan_minmax_frontiers(
-                slt.y0_frontier_lower, slt.y0_frontier_upper, resize=False
-            )
+            nscan_min, nscan_max = nscan_minmax_frontiers(slt.y0_frontier_lower, slt.y0_frontier_upper, resize=False)
             ii1 = nscan_min - slt.bb_ns1_orig
             ii2 = nscan_max - slt.bb_ns1_orig + 1
 

@@ -8,7 +8,7 @@ PyEmir, the data reduction pipeline for EMIR, is a Python package
 (Python 3.6 or greater is required).
 
 The easiest method of installing PyEmir is using prebuilt packages. You can
-also build from the development version. 
+also build from the development version.
 
 Maintainers: Sergio Pascual (sergiopr@fis.ucm.es), and Nicolás Cardiel
 (cardiel@ucm.es)
@@ -86,11 +86,11 @@ The steps to install and run PyEmir within a virtual environment are:
   In order to create a virtual environment called e.g. emir using ``venv``:
 
   .. code-block:: console
-  
+
      $ python3 -m venv emir /path/to/emir
 
   With ``virtualenv``:
-  
+
   .. code-block:: console
 
      $ virtualenv /path/to/emir
@@ -107,13 +107,13 @@ The steps to install and run PyEmir within a virtual environment are:
   shell command) this script file:
 
   .. code-block:: console
-  
+
      $ source /path/to/emir/bin/activate
 
   which yields a different system prompt to the user:
 
   .. code-block:: console
-  
+
      (emir) $
 
   Now, the name of the environment appears before the standard prompt. We can
@@ -127,7 +127,7 @@ The steps to install and run PyEmir within a virtual environment are:
   and its dependencies, unpack everything and compile when needed.
 
   .. code-block:: console
-  
+
      (emir) $ pip install pyemir
      ...
      ...
@@ -152,24 +152,24 @@ The steps to install and run PyEmir within a virtual environment are:
       has configuration 'Default configuration' uuid=225fcaf2-7f6f-49cc-972a-70fd0aee8e96
       has datamodel 'emirdrp.datamodel.EmirDataModel'
       has pipeline 'default', version 1
-     
+
 
 5. **Update within the environment**
 
   In order to update PyEmir within a virtualenv installation the user should
   execute:
-  
+
   .. code-block:: console
-  
+
      (emir) $ pip install -U pyemir
 
 6. **Deactivate the environment**
-  
+
   To exit the environment is enough to exit the terminal or run the command
   ``deactivate``:
 
   .. code-block:: console
-  
+
      (emir) $ deactivate
      $
 
@@ -248,7 +248,7 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   .. code-block:: console
 
-     (emir) $ 
+     (emir) $
 
 3. **Install PyEmir with conda**
 
@@ -275,18 +275,18 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   In order to update PyEmir within the conda environment the user should
   execute:
-  
+
   .. code-block:: console
-  
+
      (emir) $ conda update pyemir
 
 6. **Deactivate the environment**
-  
+
   To exit the environment is enough to exit the terminal or run the following
   command:
 
   .. code-block:: console
-  
+
      (emir) $ conda deactivate
      $
 
@@ -305,7 +305,7 @@ Installing the development version (using venv)
 ------------------------------------------------
 
 The development version is the most updated working version of the code (use it
-at your own risk!). 
+at your own risk!).
 
 .. code-block:: console
 
@@ -314,4 +314,3 @@ at your own risk!).
    (venv_emir) $ git clone https://github.com/guaix-ucm/pyemir.git
    (venv_emir) $ cd pyemir
    (venv_emir) $ pip install -e .
-

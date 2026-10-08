@@ -4,7 +4,7 @@ PyEmir
 
 |zenodo| |docs| |pypi| |coveralls|
 
-This is PyEmir, the data reduction pipeline for EMIR. 
+This is PyEmir, the data reduction pipeline for EMIR.
 
 EMIR is a wide-field, near-infrared, multi-object spectrograph
 designed for the Gran telescopio Canarias (GTC).
@@ -20,7 +20,7 @@ or `doc/installation/index.rst <doc/installation/index.rst>`_ in the source dist
 Licensing
 ---------
 `pyemir` is distributed under GNU GPL, either version 3 of the License,
-or (at your option) any later version. See the file LICENSE.txt 
+or (at your option) any later version. See the file LICENSE.txt
 for details.
 
 Authors
@@ -29,7 +29,7 @@ Authors
 Webpage: https://pyemir.readthedocs.io/en/latest/
 
 Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
-      
+
 .. |docs| image:: https://readthedocs.org/projects/pyemir/badge/?version=latest
    :target: https://readthedocs.org/projects/pyemir/?badge=latest
    :alt: pyemir's Documentation Status

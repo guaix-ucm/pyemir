@@ -107,9 +107,7 @@ class StareImageRecipe2(EmirRecipe):
             elif reprojection_method == "exact":
                 reproject_function = reproject_exact
             else:
-                raise ValueError(
-                    f"Unexpected astrometric_reprojection value: {reprojection_method}"
-                )
+                raise ValueError(f"Unexpected astrometric_reprojection value: {reprojection_method}")
             # reproject data
             self.logger.debug("starting image reprojection")
             hdr_original = deepcopy(hdr)
@@ -117,13 +115,9 @@ class StareImageRecipe2(EmirRecipe):
             # remove PV2_2, PV2_3,... PV2_5
             for item in wcs_original.wcs.get_pv():
                 if item[1] == 1:
-                    self.logger.debug(
-                        f"... preserving keyword PV{item[0]}_{item[1]}={item[2]}"
-                    )
+                    self.logger.debug(f"... preserving keyword PV{item[0]}_{item[1]}={item[2]}")
                 elif item[1] > 1:
-                    self.logger.debug(
-                        f"... removing   keyword PV{item[0]}_{item[1]}={item[2]}"
-                    )
+                    self.logger.debug(f"... removing   keyword PV{item[0]}_{item[1]}={item[2]}")
                     del hdr[f"PV{item[0]}_{item[1]}"]
                 else:
                     raise ValueError("Unexpected PVi_j value")
@@ -131,9 +125,7 @@ class StareImageRecipe2(EmirRecipe):
             naxis2, naxis1 = processed_img[0].data.shape
             if convert_to_surface_brightness:
                 # solid angle subtended by every pixel
-                self.logger.debug(
-                    "... computing solid angle of every pixel in the original WCS"
-                )
+                self.logger.debug("... computing solid angle of every pixel in the original WCS")
                 pixel_solid_angle_original = pixel_solid_angle_arcsec2(
                     wcs=wcs_original,
                     naxis1=naxis1,
@@ -141,24 +133,18 @@ class StareImageRecipe2(EmirRecipe):
                     method=3,
                     kernel_size=(11, 11),
                 )
-                surface_brightness_data = (
-                    processed_img[0].data / pixel_solid_angle_original
-                )
+                surface_brightness_data = processed_img[0].data / pixel_solid_angle_original
             else:
                 surface_brightness_data = processed_img[0].data
             # reprojection itself
-            self.logger.debug(
-                f"... reprojecting surface brightness using reproject_{reprojection_method}"
-            )
+            self.logger.debug(f"... reprojecting surface brightness using reproject_{reprojection_method}")
             data_final, footprint = reproject_function(
                 input_data=(surface_brightness_data, wcs_original),
                 output_projection=wcs_final,
                 shape_out=processed_img[0].data.shape,
             )
             if convert_to_surface_brightness:
-                self.logger.debug(
-                    "... computing solid angle of every pixel in the final WCS"
-                )
+                self.logger.debug("... computing solid angle of every pixel in the final WCS")
                 pixel_solid_angle_final = pixel_solid_angle_arcsec2(
                     wcs=wcs_final,
                     naxis1=naxis1,
@@ -177,9 +163,7 @@ class StareImageRecipe2(EmirRecipe):
             processed_img[0].data = data_final
             mask_footprint = (footprint < minimum_footprint).astype("uint8")
             # reproject mask
-            self.logger.debug(
-                f"... reprojecting mask using reproject_{reprojection_method}"
-            )
+            self.logger.debug(f"... reprojecting mask using reproject_{reprojection_method}")
             mask_reprojected, footprint = reproject_function(
                 input_data=(hdu_bpm.data, wcs_original),
                 output_projection=wcs_final,
@@ -203,9 +187,7 @@ class StareImageRecipe2(EmirRecipe):
                     shape_out=image_channels.shape,
                 )
                 channels_reprojected[footprint < minimum_footprint] = 0.0
-                channels_reprojected_int = np.round(channels_reprojected).astype(
-                    "uint8"
-                )
+                channels_reprojected_int = np.round(channels_reprojected).astype("uint8")
                 header = fits.Header()
                 header["EXTNAME"] = "ICHANNEL"
                 hdu_channels = fits.ImageHDU(channels_reprojected_int, header=header)
@@ -214,9 +196,7 @@ class StareImageRecipe2(EmirRecipe):
 
             # update header
             hdr["history"] = f"Reprojection using reproject_{reprojection_method}()"
-            hdr["history"] = (
-                f"Reprojection time {datetime.datetime.now(datetime.UTC).isoformat()}"
-            )
+            hdr["history"] = f"Reprojection time {datetime.datetime.now(datetime.UTC).isoformat()}"
         else:
             if detector_channels == "H2RG_FULL":
                 image_channels = np.zeros((2048, 2048), dtype="uint8")

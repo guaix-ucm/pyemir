@@ -145,9 +145,7 @@ def generate_yaml_content(args, list_fileinfo, enabled=True):
             output += "  list_rectwv_coeff:\n"
             for i in range(nimages):
                 idlabel = list_fileinfo[i].filename[:10]
-                output += (
-                    "    - ../obsid_" + idlabel + "_rectwv_results/rectwv_coeff.json\n"
-                )
+                output += "    - ../obsid_" + idlabel + "_rectwv_results/rectwv_coeff.json\n"
         output += "  method: sigmaclip\n"
         output += "  method_kwargs:\n"
         output += "    low: 3.0\n"
@@ -186,13 +184,11 @@ def main(args=None):
     parser.add_argument(
         "--step",
         required=True,
-        help=textwrap.dedent(
-            """\
+        help=textwrap.dedent("""\
                         0: preliminary rectwv_coeff.json
                         1: refined rectwv_coeff.json
                         2: ABBA fast reduction
-                        3: ABBA careful reduction"""
-        ),
+                        3: ABBA careful reduction"""),
         type=int,
         choices=[0, 1, 2, 3],
     )
@@ -210,26 +206,21 @@ def main(args=None):
         default="ABBA",
         choices=["A", "AB", "ABBA"],
     )
-    parser.add_argument(
-        "--repeat", help="Repetitions at each position", default=1, type=int
-    )
+    parser.add_argument("--repeat", help="Repetitions at each position", default=1, type=int)
     parser.add_argument(
         "--npreliminary",
-        help="number of images to be combined to compute "
-        "preliminary rectwv_coeff.json",
+        help="number of images to be combined to compute " "preliminary rectwv_coeff.json",
         type=int,
         default=1,
     )
     parser.add_argument(
         "--refine_wavecalib_mode",
-        help=textwrap.dedent(
-            """\
+        help=textwrap.dedent("""\
                         0: no refinement
                         1: global offset to all the slitlets (ARC lines)
                         2: individual offset to each slitlet (ARC lines)
                         11: global offset to all the slitlets (OH lines)
-                        12: individual offset to each slitlet (OH lines)"""
-        ),
+                        12: individual offset to each slitlet (OH lines)"""),
         type=int,
         choices=[0, 1, 2, 11, 12],
     )

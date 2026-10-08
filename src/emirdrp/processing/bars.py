@@ -202,9 +202,7 @@ def find_bars(
             logger.debug(msg, *positions[-1])
 
             if ks == 5:
-                slits[lbarid - 1] = numpy.array(
-                    [xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1]
-                )
+                slits[lbarid - 1] = numpy.array([xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1])
                 # FITS coordinates
                 slits[lbarid - 1] += 1.0
                 logger.debug('inserting bars %d-%d into "slits"', lbarid, rbarid)
@@ -241,11 +239,5 @@ def slits_to_ds9_reg(ds9reg, slits):
         xd = xpos2 - xpos1
         yd = y2 - y1
         ds9reg.write("box({0},{1},{2},{3},0)\n".format(xc, yc, xd, yd))
-        ds9reg.write(
-            "# text({0},{1}) color=red text={{{2}}}\n".format(xpos1 - 5, yc, idx)
-        )
-        ds9reg.write(
-            "# text({0},{1}) color=red text={{{2}}}\n".format(
-                xpos2 + 5, yc, idx + EMIR_NBARS
-            )
-        )
+        ds9reg.write("# text({0},{1}) color=red text={{{2}}}\n".format(xpos1 - 5, yc, idx))
+        ds9reg.write("# text({0},{1}) color=red text={{{2}}}\n".format(xpos2 + 5, yc, idx + EMIR_NBARS))

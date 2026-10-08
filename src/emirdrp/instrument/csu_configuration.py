@@ -84,18 +84,9 @@ class CsuConfiguration:
             ndig = 3
             result = (
                 (round(self._csu_bar_left, ndig) == round(other._csu_bar_left, ndig))
-                and (
-                    round(self._csu_bar_right, ndig)
-                    == round(other._csu_bar_right, ndig)
-                )
-                and (
-                    round(self._csu_bar_slit_center)
-                    == round(other._csu_bar_slit_center)
-                )
-                and (
-                    round(self._csu_bar_slit_width, ndig)
-                    == round(other._csu_bar_slit_width, ndig)
-                )
+                and (round(self._csu_bar_right, ndig) == round(other._csu_bar_right, ndig))
+                and (round(self._csu_bar_slit_center) == round(other._csu_bar_slit_center))
+                and (round(self._csu_bar_slit_width, ndig) == round(other._csu_bar_slit_width, ndig))
             )
             return result
         return NotImplemented
@@ -161,12 +152,8 @@ class CsuConfiguration:
                 self._csu_bar_right.append(fov - image_header[keyword])
             else:
                 raise ValueError("Expected keyword " + keyword + " not found!")
-            self._csu_bar_slit_center.append(
-                (self._csu_bar_left[i] + self._csu_bar_right[i]) / 2
-            )
-            self._csu_bar_slit_width.append(
-                self._csu_bar_right[i] - self._csu_bar_left[i]
-            )
+            self._csu_bar_slit_center.append((self._csu_bar_left[i] + self._csu_bar_right[i]) / 2)
+            self._csu_bar_slit_width.append(self._csu_bar_right[i] - self._csu_bar_left[i])
 
         return self
 
@@ -200,12 +187,8 @@ class CsuConfiguration:
             outdict[cbar] = {}
             outdict[cbar]["_csu_bar_left"] = round(self._csu_bar_left[i], ndigits)
             outdict[cbar]["_csu_bar_right"] = round(self._csu_bar_right[i], ndigits)
-            outdict[cbar]["_csu_bar_slit_center"] = round(
-                self._csu_bar_slit_center[i], ndigits
-            )
-            outdict[cbar]["_csu_bar_slit_width"] = round(
-                self._csu_bar_slit_width[i], ndigits
-            )
+            outdict[cbar]["_csu_bar_slit_center"] = round(self._csu_bar_slit_center[i], ndigits)
+            outdict[cbar]["_csu_bar_slit_width"] = round(self._csu_bar_slit_width[i], ndigits)
 
         return outdict
 
@@ -239,9 +222,7 @@ class CsuConfiguration:
 
         return list_ok
 
-    def pseudo_longslits(
-        self, list_valid_slitlets=None, fracwidth=0.25, diffcenter=0.25
-    ):
+    def pseudo_longslits(self, list_valid_slitlets=None, fracwidth=0.25, diffcenter=0.25):
         """Return dictionary of LongSlit instances
 
         Parameters
@@ -301,9 +282,7 @@ class CsuConfiguration:
 
         return result
 
-    def display_pseudo_longslits(
-        self, list_valid_slitlets=None, fracwidth=0.25, diffcenter=0.25
-    ):
+    def display_pseudo_longslits(self, list_valid_slitlets=None, fracwidth=0.25, diffcenter=0.25):
         dict_longslits = self.pseudo_longslits(
             list_valid_slitlets=list_valid_slitlets,
             fracwidth=fracwidth,

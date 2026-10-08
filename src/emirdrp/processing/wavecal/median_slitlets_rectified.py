@@ -28,9 +28,7 @@ from emirdrp.core import EMIR_MINIMUM_SLITLET_WIDTH_MM
 from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
 
 
-def median_slitlets_rectified(
-    input_image, mode=0, list_useful_slitlets=None, debugplot=0
-):
+def median_slitlets_rectified(input_image, mode=0, list_useful_slitlets=None, debugplot=0):
     """Compute median spectrum for each slitlet.
 
     Parameters
@@ -90,9 +88,7 @@ def median_slitlets_rectified(
         sp_median = np.median(image2d[(ns1 - 1) : ns2, :], axis=0)
 
         if mode == 0:
-            image2d_median[(ns1 - 1) : ns2, :] = np.tile(
-                sp_median, (EMIR_NPIXPERSLIT_RECTIFIED, 1)
-            )
+            image2d_median[(ns1 - 1) : ns2, :] = np.tile(sp_median, (EMIR_NPIXPERSLIT_RECTIFIED, 1))
         else:
             image2d_median[i] = np.copy(sp_median)
 
@@ -107,11 +103,7 @@ def median_slitlets_rectified(
             list_useful_slitlets = list(range(1, EMIR_NBARS + 1))
             list_not_useful_slitlets = []
         else:
-            list_not_useful_slitlets = [
-                i
-                for i in list(range(1, EMIR_NBARS + 1))
-                if i not in list_useful_slitlets
-            ]
+            list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1)) if i not in list_useful_slitlets]
         if abs(debugplot) != 0:
             print(">>> list_useful_slitlets....:", list_useful_slitlets)
             print(">>> list_not_useful_slitlets:", list_not_useful_slitlets)
@@ -167,14 +159,10 @@ def median_slitlets_rectified(
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(
-        description="description: compute median spectrum for each slitlet"
-    )
+    parser = argparse.ArgumentParser(description="description: compute median spectrum for each slitlet")
 
     # positional arguments
-    parser.add_argument(
-        "fitsfile", help="Input FITS file name", type=argparse.FileType("rb")
-    )
+    parser.add_argument("fitsfile", help="Input FITS file name", type=argparse.FileType("rb"))
     parser.add_argument(
         "outfile",
         help="Output FITS file name",
@@ -184,9 +172,7 @@ def main(args=None):
     # optional arguments
     parser.add_argument(
         "--mode",
-        help="Output type: 0 -> full frame (default), "
-        "1 -> individual slitlets, "
-        "2 -> collapsed single spectrum)",
+        help="Output type: 0 -> full frame (default), " "1 -> individual slitlets, " "2 -> collapsed single spectrum)",
         default=0,
         type=int,
         choices=[0, 1, 2],
@@ -199,8 +185,7 @@ def main(args=None):
     )
     parser.add_argument(
         "--maximum_slitlet_width_mm",
-        help="Maximum slitlet width (mm) for --mode 2 "
-        "(default=" + str(EMIR_MAXIMUM_SLITLET_WIDTH_MM) + ")",
+        help="Maximum slitlet width (mm) for --mode 2 " "(default=" + str(EMIR_MAXIMUM_SLITLET_WIDTH_MM) + ")",
         default=EMIR_MAXIMUM_SLITLET_WIDTH_MM,
         type=float,
     )

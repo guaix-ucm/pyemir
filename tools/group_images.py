@@ -1,14 +1,12 @@
-
 import glob
 import itertools
 import astropy.io.fits as fits
 import yaml
 
-
-counter_k1 = ['OBSBLOCK', 'IMGOBBL', 'EXP', 'FRSEC']
-counter_k2 = ['NOBSBLCK', 'NIMGOBBL', 'NEXP', 'NFRSEC']
-target_k = ['DATE-OBS', 'OBSMODE', 'OBJECT', 'OBSTYPE']
-counters_v1 = ['EXP', 'NEXP']
+counter_k1 = ["OBSBLOCK", "IMGOBBL", "EXP", "FRSEC"]
+counter_k2 = ["NOBSBLCK", "NIMGOBBL", "NEXP", "NFRSEC"]
+target_k = ["DATE-OBS", "OBSMODE", "OBJECT", "OBSTYPE"]
+counters_v1 = ["EXP", "NEXP"]
 
 
 class ObsBlockNode(object):
@@ -17,7 +15,7 @@ class ObsBlockNode(object):
         self.nodes = []
         self.maxlen = maxlen
         self.parent = None
-        self.mode = 'PARENT'
+        self.mode = "PARENT"
         self.index = 0
         self.frames = []
         self.value = 0
@@ -59,7 +57,7 @@ def create_branch(a, b, c, d=0):
         nodeb.index = idx1 + 1
         nodeb.label = "L2"
         nodeb.id = obid
-        obid +=1
+        obid += 1
         nodea.nodes.append(nodeb)
         for idx2 in range(b):
             nodec = ObsBlockNode(maxlen=c)
@@ -99,45 +97,44 @@ def find_node(tree, image, counters):
     return tree
 
 
-def visit_tree_p(tree, h='-'):
+def visit_tree_p(tree, h="-"):
 
-    if(isinstance(tree, ImageNode)):
+    if isinstance(tree, ImageNode):
         return
     for node in tree.nodes:
-        visit_tree_p(node, h='-'+h)
-    print(h+'>', 'id=', tree.id, 'index=', tree.index, 'mode', tree.mode, 'capacity=',tree.maxlen)
+        visit_tree_p(node, h="-" + h)
+    print(h + ">", "id=", tree.id, "index=", tree.index, "mode", tree.mode, "capacity=", tree.maxlen)
 
 
 def visit_tree_r(tree, prev):
 
-    res = {'id': tree.id, 'children': [], 'instrument': 'EMIR', 'mode': tree.mode,
-           'frames': tree.frames}
+    res = {"id": tree.id, "children": [], "instrument": "EMIR", "mode": tree.mode, "frames": tree.frames}
     for node in tree.nodes:
         if isinstance(node, ImageNode):
             continue
         subres = visit_tree_r(node, prev)
-        res['children'].append(subres['id'])
+        res["children"].append(subres["id"])
     prev.append(res)
     return res
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pickle
 
     oric = False
 
     if oric:
         values = {}
-        for fname in glob.glob('*EMIR*.fits'):
+        for fname in glob.glob("*EMIR*.fits"):
             hdr = fits.getheader(fname)
             ivalues = {}
             for k in itertools.chain(counter_k1, counter_k2, target_k):
                 ivalues[k] = hdr[k]
             values[fname] = ivalues
-        with open('inter.pkl', 'wb') as fd:
+        with open("inter.pkl", "wb") as fd:
             pickle.dump(values, fd)
     else:
-        with open('inter.pkl', 'rb') as fd:
+        with open("inter.pkl", "rb") as fd:
             values = pickle.load(fd)
 
     # print(values)
@@ -161,9 +158,9 @@ if __name__ == '__main__':
 
         if create_new or (tree.occupancy() >= tree.capacity()):
             create_new = False
-            print('block with counters', image, this[:3])
+            print("block with counters", image, this[:3])
             ntotal = this[0] * this[1] * this[2]
-            print('create new tree', 'expecting', ntotal, 'image(s)')
+            print("create new tree", "expecting", ntotal, "image(s)")
             tree = create_branch(*this[:3])
             tree.label = counter
             counter += 1
@@ -172,16 +169,16 @@ if __name__ == '__main__':
         # print('occ', tree.occupancy())
         # room = tree.capacity() - tree.occupancy()
         # print('room', room)
-        print('add image', image, that[:3])
+        print("add image", image, that[:3])
         try:
             m = find_node(tree, image, that[:3])
             if m.frames is None:
                 m.frames = [image]
-                m.parent.mode = values[image]['OBSMODE']
+                m.parent.mode = values[image]["OBSMODE"]
                 m.parent.frames.append(image)
             else:
                 create_new = True
-                raise IndexError('node already used')
+                raise IndexError("node already used")
             # go to next
             try:
                 image = next(image_si)
@@ -189,7 +186,7 @@ if __name__ == '__main__':
                 break
         except IndexError as error:
             print(error)
-            print('cannot match image, try next loop')
+            print("cannot match image, try next loop")
             errorc += 1
             if errorc > 10:
                 raise
@@ -198,6 +195,6 @@ if __name__ == '__main__':
     for tree in trees:
         visit_tree_r(tree, prev)
 
-    with open('obs.yaml', 'w') as fd:
+    with open("obs.yaml", "w") as fd:
         yaml.dump_all(prev, fd)
-    #visit_tree_p(tree)
+    # visit_tree_p(tree)

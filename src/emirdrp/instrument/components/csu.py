@@ -161,9 +161,7 @@ if __name__ == "__main__":
     import io
     import numpy.polynomial.polynomial as pol
 
-    dumdata = pkgutil.get_data(
-        "emirdrp.instrument.configs", "bars_nominal_positions_test.txt"
-    )
+    dumdata = pkgutil.get_data("emirdrp.instrument.configs", "bars_nominal_positions_test.txt")
     ss = io.StringIO(dumdata.decode("utf8"))
     bars_nominal_positions = numpy.loadtxt(ss)
 

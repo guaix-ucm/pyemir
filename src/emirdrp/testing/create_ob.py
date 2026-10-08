@@ -22,9 +22,7 @@ def create_ob_abba(value, exptime=100.0, starttime=0.0):
         t1 = base + off1
         t2 = base + off2
         keys = {"TSUTC1": t1, "TSUTC2": t2, "NUM-SK": 1}
-        scene = create_scene_noise(
-            size, background=value, std=100, pos=pos[i], peak=value
-        )
+        scene = create_scene_noise(size, background=value, std=100, pos=pos[i], peak=value)
         frame = numina.core.DataFrame(frame=create_image0(scene, keys=keys))
         frames.append(frame)
 

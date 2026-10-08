@@ -44,9 +44,7 @@ class BaseABBARecipe(EmirRecipe):
     """Process images in ABBA mode"""
 
     obresult = ObservationResultRequirement(
-        query_opts=qmod.ResultOf(
-            "STARE_SPECTRA.reduced_mos", node="children", id_field="stareSpectraIds"
-        )
+        query_opts=qmod.ResultOf("STARE_SPECTRA.reduced_mos", node="children", id_field="stareSpectraIds")
     )
     accum_in = Requirement(
         prods.DataFrameType,
@@ -136,9 +134,7 @@ class BaseABBARecipe(EmirRecipe):
             o.frames = [DataFrame(frame=hdulist)]
             subd = {}
             subd["obresult"] = o
-            bardata = pkgutil.get_data(
-                "emirdrp.instrument.configs", "bars_nominal_positions_test.txt"
-            )
+            bardata = pkgutil.get_data("emirdrp.instrument.configs", "bars_nominal_positions_test.txt")
             ss = S.StringIO(bardata.decode("utf8"))
             subd["bars_nominal_positions"] = numpy.loadtxt(ss)
 
@@ -191,9 +187,7 @@ class BaseABBARecipe(EmirRecipe):
         hdu.header["TSUTC2"] = cdata[-1][0].header["TSUTC2"]
         return result
 
-    def create_accum_hdulist(
-        self, cdata, data_array_n, method_name="unkwnow", use_errors=False
-    ):
+    def create_accum_hdulist(self, cdata, data_array_n, method_name="unkwnow", use_errors=False):
         # FIXME: duplicated
         result = copy_img(cdata[0])
         hdu = result[0]
@@ -275,9 +269,7 @@ class BaseABBARecipe(EmirRecipe):
 
         if has_num_ext:
             self.logger.debug("Using NUM extension")
-            masks = [
-                numpy.where(m["NUM"].data, 0, 1).astype("uint8") for m in data_hdul
-            ]
+            masks = [numpy.where(m["NUM"].data, 0, 1).astype("uint8") for m in data_hdul]
         elif has_bpm_ext:
             self.logger.debug("Using BPM extension")
             masks = [m["BPM"].data for m in data_hdul]
@@ -290,9 +282,7 @@ class BaseABBARecipe(EmirRecipe):
 
         weight_accum = 2 * (1 - 1.0 / naccum)
         weight_frame = 2.0 / naccum
-        self.logger.debug(
-            "weights for 'accum' and 'frame', %s", [weight_accum, weight_frame]
-        )
+        self.logger.debug("weights for 'accum' and 'frame', %s", [weight_accum, weight_frame])
         scales = [1.0 / weight_accum, 1.0 / weight_frame]
         method = combine.mean
         data_arr = [hdul[0].data for hdul in data_hdul]
@@ -300,6 +290,4 @@ class BaseABBARecipe(EmirRecipe):
 
         self.logger.debug("create result image")
 
-        return self.create_accum_hdulist(
-            data_hdul, out, method_name=method.__name__, use_errors=False
-        )
+        return self.create_accum_hdulist(data_hdul, out, method_name=method.__name__, use_errors=False)

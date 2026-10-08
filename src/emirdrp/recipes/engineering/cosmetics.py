@@ -29,7 +29,6 @@ from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 
-
 _logger = logging.getLogger(__name__)
 
 
@@ -62,9 +61,7 @@ class CosmeticsRecipe(EmirRecipe):
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
-    lowercut = Parameter(
-        4.0, "Values below this sigma level are flagged as dead pixels"
-    )
+    lowercut = Parameter(4.0, "Values below this sigma level are flagged as dead pixels")
     uppercut = Parameter(4.0, "Values above this sigma level are flagged as hot pixels")
     maxiter = Parameter(30, "Maximum number of iterations")
 
@@ -138,18 +135,14 @@ class CosmeticsRecipe(EmirRecipe):
             if self.intermediate_results:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    fits.writeto(
-                        "numina-cosmetics-i%02d.fits" % niter, ratio, overwrite=True
-                    )
+                    fits.writeto("numina-cosmetics-i%02d.fits" % niter, ratio, overwrite=True)
                     fits.writeto("numina-mask-i%02d.fits" % niter, m, overwrite=True)
                     fits.writeto(
                         "numina-sigma-i%02d.fits" % niter,
                         m * 0.0 + sigma,
                         overwrite=True,
                     )
-            self.logger.debug(
-                "iter %d, invalid points in input mask: %d", niter, ninvalid
-            )
+            self.logger.debug("iter %d, invalid points in input mask: %d", niter, ninvalid)
             self.logger.debug("iter %d, estimated sigma is %f", niter, sigma)
             n_ninvalid = numpy.count_nonzero(m)
 
@@ -170,9 +163,7 @@ class CosmeticsRecipe(EmirRecipe):
             msg = "convergence not reached after %d iterations" % maxiter
             self.logger.warning(msg)
 
-        self.logger.info(
-            "number of dead pixels %d", numpy.count_nonzero(m == PIXEL_DEAD)
-        )
+        self.logger.info("number of dead pixels %d", numpy.count_nonzero(m == PIXEL_DEAD))
         self.logger.info("number of hot pixels %d", numpy.count_nonzero(m == PIXEL_HOT))
 
         if self.intermediate_results:
@@ -180,9 +171,7 @@ class CosmeticsRecipe(EmirRecipe):
                 warnings.simplefilter("ignore")
                 fits.writeto("numina-cosmetics.fits", ratio, overwrite=True)
                 fits.writeto("numina-mask.fits", m, overwrite=True)
-                fits.writeto(
-                    "numina-sigma.fits", sigma * numpy.ones_like(m), overwrite=True
-                )
+                fits.writeto("numina-sigma.fits", sigma * numpy.ones_like(m), overwrite=True)
 
         hdu = fits.PrimaryHDU(ratio)
         hdr = hdu.header

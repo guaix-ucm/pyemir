@@ -32,7 +32,7 @@ PyEmir Reference
 
 
 
-   
+
 Indices and tables
 ==================
 

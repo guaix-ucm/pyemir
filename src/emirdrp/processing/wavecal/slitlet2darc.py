@@ -258,9 +258,7 @@ class Slitlet2dArc:
 
     """
 
-    def __init__(
-        self, islitlet, csu_conf, ymargin_bb, params=None, parmodel=None, debugplot=0
-    ):
+    def __init__(self, islitlet, csu_conf, ymargin_bb, params=None, parmodel=None, debugplot=0):
 
         # slitlet number
         self.islitlet = islitlet
@@ -310,15 +308,9 @@ class Slitlet2dArc:
 
         # define reference ordinates using lower, middle and upper spectrails
         # evaluated at x0_reference
-        self.y0_reference_lower = self.list_spectrails[
-            self.i_lower_spectrail
-        ].y_rectified
-        self.y0_reference_middle = self.list_spectrails[
-            self.i_middle_spectrail
-        ].y_rectified
-        self.y0_reference_upper = self.list_spectrails[
-            self.i_upper_spectrail
-        ].y_rectified
+        self.y0_reference_lower = self.list_spectrails[self.i_lower_spectrail].y_rectified
+        self.y0_reference_middle = self.list_spectrails[self.i_middle_spectrail].y_rectified
+        self.y0_reference_upper = self.list_spectrails[self.i_upper_spectrail].y_rectified
 
         # compute frontiers (lower and upper)
         self.list_frontiers = expected_distorted_frontiers(
@@ -359,15 +351,9 @@ class Slitlet2dArc:
         self.corr_yrect_b = (ydum2 - ydum1) / (xdum2 - xdum1)
         self.corr_yrect_a = ydum1 - self.corr_yrect_b * xdum1
         # compute expected location of rectified boundaries
-        self.y0_reference_lower_expected = (
-            self.corr_yrect_a + self.corr_yrect_b * self.y0_reference_lower
-        )
-        self.y0_reference_middle_expected = (
-            self.corr_yrect_a + self.corr_yrect_b * self.y0_reference_middle
-        )
-        self.y0_reference_upper_expected = (
-            self.corr_yrect_a + self.corr_yrect_b * self.y0_reference_upper
-        )
+        self.y0_reference_lower_expected = self.corr_yrect_a + self.corr_yrect_b * self.y0_reference_lower
+        self.y0_reference_middle_expected = self.corr_yrect_a + self.corr_yrect_b * self.y0_reference_middle
+        self.y0_reference_upper_expected = self.corr_yrect_a + self.corr_yrect_b * self.y0_reference_upper
         # shift transformation to center the rectified slitlet within the
         # slitlet bounding box
         ydummid = (ydum1 + ydum2) / 2
@@ -656,9 +642,7 @@ class Slitlet2dArc:
 
         # smooth denoising of slitlet2d
         slitlet2d_rs, coef_rs = rescale_array_to_z1z2(slitlet2d, z1z2=(-1, 1))
-        slitlet2d_dn = restoration.denoise_nl_means(
-            slitlet2d_rs, patch_size=3, patch_distance=2, multichannel=False
-        )
+        slitlet2d_dn = restoration.denoise_nl_means(slitlet2d_rs, patch_size=3, patch_distance=2, multichannel=False)
         slitlet2d_dn = rescale_array_from_z1z2(slitlet2d_dn, coef_rs)
 
         # compute basic statistics
@@ -674,9 +658,7 @@ class Slitlet2dArc:
             print(">>> sigmaG:", sigmag)
         if abs(self.debugplot) in [21, 22]:
             # display initial image with zscale cuts
-            title = (
-                "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #1)"
-            )
+            title = "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #1)"
             ximshow(
                 slitlet2d,
                 title=title,
@@ -684,9 +666,7 @@ class Slitlet2dArc:
                 debugplot=self.debugplot,
             )
             # display denoised image with zscale cuts
-            title = (
-                "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #2)"
-            )
+            title = "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #2)"
             ximshow(
                 slitlet2d_dn,
                 title=title,
@@ -698,9 +678,7 @@ class Slitlet2dArc:
                 q50 + times_sigma_threshold * sigmag,
                 q50 + 2 * times_sigma_threshold * sigmag,
             )
-            title = (
-                "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #3)"
-            )
+            title = "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #3)"
             ximshow(
                 slitlet2d_dn,
                 title=title,
@@ -722,9 +700,7 @@ class Slitlet2dArc:
             print("Number of objects initially found:", no_objects)
         if abs(self.debugplot) in [21, 22]:
             # display all objects identified in the image
-            title = (
-                "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #4)"
-            )
+            title = "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #4)"
             z1z2 = (labels2d_objects.min(), labels2d_objects.max())
             ximshow(
                 labels2d_objects,
@@ -769,11 +745,7 @@ class Slitlet2dArc:
                 ymiddle_slice = polydum(xmiddle_slice)
                 yini_slice = slice_y.start + self.bb_ns1_orig - 0.5
                 yend_slice = yini_slice + delta_y
-                if (
-                    yini_slice + min_dist_from_middle
-                    <= ymiddle_slice
-                    <= yend_slice - min_dist_from_middle
-                ):
+                if yini_slice + min_dist_from_middle <= ymiddle_slice <= yend_slice - min_dist_from_middle:
                     slices_ok[i] = True
 
         # generate list with ID of arc lines (note that first object is
@@ -793,9 +765,7 @@ class Slitlet2dArc:
         # display arc lines
         if abs(self.debugplot) in [21, 22]:
             # display all objects identified in the image
-            title = (
-                "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #5)"
-            )
+            title = "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #5)"
             z1z2 = (labels2d_objects.min(), labels2d_objects.max())
             ax = ximshow(
                 labels2d_objects,
@@ -859,16 +829,12 @@ class Slitlet2dArc:
         number_arc_lines = len(self.list_arc_lines)
 
         # remove arc lines with unexpected slopes
-        yfit = np.array(
-            [self.list_arc_lines[k].poly_funct.coef[1] for k in range(number_arc_lines)]
-        )
+        yfit = np.array([self.list_arc_lines[k].poly_funct.coef[1] for k in range(number_arc_lines)])
         xfit = np.zeros(number_arc_lines)
         # intersection between middle spectrum trail and arc line
         for k in range(number_arc_lines):
             arcline = self.list_arc_lines[k]
-            xfit[k], ydum = intersection_spectrail_arcline(
-                self.list_spectrails[self.i_middle_spectrail], arcline
-            )
+            xfit[k], ydum = intersection_spectrail_arcline(self.list_spectrails[self.i_middle_spectrail], arcline)
 
         # fit slope versus x-coordinate of the intersection of the arc line
         # with the middle spectrum trail
@@ -894,11 +860,7 @@ class Slitlet2dArc:
                     "arc lines with suspicious slopes: Slice ID",
                     [list_slices_ok[k] for k in range(number_arc_lines) if rejected[k]],
                 )
-            self.list_arc_lines = [
-                self.list_arc_lines[k]
-                for k in range(number_arc_lines)
-                if not rejected[k]
-            ]
+            self.list_arc_lines = [self.list_arc_lines[k] for k in range(number_arc_lines) if not rejected[k]]
             # recompute number of arc lines
             number_arc_lines = len(self.list_arc_lines)
             if abs(self.debugplot) >= 10:
@@ -919,9 +881,7 @@ class Slitlet2dArc:
             # compute image with only the arc lines passing the selection
             labels2d_arc_lines = labels2d_objects * mask_arc_lines
             # display background image with filtered arc lines
-            title = (
-                "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #6)"
-            )
+            title = "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #6)"
             z1z2 = (labels2d_arc_lines.min(), labels2d_arc_lines.max())
             ax = ximshow(
                 labels2d_arc_lines,
@@ -983,19 +943,13 @@ class Slitlet2dArc:
         for arcline in self.list_arc_lines:
             # middle spectrum trail
             spectrail = self.list_spectrails[self.i_middle_spectrail]
-            xroot, yroot = intersection_spectrail_arcline(
-                spectrail=spectrail, arcline=arcline
-            )
+            xroot, yroot = intersection_spectrail_arcline(spectrail=spectrail, arcline=arcline)
             arcline.x_rectified = xroot
-            self.x_inter_rect = np.append(
-                self.x_inter_rect, [xroot] * number_spectrum_trails
-            )
+            self.x_inter_rect = np.append(self.x_inter_rect, [xroot] * number_spectrum_trails)
             for spectrail in self.list_spectrails:
                 # compute expected ordinate y_expected in the rectified
                 # image
-                y_expected = (
-                    self.corr_yrect_a + self.corr_yrect_b * spectrail.y_rectified
-                )
+                y_expected = self.corr_yrect_a + self.corr_yrect_b * spectrail.y_rectified
                 self.y_inter_rect = np.append(self.y_inter_rect, y_expected)
         if abs(self.debugplot) >= 10:
             print(
@@ -1019,18 +973,14 @@ class Slitlet2dArc:
         self.y_inter_orig = np.array([])  # original image coordinates
         for arcline in self.list_arc_lines:
             for spectrail in self.list_spectrails:
-                xroot, yroot = intersection_spectrail_arcline(
-                    spectrail=spectrail, arcline=arcline
-                )
+                xroot, yroot = intersection_spectrail_arcline(spectrail=spectrail, arcline=arcline)
                 self.x_inter_orig = np.append(self.x_inter_orig, xroot)
                 self.y_inter_orig = np.append(self.y_inter_orig, yroot)
 
         # display intersection points
         if abs(self.debugplot % 10) != 0 and slitlet2d is not None:
             # display image with zscale cuts
-            title = (
-                "Slitlet#" + str(self.islitlet) + " (xy_spectrail_arc_intersections)"
-            )
+            title = "Slitlet#" + str(self.islitlet) + " (xy_spectrail_arc_intersections)"
             ax = ximshow(
                 slitlet2d,
                 title=title,
@@ -1039,15 +989,11 @@ class Slitlet2dArc:
             )
             # spectrum trails
             for spectrail in self.list_spectrails:
-                xdum, ydum = spectrail.linspace_pix(
-                    start=self.bb_nc1_orig, stop=self.bb_nc2_orig
-                )
+                xdum, ydum = spectrail.linspace_pix(start=self.bb_nc1_orig, stop=self.bb_nc2_orig)
                 ax.plot(xdum, ydum, "g")
             # arc lines
             for arcline in self.list_arc_lines:
-                xdum, ydum = arcline.linspace_pix(
-                    start=self.bb_ns1_orig, stop=self.bb_ns2_orig
-                )
+                xdum, ydum = arcline.linspace_pix(start=self.bb_ns1_orig, stop=self.bb_ns2_orig)
                 ax.plot(xdum, ydum, "g")
             # intersection points
             ax.plot(self.x_inter_orig, self.y_inter_orig, "co")
@@ -1079,11 +1025,7 @@ class Slitlet2dArc:
             raise ValueError("Intersection points not computed")
 
         npoints = len(self.x_inter_orig)
-        if (
-            len(self.y_inter_orig) != npoints
-            or len(self.x_inter_rect) != npoints
-            or len(self.y_inter_rect) != npoints
-        ):
+        if len(self.y_inter_orig) != npoints or len(self.x_inter_rect) != npoints or len(self.y_inter_rect) != npoints:
             raise ValueError("Unexpected different number of points")
 
         # IMPORTANT: correct coordinates from origin in order to manipulate
@@ -1207,9 +1149,7 @@ class Slitlet2dArc:
                 bij = self.ttd_bij_longslit_model
 
         # rectify image
-        slitlet2d_rect = rectify2d(
-            image2d=slitlet2d, aij=aij, bij=bij, resampling=resampling
-        )
+        slitlet2d_rect = rectify2d(image2d=slitlet2d, aij=aij, bij=bij, resampling=resampling)
 
         if abs(self.debugplot % 10) != 0:
             title = "Slitlet#" + str(self.islitlet) + " (rectify)"
@@ -1335,15 +1275,9 @@ class Slitlet2dArc:
 
         # gaussian filtering when requested (to avoid line saturation)
         if sigma_gaussian_filtering > 0:
-            sp0 = ndimage.filters.gaussian_filter(
-                sp0_ini, sigma=sigma_gaussian_filtering
-            )
-            sp1 = ndimage.filters.gaussian_filter(
-                sp1_ini, sigma=sigma_gaussian_filtering
-            )
-            sp2 = ndimage.filters.gaussian_filter(
-                sp2_ini, sigma=sigma_gaussian_filtering
-            )
+            sp0 = ndimage.filters.gaussian_filter(sp0_ini, sigma=sigma_gaussian_filtering)
+            sp1 = ndimage.filters.gaussian_filter(sp1_ini, sigma=sigma_gaussian_filtering)
+            sp2 = ndimage.filters.gaussian_filter(sp2_ini, sigma=sigma_gaussian_filtering)
         else:
             sp0 = np.copy(sp0_ini)
             sp1 = np.copy(sp1_ini)
@@ -1421,9 +1355,7 @@ class Slitlet2dArc:
                     imax = int((iregion + 1) * region_size)
                     if iregion > 0:
                         imin += 1
-                    ixpeaks_region = ixpeaks[
-                        np.logical_and(ixpeaks >= imin, ixpeaks <= imax)
-                    ]
+                    ixpeaks_region = ixpeaks[np.logical_and(ixpeaks >= imin, ixpeaks <= imax)]
                     if len(ixpeaks_region) > 0:
                         peak_fluxes = sp0[ixpeaks_region]
                         spos = peak_fluxes.argsort()
@@ -1431,17 +1363,13 @@ class Slitlet2dArc:
                         ixpeaks_tmp.sort()  # in-place sort
                         if abs(self.debugplot) >= 10:
                             print("ixpeaks in region........:\n", ixpeaks_tmp)
-                        ixpeaks_filtered = np.concatenate(
-                            (ixpeaks_filtered, ixpeaks_tmp)
-                        )
+                        ixpeaks_filtered = np.concatenate((ixpeaks_filtered, ixpeaks_tmp))
             ixpeaks = ixpeaks_filtered
             if abs(self.debugplot) >= 10:
                 print("ixpeaks filtered.........:\n", ixpeaks)
 
         # refined location of the peaks (float values)
-        fxpeaks, sxpeaks = refine_peaks_spectrum(
-            sp0, ixpeaks, nwinwidth=nwinwidth_refined, method="gaussian"
-        )
+        fxpeaks, sxpeaks = refine_peaks_spectrum(sp0, ixpeaks, nwinwidth=nwinwidth_refined, method="gaussian")
 
         if abs(self.debugplot) % 10 != 0:
             x = np.arange(self.bb_nc1_orig, self.bb_nc2_orig + 1)
@@ -1458,12 +1386,8 @@ class Slitlet2dArc:
             ax.plot(x, sp2, label="upper region")
             ax.plot(x, sp0, label="whole region")
             # mark peak location
-            ax.plot(
-                ixpeaks + self.bb_nc1_orig, sp0[ixpeaks], "o", label="initial location"
-            )
-            ax.plot(
-                fxpeaks + self.bb_nc1_orig, sp0[ixpeaks], "o", label="refined location"
-            )
+            ax.plot(ixpeaks + self.bb_nc1_orig, sp0[ixpeaks], "o", label="initial location")
+            ax.plot(fxpeaks + self.bb_nc1_orig, sp0[ixpeaks], "o", label="refined location")
             ax.legend()
             pause_debugplot(self.debugplot, pltshow=True, tight_layout=False)
 

@@ -33,9 +33,7 @@ base_schema_description = {
     }
 }
 
-gtc_proc_schema_description = {
-    "keywords": {"NUMINAID": {"mandatory": True, "value": int}}
-}
+gtc_proc_schema_description = {"keywords": {"NUMINAID": {"mandatory": True, "value": int}}}
 
 emir_schema_description = {
     "keywords": {
@@ -223,13 +221,9 @@ class CoordinateListNType(arrtype.ArrayNType):
     def validate(self, obj):
         ndims = len(obj.shape)
         if ndims != 2:
-            raise numina.exceptions.ValidationError(
-                "%r is not a valid %r" % (obj, self.__class__.__name__)
-            )
+            raise numina.exceptions.ValidationError("%r is not a valid %r" % (obj, self.__class__.__name__))
         if obj.shape[1] != self.N:
-            raise numina.exceptions.ValidationError(
-                "%r is not a valid %r" % (obj, self.__class__.__name__)
-            )
+            raise numina.exceptions.ValidationError("%r is not a valid %r" % (obj, self.__class__.__name__))
 
 
 class CoordinateList1DType(CoordinateListNType):
@@ -255,9 +249,7 @@ def default_nominal_positions():
         import StringIO as S
     except ImportError:
         import io as S
-    bardata = pkgutil.get_data(
-        "emirdrp.instrument.configs", "bars_nominal_positions_test.txt"
-    )
+    bardata = pkgutil.get_data("emirdrp.instrument.configs", "bars_nominal_positions_test.txt")
     ss = S.StringIO(bardata.decode("utf8"))
     bars_nominal_positions = numpy.loadtxt(ss)
     return bars_nominal_positions

@@ -418,9 +418,7 @@ class Slitlet2D:
             bij = self.ttd_bij
 
         # rectify image
-        slitlet2d_rect = rectify2d(
-            image2d=slitlet2d, aij=aij, bij=bij, resampling=resampling
-        )
+        slitlet2d_rect = rectify2d(image2d=slitlet2d, aij=aij, bij=bij, resampling=resampling)
 
         if abs(self.debugplot % 10) != 0:
             if inverse:

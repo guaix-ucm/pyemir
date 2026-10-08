@@ -26,7 +26,7 @@ Requeriments
 Procedure
 +++++++++
 The frames in the observed block are stacked together using the median of them as the final result.
-The variance of the result frame is computed using two different methods. 
+The variance of the result frame is computed using two different methods.
 The first method computes the variance across the pixels in the different frames stacked.
 The second method computes the variance en each channel in the result frame.
 
@@ -36,7 +36,7 @@ Products
 +-------------------+-------------------------------------------------------+
 | Name              | Type                                                  |
 +===================+=======================================================+
-| ``'biasframe'``   | :class:`~emirdrp.dataproducts.MasterBias`             | 
+| ``'biasframe'``   | :class:`~emirdrp.dataproducts.MasterBias`             |
 +-------------------+-------------------------------------------------------+
 | ``'stats'``       | :class:`~emirdrp.dataproducts.ChannelLevelStatistics` |
 +-------------------+-------------------------------------------------------+
@@ -67,7 +67,7 @@ Requeriments
 Procedure
 +++++++++
 The frames in the observed block are subtracted from the master bias and then they are stacked together, using the median of them as the final result.
-The variance of the result frame is computed using two different methods. 
+The variance of the result frame is computed using two different methods.
 The first method computes the variance across the pixels in the different frames stacked.
 The second method computes the variance en each channel in the result frame.
 
@@ -77,7 +77,7 @@ Products
 +-------------------+-------------------------------------------------------+
 | Name              | Type                                                  |
 +===================+=======================================================+
-| ``'darkframe'``   | :class:`~emirdrp.dataproducts.MasterDark`             | 
+| ``'darkframe'``   | :class:`~emirdrp.dataproducts.MasterDark`             |
 +-------------------+-------------------------------------------------------+
 | ``'stats'``       | :class:`~emirdrp.dataproducts.ChannelLevelStatistics` |
 +-------------------+-------------------------------------------------------+
@@ -128,8 +128,5 @@ Products
 +-------------------+-------------------------------------------------------+
 | Name              | Type                                                  |
 +===================+=======================================================+
-| ``'flatframe'``   | :class:`~emirdrp.dataproducts.MasterIntensityFlat`    | 
+| ``'flatframe'``   | :class:`~emirdrp.dataproducts.MasterIntensityFlat`    |
 +-------------------+-------------------------------------------------------+
-
-
-

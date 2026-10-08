@@ -68,9 +68,7 @@ class SpecFlatPix2Pix(EmirRecipe):
         description="Combination method",
         choices=["mean", "median", "sigmaclip"],
     )
-    method_kwargs = Parameter(
-        dict(), description="Arguments for combination method", optional=True
-    )
+    method_kwargs = Parameter(dict(), description="Arguments for combination method", optional=True)
     minimum_slitlet_width_mm = Parameter(
         float(EMIR_MINIMUM_SLITLET_WIDTH_MM),
         description="Minimum width (mm) for a valid slitlet",
@@ -93,8 +91,7 @@ class SpecFlatPix2Pix(EmirRecipe):
     )
     nwindow_median = Parameter(
         5,
-        description="Window size to smooth median spectrum in the spectral "
-        "direction",
+        description="Window size to smooth median spectrum in the spectral " "direction",
         optional=True,
     )
     minimum_fraction = Parameter(
@@ -104,14 +101,12 @@ class SpecFlatPix2Pix(EmirRecipe):
     )
     minimum_value_in_output = Parameter(
         0.01,
-        description="Minimum value allowed in output: pixels below this value"
-        " are set to 1.0",
+        description="Minimum value allowed in output: pixels below this value" " are set to 1.0",
         optional=True,
     )
     maximum_value_in_output = Parameter(
         10.0,
-        description="Maximum value allowed in output: pixels above this value"
-        " are set to 1.0",
+        description="Maximum value allowed in output: pixels above this value" " are set to 1.0",
         optional=True,
     )
     debugplot = Parameter(0, description="Debugger parameter", optional=True)
@@ -121,61 +116,25 @@ class SpecFlatPix2Pix(EmirRecipe):
     def run(self, rinput):
         self.logger.info("starting generation of flatpix2pix")
 
-        self.logger.info(
-            "rectwv_coeff..........................: {}".format(rinput.rectwv_coeff)
-        )
-        self.logger.info(
-            "master_rectwv.........................: {}".format(rinput.master_rectwv)
-        )
-        self.logger.info(
-            "Minimum slitlet width (mm)............: {}".format(
-                rinput.minimum_slitlet_width_mm
-            )
-        )
-        self.logger.info(
-            "Maximum slitlet width (mm)............: {}".format(
-                rinput.maximum_slitlet_width_mm
-            )
-        )
-        self.logger.info(
-            "Global offset X direction (pixels)....: {}".format(
-                rinput.global_integer_offset_x_pix
-            )
-        )
-        self.logger.info(
-            "Global offset Y direction (pixels)....: {}".format(
-                rinput.global_integer_offset_y_pix
-            )
-        )
-        self.logger.info(
-            "Minimum fraction......................: {}".format(rinput.minimum_fraction)
-        )
-        self.logger.info(
-            "Minimum value in output...............: {}".format(
-                rinput.minimum_value_in_output
-            )
-        )
-        self.logger.info(
-            "Maximum value in output...............: {}".format(
-                rinput.maximum_value_in_output
-            )
-        )
+        self.logger.info("rectwv_coeff..........................: {}".format(rinput.rectwv_coeff))
+        self.logger.info("master_rectwv.........................: {}".format(rinput.master_rectwv))
+        self.logger.info("Minimum slitlet width (mm)............: {}".format(rinput.minimum_slitlet_width_mm))
+        self.logger.info("Maximum slitlet width (mm)............: {}".format(rinput.maximum_slitlet_width_mm))
+        self.logger.info("Global offset X direction (pixels)....: {}".format(rinput.global_integer_offset_x_pix))
+        self.logger.info("Global offset Y direction (pixels)....: {}".format(rinput.global_integer_offset_y_pix))
+        self.logger.info("Minimum fraction......................: {}".format(rinput.minimum_fraction))
+        self.logger.info("Minimum value in output...............: {}".format(rinput.minimum_value_in_output))
+        self.logger.info("Maximum value in output...............: {}".format(rinput.maximum_value_in_output))
 
         # check rectification and wavelength calibration information
         if rinput.master_rectwv is None and rinput.rectwv_coeff is None:
-            raise ValueError(
-                "No master_rectwv nor rectwv_coeff data have " "been provided"
-            )
+            raise ValueError("No master_rectwv nor rectwv_coeff data have " "been provided")
         elif rinput.master_rectwv is not None and rinput.rectwv_coeff is not None:
             self.logger.warning("rectwv_coeff will be used instead of " "master_rectwv")
         if rinput.rectwv_coeff is not None and (
-            rinput.global_integer_offset_x_pix != 0
-            or rinput.global_integer_offset_y_pix != 0
+            rinput.global_integer_offset_x_pix != 0 or rinput.global_integer_offset_y_pix != 0
         ):
-            raise ValueError(
-                "global_integer_offsets cannot be used "
-                "simultaneously with rectwv_coeff"
-            )
+            raise ValueError("global_integer_offsets cannot be used " "simultaneously with rectwv_coeff")
 
         # check headers to detect lamp status (on/off)
         list_lampincd = []
@@ -189,9 +148,7 @@ class SpecFlatPix2Pix(EmirRecipe):
         # FALSE by 0 and TRUE by 1 when necessary
         contains_only_0_and_1 = all(item in [0, 1] for item in list_lampincd)
         if not contains_only_0_and_1:
-            contains_only_TRUE_and_FALSE = all(
-                item in ["TRUE", "FALSE"] for item in list_lampincd
-            )
+            contains_only_TRUE_and_FALSE = all(item in ["TRUE", "FALSE"] for item in list_lampincd)
             if not contains_only_TRUE_and_FALSE:
                 self.logger.info(f"List of LAMPINCD values: {list_lampincd}")
                 raise ValueError("Unexpected values of the keyword LAMPINCD")
@@ -217,9 +174,7 @@ class SpecFlatPix2Pix(EmirRecipe):
             if rinput.method == "sigmaclip":
                 method_kwargs = rinput.method_kwargs
             else:
-                raise ValueError(
-                    "Unexpected method_kwargs={}".format(rinput.method_kwargs)
-                )
+                raise ValueError("Unexpected method_kwargs={}".format(rinput.method_kwargs))
 
         # build object to proceed with bpm, bias, and dark (not flat)
         flow = self.init_filters(rinput)
@@ -232,15 +187,8 @@ class SpecFlatPix2Pix(EmirRecipe):
         reduced_image_on = None
         reduced_image_off = None
         for imode in lampmode.keys():
-            self.logger.info(
-                "starting basic reduction of images with"
-                " lamp {}".format(lampmode[imode])
-            )
-            tmplist = [
-                rinput.obresult.frames[i]
-                for i, lampincd in enumerate(list_lampincd)
-                if lampincd == imode
-            ]
+            self.logger.info("starting basic reduction of images with" " lamp {}".format(lampmode[imode]))
+            tmplist = [rinput.obresult.frames[i] for i, lampincd in enumerate(list_lampincd) if lampincd == imode]
             if len(tmplist) > 0:
                 with contextlib.ExitStack() as stack:
                     hduls = [stack.enter_context(fname.open()) for fname in tmplist]
@@ -255,16 +203,12 @@ class SpecFlatPix2Pix(EmirRecipe):
                     reduced_image_off = flow(reduced_image)
                     hdr = reduced_image_off[0].header
                     self.set_base_headers(hdr)
-                    self.save_intermediate_img(
-                        reduced_image_off, "reduced_image_off.fits"
-                    )
+                    self.save_intermediate_img(reduced_image_off, "reduced_image_off.fits")
                 elif imode == 1:
                     reduced_image_on = flow(reduced_image)
                     hdr = reduced_image_on[0].header
                     self.set_base_headers(hdr)
-                    self.save_intermediate_img(
-                        reduced_image_on, "reduced_image_on.fits"
-                    )
+                    self.save_intermediate_img(reduced_image_on, "reduced_image_on.fits")
                 else:
                     raise ValueError("Unexpected imode={}".format(imode))
 
@@ -280,25 +224,17 @@ class SpecFlatPix2Pix(EmirRecipe):
         reduced_data = data_on - data_off
 
         # update reduced image header
-        reduced_image = self.create_reduced_image(
-            rinput, reduced_data, header_on, header_off, list_lampincd
-        )
+        reduced_image = self.create_reduced_image(rinput, reduced_data, header_on, header_off, list_lampincd)
 
         # save intermediate image in work directory
         self.save_intermediate_img(reduced_image, "reduced_image.fits")
 
         # define rectification and wavelength calibration coefficients
         if rinput.rectwv_coeff is None:
-            rectwv_coeff = rectwv_coeff_from_mos_library(
-                reduced_image, rinput.master_rectwv
-            )
+            rectwv_coeff = rectwv_coeff_from_mos_library(reduced_image, rinput.master_rectwv)
             # set global offsets
-            rectwv_coeff.global_integer_offset_x_pix = (
-                rinput.global_integer_offset_x_pix
-            )
-            rectwv_coeff.global_integer_offset_y_pix = (
-                rinput.global_integer_offset_y_pix
-            )
+            rectwv_coeff.global_integer_offset_x_pix = rinput.global_integer_offset_x_pix
+            rectwv_coeff.global_integer_offset_y_pix = rinput.global_integer_offset_y_pix
         else:
             rectwv_coeff = rinput.rectwv_coeff
         # save as JSON in work directory
@@ -339,13 +275,9 @@ class SpecFlatPix2Pix(EmirRecipe):
         list_outside_valid_width = []
         for islitlet in list_valid_islitlets:
             slitwidth = csu_conf.csu_bar_slit_width(islitlet)
-            if (slitwidth < rinput.minimum_slitlet_width_mm) or (
-                slitwidth > rinput.maximum_slitlet_width_mm
-            ):
+            if (slitwidth < rinput.minimum_slitlet_width_mm) or (slitwidth > rinput.maximum_slitlet_width_mm):
                 list_outside_valid_width.append(islitlet)
-                self.logger.info(
-                    "-> Removing slitlet (width out of range): " + str(islitlet)
-                )
+                self.logger.info("-> Removing slitlet (width out of range): " + str(islitlet))
         if len(list_outside_valid_width) > 0:
             for idel in list_outside_valid_width:
                 list_valid_islitlets.remove(idel)
@@ -361,19 +293,13 @@ class SpecFlatPix2Pix(EmirRecipe):
         for islitlet in list(range(1, EMIR_NBARS + 1)):
             if islitlet in list_valid_islitlets:
                 # define Slitlet2D object
-                slt = Slitlet2D(
-                    islitlet=islitlet, rectwv_coeff=rectwv_coeff, debugplot=debugplot
-                )
+                slt = Slitlet2D(islitlet=islitlet, rectwv_coeff=rectwv_coeff, debugplot=debugplot)
                 if abs(slt.debugplot) > 10:
                     print(slt)
 
                 # extract (distorted) slitlet from the initial image
-                slitlet2d = slt.extract_slitlet2d(
-                    image_2k2k=image2d, subtitle="original image"
-                )
-                slitlet2d_clean = slt.extract_slitlet2d(
-                    image_2k2k=image2d_clean, subtitle="original (cleaned) image"
-                )
+                slitlet2d = slt.extract_slitlet2d(image_2k2k=image2d, subtitle="original image")
+                slitlet2d_clean = slt.extract_slitlet2d(image_2k2k=image2d_clean, subtitle="original (cleaned) image")
 
                 # rectify slitlet
                 slitlet2d_rect = slt.rectify(
@@ -388,9 +314,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                     print("EMIR_NAXIS1.....: ", EMIR_NAXIS1)
                     raise ValueError("Unexpected naxis1_slitlet2d")
 
-                slitlet2d_rect_mask = np.zeros(
-                    (naxis2_slitlet2d, naxis1_slitlet2d), dtype=bool
-                )
+                slitlet2d_rect_mask = np.zeros((naxis2_slitlet2d, naxis1_slitlet2d), dtype=bool)
 
                 # for grism LR set to zero data beyond useful wavelength range
                 if grism_name == "LR":
@@ -413,9 +337,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                 ii2 = int(yy0 + 0.5) - slt.bb_ns1_orig
 
                 # median spatial profile along slitlet (to be used later)
-                image2d_rect_masked = np.ma.masked_array(
-                    slitlet2d_rect, mask=slitlet2d_rect_mask
-                )
+                image2d_rect_masked = np.ma.masked_array(slitlet2d_rect, mask=slitlet2d_rect_mask)
                 if abs(slt.debugplot) % 10 != 0:
                     slt.ximshow_rectified(
                         slitlet2d_rect=image2d_rect_masked.data,
@@ -437,9 +359,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                 sp_collapsed = np.median(slitlet2d_rect[ii1 : (ii2 + 1), :], axis=0)
 
                 # smooth median spectrum along the spectral direction
-                sp_median = ndimage.median_filter(
-                    sp_collapsed, rinput.nwindow_median, mode="nearest"
-                )
+                sp_median = ndimage.median_filter(sp_collapsed, rinput.nwindow_median, mode="nearest")
 
                 ymax_spmedian = sp_median.max()
                 y_threshold = ymax_spmedian * rinput.minimum_fraction
@@ -510,9 +430,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                 )
 
                 if abs(slt.debugplot) % 10 != 0:
-                    slt.ximshow_unrectified(
-                        slitlet2d=slitlet2d_norm, subtitle="unrectified, pixel-to-pixel"
-                    )
+                    slt.ximshow_unrectified(slitlet2d=slitlet2d_norm, subtitle="unrectified, pixel-to-pixel")
 
                 # compute smooth surface
                 # clipped region
@@ -552,9 +470,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                     replacement_value=1.0,
                 )
                 slitlet2d_norm_clipped = slitlet2d_norm_clipped.transpose()
-                slitlet2d_norm_smooth = ndimage.median_filter(
-                    slitlet2d_norm_clipped, size=(5, 31), mode="nearest"
-                )
+                slitlet2d_norm_smooth = ndimage.median_filter(slitlet2d_norm_clipped, size=(5, 31), mode="nearest")
                 # apply smooth surface to pix2pix
                 slitlet2d_norm /= slitlet2d_norm_smooth
 
@@ -598,9 +514,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                     # note that n1 and n2 are scans (ranging from 1 to NAXIS2)
                     nn1 = n1 - slt.bb_ns1_orig + 1
                     nn2 = n2 - slt.bb_ns1_orig + 1
-                    image2d_flatfielded[(n1 - 1) : n2, j] = slitlet2d_norm[
-                        (nn1 - 1) : nn2, j
-                    ]
+                    image2d_flatfielded[(n1 - 1) : n2, j] = slitlet2d_norm[(nn1 - 1) : nn2, j]
 
                     # force to 1.0 region around frontiers
                     if not same_slitlet_below:
@@ -647,13 +561,9 @@ class SpecFlatPix2Pix(EmirRecipe):
         result = self.create_result(reduced_flatpix2pix=reduced_flatpix2pix)
         return result
 
-    def create_reduced_image(
-        self, rinput, reduced_data, header_on, header_off, list_lampincd
-    ):
+    def create_reduced_image(self, rinput, reduced_data, header_on, header_off, list_lampincd):
         with contextlib.ExitStack() as stack:
-            hduls = [
-                stack.enter_context(fname.open()) for fname in rinput.obresult.frames
-            ]
+            hduls = [stack.enter_context(fname.open()) for fname in rinput.obresult.frames]
             # Copy header of first image
             result = copy_img(hduls[0])
             hdu = result[0]
@@ -672,9 +582,7 @@ class SpecFlatPix2Pix(EmirRecipe):
             dm = emirdrp.datamodel.EmirDataModel()
             for img, lampincd in zip(hduls, list_lampincd):
                 imgid = dm.get_imgid(img)
-                hdu.header["HISTORY"] = "Image '{}' has lampincd='{}'".format(
-                    imgid, lampincd
-                )
+                hdu.header["HISTORY"] = "Image '{}' has lampincd='{}'".format(imgid, lampincd)
         hdu.header["HISTORY"] = "Processed flatpix2pix"
         hdu.header["HISTORY"] = "--- Reduction of images with lamp ON ---"
         for line in header_on["HISTORY"]:
@@ -708,9 +616,7 @@ def clean_defects(image2d, debugplot=0):
     i1, i2 = 750, 860  # scan region (Y direction)
     subimage = image2d_clean[i1 : (i2 + 1), j1 : (j2 + 1)].copy()
     if abs(debugplot) % 10 != 0:
-        ximshow(
-            subimage, title="original image", first_pixel=(j1, i1), debugplot=debugplot
-        )
+        ximshow(subimage, title="original image", first_pixel=(j1, i1), debugplot=debugplot)
     # median filter in Y
     subimage_filtered = ndimage.median_filter(subimage, size=(5, 1))
     if abs(debugplot) % 10 != 0:
@@ -749,9 +655,7 @@ def clean_defects(image2d, debugplot=0):
     # replace bad pixels by fitted image
     subimage[badpix] = subimage_fitted[badpix]
     if abs(debugplot) % 10 != 0:
-        ximshow(
-            subimage, title="cleaned image", first_pixel=(j1, i1), debugplot=debugplot
-        )
+        ximshow(subimage, title="cleaned image", first_pixel=(j1, i1), debugplot=debugplot)
     # replace interpolated region in original image
     image2d_clean[i1 : (i2 + 1), j1 : (j2 + 1)] = subimage
 

@@ -81,12 +81,7 @@ def get_boundaries(bounddict_file, slitlet_number):
         else:
             raise ValueError("num_date_obs =", num_date_obs, " (must be 1)")
     else:
-        print(
-            "WARNING: slitlet number "
-            + str(slitlet_number)
-            + " is not available in "
-            + bounddict_file.name
-        )
+        print("WARNING: slitlet number " + str(slitlet_number) + " is not available in " + bounddict_file.name)
 
     # return result
     return (
@@ -106,9 +101,7 @@ def main(args=None):
     parser = argparse.ArgumentParser()
 
     # positional arguments
-    parser.add_argument(
-        "fitsfile", help="FITS file name to be displayed", type=argparse.FileType("rb")
-    )
+    parser.add_argument("fitsfile", help="FITS file name to be displayed", type=argparse.FileType("rb"))
     parser.add_argument(
         "--bounddict",
         required=True,
@@ -180,13 +173,7 @@ def main(args=None):
     # display full image
     ax = ximshow(
         image2d=image2d,
-        title=sfitsfile
-        + "\ngrism="
-        + grism
-        + ", filter="
-        + spfilter
-        + ", rotang="
-        + str(round(rotang, 2)),
+        title=sfitsfile + "\ngrism=" + grism + ", filter=" + spfilter + ", rotang=" + str(round(rotang, 2)),
         image_bbox=(1, naxis1, 1, naxis2),
         show=False,
     )

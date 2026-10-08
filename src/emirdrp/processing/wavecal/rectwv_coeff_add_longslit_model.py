@@ -69,9 +69,7 @@ def rectwv_coeff_add_longslit_model(rectwv_coeff, geometry, debugplot=0):
     # check that the CSU configuration corresponds to longslit
     csu_bar_slit_center_list = []
     for islitlet in list_valid_islitlets:
-        csu_bar_slit_center_list.append(
-            rectwv_coeff.contents[islitlet - 1]["csu_bar_slit_center"]
-        )
+        csu_bar_slit_center_list.append(rectwv_coeff.contents[islitlet - 1]["csu_bar_slit_center"])
     if abs(debugplot) >= 10:
         logger.debug("Checking csu_bar_slit_center values:")
         summary(np.array(csu_bar_slit_center_list), debug=True)
@@ -85,15 +83,11 @@ def rectwv_coeff_add_longslit_model(rectwv_coeff, geometry, debugplot=0):
     # all the slitlets
     poldeg_refined_list = []
     for islitlet in list_valid_islitlets:
-        poldeg_refined_list.append(
-            len(rectwv_coeff.contents[islitlet - 1]["wpoly_coeff"]) - 1
-        )
+        poldeg_refined_list.append(len(rectwv_coeff.contents[islitlet - 1]["wpoly_coeff"]) - 1)
     # remove duplicates
     poldeg_refined_list = list(set(poldeg_refined_list))
     if len(poldeg_refined_list) != 1:
-        raise ValueError(
-            "Unexpected different poldeg_refined found: " + str(poldeg_refined_list)
-        )
+        raise ValueError("Unexpected different poldeg_refined found: " + str(poldeg_refined_list))
     poldeg_refined = poldeg_refined_list[0]
 
     # step 1: compute variation of each coefficient as a function of

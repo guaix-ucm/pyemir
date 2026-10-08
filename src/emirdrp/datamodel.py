@@ -14,7 +14,6 @@ import logging
 import numina.datamodel as dm
 from numina.keydef import QueryAttribute
 
-
 _logger = logging.getLogger(__name__)
 
 

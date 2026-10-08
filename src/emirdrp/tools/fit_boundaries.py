@@ -46,9 +46,7 @@ EXPECTED_PARAMETER_LIST = (
 )
 
 EXPECTED_PARAMETER_LIST_EXTENDED = tuple(
-    mainpar + "_" + subpar
-    for mainpar in EXPECTED_PARAMETER_LIST
-    for subpar in ["a0s", "a1s", "a2s"]
+    mainpar + "_" + subpar for mainpar in EXPECTED_PARAMETER_LIST for subpar in ["a0s", "a1s", "a2s"]
 )
 
 FUNCTION_EVALUATIONS = 0
@@ -71,10 +69,7 @@ def integrity_check(bounddict, max_dtu_offset):
         raise ValueError('"meta_info" not found in JSON file')
     if "description" not in bounddict["meta_info"].keys():
         raise ValueError('"description" not found in JSON file')
-    if (
-        bounddict["meta_info"]["description"]
-        != "slitlet boundaries from fits to continuum-lamp exposures"
-    ):
+    if bounddict["meta_info"]["description"] != "slitlet boundaries from fits to continuum-lamp exposures":
         raise ValueError('Unexpected "description" in JSON file')
 
     grism = bounddict["tags"]["grism"]
@@ -147,9 +142,7 @@ def integrity_check(bounddict, max_dtu_offset):
                 print("date_obs:", tmp_dateobs)
                 print("boundary_xmin_lower", tmp_dict["boundary_xmin_lower"])
                 print("boundary_xmax_lower", tmp_dict["boundary_xmax_lower"])
-                raise ValueError(
-                    "Unexpected boundary_xmax_lower <= " "boundary_xmin_lower"
-                )
+                raise ValueError("Unexpected boundary_xmax_lower <= " "boundary_xmin_lower")
             if tmp_dict["boundary_xmax_upper"] <= tmp_dict["boundary_xmin_upper"]:
                 print("ERROR:")
                 print("grism...:", grism)
@@ -157,22 +150,14 @@ def integrity_check(bounddict, max_dtu_offset):
                 print("date_obs:", tmp_dateobs)
                 print("boundary_xmin_upper", tmp_dict["boundary_xmin_upper"])
                 print("boundary_xmax_upper", tmp_dict["boundary_xmax_upper"])
-                raise ValueError(
-                    "Unexpected boundary_xmax_upper <= " "boundary_xmin_upper"
-                )
+                raise ValueError("Unexpected boundary_xmax_upper <= " "boundary_xmin_upper")
             if first_dtu:
-                first_dtu_configuration = (
-                    emirdrp.instrument.components.dtu.DtuConf.from_header(tmp_dict)
-                )
+                first_dtu_configuration = emirdrp.instrument.components.dtu.DtuConf.from_header(tmp_dict)
                 first_dtu = False
                 list_dtu_configurations.append(first_dtu_configuration)
             else:
-                last_dtu_configuration = (
-                    emirdrp.instrument.components.dtu.DtuConf.from_header(tmp_dict)
-                )
-                if not first_dtu_configuration.closeto(
-                    last_dtu_configuration, abserror=max_dtu_offset
-                ):
+                last_dtu_configuration = emirdrp.instrument.components.dtu.DtuConf.from_header(tmp_dict)
+                if not first_dtu_configuration.closeto(last_dtu_configuration, abserror=max_dtu_offset):
                     print("ERROR:")
                     print("grism...:", grism)
                     print("slitlet.:", tmp_slitlet)
@@ -184,12 +169,8 @@ def integrity_check(bounddict, max_dtu_offset):
 
     print("* Integrity check OK!")
 
-    averaged_dtu_configuration = emirdrp.instrument.components.dtu.average(
-        list_dtu_configurations
-    )
-    maxdiff_dtu_configuration = emirdrp.instrument.components.dtu.maxdiff(
-        list_dtu_configurations
-    )
+    averaged_dtu_configuration = emirdrp.instrument.components.dtu.average(list_dtu_configurations)
+    maxdiff_dtu_configuration = emirdrp.instrument.components.dtu.maxdiff(list_dtu_configurations)
 
     return averaged_dtu_configuration, maxdiff_dtu_configuration
 
@@ -284,9 +265,7 @@ def exvp(x, y, x0, y0, c2, c4, theta0, ff):
     """
 
     if all([np.isscalar(x), np.isscalar(y)]):
-        xdist, ydist = exvp_scalar(
-            x, y, x0=x0, y0=y0, c2=c2, c4=c4, theta0=theta0, ff=ff
-        )
+        xdist, ydist = exvp_scalar(x, y, x0=x0, y0=y0, c2=c2, c4=c4, theta0=theta0, ff=ff)
         return xdist, ydist
     elif any([np.isscalar(x), np.isscalar(y)]):
         raise ValueError("invalid mixture of scalars and arrays")
@@ -294,9 +273,7 @@ def exvp(x, y, x0, y0, c2, c4, theta0, ff):
         xdist = []
         ydist = []
         for x_, y_ in zip(x, y):
-            xdist_, ydist_ = exvp_scalar(
-                x_, y_, x0=x0, y0=y0, c2=c2, c4=c4, theta0=theta0, ff=ff
-            )
+            xdist_, ydist_ = exvp_scalar(x_, y_, x0=x0, y0=y0, c2=c2, c4=c4, theta0=theta0, ff=ff)
             xdist.append(xdist_)
             ydist.append(ydist_)
         return np.array(xdist), np.array(ydist)
@@ -378,37 +355,25 @@ def return_params(islitlet, csu_bar_slit_center, params, parmodel):
         slit_gap_a0s = params["slit_gap_a0s"].value
         slit_gap_a1s = params["slit_gap_a1s"].value / 1e3
         slit_gap_a2s = params["slit_gap_a2s"].value / 1e6
-        slit_gap = (
-            slit_gap_a0s
-            + slit_gap_a1s * csu_bar_slit_center
-            + slit_gap_a2s * csu_bar_slit_center**2
-        )
+        slit_gap = slit_gap_a0s + slit_gap_a1s * csu_bar_slit_center + slit_gap_a2s * csu_bar_slit_center**2
         # ---
         slit_height_a0s = params["slit_height_a0s"].value
         slit_height_a1s = params["slit_height_a1s"].value / 1e3
         slit_height_a2s = params["slit_height_a2s"].value / 1e6
-        slit_height = (
-            slit_height_a0s
-            + slit_height_a1s * csu_bar_slit_center
-            + slit_height_a2s * csu_bar_slit_center**2
-        )
+        slit_height = slit_height_a0s + slit_height_a1s * csu_bar_slit_center + slit_height_a2s * csu_bar_slit_center**2
         # ---
         theta0_origin_a0s = params["theta0_origin_a0s"].value
         theta0_origin_a1s = params["theta0_origin_a1s"].value / 1e3
         theta0_origin_a2s = params["theta0_origin_a2s"].value / 1e6
         theta0_origin = (
-            theta0_origin_a0s
-            + theta0_origin_a1s * csu_bar_slit_center
-            + theta0_origin_a2s * csu_bar_slit_center**2
+            theta0_origin_a0s + theta0_origin_a1s * csu_bar_slit_center + theta0_origin_a2s * csu_bar_slit_center**2
         )
         # ---
         theta0_slope_a0s = params["theta0_slope_a0s"].value
         theta0_slope_a1s = params["theta0_slope_a1s"].value / 1e3
         theta0_slope_a2s = params["theta0_slope_a2s"].value / 1e6
         theta0_slope = (
-            theta0_slope_a0s
-            + theta0_slope_a1s * csu_bar_slit_center
-            + theta0_slope_a2s * csu_bar_slit_center**2
+            theta0_slope_a0s + theta0_slope_a1s * csu_bar_slit_center + theta0_slope_a2s * csu_bar_slit_center**2
         )
         # ---
         x0_a0s = params["x0_a0s"].value
@@ -424,11 +389,7 @@ def return_params(islitlet, csu_bar_slit_center, params, parmodel):
         y_baseline_a0s = params["y_baseline_a0s"].value
         y_baseline_a1s = params["y_baseline_a1s"].value / 1e3
         y_baseline_a2s = params["y_baseline_a2s"].value / 1e6
-        y_baseline = (
-            y_baseline_a0s
-            + y_baseline_a1s * csu_bar_slit_center
-            + y_baseline_a2s * csu_bar_slit_center**2
-        )
+        y_baseline = y_baseline_a0s + y_baseline_a1s * csu_bar_slit_center + y_baseline_a2s * csu_bar_slit_center**2
 
     theta0 = theta0_origin / 1e3 + theta0_slope / 1e4 * islitlet
 
@@ -505,9 +466,7 @@ def expected_distorted_boundaries(
         # undistorted boundary
         yp_value = np.ones(numpts) * yvalue
         # distorted boundary
-        xdist, ydist = exvp(
-            xp, yp_value, x0=x0, y0=y0, c2=c2, c4=c4, theta0=theta0, ff=ff
-        )
+        xdist, ydist = exvp(xp, yp_value, x0=x0, y0=y0, c2=c2, c4=c4, theta0=theta0, ff=ff)
         spectrail = SpectrumTrail()  # declare SpectrumTrail instance
         spectrail.fit(x=xdist, y=ydist, deg=deg, debugplot=debugplot)
         list_spectrails.append(spectrail)
@@ -515,9 +474,7 @@ def expected_distorted_boundaries(
     return list_spectrails
 
 
-def expected_distorted_frontiers(
-    islitlet, csu_bar_slit_center, params, parmodel, numpts, deg, debugplot=0
-):
+def expected_distorted_frontiers(islitlet, csu_bar_slit_center, params, parmodel, numpts, deg, debugplot=0):
     """Return expected frontiers as a list with two SpectrumTrail instances.
 
     Note that the frontiers are computed as the polynomials that extend
@@ -573,9 +530,7 @@ def expected_distorted_frontiers(
         # undistorted boundary
         yp_value = np.ones(numpts) * yvalue
         # distorted boundary
-        xdist, ydist = exvp(
-            xp, yp_value, x0=x0, y0=y0, c2=c2, c4=c4, theta0=theta0, ff=ff
-        )
+        xdist, ydist = exvp(xp, yp_value, x0=x0, y0=y0, c2=c2, c4=c4, theta0=theta0, ff=ff)
         spectrail = SpectrumTrail()  # declare SpectrumTrail instance
         spectrail.fit(x=xdist, y=ydist, deg=deg, debugplot=debugplot)
         list_frontiers.append(spectrail)
@@ -656,29 +611,21 @@ def fun_residuals(
                 poly_lower_expected = list_spectrails[0].poly_funct
                 poly_upper_expected = list_spectrails[1].poly_funct
                 # measured lower boundary
-                poly_lower_measured = np.polynomial.Polynomial(
-                    tmp_dict["boundary_coef_lower"]
-                )
+                poly_lower_measured = np.polynomial.Polynomial(tmp_dict["boundary_coef_lower"])
                 xmin_lower_bound = tmp_dict["boundary_xmin_lower"]
                 xmax_lower_bound = tmp_dict["boundary_xmax_lower"]
                 dx = (xmax_lower_bound - xmin_lower_bound) * (1 - shrinking_factor) / 2
-                xdum_lower = np.linspace(
-                    xmin_lower_bound + dx, xmax_lower_bound - dx, num=numresolution
-                )
+                xdum_lower = np.linspace(xmin_lower_bound + dx, xmax_lower_bound - dx, num=numresolution)
                 # distance between expected and measured polynomials
                 poly_diff = poly_lower_expected - poly_lower_measured
                 global_residual += np.sum(poly_diff(xdum_lower) ** 2)
                 nsummed += numresolution
                 # measured upper boundary
-                poly_upper_measured = np.polynomial.Polynomial(
-                    tmp_dict["boundary_coef_upper"]
-                )
+                poly_upper_measured = np.polynomial.Polynomial(tmp_dict["boundary_coef_upper"])
                 xmin_upper_bound = tmp_dict["boundary_xmin_upper"]
                 xmax_upper_bound = tmp_dict["boundary_xmax_upper"]
                 dx = (xmax_lower_bound - xmin_lower_bound) * (1 - shrinking_factor) / 2
-                xdum_upper = np.linspace(
-                    xmin_upper_bound + dx, xmax_upper_bound - dx, num=numresolution
-                )
+                xdum_upper = np.linspace(xmin_upper_bound + dx, xmax_upper_bound - dx, num=numresolution)
                 # distance between expected and measured polynomials
                 poly_diff = poly_upper_expected - poly_upper_measured
                 global_residual += np.sum(poly_diff(xdum_upper) ** 2)
@@ -721,15 +668,11 @@ def overplot_boundaries_from_bounddict(ax, bounddict, micolors, linetype="-"):
             for tmp_dateobs in read_dateobs:
                 tmp_dict = bounddict["contents"][tmp_slitlet][tmp_dateobs]
                 # lower boundary
-                pol_lower_measured = np.polynomial.Polynomial(
-                    tmp_dict["boundary_coef_lower"]
-                )
+                pol_lower_measured = np.polynomial.Polynomial(tmp_dict["boundary_coef_lower"])
                 xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
                 ydum = pol_lower_measured(xdum)
                 ax.plot(xdum, ydum, tmpcolor + linetype)
-                pol_upper_measured = np.polynomial.Polynomial(
-                    tmp_dict["boundary_coef_upper"]
-                )
+                pol_upper_measured = np.polynomial.Polynomial(tmp_dict["boundary_coef_upper"])
                 ydum = pol_upper_measured(xdum)
                 ax.plot(xdum, ydum, tmpcolor + linetype)
 
@@ -1026,34 +969,22 @@ def save_boundaries_from_bounddict_ds9(bounddict, ds9_filename, numpix=100):
                 ds9_file.write("#\n# date-obs: {0}\n".format(tmp_dateobs))
                 tmp_dict = bounddict["contents"][tmp_slitlet][tmp_dateobs]
                 # lower boundary
-                pol_lower_measured = np.polynomial.Polynomial(
-                    tmp_dict["boundary_coef_lower"]
-                )
+                pol_lower_measured = np.polynomial.Polynomial(tmp_dict["boundary_coef_lower"])
                 xmin_lower = tmp_dict["boundary_xmin_lower"]
                 xmax_lower = tmp_dict["boundary_xmax_lower"]
                 xdum = np.linspace(xmin_lower, xmax_lower, num=numpix)
                 ydum = pol_lower_measured(xdum)
                 for i in range(len(xdum) - 1):
-                    ds9_file.write(
-                        "line {0} {1} {2} {3}".format(
-                            xdum[i], ydum[i], xdum[i + 1], ydum[i + 1]
-                        )
-                    )
+                    ds9_file.write("line {0} {1} {2} {3}".format(xdum[i], ydum[i], xdum[i + 1], ydum[i + 1]))
                     ds9_file.write(" # color={0}\n".format(colorbox[islitlet % 2]))
                 # upper boundary
-                pol_upper_measured = np.polynomial.Polynomial(
-                    tmp_dict["boundary_coef_upper"]
-                )
+                pol_upper_measured = np.polynomial.Polynomial(tmp_dict["boundary_coef_upper"])
                 xmin_upper = tmp_dict["boundary_xmin_upper"]
                 xmax_upper = tmp_dict["boundary_xmax_upper"]
                 xdum = np.linspace(xmin_upper, xmax_upper, num=numpix)
                 ydum = pol_upper_measured(xdum)
                 for i in range(len(xdum) - 1):
-                    ds9_file.write(
-                        "line {0} {1} {2} {3}".format(
-                            xdum[i], ydum[i], xdum[i + 1], ydum[i + 1]
-                        )
-                    )
+                    ds9_file.write("line {0} {1} {2} {3}".format(xdum[i], ydum[i], xdum[i + 1], ydum[i + 1]))
                     ds9_file.write(" # color={0}\n".format(colorbox[islitlet % 2]))
                 # slitlet label
                 xlabel = xmax_lower + xmax_upper + xmin_lower + xmin_upper
@@ -1385,13 +1316,7 @@ def bound_params_from_dict(bound_param_dict):
         elif bound_param_dict["meta_info"]["parmodel"] == "multislit":
             for subpar in ["a0s", "a1s", "a2s"]:
                 if subpar not in bound_param_dict["contents"][mainpar].keys():
-                    raise ValueError(
-                        "Subparameter "
-                        + subpar
-                        + " not found"
-                        + " under parameter "
-                        + mainpar
-                    )
+                    raise ValueError("Subparameter " + subpar + " not found" + " under parameter " + mainpar)
                 cpar = mainpar + "_" + subpar
                 dumdict = bound_param_dict["contents"][mainpar][subpar]
                 params.add(cpar, value=dumdict["value"], vary=dumdict["vary"])
@@ -1435,9 +1360,7 @@ def main(args=None):
     # optional arguments
     parser.add_argument(
         "--shrinking_factor",
-        help="Effective reduction factor to be applied to "
-        "the fitted X-axis (spectral) range, "
-        "(default=0.9)",
+        help="Effective reduction factor to be applied to " "the fitted X-axis (spectral) range, " "(default=0.9)",
         type=float,
         default=0.9,
     )
@@ -1449,14 +1372,11 @@ def main(args=None):
     )
     parser.add_argument(
         "--maxDTUoffset",
-        help="Maximum allowed difference in DTU location (mm)"
-        "for each parameter (default=0.5)",
+        help="Maximum allowed difference in DTU location (mm)" "for each parameter (default=0.5)",
         type=float,
         default=0.5,
     )
-    parser.add_argument(
-        "--fov", help="Field of view in mm (default=341.5)", type=float, default=341.5
-    )
+    parser.add_argument("--fov", help="Field of view in mm (default=341.5)", type=float, default=341.5)
     parser.add_argument(
         "--numresolution",
         help="Number of points/boundary (default=101)",
@@ -1470,8 +1390,7 @@ def main(args=None):
     )
     parser.add_argument(
         "--pickle_input",
-        help="Use previous pickle file instead of carrying "
-        "out the minimisation procces",
+        help="Use previous pickle file instead of carrying " "out the minimisation procces",
         type=argparse.FileType("rb"),
     )
     parser.add_argument(
@@ -1488,20 +1407,14 @@ def main(args=None):
         print("\033[1m\033[31mExecuting: " + " ".join(sys.argv) + "\033[0m\n")
 
     if args.background_image is not None and args.debugplot % 11 == 0:
-        raise ValueError(
-            "--background_image requires "
-            "--debugplot value compatible with "
-            "plotting\n'"
-        )
+        raise ValueError("--background_image requires " "--debugplot value compatible with " "plotting\n'")
 
     if args.shrinking_factor <= 0 or args.shrinking_factor > 1:
         raise ValueError("Unexpected shriking factor: ", args.shrinking_factor, "\n")
 
     # read bounddict file and check its contents
     bounddict = json.loads(open(args.bounddict.name).read())
-    averaged_dtu_configuration, maxdiff_dtu_configuration = integrity_check(
-        bounddict, args.maxDTUoffset
-    )
+    averaged_dtu_configuration, maxdiff_dtu_configuration = integrity_check(bounddict, args.maxDTUoffset)
     save_boundaries_from_bounddict_ds9(bounddict, "ds9_bounddict.reg")
     # store lists with individual slitlet number and csu_bar_slit_center
     # value, needed later to save the ds9 region file and for plotting
@@ -1541,9 +1454,7 @@ def main(args=None):
     # check that parameter model is correct
     parmodel_ = init_bound_param["meta_info"]["parmodel"]
     if args.parmodel != parmodel_:
-        raise ValueError(
-            "Unexpected parmodel: ", parmodel_, " in file ", args.init_bound_param.name
-        )
+        raise ValueError("Unexpected parmodel: ", parmodel_, " in file ", args.init_bound_param.name)
 
     # establish initial parameters from init_bound_param dictionary
     params = bound_params_from_dict(init_bound_param)
@@ -1614,35 +1525,23 @@ def main(args=None):
     fitted_bound_param["meta_info"]["maxDTUoffset"] = args.maxDTUoffset
     fitted_bound_param["meta_info"]["origin"] = {}
     fitted_bound_param["meta_info"]["origin"]["bounddict_uuid"] = bounddict["uuid"]
-    fitted_bound_param["meta_info"]["origin"]["init_bound_param_uuid"] = (
-        init_bound_param["uuid"]
-    )
+    fitted_bound_param["meta_info"]["origin"]["init_bound_param_uuid"] = init_bound_param["uuid"]
     fitted_bound_param["dtu_configuration"] = averaged_dtu_configuration.outdict()
-    fitted_bound_param["dtu_configuration_maxdiff"] = (
-        maxdiff_dtu_configuration.outdict()
-    )
+    fitted_bound_param["dtu_configuration_maxdiff"] = maxdiff_dtu_configuration.outdict()
     fitted_bound_param["uuid"] = str(uuid4())
     for mainpar in EXPECTED_PARAMETER_LIST:
         if mainpar not in init_bound_param["contents"].keys():
-            raise ValueError(
-                "Parameter " + mainpar + " not found in " + args.init_bound_param.name
-            )
+            raise ValueError("Parameter " + mainpar + " not found in " + args.init_bound_param.name)
         if args.parmodel == "longslit":
-            fitted_bound_param["contents"][mainpar]["value"] = result.params[
-                mainpar
-            ].value
+            fitted_bound_param["contents"][mainpar]["value"] = result.params[mainpar].value
             fitted_bound_param["contents"][mainpar]["initial"] = params[mainpar].value
             # compute median csu_bar_slit_center (only in longslit mode)
             dumlist = []
-            for islitlet, csu_bar_slit_center in zip(
-                list_islitlet, list_csu_bar_slit_center
-            ):
+            for islitlet, csu_bar_slit_center in zip(list_islitlet, list_csu_bar_slit_center):
                 if islitlet_min <= islitlet <= islitlet_max:
                     dumlist.append(csu_bar_slit_center)
             median_csu_bar_slit_center = np.median(np.array(dumlist))
-            fitted_bound_param["meta_info"][
-                "median_csu_bar_slit_center"
-            ] = median_csu_bar_slit_center
+            fitted_bound_param["meta_info"]["median_csu_bar_slit_center"] = median_csu_bar_slit_center
         else:
             for subpar in ["a0s", "a1s", "a2s"]:
                 if subpar not in init_bound_param["contents"][mainpar].keys():
@@ -1655,12 +1554,8 @@ def main(args=None):
                         + mainpar
                     )
                 cpar = mainpar + "_" + subpar
-                fitted_bound_param["contents"][mainpar][subpar]["value"] = (
-                    result.params[cpar].value
-                )
-                fitted_bound_param["contents"][mainpar][subpar]["initial"] = params[
-                    cpar
-                ].value
+                fitted_bound_param["contents"][mainpar][subpar]["value"] = result.params[cpar].value
+                fitted_bound_param["contents"][mainpar][subpar]["initial"] = params[cpar].value
     with open(args.fitted_bound_param.name, "w") as fstream:
         json.dump(fitted_bound_param, fstream, indent=2, sort_keys=True)
 

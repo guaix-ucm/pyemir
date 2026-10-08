@@ -5,4 +5,3 @@
 .. automodule:: emirdrp.simulation
    :members:
    :undoc-members:
-

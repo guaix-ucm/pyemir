@@ -24,7 +24,7 @@ reduction parameters and calibrations provided by the instrument team.
 
 Users of the DRP may use the simple Numina CLI (Command Line Interface) or the
 higher level, database-driven Pontifex. Users of the DFP shall interact with
-the software through the GTC Inspector. 
+the software through the GTC Inspector.
 
 Recipe Parameters
 -----------------
@@ -34,11 +34,11 @@ The Recipe announces the required parameters with the following syntax (the synt
 .. code-block:: python
 
     class SomeRecipeInput(RecipeInput):
-        master_dark = DataProductParameter(MasterDark, 'Master dark image') 
+        master_dark = DataProductParameter(MasterDark, 'Master dark image')
         some_numeric_value = Parameter(0.45, 'Some numeric value'),
 
     @define_input(SomeRecipeInput)
-    class SomeRecipe(RecipeBase):        
+    class SomeRecipe(RecipeBase):
         ...
 
 When the reduction is run from the command line using Numina CLI, the program
@@ -53,7 +53,7 @@ created from a text file. When run with Pontifex, the observing block data
 structure is created from the contents of the database.
 
 Recipe Products
---------------- 
+---------------
 Recipes based on Numina provide a list of products created by the recipe.
 The Recipe announces the required parameters with the following syntax
 (the syntax is subject to changes).
@@ -61,15 +61,15 @@ The Recipe announces the required parameters with the following syntax
 .. code-block:: python
 
     class SomeRecipeInput(RecipeInput):
-        master_dark = DataProductParameter(MasterDark, 'Master dark image') 
+        master_dark = DataProductParameter(MasterDark, 'Master dark image')
         some_numeric_value = Parameter(0.45, 'Some numeric value'),
-        
+
     class SomeRecipeResult(RecipeResult):
-        master_flat = Product(MasterDark) 
-        
+        master_flat = Product(MasterDark)
+
     @define_input(SomeRecipeInput)
     @define_result(SomeRecipeResult)
-    class SomeRecipe(RecipeBase):        
+    class SomeRecipe(RecipeBase):
         ...
 
 
@@ -89,81 +89,81 @@ or an **OptionalParameter** that will be ignored if not present.
 DFP Recipes Parameters
 ++++++++++++++++++++++
 
-:class:  ``focus.TelescopeRoughFocusRecipe``  
-:mode:  TS rough focus 
+:class:  ``focus.TelescopeRoughFocusRecipe``
+:mode:  TS rough focus
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
-    -  Parameter: objects 
-    -  Parameter: focus_range         
-:provides:  ``TelescopeFocus`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
+    -  Parameter: objects
+    -  Parameter: focus_range
+:provides:  ``TelescopeFocus``
 
 -----
 
-:class:  ``focus.TelescopeFineFocusRecipe``  
-:mode:  TS fine focus 
+:class:  ``focus.TelescopeFineFocusRecipe``
+:mode:  TS fine focus
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
-    -  Parameter: objects 
-:provides:  ``TelescopeFocus`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
+    -  Parameter: objects
+:provides:  ``TelescopeFocus``
 
 -----
 
-:class:  ``focus.DTUFocusRecipe``  
-:mode:  EMIR focus control 
+:class:  ``focus.DTUFocusRecipe``
+:mode:  EMIR focus control
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
-    -  Parameter: objects 
-    -  Parameter: msm_pattern 
-    -  Parameter: dtu_focus_range 
-:provides:  ``DTUFocus`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
+    -  Parameter: objects
+    -  Parameter: msm_pattern
+    -  Parameter: dtu_focus_range
+:provides:  ``DTUFocus``
 
 -----
 
-:class:  ``acquisition.MaskCheckRecipe`` 
-:mode:  Target acquisition 
+:class:  ``acquisition.MaskCheckRecipe``
+:mode:  Target acquisition
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
 :provides: ``TelescopeOffset``
 
 -----
 
-:class:  ``acquisition.MaskImagingRecipe``       
-:mode:  Mask image 
+:class:  ``acquisition.MaskImagingRecipe``
+:mode:  Mask image
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
-:provides:  ``MSMPositions`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
+:provides:  ``MSMPositions``
 
 -----
 
-:class:  ``acquisition.MaskCheckRecipe``  
-:mode:  MSM and LSM check 
+:class:  ``acquisition.MaskCheckRecipe``
+:mode:  MSM and LSM check
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
-:provides: ``TelescopeOffset``, ``MSMPositions`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
+:provides: ``TelescopeOffset``, ``MSMPositions``
 
 .. raw:: pdf
 
@@ -173,22 +173,22 @@ DRP Recipes Parameters
 ++++++++++++++++++++++
 
 :class: ``auxiliary.BiasRecipe``
-:mode: Bias image 
+:mode: Bias image
 :requires:
-:provides: ``MasterBias`` 
+:provides: ``MasterBias``
 
 ------------
 
 :class: ``auxiliary.DarkRecipe``
-:mode: Dark image 
+:mode: Dark image
 :requires: Product: ``MasterBias``
-:provides: ``MasterDark`` 
+:provides: ``MasterDark``
 
 ------------
 
 :class: ``auxiliary.IntensityFlatRecipe``
 :mode:  Intensity flat-field
-:requires: 
+:requires:
         - Product: ``MasterBias``
         - Product: ``MasterDark``
         - Product: ``MasterBadPixelMask``
@@ -197,65 +197,65 @@ DRP Recipes Parameters
 
 ------------
 
-:class:  ``auxiliary.SpectralFlatRecipe``  
-:mode:  MSM spectral flat-field 
+:class:  ``auxiliary.SpectralFlatRecipe``
+:mode:  MSM spectral flat-field
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-:provides:  ``MasterSpectralFlat`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+:provides:  ``MasterSpectralFlat``
 
 -----
 
-:class:  ``auxiliary.SlitTransmissionRecipe``  
-:mode:  Slit transmission calibration 
+:class:  ``auxiliary.SlitTransmissionRecipe``
+:mode:  Slit transmission calibration
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-:provides:  ``SlitTransmissionCalibration`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+:provides:  ``SlitTransmissionCalibration``
 
 -----
 
-:class:  ``auxiliary.WavelengthCalibrationRecipe``  
-:mode:  Wavelength calibration 
+:class:  ``auxiliary.WavelengthCalibrationRecipe``
+:mode:  Wavelength calibration
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
-    -  Product: ``MasterSpectralFlatField``  
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
+    -  Product: ``MasterSpectralFlatField``
     -  Parameter: line_table (with wavelengths of arc lines)
-:provides:  ``WavelengthCalibration`` 
+:provides:  ``WavelengthCalibration``
 
 -----
 
-:class:  ``image.StareImageRecipe`` 
-:mode:  Stare image 
+:class:  ``image.StareImageRecipe``
+:mode:  Stare image
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
     -  OptionalParameter: sources (list of sources coordinates)
 :provides: ``Image``, ``SourcesCatalog``
 
 -----
 
-:class:  ``image.NBImageRecipe`` 
-:mode:  Nodded/Beamswitched images 
+:class:  ``image.NBImageRecipe``
+:mode:  Nodded/Beamswitched images
 :requires:
-    - Product: ``MasterBias`` 
-    - Product: ``MasterDark``  
-    - Product: ``MasterBadPixelMask`` 
-    - Product: ``NonLinearityCorrection`` 
+    - Product: ``MasterBias``
+    - Product: ``MasterDark``
+    - Product: ``MasterBadPixelMask``
+    - Product: ``NonLinearityCorrection``
     - Product: ``MasterIntensityFlatField``
     - Parameter: extinction (Mean atmospheric extinction)
-    - Parameter: iterations 
+    - Parameter: iterations
     - Parameter: sky_images (Images used to estimate the background before and after current image)
     - Parameter: sky_images_sep_time (Maximum separation time between consecutive sky images in minutes)
     - Parameter: check_photometry_levels (Levels to check the flux of the objects)
@@ -265,16 +265,16 @@ DRP Recipes Parameters
 
 -----
 
-:class:  ``image.DitheredImageRecipe`` 
-:mode:  Dithered images 
+:class:  ``image.DitheredImageRecipe``
+:mode:  Dithered images
 :requires:
-    - Product: ``MasterBias`` 
-    - Product: ``MasterDark``  
-    - Product: ``MasterBadPixelMask`` 
-    - Product: ``NonLinearityCorrection`` 
-    - Product: ``MasterIntensityFlatField`` 
+    - Product: ``MasterBias``
+    - Product: ``MasterDark``
+    - Product: ``MasterBadPixelMask``
+    - Product: ``NonLinearityCorrection``
+    - Product: ``MasterIntensityFlatField``
     - Parameter: extinction (Mean atmospheric extinction)
-    - Parameter: iterations 
+    - Parameter: iterations
     - Parameter: sky_images (Images used to estimate the background before and after current image)
     - Parameter: sky_images_sep_time (Maximum separation time between consecutive sky images in minutes)
     - Parameter: check_photometry_levels (Levels to check the flux of the objects)
@@ -283,8 +283,8 @@ DRP Recipes Parameters
 
 -----
 
-:class:  ``image.MicroditheredImageRecipe`` 
-:mode:  Micro-dithered images 
+:class:  ``image.MicroditheredImageRecipe``
+:mode:  Micro-dithered images
 :requires:
     -  *All the parameters of* ``image.DitheredImageRecipe``
     -  Parameter: subpixelization (number of subdivisions in each pixel side)
@@ -292,54 +292,37 @@ DRP Recipes Parameters
 
 -----
 
-:class:  ``image.MosaicRecipe`` 
-:mode:  Mosaiced images 
-:requires:  
+:class:  ``image.MosaicRecipe``
+:mode:  Mosaiced images
+:requires:
 :provides: ``Image``, ``SourcesCatalog``
 
 -----
 
-:class:  ``mos.StareSpectraRecipe`` 
-:mode:  Stare spectra 
+:class:  ``mos.StareSpectraRecipe``
+:mode:  Stare spectra
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
-    -  Product: ``MasterSpectralFlatField`` 
-    -  Product: ``SlitTransmissionCalibration`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
+    -  Product: ``MasterSpectralFlatField``
+    -  Product: ``SlitTransmissionCalibration``
     -  Product: ``WavelengthCalibration``
     -  Parameter: lines (wavelength to measure)
 :provides: ``Spectra``, ``LinesCatalog``
 
 -----
 
-:class:  ``mos.DNSpectraRecipe`` 
+:class:  ``mos.DNSpectraRecipe``
 :mode:  Dithered/Nodded spectra along the slit
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
-    -  Product: ``MasterSpectralFlatField``
-    -  Product: ``SlitTransmissionCalibration`` 
-    -  Product: ``WavelengthCalibration`` 
-    -  Parameter: lines (wavelegnth to measure)
-    -  OptionalParameter: offsets (list of integer offsets between images)
-:provides: ``Spectra``, ``LinesCatalog``
-
------
-
-:class:  ``mos.OffsetSpectraRecipe`` 
-:mode:  Offset spectra beyond the slit 
-:requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
     -  Product: ``MasterSpectralFlatField``
     -  Product: ``SlitTransmissionCalibration``
     -  Product: ``WavelengthCalibration``
@@ -349,89 +332,105 @@ DRP Recipes Parameters
 
 -----
 
-:class:  ``mos.RasterSpectraRecipe`` 
-:mode:  Raster spectra 
+:class:  ``mos.OffsetSpectraRecipe``
+:mode:  Offset spectra beyond the slit
 :requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
-    -  Product: ``MasterSpectralFlatField`` 
-    -  Product: ``SlitTransmissionCalibration`` 
-    -  Product: ``WavelengthCalibration`` 
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
+    -  Product: ``MasterSpectralFlatField``
+    -  Product: ``SlitTransmissionCalibration``
+    -  Product: ``WavelengthCalibration``
+    -  Parameter: lines (wavelegnth to measure)
+    -  OptionalParameter: offsets (list of integer offsets between images)
+:provides: ``Spectra``, ``LinesCatalog``
+
+-----
+
+:class:  ``mos.RasterSpectraRecipe``
+:mode:  Raster spectra
+:requires:
+    -  Product: ``MasterBias``
+    -  Product: ``MasterDark``
+    -  Product: ``MasterBadPixelMask``
+    -  Product: ``NonLinearityCorrection``
+    -  Product: ``MasterIntensityFlatField``
+    -  Product: ``MasterSpectralFlatField``
+    -  Product: ``SlitTransmissionCalibration``
+    -  Product: ``WavelengthCalibration``
     -  Parameter: lines (wavelegnth to measure)
 :provides: ``DataCube``
 
 -----
 
-:class:  ``engineering.DTU_XY_CalibrationRecipe`` 
-:mode:  DTU X_Y calibration 
+:class:  ``engineering.DTU_XY_CalibrationRecipe``
+:mode:  DTU X_Y calibration
 :requires:
-    -  Parameter: slit_pattern 
-    -  Parameter: dtu_range 
+    -  Parameter: slit_pattern
+    -  Parameter: dtu_range
 :provides: ``DTU_XY_Calibration``
 
 -----
 
-:class:  ``engineering.DTU_Z_CalibrationRecipe`` 
-:mode:  DTU Z calibration 
-:requires:  Parameter: dtu_range 
+:class:  ``engineering.DTU_Z_CalibrationRecipe``
+:mode:  DTU Z calibration
+:requires:  Parameter: dtu_range
 :provides: ``DTU_Z_Calibration``
 
 -----
 
-:class: ``engineering.DTUFlexureRecipe`` 
-:mode:  DTU Flexure compensation 
-:requires:  
+:class: ``engineering.DTUFlexureRecipe``
+:mode:  DTU Flexure compensation
+:requires:
 :provides: ``DTUFlexureCalibration``
 
 -----
 
-:class:  ``engineering.CSU2DetectorRecipe`` 
-:mode:  CSU2Detector calibration 
-:requires:  Parameter: dtu_range 
+:class:  ``engineering.CSU2DetectorRecipe``
+:mode:  CSU2Detector calibration
+:requires:  Parameter: dtu_range
 :provides: ``DTU_XY_Calibration``
 
 -----
 
-:class:  ``engineering.FocalPlaneCalibrationRecipe`` 
-:mode:  Lateral colour 
-:requires:  
+:class:  ``engineering.FocalPlaneCalibrationRecipe``
+:mode:  Lateral colour
+:requires:
 :provides: ``PointingOriginCalibration``
 
 -----
 
-:class:  ``engineering.SpectralCharacterizationRecipe`` 
-:mode:  Spectral characterization 
-:requires:  
+:class:  ``engineering.SpectralCharacterizationRecipe``
+:mode:  Spectral characterization
+:requires:
 :provides: ``WavelengthCalibration``
 
 -----
 
-:class:  ``engineering.RotationCenterRecipe`` 
-:mode:  Centre of rotation 
-:requires:  
+:class:  ``engineering.RotationCenterRecipe``
+:mode:  Centre of rotation
+:requires:
 :provides: ``PointingOriginCalibration``
 
 -----
 
-:class:  ``engineering.AstrometricCalibrationRecipe`` 
-:mode:  Astrometric calibration 
-:requires:  
+:class:  ``engineering.AstrometricCalibrationRecipe``
+:mode:  Astrometric calibration
+:requires:
 :provides: ``Image``
 
 -----
 
-:class:  ``engineering.PhotometricCalibrationRecipe`` 
-:mode:  Photometric calibration 
-:requires:  Parameter: phot 
+:class:  ``engineering.PhotometricCalibrationRecipe``
+:mode:  Photometric calibration
+:requires:  Parameter: phot
 :provides: ``PhotometricCalibration``
 
 -----
 
-:class:  ``engineering.SpectroPhotometricCalibrationRecipe`` 
-:mode:  Spectrophotometric calibration 
-:requires:  Parameter: sphot 
+:class:  ``engineering.SpectroPhotometricCalibrationRecipe``
+:mode:  Spectrophotometric calibration
+:requires:  Parameter: sphot
 :provides: ``SpectroPhotometricCalibration``
-

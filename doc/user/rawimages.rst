@@ -27,7 +27,7 @@ after the reset and then read after the programed exposure time.
 
 The frame contains a single HDU. The data section of the HDU contains
 a 2048x2048x2 dataframe. The first layer contains the readout after reset
-and the second the readout after the exposure time.  In the header, the 
+and the second the readout after the exposure time.  In the header, the
 following keywords are set
 
  ::
@@ -42,8 +42,8 @@ times, exposed and then read agin ``n`` times. The exposure time in this
 case is equal to the time between correlated reads.
 
 The frame contains a single HDU. The data section of the HDU contains
-a 2048x2048x2n dataframe. The first ``n`` layers contain the readouts after 
-reset and the second ``n`` the readouts after the exposure time.  
+a 2048x2048x2n dataframe. The first ``n`` layers contain the readouts after
+reset and the second ``n`` the readouts after the exposure time.
 In the header, the following keywords are set
 
  ::
@@ -56,8 +56,8 @@ Follow-up-the ramp
 ------------------
 In ramp mode, the exposure time is sampled ``n`` times.
 
-The frame contains a single HDU. The data section of the HDU contains 
-a 2048x2048xn dataframe. Each layer contains the n-th readouts after 
+The frame contains a single HDU. The data section of the HDU contains
+a 2048x2048xn dataframe. Each layer contains the n-th readouts after
 reset.
 In the header, the following keywords are set
 
@@ -82,4 +82,3 @@ Flat
 
 Target
 ------
-

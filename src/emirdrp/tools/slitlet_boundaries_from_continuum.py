@@ -168,12 +168,7 @@ class SlitletLimits:
         elif grism == "LR" and spfilter == "HK":
             offset_with_J_J = -95.0
         else:
-            raise ValueError(
-                "Boundaries still undefined for grism "
-                + str(grism)
-                + " and filter "
-                + str(spfilter)
-            )
+            raise ValueError("Boundaries still undefined for grism " + str(grism) + " and filter " + str(spfilter))
         coeff_bb_ns1[0] += offset_with_J_J
         poly_bb_ns1 = np.polynomial.Polynomial(coeff_bb_ns1)
         self.bb_nc1_orig = 1
@@ -224,8 +219,7 @@ class SlitletLimits:
                 # self.xmax_lower_boundary_fit = 1750
         else:
             raise ValueError(
-                "Ranges to fit boundaries still undefined "
-                "for grism " + str(grism) + " and filter " + str(spfilter)
+                "Ranges to fit boundaries still undefined " "for grism " + str(grism) + " and filter " + str(spfilter)
             )
 
 
@@ -313,9 +307,7 @@ def compute_slitlet_boundaries(
     # ToDo: replace this by application of cosmetic defect mask!
     for j in range(1024):
         image2d[1024, j] = (image2d[1023, j] + image2d[1025, j]) / 2
-        image2d[1023, j + 1024] = (
-            image2d[1022, j + 1024] + image2d[1024, j + 1024]
-        ) / 2
+        image2d[1023, j + 1024] = (image2d[1022, j + 1024] + image2d[1024, j + 1024]) / 2
 
     # remove path from filename
     sfilename = os.path.basename(filename)
@@ -334,19 +326,12 @@ def compute_slitlet_boundaries(
     # read grism
     grism_in_header = image_header["grism"]
     if grism != grism_in_header:
-        raise ValueError(
-            "GRISM keyword=" + grism_in_header + " is not the expected value=" + grism
-        )
+        raise ValueError("GRISM keyword=" + grism_in_header + " is not the expected value=" + grism)
 
     # read filter
     spfilter_in_header = image_header["filter"]
     if spfilter != spfilter_in_header:
-        raise ValueError(
-            "FILTER keyword="
-            + spfilter_in_header
-            + " is not the expected value="
-            + spfilter
-        )
+        raise ValueError("FILTER keyword=" + spfilter_in_header + " is not the expected value=" + spfilter)
 
     # read rotator position angle
     rotang = image_header["rotang"]
@@ -382,9 +367,7 @@ def compute_slitlet_boundaries(
         # to remove bad pixels
         size_x = size_x_medfilt
         size_y = 1
-        slitlet2d_smooth = ndimage.filters.median_filter(
-            slitlet2d, size=(size_y, size_x)
-        )
+        slitlet2d_smooth = ndimage.filters.median_filter(slitlet2d, size=(size_y, size_x))
 
         if debugplot % 10 != 0:
             ximshow(
@@ -404,9 +387,7 @@ def compute_slitlet_boundaries(
 
         # apply 1d Savitzky-Golay filter (along the spatial direction)
         # to compute first derivative
-        slitlet2d_savgol = savgol_filter(
-            slitlet2d_smooth, window_length=size_y_savgol, polyorder=2, deriv=1, axis=0
-        )
+        slitlet2d_savgol = savgol_filter(slitlet2d_smooth, window_length=size_y_savgol, polyorder=2, deriv=1, axis=0)
 
         # compute basic statistics
         q25, q50, q75 = np.percentile(slitlet2d_savgol, q=[25.0, 50.0, 75.0])
@@ -446,19 +427,13 @@ def compute_slitlet_boundaries(
         # led to erroneous detections!)
         #
         # search for positive derivatives
-        labels2d_objects_pos, no_objects_pos = ndimage.label(
-            slitlet2d_savgol > q50 + times_sigma_threshold * sigmag
-        )
+        labels2d_objects_pos, no_objects_pos = ndimage.label(slitlet2d_savgol > q50 + times_sigma_threshold * sigmag)
         # search for negative derivatives
-        labels2d_objects_neg, no_objects_neg = ndimage.label(
-            slitlet2d_savgol < q50 - times_sigma_threshold * sigmag
-        )
+        labels2d_objects_neg, no_objects_neg = ndimage.label(slitlet2d_savgol < q50 - times_sigma_threshold * sigmag)
         # merge both sets
         non_zero_neg = np.where(labels2d_objects_neg > 0)
         labels2d_objects = np.copy(labels2d_objects_pos)
-        labels2d_objects[non_zero_neg] += (
-            labels2d_objects_neg[non_zero_neg] + no_objects_pos
-        )
+        labels2d_objects[non_zero_neg] += labels2d_objects_neg[non_zero_neg] + no_objects_pos
         no_objects = no_objects_pos + no_objects_neg
 
         if debugplot >= 10:
@@ -503,12 +478,8 @@ def compute_slitlet_boundaries(
                     n_der_neg = n_pix
 
         # determine which boundary is lower and which is upper
-        y_center_mass_der_pos = ndimage.center_of_mass(
-            slitlet2d_savgol, labels2d_objects, [i_der_pos]
-        )[0][0]
-        y_center_mass_der_neg = ndimage.center_of_mass(
-            slitlet2d_savgol, labels2d_objects, [i_der_neg]
-        )[0][0]
+        y_center_mass_der_pos = ndimage.center_of_mass(slitlet2d_savgol, labels2d_objects, [i_der_pos])[0][0]
+        y_center_mass_der_neg = ndimage.center_of_mass(slitlet2d_savgol, labels2d_objects, [i_der_neg])[0][0]
         if y_center_mass_der_pos < y_center_mass_der_neg:
             i_lower = i_der_pos
             i_upper = i_der_neg
@@ -561,18 +532,13 @@ def compute_slitlet_boundaries(
                 y=yfit,
                 deg=sltlim.deg_boundary,
                 times_sigma_reject=10,
-                title="slit:"
-                + str(sltlim.islitlet)
-                + ", deg="
-                + str(sltlim.deg_boundary),
+                title="slit:" + str(sltlim.islitlet) + ", deg=" + str(sltlim.deg_boundary),
                 debugplot=0,
             )
             list_boundaries.append(boundary)
 
         if debugplot % 10 != 0:
-            for tmp_img, tmp_label in zip(
-                [slitlet2d_savgol, slitlet2d], [" [S.-G.filt.]", " [original]"]
-            ):
+            for tmp_img, tmp_label in zip([slitlet2d_savgol, slitlet2d], [" [S.-G.filt.]", " [original]"]):
                 ax = ximshow(
                     tmp_img,
                     title=sfilename
@@ -590,9 +556,7 @@ def compute_slitlet_boundaries(
                     debugplot=debugplot,
                 )
                 for k in range(2):
-                    xpol, ypol = list_boundaries[k].linspace_pix(
-                        start=1, stop=EMIR_NAXIS1
-                    )
+                    xpol, ypol = list_boundaries[k].linspace_pix(start=1, stop=EMIR_NAXIS1)
                     ax.plot(xpol, ypol, "b--", linewidth=1)
                 for k in range(2):
                     xpol, ypol = list_boundaries[k].linspace_pix()
@@ -642,12 +606,8 @@ def main(args=None):
         help="FITS file or txt file with list of FITS files",
         type=argparse.FileType("rb"),
     )
-    parser.add_argument(
-        "--grism", required=True, help="Grism name", choices=EMIR_VALID_GRISMS
-    )
-    parser.add_argument(
-        "--filter", required=True, help="Filter name", choices=EMIR_VALID_FILTERS
-    )
+    parser.add_argument("--grism", required=True, help="Grism name", choices=EMIR_VALID_GRISMS)
+    parser.add_argument("--filter", required=True, help="Filter name", choices=EMIR_VALID_FILTERS)
     parser.add_argument(
         "--tuple_slit_numbers",
         required=True,
@@ -655,9 +615,7 @@ def main(args=None):
     )
 
     # optional arguments
-    parser.add_argument(
-        "--first_time", help="Generate new bounddict json file", action="store_true"
-    )
+    parser.add_argument("--first_time", help="Generate new bounddict json file", action="store_true")
     parser.add_argument(
         "--debugplot",
         help="Integer indicating plotting/debugging" + " (default=0)",
@@ -697,9 +655,7 @@ def main(args=None):
     list_slitlets = range(n1, n2 + 1, step)
 
     # define bounddict file name
-    bounddict_file = (
-        "bounddict_grism_" + args.grism + "_filter_" + args.filter + ".json"
-    )
+    bounddict_file = "bounddict_grism_" + args.grism + "_filter_" + args.filter + ".json"
 
     # define bounddict prior to the new computation
     if args.first_time:
@@ -707,9 +663,7 @@ def main(args=None):
         bounddict["instrument"] = "EMIR"
         bounddict["meta_info"] = {}
         bounddict["meta_info"]["creation_date"] = datetime.now().isoformat()
-        bounddict["meta_info"][
-            "description"
-        ] = "slitlet boundaries from fits to continuum-lamp exposures"
+        bounddict["meta_info"]["description"] = "slitlet boundaries from fits to continuum-lamp exposures"
         bounddict["meta_info"]["recipe_name"] = "undefined"
         bounddict["tags"] = {}
         bounddict["tags"]["grism"] = args.grism
@@ -746,14 +700,7 @@ def main(args=None):
 
     # update bounddict
     for ifile, myfile in enumerate(list_fits_files):
-        print(
-            ">>> Reading file "
-            + str(ifile + 1)
-            + "/"
-            + str(len(list_fits_files))
-            + ":\n"
-            + myfile
-        )
+        print(">>> Reading file " + str(ifile + 1) + "/" + str(len(list_fits_files)) + ":\n" + myfile)
         compute_slitlet_boundaries(
             filename=myfile,
             list_slitlets=list_slitlets,

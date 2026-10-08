@@ -1,14 +1,14 @@
-#  
+#
 #   VizieR Astronomical Server vizier.cfa.harvard.edu
 #    Date: 2017-01-25T16:10:03 [V1.99+ (14-Oct-2013)]
 #   In case of problem, please report to: cds-question@unistra.fr
-# 
-#   
-#Coosys J2000: eq_FK5 J2000 
-#INFO votable-version=1.99+ (14-Oct-2013) 
-#INFO -ref=VIZ5888cd262130 
-#INFO -out.max=unlimited 
-#INFO queryParameters=8 
+#
+#
+#Coosys J2000: eq_FK5 J2000
+#INFO votable-version=1.99+ (14-Oct-2013)
+#INFO -ref=VIZ5888cd262130
+#INFO -out.max=unlimited
+#INFO queryParameters=8
 #-oc.form=sexa
 #-out.max=unlimited
 #-nav=cat:J/A+A/555/A78&tab:{J/A+A/555/A78/table1}&key:source=J/A+A/555/A78/table1&HTTPPRM:&
@@ -29,7 +29,7 @@
 #    lamb.2 (0.1nm) (F9.3)  [9722/22750] Vacuum wavelength of second line of the OH doublet ({AA}) [ucd=em.wl]
 #    Flux           (I4)    Relative line photon flux of the doublet [ucd=phot.flux;arith.ratio]
 #--------- --------- ----
-#lam.      lamb.         
+#lam.      lamb.
 #1 (0.1nm) 2 (0.1nm) Flux
 #--------- --------- ----
  9722.546  9722.448   18

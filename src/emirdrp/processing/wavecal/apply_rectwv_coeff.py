@@ -138,9 +138,7 @@ def apply_rectwv_coeff(
         if islitlet in list_valid_islitlets:
 
             # define Slitlet2D object
-            slt = Slitlet2D(
-                islitlet=islitlet, rectwv_coeff=rectwv_coeff, debugplot=debugplot
-            )
+            slt = Slitlet2D(islitlet=islitlet, rectwv_coeff=rectwv_coeff, debugplot=debugplot)
 
             # extract (distorted) slitlet from the initial image
             slitlet2d = slt.extract_slitlet2d(image2d)
@@ -264,19 +262,11 @@ def apply_rectwv_coeff(
             header.remove(keyword)
 
     # update history in FITS header
-    header["history"] = (
-        "Boundary parameters uuid:"
-        + rectwv_coeff.meta_info["origin"]["bound_param"][4:]
-    )
+    header["history"] = "Boundary parameters uuid:" + rectwv_coeff.meta_info["origin"]["bound_param"][4:]
     if "master_rectwv" in rectwv_coeff.meta_info["origin"]:
-        header["history"] = (
-            "MasterRectWave uuid:"
-            + rectwv_coeff.meta_info["origin"]["master_rectwv"][4:]
-        )
+        header["history"] = "MasterRectWave uuid:" + rectwv_coeff.meta_info["origin"]["master_rectwv"][4:]
     header["history"] = "RectWaveCoeff uuid:" + rectwv_coeff.uuid
-    header["history"] = (
-        "Rectification and wavelength calibration time " + datetime.now().isoformat()
-    )
+    header["history"] = "Rectification and wavelength calibration time " + datetime.now().isoformat()
 
     logger.info("Generating rectified and wavelength calibrated image")
     rectwv_image[0].data = image2d_rectwv
@@ -296,14 +286,11 @@ def main(args=None):
     )
 
     # required arguments
-    parser.add_argument(
-        "fitsfile", help="Input FITS file", type=argparse.FileType("rb")
-    )
+    parser.add_argument("fitsfile", help="Input FITS file", type=argparse.FileType("rb"))
     parser.add_argument(
         "--rectwv_coeff",
         required=True,
-        help="Input JSON file with rectification and "
-        "wavelength calibration coefficients",
+        help="Input JSON file with rectification and " "wavelength calibration coefficients",
         type=argparse.FileType("rt"),
     )
     parser.add_argument(
@@ -328,16 +315,14 @@ def main(args=None):
     )
     parser.add_argument(
         "--resampling",
-        help="Resampling method: 1 -> nearest neighbor, "
-        "2 -> linear interpolation (default)",
+        help="Resampling method: 1 -> nearest neighbor, " "2 -> linear interpolation (default)",
         default=2,
         type=int,
         choices=(1, 2),
     )
     parser.add_argument(
         "--ignore_dtu_configuration",
-        help="Ignore DTU configurations differences between "
-        "transformation and input image",
+        help="Ignore DTU configurations differences between " "transformation and input image",
         action="store_true",
     )
     parser.add_argument(

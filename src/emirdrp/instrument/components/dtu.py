@@ -139,12 +139,8 @@ class DetectorTranslationUnit(HWDevice):
     def allclose(self, other, rtol=1e-05, atol=1e-08, equal_nan=False):
         return (
             self.xaxis.allclose(other.xaxis, rtol=rtol, atol=atol, equal_nan=equal_nan)
-            and self.yaxis.allclose(
-                other.yaxis, rtol=rtol, atol=atol, equal_nan=equal_nan
-            )
-            and self.zaxis.allclose(
-                other.zaxis, rtol=rtol, atol=atol, equal_nan=equal_nan
-            )
+            and self.yaxis.allclose(other.yaxis, rtol=rtol, atol=atol, equal_nan=equal_nan)
+            and self.zaxis.allclose(other.zaxis, rtol=rtol, atol=atol, equal_nan=equal_nan)
         )
 
     def closeto(self, other, abserror):
@@ -158,11 +154,7 @@ class DetectorTranslationUnit(HWDevice):
 
     def __eq__(self, other):
         if isinstance(other, DtuConf):
-            return (
-                self.xaxis == other.xaxis
-                and self.yaxis == other.yaxis
-                and self.zaxis == other.zaxis
-            )
+            return self.xaxis == other.xaxis and self.yaxis == other.yaxis and self.zaxis == other.zaxis
         return NotImplemented
 
     def __ne__(self, other):

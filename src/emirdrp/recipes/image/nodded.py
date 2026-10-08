@@ -9,7 +9,6 @@
 
 """Beam switched-nodded image mode recipe of EMIR"""
 
-
 from numina.core import Parameter
 from numina.core import RecipeInput
 from numina.core.recipeinout import define_input, define_result
@@ -36,16 +35,10 @@ class NBImageRecipeInput(RecipeInput):
     extinction = Parameter(0.0, "Mean atmospheric extinction")
     sources = Parameter([], "List of x, y coordinates to measure FWHM", optional=True)
     offsets = Offsets_Requirement()
-    sky_images = Parameter(
-        5, "Images used to estimate the background" " before and after current image"
-    )
+    sky_images = Parameter(5, "Images used to estimate the background" " before and after current image")
     sky_images_sep_time = SkyImageSepTime_Requirement()
-    check_photometry_levels = Parameter(
-        [0.5, 0.8], "Levels to check the flux of the objects"
-    )
-    check_photometry_actions = Parameter(
-        ["warn", "warn", "default"], "Actions to take on images"
-    )
+    check_photometry_levels = Parameter([0.5, 0.8], "Levels to check the flux of the objects")
+    check_photometry_actions = Parameter(["warn", "warn", "default"], "Actions to take on images")
 
 
 class NBImageRecipeResult(RecipeResult):

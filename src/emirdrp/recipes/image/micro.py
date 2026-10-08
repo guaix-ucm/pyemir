@@ -38,16 +38,10 @@ class MicroditheredImageRecipeInput(RecipeInput):
     sources = Parameter([], "List of x, y coordinates to measure FWHM", optional=True)
     offsets = Offsets_Requirement()
     iterations = Parameter(4, "Iterations of the recipe")
-    sky_images = Parameter(
-        5, "Images used to estimate the background before " "and after current image"
-    )
+    sky_images = Parameter(5, "Images used to estimate the background before " "and after current image")
     sky_images_sep_time = SkyImageSepTime_Requirement()
-    check_photometry_levels = Parameter(
-        [0.5, 0.8], "Levels to check the flux of the objects"
-    )
-    check_photometry_actions = Parameter(
-        ["warn", "warn", "default"], "Actions to take on images"
-    )
+    check_photometry_levels = Parameter([0.5, 0.8], "Levels to check the flux of the objects")
+    check_photometry_actions = Parameter(["warn", "warn", "default"], "Actions to take on images")
     subpixelization = Parameter(4, "Number of subdivisions in each pixel side")
     window = Parameter([], "Region of interesting data", optional=True)
 

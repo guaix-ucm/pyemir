@@ -165,9 +165,7 @@ def synthetic_lines_rawdata(
                         for i in range(npix):
                             xdum = xpix[i]
                             if 1 <= xdum <= EMIR_NAXIS1:
-                                simulated_image[icenter, xdum - 1] += (
-                                    fracpix * flux * (area[i + npix] - area[i])
-                                )
+                                simulated_image[icenter, xdum - 1] += fracpix * flux * (area[i + npix] - area[i])
         else:
             cout += "i"
 

@@ -24,7 +24,5 @@ def test_assembly2():
     drp = emirdrp.loader.load_drp()
     pkg_paths = [drp.profiles]
     com_store = asb.load_paths_store(pkg_paths, [])
-    emir_ins = asb.assembly_instrument(
-        com_store, "EMIR", "2023-10-01T12:00:00", by_key="name"
-    )
+    emir_ins = asb.assembly_instrument(com_store, "EMIR", "2023-10-01T12:00:00", by_key="name")
     assert isinstance(emir_ins, numina.instrument.generic.InstrumentGeneric)

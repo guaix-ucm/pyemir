@@ -49,7 +49,6 @@ from .naming import name_redimensioned_frames, name_object_mask, name_skybackgro
 from .naming import name_skybackgroundmask, name_skysub_proc, name_skyflat
 from .naming import name_skyflat_proc, name_segmask
 
-
 _logger = logging.getLogger("numina.recipes.emir")
 
 
@@ -188,9 +187,7 @@ class DirectImageCommon(EmirRecipe):
                 scaled_chan = clip_slices(channels, window, scale=subpix)
 
                 # Reference pixel in the center of the frame
-                refpix = numpy.divide(numpy.array([baseshape], dtype="int"), 2).astype(
-                    "float"
-                )
+                refpix = numpy.divide(numpy.array([baseshape], dtype="int"), 2).astype("float")
 
                 # lists of targets and sky frames
                 targetframes = []
@@ -248,9 +245,7 @@ class DirectImageCommon(EmirRecipe):
                     frame.pix_offset = off
                     frame.scaled_pix_offset = subpix * off
 
-                    _logger.debug(
-                        "Frame %s, offset=%s, scaled=%s", frame.label, off, subpix * off
-                    )
+                    _logger.debug("Frame %s, offset=%s, scaled=%s", frame.label, off, subpix * off)
 
                 _logger.info("Computing relative offsets")
                 offsets = [(frame.scaled_pix_offset) for frame in targetframes]
@@ -279,9 +274,7 @@ class DirectImageCommon(EmirRecipe):
                 self.update_scale_factors(ri.obresult.frames)
 
                 # Create superflat
-                superflat = self.compute_superflat(
-                    skyframes, channels=scaled_chan, step=step
-                )
+                superflat = self.compute_superflat(skyframes, channels=scaled_chan, step=step)
 
                 # Apply superflat
                 self.figure_init(subpixshape)
@@ -321,9 +314,7 @@ class DirectImageCommon(EmirRecipe):
                 else:
                     _logger.info("Recentering is not needed")
                     _logger.info("Checking photometry")
-                    check_photometry(
-                        targetframes, sf_data, seeing_fwhm, figure=self._figure
-                    )
+                    check_photometry(targetframes, sf_data, seeing_fwhm, figure=self._figure)
 
                     if stop_after == state:
                         break
@@ -357,16 +348,12 @@ class DirectImageCommon(EmirRecipe):
                 self.update_scale_factors(ri.obresult.frames, step)
 
                 # Create superflat
-                superflat = self.compute_superflat(
-                    skyframes, scaled_chan, segmask=objmask, step=step
-                )
+                superflat = self.compute_superflat(skyframes, scaled_chan, segmask=objmask, step=step)
 
                 # Apply superflat
                 self.figure_init(subpixshape)
 
-                self.apply_superflat(
-                    ri.obresult.frames, superflat, step=step, save=True
-                )
+                self.apply_superflat(ri.obresult.frames, superflat, step=step, save=True)
 
                 _logger.info("Step %d, advanced sky correction (SC)", step)
                 self.compute_advanced_sky(
@@ -509,18 +496,14 @@ class DirectImageCommon(EmirRecipe):
         # 1 / minutes in a Julian day
         SCALE = 60.0
         # max_time_sep = ri.sky_images_sep_time / 1440.0
-        _dis, idxs = kdtree.query(
-            tarray, k=nframes, distance_upper_bound=maxsep * SCALE
-        )
+        _dis, idxs = kdtree.query(tarray, k=nframes, distance_upper_bound=maxsep * SCALE)
 
         nsky = len(sarray)
 
         for tid, idss in enumerate(idxs):
             try:
                 tf = targetframes[tid]
-                _logger.info(
-                    "Step %d, SC: computing advanced sky for %s", step, tf.baselabel
-                )
+                _logger.info("Step %d, SC: computing advanced sky for %s", step, tf.baselabel)
                 # filter(lambda x: x < nsky, idss)
                 locskyframes = []
                 for si in idss:
@@ -534,9 +517,7 @@ class DirectImageCommon(EmirRecipe):
                             skyframes[si].baselabel,
                         )
                         locskyframes.append(skyframes[si])
-                self.compute_advanced_sky_for_frame(
-                    tf, locskyframes, step=step, save=save
-                )
+                self.compute_advanced_sky_for_frame(tf, locskyframes, step=step, save=save)
             except IndexError:
                 _logger.error("No sky image available for frame %s", tf.lastname)
                 raise
@@ -614,26 +595,16 @@ class DirectImageCommon(EmirRecipe):
             """Open FITS with memmap in readonly mode"""
             return fits.open(name, mode="readonly", memmap=True)
 
-        frameslll = [
-            fits_open(frame.lastname) for frame in frames if frame.valid_target
-        ]
+        frameslll = [fits_open(frame.lastname) for frame in frames if frame.valid_target]
         _logger.debug("Step %d, opening mask frames", step)
-        mskslll = [
-            fits_open(frame.resized_mask) for frame in frames if frame.valid_target
-        ]
+        mskslll = [fits_open(frame.resized_mask) for frame in frames if frame.valid_target]
         _logger.debug("Step %d, combining %d frames", step, len(frameslll))
         try:
-            extinc = [
-                pow(10, -0.4 * frame.airmass * extinction)
-                for frame in frames
-                if frame.valid_target
-            ]
+            extinc = [pow(10, -0.4 * frame.airmass * extinction) for frame in frames if frame.valid_target]
             data = [i["primary"].data for i in frameslll]
             masks = [i["primary"].data for i in mskslll]
 
-            out = quantileclip(
-                data, masks, scales=extinc, dtype="float32", out=out, fclip=0.1
-            )
+            out = quantileclip(data, masks, scales=extinc, dtype="float32", out=out, fclip=0.1)
 
             # saving the three extensions
             fits.writeto("result_i%0d.fits" % step, out[0], overwrite=True)
@@ -668,9 +639,7 @@ class DirectImageCommon(EmirRecipe):
         else:
             os.rename(frame.resized_base, frame.flat_corrected)
 
-        _logger.info(
-            "Step %d, SF: apply superflat to frame %s", step, frame.flat_corrected
-        )
+        _logger.info("Step %d, SF: apply superflat to frame %s", step, frame.flat_corrected)
         with fits.open(frame.flat_corrected, mode="update") as hdulist:
             data = hdulist["primary"].data
             datar = data[frame.valid_region]
@@ -691,9 +660,7 @@ class DirectImageCommon(EmirRecipe):
             data = []
             masks = []
             for frame in frames:
-                _logger.debug(
-                    "Step %d, opening resized frame %s", step, frame.resized_base
-                )
+                _logger.debug("Step %d, opening resized frame %s", step, frame.resized_base)
                 hdulist = fits.open(frame.resized_base, memmap=True, mode="readonly")
                 filelist.append(hdulist)
                 data.append(hdulist["primary"].data[frame.valid_region])
@@ -707,20 +674,14 @@ class DirectImageCommon(EmirRecipe):
                 masks = [segmask[frame.valid_region] for frame in frames]
             else:
                 for frame in frames:
-                    _logger.debug(
-                        "Step %d, opening resized mask %s", step, frame.resized_mask
-                    )
-                    hdulist = fits.open(
-                        frame.resized_mask, memmap=True, mode="readonly"
-                    )
+                    _logger.debug("Step %d, opening resized mask %s", step, frame.resized_mask)
+                    hdulist = fits.open(frame.resized_mask, memmap=True, mode="readonly")
                     filelist.append(hdulist)
                     masks.append(hdulist["primary"].data[frame.valid_region])
 
             _logger.debug("Step %d, combining %d frames", step, len(data))
 
-            sf_data, _sf_var, sf_num = flatcombine(
-                data, masks, scales=scales, blank=1.0 / scales[0]
-            )
+            sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, blank=1.0 / scales[0])
         finally:
             _logger.debug("Step %d, closing resized frames and mask", step)
             for fileh in filelist:
@@ -750,9 +711,7 @@ class DirectImageCommon(EmirRecipe):
             mask = fits.getdata(frame.resized_mask)[region]
             # FIXME: while developing this ::10 is faster, remove later
             frame.median_scale = numpy.median(data[mask == 0][::10])
-            _logger.debug(
-                "median value of %s is %f", frame.resized_base, frame.median_scale
-            )
+            _logger.debug("median value of %s is %f", frame.resized_base, frame.median_scale)
         return frames
 
     def resize(self, frames, shape, offsetsp, finalshape, window=None, scale=1, step=0):
@@ -774,9 +733,7 @@ class DirectImageCommon(EmirRecipe):
                     custom_region_to_str(region),
                     rel_offset,
                 )
-                self.resize_frame_and_mask(
-                    frame, finalshape, framen, maskn, window, scale
-                )
+                self.resize_frame_and_mask(frame, finalshape, framen, maskn, window, scale)
 
         return frames
 
@@ -1081,9 +1038,7 @@ class DirectImageCommon(EmirRecipe):
         data_sub = data_res - bkg
 
         _logger.info("Runing source extraction tor in %s", filename)
-        objects, objmask = sep.extract(
-            data_sub, 1.5, err=bkg.globalrms, mask=border, segmentation_map=True
-        )
+        objects, objmask = sep.extract(data_sub, 1.5, err=bkg.globalrms, mask=border, segmentation_map=True)
         fits.writeto(name_segmask(step), objmask, overwrite=True)
 
         # # Plot objects

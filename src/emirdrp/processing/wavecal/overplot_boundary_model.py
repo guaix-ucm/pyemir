@@ -85,12 +85,8 @@ def overplot_lines(
         ttd_order = rectwv_coeff.contents[islitlet - 1]["ttd_order"]
         aij = rectwv_coeff.contents[islitlet - 1]["ttd_aij"]
         bij = rectwv_coeff.contents[islitlet - 1]["ttd_bij"]
-        min_row_rectified = float(
-            rectwv_coeff.contents[islitlet - 1]["min_row_rectified"]
-        )
-        max_row_rectified = float(
-            rectwv_coeff.contents[islitlet - 1]["max_row_rectified"]
-        )
+        min_row_rectified = float(rectwv_coeff.contents[islitlet - 1]["min_row_rectified"])
+        max_row_rectified = float(rectwv_coeff.contents[islitlet - 1]["max_row_rectified"])
         mean_row_rectified = (min_row_rectified + max_row_rectified) / 2
         wpoly_coeff = rectwv_coeff.contents[islitlet - 1]["wpoly_coeff"]
         x0 = []
@@ -143,26 +139,19 @@ def overplot_lines(
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(
-        description="description: overplot boundary model over FITS image"
-    )
+    parser = argparse.ArgumentParser(description="description: overplot boundary model over FITS image")
 
     # positional arguments
-    parser.add_argument(
-        "fitsfile", help="FITS file name to be displayed", type=argparse.FileType("rb")
-    )
+    parser.add_argument("fitsfile", help="FITS file name to be displayed", type=argparse.FileType("rb"))
     parser.add_argument(
         "--rect_wpoly_MOSlibrary",
         required=True,
-        help="Input JSON file with library of rectification "
-        "and wavelength calibration coefficients",
+        help="Input JSON file with library of rectification " "and wavelength calibration coefficients",
         type=argparse.FileType("rt"),
     )
 
     # optional arguments
-    parser.add_argument(
-        "--fov", help="Field of view in mm (default=341.5)", type=float, default=341.5
-    )
+    parser.add_argument("--fov", help="Field of view in mm (default=341.5)", type=float, default=341.5)
     parser.add_argument(
         "--global_integer_offset_x_pix",
         help="Global integer offset in the X direction " "(default=0)",
@@ -215,9 +204,7 @@ def main(args=None):
     # --ds9_lines requires --arc_lines or --oh_lines
     if args.ds9_lines:
         if not (args.arc_lines or args.oh_lines):
-            raise ValueError(
-                "--ds9_lines requires the use of either " "--arc_lines or --oh_lines"
-            )
+            raise ValueError("--ds9_lines requires the use of either " "--arc_lines or --oh_lines")
 
     # read input FITS file
     hdulist = fits.open(args.fitsfile)
@@ -275,9 +262,7 @@ def main(args=None):
         list_csu_bar_slit_center.append(csu_config.csu_bar_slit_center(islitlet))
 
     # define parmodel and params
-    fitted_bound_param_json = {
-        "contents": master_rectwv.meta_info["refined_boundary_model"]
-    }
+    fitted_bound_param_json = {"contents": master_rectwv.meta_info["refined_boundary_model"]}
     parmodel = fitted_bound_param_json["contents"]["parmodel"]
     fitted_bound_param_json.update({"meta_info": {"parmodel": parmodel}})
     params = bound_params_from_dict(fitted_bound_param_json)
@@ -306,9 +291,7 @@ def main(args=None):
             catlines_all_wave = catlines[:, 0]
             # catlines_all_flux = catlines[:, 1]
         elif args.oh_lines:
-            dumdata = pkgutil.get_data(
-                "emirdrp.instrument.configs", "Oliva_etal_2013.dat"
-            )
+            dumdata = pkgutil.get_data("emirdrp.instrument.configs", "Oliva_etal_2013.dat")
             oh_lines_tmpfile = StringIO(dumdata.decode("utf8"))
             catlines = np.genfromtxt(oh_lines_tmpfile)
             # define wavelength and flux as separate arrays
@@ -360,13 +343,7 @@ def main(args=None):
     if abs(args.debugplot) % 10 != 0:
         ax = ximshow(
             image2d=image2d,
-            title=sfitsfile
-            + "\ngrism="
-            + grism
-            + ", filter="
-            + spfilter
-            + ", rotang="
-            + str(round(rotang, 2)),
+            title=sfitsfile + "\ngrism=" + grism + ", filter=" + spfilter + ", rotang=" + str(round(rotang, 2)),
             image_bbox=(1, naxis1, 1, naxis2),
             show=False,
         )
@@ -420,16 +397,8 @@ def main(args=None):
             ds9_file.write("#\n# uuid..: {0}\n".format(master_rectwv.uuid))
             ds9_file.write("# filter: {0}\n".format(spfilter))
             ds9_file.write("# grism.: {0}\n".format(grism))
-            ds9_file.write(
-                "#\n# global_offset_x_pix: {0}\n".format(
-                    args.global_integer_offset_x_pix
-                )
-            )
-            ds9_file.write(
-                "# global_offset_y_pix: {0}\n#\n".format(
-                    args.global_integer_offset_y_pix
-                )
-            )
+            ds9_file.write("#\n# global_offset_x_pix: {0}\n".format(args.global_integer_offset_x_pix))
+            ds9_file.write("# global_offset_y_pix: {0}\n#\n".format(args.global_integer_offset_y_pix))
             if parmodel == "longslit":
                 for dumpar in EXPECTED_PARAMETER_LIST:
                     parvalue = params[dumpar].value

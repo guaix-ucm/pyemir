@@ -109,9 +109,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
         flow = self.init_filters(rinput)
 
         # apply bpm, bias, dark and flat
-        reduced_image = basic_processing_with_combination(
-            rinput, flow, method=sigmaclip
-        )
+        reduced_image = basic_processing_with_combination(rinput, flow, method=sigmaclip)
         # update header with additional info
         hdr = reduced_image[0].header
         self.set_base_headers(hdr)
@@ -124,9 +122,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
         if rinput.master_rectwv:
             # RectWaveCoeff object with rectification and wavelength
             # calibration coefficients for the particular CSU configuration
-            rectwv_coeff = rectwv_coeff_from_mos_library(
-                reduced_image, rinput.master_rectwv
-            )
+            rectwv_coeff = rectwv_coeff_from_mos_library(reduced_image, rinput.master_rectwv)
 
             # apply rectification and wavelength calibration
             stare_image = apply_rectwv_coeff(reduced_image, rectwv_coeff)
@@ -186,9 +182,7 @@ class StareSpectraWaveRecipe(EmirRecipe):
 
         # save results in results directory
         self.logger.info("end reduction of stare spectra")
-        result = self.create_result(
-            reduced_image=reduced_image, reduced_mos=stare_image
-        )
+        result = self.create_result(reduced_image=reduced_image, reduced_mos=stare_image)
         return result
 
     def set_base_headers(self, hdr):
@@ -254,44 +248,18 @@ class GenerateRectwvCoeff(EmirRecipe):
         self.logger.info("starting rect.+wavecal. reduction of stare spectra")
 
         self.logger.info(rinput.master_rectwv)
-        self.logger.info(
-            "Wavelength calibration refinement mode....: {}".format(
-                rinput.refine_wavecalib_mode
-            )
-        )
-        self.logger.info(
-            "Minimum slitlet width (mm)................: {}".format(
-                rinput.minimum_slitlet_width_mm
-            )
-        )
-        self.logger.info(
-            "Maximum slitlet width (mm)................: {}".format(
-                rinput.maximum_slitlet_width_mm
-            )
-        )
-        self.logger.info(
-            "Global integer offsets mode...............: {}".format(
-                rinput.global_integer_offsets_mode
-            )
-        )
-        self.logger.info(
-            "Global integer offset X direction (pixels): {}".format(
-                rinput.global_integer_offset_x_pix
-            )
-        )
-        self.logger.info(
-            "Global integer offset Y direction (pixels): {}".format(
-                rinput.global_integer_offset_y_pix
-            )
-        )
+        self.logger.info("Wavelength calibration refinement mode....: {}".format(rinput.refine_wavecalib_mode))
+        self.logger.info("Minimum slitlet width (mm)................: {}".format(rinput.minimum_slitlet_width_mm))
+        self.logger.info("Maximum slitlet width (mm)................: {}".format(rinput.maximum_slitlet_width_mm))
+        self.logger.info("Global integer offsets mode...............: {}".format(rinput.global_integer_offsets_mode))
+        self.logger.info("Global integer offset X direction (pixels): {}".format(rinput.global_integer_offset_x_pix))
+        self.logger.info("Global integer offset Y direction (pixels): {}".format(rinput.global_integer_offset_y_pix))
 
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
 
         # apply bpm, bias, dark and flat
-        reduced_image = basic_processing_with_combination(
-            rinput, flow, method=sigmaclip
-        )
+        reduced_image = basic_processing_with_combination(rinput, flow, method=sigmaclip)
         # update header with additional info
         hdr = reduced_image[0].header
         self.set_base_headers(hdr)
@@ -301,9 +269,7 @@ class GenerateRectwvCoeff(EmirRecipe):
 
         # RectWaveCoeff object with rectification and wavelength
         # calibration coefficients for the particular CSU configuration
-        rectwv_coeff = rectwv_coeff_from_mos_library(
-            reduced_image, rinput.master_rectwv
-        )
+        rectwv_coeff = rectwv_coeff_from_mos_library(reduced_image, rinput.master_rectwv)
 
         # wavelength calibration refinement
         # 0 -> no refinement
@@ -327,29 +293,17 @@ class GenerateRectwvCoeff(EmirRecipe):
                     if iremove in list_useful_slitlets:
                         list_useful_slitlets.remove(iremove)
 
-            list_not_useful_slitlets = [
-                i
-                for i in list(range(1, EMIR_NBARS + 1))
-                if i not in list_useful_slitlets
-            ]
+            list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1)) if i not in list_useful_slitlets]
             self.logger.info("list of useful slitlets: {}".format(list_useful_slitlets))
-            self.logger.info(
-                "list of unusable slitlets: {}".format(list_not_useful_slitlets)
-            )
+            self.logger.info("list of unusable slitlets: {}".format(list_not_useful_slitlets))
 
             # retrieve arc/OH lines
-            catlines_all_wave, catlines_all_flux = retrieve_catlines(
-                rinput.refine_wavecalib_mode, main_header["grism"]
-            )
+            catlines_all_wave, catlines_all_flux = retrieve_catlines(rinput.refine_wavecalib_mode, main_header["grism"])
 
             # global integer offsets
             if rinput.global_integer_offsets_mode == "auto":
-                if (rinput.global_integer_offset_x_pix != 0) or (
-                    rinput.global_integer_offset_y_pix != 0
-                ):
-                    raise ValueError(
-                        "Global integer offsets must be zero when" " mode=auto"
-                    )
+                if (rinput.global_integer_offset_x_pix != 0) or (rinput.global_integer_offset_y_pix != 0):
+                    raise ValueError("Global integer offsets must be zero when" " mode=auto")
 
                 # ToDo: include additional airglow emission lines
 
@@ -362,26 +316,18 @@ class GenerateRectwvCoeff(EmirRecipe):
                     rectwv_coeff,
                 )
                 synthetic_raw_header = main_header.copy()
-                synthetic_raw_header["DATE-OBS"] = datetime.now().strftime(
-                    "%Y-%m-%dT%H:%M:%S"
-                )
+                synthetic_raw_header["DATE-OBS"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
                 chistory = "Synthetic image"
                 synthetic_raw_header.add_history(chistory)
-                hdu = fits.PrimaryHDU(
-                    synthetic_raw_data.astype("float32"), header=synthetic_raw_header
-                )
+                hdu = fits.PrimaryHDU(synthetic_raw_data.astype("float32"), header=synthetic_raw_header)
                 synthetic_raw_image = fits.HDUList([hdu])
                 if self.intermediate_results:
-                    self.save_intermediate_img(
-                        synthetic_raw_image, "synthetic_raw_image.fits"
-                    )
+                    self.save_intermediate_img(synthetic_raw_image, "synthetic_raw_image.fits")
 
                 # cross-correlation to determine global integer offsets
                 # (rescaling data arrays to [0, 1] before using skimage
                 # function)
-                data1_rs, coef1_rs = rescale_array_to_z1z2(
-                    reduced_image[0].data, (0, 1)
-                )
+                data1_rs, coef1_rs = rescale_array_to_z1z2(reduced_image[0].data, (0, 1))
                 data2_rs, coef2_rs = rescale_array_to_z1z2(synthetic_raw_data, (0, 1))
                 reference_mask = np.ones(data1_rs.shape, dtype=bool)
                 moving_mask = data2_rs > 0
@@ -399,16 +345,8 @@ class GenerateRectwvCoeff(EmirRecipe):
                 self.logger.info("global_float_offset_y_pix..: {}".format(-shifts[0]))
                 rectwv_coeff.global_integer_offset_x_pix = -int(round(shifts[1]))
                 rectwv_coeff.global_integer_offset_y_pix = -int(round(shifts[0]))
-                self.logger.info(
-                    "global_integer_offset_x_pix: {}".format(
-                        rectwv_coeff.global_integer_offset_x_pix
-                    )
-                )
-                self.logger.info(
-                    "global_integer_offset_y_pix: {}".format(
-                        rectwv_coeff.global_integer_offset_y_pix
-                    )
-                )
+                self.logger.info("global_integer_offset_x_pix: {}".format(rectwv_coeff.global_integer_offset_x_pix))
+                self.logger.info("global_integer_offset_y_pix: {}".format(rectwv_coeff.global_integer_offset_y_pix))
                 if self.intermediate_results:
                     data_product = np.fft.fft2(data1_rs) * np.fft.fft2(data2_rs).conj()
                     cc_image = np.fft.fftshift(np.fft.ifft2(data_product))
@@ -417,21 +355,13 @@ class GenerateRectwvCoeff(EmirRecipe):
                     hdul_power = fits.HDUList([hdu_power])
                     hdul_power.writeto("power.fits", overwrite=True)
             else:
-                rectwv_coeff.global_integer_offset_x_pix = (
-                    rinput.global_integer_offset_x_pix
-                )
-                rectwv_coeff.global_integer_offset_y_pix = (
-                    rinput.global_integer_offset_y_pix
-                )
+                rectwv_coeff.global_integer_offset_x_pix = rinput.global_integer_offset_x_pix
+                rectwv_coeff.global_integer_offset_y_pix = rinput.global_integer_offset_y_pix
 
             # apply initial rectification and wavelength calibration
             reduced_mos = apply_rectwv_coeff(reduced_image, rectwv_coeff)
 
-            self.logger.info(
-                "Refining wavelength calibration (mode={})".format(
-                    rinput.refine_wavecalib_mode
-                )
-            )
+            self.logger.info("Refining wavelength calibration (mode={})".format(rinput.refine_wavecalib_mode))
             # refine RectWaveCoeff object
             rectwv_coeff, expected_catalog_lines = refine_rectwv_coeff(
                 reduced_mos,
@@ -442,9 +372,7 @@ class GenerateRectwvCoeff(EmirRecipe):
                 list_useful_slitlets,
                 save_intermediate_results=self.intermediate_results,
             )
-            self.save_intermediate_img(
-                expected_catalog_lines, "expected_catalog_lines.fits"
-            )
+            self.save_intermediate_img(expected_catalog_lines, "expected_catalog_lines.fits")
 
         # apply rectification and wavelength calibration
         reduced_mos = apply_rectwv_coeff(reduced_image, rectwv_coeff)
@@ -499,17 +427,13 @@ class StareSpectraRectwv(EmirRecipe):
     reduced_mos = Result(prods.ProcessedMOS)
 
     def run(self, rinput):
-        self.logger.info(
-            "applying existing rect.+wavecal. calibration of " "stare spectra"
-        )
+        self.logger.info("applying existing rect.+wavecal. calibration of " "stare spectra")
 
         # build object to proceed with bpm, bias, dark and flat
         flow = self.init_filters(rinput)
 
         # apply bpm, bias, dark and flat
-        reduced_image = basic_processing_with_combination(
-            rinput, flow, method=sigmaclip
-        )
+        reduced_image = basic_processing_with_combination(rinput, flow, method=sigmaclip)
         # update header with additional info
         hdr = reduced_image[0].header
         self.set_base_headers(hdr)

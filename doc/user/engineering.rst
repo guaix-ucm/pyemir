@@ -14,14 +14,14 @@ Cosmetics
 :Result class: :class:`~emirdrp.recipes.CosmeticsRecipeResult`
 
 
-Detector cosmetics include: dead and hot pixels, 
+Detector cosmetics include: dead and hot pixels,
 inhomogenities in pixel-to-pixel response, stripes pattern and
 bias in the least significative bit.
 
 Dead and hot pixels
 -------------------
 
-Dead pixels have low response independently of the brightness of the 
+Dead pixels have low response independently of the brightness of the
 incident light. Hot pixels have high response even in low brightness conditions.
 Both types of pixels are related with problem in detector electronics.
 
@@ -74,14 +74,9 @@ Products
 ``'ratio'`` contains the normalized ratio of the two flat images.
 ``'mask'`` contains a frame with zero for valid pixels and non zero for invalid.
 
-============ ============================================== 
- Name        Type       
-============ ============================================== 
+============ ==============================================
+ Name        Type
+============ ==============================================
 ``'ratio'``  :class:`~emirdrp.dataproducts.EmirDataFrame`
 ``'mask'``   :class:`~emirdrp.dataproducts.EmirDataFrame`
-============ ============================================== 
-
-
-
-
-
+============ ==============================================

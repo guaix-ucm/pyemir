@@ -157,7 +157,6 @@ import copy
 
 from .sexcatalog import *
 
-
 # ======================================================================
 
 __version__ = "1.15.0 (2005-07-06)"
@@ -260,8 +259,7 @@ class SExtractor:
         "CLEAN": {"comment": "Clean spurious detections (Y or N)", "value": "Y"},
         "CLEAN_PARAM": {"comment": "Cleaning efficiency", "value": 1.0},
         "MASK_TYPE": {
-            "comment": 'type of detection MASKing: can be one of "NONE",'
-            ' "BLANK" or "CORRECT"',
+            "comment": 'type of detection MASKing: can be one of "NONE",' ' "BLANK" or "CORRECT"',
             "value": "CORRECT",
         },
         "PHOT_APERTURES": {
@@ -330,8 +328,7 @@ class SExtractor:
             "value": "QUIET",
         },
         "WEIGHT_TYPE": {
-            "comment": "type of WEIGHTing: NONE, BACKGROUND, "
-            "MAP_RMS, MAP_VAR or MAP_WEIGHT",
+            "comment": "type of WEIGHTing: NONE, BACKGROUND, " "MAP_RMS, MAP_VAR or MAP_WEIGHT",
             "value": "NONE",
         },
         "WEIGHT_IMAGE": {"comment": "# weight-map filename", "value": "NONE"},
@@ -372,12 +369,7 @@ class SExtractor:
         SExtractor class constructor.
         """
 
-        self.config = dict(
-            [
-                (k, copy.deepcopy(SExtractor._SE_config[k]["value"]))
-                for k in SExtractor._SE_config
-            ]
-        )
+        self.config = dict([(k, copy.deepcopy(SExtractor._SE_config[k]["value"])) for k in SExtractor._SE_config])
 
         # print self.config
 
@@ -411,7 +403,7 @@ class SExtractor:
                     stderr=subprocess.STDOUT,
                     close_fds=True,
                 )
-                (_out_err, _in) = (p.stdout, p.stdin)
+                _out_err, _in = (p.stdout, p.stdin)
                 versionline = _out_err.read()
                 if versionline.find("SExtractor") != -1:
                     selected = candidate
@@ -420,12 +412,10 @@ class SExtractor:
                 continue
 
         if not (selected):
-            raise SExtractorException(
-                """
+            raise SExtractorException("""
                   Cannot find SExtractor program. Check your PATH,
                   or provide the SExtractor program path in the constructor.
-                  """
-            )
+                  """)
 
         _program = selected
 
@@ -493,10 +483,7 @@ class SExtractor:
                 value = str(self.config[key])
 
             print(
-                (
-                    "%-16s       %-16s # %s"
-                    % (key, value, SExtractor._SE_config[key]["comment"])
-                ),
+                ("%-16s       %-16s # %s" % (key, value, SExtractor._SE_config[key]["comment"])),
                 file=main_f,
             )
 

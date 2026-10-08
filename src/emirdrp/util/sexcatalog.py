@@ -720,23 +720,17 @@ class SExtractorfile:
 
         self._line = self._file.readline()
         if not (self._line):
-            raise WrongSExtractorfileException(
-                "not a SExtractor text catalog (empty file)"
-            )
+            raise WrongSExtractorfileException("not a SExtractor text catalog (empty file)")
 
         while self._line:
             __ll = (self._line).replace("\n", "")
             if __ll[0] == "#":  # Still in header
                 columns = __ll.split()
                 if len(columns) < 3:
-                    raise WrongSExtractorfileException(
-                        "not a SExtractor text catalog (invalid header)"
-                    )
+                    raise WrongSExtractorfileException("not a SExtractor text catalog (invalid header)")
                 name = columns[2]
                 if name not in SExtractorfile._SE_keys:
-                    raise WrongSExtractorfileException(
-                        "not a SExtractor text catalog (unknown keyword %s)" % name
-                    )
+                    raise WrongSExtractorfileException("not a SExtractor text catalog (unknown keyword %s)" % name)
                 self._keys_positions[name] = int(columns[1]) - 1
                 self._keys.append(name)
             else:
@@ -744,9 +738,7 @@ class SExtractorfile:
             self._line = self._file.readline()
 
         if not (self._keys):
-            raise WrongSExtractorfileException(
-                "not a SExtractor text catalog (empty header)"
-            )
+            raise WrongSExtractorfileException("not a SExtractor text catalog (empty header)")
 
         self._outdict = dict([(k, None) for k in self._keys])
         self._firstline = True

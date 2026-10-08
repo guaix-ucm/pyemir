@@ -28,8 +28,6 @@ def test_encloses_annulus():
     y_min = -0.5 - yc
     y_max = a.shape[1] - 0.5 - yc
 
-    aa = encloses_annulus(
-        x_min, x_max, y_min, y_max, a.shape[1], a.shape[0], r_in, r_out
-    )
+    aa = encloses_annulus(x_min, x_max, y_min, y_max, a.shape[1], a.shape[0], r_in, r_out)
 
     assert_allclose(aa[50, [20, 40, 50, 60]], [0.0, 1.0, 0.0, 1.0])

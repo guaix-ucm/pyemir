@@ -256,9 +256,7 @@ class LogicalSlit:
         bbox_x1 = min(self.lbars.values(), key=lambda obk: obk.xpos).xpos
         bbox_x2 = max(self.rbars.values(), key=lambda obk: obk.xpos).xpos
         # Origin is 1
-        self.bbox_int = BoundingBox.from_coordinates(
-            bbox_x1 - 1, bbox_x2 - 1, bbox_y1 - 1, bbox_y2 - 1
-        )
+        self.bbox_int = BoundingBox.from_coordinates(bbox_x1 - 1, bbox_x2 - 1, bbox_y1 - 1, bbox_y2 - 1)
 
     def bbox(self):
         return self.bbox_int

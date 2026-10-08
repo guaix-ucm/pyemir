@@ -9,5 +9,3 @@
 .. automodule:: emirdrp.core.recipe
    :members:
    :undoc-members:
-
-

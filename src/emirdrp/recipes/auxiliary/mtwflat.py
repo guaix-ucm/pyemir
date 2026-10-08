@@ -84,9 +84,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
 
         errors = True
         self.logger.debug("using errors: %s", errors)
-        hdulist = basic_processing_with_combination_frames(
-            frames, flow, method=median, errors=errors
-        )
+        hdulist = basic_processing_with_combination_frames(frames, flow, method=median, errors=errors)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -148,9 +146,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
 
             if errors:
                 slope_scaled_var = numpy.zeros_like(slope_scaled)
-                slope_scaled_num = (
-                    numpy.zeros_like(slope_scaled, dtype="int16") + ngood_images
-                )
+                slope_scaled_num = numpy.zeros_like(slope_scaled, dtype="int16") + ngood_images
         else:
             nsaturated = nimages - good_images.sum()
             if nsaturated > 0:
@@ -176,18 +172,14 @@ class MultiTwilightFlatRecipe(EmirRecipe):
             slope_scaled = slope * exptime_frames[index_of_first_good]
             if errors:
                 slope_scaled_var = numpy.zeros_like(slope_scaled)
-                slope_scaled_num = (
-                    numpy.zeros_like(slope_scaled, dtype="int16") + ngood_images
-                )
+                slope_scaled_num = numpy.zeros_like(slope_scaled, dtype="int16") + ngood_images
 
         cdata = []
         for idx, img in enumerate(imgs):
             if good_images[idx]:
                 cdata.append(img)
 
-        result = self.compose_result(
-            cdata, slope_scaled, errors, slope_scaled_var, slope_scaled_num
-        )
+        result = self.compose_result(cdata, slope_scaled, errors, slope_scaled_var, slope_scaled_num)
 
         return result
 
@@ -246,9 +238,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         self.set_base_headers(hdu.header)
 
         hdu.header["history"] = "Combined %d images using '%s'" % (cnum, method_name)
-        hdu.header["history"] = "Combination time {}".format(
-            datetime.datetime.now(datetime.UTC).isoformat()
-        )
+        hdu.header["history"] = "Combination time {}".format(datetime.datetime.now(datetime.UTC).isoformat())
 
         for img in cdata:
             hdu.header["history"] = "Image {}".format(self.datamodel.get_imgid(img))

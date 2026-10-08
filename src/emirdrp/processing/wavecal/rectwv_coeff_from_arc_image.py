@@ -174,30 +174,19 @@ def rectwv_coeff_from_arc_image(
     wvmax_useful = wv_parameters["wvmax_useful"]
 
     # list of slitlets to be computed
-    logger.info(
-        "list_slitlets: [" + str(islitlet_min) + ",... " + str(islitlet_max) + "]"
-    )
+    logger.info("list_slitlets: [" + str(islitlet_min) + ",... " + str(islitlet_max) + "]")
 
     # read master arc line wavelengths (only brightest lines)
-    wv_master = read_wv_master_from_array(
-        master_table=lines_catalog, lines="brightest", debugplot=debugplot
-    )
+    wv_master = read_wv_master_from_array(master_table=lines_catalog, lines="brightest", debugplot=debugplot)
 
     # read master arc line wavelengths (whole data set)
-    wv_master_all = read_wv_master_from_array(
-        master_table=lines_catalog, lines="all", debugplot=debugplot
-    )
+    wv_master_all = read_wv_master_from_array(master_table=lines_catalog, lines="all", debugplot=debugplot)
 
     # check that the arc lines in the master file are properly sorted
     # in ascending order
     for i in range(len(wv_master_all) - 1):
         if wv_master_all[i] >= wv_master_all[i + 1]:
-            logger.error(
-                ">>> wavelengths: "
-                + str(wv_master_all[i])
-                + "  "
-                + str(wv_master_all[i + 1])
-            )
+            logger.error(">>> wavelengths: " + str(wv_master_all[i]) + "  " + str(wv_master_all[i + 1]))
             raise ValueError("Arc lines are not sorted in master file")
 
     # ---
@@ -252,9 +241,7 @@ def rectwv_coeff_from_arc_image(
                 slitlet2d -= spbackground
 
             # locate unknown arc lines
-            slt.locate_unknown_arc_lines(
-                slitlet2d=slitlet2d, times_sigma_threshold=args_times_sigma_threshold
-            )
+            slt.locate_unknown_arc_lines(slitlet2d=slitlet2d, times_sigma_threshold=args_times_sigma_threshold)
 
             # continue working with current slitlet only if arc lines have
             # been detected
@@ -363,9 +350,7 @@ def rectwv_coeff_from_arc_image(
                 crmin1_linear = slt.wpoly(1)
                 crmax1_linear = slt.wpoly(naxis1_linear)
                 slt.crval1_linear = crmin1_linear
-                slt.cdelt1_linear = (crmax1_linear - crmin1_linear) / (
-                    naxis1_linear - 1
-                )
+                slt.cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1_linear - 1)
 
                 # check that the trimming of wv_master and wv_master_all has
                 # preserved the wavelength range [crmin1_linear, crmax1_linear]
@@ -373,16 +358,12 @@ def rectwv_coeff_from_arc_image(
                     logger.warning(">>> islitlet: " + str(islitlet))
                     logger.warning("expected_wvmin: " + str(expected_wvmin))
                     logger.warning("crmin1_linear.: " + str(crmin1_linear))
-                    logger.warning(
-                        "WARNING: Unexpected crmin1_linear < " "expected_wvmin"
-                    )
+                    logger.warning("WARNING: Unexpected crmin1_linear < " "expected_wvmin")
                 if crmax1_linear > expected_wvmax:
                     logger.warning(">>> islitlet: " + str(islitlet))
                     logger.warning("expected_wvmax: " + str(expected_wvmax))
                     logger.warning("crmax1_linear.: " + str(crmax1_linear))
-                    logger.warning(
-                        "WARNING: Unexpected crmax1_linear > " "expected_wvmax"
-                    )
+                    logger.warning("WARNING: Unexpected crmax1_linear > " "expected_wvmax")
 
                 cout += "."
 
@@ -528,15 +509,9 @@ def rectwv_coeff_from_arc_image(
                 "bb_ns1_orig": slt.bb_ns1_orig,
                 "bb_ns2_orig": slt.bb_ns2_orig,
                 "spectrail": {
-                    "poly_coef_lower": slt.list_spectrails[
-                        slt.i_lower_spectrail
-                    ].poly_funct.coef.tolist(),
-                    "poly_coef_middle": slt.list_spectrails[
-                        slt.i_middle_spectrail
-                    ].poly_funct.coef.tolist(),
-                    "poly_coef_upper": slt.list_spectrails[
-                        slt.i_upper_spectrail
-                    ].poly_funct.coef.tolist(),
+                    "poly_coef_lower": slt.list_spectrails[slt.i_lower_spectrail].poly_funct.coef.tolist(),
+                    "poly_coef_middle": slt.list_spectrails[slt.i_middle_spectrail].poly_funct.coef.tolist(),
+                    "poly_coef_upper": slt.list_spectrails[slt.i_upper_spectrail].poly_funct.coef.tolist(),
                 },
                 "frontier": {
                     "poly_coef_lower": slt.list_frontiers[0].poly_funct.coef.tolist(),
@@ -615,8 +590,7 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description="description: determine rectification and wavelength "
-        "calibration polynomials from arc image"
+        description="description: determine rectification and wavelength " "calibration polynomials from arc image"
     )
 
     # required arguments
@@ -638,9 +612,7 @@ def main(args=None):
         default=2,
         type=int,
     )
-    parser.add_argument(
-        "--wv_master_file", required=True, help="TXT file containing wavelengths"
-    )
+    parser.add_argument("--wv_master_file", required=True, help="TXT file containing wavelengths")
     parser.add_argument(
         "--poldeg_initial",
         required=True,
@@ -663,8 +635,7 @@ def main(args=None):
     # optional arguments
     parser.add_argument(
         "--interactive",
-        help="Ask the user for confirmation before updating "
-        "the wavelength calibration polynomial",
+        help="Ask the user for confirmation before updating " "the wavelength calibration polynomial",
         action="store_true",
     )
     parser.add_argument(
@@ -718,9 +689,7 @@ def main(args=None):
     )
     parser.add_argument(
         "--out_55sp",
-        help="FITS file containing the set of averaged "
-        "spectra employed to derive the wavelength "
-        "calibration",
+        help="FITS file containing the set of averaged " "spectra employed to derive the wavelength " "calibration",
         type=lambda x: arg_file_is_new(parser, x, mode="wb"),
     )
     parser.add_argument(

@@ -24,9 +24,7 @@ def create_wcs(fppa=270 * u.deg):
     pc12 = -scale1 * numpy.sin(angle)
     pc21 = scale2 * numpy.sin(angle)
     w.wcs.cd = [[pc11, pc12], [pc21, pc22]]
-    w.wcs.set_pv(
-        [(2, 1, 0.9998), (2, 2, 0.0), (2, 3, 13824.76), (2, 4, 0.0), (2, 5, 3491446467)]
-    )
+    w.wcs.set_pv([(2, 1, 0.9998), (2, 2, 0.0), (2, 3, 13824.76), (2, 4, 0.0), (2, 5, 3491446467)])
     w.wcs.radesys = "FK5"
     return w
 
@@ -88,7 +86,5 @@ def create_wcs_4829(crpix=None):
     w.wcs.crval = [0.0, 0.0]
     w.wcs.cdelt = [1.0, 1.0]
     w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
-    w.wcs.cd = numpy.array(
-        [[5.41615466e-05, -2.55232165e-07], [2.55232165e-07, 5.41615466e-05]]
-    )
+    w.wcs.cd = numpy.array([[5.41615466e-05, -2.55232165e-07], [2.55232165e-07, 5.41615466e-05]])
     return w

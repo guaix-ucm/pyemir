@@ -42,9 +42,7 @@ from emirdrp.instrument.csuconf import TargetType
 import emirdrp.instrument.csuconf as csuconf
 
 
-def comp_centroid(
-    data, bounding_box, debug_plot=False, plot_reference=None, logger=None
-):
+def comp_centroid(data, bounding_box, debug_plot=False, plot_reference=None, logger=None):
     """Detect objects in a region and return the centroid of the brightest one"""
 
     from matplotlib.patches import Ellipse
@@ -84,9 +82,7 @@ def comp_centroid(
             extent=bounding_box.extent,
         )
         if plot_reference:
-            e = Ellipse(
-                xy=(plot_reference[0], plot_reference[1]), width=6, height=6, angle=0
-            )
+            e = Ellipse(xy=(plot_reference[0], plot_reference[1]), width=6, height=6, angle=0)
             e.set_facecolor("none")
             e.set_edgecolor("green")
             ax.add_artist(e)
@@ -125,27 +121,19 @@ class MaskCheckRecipe(EmirRecipe):
     # Recipe Requirements
     #
     obresult = ObservationResultRequirement(
-        query_opts=qmod.ResultOf(
-            "STARE_IMAGE.reduced_image", node="children", id_field="resultsIds"
-        )
+        query_opts=qmod.ResultOf("STARE_IMAGE.reduced_image", node="children", id_field="resultsIds")
     )
     master_bpm = reqs.MasterBadPixelMaskRequirement()
 
-    bars_nominal_positions = Requirement(
-        prods.NominalPositions, "Nominal positions of the bars"
-    )
+    bars_nominal_positions = Requirement(prods.NominalPositions, "Nominal positions of the bars")
 
     # Recipe Products
     slit_image = Result(prods.ProcessedImage)
     object_image = Result(prods.ProcessedImage)
     offset = Result(tarray.ArrayType)
     angle = Result(float)
-    matched_slits = Result(
-        tarray.ArrayType, description="Centroids measured in the detector"
-    )
-    centroids = Result(
-        tarray.ArrayType, description="Centroids measured in the detector"
-    )
+    matched_slits = Result(tarray.ArrayType, description="Centroids measured in the detector")
+    centroids = Result(tarray.ArrayType, description="Centroids measured in the detector")
 
     def run(self, rinput):
         self.logger.info("starting processing for image acquisition")
@@ -208,9 +196,7 @@ class MaskCheckRecipe(EmirRecipe):
 
             self.logger.debug("center of rotation (from CRPIX) is %s", wcs.wcs.crpix)
             self.logger.debug("create adapted WCS from header WCS")
-            wcsa = dist.adapt_wcs(
-                wcs, ipa_deg=ipa_deg.value, rotang_deg=rotoff_deg.value
-            )
+            wcsa = dist.adapt_wcs(wcs, ipa_deg=ipa_deg.value, rotang_deg=rotoff_deg.value)
             self.logger.debug("CD matrix of WCS %s", wcs.wcs.cd)
             self.logger.debug("CD matrix of adapted WCS %s", wcsa.wcs.cd)
             # angle in deg, offset in pixels on the CSU
@@ -236,9 +222,7 @@ class MaskCheckRecipe(EmirRecipe):
         # Offset is returned without units
         o_mm = ((offset * u.pixel) * pixsize_na).to(u.mm)
         ipa_rot = create_rot2d(ipa_deg.to("", equivalencies=u.dimensionless_angles()))
-        rotoff_rot = create_rot2d(
-            rotoff_deg.to("", equivalencies=u.dimensionless_angles())
-        )
+        rotoff_rot = create_rot2d(rotoff_deg.to("", equivalencies=u.dimensionless_angles()))
         self.logger.info("IPA is %s deg", ipa_deg.value)
         self.logger.info("ROTOFF is %s deg", rotoff_deg.value)
         self.logger.info("OFF (mm) %s", o_mm)
@@ -246,9 +230,7 @@ class MaskCheckRecipe(EmirRecipe):
         o_mm_rotoff = np.dot(rotoff_rot, o_mm)
 
         self.logger.info("=========================================")
-        self.logger.info(
-            "(WITH IPA) Offset Target in Focal Plane Frame %s mm", o_mm_ipa
-        )
+        self.logger.info("(WITH IPA) Offset Target in Focal Plane Frame %s mm", o_mm_ipa)
         self.logger.info("Offset Target in Focal Plane Frame %s mm", o_mm_rotoff)
         self.logger.info("=========================================")
 
@@ -418,9 +400,7 @@ class MaskCheckRecipe(EmirRecipe):
                 continue
             elif comp_l > comp_r:
                 # Not refining
-                self.logger.warning(
-                    "computed left border of=%d greater than right border", idx + 1
-                )
+                self.logger.warning("computed left border of=%d greater than right border", idx + 1)
                 comp2_l, comp2_r = px1, px2
             else:
                 region2 = 5
@@ -446,9 +426,7 @@ class MaskCheckRecipe(EmirRecipe):
                     comp2_l, comp2_r = comp_l, comp_r
                 elif comp2_l > comp2_r:
                     # Not refining
-                    self.logger.warning(
-                        "computed left border of=%d greater than right border", idx + 1
-                    )
+                    self.logger.warning("computed left border of=%d greater than right border", idx + 1)
                     comp2_l, comp2_r = comp_l, comp_r
 
             # print('slit', lbarid, '-', rbarid, comp_l, comp_r)
@@ -493,11 +471,7 @@ def compute_off_rotation(
         data = data.byteswap().view(data.dtype.newbyteorder())
 
     logger.info("we have %s slits", len(csu_conf.slits))
-    refslits = [
-        slit
-        for slit in csu_conf.slits.values()
-        if slit.target_type is TargetType.REFERENCE
-    ]
+    refslits = [slit for slit in csu_conf.slits.values() if slit.target_type is TargetType.REFERENCE]
     logger.info("we have %s reference slits", len(refslits))
 
     slits = []
@@ -517,16 +491,10 @@ def compute_off_rotation(
             bb = this.bbox()
         region = bb.slice
         target_coordinates = this.target_coordinates
-        res = comp_centroid(
-            data, bb, debug_plot=debug_plot, plot_reference=target_coordinates
-        )
-        logger.debug(
-            "slit %s is formed by bars %s %s", this.idx, this.lbars_ids, this.rbars_ids
-        )
+        res = comp_centroid(data, bb, debug_plot=debug_plot, plot_reference=target_coordinates)
+        logger.debug("slit %s is formed by bars %s %s", this.idx, this.lbars_ids, this.rbars_ids)
         logger.debug("in slit %s, reference is %s", this.idx, target_coordinates)
-        logger.debug(
-            "in slit %s, reference (v) is %s", this.idx, this.target_coordinates_v
-        )
+        logger.debug("in slit %s, reference (v) is %s", this.idx, this.target_coordinates_v)
 
         if res is None:
             logger.warning("no object found in slit %s, skipping", this.idx)
@@ -634,9 +602,7 @@ def calc_bars_borders(
         pr1 = prow + scale * s
         if pr1 < 0 or pr1 >= 2048:
             continue
-        val = calc_borders_step(
-            image, sob, pr1, cc1l, cc1r, refine=refine, plot=plot, barid=lbarid, px=px1
-        )
+        val = calc_borders_step(image, sob, pr1, cc1l, cc1r, refine=refine, plot=plot, barid=lbarid, px=px1)
         if val is not None:
             lres.append(val)
 
@@ -695,9 +661,7 @@ def calc_bars_borders(
     return comp_l, comp_r
 
 
-def calc_borders_step(
-    image, sob, pr, ccl, ccr, sign=1, refine=False, plot=True, barid=0, px=0
-):
+def calc_borders_step(image, sob, pr, ccl, ccr, sign=1, refine=False, plot=True, barid=0, px=0):
     cut1 = sob[pr, ccl : ccr + 1]
     mcut1 = image[pr, ccl : ccr + 1]
 

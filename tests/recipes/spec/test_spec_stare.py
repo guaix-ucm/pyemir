@@ -1,5 +1,3 @@
-import pytest
-import astropy.io.fits as fits
 import numpy
 
 import numina.core

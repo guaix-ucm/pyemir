@@ -109,8 +109,6 @@ class GainRecipe1(EmirRecipe):
         hduvar = fits.ImageHDU(cube[1])
         hdulist = fits.HDUList([hdu, hduvar])
 
-        gain = MasterGainMap(
-            mean=result_gain, var=numpy.array([]), frame=DataFrame(hdulist)
-        )
+        gain = MasterGainMap(mean=result_gain, var=numpy.array([]), frame=DataFrame(hdulist))
         ron = MasterRONMap(mean=result_ron, var=numpy.array([]))
         return self.create_result(gain=gain, ron=ron)

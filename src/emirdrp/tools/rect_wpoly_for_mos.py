@@ -60,9 +60,7 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(prog="rect_wpoly_for_mos")
     # required arguments
-    parser.add_argument(
-        "input_list", help="TXT file with list JSON files derived from " "longslit data"
-    )
+    parser.add_argument("input_list", help="TXT file with list JSON files derived from " "longslit data")
     parser.add_argument(
         "--fitted_bound_param",
         required=True,
@@ -103,9 +101,7 @@ def main(args=None):
 
     # read fitted boundary parameters and check that all the longslit JSON
     # files have been computed using the same fitted boundary parameters
-    refined_boundary_model = RefinedBoundaryModelParam._datatype_load(
-        args.fitted_bound_param.name
-    )
+    refined_boundary_model = RefinedBoundaryModelParam._datatype_load(args.fitted_bound_param.name)
     for ifile in range(nfiles):
         coef_rect_wpoly = RectWaveCoeff._datatype_load(list_json_files[ifile].filename)
         uuid_tmp = coef_rect_wpoly.meta_info["origin"]["bound_param"]
@@ -116,14 +112,10 @@ def main(args=None):
 
     # check consistency of grism, filter, DTU configuration and list of
     # valid slitlets
-    coef_rect_wpoly_first_longslit = RectWaveCoeff._datatype_load(
-        list_json_files[0].filename
-    )
+    coef_rect_wpoly_first_longslit = RectWaveCoeff._datatype_load(list_json_files[0].filename)
     filter_name = coef_rect_wpoly_first_longslit.tags["filter"]
     grism_name = coef_rect_wpoly_first_longslit.tags["grism"]
-    dtu_conf = DtuConf.from_header(
-        coef_rect_wpoly_first_longslit.meta_info["dtu_configuration"]
-    )
+    dtu_conf = DtuConf.from_header(coef_rect_wpoly_first_longslit.meta_info["dtu_configuration"])
     list_valid_islitlets = list(range(1, EMIR_NBARS + 1))
     for idel in coef_rect_wpoly_first_longslit.missing_slitlets:
         list_valid_islitlets.remove(idel)
@@ -140,9 +132,7 @@ def main(args=None):
             print(grism_tmp)
             raise ValueError("Unexpected different grism found")
         coef_rect_wpoly = RectWaveCoeff._datatype_load(list_json_files[ifile].filename)
-        dtu_conf_tmp = DtuConf.from_header(
-            coef_rect_wpoly.meta_info["dtu_configuration"]
-        )
+        dtu_conf_tmp = DtuConf.from_header(coef_rect_wpoly.meta_info["dtu_configuration"])
         if dtu_conf != dtu_conf_tmp:
             print(dtu_conf)
             print(dtu_conf_tmp)
@@ -165,13 +155,9 @@ def main(args=None):
             cslitlet = "slitlet" + str(islitlet).zfill(2)
             dict_bb_param[cslitlet] = {}
             for par in ["bb_nc1_orig", "bb_nc2_orig", "ymargin_bb"]:
-                value_initial = coef_rect_wpoly_first_longslit.contents[islitlet - 1][
-                    par
-                ]
+                value_initial = coef_rect_wpoly_first_longslit.contents[islitlet - 1][par]
                 for ifile in range(1, nfiles):
-                    coef_rect_wpoly = RectWaveCoeff._datatype_load(
-                        list_json_files[ifile].filename
-                    )
+                    coef_rect_wpoly = RectWaveCoeff._datatype_load(list_json_files[ifile].filename)
                     value_tmp = coef_rect_wpoly.contents[islitlet - 1][par]
                     if value_initial != value_tmp:
                         print(islitlet, value_initial, value_tmp)
@@ -207,9 +193,7 @@ def main(args=None):
     outdict["meta_info"]["origin"]["wpoly_longslits"] = {}
     for ifile in range(nfiles):
         cdum = "longslit_" + str(ifile + 1).zfill(3) + "_uuid"
-        outdict["meta_info"]["origin"]["wpoly_longslits"][cdum] = list_coef_rect_wpoly[
-            ifile
-        ].uuid
+        outdict["meta_info"]["origin"]["wpoly_longslits"][cdum] = list_coef_rect_wpoly[ifile].uuid
     outdict["tags"] = {}
     outdict["tags"]["grism"] = grism_name
     outdict["tags"]["filter"] = filter_name
@@ -284,9 +268,7 @@ def main(args=None):
     poldeg_no_duplicates = list(set(poldeg_check_list))
     if len(poldeg_no_duplicates) != 1:
         print("poldeg_no_duplicates:", poldeg_no_duplicates)
-        raise ValueError(
-            "poldeg is not constant in wavelength calibration " "polynomials!"
-        )
+        raise ValueError("poldeg is not constant in wavelength calibration " "polynomials!")
     poldeg_wavecal = int(poldeg_no_duplicates[0])
     if abs(args.debugplot) >= 10:
         print(">>> poldeg wavecal...:", poldeg_wavecal)
@@ -305,15 +287,11 @@ def main(args=None):
                 csu_bar_slit_center = tmpdict["csu_bar_slit_center"]
                 list_csu_bar_slit_center.append(csu_bar_slit_center)
             # check that list_csu_bar_slit_center is properly sorted
-            if not np.all(
-                list_csu_bar_slit_center[:-1] <= list_csu_bar_slit_center[1:]
-            ):
+            if not np.all(list_csu_bar_slit_center[:-1] <= list_csu_bar_slit_center[1:]):
                 print("cslitlet: ", cslitlet)
                 print("list_csu_bar_slit_center: ", list_csu_bar_slit_center)
                 raise ValueError("Unsorted list_csu_bar_slit_center")
-            outdict["contents"][cslitlet][
-                "list_csu_bar_slit_center"
-            ] = list_csu_bar_slit_center
+            outdict["contents"][cslitlet]["list_csu_bar_slit_center"] = list_csu_bar_slit_center
         else:
             islitlet_progress(islitlet, EMIR_NBARS, ignore=True)
     print("OK!")
@@ -420,18 +398,12 @@ def main(args=None):
     master_rectwv.tags["grism"] = grism_name
     master_rectwv.tags["filter"] = filter_name
     master_rectwv.meta_info["dtu_configuration"] = outdict["dtu_configuration"]
-    master_rectwv.meta_info["refined_boundary_model"] = {
-        "parmodel": refined_boundary_model.meta_info["parmodel"]
-    }
-    master_rectwv.meta_info["refined_boundary_model"].update(
-        outdict["refined_boundary_model"]["contents"]
-    )
+    master_rectwv.meta_info["refined_boundary_model"] = {"parmodel": refined_boundary_model.meta_info["parmodel"]}
+    master_rectwv.meta_info["refined_boundary_model"].update(outdict["refined_boundary_model"]["contents"])
     master_rectwv.total_slitlets = EMIR_NBARS
     master_rectwv.meta_info["origin"] = {
         "bound_param": "uuid" + refined_boundary_model.uuid,
-        "longslit_frames": [
-            "uuid:" + list_coef_rect_wpoly[ifile].uuid for ifile in range(nfiles)
-        ],
+        "longslit_frames": ["uuid:" + list_coef_rect_wpoly[ifile].uuid for ifile in range(nfiles)],
     }
     for i in range(EMIR_NBARS):
         islitlet = i + 1

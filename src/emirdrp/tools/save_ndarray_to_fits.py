@@ -101,14 +101,10 @@ def save_ndarray_to_fits(
 
     for ihdu, tmp_array in enumerate(list_of_arrays):
         if type(tmp_array) is not np.ndarray:
-            raise ValueError(
-                "Array#" + str(ihdu) + "=" + str(tmp_array) + " must be a numpy.ndarray"
-            )
+            raise ValueError("Array#" + str(ihdu) + "=" + str(tmp_array) + " must be a numpy.ndarray")
         if ihdu == 0:
             if list_cast_to_float[ihdu]:
-                hdu = fits.PrimaryHDU(
-                    data=tmp_array.astype(np.float32), header=main_header
-                )
+                hdu = fits.PrimaryHDU(data=tmp_array.astype(np.float32), header=main_header)
             else:
                 hdu = fits.PrimaryHDU(data=tmp_array, header=main_header)
         else:
@@ -123,9 +119,7 @@ def save_ndarray_to_fits(
             hdu.header.set("CRPIX1", tmp_crpix1, "Reference pixel")
         tmp_crval1 = list_crval1[ihdu]
         if tmp_crval1 is not None:
-            hdu.header.set(
-                "CRVAL1", tmp_crval1, "Reference wavelength corresponding to CRPIX1"
-            )
+            hdu.header.set("CRVAL1", tmp_crval1, "Reference wavelength corresponding to CRPIX1")
         tmp_cdelt1 = list_cdelt1[ihdu]
         if tmp_cdelt1 is not None:
             hdu.header.set("CDELT1", tmp_cdelt1, "Linear dispersion (angstrom/pixel)")

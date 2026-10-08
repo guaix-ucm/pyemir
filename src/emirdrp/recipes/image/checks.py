@@ -21,7 +21,6 @@ import sep
 from emirdrp.util.sextractor import SExtractor
 from .naming import name_skysub_proc
 
-
 _logger = logging.getLogger(__name__)
 
 # Actions to carry over images when checking the flux

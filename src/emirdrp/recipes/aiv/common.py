@@ -148,9 +148,7 @@ def gauss_model(data, center_r):
     return mm
 
 
-def recenter_char(
-    data, centers_i, recenter_maxdist, recenter_nloop, recenter_half_box, do_recenter
-):
+def recenter_char(data, centers_i, recenter_maxdist, recenter_nloop, recenter_half_box, do_recenter):
 
     # recentered values
     centers_r = numpy.empty_like(centers_i)
@@ -400,18 +398,14 @@ def pinhole_char2(
         _logger.info("Radial fit, peak: %f fwhm %f", rpeak, rfwhm)
 
         try:
-            dpeak, dfwhm, smsg = compute_fwhm_enclosed_direct(
-                part_s, xx0, yy0, maxrad=fit_rad
-            )
+            dpeak, dfwhm, smsg = compute_fwhm_enclosed_direct(part_s, xx0, yy0, maxrad=fit_rad)
             _logger.info("Enclosed direct, peak: %f fwhm %f", dpeak, dfwhm)
         except Exception as error:
             _logger.warning("Error in compute_fwhm_enclosed_direct %s", error)
             dpeak, dfwhm = -99.0, -99.0
 
         try:
-            eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(
-                part_s, xx0, yy0, maxrad=fit_rad
-            )
+            eamp, efwhm, epeak, emsg = compute_fwhm_enclosed_grow(part_s, xx0, yy0, maxrad=fit_rad)
             _logger.info("Enclosed fit, peak: %f fwhm %f", epeak, efwhm)
         except Exception as error:
             _logger.warning("Error in compute_fwhm_enclosed_grow %s", error)
@@ -445,9 +439,7 @@ def pinhole_char2(
         part1 = data[sl1]
         yy1, xx1 = numpy.mgrid[sl1]
 
-        g2d = models.Gaussian2D(
-            amplitude=rpeak, x_mean=x0, y_mean=y0, x_stddev=1.0, y_stddev=1.0
-        )
+        g2d = models.Gaussian2D(amplitude=rpeak, x_mean=x0, y_mean=y0, x_stddev=1.0, y_stddev=1.0)
         g2d_f = fitter(g2d, xx1, yy1, part1 - bck)
 
         res_gauss2d = (

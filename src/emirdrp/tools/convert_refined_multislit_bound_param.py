@@ -19,8 +19,7 @@ from emirdrp.products import RefinedBoundaryModelParam
 def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description="description: convert JSON file with refined multislit "
-        "parameters to new JSON format"
+        description="description: convert JSON file with refined multislit " "parameters to new JSON format"
     )
 
     # required arguments
@@ -54,12 +53,8 @@ def main(args=None):
         "filter": input_json["tags"]["filter"],
     }
     refined_boundary_model.contents = input_json["contents"]
-    refined_boundary_model.meta_info["dtu_configuration"] = input_json[
-        "dtu_configuration"
-    ]
-    refined_boundary_model.meta_info["dtu_configuration_maxdiff"] = input_json[
-        "dtu_configuration_maxdiff"
-    ]
+    refined_boundary_model.meta_info["dtu_configuration"] = input_json["dtu_configuration"]
+    refined_boundary_model.meta_info["dtu_configuration_maxdiff"] = input_json["dtu_configuration_maxdiff"]
     for item in [
         "function_evaluations",
         "global_residual",

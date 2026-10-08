@@ -42,9 +42,7 @@ class TestPointSourceRecipe(EmirRecipe):
 
     shift_coordinates = Parameter(
         True,
-        "Use header information to"
-        " shift the pinhole positions from (0,0) "
-        "to X_DTU, Y_DTU",
+        "Use header information to" " shift the pinhole positions from (0,0) " "to X_DTU, Y_DTU",
     )
     box_half_size = Parameter(4, "Half of the computation box size in pixels")
     recenter = Parameter(True, "Recenter the pinhole coordinates")

@@ -26,7 +26,6 @@ from numina.processing.combine import basic_processing_with_combination
 from emirdrp.processing.combine import basic_processing_with_segmentation
 from emirdrp.processing.combine import combine_images, scale_with_median
 
-
 _logger = logging.getLogger("numina.recipes.emir")
 
 
@@ -74,9 +73,7 @@ class BiasRecipe(EmirRecipe):
         def flow(x):
             return x
 
-        hdulist = basic_processing_with_combination(
-            rinput, flow, method=median, errors=False
-        )
+        hdulist = basic_processing_with_combination(rinput, flow, method=median, errors=False)
 
         pdata = hdulist[0].data
 
@@ -122,16 +119,14 @@ class DarkRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        iinfo = gather_info_frames(rinput.obresult.frames)
+        iinfo = self.datamodel.gather_info_oresult(rinput.obresult)
         ref_exptime = 0.0
         for el in iinfo[1:]:
             if abs(el["texp"] - ref_exptime) > 1e-4:
                 _logger.error("image with wrong exposure time")
                 raise RecipeError("image with wrong exposure time")
 
-        hdulist = basic_processing_with_combination(
-            rinput, flow, method=median, errors=True
-        )
+        hdulist = basic_processing_with_combination(rinput, flow, method=median, errors=True)
 
         pdata = hdulist[0].data
 
@@ -188,9 +183,7 @@ class IntensityFlatRecipe(EmirRecipe):
         errors = True
 
         flow = self.init_filters(rinput)
-        hdulist = basic_processing_with_combination(
-            rinput, flow, method=median, errors=errors
-        )
+        hdulist = basic_processing_with_combination(rinput, flow, method=median, errors=errors)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -239,9 +232,7 @@ class IntensityFlatRecipe2(EmirRecipe):
         import scipy.ndimage.filters
 
         _logger.info("median filter")
-        data_smooth = scipy.ndimage.filters.median_filter(
-            processed_img[0].data, size=11
-        )
+        data_smooth = scipy.ndimage.filters.median_filter(processed_img[0].data, size=11)
 
         self.save_intermediate_array(data_smooth, "smooth.fits")
 
@@ -273,9 +264,7 @@ class SimpleSkyRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(
-            rinput, flow, method=median, errors=True
-        )
+        hdulist = basic_processing_with_combination(rinput, flow, method=median, errors=True)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -297,16 +286,12 @@ class DitherSkyRecipe(EmirRecipe):
     skyframe = Result(prods.MasterSky)
 
     def run(self, rinput):
-        _logger.debug(
-            "instrument %s, mode %s", rinput.obresult.instrument, rinput.obresult.mode
-        )
+        _logger.debug("instrument %s, mode %s", rinput.obresult.instrument, rinput.obresult.mode)
         _logger.info("starting sky reduction with dither")
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_segmentation(
-            rinput, flow, method=median, errors=True
-        )
+        hdulist = basic_processing_with_segmentation(rinput, flow, method=median, errors=True)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)

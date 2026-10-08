@@ -12,7 +12,6 @@ import logging
 import numpy
 import numina.processing as proc
 
-
 _logger = logging.getLogger(__name__)
 
 

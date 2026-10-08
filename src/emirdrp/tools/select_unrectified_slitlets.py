@@ -32,9 +32,7 @@ from emirdrp.core import EMIR_NAXIS1
 from emirdrp.core import EMIR_NAXIS2
 
 
-def select_unrectified_slitlet(
-    image2d, islitlet, csu_bar_slit_center, params, parmodel, maskonly
-):
+def select_unrectified_slitlet(image2d, islitlet, csu_bar_slit_center, params, parmodel, maskonly):
     """Returns image with the indicated slitlet (zero anywhere else).
 
     Parameters
@@ -82,9 +80,7 @@ def select_unrectified_slitlet(
         xchannel = j + 1
         y0_lower = pol_lower_expected(xchannel)
         y0_upper = pol_upper_expected(xchannel)
-        n1, n2 = nscan_minmax_frontiers(
-            y0_frontier_lower=y0_lower, y0_frontier_upper=y0_upper, resize=True
-        )
+        n1, n2 = nscan_minmax_frontiers(y0_frontier_lower=y0_lower, y0_frontier_upper=y0_upper, resize=True)
         # note that n1 and n2 are scans (ranging from 1 to NAXIS2)
         if maskonly:
             image2d_output[(n1 - 1) : n2, j] = np.repeat([1.0], (n2 - n1 + 1))
@@ -100,29 +96,22 @@ def main(args=None):
     parser = argparse.ArgumentParser()
 
     # positional arguments
-    parser.add_argument(
-        "fitsfile", help="FITS file name to be displayed", type=argparse.FileType("rb")
-    )
+    parser.add_argument("fitsfile", help="FITS file name to be displayed", type=argparse.FileType("rb"))
     parser.add_argument(
         "--fitted_bound_param",
         required=True,
-        help="JSON file with fitted boundary coefficients "
-        "corresponding to the multislit model",
+        help="JSON file with fitted boundary coefficients " "corresponding to the multislit model",
         type=argparse.FileType("rt"),
     )
     parser.add_argument(
         "--slitlets",
         required=True,
-        help="Slitlet selection: string between double "
-        "quotes providing tuples of the form "
-        "n1[,n2[,step]]",
+        help="Slitlet selection: string between double " "quotes providing tuples of the form " "n1[,n2[,step]]",
         type=str,
     )
 
     # optional arguments
-    parser.add_argument(
-        "--fov", help="Field of view in mm (default=341.5)", type=float, default=341.5
-    )
+    parser.add_argument("--fov", help="Field of view in mm (default=341.5)", type=float, default=341.5)
     parser.add_argument(
         "--outfile",
         help="Output FITS file name",
@@ -190,9 +179,7 @@ def main(args=None):
     # define slitlet range
     islitlet_min = fittedpar_dict["tags"]["islitlet_min"]
     islitlet_max = fittedpar_dict["tags"]["islitlet_max"]
-    list_islitlet = list_slitlets_from_string(
-        s=args.slitlets, islitlet_min=islitlet_min, islitlet_max=islitlet_max
-    )
+    list_islitlet = list_slitlets_from_string(s=args.slitlets, islitlet_min=islitlet_min, islitlet_max=islitlet_max)
 
     # read CsuConfiguration object from FITS file
     csu_config = CsuConfiguration.define_from_fits(args.fitsfile)

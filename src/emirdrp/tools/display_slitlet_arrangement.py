@@ -115,12 +115,8 @@ def display_slitlet_arrangement(
 
         # compute slit width and center
         for i in range(EMIR_NBARS):
-            csu_config._csu_bar_slit_center.append(
-                (csu_config._csu_bar_left[i] + csu_config._csu_bar_right[i]) / 2
-            )
-            csu_config._csu_bar_slit_width.append(
-                csu_config._csu_bar_right[i] - csu_config._csu_bar_left[i]
-            )
+            csu_config._csu_bar_slit_center.append((csu_config._csu_bar_left[i] + csu_config._csu_bar_right[i]) / 2)
+            csu_config._csu_bar_slit_width.append(csu_config._csu_bar_right[i] - csu_config._csu_bar_left[i])
 
     else:
         # read input FITS file
@@ -240,12 +236,8 @@ def display_slitlet_arrangement(
                     1.0,
                 )
             )
-            ax.plot(
-                [0.0, csu_config.csu_bar_left(ibar)], [ibar, ibar], "-", color="gray"
-            )
-            ax.plot(
-                [csu_config.csu_bar_right(ibar), fov], [ibar, ibar], "-", color="gray"
-            )
+            ax.plot([0.0, csu_config.csu_bar_left(ibar)], [ibar, ibar], "-", color="gray")
+            ax.plot([csu_config.csu_bar_right(ibar), fov], [ibar, ibar], "-", color="gray")
         plt.title("File: " + fileobj.name + "\ngrism=" + grism + ", filter=" + spfilter)
         pause_debugplot(debugplot, pltshow=True)
 
@@ -258,9 +250,7 @@ def display_slitlet_arrangement(
     )
 
 
-def display_slitlet_histogram(
-    csu_bar_slit_width, n_clusters=2, geometry=None, debugplot=0
-):
+def display_slitlet_histogram(csu_bar_slit_width, n_clusters=2, geometry=None, debugplot=0):
     """
 
     Find separations between groups of slitlet widths.
@@ -305,17 +295,9 @@ def display_slitlet_histogram(
                 list_ok.append(k + 1)
             else:
                 list_not_ok.append(k + 1)
-        print(
-            "\nNumber of slitlets with width > separator: {}".format(
-                sum(np.array(csu_bar_slit_width) > separator)
-            )
-        )
+        print("\nNumber of slitlets with width > separator: {}".format(sum(np.array(csu_bar_slit_width) > separator)))
         print(list_ok)
-        print(
-            "\nNumber of slitlets with width < separator: {}".format(
-                sum(np.array(csu_bar_slit_width) < separator)
-            )
-        )
+        print("\nNumber of slitlets with width < separator: {}".format(sum(np.array(csu_bar_slit_width) < separator)))
         print(list_not_ok)
         print("\n--->  separator: {0:7.3f}".format(separator))
 
@@ -335,34 +317,25 @@ def display_slitlet_histogram(
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(
-        description="description: display arrangement of EMIR CSU bars"
-    )
+    parser = argparse.ArgumentParser(description="description: display arrangement of EMIR CSU bars")
 
     # positional arguments
     parser.add_argument(
         "filename",
-        help="FITS files (wildcards accepted) or single TXT "
-        "file with CSU configuration from OSP",
+        help="FITS files (wildcards accepted) or single TXT " "file with CSU configuration from OSP",
         type=argparse.FileType("rb"),
         nargs="+",
     )
 
     # optional arguments
-    parser.add_argument(
-        "--grism", help="Grism (J, H, K, LR)", choices=["J", "H", "K", "LR"]
-    )
+    parser.add_argument("--grism", help="Grism (J, H, K, LR)", choices=["J", "H", "K", "LR"])
     parser.add_argument(
         "--filter",
         help="Filter (J, H, Ksp, YJ, HK)",
         choices=["J", "H", "Ksp", "YJ", "HK"],
     )
-    parser.add_argument(
-        "--n_clusters", help="Display histogram of slitlet widths", default=0, type=int
-    )
-    parser.add_argument(
-        "--fov", help="Field of view (in mm; default=341.5)", default=341.5, type=float
-    )
+    parser.add_argument("--n_clusters", help="Display histogram of slitlet widths", default=0, type=int)
+    parser.add_argument("--fov", help="Field of view (in mm; default=341.5)", default=341.5, type=float)
     parser.add_argument(
         "--longslits",
         help="Display (pseudo) longslits built with " "consecutive slitlets",

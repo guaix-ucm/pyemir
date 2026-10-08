@@ -49,8 +49,6 @@ def nscan_minmax_frontiers(y0_frontier_lower, y0_frontier_upper, resize=False):
         if resize:
             nscan_max = EMIR_NAXIS2
         else:
-            raise ValueError(
-                "nscan_max=" + str(nscan_max) + " is > NAXIS2_EMIR=" + str(EMIR_NAXIS2)
-            )
+            raise ValueError("nscan_max=" + str(nscan_max) + " is > NAXIS2_EMIR=" + str(EMIR_NAXIS2))
 
     return nscan_min, nscan_max

@@ -1,7 +1,7 @@
 PyEmir Documentation
 ====================
 
-Welcome. This is the Documentation for PyEmir (version |version|), 
+Welcome. This is the Documentation for PyEmir (version |version|),
 
 EMIR_ is a **wide-field, near-infrared, multi-object spectrograph** (MOS)
 installed at the Nasmyth focus of GTC_. Its MOS mode allows observers to obtain
@@ -33,10 +33,10 @@ Maintainers: Sergio Pascual (sergiopr@fis.ucm.es), and Nicolás Cardiel
 
 .. toctree::
    :maxdepth: 1
-   
+
    installation/index
    Tutorials <https://guaix-ucm.github.io/pyemir-tutorials/index.html>
-   user/index 
+   user/index
    reference/index
    glossary
 

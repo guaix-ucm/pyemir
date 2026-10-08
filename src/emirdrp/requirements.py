@@ -15,7 +15,6 @@ from numina.types.datatype import ListOfType
 
 import emirdrp.products as prods
 
-
 # Expose this from numina for convenience
 EMIRObservationResultRequirement = ObservationResultRequirement
 
@@ -25,9 +24,7 @@ class EMIRConfigurationRequirement(Requirement):
 
     def __init__(self):
 
-        super(EMIRConfigurationRequirement, self).__init__(
-            prods.EMIRConfigurationType, "EMIR Configuration"
-        )
+        super(EMIRConfigurationRequirement, self).__init__(prods.EMIRConfigurationType, "EMIR Configuration")
 
     def __repr__(self):
         sclass = type(self).__name__
@@ -43,16 +40,12 @@ class MasterBadPixelMaskRequirement(Requirement):
 
 class MasterBiasRequirement(Requirement):
     def __init__(self, optional=True):
-        super(MasterBiasRequirement, self).__init__(
-            prods.MasterBias, "Master BIAS image", optional=optional
-        )
+        super(MasterBiasRequirement, self).__init__(prods.MasterBias, "Master BIAS image", optional=optional)
 
 
 class MasterDarkRequirement(Requirement):
     def __init__(self, optional=True):
-        super(MasterDarkRequirement, self).__init__(
-            prods.MasterDark, "Master DARK image", optional=optional
-        )
+        super(MasterDarkRequirement, self).__init__(prods.MasterDark, "Master DARK image", optional=optional)
 
 
 class MasterIntensityFlatFieldRequirement(Requirement):
@@ -64,9 +57,7 @@ class MasterIntensityFlatFieldRequirement(Requirement):
 
 class MasterSpectralFlatFieldRequirement(Requirement):
     def __init__(self):
-        super(MasterSpectralFlatFieldRequirement, self).__init__(
-            prods.MasterSpectralFlat, "Master spectral flatfield"
-        )
+        super(MasterSpectralFlatFieldRequirement, self).__init__(prods.MasterSpectralFlat, "Master spectral flatfield")
 
 
 class RefinedBoundaryModelParamRequirement(Requirement):
@@ -105,9 +96,7 @@ class ListOfRectWaveCoeffRequirement(Requirement):
 
 class MasterSkyRequirement(Requirement):
     def __init__(self, optional=False):
-        super(MasterSkyRequirement, self).__init__(
-            prods.MasterSky, "Sky image for subtraction", optional=optional
-        )
+        super(MasterSkyRequirement, self).__init__(prods.MasterSky, "Sky image for subtraction", optional=optional)
 
 
 class SpectralSkyRequirement(Requirement):
@@ -131,13 +120,9 @@ class SkyImageSepTime_Requirement(Parameter):
 
 class Catalog_Requirement(Parameter):
     def __init__(self, optional=True):
-        super(Catalog_Requirement, self).__init__(
-            [], "List of x, y coordinates to measure FWHM", optional=optional
-        )
+        super(Catalog_Requirement, self).__init__([], "List of x, y coordinates to measure FWHM", optional=optional)
 
 
 class Offsets_Requirement(Parameter):
     def __init__(self, optional=True):
-        super(Offsets_Requirement, self).__init__(
-            [], "List of pairs of offsets", optional=optional
-        )
+        super(Offsets_Requirement, self).__init__([], "List of pairs of offsets", optional=optional)

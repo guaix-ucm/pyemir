@@ -63,9 +63,7 @@ def get_corrector_b(rinput, meta, ins, datamodel):
             _logger.info("loading bias")
             _logger.debug("bias info: %s", bias_info)
             mbias = hdul[0].data
-            bias_corrector = proc.BiasCorrector(
-                mbias, datamodel=datamodel, calibid=dm.get_imgid(hdul, prefix=True)
-            )
+            bias_corrector = proc.BiasCorrector(mbias, datamodel=datamodel, calibid=dm.get_imgid(hdul, prefix=True))
     else:
         _logger.info("ignoring bias")
         bias_corrector = numina.util.node.IdNode()
@@ -106,9 +104,7 @@ def get_corrector_f(rinput, meta, ins, datamodel):
             _logger.warning("flat has %d values below 0", mask1.sum())
         if numpy.any(mask2):
             _logger.warning("flat has %d NaN", mask2.sum())
-        flat_corrector = FlatFieldCorrector(
-            mflat, datamodel=datamodel, calibid=dm.get_imgid(hdul, prefix=True)
-        )
+        flat_corrector = FlatFieldCorrector(mflat, datamodel=datamodel, calibid=dm.get_imgid(hdul, prefix=True))
 
     return flat_corrector
 
@@ -129,9 +125,7 @@ def get_corrector_sf(rinput, meta, ins, datamodel):
             _logger.warning("flat has %d values below 0", mask1.sum())
         if numpy.any(mask2):
             _logger.warning("flat has %d NaN", mask2.sum())
-        flat_corrector = FlatFieldCorrector(
-            mflat, datamodel=datamodel, calibid=dm.get_imgid(hdul, prefix=True)
-        )
+        flat_corrector = FlatFieldCorrector(mflat, datamodel=datamodel, calibid=dm.get_imgid(hdul, prefix=True))
 
     return flat_corrector
 
@@ -157,9 +151,7 @@ def get_corrector_gen(rinput, datamodel, CorrectorClass, key):
     else:
         with value.open() as hdul:
             datac = hdul["primary"].data
-            corrector = CorrectorClass(
-                datac, calibid=dm.get_imgid(hdul, prefix=True), datamodel=datamodel
-            )
+            corrector = CorrectorClass(datac, calibid=dm.get_imgid(hdul, prefix=True), datamodel=datamodel)
         return corrector
 
 

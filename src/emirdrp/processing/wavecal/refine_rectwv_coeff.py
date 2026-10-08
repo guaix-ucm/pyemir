@@ -106,9 +106,7 @@ def refine_rectwv_coeff(
 
     logger.info("Computing median spectrum")
     # compute median spectrum and normalize it
-    sp_median = median_slitlets_rectified(
-        input_image, mode=2, list_useful_slitlets=list_useful_slitlets
-    )[0].data
+    sp_median = median_slitlets_rectified(input_image, mode=2, list_useful_slitlets=list_useful_slitlets)[0].data
     sp_median /= sp_median.max()
 
     # determine minimum and maximum useful wavelength
@@ -139,14 +137,10 @@ def refine_rectwv_coeff(
     # estimate sigma to broaden catalogue lines
     csu_config = CsuConfiguration.define_from_header(mecs_header)
     # segregate slitlets
-    list_not_useful_slitlets = [
-        i for i in list(range(1, EMIR_NBARS + 1)) if i not in list_useful_slitlets
-    ]
+    list_not_useful_slitlets = [i for i in list(range(1, EMIR_NBARS + 1)) if i not in list_useful_slitlets]
     logger.info("list of useful slitlets: {}".format(list_useful_slitlets))
     logger.info("list of unusable slitlets: {}".format(list_not_useful_slitlets))
-    tempwidths = np.array(
-        [csu_config.csu_bar_slit_width(islitlet) for islitlet in list_useful_slitlets]
-    )
+    tempwidths = np.array([csu_config.csu_bar_slit_width(islitlet) for islitlet in list_useful_slitlets])
     widths_summary = summary(tempwidths)
     logger.info("Statistics of useful slitlet widths (mm):")
     logger.info("- npoints....: {0:d}".format(widths_summary["npoints"]))
@@ -333,9 +327,7 @@ def refine_rectwv_coeff(
             )
             if len(xplot_skipped) > 0:
                 ax.plot(xplot_skipped, yplot_skipped, "mx")
-            ax.axhline(
-                -global_offset, linestyle="--", color="C1", label="global offset"
-            )
+            ax.axhline(-global_offset, linestyle="--", color="C1", label="global offset")
             ax.legend()
             if pdf is not None:
                 pdf.savefig()

@@ -45,9 +45,7 @@ def comp_back_with_annulus(img, xc, yc, r_in, r_out, frac=0.1):
     x_max = img.shape[1] - 0.5 - xc
     y_min = -0.5 - yc
     y_max = img.shape[1] - 0.5 - yc
-    mm = encloses_annulus(
-        x_min, x_max, y_min, y_max, img.shape[1], img.shape[0], r_in, r_out
-    )
+    mm = encloses_annulus(x_min, x_max, y_min, y_max, img.shape[1], img.shape[0], r_in, r_out)
 
     valid = mm > frac
     rr = img[valid]
@@ -237,9 +235,7 @@ def rim(
     if fine_recentering:
         print("Fine recentering")
         print("C initial", x0, y0)
-        x1, y1, _back, _status, _msg = centering_centroid(
-            data, x0, y0, box=(1, 1), maxdist=2 * math.sqrt(2), nloop=1
-        )
+        x1, y1, _back, _status, _msg = centering_centroid(data, x0, y0, box=(1, 1), maxdist=2 * math.sqrt(2), nloop=1)
         print("C final", x1, y1)
 
     sl = image_box2d(x0, y0, data.shape, plot_half_box)
@@ -310,9 +306,7 @@ def rim(
     sl1 = image_box2d(x0, y0, data.shape, fit2d_half_box)
     part1 = data[sl1]
     Y1, X1 = np.mgrid[sl1]
-    g2d = models.Gaussian2D(
-        amplitude=rpeak, x_mean=x0, y_mean=y0, x_stddev=1.0, y_stddev=1.0
-    )
+    g2d = models.Gaussian2D(amplitude=rpeak, x_mean=x0, y_mean=y0, x_stddev=1.0, y_stddev=1.0)
     g2d_f = fitter(g2d, X1, Y1, part1 - bck)
     print("Gauss2D fit")
     print(g2d_f)

@@ -1,6 +1,5 @@
 import astropy.io.fits as fits
 import numpy
-from astropy.io import fits as fits
 
 
 def compute_md5_checksum(conf):

@@ -11,17 +11,17 @@ about the version of Numina and the name and version of the recipe used.
 
   ::
 
-   NUMXVER = '0.7.0   '           / Numina package version                         
-   NUMRNAM = 'DitheredImageRecipe' / Numina recipe name                            
-   NUMRVER = '0.1.0   '           / Numina recipe version                                     
-   NUMTYP  = 'TARGET  '           / Data product type  
+   NUMXVER = '0.7.0   '           / Numina package version
+   NUMRNAM = 'DitheredImageRecipe' / Numina recipe name
+   NUMRVER = '0.1.0   '           / Numina recipe version
+   NUMTYP  = 'TARGET  '           / Data product type
 
 ``HISTORY`` keywords may be used also, but the information in these keyword may not be easily indexed.
 
 Master Bias frames
 *******************
 
-Bias frames are produced by the recipe :class:`~emirdrp.recipes.BiasRecipe`. Each bias frame is a 
+Bias frames are produced by the recipe :class:`~emirdrp.recipes.BiasRecipe`. Each bias frame is a
 multiextension FITS file with the following extensions.
 
   ===============    =======   ========   =======================
@@ -38,7 +38,7 @@ Master bias frames are represented by :class:`~emirdrp.dataproducts.MasterBias`.
 Master Dark frames
 ******************
 
-Master dark frames are produced by the recipe :class:`~emirdrp.recipes.DarkRecipe`. Each dark frame is a 
+Master dark frames are produced by the recipe :class:`~emirdrp.recipes.DarkRecipe`. Each dark frame is a
 multiextension FITS file with the following extensions.
 
   ===============    =======   ========   =======================
@@ -51,5 +51,3 @@ multiextension FITS file with the following extensions.
   ===============    =======   ========   =======================
 
 Master dark frames are represented by :class:`~emirdrp.dataproducts.MasterDark`.
-
-

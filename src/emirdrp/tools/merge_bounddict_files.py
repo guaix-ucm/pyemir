@@ -69,9 +69,7 @@ def main(args=None):
                         cslitlet = "slitlet" + str(islitlet).zfill(2)
                         if cslitlet in tmpbounddict["contents"]:
                             for dateobs in tmpbounddict["contents"][cslitlet]:
-                                bounddict["contents"][cslitlet][dateobs] = tmpbounddict[
-                                    "contents"
-                                ][cslitlet][dateobs]
+                                bounddict["contents"][cslitlet][dateobs] = tmpbounddict["contents"][cslitlet][dateobs]
 
     # save merged JSON file
     with open(args.outfile.name, "w") as fstream:

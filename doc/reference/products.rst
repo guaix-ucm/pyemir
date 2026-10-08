@@ -28,4 +28,3 @@
 .. class:: MasterIntensityFlat
 
    Master flar EMIR frame
-

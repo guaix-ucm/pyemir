@@ -43,19 +43,11 @@ class MaskImagingRecipe(EmirRecipe):
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
     master_sky = reqs.MasterSkyRequirement()
 
-    bars_nominal_positions = Requirement(
-        prods.CoordinateList2DType, "Nominal positions of the bars"
-    )
+    bars_nominal_positions = Requirement(prods.CoordinateList2DType, "Nominal positions of the bars")
     median_filter_size = Parameter(5, "Size of the median box")
-    average_box_row_size = Parameter(
-        7, "Number of rows to average for fine centering (odd)"
-    )
-    average_box_col_size = Parameter(
-        21, "Number of columns to extract for fine centering (odd)"
-    )
-    fit_peak_npoints = Parameter(
-        3, "Number of points to use for fitting the peak (odd)"
-    )
+    average_box_row_size = Parameter(7, "Number of rows to average for fine centering (odd)")
+    average_box_col_size = Parameter(21, "Number of columns to extract for fine centering (odd)")
+    fit_peak_npoints = Parameter(3, "Number of points to use for fitting the peak (odd)")
 
     # Recipe Products
     frame = Result(prods.ProcessedImage)
@@ -132,9 +124,7 @@ class MaskImagingRecipe(EmirRecipe):
         # extract a region to average
         wy = rinput.average_box_row_size // 2
         wx = rinput.average_box_col_size // 2
-        self.logger.debug(
-            "extraction window is %d rows, %d cols", 2 * wy + 1, 2 * wx + 1
-        )
+        self.logger.debug("extraction window is %d rows, %d cols", 2 * wy + 1, 2 * wx + 1)
         # Fit the peak with these points
         wfit = 2 * (rinput.fit_peak_npoints // 2) + 1
         self.logger.debug("fit with %d points", wfit)
@@ -268,9 +258,7 @@ class MaskImagingRecipe(EmirRecipe):
                     slits[lbarid - 1] = [xpos1, y2, xpos2, y2, xpos2, y1, xpos1, y1]
                     # FITS coordinates
                     slits[lbarid - 1] += 1.0
-                    self.logger.debug(
-                        'inserting bars %d-%d into "slits"', lbarid, rbarid
-                    )
+                    self.logger.debug('inserting bars %d-%d into "slits"', lbarid, rbarid)
 
             # GCS doesn't like lists of lists
             allpos[ks] = numpy.asarray(positions, dtype="float")

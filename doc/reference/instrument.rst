@@ -18,4 +18,3 @@
 .. automodule:: emirdrp.instrument.distortions
    :members:
    :undoc-members:
-

@@ -20,7 +20,6 @@ from numina.array.imsurfit import vertex_of_quadratic
 import numina.array.utils as utils
 import numina.array.stats as s
 
-
 _logger = logging.getLogger("numina.recipes.emir")
 
 
@@ -48,17 +47,13 @@ def offsets_from_crosscor(arrs, region, refine=True, refine_box=3, order="ij"):
 
     for idx, arr in enumerate(arrs[1:], 1):
 
-        refoff = offset_from_crosscor(
-            ref_array, arr, region, refine=refine, refine_box=refine_box, order=order
-        )
+        refoff = offset_from_crosscor(ref_array, arr, region, refine=refine, refine_box=refine_box, order=order)
         result[idx] = refoff
 
     return result
 
 
-def offsets_from_crosscor_regions(
-    arrs, regions, refine=True, refine_box=3, order="ij", tol=0.5
-):
+def offsets_from_crosscor_regions(arrs, regions, refine=True, refine_box=3, order="ij", tol=0.5):
     # import astropy.io.fits as fits
     # allowed values for order
     if order not in ["xy", "ij"]:
@@ -159,16 +154,12 @@ def offset_from_crosscor(arr0, arr1, region, refine=True, refine_box=3, order="i
         return refoff
 
 
-def offset_from_crosscor_regions(
-    arr0, arr1, regions, refine=True, refine_box=3, order="ij", tol=0.5
-):
+def offset_from_crosscor_regions(arr0, arr1, regions, refine=True, refine_box=3, order="ij", tol=0.5):
 
     values = []
     for region in regions:
         try:
-            res = offset_from_crosscor(
-                arr0, arr1, region, refine=refine, refine_box=refine_box, order=order
-            )
+            res = offset_from_crosscor(arr0, arr1, region, refine=refine, refine_box=refine_box, order=order)
             values.append(res)
         except ValueError as error:
             _logger.debug("error in offset_from_crosscor_regions: %s", error)

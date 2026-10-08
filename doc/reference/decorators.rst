@@ -5,4 +5,3 @@
 .. automodule:: emirdrp.decorators
    :members:
    :undoc-members:
-

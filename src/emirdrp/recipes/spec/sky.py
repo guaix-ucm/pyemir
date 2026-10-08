@@ -12,7 +12,6 @@
 Spectroscopy mode, Stare Spectra
 """
 
-
 from numina.core import Result
 from numina.array.combine import median
 from numina.processing.combine import basic_processing_with_combination
@@ -44,9 +43,7 @@ class SkySpecRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        reduced_image = basic_processing_with_combination(
-            rinput, flow, method=median, errors=True
-        )
+        reduced_image = basic_processing_with_combination(rinput, flow, method=median, errors=True)
 
         hdr = reduced_image[0].header
         self.set_base_headers(hdr)
@@ -56,9 +53,7 @@ class SkySpecRecipe(EmirRecipe):
 
         # RectWaveCoeff object with rectification and wavelength calibration
         # coefficients for the particular CSU configuration
-        rectwv_coeff = rectwv_coeff_from_mos_library(
-            reduced_image, rinput.master_rectwv
-        )
+        rectwv_coeff = rectwv_coeff_from_mos_library(reduced_image, rinput.master_rectwv)
         # save as JSON file in work directory
         self.save_structured_as_json(rectwv_coeff, "rectwv_coeff.json")
 

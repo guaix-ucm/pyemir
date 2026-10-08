@@ -86,11 +86,9 @@ def main(args=None):
     parser.add_argument(
         "--step",
         required=True,
-        help=textwrap.dedent(
-            """\
+        help=textwrap.dedent("""\
                         0: preliminary STARE_IMAGE
-                        1: combination with FULL_DITHERED_IMAGE"""
-        ),
+                        1: combination with FULL_DITHERED_IMAGE"""),
         type=int,
         choices=[0, 1],
     )
@@ -109,9 +107,7 @@ def main(args=None):
         type=str,
         choices=["interp", "adaptive", "exact", "none"],
     )
-    parser.add_argument(
-        "--repeat", help="Repetitions at each position", default=1, type=int
-    )
+    parser.add_argument("--repeat", help="Repetitions at each position", default=1, type=int)
     parser.add_argument("--obsid_combined", type=str)
     parser.add_argument("--echo", help="Display full command line", action="store_true")
     args = parser.parse_args(args)

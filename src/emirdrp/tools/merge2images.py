@@ -60,9 +60,7 @@ def merge2images(hdu1, hdu2, debugplot):
         naxis2 = image_header["naxis2"]
         naxis2_ = image_header_["naxis2"]
         if naxis2 != naxis2_:
-            raise ValueError(
-                "Incompatible NAXIS2 values: {}, {}".format(naxis2, naxis2_)
-            )
+            raise ValueError("Incompatible NAXIS2 values: {}, {}".format(naxis2, naxis2_))
     else:
         raise ValueError("Unexpected NAXIS value: {}".format(naxis))
 
@@ -93,17 +91,11 @@ def merge2images(hdu1, hdu2, debugplot):
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(
-        description="description: merge 2 EMIR images averaging the common" " region"
-    )
+    parser = argparse.ArgumentParser(description="description: merge 2 EMIR images averaging the common" " region")
 
     # positional arguments
-    parser.add_argument(
-        "infile1", help="Input FITS file name #1", type=argparse.FileType("rb")
-    )
-    parser.add_argument(
-        "infile2", help="Input FITS file name #2", type=argparse.FileType("rb")
-    )
+    parser.add_argument("infile1", help="Input FITS file name #1", type=argparse.FileType("rb"))
+    parser.add_argument("infile2", help="Input FITS file name #2", type=argparse.FileType("rb"))
     parser.add_argument(
         "outfile",
         help="Output FITS file name",

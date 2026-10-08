@@ -40,9 +40,7 @@ class BarDetectionRecipe(EmirRecipe):
     master_flat = reqs.MasterIntensityFlatFieldRequirement()
     master_sky = reqs.MasterSkyRequirement()
 
-    bars_nominal_positions = Requirement(
-        prods.CoordinateList2DType, "Nominal positions of the bars"
-    )
+    bars_nominal_positions = Requirement(prods.CoordinateList2DType, "Nominal positions of the bars")
     median_filter_size = Parameter(5, "Size of the median box")
     canny_sigma = Parameter(3.0, "Sigma for the canny algorithm")
     canny_high_threshold = Parameter(0.04, "High threshold for the canny algorithm")
@@ -152,9 +150,7 @@ class BarDetectionRecipe(EmirRecipe):
 
             # If no bar is found, append and empty token
             if nbars_found == 0:
-                logger.debug(
-                    "bars %d, %d not found at row %d", lbarid, rbarid, fits_row
-                )
+                logger.debug("bars %d, %d not found at row %d", lbarid, rbarid, fits_row)
                 thisres1 = (lbarid, fits_row, 0, 0, 1)
                 thisres2 = (rbarid, fits_row, 0, 0, 1)
 
@@ -165,9 +161,7 @@ class BarDetectionRecipe(EmirRecipe):
                 c1 = centl[0]
                 c2 = centr[0]
 
-                logger.debug(
-                    "bars found  at row %d between %7.2f - %7.2f", fits_row, c1, c2
-                )
+                logger.debug("bars found  at row %d between %7.2f - %7.2f", fits_row, c1, c2)
                 # Compute FWHM of the collapsed profile
 
                 cslit = arr_grey[prow - nt : prow + nt + 1, :]
@@ -181,16 +175,12 @@ class BarDetectionRecipe(EmirRecipe):
                 thisres2 = rbarid, fits_row, epos + 1, epos_f + 1, error
 
             elif nbars_found == 1:
-                logger.warning(
-                    "only 1 edge found  at row %d, not yet implemented", fits_row
-                )
+                logger.warning("only 1 edge found  at row %d, not yet implemented", fits_row)
                 thisres1 = (lbarid, fits_row, 0, 0, 1)
                 thisres2 = (rbarid, fits_row, 0, 0, 1)
 
             else:
-                logger.warning(
-                    "3 or more edges found  at row %d, not yet implemented", fits_row
-                )
+                logger.warning("3 or more edges found  at row %d, not yet implemented", fits_row)
                 thisres1 = (lbarid, fits_row, 0, 0, 1)
                 thisres2 = (rbarid, fits_row, 0, 0, 1)
 

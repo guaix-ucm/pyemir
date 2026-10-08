@@ -56,9 +56,7 @@ def find_position(edges, prow, bstart, bend, total=5):
     structure = scipy.ndimage.generate_binary_structure(2, 2)  # 8 way conection
     har, num_f = scipy.ndimage.label(s2edges, structure=structure)
 
-    cen_of_mass = scipy.ndimage.center_of_mass(
-        s2edges, labels=har, index=range(1, num_f + 1)
-    )
+    cen_of_mass = scipy.ndimage.center_of_mass(s2edges, labels=har, index=range(1, num_f + 1))
 
     # center_of_mass returns y, x coordinates
 
@@ -269,15 +267,11 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, sign=1):
     for off in offs:
         if 0 <= centery + off <= 2047:
             logger.debug("looping, off %d, measuring at %7.2f", off, centery + off + 1)
-            res = refine_bar_centroid(
-                arr_deriv, centerx, centery + off, wx, wy, th, sign
-            )
+            res = refine_bar_centroid(arr_deriv, centerx, centery + off, wx, wy, th, sign)
             logger.debug("looping, measured values %7.2f (FWHM %7.2f)", res[0], res[1])
             newrefine.append(res)
         else:
-            logger.debug(
-                "looping, off %d, skipping position %7.2f", off, centery + off + 1
-            )
+            logger.debug("looping, off %d, skipping position %7.2f", off, centery + off + 1)
 
     # this goes in FITS pix coordinates, adding 1
     # filter values with status != 0

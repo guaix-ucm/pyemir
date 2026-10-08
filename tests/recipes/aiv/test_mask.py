@@ -2,7 +2,6 @@ import pytest
 
 from tests.runrecipe import run_recipe
 
-
 BASE_URL = "https://guaix.fis.ucm.es/data/pyemir/test/"
 
 

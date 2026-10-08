@@ -5,7 +5,7 @@ on: workflow_dispatch
 
 jobs:
   test:
-    name: Test ${{ matrix.python }} 
+    name: Test ${{ matrix.python }}
 
     runs-on: ubuntu-latest
     strategy:

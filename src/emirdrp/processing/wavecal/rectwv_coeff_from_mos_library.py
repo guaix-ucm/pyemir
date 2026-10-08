@@ -41,9 +41,7 @@ from emirdrp.core import EMIR_NAXIS2
 from emirdrp.core import EMIR_NBARS
 
 
-def rectwv_coeff_from_mos_library(
-    reduced_image, master_rectwv, ignore_dtu_configuration=True, debugplot=0
-):
+def rectwv_coeff_from_mos_library(reduced_image, master_rectwv, ignore_dtu_configuration=True, debugplot=0):
     """Evaluate rect.+wavecal. coefficients from MOS library
 
     Parameters
@@ -132,9 +130,7 @@ def rectwv_coeff_from_mos_library(
     outdict["meta_info"]["origin"] = {}
     outdict["meta_info"]["origin"]["fits_frame_uuid"] = "TBD"
     outdict["meta_info"]["origin"]["rect_wpoly_mos_uuid"] = master_rectwv.uuid
-    outdict["meta_info"]["origin"]["fitted_boundary_param_uuid"] = (
-        master_rectwv.meta_info["origin"]["bound_param"]
-    )
+    outdict["meta_info"]["origin"]["fitted_boundary_param_uuid"] = master_rectwv.meta_info["origin"]["bound_param"]
     outdict["tags"] = {}
     outdict["tags"]["grism"] = grism_name
     outdict["tags"]["filter"] = filter_name
@@ -157,15 +153,11 @@ def rectwv_coeff_from_mos_library(
         # check extrapolations
         if csu_bar_slit_center < min(list_csu_bar_slit_center):
             logger.warning("extrapolating table with " + cslitlet)
-            logger.warning(
-                "minimum tabulated value: " + str(min(list_csu_bar_slit_center))
-            )
+            logger.warning("minimum tabulated value: " + str(min(list_csu_bar_slit_center)))
             logger.warning("sought value...........: " + str(csu_bar_slit_center))
         if csu_bar_slit_center > max(list_csu_bar_slit_center):
             logger.warning("extrapolating table with " + cslitlet)
-            logger.warning(
-                "maximum tabulated value: " + str(max(list_csu_bar_slit_center))
-            )
+            logger.warning("maximum tabulated value: " + str(max(list_csu_bar_slit_center)))
             logger.warning("sought value...........: " + str(csu_bar_slit_center))
 
         # rectification coefficients
@@ -220,21 +212,13 @@ def rectwv_coeff_from_mos_library(
 
         # update CSU keywords
         outdict["contents"][cslitlet]["csu_bar_left"] = csu_conf.csu_bar_left(islitlet)
-        outdict["contents"][cslitlet]["csu_bar_right"] = csu_conf.csu_bar_right(
-            islitlet
-        )
-        outdict["contents"][cslitlet]["csu_bar_slit_center"] = (
-            csu_conf.csu_bar_slit_center(islitlet)
-        )
-        outdict["contents"][cslitlet]["csu_bar_slit_width"] = (
-            csu_conf.csu_bar_slit_width(islitlet)
-        )
+        outdict["contents"][cslitlet]["csu_bar_right"] = csu_conf.csu_bar_right(islitlet)
+        outdict["contents"][cslitlet]["csu_bar_slit_center"] = csu_conf.csu_bar_slit_center(islitlet)
+        outdict["contents"][cslitlet]["csu_bar_slit_width"] = csu_conf.csu_bar_slit_width(islitlet)
 
     # for each slitlet compute spectrum trails and frontiers using the
     # fitted boundary parameters
-    fitted_bound_param_json = {
-        "contents": master_rectwv.meta_info["refined_boundary_model"]
-    }
+    fitted_bound_param_json = {"contents": master_rectwv.meta_info["refined_boundary_model"]}
     parmodel = fitted_bound_param_json["contents"]["parmodel"]
     fitted_bound_param_json.update({"meta_info": {"parmodel": parmodel}})
     params = bound_params_from_dict(fitted_bound_param_json)
@@ -262,12 +246,10 @@ def rectwv_coeff_from_mos_library(
         # store spectrails in output JSON file
         outdict["contents"][cslitlet]["spectrail"] = {}
         for idum, cdum in zip(range(3), ["lower", "middle", "upper"]):
-            outdict["contents"][cslitlet]["spectrail"]["poly_coef_" + cdum] = (
-                list_spectrails[idum].poly_funct.coef.tolist()
-            )
-            outdict["contents"][cslitlet]["y0_reference_" + cdum] = list_spectrails[
+            outdict["contents"][cslitlet]["spectrail"]["poly_coef_" + cdum] = list_spectrails[
                 idum
-            ].poly_funct(x0_reference)
+            ].poly_funct.coef.tolist()
+            outdict["contents"][cslitlet]["y0_reference_" + cdum] = list_spectrails[idum].poly_funct(x0_reference)
         # compute frontiers (lower, upper)
         list_frontiers = expected_distorted_frontiers(
             islitlet,
@@ -281,12 +263,10 @@ def rectwv_coeff_from_mos_library(
         # store frontiers in output JSON
         outdict["contents"][cslitlet]["frontier"] = {}
         for idum, cdum in zip(range(2), ["lower", "upper"]):
-            outdict["contents"][cslitlet]["frontier"]["poly_coef_" + cdum] = (
-                list_frontiers[idum].poly_funct.coef.tolist()
-            )
-            outdict["contents"][cslitlet]["y0_frontier_" + cdum] = list_frontiers[
+            outdict["contents"][cslitlet]["frontier"]["poly_coef_" + cdum] = list_frontiers[
                 idum
-            ].poly_funct(x0_reference)
+            ].poly_funct.coef.tolist()
+            outdict["contents"][cslitlet]["y0_frontier_" + cdum] = list_frontiers[idum].poly_funct(x0_reference)
 
     # store bounding box parameters for each slitlet
     xdum = np.linspace(1, EMIR_NAXIS1, num=EMIR_NAXIS1)
@@ -294,18 +274,12 @@ def rectwv_coeff_from_mos_library(
         cslitlet = "slitlet" + str(islitlet).zfill(2)
         # parameters already available in the input JSON file
         for par in ["bb_nc1_orig", "bb_nc2_orig", "ymargin_bb"]:
-            outdict["contents"][cslitlet][par] = master_rectwv.contents[islitlet - 1][
-                par
-            ]
+            outdict["contents"][cslitlet][par] = master_rectwv.contents[islitlet - 1][par]
         # estimate bb_ns1_orig and bb_ns2_orig using the already computed
         # frontiers and the value of ymargin_bb, following the same approach
         # employed in Slitlet2dArc.__init__()
-        poly_lower_frontier = np.polynomial.Polynomial(
-            outdict["contents"][cslitlet]["frontier"]["poly_coef_lower"]
-        )
-        poly_upper_frontier = np.polynomial.Polynomial(
-            outdict["contents"][cslitlet]["frontier"]["poly_coef_upper"]
-        )
+        poly_lower_frontier = np.polynomial.Polynomial(outdict["contents"][cslitlet]["frontier"]["poly_coef_lower"])
+        poly_upper_frontier = np.polynomial.Polynomial(outdict["contents"][cslitlet]["frontier"]["poly_coef_upper"])
         ylower = poly_lower_frontier(xdum)
         yupper = poly_upper_frontier(xdum)
         ymargin_bb = master_rectwv.contents[islitlet - 1]["ymargin_bb"]
@@ -324,12 +298,8 @@ def rectwv_coeff_from_mos_library(
         # define expected frontier ordinates at x0_reference for the rectified
         # image imposing the vertical length of the slitlet to be constant
         # and equal to EMIR_NPIXPERSLIT_RECTIFIED
-        outdict["contents"][cslitlet]["y0_frontier_lower_expected"] = (
-            expected_y0_lower_frontier(islitlet)
-        )
-        outdict["contents"][cslitlet]["y0_frontier_upper_expected"] = (
-            expected_y0_upper_frontier(islitlet)
-        )
+        outdict["contents"][cslitlet]["y0_frontier_lower_expected"] = expected_y0_lower_frontier(islitlet)
+        outdict["contents"][cslitlet]["y0_frontier_upper_expected"] = expected_y0_upper_frontier(islitlet)
         # compute linear transformation to place the rectified slitlet at
         # the center of the current slitlet bounding box
         tmpdict = outdict["contents"][cslitlet]
@@ -340,15 +310,9 @@ def rectwv_coeff_from_mos_library(
         corr_yrect_b = (ydum2 - ydum1) / (xdum2 - xdum1)
         corr_yrect_a = ydum1 - corr_yrect_b * xdum1
         # compute expected location of rectified boundaries
-        y0_reference_lower_expected = (
-            corr_yrect_a + corr_yrect_b * tmpdict["y0_reference_lower"]
-        )
-        y0_reference_middle_expected = (
-            corr_yrect_a + corr_yrect_b * tmpdict["y0_reference_middle"]
-        )
-        y0_reference_upper_expected = (
-            corr_yrect_a + corr_yrect_b * tmpdict["y0_reference_upper"]
-        )
+        y0_reference_lower_expected = corr_yrect_a + corr_yrect_b * tmpdict["y0_reference_lower"]
+        y0_reference_middle_expected = corr_yrect_a + corr_yrect_b * tmpdict["y0_reference_middle"]
+        y0_reference_upper_expected = corr_yrect_a + corr_yrect_b * tmpdict["y0_reference_upper"]
         # shift transformation to center the rectified slitlet within the
         # slitlet bounding box
         ydummid = (ydum1 + ydum2) / 2
@@ -363,15 +327,9 @@ def rectwv_coeff_from_mos_library(
         min_row_rectified = int((round(xdum1 * 10) + 5) / 10) - tmpdict["bb_ns1_orig"]
         max_row_rectified = int((round(xdum2 * 10) - 5) / 10) - tmpdict["bb_ns1_orig"]
         # save previous results in outdict
-        outdict["contents"][cslitlet][
-            "y0_reference_lower_expected"
-        ] = y0_reference_lower_expected
-        outdict["contents"][cslitlet][
-            "y0_reference_middle_expected"
-        ] = y0_reference_middle_expected
-        outdict["contents"][cslitlet][
-            "y0_reference_upper_expected"
-        ] = y0_reference_upper_expected
+        outdict["contents"][cslitlet]["y0_reference_lower_expected"] = y0_reference_lower_expected
+        outdict["contents"][cslitlet]["y0_reference_middle_expected"] = y0_reference_middle_expected
+        outdict["contents"][cslitlet]["y0_reference_upper_expected"] = y0_reference_upper_expected
         outdict["contents"][cslitlet]["corr_yrect_a"] = corr_yrect_a
         outdict["contents"][cslitlet]["corr_yrect_b"] = corr_yrect_b
         outdict["contents"][cslitlet]["min_row_rectified"] = min_row_rectified
@@ -385,9 +343,7 @@ def rectwv_coeff_from_mos_library(
     rectwv_coeff.quality_control = numina.types.qc.QC.GOOD
     rectwv_coeff.tags["grism"] = grism_name
     rectwv_coeff.tags["filter"] = filter_name
-    rectwv_coeff.meta_info["origin"]["bound_param"] = master_rectwv.meta_info["origin"][
-        "bound_param"
-    ]
+    rectwv_coeff.meta_info["origin"]["bound_param"] = master_rectwv.meta_info["origin"]["bound_param"]
     rectwv_coeff.meta_info["origin"]["master_rectwv"] = "uuid" + master_rectwv.uuid
     rectwv_coeff.meta_info["dtu_configuration"] = outdict["dtu_configuration"]
     rectwv_coeff.total_slitlets = EMIR_NBARS
@@ -429,14 +385,11 @@ def main(args=None):
     )
 
     # required arguments
-    parser.add_argument(
-        "fitsfile", help="Input FITS file", type=argparse.FileType("rb")
-    )
+    parser.add_argument("fitsfile", help="Input FITS file", type=argparse.FileType("rb"))
     parser.add_argument(
         "--rect_wpoly_MOSlibrary",
         required=True,
-        help="Input JSON file with library of rectification "
-        "and wavelength calibration coefficients",
+        help="Input JSON file with library of rectification " "and wavelength calibration coefficients",
         type=argparse.FileType("rt"),
     )
     parser.add_argument(

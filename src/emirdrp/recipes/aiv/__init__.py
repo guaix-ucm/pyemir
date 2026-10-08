@@ -50,9 +50,7 @@ class SimpleBiasRecipe(EmirRecipe):
         def flow(x):
             return x
 
-        hdulist = basic_processing_with_combination(
-            rinput, flow, method=median, errors=True
-        )
+        hdulist = basic_processing_with_combination(rinput, flow, method=median, errors=True)
 
         # update hdu header with
         # reduction keywords

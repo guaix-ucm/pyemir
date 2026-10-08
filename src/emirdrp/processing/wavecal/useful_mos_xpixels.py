@@ -66,9 +66,7 @@ def useful_mos_xpixels(
             wvmin = float(wvregion[0])
             wvmax = float(wvregion[1])
             if wvmin > wvmax:
-                raise ValueError(
-                    "wvregion values in wrong order:" " {}, {}".format(wvmin, wvmax)
-                )
+                raise ValueError("wvregion values in wrong order:" " {}, {}".format(wvmin, wvmax))
             minpix = int((wvmin - crval1) / cdelt1 + crpix1 + 0.5)
             maxpix = int((wvmax - crval1) / cdelt1 + crpix1 + 0.5)
             for ipix in range(minpix, maxpix + 1):
@@ -96,9 +94,7 @@ def useful_mos_xpixels(
     xisok = np.logical_and(xisok_wvreg, xisok_oh)
     naxis1_effective = np.sum(xisok)
     if naxis1_effective < 1:
-        raise ValueError(
-            "no valid wavelength range available after " "removing OH lines"
-        )
+        raise ValueError("no valid wavelength range available after " "removing OH lines")
 
     if abs(debugplot) in [21, 22]:
         slitlet2d = reduced_mos_data[(nsmin - 1) : nsmax, :].copy()

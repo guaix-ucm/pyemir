@@ -110,9 +110,7 @@ class DTUAxis(HWDevice):
     def __eq__(self, other):
         ndig = 3
         if isinstance(other, DTUAxis):
-            result = self.name.lower() == other.name.lower() and self.stringify(
-                ndig
-            ) == other.stringify(ndig)
+            result = self.name.lower() == other.name.lower() and self.stringify(ndig) == other.stringify(ndig)
 
             return result
         return NotImplemented
