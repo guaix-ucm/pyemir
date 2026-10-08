@@ -1,0 +1,6 @@
+# Commits ignored by git blame, with formatting changes only.
+# GitHub uses this file automatically. For local use, run:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Format code with black
+e92ab2c55180900baf926fbfe9c34007ad741f96
