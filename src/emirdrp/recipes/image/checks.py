@@ -11,14 +11,12 @@
 """Routines shared by image mode recipes"""
 
 import logging
-import operator
 
 import numpy
 from astropy.io import fits
 import matplotlib.pyplot as plt
 import sep
 
-from emirdrp.util.sextractor import SExtractor
 from .naming import name_skysub_proc
 
 _logger = logging.getLogger(__name__)
@@ -74,15 +72,8 @@ def check_photometry(
     bkg = sep.Background(data_res)
     data_sub = data_res - bkg
 
-    _logger.info("Runing source extraction tor in %s", basename)
+    _logger.info("Running source extraction in %s", basename)
     objects = sep.extract(data_sub, 1.5, err=bkg.globalrms, mask=wmap)
-
-    # if seeing_fwhm is not None:
-    #    sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
-
-    # sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
-
-    # sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % step
 
     LIMIT_AREA = 5000
     idx_small = objects["npix"] < LIMIT_AREA
@@ -100,12 +91,7 @@ def check_photometry(
     for idx, frame in enumerate(frames):
         imagename = name_skysub_proc(frame.baselabel, step)
 
-        # sex.config['CATALOG_NAME'] = ('catalogue-%s-i%01d.cat' %
-        #                              (frame.baselabel, step))
-
-        # Lauch SExtractor on a FITS file
-        # om double image mode
-        _logger.info("Runing sextractor in %s", imagename)
+        _logger.info("Running source extraction in %s", imagename)
         with fits.open(imagename) as hdul:
             header = hdul[0].header
             airmasses.append(header["airmass"])
@@ -210,76 +196,3 @@ def plot_photometry_check(ax, vals, errors, levels, nsigma):
         ax.plot([x[0], x[-1]], [f, f], "g--")
 
     return ax
-
-
-def check_position(images_info, sf_data, seeing_fwhm, step=0):
-    # FIXME: this method has to be updated
-
-    _logger.info("Checking positions")
-    # Check position of bright objects
-    weigthmap = "weights4rms.fits"
-
-    wmap = numpy.zeros_like(sf_data[0])
-
-    # Center of the image
-    border = 300
-    wmap[border:-border, border:-border] = 1
-    fits.writeto(weigthmap, wmap.astype("uint8"), overwrite=True)
-
-    basename = "result_i%0d.fits" % (step)
-    sex = SExtractor()
-    sex.config["VERBOSE_TYPE"] = "QUIET"
-    sex.config["PIXEL_SCALE"] = 1
-    sex.config["BACK_TYPE"] = "AUTO"
-    if seeing_fwhm is not None and seeing_fwhm > 0:
-        sex.config["SEEING_FWHM"] = seeing_fwhm * sex.config["PIXEL_SCALE"]
-    sex.config["WEIGHT_TYPE"] = "MAP_WEIGHT"
-    sex.config["WEIGHT_IMAGE"] = weigthmap
-
-    sex.config["PARAMETERS_LIST"].append("FLUX_BEST")
-    sex.config["PARAMETERS_LIST"].append("FLUXERR_BEST")
-    sex.config["PARAMETERS_LIST"].append("FWHM_IMAGE")
-    sex.config["PARAMETERS_LIST"].append("CLASS_STAR")
-
-    sex.config["CATALOG_NAME"] = "master-catalogue-i%01d.cat" % step
-
-    _logger.info("Runing sextractor in %s", basename)
-    sex.run("%s,%s" % (basename, basename))
-
-    # Sort catalog by flux
-    catalog = sex.catalog()
-    catalog = sorted(catalog, key=operator.itemgetter("FLUX_BEST"), reverse=True)
-
-    # set of indices of the N first objects
-    # OBJS_I_KEEP = 10
-
-    # master = [(obj['X_IMAGE'], obj['Y_IMAGE'])
-    #    for obj in catalog[:OBJS_I_KEEP]]
-
-    for image in images_info:
-        imagename = name_skysub_proc(image.baselabel, step)
-
-        sex.config["CATALOG_NAME"] = "catalogue-self-%s-i%01d.cat" % (
-            image.baselabel,
-            step,
-        )
-
-        # Lauch SExtractor on a FITS file
-        # on double image mode
-        _logger.info("Runing sextractor in %s", imagename)
-        sex.run(imagename)
-        catalog = sex.catalog()
-
-        # data = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog]
-
-        # tree = KDTree(data)
-
-        # Search 2 neighbors
-        # dists, _ids = tree.query(master, 2, distance_upper_bound=5)
-
-        # for i in dists[:,0]:
-        #    print i
-
-        # _logger.info('Mean offset correction for image %s is %f',
-        #    imagename, dists[:,0].mean())
-        # raw_input('press any key')

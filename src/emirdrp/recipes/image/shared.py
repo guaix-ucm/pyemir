@@ -24,8 +24,6 @@ from scipy.spatial import KDTree as KDTree
 import sep
 
 import matplotlib as mpl
-from matplotlib.patches import Ellipse
-from matplotlib.collections import PatchCollection
 
 from numina import __version__
 from numina.core import DataFrame
@@ -36,9 +34,6 @@ from numina.array import subarray_match
 from numina.array.combine import flatcombine, median, quantileclip
 from numina.exceptions import RecipeError
 
-from emirdrp.util.sextractor import SExtractor
-from emirdrp.util.sextractor import open as sopen
-from emirdrp.util import sexcatalog
 from emirdrp.core.recipe import EmirRecipe
 from emirdrp.products import SourcesCatalog
 from emirdrp.instrument.channels import FULL
@@ -306,7 +301,6 @@ class DirectImageCommon(EmirRecipe):
 
                 seeing_fwhm = None
 
-                # self.check_position(images_info, sf_data, seeing_fwhm)
                 recompute = False
                 if recompute:
                     _logger.info("Recentering is needed")
@@ -895,102 +889,12 @@ class DirectImageCommon(EmirRecipe):
         ax.set_title("%s, bg=%g fg=%g, linscale" % (image.lastname, clim[0], clim[1]))
         self._figure.canvas.draw()
 
-    def create_mask_single(self, frame, seeing_fwhm, step=0):
-        #
-        # remove_border = True
-
-        # sextractor takes care of bad pixels
-        sex = SExtractor()
-        sex.config["CHECKIMAGE_TYPE"] = "SEGMENTATION"
-        sex.config["CHECKIMAGE_NAME"] = name_object_mask(frame.baselabel, step)
-
-        sex.config["VERBOSE_TYPE"] = "QUIET"
-        sex.config["PIXEL_SCALE"] = 1
-        sex.config["BACK_TYPE"] = "AUTO"
-
-        if seeing_fwhm is not None and seeing_fwhm > 0:
-            sex.config["SEEING_FWHM"] = seeing_fwhm * sex.config["PIXEL_SCALE"]
-
-        sex.config["PARAMETERS_LIST"].append("FLUX_BEST")
-        sex.config["PARAMETERS_LIST"].append("X_IMAGE")
-        sex.config["PARAMETERS_LIST"].append("Y_IMAGE")
-        sex.config["PARAMETERS_LIST"].append("A_IMAGE")
-        sex.config["PARAMETERS_LIST"].append("B_IMAGE")
-        sex.config["PARAMETERS_LIST"].append("THETA_IMAGE")
-        sex.config["PARAMETERS_LIST"].append("FWHM_IMAGE")
-        sex.config["PARAMETERS_LIST"].append("CLASS_STAR")
-
-        filename = frame.lastname
-
-        # Lauch SExtractor on a FITS file
-        sex.run(filename)
-
-        # Plot objects
-        # FIXME, plot sextractor objects on top of image
-        patches = []
-        fwhms = []
-        nfirst = 0
-        catalog_f = sopen(sex.config["CATALOG_NAME"])
-        try:
-            star = catalog_f.readline()
-            while star:
-                flags = star["FLAGS"]
-                # ignoring those objects with corrupted apertures
-                if flags & sexcatalog.CORRUPTED_APER:
-                    star = catalog_f.readline()
-                    continue
-                center = (star["X_IMAGE"], star["Y_IMAGE"])
-                wd = 10 * star["A_IMAGE"]
-                hd = 10 * star["B_IMAGE"]
-                color = "red"
-                e = Ellipse(center, wd, hd, star["THETA_IMAGE"], color=color)
-                patches.append(e)
-                fwhms.append(star["FWHM_IMAGE"])
-                nfirst += 1
-                # FIXME Plot a ellipse
-                star = catalog_f.readline()
-        finally:
-            catalog_f.close()
-
-        p = PatchCollection(patches, alpha=0.4)
-        ax = self._figure.gca()
-        ax.add_collection(p)
-        self._figure.canvas.draw()
-        self._figure.savefig("figure-sky-segmentation-overlay_%01d.png" % step)
-
-        self.figure_fwhm_histogram(fwhms, step=step)
-
-        # mode with an histogram
-        hist, edges = numpy.histogram(fwhms, 50)
-        idx = hist.argmax()
-
-        seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1])
-        if seeing_fwhm <= 0:
-            _logger.warning("Seeing FHWM %f pixels is negative, reseting", seeing_fwhm)
-            seeing_fwhm = None
-        else:
-            _logger.info(
-                "Seeing FHWM %f pixels (%f arcseconds)",
-                seeing_fwhm,
-                seeing_fwhm * sex.config["PIXEL_SCALE"],
-            )
-        name_segmask(step)
-        _logger.info("Step %d, create object mask %s", step, frame.objmask)
-        frame.objmask = name_object_mask(frame.baselabel, step)
-        frame.objmask_data = None
-        return frame, seeing_fwhm
-
     def create_mask(self, sf_data, seeing_fwhm, step=0):
         # FIXME more plots
         self.figure_final_before_s(sf_data[0])
 
         #
         remove_border = True
-
-        # sextractor takes care of bad pixels
-
-        # if seeing_fwhm is not None and seeing_fwhm > 0:
-        #    sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
 
         if remove_border:
             weigthmap = "weights4rms.fits"
@@ -1019,76 +923,19 @@ class DirectImageCommon(EmirRecipe):
             lower = sf_data[2].max() // 10
             border = wm < lower
             fits.writeto(weigthmap, border.astype("uint8"), overwrite=True)
-
-            # sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-            # FIXME: this is a magic number
-            # sex.config['WEIGHT_THRESH'] = 50
-            # sex.config['WEIGHT_IMAGE'] = weigthmap
         else:
             border = None
 
         filename = "result_i%0d.fits" % (step)
-
-        # Lauch SExtractor on a FITS file
-        # sex.run(filename)
 
         data_res = fits.getdata(filename)
         data_res = data_res.byteswap().view(data_res.dtype.newbyteorder())
         bkg = sep.Background(data_res)
         data_sub = data_res - bkg
 
-        _logger.info("Runing source extraction tor in %s", filename)
+        _logger.info("Running source extraction in %s", filename)
         objects, objmask = sep.extract(data_sub, 1.5, err=bkg.globalrms, mask=border, segmentation_map=True)
         fits.writeto(name_segmask(step), objmask, overwrite=True)
-
-        # # Plot objects
-        # # FIXME, plot sextractor objects on top of image
-        # patches = []
-        # fwhms = []
-        # nfirst = 0
-        # catalog_f = sopen(sex.config['CATALOG_NAME'])
-        # try:
-        #     star = catalog_f.readline()
-        #     while star:
-        #         flags = star['FLAGS']
-        #         # ignoring those objects with corrupted apertures
-        #         if flags & sexcatalog.CORRUPTED_APER:
-        #             star = catalog_f.readline()
-        #             continue
-        #         center = (star['X_IMAGE'], star['Y_IMAGE'])
-        #         wd = 10 * star['A_IMAGE']
-        #         hd = 10 * star['B_IMAGE']
-        #         color = 'red'
-        #         e = Ellipse(center, wd, hd, star['THETA_IMAGE'], color=color)
-        #         patches.append(e)
-        #         fwhms.append(star['FWHM_IMAGE'])
-        #         nfirst += 1
-        #         # FIXME Plot a ellipse
-        #         star = catalog_f.readline()
-        # finally:
-        #     catalog_f.close()
-        #
-        # p = PatchCollection(patches, alpha=0.4)
-        # ax = self._figure.gca()
-        # ax.add_collection(p)
-        # self._figure.canvas.draw()
-        # self._figure.savefig('figure-segmentation-overlay_%01d.png' % step)
-        #
-        # self.figure_fwhm_histogram(fwhms, step=step)
-        #
-        # # mode with an histogram
-        # hist, edges = numpy.histogram(fwhms, 50)
-        # idx = hist.argmax()
-        #
-        # seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1])
-        # if seeing_fwhm <= 0:
-        #     _logger.warning(
-        #         'Seeing FHWM %f pixels is negative, reseting', seeing_fwhm)
-        #     seeing_fwhm = None
-        # else:
-        #     _logger.info('Seeing FHWM %f pixels (%f arcseconds)',
-        #                  seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
-        # objmask = fits.getdata(name_segmask(step))
 
         return objmask, seeing_fwhm
 
@@ -1106,11 +953,3 @@ class DirectImageCommon(EmirRecipe):
         norm = ImageNormalize(vmin=z1, vmax=z2, stretch=SqrtStretch())
         ax.imshow(data, cmap=cmap, clim=(z1, z2), norm=norm)
         self._figure.canvas.draw()
-
-    def figure_fwhm_histogram(self, fwhms, step=0):
-        self._figure.clf()
-        ax = self._figure.add_subplot(111)
-        ax.set_title("FWHM of objects")
-        ax.hist(fwhms, 50, normed=1, facecolor="g", alpha=0.75)
-        self._figure.canvas.draw()
-        self._figure.savefig("figure-fwhm-histogram_i%01d.png" % step)

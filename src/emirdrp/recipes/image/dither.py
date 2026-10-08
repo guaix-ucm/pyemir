@@ -1043,11 +1043,6 @@ class FullDitheredImagesRecipe(EmirRecipe):
         #
         remove_border = True
 
-        # sextractor takes care of bad pixels
-
-        # if seeing_fwhm is not None and seeing_fwhm > 0:
-        #    sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
-
         if remove_border:
             weigthmap = "weights4rms.fits"
 
@@ -1075,11 +1070,6 @@ class FullDitheredImagesRecipe(EmirRecipe):
             lower = wm.max() // 10
             border = wm < lower
             fits.writeto(weigthmap, border.astype("uint8"), overwrite=True)
-
-            # sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-            # FIXME: this is a magic number
-            # sex.config['WEIGHT_THRESH'] = 50
-            # sex.config['WEIGHT_IMAGE'] = weigthmap
         else:
             border = None
 
@@ -1091,55 +1081,6 @@ class FullDitheredImagesRecipe(EmirRecipe):
         objects, objmask = sep.extract(data_sub, 1.5, err=bkg.globalrms, mask=border, segmentation_map=True)
         self.logger.debug(f"... saving segmentation mask: {name_segmask(step)}")
         fits.writeto(name_segmask(step), objmask, overwrite=True)
-
-        # # Plot objects
-        # # FIXME, plot sextractor objects on top of image
-        # patches = []
-        # fwhms = []
-        # nfirst = 0
-        # catalog_f = sopen(sex.config['CATALOG_NAME'])
-        # try:
-        #     star = catalog_f.readline()
-        #     while star:
-        #         flags = star['FLAGS']
-        #         # ignoring those objects with corrupted apertures
-        #         if flags & sexcatalog.CORRUPTED_APER:
-        #             star = catalog_f.readline()
-        #             continue
-        #         center = (star['X_IMAGE'], star['Y_IMAGE'])
-        #         wd = 10 * star['A_IMAGE']
-        #         hd = 10 * star['B_IMAGE']
-        #         color = 'red'
-        #         e = Ellipse(center, wd, hd, star['THETA_IMAGE'], color=color)
-        #         patches.append(e)
-        #         fwhms.append(star['FWHM_IMAGE'])
-        #         nfirst += 1
-        #         # FIXME Plot a ellipse
-        #         star = catalog_f.readline()
-        # finally:
-        #     catalog_f.close()
-        #
-        # p = PatchCollection(patches, alpha=0.4)
-        # ax = self._figure.gca()
-        # ax.add_collection(p)
-        # self._figure.canvas.draw()
-        # self._figure.savefig('figure-segmentation-overlay_%01d.png' % step)
-        #
-        # self.figure_fwhm_histogram(fwhms, step=step)
-        #
-        # # mode with an histogram
-        # hist, edges = numpy.histogram(fwhms, 50)
-        # idx = hist.argmax()
-        #
-        # seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1])
-        # if seeing_fwhm <= 0:
-        #     _logger.warning(
-        #         'Seeing FHWM %f pixels is negative, reseting', seeing_fwhm)
-        #     seeing_fwhm = None
-        # else:
-        #     _logger.info('Seeing FHWM %f pixels (%f arcseconds)',
-        #                  seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
-        # objmask = fits.getdata(name_segmask(step))
 
         return objmask, seeing_fwhm
 
