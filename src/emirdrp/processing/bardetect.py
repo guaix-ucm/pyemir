@@ -143,31 +143,6 @@ def position_half_h(pslit, cpix, backw=4):
     return xint, next_peak, wpos1, wpos2, left_background, half_height
 
 
-def locate_bar_l(icut, epos):
-    """Fine position of the left CSU bar"""
-
-    def swap_coor(x):
-        return x
-
-    def swap_line(tab):
-        return tab
-
-    return _locate_bar_gen(icut, epos, transform1=swap_coor, transform2=swap_line)
-
-
-def locate_bar_r(icut, epos):
-    """Fine position of the right CSU bar"""
-    sm = len(icut)
-
-    def swap_coor(x):
-        return sm - 1 - x
-
-    def swap_line(tab):
-        return tab[::-1]
-
-    return _locate_bar_gen(icut, epos, transform1=swap_coor, transform2=swap_line)
-
-
 def _locate_bar_gen(icut, epos, transform1, transform2):
     """Generic function for the fine position of the CSU"""
 
@@ -341,75 +316,6 @@ def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
 
     xl = centerx - wx + x_t[0]
     return xl, fwhm_x, 0
-
-
-def char_bar_height(arr_deriv_alt, xpos1, xpos2, centery, threshold, wh=35, wfit=3):
-
-    logger = logging.getLogger("emir.recipes.bardetect")
-    pcentery = coor_to_pix_1d(centery)
-    slicey = slice_create(pcentery, wh, start=1, stop=2047)
-
-    ref_pcentery = pcentery - slicey.start
-    mm = arr_deriv_alt[slicey, xpos1 : xpos2 + 1].mean(axis=-1)
-
-    idxs_t = find_peaks_indexes(mm, window_width=3, threshold=threshold)
-    idxs_u = find_peaks_indexes(-mm, window_width=3, threshold=threshold)
-    # Peaks on the right
-
-    status = 0
-    npeaks_u = len(idxs_u)
-    if npeaks_u == 0:
-        # This is a problem, no peak on the right
-        b2 = 0
-        status = 4
-        logger.debug("no bottom border found")
-    else:
-        # Filter over reference
-        g_idxs_u = idxs_u[idxs_u >= ref_pcentery]
-        if len(g_idxs_u) == 0:
-            logger.debug("no peak over center")
-            b2 = 0
-            status = 4
-        else:
-            x_u, y_u = refine_peaks(-mm, g_idxs_u, window_width=wfit)
-            # Select the peak with max derivative
-            if len(x_u) == 0 or len(y_u) == 0:
-                logger.warning("no 1st peak found after refine")
-                b2 = 0
-                status = 4
-            else:
-                idmax = y_u.argmax()
-                b2 = x_u[idmax]
-                # b2val = y_u[idmax]
-                logger.debug("main border in %f", slicey.start + b2)
-
-    # peaks on the left
-    npeaks_t = len(idxs_t)
-    if npeaks_t == 0:
-        # This is a problem, no peak on the left
-        b1 = 0
-        logger.debug("no top border found")
-        status = 40 + status
-    else:
-        g_idxs_t = idxs_t[idxs_t <= ref_pcentery]
-        if len(g_idxs_t) == 0:
-            logger.debug("no peak under center")
-            b1 = 0
-            status = 40 + status
-        else:
-            x_t, y_t = refine_peaks(mm, g_idxs_t, window_width=wfit)
-            # Select the peak with max derivative
-            if len(x_t) == 0 or len(y_t) == 0:
-                logger.warning("no 2nd peak found after refine")
-                b1 = 0
-                status = 40 + status
-            else:
-                idmax = y_t.argmax()
-                b1 = x_t[idmax]
-                # b1val = y_t[idmax]
-                logger.debug("second border in %f", slicey.start + b1)
-
-    return slicey.start + b1, slicey.start + b2, status
 
 
 def overlap(intv1, intv2):

@@ -88,9 +88,9 @@ Intensity Flat-Field
 --------------------
 
 :Mode: Intensity Flat-Field
-:Recipe class: :class:`~emirdrp.recipes.IntensityFlatRecipe`
-:Input class: :class:`~emirdrp.recipes.IntensityFlatRecipeInput`
-:Result class: :class:`~emirdrp.recipes.IntensityFlatRecipeResult`
+:Recipe class: :class:`~emirdrp.recipes.IntensityFlatRecipe2`
+:Input class: :class:`~emirdrp.recipes.IntensityFlatRecipe2Input`
+:Result class: :class:`~emirdrp.recipes.IntensityFlatRecipe2Result`
 
 The required actions to set the TS and EMIR at the
 configuration from which sky and/or artificial illumination flat

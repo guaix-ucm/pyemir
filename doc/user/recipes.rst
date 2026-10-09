@@ -89,48 +89,6 @@ or an **OptionalParameter** that will be ignored if not present.
 DFP Recipes Parameters
 ++++++++++++++++++++++
 
-:class:  ``focus.TelescopeRoughFocusRecipe``
-:mode:  TS rough focus
-:requires:
-    -  Product: ``MasterBias``
-    -  Product: ``MasterDark``
-    -  Product: ``MasterBadPixelMask``
-    -  Product: ``NonLinearityCorrection``
-    -  Product: ``MasterIntensityFlatField``
-    -  Parameter: objects
-    -  Parameter: focus_range
-:provides:  ``TelescopeFocus``
-
------
-
-:class:  ``focus.TelescopeFineFocusRecipe``
-:mode:  TS fine focus
-:requires:
-    -  Product: ``MasterBias``
-    -  Product: ``MasterDark``
-    -  Product: ``MasterBadPixelMask``
-    -  Product: ``NonLinearityCorrection``
-    -  Product: ``MasterIntensityFlatField``
-    -  Parameter: objects
-:provides:  ``TelescopeFocus``
-
------
-
-:class:  ``focus.DTUFocusRecipe``
-:mode:  EMIR focus control
-:requires:
-    -  Product: ``MasterBias``
-    -  Product: ``MasterDark``
-    -  Product: ``MasterBadPixelMask``
-    -  Product: ``NonLinearityCorrection``
-    -  Product: ``MasterIntensityFlatField``
-    -  Parameter: objects
-    -  Parameter: msm_pattern
-    -  Parameter: dtu_focus_range
-:provides:  ``DTUFocus``
-
------
-
 :class:  ``acquisition.MaskCheckRecipe``
 :mode:  Target acquisition
 :requires:
@@ -143,17 +101,6 @@ DFP Recipes Parameters
 
 -----
 
-:class:  ``acquisition.MaskImagingRecipe``
-:mode:  Mask image
-:requires:
-    -  Product: ``MasterBias``
-    -  Product: ``MasterDark``
-    -  Product: ``MasterBadPixelMask``
-    -  Product: ``NonLinearityCorrection``
-    -  Product: ``MasterIntensityFlatField``
-:provides:  ``MSMPositions``
-
------
 
 :class:  ``acquisition.MaskCheckRecipe``
 :mode:  MSM and LSM check
@@ -186,7 +133,7 @@ DRP Recipes Parameters
 
 ------------
 
-:class: ``auxiliary.IntensityFlatRecipe``
+:class: ``auxiliary.IntensityFlatRecipe2``
 :mode:  Intensity flat-field
 :requires:
         - Product: ``MasterBias``
@@ -208,30 +155,6 @@ DRP Recipes Parameters
 
 -----
 
-:class:  ``auxiliary.SlitTransmissionRecipe``
-:mode:  Slit transmission calibration
-:requires:
-    -  Product: ``MasterBias``
-    -  Product: ``MasterDark``
-    -  Product: ``MasterBadPixelMask``
-    -  Product: ``NonLinearityCorrection``
-:provides:  ``SlitTransmissionCalibration``
-
------
-
-:class:  ``auxiliary.WavelengthCalibrationRecipe``
-:mode:  Wavelength calibration
-:requires:
-    -  Product: ``MasterBias``
-    -  Product: ``MasterDark``
-    -  Product: ``MasterBadPixelMask``
-    -  Product: ``NonLinearityCorrection``
-    -  Product: ``MasterIntensityFlatField``
-    -  Product: ``MasterSpectralFlatField``
-    -  Parameter: line_table (with wavelengths of arc lines)
-:provides:  ``WavelengthCalibration``
-
------
 
 :class:  ``image.StareImageRecipe``
 :mode:  Stare image

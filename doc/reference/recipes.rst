@@ -16,7 +16,7 @@ Recipes for auxiliary modes
 
    Dark Recipe
 
-.. class:: IntensityFlatRecipe
+.. class:: IntensityFlatRecipe2
 
    Intensity Flat Recipe
 

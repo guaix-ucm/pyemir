@@ -142,63 +142,6 @@ class DarkRecipe(EmirRecipe):
         return result
 
 
-class IntensityFlatRecipe(EmirRecipe):
-    """Recipe to process data taken in intensity flat-field mode.
-
-    Recipe to process intensity flat-fields. The flat-on and
-    flat-off images are combined (method?) separately and the subtracted
-    to obtain a thermal subtracted flat-field.
-
-    **Observing modes:**
-
-     * Intensity Flat-Field
-
-    **Inputs:**
-
-      * A master dark frame
-      * Non linearity
-      * A model of the detector.
-
-    **Outputs:**
-
-     * TBD
-
-    **Procedure:**
-
-     * A combined thermal subtracted flat field, normalized to median 1,
-       with with variance extension and quality flag.
-
-    """
-
-    master_bpm = reqs.MasterBadPixelMaskRequirement()
-    obresult = reqs.ObservationResultRequirement()
-    master_bias = reqs.MasterBiasRequirement()
-    master_dark = reqs.MasterDarkRequirement()
-
-    flatframe = Result(prods.MasterIntensityFlat)
-
-    def run(self, rinput):
-        _logger.info("starting flat reduction")
-
-        errors = True
-
-        flow = self.init_filters(rinput)
-        hdulist = basic_processing_with_combination(rinput, flow, method=median, errors=errors)
-
-        hdr = hdulist[0].header
-        self.set_base_headers(hdr)
-        mm = hdulist[0].data.mean()
-        hdr["CCDMEAN"] = mm
-
-        hdulist[0].data /= mm
-        if errors:
-            hdulist["variance"].data /= mm * mm
-
-        result = self.create_result(flatframe=hdulist)
-
-        return result
-
-
 class IntensityFlatRecipe2(EmirRecipe):
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
@@ -248,32 +191,6 @@ class IntensityFlatRecipe2(EmirRecipe):
         return result
 
 
-class SimpleSkyRecipe(EmirRecipe):
-    """Recipe to process data taken in intensity flat-field mode."""
-
-    master_bpm = reqs.MasterBadPixelMaskRequirement()
-    obresult = reqs.ObservationResultRequirement()
-    master_bias = reqs.MasterBiasRequirement()
-    master_dark = reqs.MasterDarkRequirement()
-    master_flat = reqs.MasterIntensityFlatFieldRequirement()
-
-    skyframe = Result(prods.MasterSky)
-
-    def run(self, rinput):
-        _logger.info("starting sky reduction")
-
-        flow = self.init_filters(rinput)
-
-        hdulist = basic_processing_with_combination(rinput, flow, method=median, errors=True)
-
-        hdr = hdulist[0].header
-        self.set_base_headers(hdr)
-
-        result = self.create_result(skyframe=hdulist)
-
-        return result
-
-
 class DitherSkyRecipe(EmirRecipe):
     """Recipe to process data taken in dither sky mode."""
 
@@ -315,67 +232,3 @@ class SpectralFlatRecipe(EmirRecipe):
 
     def run(self, rinput):
         return self.create_result(flatframe=prods.MasterSpectralFlat())
-
-
-class SlitTransmissionRecipe(EmirRecipe):
-    """Recipe to calibrate the slit transmission.
-
-    **Observing modes:**
-
-        * Slit transmission calibration (4.4)
-
-    **Inputs:**
-
-        * A list of uniformly illuminated images of MSM
-
-    **Outputs:**
-
-     * A list of slit transmission functions
-
-    **Procedure:**
-
-     * TBD
-
-    """
-
-    master_bpm = reqs.MasterBadPixelMaskRequirement()
-    master_bias = reqs.MasterBiasRequirement()
-    master_dark = reqs.MasterDarkRequirement()
-
-    slit = Result(prods.SlitTransmissionCalibration)
-
-    def run(self, rinput):
-        return self.create_result(slit=prods.SlitTransmissionCalibration())
-
-
-class WavelengthCalibrationRecipe(EmirRecipe):
-    """Recipe to calibrate the spectral response.
-
-    **Observing modes:**
-
-        * Wavelength calibration (4.5)
-
-    **Inputs:**
-
-     * List of line positions
-     * Calibrations up to spectral flatfielding
-
-    **Outputs:**
-
-     * Wavelength calibration structure
-
-    **Procedure:**
-
-     * TBD
-    """
-
-    master_bpm = reqs.MasterBadPixelMaskRequirement()
-    master_bias = reqs.MasterBiasRequirement()
-    master_dark = reqs.MasterDarkRequirement()
-    master_flat = reqs.MasterIntensityFlatFieldRequirement()
-    master_spectral_ff = reqs.MasterSpectralFlatFieldRequirement()
-
-    cal = Result(prods.WavelengthCalibration)
-
-    def run(self, rinput):
-        return self.create_result(cal=prods.WavelengthCalibration())
