@@ -39,9 +39,10 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
+    "hypothesis",
     "pytest>=6",
     "pytest-remotedata",
-    "hypothesis",
+    "pytest-xdist",
 ]
 docs = [
     "sphinx>=7",

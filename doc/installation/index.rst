@@ -314,3 +314,27 @@ at your own risk!).
    (venv_emir) $ git clone https://github.com/guaix-ucm/pyemir.git
    (venv_emir) $ cd pyemir
    (venv_emir) $ pip install -e .
+
+Running the tests
+-----------------
+
+The tests use `pytest <https://pytest.org>`_. Install PyEmir with the optional
+dependencies for testing and run pytest from the root of the source tree:
+
+.. code-block:: console
+
+   (venv_emir) $ pip install -e ".[test]"
+   (venv_emir) $ pytest
+
+The tests that need data downloaded from a server are skipped by default,
+they are enabled with ``--remote-data=any``. The tests can be run in parallel
+with `pytest-xdist <https://pytest-xdist.readthedocs.io>`_. The tests of a
+file must be run in the same process, as they share the downloaded data and
+can use the results of previous tests, so use the option ``--dist loadfile``:
+
+.. code-block:: console
+
+   (venv_emir) $ pytest -n auto --dist loadfile --remote-data=any
+
+Most of the time is taken by the tests of the imaging tutorial, in a single
+file, so the gain is small.
