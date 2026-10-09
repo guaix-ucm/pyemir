@@ -97,10 +97,6 @@ modes:
   key: TEST9
   name: Slit-mask spectra extraction
   summary: Summary
-- description: Extracts spectra of the slits in the AIV mask
-  key: TEST9
-  name: Slit-mask spectra extraction
-  summary: Summary
 - description: Positions of the CSU bars
   key: TEST10
   name: Bar detection
