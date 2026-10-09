@@ -25,7 +25,6 @@ import sep
 
 import matplotlib as mpl
 
-from numina import __version__
 from numina.core import DataFrame
 from numina.array import fixpix2
 from numina.frame import resize_fits, custom_region_to_str
@@ -100,10 +99,9 @@ class DirectImageCommon(EmirRecipe):
 
     logger = _logger
     BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = [0, 1, 2, 3, 4]
-    __version__ = "1"
 
     def __init__(self, *args, **kwds):
-        super(DirectImageCommon, self).__init__(version=__version__)
+        super().__init__(*args, **kwds)
         # Required to delay the backend initialization (issue numina/#102, #49)
         import matplotlib.pyplot as plt
 
@@ -374,13 +372,11 @@ class DirectImageCommon(EmirRecipe):
 
         hdu = fits.PrimaryHDU(sf_data[0])
         hdr = hdu.header
-        hdr.update("NUMXVER", __version__, "Numina package version")
-        hdr.update("NUMRNAM", self.__class__.__name__, "Numina recipe name")
-        hdr.update("NUMRVER", self.__version__, "Numina recipe version")
+        self.set_base_headers(hdr)
 
-        hdr.update("FILENAME", "result.fits")
-        hdr.update("IMGTYP", "TARGET", "Image type")
-        hdr.update("NUMTYP", "TARGET", "Data product type")
+        hdr["FILENAME"] = "result.fits"
+        hdr["IMGTYP"] = ("TARGET", "Image type")
+        hdr["NUMTYP"] = ("TARGET", "Data product type")
 
         varhdu = fits.ImageHDU(sf_data[1], name="VARIANCE")
         num = fits.ImageHDU(sf_data[2], name="MAP")

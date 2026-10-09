@@ -57,8 +57,7 @@ class SimpleBiasRecipe(EmirRecipe):
         hdr = hdulist[0].header
         hdr["IMGTYP"] = ("BIAS", "Image type")
         hdr["NUMTYP"] = ("MASTER_BIAS", "Data product type")
-        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
-        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
+        self.set_base_headers(hdr)
 
         _logger.info("simple bias reduction ended")
 
@@ -80,8 +79,7 @@ class TestBiasCorrectRecipe(EmirRecipe):
         flow = self.init_filters(rinput)
         hdu = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdu[0].header
-        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
-        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
+        self.set_base_headers(hdr)
         hdulist = fits.HDUList([hdu])
 
         result = self.create_result(frame=hdulist)
@@ -129,8 +127,7 @@ class TestDarkCorrectRecipe(EmirRecipe):
         flow = self.init_filters(rinput)
         hdulist = basic_processing_with_combination(rinput, flow, method=median)
         hdr = hdulist[0].header
-        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
-        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
+        self.set_base_headers(hdr)
 
         result = self.create_result(frame=hdulist)
 

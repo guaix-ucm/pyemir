@@ -15,7 +15,6 @@ import warnings
 import numpy
 from astropy.io import fits
 
-from numina import __version__
 from numina.core import Parameter
 from numina.exceptions import RecipeError
 from numina.core import Result
@@ -175,16 +174,12 @@ class CosmeticsRecipe(EmirRecipe):
 
         hdu = fits.PrimaryHDU(ratio)
         hdr = hdu.header
-        hdr["NUMXVER"] = (__version__, "Numina package version")
-        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
-        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
+        self.set_base_headers(hdr)
         ratiohdl = fits.HDUList([hdu])
 
         maskhdu = fits.PrimaryHDU(m)
         hdr = maskhdu.header
-        hdr["NUMXVER"] = (__version__, "Numina package version")
-        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
-        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
+        self.set_base_headers(hdr)
         maskhdl = fits.HDUList([maskhdu])
 
         res = self.create_result(ratioframe=ratiohdl, maskframe=maskhdl)
