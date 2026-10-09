@@ -55,8 +55,3 @@ QUADRANTS = [(_P2, _P1), (_P1, _P1), (_P1, _P2), (_P2, _P2)]
 
 
 # FIXME: this is a hack to convert channel name to a structure
-def convert_name_to_channels(conf):
-    chname = conf.configuration["detector"]["channels"]
-    allcha = globals()[chname]
-    conf.configuration["detector"]["channels"] = allcha
-    return conf

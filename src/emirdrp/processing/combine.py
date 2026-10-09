@@ -513,13 +513,3 @@ def segmentation_combined(data, snr_detect=10.0, fwhm=4.0, npixels=15, mask_corn
         _logger.warning("%s", error)
         segmap = numpy.zeros_like(data_s, dtype="int")
     return segmap
-
-
-def basic_processing_with_update(rinput, flow):
-
-    # FIXME: this only works with local images
-    # We don't know how to store temporary GCS frames
-    _logger.info("processing input images")
-    for frame in rinput.obresult.images:
-        with fits.open(frame.label, mode="update") as hdul:
-            flow(hdul)

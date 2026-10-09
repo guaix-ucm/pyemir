@@ -121,19 +121,6 @@ def wcs_pvex(wcs, xr, yr):
     return xv, yv
 
 
-def pix2virt(pos, origin=1):
-    """
-
-    This function is deprecated, use wcs_pix2virt instead
-    """
-    ddef_o = 1
-    off = ddef_o - origin
-    pos = numpy.atleast_2d(pos) + off
-    nx, ny = pvex(pos[:, 0], pos[:, 1])
-    res = numpy.stack((nx, ny), axis=1)
-    return res - off
-
-
 def wcs_pix2virt(wcs, pos, origin=1):
     ddef_o = 1
     off = ddef_o - origin

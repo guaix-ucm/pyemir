@@ -16,7 +16,6 @@ import numpy
 import scipy.ndimage
 from numina.array.utils import expand_region
 import numina.array.fwhm as fmod
-from numina.array.utils import coor_to_pix_1d
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from numina.array.utils import slice_create
 
@@ -93,82 +92,6 @@ def calc_fwhm(img, region, fexpand=3, axis=0):
     pidx = numpy.argmax(qslit)
     peak, fwhm = fmod.compute_fwhm_1d_simple(qslit, pidx)
     return fwhm
-
-
-def simple_prot(x, start):
-    """Find the first peak to the right of start"""
-
-    # start must b >= 1
-
-    for i in range(start, len(x) - 1):
-        a, b, c = x[i - 1], x[i], x[i + 1]
-        if b - a > 0 and b - c >= 0:
-            return i
-    else:
-        return None
-
-
-def position_half_h(pslit, cpix, backw=4):
-    """Find the position where the value is half of the peak"""
-
-    # Find the first peak to the right of cpix
-    next_peak = simple_prot(pslit, cpix)
-
-    if next_peak is None:
-        raise ValueError
-
-    dis_peak = next_peak - cpix
-
-    wpos2 = cpix - dis_peak
-    wpos1 = wpos2 - backw
-
-    # Compute background in a window of width backw
-    # in a position simetrical to the peak
-    # around cpix
-    left_background = pslit[wpos1:wpos2].min()
-
-    # height of the peak
-    height = pslit[next_peak] - left_background
-
-    half_height = left_background + 0.5 * height
-
-    # Position at halg peak, linear interpolation
-    vv = pslit[wpos1 : next_peak + 1] - half_height
-
-    (res1,) = numpy.nonzero(numpy.diff(vv > 0))
-    i1 = res1[0]
-
-    xint = wpos1 + i1 + (0 - vv[i1]) / (vv[i1 + 1] - vv[i1])
-
-    return xint, next_peak, wpos1, wpos2, left_background, half_height
-
-
-def _locate_bar_gen(icut, epos, transform1, transform2):
-    """Generic function for the fine position of the CSU"""
-
-    epos_pix = coor_to_pix_1d(epos)
-
-    # transform ->
-    epos_pix_s = transform1(epos_pix)
-    icut2 = transform2(icut)
-    #
-
-    try:
-        res = position_half_h(icut2, epos_pix_s)
-
-        xint_s, next_peak_s, wpos1_s, wpos2_s, background_level, half_height = res
-        #
-
-        xint = transform1(xint_s)
-
-        #
-        epos_f = xint
-        error = 0
-    except ValueError:
-        error = 2
-        epos_f = epos
-
-    return epos_pix, epos_f, error
 
 
 def char_bar_peak_l(arr_deriv, ypix, bstart, bend, th):

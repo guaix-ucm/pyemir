@@ -26,7 +26,7 @@ from emirdrp.core.recipe import EmirRecipe
 import emirdrp.products as prods
 import emirdrp.requirements as reqs
 
-from .procedures import image_box2d
+from numina.array.utils import image_box2d
 
 
 class TestPointSourceRecipe(EmirRecipe):

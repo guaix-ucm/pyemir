@@ -15,11 +15,6 @@ import numpy
 import scipy.interpolate as sil
 
 
-class Counts:
-    INTEGRAL_COUNTS = (0,)
-    DIFFERENTIAL_COUNTS = 1
-
-
 class PhotometricFilter:
     FILTER_NONE = 0
     FILTER_B = 1
