@@ -893,23 +893,6 @@ class DirectImageCommon(EmirRecipe):
         remove_border = True
 
         if remove_border:
-            weigthmap = "weights4rms.fits"
-
-            # Create weight map, remove n pixs from either side
-            # using a Hannig filter
-            # npix = 90
-            # w1 = npix
-            # w2 = npix
-            # wmap = numpy.ones_like(sf_data[0])
-
-            # cos_win1 = numpy.hanning(2 * w1)
-            # cos_win2 = numpy.hanning(2 * w2)
-
-            # wmap[:,:w1] *= cos_win1[:w1]
-            # wmap[:,-w1:] *= cos_win1[-w1:]
-            # wmap[:w2,:] *= cos_win2[:w2, numpy.newaxis]
-            # wmap[-w2:,:] *= cos_win2[-w2:, numpy.newaxis]
-
             # Take the number of combined images from the combined image
             wm = sf_data[2].copy()
             # Dont search objects where nimages < lower
@@ -918,7 +901,6 @@ class DirectImageCommon(EmirRecipe):
             # than 10% of the images
             lower = sf_data[2].max() // 10
             border = wm < lower
-            fits.writeto(weigthmap, border.astype("uint8"), overwrite=True)
         else:
             border = None
 

@@ -57,13 +57,11 @@ def check_photometry(
     figure=None,
 ):
     # Check photometry of few objects
-    # weigthmap = 'weights4rms.fits'
 
     wmap = numpy.ones_like(sf_data[0], dtype="bool")
 
     # Center of the image
     wmap[border:-border, border:-border] = 0
-    # fits.writeto(weigthmap, wmap.astype('uintt8'), overwrite=True)
 
     basename = "result_i%0d.fits" % step
 
