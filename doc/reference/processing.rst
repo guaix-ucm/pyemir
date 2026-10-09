@@ -24,10 +24,6 @@
    :members:
    :undoc-members:
 
-.. automodule:: emirdrp.processing.info
-   :members:
-   :undoc-members:
-
 .. automodule:: emirdrp.processing.wcs
    :members:
    :undoc-members:
