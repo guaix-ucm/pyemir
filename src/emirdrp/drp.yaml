@@ -241,7 +241,6 @@ pipelines:
       TEST1: emirdrp.recipes.aiv.TestBiasCorrectRecipe
       TEST2: emirdrp.recipes.aiv.TestDarkCorrectRecipe
       TEST3: emirdrp.recipes.aiv.TestFlatCorrectRecipe
-      TEST4: emirdrp.recipes.aiv.TestFlatCorrectRecipe
       SKY_CORRECT: emirdrp.recipes.aiv.sky.TestSkyCorrectRecipe
       POINT_SOURCE: emirdrp.recipes.aiv.pointsources.TestPointSourceRecipe
       TEST7: emirdrp.recipes.aiv.slits.TestSlitDetectionRecipe
