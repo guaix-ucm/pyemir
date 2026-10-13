@@ -10,6 +10,7 @@
 """Datamodel for EMIR and related functions"""
 
 import logging
+import warnings
 
 import numina.datamodel as dm
 from numina.keydef import QueryAttribute
@@ -68,6 +69,13 @@ class EmirDataModel(dm.DataModel):
         return header.get("SKYADD", True)
 
     def add_computation_time(self, img, time1, time2):
+        """Deprecated, the results of the recipes record the computation time"""
+        warnings.warn(
+            "EmirDataModel.add_computation_time is deprecated, "
+            "the results of the recipes record the computation time",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         img[0].header["NUMUTC1"] = time1.isoformat()
         img[0].header["NUMUTC2"] = time2.isoformat()
         return img

@@ -26,7 +26,7 @@ def loginfo(method):
         for key in klass.stored():
             val = getattr(rinput, key)
             if isinstance(val, DataFrame):
-                self.logger.debug("DataFrame %s", datamodel.gather_info_dframe(val))
+                self.logger.debug("DataFrame %s", datamodel.gather_info(val))
             elif isinstance(val, ObservationResult):
                 for msg in datamodel.gather_info_oresult(val):
                     self.logger.debug("OB DataFrame %s", msg)
