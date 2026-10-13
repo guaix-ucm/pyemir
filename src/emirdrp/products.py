@@ -308,12 +308,27 @@ class LinesCatalog(DataProductType):
         super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
 
 
+def _set_query_expr(product):
+    """Set the query expression of a structured product from its tag names
+
+    The expression selects the products with the same values of the tags
+    as the observation result, for example the same grism and filter.
+    """
+    import numina.core.tagexpr as tagexpr
+
+    query_attrs = emirdrp.datamodel.EmirDataModel().query_attrs
+    product.query_expr = tagexpr.query_expr_from_attr([query_attrs[name] for name in product.tag_names()])
+    product.names_t = product.query_expr.tags()
+    product.names_f = product.query_expr.fields()
+
+
 class RefinedBoundaryModelParam(numina.types.structured.BaseStructuredCalibration):
     """Refined parameters of MOS model"""
 
     def __init__(self, instrument="unknown"):
         super(RefinedBoundaryModelParam, self).__init__(instrument)
         self.tags = {"grism": "unknown", "filter": "unknown"}
+        _set_query_expr(self)
         self.contents = []
 
     def __getstate__(self):
@@ -335,6 +350,7 @@ class RectWaveCoeff(numina.types.structured.BaseStructuredCalibration):
     def __init__(self, instrument="unknown"):
         super(RectWaveCoeff, self).__init__(instrument)
         self.tags = {"grism": "unknown", "filter": "unknown"}
+        _set_query_expr(self)
         self.global_integer_offset_x_pix = 0
         self.global_integer_offset_y_pix = 0
         self.total_slitlets = 0
@@ -377,17 +393,10 @@ class MasterRectWave(numina.types.structured.BaseStructuredCalibration):
     """Rectification and Wavelength Calibration Library Product"""
 
     def __init__(self, instrument="unknown"):
-        import numina.core.tagexpr as tagexpr
-
         datamodel = emirdrp.datamodel.EmirDataModel()
         super(MasterRectWave, self).__init__(instrument, datamodel=datamodel)
         self.tags = {"grism": "unknown", "filter": "unknown"}
-
-        my_tag_table = self.datamodel.query_attrs
-        objtags = [my_tag_table[t] for t in self.tag_names()]
-        self.query_expr = tagexpr.query_expr_from_attr(objtags)
-        self.names_t = self.query_expr.tags()
-        self.names_f = self.query_expr.fields()
+        _set_query_expr(self)
         self.query_opts = []
 
         self.total_slitlets = 0
