@@ -53,7 +53,6 @@ class EmirDataModel(dm.DataModel):
             "uuid2": ("EMIRUUID", "undefined"),
             "skyadd": ("SKYADD", True),
             "insconf": ("INSCONF", None),
-            "blckuuid": lambda img: None,
         }
 
         defaults.update(instrument_mappings)
