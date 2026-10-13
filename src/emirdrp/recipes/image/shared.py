@@ -100,15 +100,20 @@ class DirectImageCommon(EmirRecipe):
     logger = _logger
     BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = [0, 1, 2, 3, 4]
 
-    def __init__(self, *args, **kwds):
-        super().__init__(*args, **kwds)
-        # Required to delay the backend initialization (issue numina/#102, #49)
-        import matplotlib.pyplot as plt
+    _figure_plots = None
 
-        self._figure = plt.figure(facecolor="white")
-        # FigureCanvasAgg has no set_window_title
-        # self._figure.canvas.set_window_title('Recipe Plots')
-        self._figure.canvas.draw()
+    @property
+    def _figure(self):
+        """Figure of the plots of the recipe, created when it is first used"""
+        if self._figure_plots is None:
+            # Required to delay the backend initialization (issue numina/#102, #49)
+            import matplotlib.pyplot as plt
+
+            self._figure_plots = plt.figure(facecolor="white")
+            # FigureCanvasAgg has no set_window_title
+            # self._figure_plots.canvas.set_window_title('Recipe Plots')
+            self._figure_plots.canvas.draw()
+        return self._figure_plots
 
     def process(
         self,
