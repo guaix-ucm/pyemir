@@ -5,7 +5,9 @@ PyEmir Installation
 *******************
 
 PyEmir, the data reduction pipeline for EMIR, is a Python package
-(Python 3.6 or greater is required).
+(Python 3.10 or greater is required). It runs under `numina
+<https://numina.readthedocs.io>`_, version 0.40 or greater, that is
+installed with it.
 
 The easiest method of installing PyEmir is using prebuilt packages. You can
 also build from the development version.
@@ -46,14 +48,10 @@ What method of installation should I use?
   --not installing-- the pipeline; we suggest those users to try the
   installation using conda).
 
-- In macOS, there is a well-known compatibility problem between virtualenv and
-  `matplotlib <https://matplotlib.org/faq/osx_framework.html>`_, so we
-  recommend setting up conda.
-
 **You do not need root privileges to install the software.
 Everything will be installed under your home directory.**
 
-We are explaining how to install the sofware using **environments**.
+We are explaining how to install the software using **environments**.
 Environments allow the installation of software packages in isolated *work
 places*, avoiding collisions between already installed software packages in
 your computer. This approach has several advantages:
@@ -73,7 +71,7 @@ your computer. This approach has several advantages:
 Install in virtualenv (or venv)
 -------------------------------
 
-`Virtualenv <https:virtualenv.pypa.io/en/stable/installation/>`_ is a tool that
+`Virtualenv <https://virtualenv.pypa.io/en/stable/installation.html>`_ is a tool that
 allows to create isolated Python environments.
 
 Since Python version 3.3, there is also a module in the standard library called
@@ -87,7 +85,7 @@ The steps to install and run PyEmir within a virtual environment are:
 
   .. code-block:: console
 
-     $ python3 -m venv emir /path/to/emir
+     $ python3 -m venv /path/to/emir
 
   With ``virtualenv``:
 
@@ -102,7 +100,7 @@ The steps to install and run PyEmir within a virtual environment are:
 2. **Activate the environment**
 
   After creating the environment, the directory ``/path/to/emir`` contains a
-  Python tree. One of the directories is ``/path/to/emir/bin``, whih contains a
+  Python tree. One of the directories is ``/path/to/emir/bin``, which contains a
   script called ``activate``. To activate the environment we ``source`` (a bash
   shell command) this script file:
 
@@ -132,24 +130,32 @@ The steps to install and run PyEmir within a virtual environment are:
      ...
      ...
 
+  The graphical tools need the Qt bindings, installed with the optional
+  dependencies ``gui``:
+
+  .. code-block:: console
+
+     (emir) $ pip install "pyemir[gui]"
+
 4. **Test the installation**
 
   We can test the installation by running the ``numina`` command:
 
   .. code-block:: console
 
-     (emir) $ numina
-     DEBUG: Numina simple recipe runner version 0.30
+     (emir) $ numina --version
+     numina 0.40.0
 
   The current PyEmir version can also be easily displayed using:
 
   .. code-block:: console
 
      (emir) $ numina show-instruments
-     INFO: Numina simple recipe runner version 0.30.0
+     INFO: Numina simple recipe runner version 0.40.0
      Instrument: EMIR
-      version is '0.16.0'
-      has configuration 'Default configuration' uuid=225fcaf2-7f6f-49cc-972a-70fd0aee8e96
+      version is '0.24'
+      has profile 'Original EMIR configuration' uuid=225fcaf2-7f6f-49cc-972a-70fd0aee8e96
+      has profile 'Updated instrument after March 2023' uuid=443fc0d1-e09a-48cc-a0fd-02be6f399da2
       has datamodel 'emirdrp.datamodel.EmirDataModel'
       has pipeline 'default', version 1
 
@@ -220,7 +226,7 @@ instructions, the steps to execute and run PyEmir under conda are:
 
 1. **Create a conda environment**
 
-  With coda, environments are created in a centralised manner (under the
+  With conda, environments are created in a centralised manner (under the
   subdirectory ``./envs`` in your conda tree), i.e., we do not pass the path to
   the environment:
 
@@ -230,11 +236,11 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   Here we are asking that environment to be created including the last version
   of Python 3. If for any reason you need a particular Python version, you can
-  specify it; for example, to force the use of Python 3.9:
+  specify it; for example, to force the use of Python 3.12:
 
   .. code-block:: console
 
-     $ conda create --name emir python=3.9
+     $ conda create --name emir python=3.12
 
 2. **Activate the environment**
 
@@ -252,7 +258,7 @@ instructions, the steps to execute and run PyEmir under conda are:
 
 3. **Install PyEmir with conda**
 
-  After the environment activation, we can instal PyEmir using conda (we
+  After the environment activation, we can install PyEmir using conda (we
   provide conda packages for PyEmir in the `conda-forge channel
   <https://conda-forge.org>`_):
 
@@ -268,8 +274,8 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   .. code-block:: console
 
-     (emir) $ numina
-     DEBUG: Numina simple recipe runner version 0.30
+     (emir) $ numina --version
+     numina 0.40.0
 
 5. **Update within the environment**
 
