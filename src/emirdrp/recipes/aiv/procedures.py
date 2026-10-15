@@ -9,7 +9,7 @@
 
 """AIV Recipes for EMIR"""
 
-from photutils.geometry.circular_overlap import circular_overlap_grid
+from photutils.geometry import circular_overlap_grid
 
 
 def encloses_annulus(x_min, x_max, y_min, y_max, nx, ny, r_in, r_out):
