@@ -41,7 +41,9 @@ What method of installation should I use?
 -----------------------------------------
 
 - If you are familiar with one method, use it (conda or virtualenv), since both
-  are fully supported.
+  are fully supported. In both cases PyEmir is installed with ``pip`` from
+  `PyPI <https://pypi.org/project/pyemir/>`_, where there are prebuilt packages
+  of PyEmir and numina for Linux and macOS.
 
 - In Linux, virtualenv is easier to setup (note: for still unknown reasons,
   some people using particular Ubuntu versions have faced some problems running
@@ -256,17 +258,30 @@ instructions, the steps to execute and run PyEmir under conda are:
 
      (emir) $
 
-3. **Install PyEmir with conda**
+3. **Install PyEmir with pip**
 
-  After the environment activation, we can install PyEmir using conda (we
-  provide conda packages for PyEmir in the `conda-forge channel
-  <https://conda-forge.org>`_):
+  After the environment activation, we install PyEmir with ``pip``, inside the
+  conda environment:
 
   .. code-block:: console
 
-     (emir) $ conda install -c conda-forge pyemir
+     (emir) $ pip install pyemir
      ...
      ...
+
+  The graphical tools need the Qt bindings, installed with the optional
+  dependencies ``gui``:
+
+  .. code-block:: console
+
+     (emir) $ pip install "pyemir[gui]"
+
+  .. note::
+
+     The packages of PyEmir and numina in the `conda-forge channel
+     <https://conda-forge.org>`_ are no longer updated: they are older
+     versions, and some dependencies of numina are not in conda-forge. Install
+     PyEmir with ``pip`` as shown above, also in conda environments.
 
 4. **Test the installation**
 
@@ -284,7 +299,7 @@ instructions, the steps to execute and run PyEmir under conda are:
 
   .. code-block:: console
 
-     (emir) $ conda update pyemir
+     (emir) $ pip install -U pyemir
 
 6. **Deactivate the environment**
 
