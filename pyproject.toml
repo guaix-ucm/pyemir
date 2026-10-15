@@ -52,9 +52,6 @@ docs = [
 gui = [
     "PyQt6",
 ]
-tool = [
-    "PyQt5",
-]
 
 [project.urls]
 Homepage = "https://github.com/guaix-ucm/pyemir"
