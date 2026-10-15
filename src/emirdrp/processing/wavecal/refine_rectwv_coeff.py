@@ -13,8 +13,6 @@ import numpy as np
 
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
-from numina.array.display.matplotlib_qt import plt
-from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.stats import summary
 from numina.array.wavecalib.check_wlcalib import check_wlcalib_sp
 from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
@@ -85,6 +83,8 @@ def refine_rectwv_coeff(
         the expected catalogue lines.
 
     """
+    from numina.array.display.matplotlib_qt import plt
+    from numina.array.display.matplotlib_qt import set_window_geometry
 
     logger = logging.getLogger(__name__)
 

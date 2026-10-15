@@ -13,14 +13,12 @@ from copy import deepcopy
 from datetime import datetime
 import json
 from lmfit import Minimizer, Parameters, report_fit
-import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import sys
 from uuid import uuid4
 
 from numina.array.ccd_line import SpectrumTrail
-from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximshow import ximshow
 
@@ -1327,6 +1325,9 @@ def bound_params_from_dict(bound_param_dict):
 
 
 def main(args=None):
+
+    import matplotlib.pyplot as plt
+    from numina.array.display.matplotlib_qt import set_window_geometry
 
     # parse command-line options
     parser = argparse.ArgumentParser()

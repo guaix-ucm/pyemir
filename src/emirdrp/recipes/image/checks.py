@@ -14,7 +14,6 @@ import logging
 
 import numpy
 from astropy.io import fits
-import matplotlib.pyplot as plt
 import sep
 
 from .naming import name_skysub_proc
@@ -57,6 +56,8 @@ def check_photometry(
     figure=None,
 ):
     # Check photometry of few objects
+
+    import matplotlib.pyplot as plt
 
     wmap = numpy.ones_like(sf_data[0], dtype="bool")
 
