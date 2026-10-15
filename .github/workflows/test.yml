@@ -23,7 +23,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .tox
-          key: tox-${{ matrix.python }}-${{ hashFiles('pyproject.toml', 'setup.cfg') }}
+          key: tox-${{ matrix.python }}-${{ hashFiles('pyproject.toml') }}
       - name: Install tox and any other packages
         run: pip install tox
       - name: Run tox

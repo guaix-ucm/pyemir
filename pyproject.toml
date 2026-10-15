@@ -4,7 +4,7 @@ dynamic = ["version"]
 description = "EMIR Data Processing Pipeline"
 readme = "README.rst"
 requires-python = ">=3.10"
-license = {text = "GPL-3.0-or-later"}
+license = "GPL-3.0-or-later"
 authors = [
     {name = "Sergio Pascual", email = "sergiopr@fis.ucm.es"},
     {name = "Nicolás Cardiel", email = "cardiel@ucm.es"},
@@ -18,7 +18,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License (GPL)",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
@@ -27,14 +26,14 @@ dependencies = [
     "astropy",
     "lmfit",
     "matplotlib",
-    "numpy",
     "numina>=0.40.0",
+    "numpy",
     "photutils>=1.4",
     "reproject",
-    "sep>=1.4.0",
     "scikit-image>=0.22",
     "scikit-learn>=0.19",
     "scipy >= 1.8",
+    "sep>=1.4.0",
 ]
 
 [project.optional-dependencies]
