@@ -167,8 +167,8 @@ def integrity_check(bounddict, max_dtu_offset):
 
     print("* Integrity check OK!")
 
-    averaged_dtu_configuration = emirdrp.instrument.components.dtu.average(list_dtu_configurations)
-    maxdiff_dtu_configuration = emirdrp.instrument.components.dtu.maxdiff(list_dtu_configurations)
+    averaged_dtu_configuration = emirdrp.instrument.components.dtu.average(*list_dtu_configurations)
+    maxdiff_dtu_configuration = emirdrp.instrument.components.dtu.maxdiff(*list_dtu_configurations)
 
     return averaged_dtu_configuration, maxdiff_dtu_configuration
 

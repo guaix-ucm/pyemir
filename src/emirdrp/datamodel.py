@@ -103,7 +103,7 @@ def get_dtur_from_img(hdulist):
 
 
 def get_dtur_from_header(hdr):
-    from emirdrp.instrument.dtuconf import DtuConf
+    from emirdrp.instrument.components.dtu import DtuConf
 
     dtuconf = DtuConf.from_header(hdr)
     return dtuconf.coor, dtuconf.coor_r

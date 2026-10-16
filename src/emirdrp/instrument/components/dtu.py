@@ -210,7 +210,7 @@ def average(*args):
 
 def maxdiff(*args):
     """Return DtuConf instance with maximum differences."""
-    new = DtuConf()
+    new = DtuConf("DTU_maxdiff")
     for axis in ["xaxis", "yaxis", "zaxis"]:
         fun_res = apply_on_axis(numpy.ptp, [getattr(arg, axis) for arg in args])
         getattr(new, axis).configure_me(fun_res)

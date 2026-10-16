@@ -9,7 +9,6 @@
 
 import warnings
 
-from astropy.io.fits import Header
 from numina.instrument.hwdevice import HWDevice
 
 
@@ -77,7 +76,9 @@ class DTUAxis(HWDevice):
 
     def configure_me_with_header(self, hdr):
         if isinstance(hdr, dict):
-            hdr = Header(hdr)
+            # the keys of a FITS header are not case sensitive, and the
+            # dict can have other values, that are not valid in a header
+            hdr = {key.upper(): value for key, value in hdr.items()}
         super().configure_me_with_header(hdr)
         self.coor = hdr[f"{self.name}DTU"]
         self.coor_f = hdr.get(f"{self.name}DTU_F", 1.0)

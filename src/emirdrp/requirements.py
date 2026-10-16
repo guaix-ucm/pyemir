@@ -19,18 +19,6 @@ import emirdrp.products as prods
 EMIRObservationResultRequirement = ObservationResultRequirement
 
 
-class EMIRConfigurationRequirement(Requirement):
-    """The Recipe requires the configuration of EMIR."""
-
-    def __init__(self):
-
-        super(EMIRConfigurationRequirement, self).__init__(prods.EMIRConfigurationType, "EMIR Configuration")
-
-    def __repr__(self):
-        sclass = type(self).__name__
-        return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
-
-
 class MasterBadPixelMaskRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterBadPixelMaskRequirement, self).__init__(

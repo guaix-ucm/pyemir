@@ -118,3 +118,23 @@ def test_dtu_hash(dtu_header_example):
     dtuconf = DtuConf.from_header(dtu_header_example)
     res = dtuconf.outdict()
     assert res["dtuhash"] == "271c6b3476b06c527196b8a96d72c9d6"
+
+
+def test_dtur_from_header(dtu_header_example):
+    """The coordinates of the DTU, used by the recipes of EMIR"""
+    from emirdrp.datamodel import get_dtur_from_header
+
+    coor, coor_r = get_dtur_from_header(dtu_header_example)
+    dtuconf = DtuConf.from_header(dtu_header_example)
+    assert numpy.allclose(coor, dtuconf.coor)
+    assert numpy.allclose(coor_r, dtuconf.coor_r)
+
+
+def test_dtu_maxdiff():
+    from emirdrp.instrument.components.dtu import maxdiff
+
+    dtuconf1 = DtuConf.from_header(dict(xdtu=1.0, ydtu=2.0, zdtu=3.0))
+    dtuconf2 = DtuConf.from_header(dict(xdtu=1.5, ydtu=1.0, zdtu=3.0))
+    dtuconf = maxdiff(dtuconf1, dtuconf2)
+    assert isinstance(dtuconf, DtuConf)
+    assert numpy.allclose(dtuconf.coor, [0.5, 1.0, 0.0])
