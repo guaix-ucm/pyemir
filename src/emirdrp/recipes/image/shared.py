@@ -311,7 +311,9 @@ class DirectImageCommon(EmirRecipe):
                 else:
                     _logger.info("Recentering is not needed")
                     _logger.info("Checking photometry")
-                    check_photometry(targetframes, sf_data, seeing_fwhm, figure=self._figure)
+                    check_photometry(
+                        targetframes, sf_data, seeing_fwhm, figure=self._figure, save_figure=self.intermediate_results
+                    )
 
                     if stop_after == state:
                         break
@@ -568,10 +570,8 @@ class DirectImageCommon(EmirRecipe):
 
             # To continue we interpolate over the patches
             fixpix2(sky, binmask, out=sky, iterations=1)
-            name = name_skybackground(frame.baselabel, step)
-            fits.writeto(name, sky, overwrite=True)
-            name = name_skybackgroundmask(frame.baselabel, step)
-            fits.writeto(name, binmask.astype("int16"), overwrite=True)
+            self.save_intermediate_array(sky, name_skybackground(frame.baselabel, step))
+            self.save_intermediate_array(binmask.astype("int16"), name_skybackgroundmask(frame.baselabel, step))
 
         dst = name_skysub_proc(frame.baselabel, step)
         prev = frame.lastname
@@ -601,10 +601,10 @@ class DirectImageCommon(EmirRecipe):
 
             out = quantileclip(data, masks, scales=extinc, dtype="float32", out=out, fclip=0.1)
 
-            # saving the three extensions
+            # the result is read by create_mask and check_photometry
             fits.writeto("result_i%0d.fits" % step, out[0], overwrite=True)
-            fits.writeto("result_var_i%0d.fits" % step, out[1], overwrite=True)
-            fits.writeto("result_npix_i%0d.fits" % step, out[2], overwrite=True)
+            self.save_intermediate_array(out[1], "result_var_i%0d.fits" % step)
+            self.save_intermediate_array(out[2], "result_npix_i%0d.fits" % step)
 
             return out
 
@@ -693,8 +693,7 @@ class DirectImageCommon(EmirRecipe):
         sf_data /= sf_data.mean()
 
         # Auxiliary data
-        sfhdu = fits.PrimaryHDU(sf_data)
-        sfhdu.writeto(name_skyflat("comb", step), overwrite=True)
+        self.save_intermediate_array(sf_data, name_skyflat("comb", step))
         return sf_data
 
     def update_scale_factors(self, frames, step=0):
@@ -822,7 +821,7 @@ class DirectImageCommon(EmirRecipe):
         ndata[mask] = 0
         self.figure_simple_image(fake, title="Fake sky error image")
         # store fake image
-        fits.writeto("fake_sky_rms_i%0d.fits" % step, fake, overwrite=True)
+        self.save_intermediate_array(fake, "fake_sky_rms_i%0d.fits" % step)
 
     def figure_check_combination(self, rnimage, rmean, rstd, step=0):
         self._figure.clf()
@@ -848,7 +847,8 @@ class DirectImageCommon(EmirRecipe):
         xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
         mpl.artist.setp(xticklabels, visible=False)
         self._figure.canvas.draw()
-        self._figure.savefig("figure-check-combination_i%01d.png" % step)
+        if self.intermediate_results:
+            self._figure.savefig("figure-check-combination_i%01d.png" % step)
         return avg_rms
 
     def figure_simple_image(self, data, title=None):
@@ -873,7 +873,8 @@ class DirectImageCommon(EmirRecipe):
         ax.set_xlabel("Image number")
         ax.set_ylabel("Median")
         self._figure.canvas.draw()
-        self._figure.savefig("figure-median-sky-background_i%01d.png" % step)
+        if self.intermediate_results:
+            self._figure.savefig("figure-median-sky-background_i%01d.png" % step)
 
     def figure_image(self, thedata, image):
         ax = self._figure.gca()
@@ -918,7 +919,7 @@ class DirectImageCommon(EmirRecipe):
 
         _logger.info("Running source extraction in %s", filename)
         objects, objmask = sep.extract(data_sub, 1.5, err=bkg.globalrms, mask=border, segmentation_map=True)
-        fits.writeto(name_segmask(step), objmask, overwrite=True)
+        self.save_intermediate_array(objmask, name_segmask(step))
 
         return objmask, seeing_fwhm
 

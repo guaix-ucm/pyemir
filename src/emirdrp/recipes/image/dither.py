@@ -948,11 +948,11 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
             result = fits.HDUList([hdu, varhdu, num])
             # saving the three extensions
-            fits.writeto("result_i%0d.fits" % step, out[0], overwrite=True)
-            fits.writeto("result_i%0d_var.fits" % step, out[1], overwrite=True)
-            fits.writeto("result_i%0d_npix.fits" % step, out[2], overwrite=True)
+            self.save_intermediate_array(out[0], "result_i%0d.fits" % step)
+            self.save_intermediate_array(out[1], "result_i%0d_var.fits" % step)
+            self.save_intermediate_array(out[2], "result_i%0d_npix.fits" % step)
             # saving the combined image (result)
-            result.writeto("result_i%0d_full.fits" % step, overwrite=True)
+            self.save_intermediate_img(result, "result_i%0d_full.fits" % step)
             return result
 
         finally:
@@ -1062,7 +1062,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         self.logger.info("Running source extraction in previous result")
         objects, objmask = sep.extract(data_sub, 1.5, err=bkg.globalrms, mask=border, segmentation_map=True)
         self.logger.debug(f"... saving segmentation mask: {name_segmask(step)}")
-        fits.writeto(name_segmask(step), objmask, overwrite=True)
+        self.save_intermediate_array(objmask, name_segmask(step))
 
         return objmask, seeing_fwhm
 
@@ -1246,7 +1246,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
 
         name_sky = name_skybackground(frame.label, step)
         self.logger.debug(f"saving sky background {name_sky}")
-        fits.writeto(name_sky, sky, overwrite=True)
+        self.save_intermediate_array(sky, name_sky)
 
         dst = name_skysub_proc(frame.label, step)
         prev = frame.lastname
