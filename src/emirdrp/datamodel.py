@@ -64,6 +64,15 @@ class EmirDataModel(dm.DataModel):
     def shape(self):
         return (2048, 2048)
 
+    def get_imgid(self, img):
+        """Obtain a unique identifier of the image, with the kind of identifier as prefix
+
+        The raw images of EMIR can be identified by their UUID or by
+        their time stamp, the prefix ('uuid:', 'tsutc:', etc.) tells
+        which one is used.
+        """
+        return dm.get_imgid(img, prefix=True)
+
     def do_sky_correction(self, img):
         header = img["primary"].header
         return header.get("SKYADD", True)

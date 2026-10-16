@@ -82,6 +82,10 @@ def test_init_aggregate_result(nimages):
 
     assert numpy.allclose(frame_hdul[0].data, accum_hdul[0].data)
 
+    # the images, identified by their time stamp
+    history = [str(entry) for entry in frame_hdul[0].header["HISTORY"]]
+    assert sum(entry.startswith("Image tsutc:") for entry in history) == nimages
+
 
 def test_join_sky_not_written(tmp_path, monkeypatch):
     """The sky computed by the recipe is not written without intermediate results"""
