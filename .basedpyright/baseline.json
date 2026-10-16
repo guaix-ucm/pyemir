@@ -1,0 +1,264 @@
+{
+    "files": {
+        "./src/emirdrp/instrument/components/csu.py": [
+            {
+                "code": "reportSelfClsParameterName",
+                "range": {
+                    "startColumn": 18,
+                    "endColumn": 22,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/instrument/csu_configuration.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 17,
+                    "endColumn": 48,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 52,
+                    "endColumn": 84,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 21,
+                    "endColumn": 53,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 57,
+                    "endColumn": 90,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 21,
+                    "endColumn": 58,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 62,
+                    "endColumn": 100,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/processing/combine.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 12,
+                    "endColumn": 22,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/processing/wavecal/rectwv_coeff_from_mos_library.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 12,
+                    "endColumn": 13,
+                    "lineCount": 11
+                }
+            }
+        ],
+        "./src/emirdrp/products.py": [
+            {
+                "code": "reportMissingImports",
+                "range": {
+                    "startColumn": 15,
+                    "endColumn": 23,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportMissingImports",
+                "range": {
+                    "startColumn": 9,
+                    "endColumn": 39,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/recipes/image/dither.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 93,
+                    "endColumn": 106,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 81,
+                    "endColumn": 94,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 63,
+                    "endColumn": 76,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/recipes/image/shared.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 28,
+                    "endColumn": 41,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/recipes/spec/abba.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 31,
+                    "endColumn": 44,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 48,
+                    "endColumn": 63,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/recipes/spec/subs.py": [
+            {
+                "code": "reportMissingImports",
+                "range": {
+                    "startColumn": 23,
+                    "endColumn": 31,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/simulation/starcounts.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 15,
+                    "endColumn": 48,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 15,
+                    "endColumn": 48,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/tools/display_slitlet_arrangement.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 16,
+                    "endColumn": 49,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 16,
+                    "endColumn": 50,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 16,
+                    "endColumn": 56,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 16,
+                    "endColumn": 55,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/tools/overplot_bounddict.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 17,
+                    "endColumn": 73,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 17,
+                    "endColumn": 73,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/emirdrp/tools/rect_wpoly_for_mos.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 12,
+                    "endColumn": 13,
+                    "lineCount": 11
+                }
+            }
+        ],
+        "./src/emirdrp/tools/slitlet_boundaries_from_continuum.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 24,
+                    "endColumn": 77,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 48,
+                    "endColumn": 59,
+                    "lineCount": 1
+                }
+            }
+        ]
+    }
+}

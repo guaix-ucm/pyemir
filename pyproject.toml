@@ -110,3 +110,18 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.basedpyright]
+# Run with 'tox -e typecheck' before a release. Only the rules that
+# find real bugs: calls with wrong arguments, imports that do not exist,
+# redefinitions and undefined names. The errors already known are in
+# .basedpyright/baseline.json, update it with
+# 'tox -e typecheck -- --writebaseline'
+include = ["src/emirdrp"]
+pythonVersion = "3.11"
+typeCheckingMode = "off"
+reportCallIssue = "error"
+reportMissingImports = "error"
+reportRedeclaration = "error"
+reportSelfClsParameterName = "error"
+reportUndefinedVariable = "error"
