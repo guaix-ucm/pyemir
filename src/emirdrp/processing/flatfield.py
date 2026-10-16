@@ -33,9 +33,12 @@ class FlatFieldCorrector(proc.Corrector):
 
         super(FlatFieldCorrector, self).__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
 
-        self.flatdata = flatdata
-        self.flatdata[flatdata <= 0] = 1.0  # To avoid NaN
-        self.flat_stats = flatdata.mean()
+        # A copy, with the values <= 0 replaced by 1, to avoid NaN
+        nonpositive = flatdata <= 0
+        if numpy.any(nonpositive):
+            _logger.warning("flat has %d values <= 0, replaced by 1", nonpositive.sum())
+        self.flatdata = numpy.where(nonpositive, 1.0, flatdata)
+        self.flat_stats = self.flatdata.mean()
 
     def run(self, img):
         imgid = self.get_imgid(img)
@@ -45,10 +48,6 @@ class FlatFieldCorrector(proc.Corrector):
 
         data = self.datamodel.get_data(img)
         # data = array.correct_flatfield(data, self.flatdata, dtype=self.dtype)
-        # Check if flatdata as 0
-        mask1 = self.flatdata < 0
-        if numpy.any(mask1):
-            _logger.warning("flat has %d zeros", mask1.sum())
         mask2 = ~numpy.isfinite(data)
         if numpy.any(mask2):
             _logger.warning("image has %d NaN", mask2.sum())

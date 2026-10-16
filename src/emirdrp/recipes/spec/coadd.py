@@ -131,6 +131,6 @@ class CoaddRecipe(EmirRecipe):
         # Update SEC to 0
         # hdr['SEC'] = 0
 
-        result = self.create_result(spec_coadd_abba=hdulist)
+        result = self.create_result(result_coadd=hdulist)
         self.logger.info("end coadd reduction")
         return result

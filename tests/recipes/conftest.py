@@ -23,3 +23,8 @@ def frame_dark():
 @pytest.fixture
 def frame_flat():
     return calibration(numpy.ones((10, 10)), "f7af05ee-27bd-4a04-957d-28d23b11a532")
+
+
+@pytest.fixture
+def frame_sky():
+    return calibration(numpy.zeros((10, 10)), "5d3a7ee4-9d8c-4c0a-9a43-62ef0bd76a1c")

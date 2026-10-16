@@ -122,7 +122,6 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             self.logger.info("compute sky simple")
             sky_result = self.compute_sky_simple(data_hdul, use_errors=False)
             self.save_intermediate_img(sky_result, "sky_init.fits")
-            sky_result.writeto("sky_init.fits", overwrite=True)
             sky_data = sky_result[0].data
             self.logger.debug("sky image has shape %s", sky_data.shape)
 
@@ -692,7 +691,6 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
             self.logger.info("compute sky simple")
             sky_result = self.compute_sky_simple(data_hdul, use_errors=False)
             self.save_intermediate_img(sky_result, "sky_init.fits")
-            sky_result.writeto("sky_init.fits", overwrite=True)
             sky_data = sky_result[0].data
             self.logger.debug("sky image has shape %s", sky_data.shape)
 
@@ -804,7 +802,7 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
         for inum in range(1, rinput.iterations + 1):
             # superflat
             sf_data = self.compute_superflat(data_arr_0, objmask, regions, channels)
-            fits.writeto("superflat_%d.fits" % inum, sf_data, overwrite=True)
+            self.save_intermediate_array(sf_data, "superflat_%d.fits" % inum)
             # apply superflat
             data_arr_rf = data_arr_r
             for base, arr, reg in zip(data_arr_rf, data_arr_0, regions):
@@ -862,10 +860,8 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
                     # To continue we interpolate over the patches
                     fixpix2(sky, binmask, out=sky, iterations=1)
 
-                name = "sky_%d_%03d.fits" % (inum, idx)
-                fits.writeto(name, sky, overwrite=True)
-                name = "sky_binmask_%d_%03d.fits" % (inum, idx)
-                fits.writeto(name, binmask.astype("int16"), overwrite=True)
+                self.save_intermediate_array(sky, "sky_%d_%03d.fits" % (inum, idx))
+                self.save_intermediate_array(binmask.astype("int16"), "sky_binmask_%d_%03d.fits" % (inum, idx))
 
                 data_arr_sky.append(sky)
                 arr = numpy.copy(data_arr_rf[idx])

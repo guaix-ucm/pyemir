@@ -12,7 +12,6 @@
 
 import logging
 
-from astropy.io import fits
 from numina.array.combine import median
 from numina.core import Result
 from numina.core.requirements import ObservationResultRequirement
@@ -77,10 +76,9 @@ class TestBiasCorrectRecipe(EmirRecipe):
         _logger.info("starting simple bias reduction")
 
         flow = self.init_filters(rinput)
-        hdu = basic_processing_with_combination(rinput, flow, method=median)
-        hdr = hdu[0].header
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+        hdr = hdulist[0].header
         self.set_base_headers(hdr)
-        hdulist = fits.HDUList([hdu])
 
         result = self.create_result(frame=hdulist)
         return result

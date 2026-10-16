@@ -81,3 +81,16 @@ def test_init_aggregate_result(nimages):
     assert frame_hdul[0].header["NUM-NCOM"] == nimages * nstare
 
     assert numpy.allclose(frame_hdul[0].data, accum_hdul[0].data)
+
+
+def test_join_sky_not_written(tmp_path, monkeypatch):
+    """The sky computed by the recipe is not written without intermediate results"""
+    monkeypatch.chdir(tmp_path)
+    nimages = 3
+    crpix = numpy.array([(50, 50) for _ in range(nimages)])
+    obsresult = create_ob_1(9, nimages, crpix)
+    for frame in obsresult.frames:
+        del frame.frame[0].header["NUM-SK"]
+    recipe = JoinDitheredImagesRecipe()
+    recipe.run(recipe.create_input(obresult=obsresult))
+    assert list(tmp_path.iterdir()) == []

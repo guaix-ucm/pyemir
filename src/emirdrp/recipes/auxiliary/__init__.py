@@ -119,10 +119,12 @@ class DarkRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
+        # all the images must have the exposure time of the first one
         iinfo = self.datamodel.gather_info_oresult(rinput.obresult)
-        ref_exptime = 0.0
+        if iinfo:
+            ref_exptime = iinfo[0]["exptime"]
         for el in iinfo[1:]:
-            if abs(el["texp"] - ref_exptime) > 1e-4:
+            if abs(el["exptime"] - ref_exptime) > 1e-4:
                 _logger.error("image with wrong exposure time")
                 raise RecipeError("image with wrong exposure time")
 

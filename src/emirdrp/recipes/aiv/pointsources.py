@@ -11,7 +11,6 @@
 
 import sep
 import numpy
-import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel
 from astropy.stats import gaussian_fwhm_to_sigma
 from numina.array.fwhm import compute_fwhm_2d_simple
@@ -67,7 +66,7 @@ class TestPointSourceRecipe(EmirRecipe):
 
         flow = self.init_filters(rinput)
 
-        hdulist = basic_processing_with_combination(rinput, reduction_flow=flow)
+        hdulist = basic_processing_with_combination(rinput, flow)
 
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
@@ -121,7 +120,7 @@ class TestPointSourceRecipe(EmirRecipe):
             segmentation_map=True,
             mask=mask,
         )
-        fits.writeto("segmap.fits", segmap)
+        self.save_intermediate_array(segmap, "segmap.fits")
         self.logger.info("detected %d objects", len(objects))
 
         # Hardcoded values

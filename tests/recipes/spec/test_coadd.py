@@ -5,8 +5,8 @@ import numina.core
 import numina.exceptions
 
 from emirdrp.recipes.spec.subs import BaseABBARecipe
-from emirdrp.recipes.spec.coadd import CoaddABBARecipe
-from emirdrp.testing.create_ob import create_ob_internal, make_obresult
+from emirdrp.recipes.spec.coadd import CoaddABBARecipe, CoaddRecipe
+from emirdrp.testing.create_ob import create_ob_2, create_ob_internal, make_obresult
 
 
 @pytest.mark.parametrize("nabba", [1, 2, 3, 4])
@@ -57,3 +57,11 @@ def test_coadd_empty():
 
     with pytest.raises(numina.exceptions.RecipeError):
         recipe.run(rinput)
+
+
+def test_coadd_generic():
+    recipe = CoaddRecipe()
+    rinput = recipe.create_input(obresult=create_ob_2(4, 3))
+    hdu = recipe.run(rinput).result_coadd.frame[0]
+    assert hdu.header["NUM-NCOM"] == 3
+    assert numpy.allclose(hdu.data, 4)
