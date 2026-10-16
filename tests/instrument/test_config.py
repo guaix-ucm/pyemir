@@ -1,16 +1,7 @@
 import pytest
 
-import emirdrp.loader
 import numina.instrument.assembly as asb
 import numina.instrument.generic
-
-
-@pytest.fixture
-def component_store():
-    drp = emirdrp.loader.load_drp()
-    pkg_paths = [drp.profiles]
-    com_store = asb.load_paths_store(pkg_paths, [])
-    return com_store
 
 
 @pytest.fixture

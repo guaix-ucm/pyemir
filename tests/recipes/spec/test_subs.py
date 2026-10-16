@@ -1,13 +1,13 @@
 import pytest
 import numpy
 
-import numina.core
 import numina.exceptions
 
 from emirdrp.recipes.spec.subs import BaseABBARecipe
-from emirdrp.testing.create_base import create_image0
 from emirdrp.testing.create_scenes import create_scene_23
-from emirdrp.testing.create_ob import create_ob_abba
+from emirdrp.testing.create_ob import create_ob_abba, exposure_keys, make_frame, make_obresult
+
+STARTTIME = 1000000001.00034
 
 
 def test_subs():
@@ -15,21 +15,12 @@ def test_subs():
     expected_data = numpy.zeros((100, 100))
     expected_data[5] = 4
     expected_data[3] = -4
-    keys = {"TSUTC1": 1000000001.00034, "TSUTC2": 1000000100.00034}
-    scene1 = create_scene_23(size, peak=2, pos=5)
-    frames1 = numina.core.DataFrame(frame=create_image0(scene1, keys=keys))
-    keys = {"TSUTC1": 1000000101.00034, "TSUTC2": 1000000200.00034}
-    scene2 = create_scene_23(size, peak=2, pos=3)
-    frames2 = numina.core.DataFrame(frame=create_image0(scene2, keys=keys))
-    keys = {"TSUTC1": 1000000201.00034, "TSUTC2": 1000000300.00034}
-    scene3 = create_scene_23(size, peak=2, pos=3)
-    frames3 = numina.core.DataFrame(frame=create_image0(scene3, keys=keys))
-    keys = {"TSUTC1": 1000000301.00034, "TSUTC2": 1000000400.00034}
-    scene4 = create_scene_23(size, peak=2, pos=5)
-    frames4 = numina.core.DataFrame(frame=create_image0(scene4, keys=keys))
-
-    obs_result = numina.core.ObservationResult()
-    obs_result.frames = [frames1, frames2, frames3, frames4]
+    # the ABBA sequence, the source in row 5 in A and in row 3 in B
+    frames = [
+        make_frame(create_scene_23(size, peak=2, pos=pos), keys=exposure_keys(idx, 100.0, STARTTIME))
+        for idx, pos in enumerate([5, 3, 3, 5])
+    ]
+    obs_result = make_obresult(frames)
 
     recipe = BaseABBARecipe()
     rinput = recipe.create_input(
@@ -38,24 +29,17 @@ def test_subs():
     result = recipe.run(rinput)
 
     reduced_mos_abba_hdul = result.reduced_mos_abba.frame
-    assert reduced_mos_abba_hdul[0].header["TSUTC1"] == 1000000001.00034
-    assert reduced_mos_abba_hdul[0].header["TSUTC2"] == 1000000400.00034
+    assert reduced_mos_abba_hdul[0].header["TSUTC1"] == STARTTIME
+    assert reduced_mos_abba_hdul[0].header["TSUTC2"] == STARTTIME + 400.0
 
     assert reduced_mos_abba_hdul[0].header["NUM-NCOM"] == 2
     assert numpy.allclose(expected_data, result.reduced_mos_abba.frame[0].data)
 
 
 def test_subs_raise():
-    size = (100, 100)
-    expected_data = numpy.zeros((10, 10))
-    expected_data[5] = 4
-    expected_data[3] = -4
-    scene1 = create_scene_23(size, peak=2, pos=5)
-    keys = {"TSUTC1": 1000000001.00034, "TSUTC2": 1000000100.00034}
-    frames1 = numina.core.DataFrame(frame=create_image0(scene1, keys=keys))
-
-    obsresult = numina.core.ObservationResult()
-    obsresult.frames = [frames1]
+    # only one image, not an ABBA sequence
+    frame = make_frame(create_scene_23((100, 100), peak=2, pos=5), keys=exposure_keys(0, 100.0, STARTTIME))
+    obsresult = make_obresult([frame])
 
     recipe = BaseABBARecipe()
     rinput = BaseABBARecipe.RecipeInput(

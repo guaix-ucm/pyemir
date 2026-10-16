@@ -2,7 +2,6 @@ import pytest
 import numpy
 
 import numina.core
-import numina.exceptions
 
 from emirdrp.recipes.image.stare import StareImageBaseRecipe
 from emirdrp.testing.create_ob import create_ob_2
@@ -32,9 +31,9 @@ def test_stare_with_bpm(nimages, frame_bpm, frame_dark, frame_flat):
 
     hdu = hdulist[0]
     assert hdu.header["NUM-NCOM"] == nimages
-    assert hdu.header["NUM-BPM"] == "uuid:74263122-4747-4a68-b148-7834d702a733"
-    assert hdu.header["NUM-DK"] == "uuid:db4cf732-76a7-4f54-85bf-2db2f0ab46ef"
-    assert hdu.header["NUM-FF"] == "uuid:f7af05ee-27bd-4a04-957d-28d23b11a532"
+    assert hdu.header["NUM-BPM"] == f"uuid:{frame_bpm[0].header['UUID']}"
+    assert hdu.header["NUM-DK"] == f"uuid:{frame_dark[0].header['UUID']}"
+    assert hdu.header["NUM-FF"] == f"uuid:{frame_flat[0].header['UUID']}"
     assert hdu.header["TSUTC1"] == starttime
     assert hdu.header["TSUTC2"] == starttime + nimages * exptime
     assert numpy.allclose(expected_data, hdu.data)
@@ -59,18 +58,13 @@ def test_stare(nimages, frame_dark, frame_flat):
     result = recipe.run(rinput)
     hdulist = result.frame.open()
 
-    bpm_ext = 0
-    try:
-        bpm_ext = hdulist["BPM"]
-    except KeyError:
-        pass
-
-    assert bpm_ext != 0, "Wrong BPM extension number"
+    # the mask of bad pixels is added, even without master_bpm
+    assert "BPM" in hdulist
 
     hdu = hdulist[0]
     assert hdu.header["NUM-NCOM"] == nimages
-    assert hdu.header["NUM-DK"] == "uuid:db4cf732-76a7-4f54-85bf-2db2f0ab46ef"
-    assert hdu.header["NUM-FF"] == "uuid:f7af05ee-27bd-4a04-957d-28d23b11a532"
+    assert hdu.header["NUM-DK"] == f"uuid:{frame_dark[0].header['UUID']}"
+    assert hdu.header["NUM-FF"] == f"uuid:{frame_flat[0].header['UUID']}"
     assert hdu.header["TSUTC1"] == starttime
     assert hdu.header["TSUTC2"] == starttime + nimages * exptime
     assert numpy.allclose(expected_data, hdu.data)

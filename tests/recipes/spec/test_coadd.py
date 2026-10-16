@@ -6,7 +6,7 @@ import numina.exceptions
 
 from emirdrp.recipes.spec.subs import BaseABBARecipe
 from emirdrp.recipes.spec.coadd import CoaddABBARecipe
-from emirdrp.testing.create_ob import create_ob_internal
+from emirdrp.testing.create_ob import create_ob_internal, make_obresult
 
 
 @pytest.mark.parametrize("nabba", [1, 2, 3, 4])
@@ -31,8 +31,7 @@ def test_coadd(nabba, frame_dark, frame_flat):
         result = recipe.run(rinput)
         results.append(result)
 
-    obs_result = numina.core.ObservationResult()
-    obs_result.frames = [result.reduced_mos_abba for result in results]
+    obs_result = make_obresult(result.reduced_mos_abba for result in results)
 
     recipe = CoaddABBARecipe()
     rinput = recipe.create_input(
@@ -49,8 +48,7 @@ def test_coadd(nabba, frame_dark, frame_flat):
 
 def test_coadd_empty():
 
-    obsresult = numina.core.ObservationResult()
-    obsresult.frames = []
+    obsresult = make_obresult([])
 
     recipe = CoaddABBARecipe()
     rinput = recipe.create_input(

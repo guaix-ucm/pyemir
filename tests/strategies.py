@@ -37,10 +37,12 @@ def dtu_dict(draw):
 @st.composite
 def dtu_fits_dict(draw):
     mapping = draw(dtu_dict())
+    # the keywords XDTU, XDTU_F, XDTU_0, and the same for Y and Z
+    suffixes = {"coor": "", "coor_f": "_F", "coor_0": "_0"}
     header = {}
-    for prop in ["coor", "coor_f", "coor_0"]:
+    for prop, suffix in suffixes.items():
         for axis in ["X", "Y", "Z"]:
-            header[f"{axis}DTU"] = mapping[axis][prop]
+            header[f"{axis}DTU{suffix}"] = mapping[axis][prop]
     return header
 
 
