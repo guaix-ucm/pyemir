@@ -58,3 +58,16 @@ def test_find_position_1():
     assert len(m) == 1
 
     assert m[0] == res
+
+
+def test_refine_bar_centroid_logger(caplog):
+    """The messages are logged under emirdrp, that numina run records"""
+    import logging
+
+    from emirdrp.processing.bardetect import refine_bar_centroid
+
+    caplog.set_level(logging.DEBUG, logger="emirdrp")
+    # a region without peaks
+    assert refine_bar_centroid(numpy.zeros((20, 20)), 10, 10, 3, 3, 0.1, 1) == (0, 0, 2)
+    (record,) = [r for r in caplog.records if r.getMessage() == "no peaks after fine-tunning"]
+    assert record.name.startswith("emirdrp.")

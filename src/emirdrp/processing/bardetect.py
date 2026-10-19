@@ -201,7 +201,8 @@ def _char_bar_peak(arr_deriv, ypix, bstart, bend, th, sign=1):
 
 def refine_bar_centroid(arr_deriv, centerx, centery, wx, wy, threshold, sign):
     # Refine values
-    logger = logging.getLogger("emir.recipes.bardetect")
+    # under emirdrp, so that the messages reach the log of numina run
+    logger = logging.getLogger(__name__)
 
     logger.debug("collapsing a %d x %d region", 2 * wx + 1, 2 * wy + 1)
     #
