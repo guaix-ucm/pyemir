@@ -1319,8 +1319,7 @@ def bound_params_from_dict(bound_param_dict):
                 dumdict = bound_param_dict["contents"][mainpar][subpar]
                 params.add(cpar, value=dumdict["value"], vary=dumdict["vary"])
         else:
-            print("parmodel: ", bound_param_dict["meta_info"]["parmodel"])
-            raise ValueError("Unexpected parmodel")
+            raise ValueError(f"Unexpected parmodel {bound_param_dict['meta_info']['parmodel']}")
     return params
 
 

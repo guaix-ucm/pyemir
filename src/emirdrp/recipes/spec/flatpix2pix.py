@@ -310,9 +310,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                 naxis2_slitlet2d, naxis1_slitlet2d = slitlet2d_rect.shape
 
                 if naxis1_slitlet2d != EMIR_NAXIS1:
-                    print("naxis1_slitlet2d: ", naxis1_slitlet2d)
-                    print("EMIR_NAXIS1.....: ", EMIR_NAXIS1)
-                    raise ValueError("Unexpected naxis1_slitlet2d")
+                    raise ValueError(f"Unexpected naxis1_slitlet2d={naxis1_slitlet2d}, EMIR_NAXIS1={EMIR_NAXIS1}")
 
                 slitlet2d_rect_mask = np.zeros((naxis2_slitlet2d, naxis1_slitlet2d), dtype=bool)
 

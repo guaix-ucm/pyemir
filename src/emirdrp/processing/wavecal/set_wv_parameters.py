@@ -129,8 +129,6 @@ def set_wv_parameters(filter_name, grism_name):
         wv_parameters["wvmin_useful"] = 14500
         wv_parameters["wvmax_useful"] = 24300
     else:
-        print("filter_name..:", filter_name)
-        print("grism_name...:", grism_name)
-        raise ValueError("invalid filter_name and grism_name combination")
+        raise ValueError(f"invalid filter_name and grism_name combination, {filter_name=}, {grism_name=}")
 
     return wv_parameters

@@ -304,9 +304,7 @@ class SpecFlatLowFreq(EmirRecipe):
                 naxis2_slitlet2d, naxis1_slitlet2d = slitlet2d_rect.shape
 
                 if naxis1_slitlet2d != EMIR_NAXIS1:
-                    print("naxis1_slitlet2d: ", naxis1_slitlet2d)
-                    print("EMIR_NAXIS1.....: ", EMIR_NAXIS1)
-                    raise ValueError("Unexpected naxis1_slitlet2d")
+                    raise ValueError(f"Unexpected naxis1_slitlet2d={naxis1_slitlet2d}, EMIR_NAXIS1={EMIR_NAXIS1}")
 
                 # get useful slitlet region (use boundaries)
                 spectrail = slt.list_spectrails[0]

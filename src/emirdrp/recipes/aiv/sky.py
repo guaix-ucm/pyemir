@@ -9,6 +9,8 @@
 
 """AIV Recipes for EMIR"""
 
+import logging
+
 from numina.core import ObservationResult
 from numina.array.combine import median
 from numina.core import Result, Requirement
@@ -17,6 +19,8 @@ from numina.processing.combine import basic_processing_with_combination
 from emirdrp.core.recipe import EmirRecipe
 import emirdrp.requirements as reqs
 import emirdrp.products as prods
+
+_logger = logging.getLogger(__name__)
 
 
 class TestSkyCorrectRecipe(EmirRecipe):
@@ -61,7 +65,7 @@ class StareImageRecipeInputBuilder:
     def buildRecipeInput(self, obsres):
 
         if self.sky_image is None:
-            print("obtaining SKY image")
+            _logger.debug("obtaining SKY image")
             sky_cal_result = self.dal.getLastRecipeResult("EMIR", "EMIR", "IMAGE_SKY")
             self.sky_image = sky_cal_result["elements"]["skyframe"]
 
