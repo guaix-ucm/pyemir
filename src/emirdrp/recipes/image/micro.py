@@ -13,8 +13,7 @@ Micro-dithering Recipe of EMIR
 """
 
 from numina.core import Parameter
-from numina.core.recipeinout import define_input, define_result
-from numina.core import Result, DataFrameType, RecipeInput, RecipeResult
+from numina.core import Result, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 
 from emirdrp.products import SourcesCatalog
@@ -28,31 +27,6 @@ from emirdrp.requirements import MasterIntensityFlatFieldRequirement
 from .shared import DirectImageCommon
 
 
-class MicroditheredImageRecipeInput(RecipeInput):
-    obresult = ObservationResultRequirement()
-    master_bpm = MasterBadPixelMaskRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_flat = MasterIntensityFlatFieldRequirement()
-    extinction = Parameter(0.0, "Mean atmospheric extinction")
-    sources = Parameter([], "List of x, y coordinates to measure FWHM", optional=True)
-    offsets = Offsets_Requirement()
-    iterations = Parameter(4, "Iterations of the recipe")
-    sky_images = Parameter(5, "Images used to estimate the background before " "and after current image")
-    sky_images_sep_time = SkyImageSepTime_Requirement()
-    check_photometry_levels = Parameter([0.5, 0.8], "Levels to check the flux of the objects")
-    check_photometry_actions = Parameter(["warn", "warn", "default"], "Actions to take on images")
-    subpixelization = Parameter(4, "Number of subdivisions in each pixel side")
-    window = Parameter([], "Region of interesting data", optional=True)
-
-
-class MicroditheredImageRecipeResult(RecipeResult):
-    frame = Result(DataFrameType)
-    catalog = Result(SourcesCatalog)
-
-
-@define_input(MicroditheredImageRecipeInput)
-@define_result(MicroditheredImageRecipeResult)
 class MicroditheredImageRecipe(DirectImageCommon):
     """
     Recipe for the reduction of microdithering imaging.
@@ -135,6 +109,25 @@ class MicroditheredImageRecipe(DirectImageCommon):
 
     """
 
+    obresult = ObservationResultRequirement()
+    master_bpm = MasterBadPixelMaskRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_flat = MasterIntensityFlatFieldRequirement()
+    extinction = Parameter(0.0, "Mean atmospheric extinction")
+    sources = Parameter([], "List of x, y coordinates to measure FWHM", optional=True)
+    offsets = Offsets_Requirement()
+    iterations = Parameter(4, "Iterations of the recipe")
+    sky_images = Parameter(5, "Images used to estimate the background before " "and after current image")
+    sky_images_sep_time = SkyImageSepTime_Requirement()
+    check_photometry_levels = Parameter([0.5, 0.8], "Levels to check the flux of the objects")
+    check_photometry_actions = Parameter(["warn", "warn", "default"], "Actions to take on images")
+    subpixelization = Parameter(4, "Number of subdivisions in each pixel side")
+    window = Parameter([], "Region of interesting data", optional=True)
+
+    frame = Result(DataFrameType)
+    catalog = Result(SourcesCatalog)
+
     def run(self, ri):
 
         subpix = ri.subpixelization
@@ -150,3 +143,9 @@ class MicroditheredImageRecipe(DirectImageCommon):
 
         result = self.create_result(frame=frame, catalog=catalog)
         return result
+
+
+# The input and result classes, with their names before the fields were
+# declared in the recipe
+MicroditheredImageRecipeInput = MicroditheredImageRecipe.RecipeInput
+MicroditheredImageRecipeResult = MicroditheredImageRecipe.RecipeResult
