@@ -547,7 +547,7 @@ class DirectImageCommon(EmirRecipe):
                     desc.append(hdulistmask)
                     _logger.debug("object mask is particular")
                 else:
-                    _logger.warn("no object mask for %s", filename)
+                    _logger.warning("no object mask for %s", filename)
 
             _logger.debug("computing background with %d frames", len(data))
             sky, _, num = median(data, masks, scales=scales)
@@ -560,7 +560,7 @@ class DirectImageCommon(EmirRecipe):
         if numpy.any(num == 0):
             # We have pixels without
             # sky background information
-            _logger.warn(
+            _logger.warning(
                 "pixels without sky information when correcting %s",
                 frame.flat_corrected,
             )

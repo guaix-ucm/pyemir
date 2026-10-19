@@ -853,7 +853,7 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
                 if numpy.any(binmask):
                     # We have pixels without
                     # sky background information
-                    self.logger.warn("pixels without sky information when correcting %d", idx)
+                    self.logger.warning("pixels without sky information when correcting %d", idx)
 
                     # FIXME: during development, this is faster
                     # sky[binmask] = sky[num != 0].mean()
