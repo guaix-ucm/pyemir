@@ -26,7 +26,7 @@ from numina.processing.combine import basic_processing_with_combination
 from emirdrp.processing.combine import basic_processing_with_segmentation
 from emirdrp.processing.combine import combine_images, scale_with_median
 
-_logger = logging.getLogger("numina.recipes.emir")
+_logger = logging.getLogger(__name__)
 
 
 class BiasRecipe(EmirRecipe):

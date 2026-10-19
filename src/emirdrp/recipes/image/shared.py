@@ -43,7 +43,7 @@ from .naming import name_redimensioned_frames, name_object_mask, name_skybackgro
 from .naming import name_skybackgroundmask, name_skysub_proc, name_skyflat
 from .naming import name_skyflat_proc, name_segmask
 
-_logger = logging.getLogger("numina.recipes.emir")
+_logger = logging.getLogger(__name__)
 
 
 def intersection(a, b, scale=1):

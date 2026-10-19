@@ -20,7 +20,7 @@ from numina.array.imsurfit import vertex_of_quadratic
 import numina.array.utils as utils
 import numina.array.stats as s
 
-_logger = logging.getLogger("numina.recipes.emir")
+_logger = logging.getLogger(__name__)
 
 
 def standarize(arr):

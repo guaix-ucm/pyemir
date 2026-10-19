@@ -26,7 +26,7 @@ from emirdrp.instrument.channels import QUADRANTS
 from emirdrp.instrument.channels import CHANNELS
 from emirdrp.products import MasterGainMap, MasterRONMap
 
-_logger = logging.getLogger("numina.recipes.emir")
+_logger = logging.getLogger(__name__)
 
 
 class GainRecipe1(EmirRecipe):
