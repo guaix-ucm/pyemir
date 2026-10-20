@@ -322,7 +322,7 @@ class ABBASpectraRectwv(EmirRecipe):
             if filter_name_ != filter_name:
                 raise ValueError("Incompatible filter name in rectwv_coeff.json file and FITS image")
             hdu = newimg[0]
-            hdu.header["UUID"] = str(uuid.uuid1())
+            hdu.header["UUID"] = str(uuid.uuid4())
             # basic reduction
             reduced_image = flow(newimg)
             hdr = reduced_image[0].header
@@ -731,7 +731,7 @@ class ABBASpectraRectwv(EmirRecipe):
                     hdu.header.remove(keyword)
 
             # update additional keywords
-            hdu.header["UUID"] = str(uuid.uuid1())
+            hdu.header["UUID"] = str(uuid.uuid4())
             hdu.header["OBSMODE"] = f"{basic_pattern} pattern (repeat={repeat})"
             hdu.header["TSUTC2"] = hduls[-1][0].header["TSUTC2"]
             hdu.header["NUM-NCOM"] = (len(hduls), "Number of combined frames")
@@ -1035,7 +1035,7 @@ class ABBASpectraFastRectwv(EmirRecipe):
                         hdu.header.remove(keyword)
 
             # update additional keywords
-            hdu.header["UUID"] = str(uuid.uuid1())
+            hdu.header["UUID"] = str(uuid.uuid4())
             hdu.header["OBSMODE"] = f"{basic_pattern} pattern (repeat={repeat})"
             hdu.header["TSUTC2"] = hduls[-1][0].header["TSUTC2"]
             hdu.header["history"] = f"Processed {basic_pattern} pattern (repeat={repeat})"

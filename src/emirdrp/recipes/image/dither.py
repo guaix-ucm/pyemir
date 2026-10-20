@@ -855,7 +855,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
         points_no_data = (sky_data[2] == 0).sum()
 
         self.logger.debug('update created sky image result header')
-        skyid = str(uuid.uuid1())
+        skyid = str(uuid.uuid4())
         hdu.header['UUID'] = skyid
         hdu.header['history'] = "Combined {} images using '{}'".format(
             len(data_hdul),
@@ -931,7 +931,7 @@ class FullDitheredImagesRecipe(EmirRecipe):
             prevnum = base_header.get("NUM-NCOM", 1)
             hdu.header["NUM-NCOM"] = prevnum * len(frameslll)
             hdu.header["NUMRNAM"] = "FullDitheredImagesRecipe"
-            hdu.header["UUID"] = str(uuid.uuid1())
+            hdu.header["UUID"] = str(uuid.uuid4())
             hdu.header["OBSMODE"] = "FULL_DITHERED_IMAGE"
             # Headers of last image
             hdu.header["TSUTC2"] = headers[-1]["TSUTC2"]

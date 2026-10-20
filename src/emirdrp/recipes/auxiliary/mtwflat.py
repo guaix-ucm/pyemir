@@ -241,7 +241,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
 
         prevnum = base_header.get("NUM-NCOM", 1)
         hdu.header["NUM-NCOM"] = prevnum * cnum
-        hdu.header["UUID"] = str(uuid.uuid1())
+        hdu.header["UUID"] = str(uuid.uuid4())
         # Headers of last image
         hdu.header["TSUTC2"] = cdata[-1][0].header["TSUTC2"]
         # TODO: use BPM to compute mean

@@ -567,7 +567,7 @@ class SpecFlatPix2Pix(EmirRecipe):
 
             self.logger.debug("update result header")
             # update additional keywords
-            hdu.header["UUID"] = str(uuid.uuid1())
+            hdu.header["UUID"] = str(uuid.uuid4())
             hdu.header["OBSMODE"] = "flatpix2pix"
             hdu.header["TSUTC2"] = hduls[-1][0].header["TSUTC2"]
             hdu.header["history"] = "Processed flatpix2pix"

@@ -82,7 +82,7 @@ def process_abba(images, errors=False, prolog=None):
         hdu.header["history"] = "Image {}".format(datam.get_imgid(img))
     prevnum = base_header.get("NUM-NCOM", 1)
     hdu.header["NUM-NCOM"] = prevnum * cnum // 2
-    hdu.header["UUID"] = str(uuid.uuid1())
+    hdu.header["UUID"] = str(uuid.uuid4())
     # Headers of last image
     hdu.header["TSUTC2"] = images[-1][0].header["TSUTC2"]
     # Not sure why this is needed
@@ -133,7 +133,7 @@ def process_ab(images, errors=False, prolog=None):
         hdu.header["history"] = "Image {}".format(datam.get_imgid(img))
     prevnum = base_header.get("NUM-NCOM", 1)
     hdu.header["NUM-NCOM"] = prevnum * cnum // 2
-    hdu.header["UUID"] = str(uuid.uuid1())
+    hdu.header["UUID"] = str(uuid.uuid4())
     # Headers of last image
     hdu.header["TSUTC2"] = images[-1][0].header["TSUTC2"]
 
@@ -156,7 +156,7 @@ def create_proc_hdulist(images, data_array):
 
     hdu = fits.PrimaryHDU(data_array, header=base_header)
     # self.set_base_headers(hdu.header)
-    hdu.header["UUID"] = str(uuid.uuid1())
+    hdu.header["UUID"] = str(uuid.uuid4())
     # Update obsmode in header
     # hdu.header['OBSMODE'] = 'LS_ABBA'
     # Headers of last image
@@ -250,7 +250,7 @@ def combine_images(images, method=combine.mean, method_kwargs=None, errors=False
         hdu.header["history"] = "Image {}".format(datam.get_imgid(img))
     prevnum = base_header.get("NUM-NCOM", 1)
     hdu.header["NUM-NCOM"] = prevnum * cnum
-    hdu.header["UUID"] = str(uuid.uuid1())
+    hdu.header["UUID"] = str(uuid.uuid4())
     # Headers of last image
     hdu.header["TSUTC2"] = images[-1][0].header["TSUTC2"]
     # Not sure why this is needed
@@ -436,7 +436,7 @@ def basic_processing_with_segmentation(rinput, flow, method=combine.mean, errors
             method.__name__,
         )
         hdu.header["history"] = "Combination time {}".format(datetime.datetime.now(datetime.UTC).isoformat())
-        hdu.header["UUID"] = str(uuid.uuid1())
+        hdu.header["UUID"] = str(uuid.uuid4())
         _logger.info(
             "missing points, total: %d, fraction: %3.1f",
             points_no_data,

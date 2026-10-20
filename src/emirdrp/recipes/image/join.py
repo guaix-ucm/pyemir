@@ -261,7 +261,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
             hdu.header["history"] = "Image {}".format(self.datamodel.get_imgid(img))
             ncom += img[0].header.get("NUM-NCOM", 1)
         hdr["NUM-NCOM"] = ncom
-        hdr["UUID"] = str(uuid.uuid1())
+        hdr["UUID"] = str(uuid.uuid4())
 
         # Update WCS, approximate solution
         hdr["CRPIX1"] += offsetsp[0][0]
@@ -295,7 +295,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         self.set_base_headers(hdr)
 
         hdr["TSUTC2"] = data_hdul[-1][0].header["TSUTC2"]
-        hdr["UUID"] = str(uuid.uuid1())
+        hdr["UUID"] = str(uuid.uuid4())
         # Update obsmode in header
 
         hdu.header["history"] = "Combined %d images using '%s'" % (
@@ -426,7 +426,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         hdu = fits.PrimaryHDU(sky_data[0], header=base_header)
 
         self.logger.debug("update created sky image result header")
-        skyid = str(uuid.uuid1())
+        skyid = str(uuid.uuid4())
         hdu.header["UUID"] = skyid
         hdu.header["history"] = "Combined {} images using '{}'".format(len(data_hdul), method.__name__)
         hdu.header["history"] = "Combination time {}".format(datetime.datetime.now(datetime.UTC).isoformat())
@@ -452,7 +452,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         points_no_data = (sky_data[2] == 0).sum()
 
         self.logger.debug("update created sky image result header")
-        skyid = str(uuid.uuid1())
+        skyid = str(uuid.uuid4())
         hdu.header["UUID"] = skyid
         hdu.header["history"] = "Combined {} images using '{}'".format(len(data_hdul), method.__name__)
         hdu.header["history"] = "Combination time {}".format(datetime.datetime.now(datetime.UTC).isoformat())
@@ -911,7 +911,7 @@ class FullDitheredImagesRecipe(JoinDitheredImagesRecipe):
         points_no_data = (sky_data[2] == 0).sum()
 
         self.logger.debug("update created sky image result header")
-        skyid = str(uuid.uuid1())
+        skyid = str(uuid.uuid4())
         hdu.header["UUID"] = skyid
         hdu.header["history"] = "Combined {} images using '{}'".format(len(data_hdul), method.__name__)
         hdu.header["history"] = "Combination time {}".format(datetime.datetime.now(datetime.UTC).isoformat())

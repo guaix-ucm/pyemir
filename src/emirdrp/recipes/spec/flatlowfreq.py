@@ -487,7 +487,7 @@ class SpecFlatLowFreq(EmirRecipe):
 
             self.logger.debug("update result header")
             # update additional keywords
-            hdu.header["UUID"] = str(uuid.uuid1())
+            hdu.header["UUID"] = str(uuid.uuid4())
             hdu.header["OBSMODE"] = "flatlowfreq"
             hdu.header["TSUTC2"] = hduls[-1][0].header["TSUTC2"]
             hdu.header["history"] = "Processed flatlowfreq"
