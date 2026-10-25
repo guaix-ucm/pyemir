@@ -43,7 +43,7 @@ import emirdrp.instrument.csuconf as csuconf
 
 def comp_centroid(data, bounding_box, debug_plot=False, plot_reference=None, logger=None):
     """Detect objects in a region and return the centroid of the brightest one"""
-    import matplotlib.pyplot as plt
+    from matplotlib.figure import Figure
     from matplotlib.patches import Ellipse
 
     if logger is None:
@@ -69,7 +69,9 @@ def comp_centroid(data, bounding_box, debug_plot=False, plot_reference=None, log
     maxflux = objects[iadx]
 
     if debug_plot:
-        fig, ax = plt.subplots()
+        # the figure is only saved in a file, by the caller
+        fig = Figure()
+        ax = fig.subplots()
         m, s = np.mean(data_sub), np.std(data_sub)
         ax.imshow(
             data_sub,
@@ -462,8 +464,6 @@ def compute_off_rotation(
     # in the image or we can use the slits given by the model of the CSU
     # which is correct around ~ 1.5 pix
 
-    import matplotlib.pyplot as plt
-
     if logger is None:
         logger = logging.getLogger(__name__)
 
@@ -504,8 +504,7 @@ def compute_off_rotation(
         if debug_plot and intermediate_results:
             ax = res[2]
             ax.set_title("slit %s" % this.idx)
-            plt.savefig("centroid_slit_%s.png" % this.idx)
-            plt.close()
+            ax.figure.savefig("centroid_slit_%s.png" % this.idx)
 
         m_x = res[0] + region[1].start
         m_y = res[1] + region[0].start

@@ -106,13 +106,10 @@ class DirectImageCommon(EmirRecipe):
     def _figure(self):
         """Figure of the plots of the recipe, created when it is first used"""
         if self._figure_plots is None:
-            # Required to delay the backend initialization (issue numina/#102, #49)
-            import matplotlib.pyplot as plt
+            # the figure is only saved in files, without pyplot
+            from matplotlib.figure import Figure
 
-            self._figure_plots = plt.figure(facecolor="white")
-            # FigureCanvasAgg has no set_window_title
-            # self._figure_plots.canvas.set_window_title('Recipe Plots')
-            self._figure_plots.canvas.draw()
+            self._figure_plots = Figure(facecolor="white")
         return self._figure_plots
 
     def process(
@@ -774,12 +771,11 @@ class DirectImageCommon(EmirRecipe):
     def figure_init(self, shape):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
-        cmap = mpl.cm.get_cmap("gray")
+        cmap = mpl.colormaps["gray"]
         norm = mpl.colors.LogNorm()
         ax.imshow(numpy.ones(shape), cmap=cmap, norm=norm)
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
-        self._figure.canvas.draw()
 
     def figures_after_combine(self, sf_data, step=0):
 
@@ -846,7 +842,6 @@ class DirectImageCommon(EmirRecipe):
 
         xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
         mpl.artist.setp(xticklabels, visible=False)
-        self._figure.canvas.draw()
         if self.intermediate_results:
             self._figure.savefig("figure-check-combination_i%01d.png" % step)
         return avg_rms
@@ -854,7 +849,7 @@ class DirectImageCommon(EmirRecipe):
     def figure_simple_image(self, data, title=None):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
-        cmap = mpl.cm.get_cmap("gray")
+        cmap = mpl.colormaps["gray"]
         norm = mpl.colors.LogNorm()
         if title is not None:
             ax.set_title(title)
@@ -862,7 +857,6 @@ class DirectImageCommon(EmirRecipe):
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         ax.imshow(data, cmap=cmap, norm=norm)
-        self._figure.canvas.draw()
 
     def figure_median_background(self, scales, step=0):
         # FIXME: plotting
@@ -872,7 +866,6 @@ class DirectImageCommon(EmirRecipe):
         ax.set_title("")
         ax.set_xlabel("Image number")
         ax.set_ylabel("Median")
-        self._figure.canvas.draw()
         if self.intermediate_results:
             self._figure.savefig("figure-median-sky-background_i%01d.png" % step)
 
@@ -889,7 +882,6 @@ class DirectImageCommon(EmirRecipe):
         image_axes.set_norm(norm)
         clim = image_axes.get_clim()
         ax.set_title("%s, bg=%g fg=%g, linscale" % (image.lastname, clim[0], clim[1]))
-        self._figure.canvas.draw()
 
     def create_mask(self, sf_data, seeing_fwhm, step=0):
         # FIXME more plots
@@ -926,7 +918,7 @@ class DirectImageCommon(EmirRecipe):
     def figure_final_before_s(self, data):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
-        cmap = mpl.cm.get_cmap("gray")
+        cmap = mpl.colormaps["gray"]
         # norm = mpl.colors.LogNorm()
         ax.set_title("Result image")
         ax.set_xlabel("X")
@@ -936,4 +928,3 @@ class DirectImageCommon(EmirRecipe):
         z1, z2 = interval.get_limits(data)
         norm = ImageNormalize(vmin=z1, vmax=z2, stretch=SqrtStretch())
         ax.imshow(data, cmap=cmap, clim=(z1, z2), norm=norm)
-        self._figure.canvas.draw()

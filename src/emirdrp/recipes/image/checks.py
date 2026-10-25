@@ -59,8 +59,6 @@ def check_photometry(
     # Check photometry of few objects
     # With save_figure, the relative fluxes are plotted in figure-relative-flux_iN.png
 
-    import matplotlib.pyplot as plt
-
     wmap = numpy.ones_like(sf_data[0], dtype="bool")
 
     # Center of the image
@@ -133,12 +131,13 @@ def check_photometry(
     nsig = 3
 
     if save_figure:
-        figure = plt.figure()
+        from matplotlib.figure import Figure
+
+        figure = Figure()
         ax = figure.add_subplot(111)
 
         plot_photometry_check(ax, vals, wsigma, check_photometry_levels, nsig * sigma)
         figure.savefig("figure-relative-flux_i%01d.png" % step)
-        plt.close(figure)
 
     for x, _, t in vals:
         try:
