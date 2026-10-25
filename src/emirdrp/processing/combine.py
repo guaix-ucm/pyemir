@@ -12,11 +12,7 @@
 import datetime
 import functools
 import logging
-import sys
 import uuid
-
-if sys.version_info <= (3, 10):
-    datetime.UTC = datetime.timezone.utc
 
 import numpy
 from astropy.io import fits
@@ -26,9 +22,6 @@ from numina.array import combine
 from numina.array import combine_shape
 
 from emirdrp.processing.wcs import offsets_from_wcs
-
-if sys.version_info[:2] <= (3, 10):
-    datetime.UTC = datetime.timezone.utc
 
 _logger = logging.getLogger(__name__)
 

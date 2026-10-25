@@ -5,7 +5,7 @@ PyEmir Installation
 *******************
 
 PyEmir, the data reduction pipeline for EMIR, is a Python package
-(Python 3.10 or greater is required). It runs under `numina
+(Python 3.11 or greater is required). It runs under `numina
 <https://numina.readthedocs.io>`_, version 0.40 or greater, that is
 installed with it.
 

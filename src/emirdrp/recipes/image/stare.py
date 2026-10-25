@@ -15,10 +15,6 @@ Stare Image mode of EMIR
 from copy import deepcopy
 import datetime
 import logging
-import sys
-
-if sys.version_info[:2] <= (3, 10):
-    datetime.UTC = datetime.timezone.utc
 
 import astropy.io.fits as fits
 from astropy.wcs import WCS

@@ -13,12 +13,7 @@ Spectroscopy mode, ABBA
 
 # import datetime
 import pkgutil
-
-# import sys
 import uuid
-
-# if sys.version_info[:2] <= (3, 10):
-#    datetime.UTC = datetime.timezone.utc
 
 import astropy.io.fits as fits
 import numpy

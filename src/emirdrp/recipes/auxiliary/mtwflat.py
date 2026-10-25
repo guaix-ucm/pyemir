@@ -11,11 +11,7 @@
 """Twilight Flat Recipe for a list of frames in different filters"""
 
 import datetime
-import sys
 import uuid
-
-if sys.version_info[:2] <= (3, 10):
-    datetime.UTC = datetime.timezone.utc
 
 import astropy.io.fits as fits
 from numina.array.combine import median

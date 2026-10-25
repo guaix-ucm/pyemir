@@ -11,11 +11,7 @@
 """Dither Image recipe for EMIR"""
 
 import datetime
-import sys
 import uuid
-
-if sys.version_info[:2] <= (3, 10):
-    datetime.UTC = datetime.timezone.utc
 
 from astropy.io import fits
 from numina.core import Result, Requirement, Parameter

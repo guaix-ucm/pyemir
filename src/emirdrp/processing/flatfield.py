@@ -12,14 +12,9 @@
 
 import datetime
 import logging
-import sys
 
 import numpy
 import numina.processing as proc
-
-if sys.version_info[:2] <= (3, 10):
-    datetime.UTC = datetime.timezone.utc
-
 
 _logger = logging.getLogger(__name__)
 
