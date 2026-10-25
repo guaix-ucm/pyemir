@@ -83,8 +83,7 @@ def refine_rectwv_coeff(
         the expected catalogue lines.
 
     """
-    from numina.array.display.matplotlib_qt import plt
-    from numina.array.display.matplotlib_qt import set_window_geometry
+    from numina.array.display.matplotlib_qt import new_figure, set_window_geometry
 
     logger = logging.getLogger(__name__)
 
@@ -171,7 +170,9 @@ def refine_rectwv_coeff(
     else:
         expected_cat_image = None
 
+    # the figures only saved in the PDF file are created without pyplot
     if (abs(debugplot) % 10 != 0) or (pdf is not None):
+        fig = None if pdf is None else new_figure(interactive=False)
         ax = ximplotxy(
             xwave,
             sp_median,
@@ -181,6 +182,7 @@ def refine_rectwv_coeff(
             title="Median spectrum",
             label="observed spectrum",
             show=False,
+            fig=fig,
         )
         # overplot reference catalogue lines
         ax.stem(
@@ -195,14 +197,14 @@ def refine_rectwv_coeff(
         ax.plot(xwave_reference, sp_reference, "C0-", label="expected spectrum")
         ax.legend()
         if pdf is not None:
-            pdf.savefig()
+            pdf.savefig(fig)
         else:
             pause_debugplot(debugplot=debugplot, pltshow=True)
 
     # compute baseline signal in sp_median
     baseline = np.percentile(sp_median[sp_median > 0], q=10)
     if (abs(debugplot) % 10 != 0) or (pdf is not None):
-        fig = plt.figure()
+        fig = new_figure(interactive=pdf is None)
         ax = fig.add_subplot(111)
         ax.hist(sp_median, bins=1000, log=True)
         ax.set_xlabel("Normalized number of counts")
@@ -210,8 +212,10 @@ def refine_rectwv_coeff(
         ax.set_title("Median spectrum")
         ax.axvline(float(baseline), linestyle="--", color="grey")
         if pdf is not None:
-            pdf.savefig()
+            pdf.savefig(fig)
         else:
+            from numina.array.display.matplotlib_qt import plt
+
             geometry = (0, 0, 640, 480)
             set_window_geometry(geometry)
             plt.show()
@@ -313,6 +317,7 @@ def refine_rectwv_coeff(
         logger.info("- std........: {0:7.3f}".format(stat_summary["std"]))
         logger.info("- robust_std.: {0:7.3f}".format(stat_summary["robust_std"]))
         if (abs(debugplot) % 10 != 0) or (pdf is not None):
+            fig = None if pdf is None else new_figure(interactive=False)
             ax = ximplotxy(
                 xplot,
                 yplot,
@@ -323,6 +328,7 @@ def refine_rectwv_coeff(
                 ylabel="-offset (pixels) = offset to be applied",
                 title="cross-correlation result",
                 show=False,
+                fig=fig,
                 **{"label": "individual slitlets"},
             )
             if len(xplot_skipped) > 0:
@@ -330,7 +336,7 @@ def refine_rectwv_coeff(
             ax.axhline(-global_offset, linestyle="--", color="C1", label="global offset")
             ax.legend()
             if pdf is not None:
-                pdf.savefig()
+                pdf.savefig(fig)
             else:
                 pause_debugplot(debugplot=debugplot, pltshow=True)
     else:
