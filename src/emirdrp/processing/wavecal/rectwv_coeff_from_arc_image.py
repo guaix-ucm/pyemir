@@ -255,12 +255,28 @@ def rectwv_coeff_from_arc_image(
                     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(8, 6))
                     # compute vmin, vmax using zscale
                     vmin, vmax = tea.zscale(slitlet2d)
-                    tea.imshow(fig, ax1, slitlet2d, vmin=vmin, vmax=vmax, aspect='auto', ds9mode=True,
-                               title="slitlet2d before background subtraction")
+                    tea.imshow(
+                        fig,
+                        ax1,
+                        slitlet2d,
+                        vmin=vmin,
+                        vmax=vmax,
+                        aspect="auto",
+                        ds9mode=True,
+                        title="slitlet2d before background subtraction",
+                    )
                 slitlet2d -= spbackground
                 if debugplot % 10 != 0:
-                    tea.imshow(fig, ax2, slitlet2d, vmin=vmin, vmax=vmax, aspect='auto', ds9mode=True,
-                               title="slitlet2d after background subtraction")
+                    tea.imshow(
+                        fig,
+                        ax2,
+                        slitlet2d,
+                        vmin=vmin,
+                        vmax=vmax,
+                        aspect="auto",
+                        ds9mode=True,
+                        title="slitlet2d after background subtraction",
+                    )
                     plt.tight_layout()
                     plt.show()
 
