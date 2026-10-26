@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2025 Universidad Complutense de Madrid
+# Copyright 2008-2026 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -567,11 +567,11 @@ def compute_slitlet_boundaries(
         # update bounddict
         tmp_dict = {
             "boundary_coef_lower": list_boundaries[0].poly_funct.coef.tolist(),
-            "boundary_xmin_lower": list_boundaries[0].xlower_line,
-            "boundary_xmax_lower": list_boundaries[0].xupper_line,
+            "boundary_xmin_lower": int(list_boundaries[0].xlower_line),
+            "boundary_xmax_lower": int(list_boundaries[0].xupper_line),
             "boundary_coef_upper": list_boundaries[1].poly_funct.coef.tolist(),
-            "boundary_xmin_upper": list_boundaries[1].xlower_line,
-            "boundary_xmax_upper": list_boundaries[1].xupper_line,
+            "boundary_xmin_upper": int(list_boundaries[1].xlower_line),
+            "boundary_xmax_upper": int(list_boundaries[1].xupper_line),
             "csu_bar_left": csu_config.csu_bar_left(islitlet),
             "csu_bar_right": csu_config.csu_bar_right(islitlet),
             "csu_bar_slit_center": csu_config.csu_bar_slit_center(islitlet),
@@ -580,8 +580,8 @@ def compute_slitlet_boundaries(
             "xdtu": dtu2_config.xaxis.coor,
             "ydtu": dtu2_config.yaxis.coor,
             "zdtu": dtu2_config.zaxis.coor,
-            "xdtu_0": dtu2_config.xaxis.coorx_0,
-            "ydtu_0": dtu2_config.yaxis.coory_0,
+            "xdtu_0": dtu2_config.xaxis.coor_0,
+            "ydtu_0": dtu2_config.yaxis.coor_0,
             "zdtu_0": dtu2_config.zaxis.coor_0,
             "zzz_info1": os.getlogin() + "@" + socket.gethostname(),
             "zzz_info2": datetime.now().isoformat(),
