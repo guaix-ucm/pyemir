@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 Universidad Complutense de Madrid
+# Copyright 2018-2026 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -10,6 +10,7 @@
 
 """Definition of Slitlet2dArc class"""
 
+import logging
 from matplotlib.patches import Rectangle
 import numpy as np
 from scipy import ndimage
@@ -568,6 +569,7 @@ class Slitlet2dArc:
             bounding box.
 
         """
+        logger = logging.getLogger(__name__)
 
         # protections
         naxis2, naxis1 = image_2k2k.shape
@@ -587,6 +589,7 @@ class Slitlet2dArc:
 
         # display slitlet2d with boundaries and middle spectrum trail
         if abs(self.debugplot) in [21, 22]:
+            logger.info("Display slitlet2d with boundaries and middle spectrum trail")
             ax = ximshow(
                 slitlet2d,
                 title="Slitlet#" + str(self.islitlet),
@@ -639,6 +642,7 @@ class Slitlet2dArc:
             detecting arc line reflections as bone fide arc lines.
 
         """
+        logger = logging.getLogger(__name__)
 
         # smooth denoising of slitlet2d
         slitlet2d_rs, coef_rs = rescale_array_to_z1z2(slitlet2d, z1z2=(-1, 1))
@@ -650,14 +654,15 @@ class Slitlet2dArc:
         sigmag = 0.7413 * (q75 - q25)  # robust standard deviation
         if abs(self.debugplot) >= 10:
             q16, q84 = np.percentile(slitlet2d_dn, q=[15.87, 84.13])
-            print(">>> q16...:", q16)
-            print(">>> q25...:", q25)
-            print(">>> q50...:", q50)
-            print(">>> q75...:", q75)
-            print(">>> q84...:", q84)
-            print(">>> sigmaG:", sigmag)
+            logger.info(f">>> q16...: {q16}")
+            logger.info(f">>> q25...: {q25}")
+            logger.info(f">>> q50...: {q50}")
+            logger.info(f">>> q75...: {q75}")
+            logger.info(f">>> q84...: {q84}")
+            logger.info(f">>> sigmaG: {sigmag}")
         if abs(self.debugplot) in [21, 22]:
             # display initial image with zscale cuts
+            logger.info("Display initial slitlet2d image")
             title = "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #1)"
             ximshow(
                 slitlet2d,
@@ -666,6 +671,7 @@ class Slitlet2dArc:
                 debugplot=self.debugplot,
             )
             # display denoised image with zscale cuts
+            logger.info("Display denoised slitlet2d image")
             title = "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #2)"
             ximshow(
                 slitlet2d_dn,
@@ -674,6 +680,7 @@ class Slitlet2dArc:
                 debugplot=self.debugplot,
             )
             # display image with different cuts
+            logger.info("Display slitlet2d image with different cuts")
             z1z2 = (
                 q50 + times_sigma_threshold * sigmag,
                 q50 + 2 * times_sigma_threshold * sigmag,
@@ -693,13 +700,16 @@ class Slitlet2dArc:
         if minimum_threshold is not None:
             if minimum_threshold > threshold:
                 threshold = minimum_threshold
+        if abs(self.debugplot) >= 10:
+            logger.info(f"Threshold for arc line detection: {threshold}")
 
         # identify objects in slitlet2d above threshold
         labels2d_objects, no_objects = ndimage.label(slitlet2d_dn > threshold)
         if abs(self.debugplot) >= 10:
-            print("Number of objects initially found:", no_objects)
+            logger.info(f"Number of objects initially found: {no_objects}")
         if abs(self.debugplot) in [21, 22]:
             # display all objects identified in the image
+            logger.info("Display all objects identified in the image")
             title = "Slitlet#" + str(self.islitlet) + " (locate_unknown_arc_lines, step #4)"
             z1z2 = (labels2d_objects.min(), labels2d_objects.max())
             ximshow(

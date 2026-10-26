@@ -23,10 +23,13 @@ import argparse
 from astropy.io import fits
 from datetime import datetime
 import logging
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 from scipy.signal import medfilt
 from uuid import uuid4
+
+import teareduce as tea
 
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.wavecalib.__main__ import read_wv_master_from_array
@@ -161,8 +164,8 @@ def rectwv_coeff_from_arc_image(
     parmodel = bound_param.meta_info["parmodel"]
     params = bound_params_from_dict(bound_param.__getstate__())
     if abs(debugplot) >= 10:
-        print("-" * 83)
-        print("* FITTED BOUND PARAMETERS")
+        logger.info("-" * 83)
+        logger.info("* FITTED BOUND PARAMETERS")
         params.pretty_print()
         pause_debugplot(debugplot)
 
@@ -238,7 +241,9 @@ def rectwv_coeff_from_arc_image(
             # subtract smooth background computed as follows:
             # - median collapsed spectrum of the whole slitlet2d
             # - independent median filtering of the previous spectrum in the
-            #   two halves in the spectral direction
+            #   two halves in the spectral direction; note that the median filter
+            #   is computed using a window of 201 pixels, which is much larger
+            #   than the typical arc line width
             if args_remove_sp_background:
                 spmedian = np.median(slitlet2d, axis=0)
                 naxis1_tmp = spmedian.shape[0]
@@ -246,7 +251,18 @@ def rectwv_coeff_from_arc_image(
                 sp1 = medfilt(spmedian[:jmidpoint], [201])
                 sp2 = medfilt(spmedian[jmidpoint:], [201])
                 spbackground = np.concatenate((sp1, sp2))
+                if debugplot % 10 != 0:
+                    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(8, 6))
+                    # compute vmin, vmax using zscale
+                    vmin, vmax = tea.zscale(slitlet2d)
+                    tea.imshow(fig, ax1, slitlet2d, vmin=vmin, vmax=vmax, aspect='auto', ds9mode=True,
+                               title="slitlet2d before background subtraction")
                 slitlet2d -= spbackground
+                if debugplot % 10 != 0:
+                    tea.imshow(fig, ax2, slitlet2d, vmin=vmin, vmax=vmax, aspect='auto', ds9mode=True,
+                               title="slitlet2d after background subtraction")
+                    plt.tight_layout()
+                    plt.show()
 
             # locate unknown arc lines
             slt.locate_unknown_arc_lines(slitlet2d=slitlet2d, times_sigma_threshold=args_times_sigma_threshold)
@@ -403,7 +419,7 @@ def rectwv_coeff_from_arc_image(
         # store current slitlet in list of measured slitlets
         measured_slitlets.append(slt)
 
-        logger.info(cout)
+        logger.info(str(cout))
 
     # ---
 
