@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2024 Universidad Complutense de Madrid
+# Copyright 2018-2026 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -177,10 +177,10 @@ def rectwv_coeff_from_arc_image(
     logger.info("list_slitlets: [" + str(islitlet_min) + ",... " + str(islitlet_max) + "]")
 
     # read master arc line wavelengths (only brightest lines)
-    wv_master = read_wv_master_from_array(master_table=lines_catalog, lines="brightest", debugplot=debugplot)
+    wv_master = read_wv_master_from_array(master_table=lines_catalog, lines="brightest")
 
     # read master arc line wavelengths (whole data set)
-    wv_master_all = read_wv_master_from_array(master_table=lines_catalog, lines="all", debugplot=debugplot)
+    wv_master_all = read_wv_master_from_array(master_table=lines_catalog, lines="all")
 
     # check that the arc lines in the master file are properly sorted
     # in ascending order

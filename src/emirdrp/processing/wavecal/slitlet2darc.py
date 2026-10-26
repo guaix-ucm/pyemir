@@ -642,7 +642,7 @@ class Slitlet2dArc:
 
         # smooth denoising of slitlet2d
         slitlet2d_rs, coef_rs = rescale_array_to_z1z2(slitlet2d, z1z2=(-1, 1))
-        slitlet2d_dn = restoration.denoise_nl_means(slitlet2d_rs, patch_size=3, patch_distance=2, multichannel=False)
+        slitlet2d_dn = restoration.denoise_nl_means(slitlet2d_rs, patch_size=3, patch_distance=2, channel_axis=None)
         slitlet2d_dn = rescale_array_from_z1z2(slitlet2d_dn, coef_rs)
 
         # compute basic statistics
