@@ -9,6 +9,14 @@
 
 """
 Rectification and wavelength calibration polynomials from arc image
+
+This script computes the rectification and wavelength calibration polynomials
+for a particular CSU configuration from an arc image. The script requires
+as input the arc image, the fitted boundary parameters, and a master file
+with the expected arc line wavelengths. The output is a JSON file containing
+the rectification and wavelength calibration coefficients for each slitlet,
+as well as a FITS file with the median spectra for each slitlet used
+to derive the wavelength calibration polynomial.
 """
 
 import argparse
@@ -16,16 +24,16 @@ from astropy.io import fits
 from datetime import datetime
 import logging
 import numpy as np
+import os
 from scipy.signal import medfilt
-import sys
 from uuid import uuid4
 
-from numina.array.display.logging_from_debugplot import logging_from_debugplot
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.wavecalib.__main__ import read_wv_master_from_array
 from numina.array.wavecalib.__main__ import wvcal_spectrum
 from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.frame.utils import copy_img
+from numina.tools.initialize_script_with_args import NuminaScriptDefinition
 from numina.tools.arg_file_is_new import arg_file_is_new
 import numina.types.qc
 
@@ -590,20 +598,20 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description="description: determine rectification and wavelength " "calibration polynomials from arc image"
+        description="description: determine rectification and wavelength calibration polynomials from arc image"
     )
 
     # required arguments
     parser.add_argument(
         "fitsfile",
         help="Input FITS file with longslit data",
-        type=argparse.FileType("rb"),
+        type=str,
     )
     parser.add_argument(
         "--bound_param",
         required=True,
         help="Input JSON with fitted boundary parameters",
-        type=argparse.FileType("rt"),
+        type=str,
     )
     parser.add_argument(
         "--order_fmap",
@@ -714,17 +722,22 @@ def main(args=None):
         type=int,
         choices=DEBUGPLOT_CODES,
     )
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
-    args = parser.parse_args(args)
+    # Include default arguments for common actions, and initialize console and logging
+    myscript = NuminaScriptDefinition(parser, argv=args)
+    args = myscript.args  # noqa: F841
+    logger = myscript.logger
 
-    if args.echo:
-        print("\033[1m\033[31m% " + " ".join(sys.argv) + "\033[0m\n")
+    # check fitsfile does exist and is a FITS file
+    if not args.fitsfile.lower().endswith(".fits"):
+        raise ValueError("Input file must be a FITS file")
+    if not os.path.isfile(args.fitsfile):
+        raise ValueError("Input FITS file does not exist")
 
-    # ---
-
-    logger = logging.getLogger(__name__)
-
-    logging_from_debugplot(args.debugplot)
+    # check boundparam does exist and is a JSON file
+    if not args.bound_param.lower().endswith(".json"):
+        raise ValueError("Input bound_param file must be a JSON file")
+    if not os.path.isfile(args.bound_param):
+        raise ValueError("Input bound_param file does not exist")
 
     # read pdffile
     if args.pdffile is not None:
@@ -751,7 +764,7 @@ def main(args=None):
     hdulist = fits.open(args.fitsfile)
 
     # generate RefinedBoundaryModelParam object
-    bound_param = RefinedBoundaryModelParam._datatype_load(args.bound_param.name)
+    bound_param = RefinedBoundaryModelParam._datatype_load(args.bound_param)
 
     # generate lines_catalog
     lines_catalog = np.genfromtxt(args.wv_master_file)
@@ -790,6 +803,9 @@ def main(args=None):
 
     if pdf is not None:
         pdf.close()
+
+    # Display goodbye message and save console log if recording is enabled
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":
