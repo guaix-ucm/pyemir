@@ -15,7 +15,6 @@ from astropy import wcs
 from astropy.coordinates import SkyCoord
 import astropy.io.fits as fits
 import contextlib
-import logging
 import numpy as np
 from scipy import ndimage
 import uuid
@@ -112,8 +111,6 @@ class ABBASpectraRectwv(EmirRecipe):
     determined.
 
     """
-
-    logger = logging.getLogger(__name__)
 
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
@@ -789,8 +786,6 @@ class ABBASpectraFastRectwv(EmirRecipe):
     Note that the wavelength calibration has already been determined.
 
     """
-
-    logger = logging.getLogger(__name__)
 
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()

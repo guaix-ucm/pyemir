@@ -12,7 +12,6 @@ Spectroscopy mode, compute pixel-to-pixel flatfield
 """
 
 import contextlib
-import logging
 import numpy as np
 from numpy.polynomial.polynomial import polyval
 from scipy import ndimage
@@ -53,8 +52,6 @@ from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
 
 class SpecFlatPix2Pix(EmirRecipe):
     """Process continuum exposures of continuum lamp (lamp ON-OFF)"""
-
-    logger = logging.getLogger(__name__)
 
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()

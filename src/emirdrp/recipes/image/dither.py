@@ -10,7 +10,6 @@
 """Recipe for the reduction of imaging mode observations."""
 
 import datetime
-import logging
 import os
 import shutil
 import uuid
@@ -155,8 +154,6 @@ class FullDitheredImagesRecipe(EmirRecipe):
        A better calibration might be computed using available stars (TBD).
 
     """
-
-    logger = logging.getLogger(__name__)
 
     obresult = ObservationResultRequirement(query_opts=ResultOf("reduced_image", node="children"))
 

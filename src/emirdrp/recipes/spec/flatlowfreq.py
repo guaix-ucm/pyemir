@@ -12,7 +12,6 @@ Spectroscopy mode, compute low-frequency flatfield
 """
 
 import contextlib
-import logging
 import numpy as np
 from scipy import ndimage
 import uuid
@@ -49,8 +48,6 @@ from emirdrp.core import EMIR_MAXIMUM_SLITLET_WIDTH_MM
 
 class SpecFlatLowFreq(EmirRecipe):
     """Process continuum exposures of continuum lamp (lamp ON-OFF)"""
-
-    logger = logging.getLogger(__name__)
 
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()

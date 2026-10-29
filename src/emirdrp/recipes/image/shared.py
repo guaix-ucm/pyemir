@@ -97,7 +97,6 @@ def clip_slices(r, region, scale=1):
 
 class DirectImageCommon(EmirRecipe):
 
-    logger = _logger
     BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = [0, 1, 2, 3, 4]
 
     _figure_plots = None

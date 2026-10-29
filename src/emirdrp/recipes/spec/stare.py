@@ -13,7 +13,6 @@ Spectroscopy mode, Stare Spectra
 
 from astropy.io import fits
 from datetime import datetime
-import logging
 import numpy as np
 from skimage.registration import phase_cross_correlation
 
@@ -51,8 +50,6 @@ from emirdrp.core import EMIR_NBARS
 class StareSpectraRecipe(EmirRecipe):
     """Process images in Stare spectra mode"""
 
-    logger = logging.getLogger(__name__)
-
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
     master_bias = reqs.MasterBiasRequirement()
@@ -86,8 +83,6 @@ class StareSpectraWaveRecipe(EmirRecipe):
     model (master_rectwv) is provided as input.
 
     """
-
-    logger = logging.getLogger(__name__)
 
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
@@ -200,8 +195,6 @@ class GenerateRectwvCoeff(EmirRecipe):
     can be refined (using refine_wavecalib_mode != 0).
 
     """
-
-    logger = logging.getLogger(__name__)
 
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()
@@ -414,8 +407,6 @@ class StareSpectraRectwv(EmirRecipe):
     determined.
 
     """
-
-    logger = logging.getLogger(__name__)
 
     obresult = reqs.ObservationResultRequirement()
     master_bpm = reqs.MasterBadPixelMaskRequirement()

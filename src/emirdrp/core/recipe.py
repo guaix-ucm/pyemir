@@ -7,8 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-import logging
-
 import numina.core.recipes as recipes
 
 import emirdrp.core.correctors as cor
@@ -19,7 +17,6 @@ import emirdrp.datamodel
 class EmirRecipe(recipes.BaseRecipe):
     """Base class for all EMIR Recipes"""
 
-    logger = logging.getLogger(__name__)
     datamodel = emirdrp.datamodel.EmirDataModel()
 
     def types_getter(self):
