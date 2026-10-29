@@ -32,9 +32,9 @@ from uuid import uuid4
 import teareduce as tea
 
 from numina.array.display.pause_debugplot import pause_debugplot
-from numina.array.wavecalib.__main__ import read_wv_master_from_array
-from numina.array.wavecalib.__main__ import wvcal_spectrum
 from numina.array.wavecalib.arccalibration import refine_arccalibration
+from numina.array.wavecalib.core import read_wv_master_from_array
+from numina.array.wavecalib.core import wvcal_spectrum
 from numina.frame.utils import copy_img
 from numina.tools.initialize_script_with_args import NuminaScriptDefinition
 from numina.tools.arg_file_is_new import arg_file_is_new
