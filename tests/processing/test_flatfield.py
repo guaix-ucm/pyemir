@@ -22,3 +22,11 @@ def test_flat_nonpositive(caplog):
     data = corrector(img)[0].data
     assert data[0, 0] == 8.0 and data[1, 1] == 8.0
     assert data[2, 2] == 4.0
+
+
+def test_flat_nan(caplog):
+    flat = numpy.full((4, 4), 2.0)
+    flat[0, 0] = numpy.nan
+    with caplog.at_level(logging.WARNING, logger="emirdrp.processing.flatfield"):
+        FlatFieldCorrector(flat)
+    assert "flat has 1 NaN" in caplog.text

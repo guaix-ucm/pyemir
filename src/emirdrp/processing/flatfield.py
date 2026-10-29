@@ -32,6 +32,9 @@ class FlatFieldCorrector(proc.Corrector):
         nonpositive = flatdata <= 0
         if numpy.any(nonpositive):
             _logger.warning("flat has %d values <= 0, replaced by 1", nonpositive.sum())
+        nonfinite = ~numpy.isfinite(flatdata)
+        if numpy.any(nonfinite):
+            _logger.warning("flat has %d NaN", nonfinite.sum())
         self.flatdata = numpy.where(nonpositive, 1.0, flatdata)
         self.flat_stats = self.flatdata.mean()
 
