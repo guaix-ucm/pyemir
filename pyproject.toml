@@ -26,7 +26,7 @@ dependencies = [
     "astropy",
     "lmfit",
     "matplotlib",
-    "numina>=0.41.0",
+    "numina>=0.41.1",
     "numpy",
     "photutils>=1.4",
     "reproject",
