@@ -364,7 +364,7 @@ class SpecFlatPix2Pix(EmirRecipe):
                 if abs(slt.debugplot) % 10 != 0:
                     xaxis1 = np.arange(1, naxis1_slitlet2d + 1)
                     title = "Slitlet#" + str(islitlet) + " (median spectrum)"
-                    ax = ximplotxy(
+                    fig, ax = ximplotxy(
                         xaxis1,
                         sp_collapsed,
                         title=title,

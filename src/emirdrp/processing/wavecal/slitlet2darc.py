@@ -1384,7 +1384,7 @@ class Slitlet2dArc:
         if abs(self.debugplot) % 10 != 0:
             x = np.arange(self.bb_nc1_orig, self.bb_nc2_orig + 1)
             title = "Slitlet#" + str(self.islitlet) + " (median spectrum)"
-            ax = ximplotxy(
+            fig, ax = ximplotxy(
                 x,
                 sp1,
                 show=False,

@@ -173,7 +173,7 @@ def refine_rectwv_coeff(
     # the figures only saved in the PDF file are created without pyplot
     if (abs(debugplot) % 10 != 0) or (pdf is not None):
         fig = None if pdf is None else new_figure(interactive=False)
-        ax = ximplotxy(
+        fig, ax = ximplotxy(
             xwave,
             sp_median,
             "C1-",
@@ -318,7 +318,7 @@ def refine_rectwv_coeff(
         logger.info("- robust_std.: {0:7.3f}".format(stat_summary["robust_std"]))
         if (abs(debugplot) % 10 != 0) or (pdf is not None):
             fig = None if pdf is None else new_figure(interactive=False)
-            ax = ximplotxy(
+            fig, ax = ximplotxy(
                 xplot,
                 yplot,
                 linestyle="",
