@@ -83,7 +83,7 @@ def refine_rectwv_coeff(
         the expected catalogue lines.
 
     """
-    from numina.array.display.matplotlib_qt import new_figure, set_window_geometry
+    from numina.array.display.matplotlib_utils import new_figure, set_window_geometry
 
     logger = logging.getLogger(__name__)
 
@@ -214,7 +214,7 @@ def refine_rectwv_coeff(
         if pdf is not None:
             pdf.savefig(fig)
         else:
-            from numina.array.display.matplotlib_qt import plt
+            from numina.array.display.matplotlib_utils import plt
 
             geometry = (0, 0, 640, 480)
             set_window_geometry(geometry)
