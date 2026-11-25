@@ -18,7 +18,6 @@ from numina.array.wavecalib.check_wlcalib import check_wlcalib_sp
 from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
 from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 from numina.array.wavecalib.fix_pix_borders import find_pix_borders
-from numina.frame.utils import copy_img
 
 import emirdrp.datamodel as datamodel
 from emirdrp.instrument.csu_configuration import CsuConfiguration
@@ -165,7 +164,7 @@ def refine_rectwv_coeff(
     # generate image2d with expected lines
     if save_intermediate_results:
         image2d_expected_lines = np.tile(sp_reference, (naxis2, 1))
-        expected_cat_image = copy_img(input_image)
+        expected_cat_image = deepcopy(input_image)
         expected_cat_image[0].data = image2d_expected_lines
     else:
         expected_cat_image = None

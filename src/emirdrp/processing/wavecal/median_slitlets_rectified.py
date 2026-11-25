@@ -8,6 +8,7 @@
 #
 
 import argparse
+import copy
 from astropy.io import fits
 import numpy as np
 import sys
@@ -17,7 +18,6 @@ from emirdrp.instrument.csu_configuration import CsuConfiguration
 
 from numina.array.display.ximshow import ximshow
 from numina.array.wavecalib.fix_pix_borders import define_mask_borders
-from numina.frame.utils import copy_img
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.core import EMIR_NBARS
@@ -59,7 +59,7 @@ def median_slitlets_rectified(input_image, mode=0, list_useful_slitlets=None, de
 
     """
 
-    result = copy_img(input_image)
+    result = copy.deepcopy(input_image)
     image_header = input_image[0].header
     image2d = input_image[0].data
 

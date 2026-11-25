@@ -12,6 +12,7 @@ Spectroscopy mode, compute pixel-to-pixel flatfield
 """
 
 import contextlib
+import copy
 import numpy as np
 from numpy.polynomial.polynomial import polyval
 from scipy import ndimage
@@ -26,7 +27,6 @@ from numina.array.wavecalib.fix_pix_borders import fix_pix_borders
 from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.core import Parameter
 from numina.core import Result
-from numina.frame.utils import copy_img
 from numina.processing.combine import combine_imgs
 
 from emirdrp.core.recipe import EmirRecipe
@@ -560,7 +560,7 @@ class SpecFlatPix2Pix(EmirRecipe):
         with contextlib.ExitStack() as stack:
             hduls = [stack.enter_context(fname.open()) for fname in rinput.obresult.frames]
             # Copy header of first image
-            result = copy_img(hduls[0])
+            result = copy.deepcopy(hduls[0])
             hdu = result[0]
             hdu.data = reduced_data
             self.set_base_headers(hdu.header)

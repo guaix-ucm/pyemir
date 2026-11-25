@@ -20,6 +20,7 @@ to derive the wavelength calibration polynomial.
 """
 
 import argparse
+import copy
 from astropy.io import fits
 from datetime import datetime
 import logging
@@ -35,7 +36,6 @@ from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.array.wavecalib.core import read_wv_master_from_array
 from numina.array.wavecalib.core import wvcal_spectrum
-from numina.frame.utils import copy_img
 from numina.tools.initialize_script_with_args import NuminaScriptDefinition
 from numina.tools.arg_file_is_new import arg_file_is_new
 import numina.types.qc
@@ -441,7 +441,7 @@ def rectwv_coeff_from_arc_image(
 
     # generate FITS file structure with 55 spectra corresponding to the
     # median spectrum for each slitlet
-    reduced_55sp_l = copy_img(reduced_image)
+    reduced_55sp_l = copy.deepcopy(reduced_image)
     reduced_55sp = reduced_55sp_l[0]
     reduced_55sp.data = image2d_55sp
     reduced_55sp.header["crpix1"] = (0.0, "reference pixel")

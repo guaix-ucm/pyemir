@@ -9,12 +9,12 @@
 
 
 import argparse
+import copy
 from astropy.io import fits
 import numpy as np
 import sys
 
 from numina.array.wavecalib.fix_pix_borders import find_pix_borders
-from numina.frame.utils import copy_img
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
@@ -43,7 +43,7 @@ def merge2images(hdu1, hdu2, debugplot):
 
     # check image dimensions
     image_header = hdu1[0].header
-    image_merged = copy_img(hdu1)
+    image_merged = copy.deepcopy(hdu1)
     image_header_ = hdu2[0].header
     #
     naxis = image_header["naxis"]

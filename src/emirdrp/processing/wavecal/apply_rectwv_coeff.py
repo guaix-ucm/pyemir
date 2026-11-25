@@ -8,6 +8,7 @@
 #
 
 import argparse
+import copy
 from astropy.io import fits
 from datetime import datetime
 import logging
@@ -18,7 +19,6 @@ from numina.array.display.logging_from_debugplot import logging_from_debugplot
 from numina.array.wavecalib.apply_integer_offsets import apply_integer_offsets
 from numina.array.wavecalib.fix_pix_borders import find_pix_borders
 from numina.array.wavecalib.resample import resample_image2d_flux
-from numina.frame.utils import copy_img
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 from emirdrp.instrument.components.dtu import DtuConf
@@ -66,7 +66,7 @@ def apply_rectwv_coeff(
 
     logger = logging.getLogger(__name__)
 
-    rectwv_image = copy_img(reduced_image)
+    rectwv_image = copy.deepcopy(reduced_image)
     header = rectwv_image[0].header
     image2d = rectwv_image[0].data
 
