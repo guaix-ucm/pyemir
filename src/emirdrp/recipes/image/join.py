@@ -10,6 +10,7 @@
 
 """Dither Image recipe for EMIR"""
 
+import copy
 import datetime
 import uuid
 
@@ -24,7 +25,6 @@ from numina.array.utils import coor_to_pix, image_box2d
 import numina.processing as proc
 from numina.core.query import ResultOf
 from numina.array import fixpix2
-from numina.frame.utils import copy_img
 import numpy
 import sep
 
@@ -215,7 +215,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         baseshape = baseimg[0].shape
         subpixshape = baseshape
         # base_header = baseimg[0].header
-        result = copy_img(baseimg)
+        result = copy.deepcopy(baseimg)
 
         if has_num_ext:
             self.logger.debug("Using NUM extension")
@@ -279,7 +279,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # in processing.combine
         baseimg = data_hdul[0]
         # base_header = baseimg[0].header
-        result = copy_img(baseimg)
+        result = copy.deepcopy(baseimg)
 
         self.logger.info("Combine target images (final)")
         method = combine.median
@@ -479,7 +479,7 @@ class JoinDitheredImagesRecipe(EmirRecipe):
         # Initial checks
         fframe = frames[0]
         img = fframe.open()
-        result = copy_img(img)
+        result = copy.deepcopy(img)
         # base_header = result[0].header
 
         imgs = []

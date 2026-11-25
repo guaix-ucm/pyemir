@@ -9,6 +9,7 @@
 
 """Combination routines"""
 
+import copy
 import datetime
 import functools
 import logging
@@ -17,7 +18,6 @@ import uuid
 import numpy
 from astropy.io import fits
 import numina.datamodel as datam
-from numina.frame.utils import copy_img
 from numina.array import combine
 from numina.array import combine_shape
 
@@ -56,7 +56,7 @@ def process_abba(images, errors=False, prolog=None):
 
     """
     cnum = len(images)
-    result = copy_img(images[0])
+    result = copy.deepcopy(images[0])
     base_header = result[0].header.copy()
 
     now = datetime.datetime.now(datetime.UTC)
@@ -112,7 +112,7 @@ def process_ab(images, errors=False, prolog=None):
 
     """
     cnum = len(images)
-    result = copy_img(images[0])
+    result = copy.deepcopy(images[0])
     base_header = result[0].header.copy()
     now = datetime.datetime.now(datetime.UTC)
     _logger.info("processing AB")
@@ -151,7 +151,7 @@ def process_ab(images, errors=False, prolog=None):
 
 def create_proc_hdulist(images, data_array):
     # cnum = len(images)
-    result = copy_img(images[0])
+    result = copy.deepcopy(images[0])
     base_header = result[0].header.copy()
 
     hdu = fits.PrimaryHDU(data_array, header=base_header)
@@ -233,7 +233,7 @@ def combine_images(images, method=combine.mean, method_kwargs=None, errors=False
 
     """
     cnum = len(images)
-    result = copy_img(images[0])
+    result = copy.deepcopy(images[0])
     base_header = result[0].header.copy()
 
     now = datetime.datetime.now(datetime.UTC)

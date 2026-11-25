@@ -10,6 +10,7 @@
 
 """Twilight Flat Recipe for a list of frames in different filters"""
 
+import copy
 import datetime
 import uuid
 
@@ -17,7 +18,6 @@ import astropy.io.fits as fits
 from numina.array.combine import median
 from numina.array.robustfit import fit_theil_sen
 from numina.core import Result
-from numina.frame.utils import copy_img
 import numina.types.datatype as dt
 from numina.processing.combine import basic_processing_with_combination_frames
 import numpy
@@ -225,7 +225,7 @@ class MultiTwilightFlatRecipe(EmirRecipe):
         self.logger.debug("update result header")
         cnum = len(imgs)
         method_name = "Theil-Sen"
-        result = copy_img(imgs[0])
+        result = copy.deepcopy(imgs[0])
         base_header = result[0].header
         cdata = imgs
 

@@ -12,6 +12,7 @@ Spectroscopy mode, ABBA
 """
 
 # import datetime
+import copy
 import pkgutil
 import uuid
 
@@ -26,7 +27,6 @@ from numina.array import combine
 from numina.core import Result, Requirement
 from numina.exceptions import RecipeError
 from numina.core.requirements import ObservationResultRequirement
-from numina.frame.utils import copy_img
 
 import emirdrp.datamodel
 import emirdrp.decorators
@@ -170,7 +170,7 @@ class BaseABBARecipe(EmirRecipe):
 
     def create_proc_hdulist(self, cdata, data_array):
         # Copy header of first image
-        result = copy_img(cdata[0])
+        result = copy.deepcopy(cdata[0])
 
         hdu = result[0]
         hdu.data = data_array
@@ -184,7 +184,7 @@ class BaseABBARecipe(EmirRecipe):
 
     def create_accum_hdulist(self, cdata, data_array_n, method_name="unkwnow", use_errors=False):
         # FIXME: duplicated
-        result = copy_img(cdata[0])
+        result = copy.deepcopy(cdata[0])
         hdu = result[0]
         hdu.data = data_array_n[0]
         hdr = hdu.header
