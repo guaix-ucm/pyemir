@@ -60,16 +60,6 @@
                 }
             }
         ],
-        "./src/emirdrp/processing/combine.py": [
-            {
-                "code": "reportCallIssue",
-                "range": {
-                    "startColumn": 12,
-                    "endColumn": 22,
-                    "lineCount": 1
-                }
-            }
-        ],
         "./src/emirdrp/processing/wavecal/rectwv_coeff_from_mos_library.py": [
             {
                 "code": "reportCallIssue",
