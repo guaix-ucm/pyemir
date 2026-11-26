@@ -6,7 +6,7 @@ PyEmir Installation
 
 PyEmir, the data reduction pipeline for EMIR, is a Python package
 (Python 3.11 or greater is required). It runs under `numina
-<https://numina.readthedocs.io>`_, version 0.40 or greater, that is
+<https://numina.readthedocs.io>`_, version 0.42 or greater, that is
 installed with it.
 
 The easiest method of installing PyEmir is using prebuilt packages. You can
@@ -146,16 +146,16 @@ The steps to install and run PyEmir within a virtual environment are:
   .. code-block:: console
 
      (emir) $ numina --version
-     numina 0.40.0
+     numina 0.42.0
 
   The current PyEmir version can also be easily displayed using:
 
   .. code-block:: console
 
      (emir) $ numina show-instruments
-     INFO: Numina simple recipe runner version 0.40.0
+     INFO: Numina simple recipe runner version 0.42.0
      Instrument: EMIR
-      version is '0.24'
+      version is '0.25'
       has profile 'Original EMIR configuration' uuid=225fcaf2-7f6f-49cc-972a-70fd0aee8e96
       has profile 'Updated instrument after March 2023' uuid=443fc0d1-e09a-48cc-a0fd-02be6f399da2
       has datamodel 'emirdrp.datamodel.EmirDataModel'
@@ -290,7 +290,7 @@ instructions, the steps to execute and run PyEmir under conda are:
   .. code-block:: console
 
      (emir) $ numina --version
-     numina 0.40.0
+     numina 0.42.0
 
 5. **Update within the environment**
 
