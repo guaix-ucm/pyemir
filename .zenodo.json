@@ -1,0 +1,29 @@
+{
+  "title": "pyemir",
+  "upload_type": "software",
+  "description": "This is PyEmir, the data reduction pipeline for EMIR, the wide-field, near-infrared, multi-object spectrograph designed for the Gran Telescopio Canarias (GTC).",
+  "creators": [
+    {
+      "name": "Pascual, Sergio",
+      "affiliation": "Universidad Complutense de Madrid",
+      "orcid": "0000-0002-9351-6051"
+    },
+    {
+      "name": "Cardiel, Nicolás",
+      "affiliation": "Universidad Complutense de Madrid",
+      "orcid": "0000-0002-9334-2979"
+    }
+  ],
+  "keywords": ["EMIR", "GTC"],
+  "license": "gpl-3.0-or-later",
+  "access_right": "open",
+  "communities": [
+    {"identifier": "iparcos-ucm"},
+    {"identifier": "guaix-ucm"}
+  ],
+  "custom": {
+    "code:codeRepository": "https://github.com/guaix-ucm/pyemir",
+    "code:programmingLanguage": [{"id": "python"}],
+    "code:developmentStatus": {"id": "active"}
+  }
+}

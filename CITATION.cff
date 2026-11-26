@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: pyemir
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+- affiliation: Universidad Complutense de Madrid
+  family-names: Pascual
+  given-names: Sergio
+  orcid: 'https://orcid.org/0000-0002-9351-6051'
+- affiliation: Universidad Complutense de Madrid
+  family-names: Cardiel
+  given-names: Nicolás
+  orcid: 'https://orcid.org/0000-0002-9334-2979'
+date-released: '2026-10-15'
+doi: 10.5281/zenodo.593642
+identifiers:
+- type: doi
+  value: 10.5281/zenodo.593642
+repository-code: 'https://github.com/guaix-ucm/pyemir'
+abstract: >-
+  This is PyEmir, the data reduction pipeline for EMIR, the wide-field,
+  near-infrared, multi-object spectrograph designed for the
+  Gran Telescopio Canarias (GTC).
+keywords:
+- EMIR
+- GTC
+license: GPL-3.0-or-later
+version: '0.24'
