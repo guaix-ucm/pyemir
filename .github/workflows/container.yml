@@ -1,0 +1,154 @@
+name: Build and publish the container image
+
+# Called by the release workflow after the upload to PyPI, or run by hand
+# to build the image of a version already in PyPI
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Version of pyemir in PyPI, with or without a leading v
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version of pyemir in PyPI, for example 0.25
+        required: true
+        type: string
+      push:
+        description: Publish the image (if false, only build it)
+        type: boolean
+        default: false
+      latest:
+        description: Tag the image also as latest
+        type: boolean
+        default: true
+
+# Only read access for the GITHUB_TOKEN, the jobs that need more ask for it
+permissions:
+  contents: read
+
+# The image is built once, saved as an OCI archive, and pushed to each
+# registry in its own job, so that a failure in one registry does not
+# stop the other, and both have the same image (the same digest)
+jobs:
+  build:
+    name: Build the container image
+    runs-on: ubuntu-latest
+    env:
+      # inputs.push and inputs.latest are empty in workflow_call
+      PUSH: ${{ github.event_name != 'workflow_dispatch' || inputs.push }}
+      LATEST: ${{ github.event_name != 'workflow_dispatch' || inputs.latest }}
+    outputs:
+      push: ${{ env.PUSH }}
+      tags: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: version
+        name: Version of pyemir
+        env:
+          VERSION: ${{ inputs.version }}
+        run: echo "version=${VERSION#v}" >> "$GITHUB_OUTPUT"
+
+      # The image installs the wheel uploaded to PyPI. Just after the
+      # upload, it can take a few minutes to be available
+      - name: Download the wheel from PyPI
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for attempt in $(seq 1 20); do
+            if python3 -m pip download --no-deps --no-cache-dir --only-binary :all: \
+                --dest dist "pyemir==${VERSION}"; then
+              exit 0
+            fi
+            sleep 30
+          done
+          exit 1
+
+      - uses: docker/setup-qemu-action@v4
+
+      - uses: docker/setup-buildx-action@v4
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ghcr.io/guaix-ucm/pyemir
+            quay.io/guaix-ucm/pyemir
+          # latest only from the input, not added with the tag of the version
+          flavor: |
+            latest=false
+          tags: |
+            type=pep440,pattern={{version}},value=${{ steps.version.outputs.version }}
+            type=raw,value=latest,enable=${{ env.LATEST }}
+          labels: |
+            org.opencontainers.image.title=pyemir
+            org.opencontainers.image.description=Container with pyemir, the data reduction pipeline of EMIR
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: container/Containerfile
+          platforms: linux/amd64,linux/arm64
+          outputs: type=oci,dest=${{ runner.temp }}/image.tar
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # Check that the archive can be read, also when the image is not pushed
+      - name: Platforms in the archive
+        run: skopeo inspect --raw "oci-archive:${RUNNER_TEMP}/image.tar" | jq -r '.manifests[].platform | "\(.os)/\(.architecture)"'
+
+      - uses: actions/upload-artifact@v7
+        if: env.PUSH == 'true'
+        with:
+          name: container-image
+          path: ${{ runner.temp }}/image.tar
+          retention-days: 1
+          # the layers are already compressed
+          compression-level: 0
+
+  push:
+    name: Push the image to ${{ matrix.registry }}
+    needs: [build]
+    if: needs.build.outputs.push == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        registry: [ghcr.io, quay.io]
+    steps:
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: container-image
+          path: ${{ runner.temp }}
+
+      - uses: docker/login-action@v4
+        if: matrix.registry == 'ghcr.io'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Robot account of quay.io with write permission in the
+      # repository guaix-ucm/pyemir
+      - uses: docker/login-action@v4
+        if: matrix.registry == 'quay.io'
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      # skopeo uses the credentials of docker login; --all copies the
+      # images of every platform and the index
+      - name: Push the image
+        env:
+          REGISTRY: ${{ matrix.registry }}
+          TAGS: ${{ needs.build.outputs.tags }}
+        run: |
+          grep "^${REGISTRY}/" <<< "$TAGS" | while read -r ref; do
+            echo "Pushing ${ref}"
+            skopeo copy --all --retry-times 3 "oci-archive:${RUNNER_TEMP}/image.tar" "docker://${ref}"
+          done

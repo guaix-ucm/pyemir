@@ -5,14 +5,18 @@ on:
   release:
     types: [published]
 
+# Only read access for the GITHUB_TOKEN, the jobs that need more ask for it
+permissions:
+  contents: read
+
 jobs:
   build_sdist:
     name: Build source distribution and wheel
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         name: Install Python
         with:
           python-version: '3.12'
@@ -25,7 +29,7 @@ jobs:
         # This builds both the wheel and sdist
         run: python -m build
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           path: dist/pyemir*
 
@@ -40,9 +44,22 @@ jobs:
     # alternatively, to publish when a GitHub Release is created, use the following rule:
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: artifact
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  # The image installs the wheel uploaded to PyPI. To build it again for
+  # a version already released, run the workflow container.yml by hand
+  container:
+    needs: [upload_pypi]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/container.yml
+    with:
+      version: ${{ github.ref_name }}
+    secrets: inherit

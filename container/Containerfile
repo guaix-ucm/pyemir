@@ -1,0 +1,38 @@
+# Container image with pyemir
+#
+# The image installs the wheel of pyemir in dist/, so the build
+# context is the root of the repository:
+#
+#   python -m build --wheel
+#   podman build -f container/Containerfile .
+#
+# The release workflow builds and publishes it in
+# ghcr.io/guaix-ucm/pyemir and quay.io/guaix-ucm/pyemir, see
+# container/build.sh to build it locally.
+
+ARG PYTHON_VERSION="3.12"
+
+# Some dependencies have no wheels for every platform (spherical-geometry
+# has none for linux/arm64), so the wheels of pyemir and of all its
+# dependencies are built in a stage with a compiler
+FROM python:${PYTHON_VERSION}-slim AS wheels
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY dist/pyemir-*.whl /tmp/dist/
+
+RUN pip wheel --no-cache-dir --wheel-dir /tmp/wheels /tmp/dist/pyemir-*.whl
+
+FROM python:${PYTHON_VERSION}-slim
+
+LABEL org.opencontainers.image.authors="Sergio Pascual <sergiopr@fis.ucm.es>" \
+      org.opencontainers.image.vendor="GUAIX - Universidad Complutense de Madrid" \
+      org.opencontainers.image.url="https://guaix.ucm.es"
+
+# The wheels are mounted, not copied, so that they are not in any layer
+RUN --mount=type=bind,from=wheels,source=/tmp/wheels,target=/tmp/wheels \
+    pip install --no-cache-dir --no-index --find-links /tmp/wheels pyemir
+
+CMD ["python3"]
